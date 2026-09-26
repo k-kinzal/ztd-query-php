@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\UnreservedKeywordWithFamily_5871fd1f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\UnreservedKeywordWithFamily_5871fd1f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class UnreservedKeywordWithFamily_5871fd1f implements \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\NonReservedWordForm, \SqlSemantics\Statement\Model\PostgreSql\Role\NonReservedWordOrSconstForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTempTableNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoleIdForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TransitionRelNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerFuncArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerFuncArgsForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AliasClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AttrNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AuthIdentForm, \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CaseArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ColumnElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ColumnListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ColumnrefForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintsSetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CursorNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\DefElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\DefListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FetchArgsForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncAliasClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListOptForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GenericResetForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GranteeForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GranteeListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\HandlerNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\InsertTargetForm, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\NameListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptAliasClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptBooleanOrStringForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptExistingWindowNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptQualifiedNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSingleNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTargetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParamNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParameterNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParameterNameListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\PlassignTargetForm, \SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegeTargetForm, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprOptAliasForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ResetRestForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoleListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectFetchFirstValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectOffsetValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SetAccessMethodNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamsForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TrimListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TypeFunctionNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\UnreservedKeywordForm, \SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\VarListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\VarNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\VarValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $name,
     ) {
+        $this->assertMatchesPattern($name, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['FAMILY'], 'The name must be a complete FAMILY lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class UnreservedKeywordWithFamily_5871fd1f implements \SqlSemantics\Statem
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->name);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(string $name): self
+    {
+        return new self($name);
     }
 }

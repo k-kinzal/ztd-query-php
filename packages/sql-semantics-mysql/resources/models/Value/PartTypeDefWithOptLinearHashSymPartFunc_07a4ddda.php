@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PartTypeDefWithOptLinearHashSymPartFunc_07a4ddda $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PartTypeDefWithOptLinearHashSymPartFunc_07a4ddda $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PartTypeDefWithOptLinearHashSymPartFunc_07a4ddda implements \SqlSemantics\Statement\Model\MySql\Role\PartTypeDefForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class PartTypeDefWithOptLinearHashSymPartFunc_07a4ddda implements \SqlSema
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLinearForm $optLinear,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartFuncForm $partFunc,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLinear), 'The optLinear must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partFunc), 'The partFunc must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class PartTypeDefWithOptLinearHashSymPartFunc_07a4ddda implements \SqlSema
         $this->optLinear->write($writer);
         $writer->append('HASH');
         $this->partFunc->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optLinear, preserving every other field.
+     */
+    public function withOptLinear(\SqlSemantics\Statement\Model\MySql\Role\OptLinearForm $optLinear): self
+    {
+        return new self($optLinear, $this->partFunc);
+    }
+
+    /**
+     * Returns a copy with a new partFunc, preserving every other field.
+     */
+    public function withPartFunc(\SqlSemantics\Statement\Model\MySql\Role\PartFuncForm $partFunc): self
+    {
+        return new self($this->optLinear, $partFunc);
     }
 }

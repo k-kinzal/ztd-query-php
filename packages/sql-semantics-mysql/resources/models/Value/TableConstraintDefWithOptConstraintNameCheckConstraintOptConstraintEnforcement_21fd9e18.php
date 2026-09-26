@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableConstraintDefWithOptConstraintNameCheckConstraintOptConstraintEnforcement_21fd9e18 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableConstraintDefWithOptConstraintNameCheckConstraintOptConstraintEnforcement_21fd9e18 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableConstraintDefWithOptConstraintNameCheckConstraintOptConstraintEnforcement_21fd9e18 implements \SqlSemantics\Statement\Model\MySql\Role\TableConstraintDefForm, \SqlSemantics\Statement\Model\MySql\Role\TableElementForm, \SqlSemantics\Statement\Model\MySql\Role\TableElementListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class TableConstraintDefWithOptConstraintNameCheckConstraintOptConstraintE
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CheckConstraintForm $checkConstraint,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptConstraintEnforcementForm $optConstraintEnforcement,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optConstraintName), 'The optConstraintName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($checkConstraint), 'The checkConstraint must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optConstraintEnforcement), 'The optConstraintEnforcement must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class TableConstraintDefWithOptConstraintNameCheckConstraintOptConstraintE
         $this->optConstraintName->write($writer);
         $this->checkConstraint->write($writer);
         $this->optConstraintEnforcement->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optConstraintName, preserving every other field.
+     */
+    public function withOptConstraintName(\SqlSemantics\Statement\Model\MySql\Role\OptConstraintNameForm $optConstraintName): self
+    {
+        return new self($optConstraintName, $this->checkConstraint, $this->optConstraintEnforcement);
+    }
+
+    /**
+     * Returns a copy with a new checkConstraint, preserving every other field.
+     */
+    public function withCheckConstraint(\SqlSemantics\Statement\Model\MySql\Role\CheckConstraintForm $checkConstraint): self
+    {
+        return new self($this->optConstraintName, $checkConstraint, $this->optConstraintEnforcement);
+    }
+
+    /**
+     * Returns a copy with a new optConstraintEnforcement, preserving every other field.
+     */
+    public function withOptConstraintEnforcement(\SqlSemantics\Statement\Model\MySql\Role\OptConstraintEnforcementForm $optConstraintEnforcement): self
+    {
+        return new self($this->optConstraintName, $this->checkConstraint, $optConstraintEnforcement);
     }
 }

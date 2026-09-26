@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\Create3WithOptDuplicateOptAsCreateSelectUnionClause_16b88082 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\Create3WithOptDuplicateOptAsCreateSelectUnionClause_16b88082 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class Create3WithOptDuplicateOptAsCreateSelectUnionClause_16b88082 implements \SqlSemantics\Statement\Model\MySql\Role\Create3Form
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class Create3WithOptDuplicateOptAsCreateSelectUnionClause_16b88082 impleme
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateSelectForm $createSelect,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UnionClauseForm $unionClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDuplicate), 'The optDuplicate must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optAs), 'The optAs must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createSelect), 'The createSelect must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($unionClause), 'The unionClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +40,37 @@ final class Create3WithOptDuplicateOptAsCreateSelectUnionClause_16b88082 impleme
         $this->optAs->write($writer);
         $this->createSelect->write($writer);
         $this->unionClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optDuplicate, preserving every other field.
+     */
+    public function withOptDuplicate(\SqlSemantics\Statement\Model\MySql\Role\OptDuplicateForm $optDuplicate): self
+    {
+        return new self($optDuplicate, $this->optAs, $this->createSelect, $this->unionClause);
+    }
+
+    /**
+     * Returns a copy with a new optAs, preserving every other field.
+     */
+    public function withOptAs(\SqlSemantics\Statement\Model\MySql\Role\OptAsForm $optAs): self
+    {
+        return new self($this->optDuplicate, $optAs, $this->createSelect, $this->unionClause);
+    }
+
+    /**
+     * Returns a copy with a new createSelect, preserving every other field.
+     */
+    public function withCreateSelect(\SqlSemantics\Statement\Model\MySql\Role\CreateSelectForm $createSelect): self
+    {
+        return new self($this->optDuplicate, $this->optAs, $createSelect, $this->unionClause);
+    }
+
+    /**
+     * Returns a copy with a new unionClause, preserving every other field.
+     */
+    public function withUnionClause(\SqlSemantics\Statement\Model\MySql\Role\UnionClauseForm $unionClause): self
+    {
+        return new self($this->optDuplicate, $this->optAs, $this->createSelect, $unionClause);
     }
 }

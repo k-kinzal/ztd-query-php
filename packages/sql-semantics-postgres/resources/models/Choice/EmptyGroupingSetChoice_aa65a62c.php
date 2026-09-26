@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Choice\EmptyGroupingSetChoice_aa65a62c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Choice\EmptyGroupingSetChoice_aa65a62c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum EmptyGroupingSetChoice_aa65a62c: string implements \SqlSemantics\Statement\Model\PostgreSql\Role\EmptyGroupingSetForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByListForm

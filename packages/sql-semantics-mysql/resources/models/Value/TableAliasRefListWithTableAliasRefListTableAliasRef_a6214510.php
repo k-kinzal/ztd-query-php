@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableAliasRefListWithTableAliasRefListTableAliasRef_a6214510 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableAliasRefListWithTableAliasRefListTableAliasRef_a6214510 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableAliasRefListWithTableAliasRefListTableAliasRef_a6214510 implements \SqlSemantics\Statement\Model\MySql\Role\TableAliasRefListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TableAliasRefListWithTableAliasRefListTableAliasRef_a6214510 impleme
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableAliasRefListForm $tableAliasRefList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableAliasRefForm $tableAliasRef,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableAliasRefList), 'The tableAliasRefList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableAliasRef), 'The tableAliasRef must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TableAliasRefListWithTableAliasRefListTableAliasRef_a6214510 impleme
         $this->tableAliasRefList->write($writer);
         $writer->append(',');
         $this->tableAliasRef->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableAliasRefList, preserving every other field.
+     */
+    public function withTableAliasRefList(\SqlSemantics\Statement\Model\MySql\Role\TableAliasRefListForm $tableAliasRefList): self
+    {
+        return new self($tableAliasRefList, $this->tableAliasRef);
+    }
+
+    /**
+     * Returns a copy with a new tableAliasRef, preserving every other field.
+     */
+    public function withTableAliasRef(\SqlSemantics\Statement\Model\MySql\Role\TableAliasRefForm $tableAliasRef): self
+    {
+        return new self($this->tableAliasRefList, $tableAliasRef);
     }
 }

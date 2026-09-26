@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterListItemWithRenameOptToTableIdent_98cfa9c5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterListItemWithRenameOptToTableIdent_98cfa9c5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterListItemWithRenameOptToTableIdent_98cfa9c5 implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListItemForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterTableActionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterListItemWithRenameOptToTableIdent_98cfa9c5 implements \SqlSeman
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptToForm $optTo,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optTo), 'The optTo must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class AlterListItemWithRenameOptToTableIdent_98cfa9c5 implements \SqlSeman
         $writer->append('RENAME');
         $this->optTo->write($writer);
         $this->tableIdent->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optTo, preserving every other field.
+     */
+    public function withOptTo(\SqlSemantics\Statement\Model\MySql\Role\OptToForm $optTo): self
+    {
+        return new self($optTo, $this->tableIdent);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($this->optTo, $tableIdent);
     }
 }

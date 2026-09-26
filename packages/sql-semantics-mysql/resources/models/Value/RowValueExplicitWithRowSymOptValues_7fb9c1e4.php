@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RowValueExplicitWithRowSymOptValues_7fb9c1e4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RowValueExplicitWithRowSymOptValues_7fb9c1e4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RowValueExplicitWithRowSymOptValues_7fb9c1e4 implements \SqlSemantics\Statement\Model\MySql\Role\RowValueExplicitForm, \SqlSemantics\Statement\Model\MySql\Role\ValuesRowListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptValuesForm $optValues,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optValues), 'The optValues must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class RowValueExplicitWithRowSymOptValues_7fb9c1e4 implements \SqlSemantic
         $writer->append('(');
         $this->optValues->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new optValues, preserving every other field.
+     */
+    public function withOptValues(\SqlSemantics\Statement\Model\MySql\Role\OptValuesForm $optValues): self
+    {
+        return new self($optValues);
     }
 }

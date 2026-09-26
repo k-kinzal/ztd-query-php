@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\SubselectEndChoice_055539df $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\SubselectEndChoice_055539df $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum SubselectEndChoice_055539df: string implements \SqlSemantics\Statement\Model\MySql\Role\SubselectEndForm

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\VarcharWithCharVarying_35d3e7d5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\VarcharWithCharVarying_35d3e7d5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class VarcharWithCharVarying_35d3e7d5 implements \SqlSemantics\Statement\Model\MySql\Role\VarcharForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharForm $char,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($char), 'The char must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class VarcharWithCharVarying_35d3e7d5 implements \SqlSemantics\Statement\M
     {
         $this->char->write($writer);
         $writer->append('VARYING');
+    }
+
+    /**
+     * Returns a copy with a new char, preserving every other field.
+     */
+    public function withChar(\SqlSemantics\Statement\Model\MySql\Role\CharForm $char): self
+    {
+        return new self($char);
     }
 }

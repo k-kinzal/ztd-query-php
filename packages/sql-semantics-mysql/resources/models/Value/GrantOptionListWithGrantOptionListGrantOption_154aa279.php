@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GrantOptionListWithGrantOptionListGrantOption_154aa279 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GrantOptionListWithGrantOptionListGrantOption_154aa279 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GrantOptionListWithGrantOptionListGrantOption_154aa279 implements \SqlSemantics\Statement\Model\MySql\Role\GrantOptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class GrantOptionListWithGrantOptionListGrantOption_154aa279 implements \S
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GrantOptionListForm $grantOptionList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GrantOptionForm $grantOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($grantOptionList), 'The grantOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($grantOption), 'The grantOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class GrantOptionListWithGrantOptionListGrantOption_154aa279 implements \S
     {
         $this->grantOptionList->write($writer);
         $this->grantOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new grantOptionList, preserving every other field.
+     */
+    public function withGrantOptionList(\SqlSemantics\Statement\Model\MySql\Role\GrantOptionListForm $grantOptionList): self
+    {
+        return new self($grantOptionList, $this->grantOption);
+    }
+
+    /**
+     * Returns a copy with a new grantOption, preserving every other field.
+     */
+    public function withGrantOption(\SqlSemantics\Statement\Model\MySql\Role\GrantOptionForm $grantOption): self
+    {
+        return new self($this->grantOptionList, $grantOption);
     }
 }

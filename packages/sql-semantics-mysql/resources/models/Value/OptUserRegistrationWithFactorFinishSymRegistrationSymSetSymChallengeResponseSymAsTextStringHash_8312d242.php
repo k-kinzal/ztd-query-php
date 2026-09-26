@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptUserRegistrationWithFactorFinishSymRegistrationSymSetSymChallengeResponseSymAsTextStringHash_8312d242 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptUserRegistrationWithFactorFinishSymRegistrationSymSetSymChallengeResponseSymAsTextStringHash_8312d242 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptUserRegistrationWithFactorFinishSymRegistrationSymSetSymChallengeResponseSymAsTextStringHash_8312d242 implements \SqlSemantics\Statement\Model\MySql\Role\OptUserRegistrationForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptUserRegistrationWithFactorFinishSymRegistrationSymSetSymChallenge
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FactorForm $factor,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringHashForm $textStringHash,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($factor), 'The factor must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringHash), 'The textStringHash must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +39,21 @@ final class OptUserRegistrationWithFactorFinishSymRegistrationSymSetSymChallenge
         $writer->append('CHALLENGE_RESPONSE');
         $writer->append('AS');
         $this->textStringHash->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new factor, preserving every other field.
+     */
+    public function withFactor(\SqlSemantics\Statement\Model\MySql\Role\FactorForm $factor): self
+    {
+        return new self($factor, $this->textStringHash);
+    }
+
+    /**
+     * Returns a copy with a new textStringHash, preserving every other field.
+     */
+    public function withTextStringHash(\SqlSemantics\Statement\Model\MySql\Role\TextStringHashForm $textStringHash): self
+    {
+        return new self($this->factor, $textStringHash);
     }
 }

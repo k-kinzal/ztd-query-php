@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithMasterOrBinaryLogsSym_0cd3fb4e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithMasterOrBinaryLogsSym_0cd3fb4e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ShowParamWithMasterOrBinaryLogsSym_0cd3fb4e implements \SqlSemantics\Statement\Model\MySql\Role\ShowParamForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\MasterOrBinaryForm $masterOrBinary,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($masterOrBinary), 'The masterOrBinary must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class ShowParamWithMasterOrBinaryLogsSym_0cd3fb4e implements \SqlSemantics
     {
         $this->masterOrBinary->write($writer);
         $writer->append('LOGS');
+    }
+
+    /**
+     * Returns a copy with a new masterOrBinary, preserving every other field.
+     */
+    public function withMasterOrBinary(\SqlSemantics\Statement\Model\MySql\Role\MasterOrBinaryForm $masterOrBinary): self
+    {
+        return new self($masterOrBinary);
     }
 }

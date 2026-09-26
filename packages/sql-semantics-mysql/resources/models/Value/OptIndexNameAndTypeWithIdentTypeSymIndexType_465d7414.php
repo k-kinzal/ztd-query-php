@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptIndexNameAndTypeWithIdentTypeSymIndexType_465d7414 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptIndexNameAndTypeWithIdentTypeSymIndexType_465d7414 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptIndexNameAndTypeWithIdentTypeSymIndexType_465d7414 implements \SqlSemantics\Statement\Model\MySql\Role\OptIndexNameAndTypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptIndexNameAndTypeWithIdentTypeSymIndexType_465d7414 implements \Sq
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IndexTypeForm $indexType,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($indexType), 'The indexType must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class OptIndexNameAndTypeWithIdentTypeSymIndexType_465d7414 implements \Sq
         $this->ident->write($writer);
         $writer->append('TYPE');
         $this->indexType->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($ident, $this->indexType);
+    }
+
+    /**
+     * Returns a copy with a new indexType, preserving every other field.
+     */
+    public function withIndexType(\SqlSemantics\Statement\Model\MySql\Role\IndexTypeForm $indexType): self
+    {
+        return new self($this->ident, $indexType);
     }
 }

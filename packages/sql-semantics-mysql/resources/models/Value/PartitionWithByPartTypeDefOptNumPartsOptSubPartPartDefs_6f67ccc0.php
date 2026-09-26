@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PartitionWithByPartTypeDefOptNumPartsOptSubPartPartDefs_6f67ccc0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PartitionWithByPartTypeDefOptNumPartsOptSubPartPartDefs_6f67ccc0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PartitionWithByPartTypeDefOptNumPartsOptSubPartPartDefs_6f67ccc0 implements \SqlSemantics\Statement\Model\MySql\Role\PartitionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class PartitionWithByPartTypeDefOptNumPartsOptSubPartPartDefs_6f67ccc0 imp
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSubPartForm $optSubPart,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartDefsForm $partDefs,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partTypeDef), 'The partTypeDef must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optNumParts), 'The optNumParts must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optSubPart), 'The optSubPart must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partDefs), 'The partDefs must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +41,37 @@ final class PartitionWithByPartTypeDefOptNumPartsOptSubPartPartDefs_6f67ccc0 imp
         $this->optNumParts->write($writer);
         $this->optSubPart->write($writer);
         $this->partDefs->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new partTypeDef, preserving every other field.
+     */
+    public function withPartTypeDef(\SqlSemantics\Statement\Model\MySql\Role\PartTypeDefForm $partTypeDef): self
+    {
+        return new self($partTypeDef, $this->optNumParts, $this->optSubPart, $this->partDefs);
+    }
+
+    /**
+     * Returns a copy with a new optNumParts, preserving every other field.
+     */
+    public function withOptNumParts(\SqlSemantics\Statement\Model\MySql\Role\OptNumPartsForm $optNumParts): self
+    {
+        return new self($this->partTypeDef, $optNumParts, $this->optSubPart, $this->partDefs);
+    }
+
+    /**
+     * Returns a copy with a new optSubPart, preserving every other field.
+     */
+    public function withOptSubPart(\SqlSemantics\Statement\Model\MySql\Role\OptSubPartForm $optSubPart): self
+    {
+        return new self($this->partTypeDef, $this->optNumParts, $optSubPart, $this->partDefs);
+    }
+
+    /**
+     * Returns a copy with a new partDefs, preserving every other field.
+     */
+    public function withPartDefs(\SqlSemantics\Statement\Model\MySql\Role\PartDefsForm $partDefs): self
+    {
+        return new self($this->partTypeDef, $this->optNumParts, $this->optSubPart, $partDefs);
     }
 }

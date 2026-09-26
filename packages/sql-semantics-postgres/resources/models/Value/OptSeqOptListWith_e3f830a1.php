@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptSeqOptListWith_e3f830a1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptSeqOptListWith_e3f830a1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptSeqOptListWith_e3f830a1 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptSeqOptListForm

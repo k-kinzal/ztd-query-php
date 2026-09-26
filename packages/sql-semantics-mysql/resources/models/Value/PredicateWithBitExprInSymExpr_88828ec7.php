@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PredicateWithBitExprInSymExpr_88828ec7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PredicateWithBitExprInSymExpr_88828ec7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PredicateWithBitExprInSymExpr_88828ec7 implements \SqlSemantics\Statement\Model\MySql\Role\BoolPriForm, \SqlSemantics\Statement\Model\MySql\Role\ExprForm, \SqlSemantics\Statement\Model\MySql\Role\ExprListForm, \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\GeneratedColumnFuncForm, \SqlSemantics\Statement\Model\MySql\Role\GroupListForm, \SqlSemantics\Statement\Model\MySql\Role\GroupingExprForm, \SqlSemantics\Statement\Model\MySql\Role\InstallSetRvalueForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprListForm, \SqlSemantics\Statement\Model\MySql\Role\OptSpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\OptValuesForm, \SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm, \SqlSemantics\Statement\Model\MySql\Role\PredicateForm, \SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\SpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\ValuesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,9 @@ final class PredicateWithBitExprInSymExpr_88828ec7 implements \SqlSemantics\Stat
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($bitExpr), 'The bitExpr must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($bitExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-8.0.44' => 27,  'mysql-8.1.0' => 27,  'mysql-8.2.0' => 27,  'mysql-8.3.0' => 27,  'mysql-8.4.7' => 27,  'mysql-9.0.1' => 27,  'mysql-9.1.0' => 27,));
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,21 @@ final class PredicateWithBitExprInSymExpr_88828ec7 implements \SqlSemantics\Stat
         $writer->append('(');
         $this->expr->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new bitExpr, preserving every other field.
+     */
+    public function withBitExpr(\SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr): self
+    {
+        return new self($bitExpr, $this->expr);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
+    {
+        return new self($this->bitExpr, $expr);
     }
 }

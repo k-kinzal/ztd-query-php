@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TableFuncColumnWithParamNameFuncType_948bbdea $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TableFuncColumnWithParamNameFuncType_948bbdea $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableFuncColumnWithParamNameFuncType_948bbdea implements \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncColumnForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncColumnListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TableFuncColumnWithParamNameFuncType_948bbdea implements \SqlSemanti
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ParamNameForm $paramName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncTypeForm $funcType,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($paramName), 'The paramName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcType), 'The funcType must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class TableFuncColumnWithParamNameFuncType_948bbdea implements \SqlSemanti
     {
         $this->paramName->write($writer);
         $this->funcType->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new paramName, preserving every other field.
+     */
+    public function withParamName(\SqlSemantics\Statement\Model\PostgreSql\Role\ParamNameForm $paramName): self
+    {
+        return new self($paramName, $this->funcType);
+    }
+
+    /**
+     * Returns a copy with a new funcType, preserving every other field.
+     */
+    public function withFuncType(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncTypeForm $funcType): self
+    {
+        return new self($this->paramName, $funcType);
     }
 }

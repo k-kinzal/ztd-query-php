@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\UserWithCurrentUserOptionalBraces_c8a8d435 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\UserWithCurrentUserOptionalBraces_c8a8d435 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class UserWithCurrentUserOptionalBraces_c8a8d435 implements \SqlSemantics\Statement\Model\MySql\Role\GrantListForm, \SqlSemantics\Statement\Model\MySql\Role\GrantUserForm, \SqlSemantics\Statement\Model\MySql\Role\UserForm, \SqlSemantics\Statement\Model\MySql\Role\UserListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptionalBracesForm $optionalBraces,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optionalBraces), 'The optionalBraces must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class UserWithCurrentUserOptionalBraces_c8a8d435 implements \SqlSemantics\
     {
         $writer->append('CURRENT_USER');
         $this->optionalBraces->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optionalBraces, preserving every other field.
+     */
+    public function withOptionalBraces(\SqlSemantics\Statement\Model\MySql\Role\OptionalBracesForm $optionalBraces): self
+    {
+        return new self($optionalBraces);
     }
 }

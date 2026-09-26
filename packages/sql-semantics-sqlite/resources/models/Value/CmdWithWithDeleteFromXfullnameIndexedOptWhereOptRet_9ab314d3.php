@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithWithDeleteFromXfullnameIndexedOptWhereOptRet_9ab314d3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithWithDeleteFromXfullnameIndexedOptWhereOptRet_9ab314d3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CmdWithWithDeleteFromXfullnameIndexedOptWhereOptRet_9ab314d3 implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm
+final class CmdWithWithDeleteFromXfullnameIndexedOptWhereOptRet_9ab314d3 implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class CmdWithWithDeleteFromXfullnameIndexedOptWhereOptRet_9ab314d3 impleme
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\IndexedOptForm $indexedOpt,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptRetForm $whereOptRet,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($with), 'The with must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($xfullname), 'The xfullname must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($indexedOpt), 'The indexedOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($whereOptRet), 'The whereOptRet must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +42,37 @@ final class CmdWithWithDeleteFromXfullnameIndexedOptWhereOptRet_9ab314d3 impleme
         $this->xfullname->write($writer);
         $this->indexedOpt->write($writer);
         $this->whereOptRet->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new with, preserving every other field.
+     */
+    public function withWith(\SqlSemantics\Statement\Model\Sqlite\Role\WithForm $with): self
+    {
+        return new self($with, $this->xfullname, $this->indexedOpt, $this->whereOptRet);
+    }
+
+    /**
+     * Returns a copy with a new xfullname, preserving every other field.
+     */
+    public function withXfullname(\SqlSemantics\Statement\Model\Sqlite\Role\XfullnameForm $xfullname): self
+    {
+        return new self($this->with, $xfullname, $this->indexedOpt, $this->whereOptRet);
+    }
+
+    /**
+     * Returns a copy with a new indexedOpt, preserving every other field.
+     */
+    public function withIndexedOpt(\SqlSemantics\Statement\Model\Sqlite\Role\IndexedOptForm $indexedOpt): self
+    {
+        return new self($this->with, $this->xfullname, $indexedOpt, $this->whereOptRet);
+    }
+
+    /**
+     * Returns a copy with a new whereOptRet, preserving every other field.
+     */
+    public function withWhereOptRet(\SqlSemantics\Statement\Model\Sqlite\Role\WhereOptRetForm $whereOptRet): self
+    {
+        return new self($this->with, $this->xfullname, $this->indexedOpt, $whereOptRet);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DomainConstraintWithConstraintNameDomainConstraintElem_651a2763 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DomainConstraintWithConstraintNameDomainConstraintElem_651a2763 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DomainConstraintWithConstraintNameDomainConstraintElem_651a2763 implements \SqlSemantics\Statement\Model\PostgreSql\Role\DomainConstraintForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class DomainConstraintWithConstraintNameDomainConstraintElem_651a2763 impl
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DomainConstraintElemForm $domainConstraintElem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($domainConstraintElem), 'The domainConstraintElem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class DomainConstraintWithConstraintNameDomainConstraintElem_651a2763 impl
         $writer->append('CONSTRAINT');
         $this->name->write($writer);
         $this->domainConstraintElem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($name, $this->domainConstraintElem);
+    }
+
+    /**
+     * Returns a copy with a new domainConstraintElem, preserving every other field.
+     */
+    public function withDomainConstraintElem(\SqlSemantics\Statement\Model\PostgreSql\Role\DomainConstraintElemForm $domainConstraintElem): self
+    {
+        return new self($this->name, $domainConstraintElem);
     }
 }

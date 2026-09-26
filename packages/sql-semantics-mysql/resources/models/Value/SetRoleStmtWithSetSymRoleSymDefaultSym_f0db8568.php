@@ -9,10 +9,10 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SetRoleStmtWithSetSymRoleSymDefaultSym_f0db8568 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SetRoleStmtWithSetSymRoleSymDefaultSym_f0db8568 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class SetRoleStmtWithSetSymRoleSymDefaultSym_f0db8568 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SetRoleStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class SetRoleStmtWithSetSymRoleSymDefaultSym_f0db8568 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SetRoleStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
     /**
      * Writes SQL entirely from this value's fields.

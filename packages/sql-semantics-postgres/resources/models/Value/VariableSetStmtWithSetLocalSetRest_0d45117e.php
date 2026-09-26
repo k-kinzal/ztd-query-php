@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\VariableSetStmtWithSetLocalSetRest_0d45117e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\VariableSetStmtWithSetLocalSetRest_0d45117e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class VariableSetStmtWithSetLocalSetRest_0d45117e implements \SqlSemantics\Statement\Model\PostgreSql\Role\VariableSetStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class VariableSetStmtWithSetLocalSetRest_0d45117e implements \SqlSemantics\Statement\Model\PostgreSql\Role\VariableSetStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetRestForm $setRest,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setRest), 'The setRest must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class VariableSetStmtWithSetLocalSetRest_0d45117e implements \SqlSemantics
         $writer->append('SET');
         $writer->append('LOCAL');
         $this->setRest->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new setRest, preserving every other field.
+     */
+    public function withSetRest(\SqlSemantics\Statement\Model\PostgreSql\Role\SetRestForm $setRest): self
+    {
+        return new self($setRest);
     }
 }

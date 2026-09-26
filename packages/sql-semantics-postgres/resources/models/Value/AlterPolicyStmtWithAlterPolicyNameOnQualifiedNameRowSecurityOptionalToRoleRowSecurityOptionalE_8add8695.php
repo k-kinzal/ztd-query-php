@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterPolicyStmtWithAlterPolicyNameOnQualifiedNameRowSecurityOptionalToRoleRowSecurityOptionalE_8add8695 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterPolicyStmtWithAlterPolicyNameOnQualifiedNameRowSecurityOptionalToRoleRowSecurityOptionalE_8add8695 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterPolicyStmtWithAlterPolicyNameOnQualifiedNameRowSecurityOptionalToRoleRowSecurityOptionalE_8add8695 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterPolicyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterPolicyStmtWithAlterPolicyNameOnQualifiedNameRowSecurityOptionalToRoleRowSecurityOptionalE_8add8695 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterPolicyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class AlterPolicyStmtWithAlterPolicyNameOnQualifiedNameRowSecurityOptional
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityOptionalExprForm $rowSecurityOptionalExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityOptionalWithCheckForm $rowSecurityOptionalWithCheck,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($rowSecurityOptionalToRole), 'The rowSecurityOptionalToRole must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($rowSecurityOptionalExpr), 'The rowSecurityOptionalExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($rowSecurityOptionalWithCheck), 'The rowSecurityOptionalWithCheck must be a generated immutable SQL value.');
     }
 
     /**
@@ -39,5 +46,45 @@ final class AlterPolicyStmtWithAlterPolicyNameOnQualifiedNameRowSecurityOptional
         $this->rowSecurityOptionalToRole->write($writer);
         $this->rowSecurityOptionalExpr->write($writer);
         $this->rowSecurityOptionalWithCheck->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($name, $this->qualifiedName, $this->rowSecurityOptionalToRole, $this->rowSecurityOptionalExpr, $this->rowSecurityOptionalWithCheck);
+    }
+
+    /**
+     * Returns a copy with a new qualifiedName, preserving every other field.
+     */
+    public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
+    {
+        return new self($this->name, $qualifiedName, $this->rowSecurityOptionalToRole, $this->rowSecurityOptionalExpr, $this->rowSecurityOptionalWithCheck);
+    }
+
+    /**
+     * Returns a copy with a new rowSecurityOptionalToRole, preserving every other field.
+     */
+    public function withRowSecurityOptionalToRole(\SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityOptionalToRoleForm $rowSecurityOptionalToRole): self
+    {
+        return new self($this->name, $this->qualifiedName, $rowSecurityOptionalToRole, $this->rowSecurityOptionalExpr, $this->rowSecurityOptionalWithCheck);
+    }
+
+    /**
+     * Returns a copy with a new rowSecurityOptionalExpr, preserving every other field.
+     */
+    public function withRowSecurityOptionalExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityOptionalExprForm $rowSecurityOptionalExpr): self
+    {
+        return new self($this->name, $this->qualifiedName, $this->rowSecurityOptionalToRole, $rowSecurityOptionalExpr, $this->rowSecurityOptionalWithCheck);
+    }
+
+    /**
+     * Returns a copy with a new rowSecurityOptionalWithCheck, preserving every other field.
+     */
+    public function withRowSecurityOptionalWithCheck(\SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityOptionalWithCheckForm $rowSecurityOptionalWithCheck): self
+    {
+        return new self($this->name, $this->qualifiedName, $this->rowSecurityOptionalToRole, $this->rowSecurityOptionalExpr, $rowSecurityOptionalWithCheck);
     }
 }

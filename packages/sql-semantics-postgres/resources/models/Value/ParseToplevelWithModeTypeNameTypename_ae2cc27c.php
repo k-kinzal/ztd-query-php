@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ParseToplevelWithModeTypeNameTypename_ae2cc27c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ParseToplevelWithModeTypeNameTypename_ae2cc27c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ParseToplevelWithModeTypeNameTypename_ae2cc27c implements \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ParseToplevelWithModeTypeNameTypename_ae2cc27c implements \SqlSemant
         public readonly string $modeTypeName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename,
     ) {
+        $this->assertMatchesPattern($modeTypeName, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['MODE_TYPE_NAME'], 'The modeTypeName must be a complete MODE_TYPE_NAME lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class ParseToplevelWithModeTypeNameTypename_ae2cc27c implements \SqlSemant
     {
         $writer->append($this->modeTypeName);
         $this->typename->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new modeTypeName, preserving every other field.
+     */
+    public function withModeTypeName(string $modeTypeName): self
+    {
+        return new self($modeTypeName, $this->typename);
+    }
+
+    /**
+     * Returns a copy with a new typename, preserving every other field.
+     */
+    public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
+    {
+        return new self($this->modeTypeName, $typename);
     }
 }

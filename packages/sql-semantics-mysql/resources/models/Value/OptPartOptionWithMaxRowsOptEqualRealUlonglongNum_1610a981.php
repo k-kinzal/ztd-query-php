@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptPartOptionWithMaxRowsOptEqualRealUlonglongNum_1610a981 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptPartOptionWithMaxRowsOptEqualRealUlonglongNum_1610a981 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptPartOptionWithMaxRowsOptEqualRealUlonglongNum_1610a981 implements \SqlSemantics\Statement\Model\MySql\Role\OptPartOptionForm, \SqlSemantics\Statement\Model\MySql\Role\OptPartOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\OptPartOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptPartOptionWithMaxRowsOptEqualRealUlonglongNum_1610a981 implements
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RealUlonglongNumForm $realUlonglongNum,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($realUlonglongNum), 'The realUlonglongNum must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class OptPartOptionWithMaxRowsOptEqualRealUlonglongNum_1610a981 implements
         $writer->append('MAX_ROWS');
         $this->optEqual->write($writer);
         $this->realUlonglongNum->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optEqual, preserving every other field.
+     */
+    public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
+    {
+        return new self($optEqual, $this->realUlonglongNum);
+    }
+
+    /**
+     * Returns a copy with a new realUlonglongNum, preserving every other field.
+     */
+    public function withRealUlonglongNum(\SqlSemantics\Statement\Model\MySql\Role\RealUlonglongNumForm $realUlonglongNum): self
+    {
+        return new self($this->optEqual, $realUlonglongNum);
     }
 }

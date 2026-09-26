@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ArrayExprWithExprList_66959ccf $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ArrayExprWithExprList_66959ccf $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ArrayExprWithExprList_66959ccf implements \SqlSemantics\Statement\Model\PostgreSql\Role\ArrayExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ArrayExprListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm $exprList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($exprList), 'The exprList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class ArrayExprWithExprList_66959ccf implements \SqlSemantics\Statement\Mo
         $writer->append('[');
         $this->exprList->write($writer);
         $writer->append(']');
+    }
+
+    /**
+     * Returns a copy with a new exprList, preserving every other field.
+     */
+    public function withExprList(\SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm $exprList): self
+    {
+        return new self($exprList);
     }
 }

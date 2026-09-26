@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PasswordExpireWithPasswordExpireSymClearPasswordExpireOptions_5b84c371 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PasswordExpireWithPasswordExpireSymClearPasswordExpireOptions_5b84c371 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PasswordExpireWithPasswordExpireSymClearPasswordExpireOptions_5b84c371 implements \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionForm, \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\PasswordExpireForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ClearPasswordExpireOptionsForm $clearPasswordExpireOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($clearPasswordExpireOptions), 'The clearPasswordExpireOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class PasswordExpireWithPasswordExpireSymClearPasswordExpireOptions_5b84c3
         $writer->append('PASSWORD');
         $writer->append('EXPIRE');
         $this->clearPasswordExpireOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new clearPasswordExpireOptions, preserving every other field.
+     */
+    public function withClearPasswordExpireOptions(\SqlSemantics\Statement\Model\MySql\Role\ClearPasswordExpireOptionsForm $clearPasswordExpireOptions): self
+    {
+        return new self($clearPasswordExpireOptions);
     }
 }

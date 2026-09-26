@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SimpleIdentListWithSimpleIdentListIdent_3d2555f0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SimpleIdentListWithSimpleIdentListIdent_3d2555f0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SimpleIdentListWithSimpleIdentListIdent_3d2555f0 implements \SqlSemantics\Statement\Model\MySql\Role\SimpleIdentListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SimpleIdentListWithSimpleIdentListIdent_3d2555f0 implements \SqlSema
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleIdentListForm $simpleIdentList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleIdentList), 'The simpleIdentList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SimpleIdentListWithSimpleIdentListIdent_3d2555f0 implements \SqlSema
         $this->simpleIdentList->write($writer);
         $writer->append(',');
         $this->ident->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new simpleIdentList, preserving every other field.
+     */
+    public function withSimpleIdentList(\SqlSemantics\Statement\Model\MySql\Role\SimpleIdentListForm $simpleIdentList): self
+    {
+        return new self($simpleIdentList, $this->ident);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($this->simpleIdentList, $ident);
     }
 }

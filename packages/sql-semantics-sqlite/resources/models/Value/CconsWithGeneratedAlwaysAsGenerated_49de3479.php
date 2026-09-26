@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CconsWithGeneratedAlwaysAsGenerated_49de3479 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CconsWithGeneratedAlwaysAsGenerated_49de3479 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CconsWithGeneratedAlwaysAsGenerated_49de3479 implements \SqlSemantics\Statement\Model\Sqlite\Role\CconsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\GeneratedForm $generated,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($generated), 'The generated must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class CconsWithGeneratedAlwaysAsGenerated_49de3479 implements \SqlSemantic
         $writer->append('ALWAYS');
         $writer->append('AS');
         $this->generated->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new generated, preserving every other field.
+     */
+    public function withGenerated(\SqlSemantics\Statement\Model\Sqlite\Role\GeneratedForm $generated): self
+    {
+        return new self($generated);
     }
 }

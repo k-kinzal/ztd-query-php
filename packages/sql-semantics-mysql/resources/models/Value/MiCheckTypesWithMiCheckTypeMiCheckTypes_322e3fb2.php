@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\MiCheckTypesWithMiCheckTypeMiCheckTypes_322e3fb2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\MiCheckTypesWithMiCheckTypeMiCheckTypes_322e3fb2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class MiCheckTypesWithMiCheckTypeMiCheckTypes_322e3fb2 implements \SqlSemantics\Statement\Model\MySql\Role\MiCheckTypesForm, \SqlSemantics\Statement\Model\MySql\Role\OptMiCheckTypeForm, \SqlSemantics\Statement\Model\MySql\Role\OptMiCheckTypesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class MiCheckTypesWithMiCheckTypeMiCheckTypes_322e3fb2 implements \SqlSema
         public readonly \SqlSemantics\Statement\Model\MySql\Role\MiCheckTypeForm $miCheckType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\MiCheckTypesForm $miCheckTypes,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($miCheckType), 'The miCheckType must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($miCheckTypes), 'The miCheckTypes must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class MiCheckTypesWithMiCheckTypeMiCheckTypes_322e3fb2 implements \SqlSema
     {
         $this->miCheckType->write($writer);
         $this->miCheckTypes->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new miCheckType, preserving every other field.
+     */
+    public function withMiCheckType(\SqlSemantics\Statement\Model\MySql\Role\MiCheckTypeForm $miCheckType): self
+    {
+        return new self($miCheckType, $this->miCheckTypes);
+    }
+
+    /**
+     * Returns a copy with a new miCheckTypes, preserving every other field.
+     */
+    public function withMiCheckTypes(\SqlSemantics\Statement\Model\MySql\Role\MiCheckTypesForm $miCheckTypes): self
+    {
+        return new self($this->miCheckType, $miCheckTypes);
     }
 }

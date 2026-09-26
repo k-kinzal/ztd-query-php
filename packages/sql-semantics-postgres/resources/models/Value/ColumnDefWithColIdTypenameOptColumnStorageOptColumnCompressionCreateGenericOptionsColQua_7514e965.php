@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ColumnDefWithColIdTypenameOptColumnStorageOptColumnCompressionCreateGenericOptionsColQua_7514e965 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ColumnDefWithColIdTypenameOptColumnStorageOptColumnCompressionCreateGenericOptionsColQua_7514e965 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColumnDefWithColIdTypenameOptColumnStorageOptColumnCompressionCreateGenericOptionsColQua_7514e965 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptTableElementListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableElementForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableElementListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ColumnDefForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -25,6 +27,12 @@ final class ColumnDefWithColIdTypenameOptColumnStorageOptColumnCompressionCreate
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreateGenericOptionsForm $createGenericOptions,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColQualListForm $colQualList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optColumnStorage), 'The optColumnStorage must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optColumnCompression), 'The optColumnCompression must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createGenericOptions), 'The createGenericOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colQualList), 'The colQualList must be a generated immutable SQL value.');
     }
 
     /**
@@ -38,5 +46,53 @@ final class ColumnDefWithColIdTypenameOptColumnStorageOptColumnCompressionCreate
         $this->optColumnCompression->write($writer);
         $this->createGenericOptions->write($writer);
         $this->colQualList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($colId, $this->typename, $this->optColumnStorage, $this->optColumnCompression, $this->createGenericOptions, $this->colQualList);
+    }
+
+    /**
+     * Returns a copy with a new typename, preserving every other field.
+     */
+    public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
+    {
+        return new self($this->colId, $typename, $this->optColumnStorage, $this->optColumnCompression, $this->createGenericOptions, $this->colQualList);
+    }
+
+    /**
+     * Returns a copy with a new optColumnStorage, preserving every other field.
+     */
+    public function withOptColumnStorage(\SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnStorageForm $optColumnStorage): self
+    {
+        return new self($this->colId, $this->typename, $optColumnStorage, $this->optColumnCompression, $this->createGenericOptions, $this->colQualList);
+    }
+
+    /**
+     * Returns a copy with a new optColumnCompression, preserving every other field.
+     */
+    public function withOptColumnCompression(\SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnCompressionForm $optColumnCompression): self
+    {
+        return new self($this->colId, $this->typename, $this->optColumnStorage, $optColumnCompression, $this->createGenericOptions, $this->colQualList);
+    }
+
+    /**
+     * Returns a copy with a new createGenericOptions, preserving every other field.
+     */
+    public function withCreateGenericOptions(\SqlSemantics\Statement\Model\PostgreSql\Role\CreateGenericOptionsForm $createGenericOptions): self
+    {
+        return new self($this->colId, $this->typename, $this->optColumnStorage, $this->optColumnCompression, $createGenericOptions, $this->colQualList);
+    }
+
+    /**
+     * Returns a copy with a new colQualList, preserving every other field.
+     */
+    public function withColQualList(\SqlSemantics\Statement\Model\PostgreSql\Role\ColQualListForm $colQualList): self
+    {
+        return new self($this->colId, $this->typename, $this->optColumnStorage, $this->optColumnCompression, $this->createGenericOptions, $colQualList);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ReloptionElemWithColLabelColLabelDefArg_78dadc8e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ReloptionElemWithColLabelColLabelDefArg_78dadc8e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ReloptionElemWithColLabelColLabelDefArg_78dadc8e implements \SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class ReloptionElemWithColLabelColLabelDefArg_78dadc8e implements \SqlSema
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm $colLabel2,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DefArgForm $defArg,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colLabel), 'The colLabel must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colLabel2), 'The colLabel2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($defArg), 'The defArg must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class ReloptionElemWithColLabelColLabelDefArg_78dadc8e implements \SqlSema
         $this->colLabel2->write($writer);
         $writer->append('=');
         $this->defArg->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new colLabel, preserving every other field.
+     */
+    public function withColLabel(\SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm $colLabel): self
+    {
+        return new self($colLabel, $this->colLabel2, $this->defArg);
+    }
+
+    /**
+     * Returns a copy with a new colLabel2, preserving every other field.
+     */
+    public function withColLabel2(\SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm $colLabel2): self
+    {
+        return new self($this->colLabel, $colLabel2, $this->defArg);
+    }
+
+    /**
+     * Returns a copy with a new defArg, preserving every other field.
+     */
+    public function withDefArg(\SqlSemantics\Statement\Model\PostgreSql\Role\DefArgForm $defArg): self
+    {
+        return new self($this->colLabel, $this->colLabel2, $defArg);
     }
 }

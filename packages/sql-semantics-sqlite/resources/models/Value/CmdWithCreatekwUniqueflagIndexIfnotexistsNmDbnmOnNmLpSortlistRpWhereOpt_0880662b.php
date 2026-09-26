@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithCreatekwUniqueflagIndexIfnotexistsNmDbnmOnNmLpSortlistRpWhereOpt_0880662b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithCreatekwUniqueflagIndexIfnotexistsNmDbnmOnNmLpSortlistRpWhereOpt_0880662b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CmdWithCreatekwUniqueflagIndexIfnotexistsNmDbnmOnNmLpSortlistRpWhereOpt_0880662b implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm
+final class CmdWithCreatekwUniqueflagIndexIfnotexistsNmDbnmOnNmLpSortlistRpWhereOpt_0880662b implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -27,6 +29,14 @@ final class CmdWithCreatekwUniqueflagIndexIfnotexistsNmDbnmOnNmLpSortlistRpWhere
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm $sortlist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm $where,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($createkw), 'The createkw must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($uniqueflag), 'The uniqueflag must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($ifnotexists), 'The ifnotexists must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($dbnm), 'The dbnm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm2), 'The nm2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($sortlist), 'The sortlist must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($where), 'The where must be a generated immutable SQL value.');
     }
 
     /**
@@ -46,5 +56,69 @@ final class CmdWithCreatekwUniqueflagIndexIfnotexistsNmDbnmOnNmLpSortlistRpWhere
         $this->sortlist->write($writer);
         $writer->append(')');
         $this->where->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new createkw, preserving every other field.
+     */
+    public function withCreatekw(\SqlSemantics\Statement\Model\Sqlite\Role\CreatekwForm $createkw): self
+    {
+        return new self($createkw, $this->uniqueflag, $this->ifnotexists, $this->nm, $this->dbnm, $this->nm2, $this->sortlist, $this->where);
+    }
+
+    /**
+     * Returns a copy with a new uniqueflag, preserving every other field.
+     */
+    public function withUniqueflag(\SqlSemantics\Statement\Model\Sqlite\Role\UniqueflagForm $uniqueflag): self
+    {
+        return new self($this->createkw, $uniqueflag, $this->ifnotexists, $this->nm, $this->dbnm, $this->nm2, $this->sortlist, $this->where);
+    }
+
+    /**
+     * Returns a copy with a new ifnotexists, preserving every other field.
+     */
+    public function withIfnotexists(\SqlSemantics\Statement\Model\Sqlite\Role\IfnotexistsForm $ifnotexists): self
+    {
+        return new self($this->createkw, $this->uniqueflag, $ifnotexists, $this->nm, $this->dbnm, $this->nm2, $this->sortlist, $this->where);
+    }
+
+    /**
+     * Returns a copy with a new nm, preserving every other field.
+     */
+    public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
+    {
+        return new self($this->createkw, $this->uniqueflag, $this->ifnotexists, $nm, $this->dbnm, $this->nm2, $this->sortlist, $this->where);
+    }
+
+    /**
+     * Returns a copy with a new dbnm, preserving every other field.
+     */
+    public function withDbnm(\SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm): self
+    {
+        return new self($this->createkw, $this->uniqueflag, $this->ifnotexists, $this->nm, $dbnm, $this->nm2, $this->sortlist, $this->where);
+    }
+
+    /**
+     * Returns a copy with a new nm2, preserving every other field.
+     */
+    public function withNm2(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm2): self
+    {
+        return new self($this->createkw, $this->uniqueflag, $this->ifnotexists, $this->nm, $this->dbnm, $nm2, $this->sortlist, $this->where);
+    }
+
+    /**
+     * Returns a copy with a new sortlist, preserving every other field.
+     */
+    public function withSortlist(\SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm $sortlist): self
+    {
+        return new self($this->createkw, $this->uniqueflag, $this->ifnotexists, $this->nm, $this->dbnm, $this->nm2, $sortlist, $this->where);
+    }
+
+    /**
+     * Returns a copy with a new where, preserving every other field.
+     */
+    public function withWhere(\SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm $where): self
+    {
+        return new self($this->createkw, $this->uniqueflag, $this->ifnotexists, $this->nm, $this->dbnm, $this->nm2, $this->sortlist, $where);
     }
 }

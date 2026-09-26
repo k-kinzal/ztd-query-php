@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithChangeReplicationSourceAutoPositionEqUlongNum_c18d87f8 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithChangeReplicationSourceAutoPositionEqUlongNum_c18d87f8 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SourceDefWithChangeReplicationSourceAutoPositionEqUlongNum_c18d87f8 implements \SqlSemantics\Statement\Model\MySql\Role\SourceDefForm, \SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SourceDefWithChangeReplicationSourceAutoPositionEqUlongNum_c18d87f8 
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceAutoPositionForm $changeReplicationSourceAutoPosition,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($changeReplicationSourceAutoPosition), 'The changeReplicationSourceAutoPosition must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ulongNum), 'The ulongNum must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SourceDefWithChangeReplicationSourceAutoPositionEqUlongNum_c18d87f8 
         $this->changeReplicationSourceAutoPosition->write($writer);
         $writer->append('=');
         $this->ulongNum->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new changeReplicationSourceAutoPosition, preserving every other field.
+     */
+    public function withChangeReplicationSourceAutoPosition(\SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceAutoPositionForm $changeReplicationSourceAutoPosition): self
+    {
+        return new self($changeReplicationSourceAutoPosition, $this->ulongNum);
+    }
+
+    /**
+     * Returns a copy with a new ulongNum, preserving every other field.
+     */
+    public function withUlongNum(\SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum): self
+    {
+        return new self($this->changeReplicationSourceAutoPosition, $ulongNum);
     }
 }

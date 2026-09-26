@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableFactorWithSelectDerivedInitGetSelectLexSelectDerived2_01d3d8c0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableFactorWithSelectDerivedInitGetSelectLexSelectDerived2_01d3d8c0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableFactorWithSelectDerivedInitGetSelectLexSelectDerived2_01d3d8c0 implements \SqlSemantics\Statement\Model\MySql\Role\DerivedTableListForm, \SqlSemantics\Statement\Model\MySql\Role\EscTableRefForm, \SqlSemantics\Statement\Model\MySql\Role\EscTableReferenceForm, \SqlSemantics\Statement\Model\MySql\Role\FromTablesForm, \SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm, \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedForm, \SqlSemantics\Statement\Model\MySql\Role\TableFactorForm, \SqlSemantics\Statement\Model\MySql\Role\TableRefForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class TableFactorWithSelectDerivedInitGetSelectLexSelectDerived2_01d3d8c0 
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GetSelectLexForm $getSelectLex,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectDerived2Form $selectDerived2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectDerivedInit), 'The selectDerivedInit must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($getSelectLex), 'The getSelectLex must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectDerived2), 'The selectDerived2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class TableFactorWithSelectDerivedInitGetSelectLexSelectDerived2_01d3d8c0 
         $this->selectDerivedInit->write($writer);
         $this->getSelectLex->write($writer);
         $this->selectDerived2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new selectDerivedInit, preserving every other field.
+     */
+    public function withSelectDerivedInit(\SqlSemantics\Statement\Model\MySql\Role\SelectDerivedInitForm $selectDerivedInit): self
+    {
+        return new self($selectDerivedInit, $this->getSelectLex, $this->selectDerived2);
+    }
+
+    /**
+     * Returns a copy with a new getSelectLex, preserving every other field.
+     */
+    public function withGetSelectLex(\SqlSemantics\Statement\Model\MySql\Role\GetSelectLexForm $getSelectLex): self
+    {
+        return new self($this->selectDerivedInit, $getSelectLex, $this->selectDerived2);
+    }
+
+    /**
+     * Returns a copy with a new selectDerived2, preserving every other field.
+     */
+    public function withSelectDerived2(\SqlSemantics\Statement\Model\MySql\Role\SelectDerived2Form $selectDerived2): self
+    {
+        return new self($this->selectDerivedInit, $this->getSelectLex, $selectDerived2);
     }
 }

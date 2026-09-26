@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateTableSpaceStmtWithCreateTablespaceNameOptTableSpaceOwnerLocationSconstOptReloptions_8ee493fd $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateTableSpaceStmtWithCreateTablespaceNameOptTableSpaceOwnerLocationSconstOptReloptions_8ee493fd $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateTableSpaceStmtWithCreateTablespaceNameOptTableSpaceOwnerLocationSconstOptReloptions_8ee493fd implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateTableSpaceStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class CreateTableSpaceStmtWithCreateTablespaceNameOptTableSpaceOwnerLocationSconstOptReloptions_8ee493fd implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateTableSpaceStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class CreateTableSpaceStmtWithCreateTablespaceNameOptTableSpaceOwnerLocati
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptReloptionsForm $optReloptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTableSpaceOwner), 'The optTableSpaceOwner must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($sconst), 'The sconst must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optReloptions), 'The optReloptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -37,5 +43,37 @@ final class CreateTableSpaceStmtWithCreateTablespaceNameOptTableSpaceOwnerLocati
         $writer->append('LOCATION');
         $this->sconst->write($writer);
         $this->optReloptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($name, $this->optTableSpaceOwner, $this->sconst, $this->optReloptions);
+    }
+
+    /**
+     * Returns a copy with a new optTableSpaceOwner, preserving every other field.
+     */
+    public function withOptTableSpaceOwner(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTableSpaceOwnerForm $optTableSpaceOwner): self
+    {
+        return new self($this->name, $optTableSpaceOwner, $this->sconst, $this->optReloptions);
+    }
+
+    /**
+     * Returns a copy with a new sconst, preserving every other field.
+     */
+    public function withSconst(\SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst): self
+    {
+        return new self($this->name, $this->optTableSpaceOwner, $sconst, $this->optReloptions);
+    }
+
+    /**
+     * Returns a copy with a new optReloptions, preserving every other field.
+     */
+    public function withOptReloptions(\SqlSemantics\Statement\Model\PostgreSql\Role\OptReloptionsForm $optReloptions): self
+    {
+        return new self($this->name, $this->optTableSpaceOwner, $this->sconst, $optReloptions);
     }
 }

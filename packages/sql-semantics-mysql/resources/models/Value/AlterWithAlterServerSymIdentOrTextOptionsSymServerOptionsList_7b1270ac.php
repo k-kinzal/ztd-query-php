@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterWithAlterServerSymIdentOrTextOptionsSymServerOptionsList_7b1270ac $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterWithAlterServerSymIdentOrTextOptionsSymServerOptionsList_7b1270ac $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterWithAlterServerSymIdentOrTextOptionsSymServerOptionsList_7b1270ac implements \SqlSemantics\Statement\Model\MySql\Role\AlterForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterWithAlterServerSymIdentOrTextOptionsSymServerOptionsList_7b1270
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ServerOptionsListForm $serverOptionsList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText), 'The identOrText must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($serverOptionsList), 'The serverOptionsList must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +39,21 @@ final class AlterWithAlterServerSymIdentOrTextOptionsSymServerOptionsList_7b1270
         $writer->append('(');
         $this->serverOptionsList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new identOrText, preserving every other field.
+     */
+    public function withIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText): self
+    {
+        return new self($identOrText, $this->serverOptionsList);
+    }
+
+    /**
+     * Returns a copy with a new serverOptionsList, preserving every other field.
+     */
+    public function withServerOptionsList(\SqlSemantics\Statement\Model\MySql\Role\ServerOptionsListForm $serverOptionsList): self
+    {
+        return new self($this->identOrText, $serverOptionsList);
     }
 }

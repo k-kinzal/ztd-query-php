@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\EcmdWithCmdxSemi_b7577a8f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\EcmdWithCmdxSemi_b7577a8f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class EcmdWithCmdxSemi_b7577a8f implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdlistForm, \SqlSemantics\Statement\Model\Sqlite\Role\EcmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\InputForm
+final class EcmdWithCmdxSemi_b7577a8f implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdlistForm, \SqlSemantics\Statement\Model\Sqlite\Role\EcmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\InputForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class EcmdWithCmdxSemi_b7577a8f implements \SqlSemantics\Statement\Model\S
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm $cmdx,
         public readonly string $semi,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($cmdx), 'The cmdx must be a generated immutable SQL value.');
+        $this->assertMatchesPattern($semi, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['SEMI'], 'The semi must be a complete SEMI lexical spelling.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class EcmdWithCmdxSemi_b7577a8f implements \SqlSemantics\Statement\Model\S
     {
         $this->cmdx->write($writer);
         $writer->append($this->semi);
+    }
+
+    /**
+     * Returns a copy with a new cmdx, preserving every other field.
+     */
+    public function withCmdx(\SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm $cmdx): self
+    {
+        return new self($cmdx, $this->semi);
+    }
+
+    /**
+     * Returns a copy with a new semi, preserving every other field.
+     */
+    public function withSemi(string $semi): self
+    {
+        return new self($this->cmdx, $semi);
     }
 }

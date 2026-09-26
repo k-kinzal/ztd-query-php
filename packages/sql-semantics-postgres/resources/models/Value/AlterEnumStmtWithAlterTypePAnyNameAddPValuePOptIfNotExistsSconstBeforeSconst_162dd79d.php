@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterEnumStmtWithAlterTypePAnyNameAddPValuePOptIfNotExistsSconstBeforeSconst_162dd79d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterEnumStmtWithAlterTypePAnyNameAddPValuePOptIfNotExistsSconstBeforeSconst_162dd79d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterEnumStmtWithAlterTypePAnyNameAddPValuePOptIfNotExistsSconstBeforeSconst_162dd79d implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterEnumStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterEnumStmtWithAlterTypePAnyNameAddPValuePOptIfNotExistsSconstBeforeSconst_162dd79d implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterEnumStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class AlterEnumStmtWithAlterTypePAnyNameAddPValuePOptIfNotExistsSconstBefo
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optIfNotExists), 'The optIfNotExists must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($sconst), 'The sconst must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($sconst2), 'The sconst2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -39,5 +45,37 @@ final class AlterEnumStmtWithAlterTypePAnyNameAddPValuePOptIfNotExistsSconstBefo
         $this->sconst->write($writer);
         $writer->append('BEFORE');
         $this->sconst2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new anyName, preserving every other field.
+     */
+    public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
+    {
+        return new self($anyName, $this->optIfNotExists, $this->sconst, $this->sconst2);
+    }
+
+    /**
+     * Returns a copy with a new optIfNotExists, preserving every other field.
+     */
+    public function withOptIfNotExists(\SqlSemantics\Statement\Model\PostgreSql\Role\OptIfNotExistsForm $optIfNotExists): self
+    {
+        return new self($this->anyName, $optIfNotExists, $this->sconst, $this->sconst2);
+    }
+
+    /**
+     * Returns a copy with a new sconst, preserving every other field.
+     */
+    public function withSconst(\SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst): self
+    {
+        return new self($this->anyName, $this->optIfNotExists, $sconst, $this->sconst2);
+    }
+
+    /**
+     * Returns a copy with a new sconst2, preserving every other field.
+     */
+    public function withSconst2(\SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst2): self
+    {
+        return new self($this->anyName, $this->optIfNotExists, $this->sconst, $sconst2);
     }
 }

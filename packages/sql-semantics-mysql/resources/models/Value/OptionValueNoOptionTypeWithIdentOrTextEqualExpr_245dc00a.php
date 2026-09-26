@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptionValueNoOptionTypeWithIdentOrTextEqualExpr_245dc00a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptionValueNoOptionTypeWithIdentOrTextEqualExpr_245dc00a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptionValueNoOptionTypeWithIdentOrTextEqualExpr_245dc00a implements \SqlSemantics\Statement\Model\MySql\Role\OptionValueForm, \SqlSemantics\Statement\Model\MySql\Role\OptionValueListForm, \SqlSemantics\Statement\Model\MySql\Role\OptionValueNoOptionTypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class OptionValueNoOptionTypeWithIdentOrTextEqualExpr_245dc00a implements 
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText), 'The identOrText must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($equal), 'The equal must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class OptionValueNoOptionTypeWithIdentOrTextEqualExpr_245dc00a implements 
         $this->identOrText->write($writer);
         $this->equal->write($writer);
         $this->expr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new identOrText, preserving every other field.
+     */
+    public function withIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText): self
+    {
+        return new self($identOrText, $this->equal, $this->expr);
+    }
+
+    /**
+     * Returns a copy with a new equal, preserving every other field.
+     */
+    public function withEqual(\SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal): self
+    {
+        return new self($this->identOrText, $equal, $this->expr);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
+    {
+        return new self($this->identOrText, $this->equal, $expr);
     }
 }

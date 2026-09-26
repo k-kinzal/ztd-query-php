@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ConditionInformationWithConditionInformationConditionInformationItem_e65e0b2c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ConditionInformationWithConditionInformationConditionInformationItem_e65e0b2c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ConditionInformationWithConditionInformationConditionInformationItem_e65e0b2c implements \SqlSemantics\Statement\Model\MySql\Role\ConditionInformationForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ConditionInformationWithConditionInformationConditionInformationItem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ConditionInformationForm $conditionInformation,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ConditionInformationItemForm $conditionInformationItem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($conditionInformation), 'The conditionInformation must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($conditionInformationItem), 'The conditionInformationItem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ConditionInformationWithConditionInformationConditionInformationItem
         $this->conditionInformation->write($writer);
         $writer->append(',');
         $this->conditionInformationItem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new conditionInformation, preserving every other field.
+     */
+    public function withConditionInformation(\SqlSemantics\Statement\Model\MySql\Role\ConditionInformationForm $conditionInformation): self
+    {
+        return new self($conditionInformation, $this->conditionInformationItem);
+    }
+
+    /**
+     * Returns a copy with a new conditionInformationItem, preserving every other field.
+     */
+    public function withConditionInformationItem(\SqlSemantics\Statement\Model\MySql\Role\ConditionInformationItemForm $conditionInformationItem): self
+    {
+        return new self($this->conditionInformation, $conditionInformationItem);
     }
 }

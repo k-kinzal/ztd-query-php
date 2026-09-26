@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AssignToKeycacheWithTableIdentCacheKeysSpec_c5871e0f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AssignToKeycacheWithTableIdentCacheKeysSpec_c5871e0f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AssignToKeycacheWithTableIdentCacheKeysSpec_c5871e0f implements \SqlSemantics\Statement\Model\MySql\Role\AssignToKeycacheForm, \SqlSemantics\Statement\Model\MySql\Role\KeycacheListForm, \SqlSemantics\Statement\Model\MySql\Role\KeycacheListOrPartsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AssignToKeycacheWithTableIdentCacheKeysSpec_c5871e0f implements \Sql
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CacheKeysSpecForm $cacheKeysSpec,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($cacheKeysSpec), 'The cacheKeysSpec must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class AssignToKeycacheWithTableIdentCacheKeysSpec_c5871e0f implements \Sql
     {
         $this->tableIdent->write($writer);
         $this->cacheKeysSpec->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($tableIdent, $this->cacheKeysSpec);
+    }
+
+    /**
+     * Returns a copy with a new cacheKeysSpec, preserving every other field.
+     */
+    public function withCacheKeysSpec(\SqlSemantics\Statement\Model\MySql\Role\CacheKeysSpecForm $cacheKeysSpec): self
+    {
+        return new self($this->tableIdent, $cacheKeysSpec);
     }
 }

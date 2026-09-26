@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\OptToChoice_c11aeeda $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\OptToChoice_c11aeeda $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum OptToChoice_c11aeeda: string implements \SqlSemantics\Statement\Model\MySql\Role\OptToForm

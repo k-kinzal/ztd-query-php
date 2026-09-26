@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterUserCommandWithAlterUserIfExists_3276589d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterUserCommandWithAlterUserIfExists_3276589d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterUserCommandWithAlterUserIfExists_3276589d implements \SqlSemantics\Statement\Model\MySql\Role\AlterUserCommandForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterUserCommandWithAlterUserIfExists_3276589d implements \SqlSemant
         public readonly string $user,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists,
     ) {
+        $this->assertMatchesPattern($user, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['USER'], 'The user must be a complete USER lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ifExists), 'The ifExists must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class AlterUserCommandWithAlterUserIfExists_3276589d implements \SqlSemant
         $writer->append('ALTER');
         $writer->append($this->user);
         $this->ifExists->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new user, preserving every other field.
+     */
+    public function withUser(string $user): self
+    {
+        return new self($user, $this->ifExists);
+    }
+
+    /**
+     * Returns a copy with a new ifExists, preserving every other field.
+     */
+    public function withIfExists(\SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists): self
+    {
+        return new self($this->user, $ifExists);
     }
 }

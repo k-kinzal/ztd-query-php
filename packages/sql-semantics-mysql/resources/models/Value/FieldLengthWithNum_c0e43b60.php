@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldLengthWithNum_c0e43b60 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldLengthWithNum_c0e43b60 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FieldLengthWithNum_c0e43b60 implements \SqlSemantics\Statement\Model\MySql\Role\FieldLengthForm, \SqlSemantics\Statement\Model\MySql\Role\FloatOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptFieldLengthForm, \SqlSemantics\Statement\Model\MySql\Role\StandardFloatOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $value,
     ) {
+        $this->assertMatchesPattern($value, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['NUM'], 'The value must be a complete NUM lexical spelling.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class FieldLengthWithNum_c0e43b60 implements \SqlSemantics\Statement\Model
         $writer->append('(');
         $writer->append($this->value);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new value, preserving every other field.
+     */
+    public function withValue(string $value): self
+    {
+        return new self($value);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\KeyUpdateWithOnUpdateKeyAction_7313c7fe $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\KeyUpdateWithOnUpdateKeyAction_7313c7fe $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class KeyUpdateWithOnUpdateKeyAction_7313c7fe implements \SqlSemantics\Statement\Model\PostgreSql\Role\KeyActionsForm, \SqlSemantics\Statement\Model\PostgreSql\Role\KeyUpdateForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\KeyActionForm $keyAction,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($keyAction), 'The keyAction must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class KeyUpdateWithOnUpdateKeyAction_7313c7fe implements \SqlSemantics\Sta
         $writer->append('ON');
         $writer->append('UPDATE');
         $this->keyAction->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new keyAction, preserving every other field.
+     */
+    public function withKeyAction(\SqlSemantics\Statement\Model\PostgreSql\Role\KeyActionForm $keyAction): self
+    {
+        return new self($keyAction);
     }
 }

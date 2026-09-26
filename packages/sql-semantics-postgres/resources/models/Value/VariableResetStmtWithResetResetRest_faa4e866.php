@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\VariableResetStmtWithResetResetRest_faa4e866 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\VariableResetStmtWithResetResetRest_faa4e866 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class VariableResetStmtWithResetResetRest_faa4e866 implements \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionSetResetClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SetResetClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\VariableResetStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterfuncOptListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CommonFuncOptItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CreatefuncOptItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CreatefuncOptListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptCreatefuncOptListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class VariableResetStmtWithResetResetRest_faa4e866 implements \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionSetResetClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SetResetClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\VariableResetStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterfuncOptListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CommonFuncOptItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CreatefuncOptItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CreatefuncOptListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptCreatefuncOptListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ResetRestForm $resetRest,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($resetRest), 'The resetRest must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class VariableResetStmtWithResetResetRest_faa4e866 implements \SqlSemantic
     {
         $writer->append('RESET');
         $this->resetRest->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new resetRest, preserving every other field.
+     */
+    public function withResetRest(\SqlSemantics\Statement\Model\PostgreSql\Role\ResetRestForm $resetRest): self
+    {
+        return new self($resetRest);
     }
 }

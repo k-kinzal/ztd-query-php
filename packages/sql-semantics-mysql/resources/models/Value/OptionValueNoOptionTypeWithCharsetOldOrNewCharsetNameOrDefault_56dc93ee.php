@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptionValueNoOptionTypeWithCharsetOldOrNewCharsetNameOrDefault_56dc93ee $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptionValueNoOptionTypeWithCharsetOldOrNewCharsetNameOrDefault_56dc93ee $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptionValueNoOptionTypeWithCharsetOldOrNewCharsetNameOrDefault_56dc93ee implements \SqlSemantics\Statement\Model\MySql\Role\OptionValueForm, \SqlSemantics\Statement\Model\MySql\Role\OptionValueListForm, \SqlSemantics\Statement\Model\MySql\Role\OptionValueNoOptionTypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptionValueNoOptionTypeWithCharsetOldOrNewCharsetNameOrDefault_56dc9
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharsetForm $charset,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OldOrNewCharsetNameOrDefaultForm $oldOrNewCharsetNameOrDefault,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($charset), 'The charset must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($oldOrNewCharsetNameOrDefault), 'The oldOrNewCharsetNameOrDefault must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class OptionValueNoOptionTypeWithCharsetOldOrNewCharsetNameOrDefault_56dc9
     {
         $this->charset->write($writer);
         $this->oldOrNewCharsetNameOrDefault->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new charset, preserving every other field.
+     */
+    public function withCharset(\SqlSemantics\Statement\Model\MySql\Role\CharsetForm $charset): self
+    {
+        return new self($charset, $this->oldOrNewCharsetNameOrDefault);
+    }
+
+    /**
+     * Returns a copy with a new oldOrNewCharsetNameOrDefault, preserving every other field.
+     */
+    public function withOldOrNewCharsetNameOrDefault(\SqlSemantics\Statement\Model\MySql\Role\OldOrNewCharsetNameOrDefaultForm $oldOrNewCharsetNameOrDefault): self
+    {
+        return new self($this->charset, $oldOrNewCharsetNameOrDefault);
     }
 }

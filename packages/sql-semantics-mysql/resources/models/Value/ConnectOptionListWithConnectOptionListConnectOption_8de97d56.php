@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ConnectOptionListWithConnectOptionListConnectOption_8de97d56 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ConnectOptionListWithConnectOptionListConnectOption_8de97d56 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ConnectOptionListWithConnectOptionListConnectOption_8de97d56 implements \SqlSemantics\Statement\Model\MySql\Role\ConnectOptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ConnectOptionListWithConnectOptionListConnectOption_8de97d56 impleme
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ConnectOptionListForm $connectOptionList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ConnectOptionForm $connectOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($connectOptionList), 'The connectOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($connectOption), 'The connectOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class ConnectOptionListWithConnectOptionListConnectOption_8de97d56 impleme
     {
         $this->connectOptionList->write($writer);
         $this->connectOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new connectOptionList, preserving every other field.
+     */
+    public function withConnectOptionList(\SqlSemantics\Statement\Model\MySql\Role\ConnectOptionListForm $connectOptionList): self
+    {
+        return new self($connectOptionList, $this->connectOption);
+    }
+
+    /**
+     * Returns a copy with a new connectOption, preserving every other field.
+     */
+    public function withConnectOption(\SqlSemantics\Statement\Model\MySql\Role\ConnectOptionForm $connectOption): self
+    {
+        return new self($this->connectOptionList, $connectOption);
     }
 }

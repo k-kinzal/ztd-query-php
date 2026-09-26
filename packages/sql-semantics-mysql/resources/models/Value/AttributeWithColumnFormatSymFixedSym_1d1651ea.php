@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AttributeWithColumnFormatSymFixedSym_1d1651ea $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AttributeWithColumnFormatSymFixedSym_1d1651ea $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AttributeWithColumnFormatSymFixedSym_1d1651ea implements \SqlSemantics\Statement\Model\MySql\Role\AttributeForm, \SqlSemantics\Statement\Model\MySql\Role\OptAttributeForm, \SqlSemantics\Statement\Model\MySql\Role\OptAttributeListForm

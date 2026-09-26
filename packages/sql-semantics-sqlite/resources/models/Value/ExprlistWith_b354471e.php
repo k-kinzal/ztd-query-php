@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprlistWith_b354471e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprlistWith_b354471e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ExprlistWith_b354471e implements \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WsLevelFlagsWithWsLevelFlagDescWsLevelFlagReverse_c49be2d5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WsLevelFlagsWithWsLevelFlagDescWsLevelFlagReverse_c49be2d5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WsLevelFlagsWithWsLevelFlagDescWsLevelFlagReverse_c49be2d5 implements \SqlSemantics\Statement\Model\MySql\Role\WsLevelFlagsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class WsLevelFlagsWithWsLevelFlagDescWsLevelFlagReverse_c49be2d5 implement
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WsLevelFlagDescForm $wsLevelFlagDesc,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WsLevelFlagReverseForm $wsLevelFlagReverse,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($wsLevelFlagDesc), 'The wsLevelFlagDesc must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($wsLevelFlagReverse), 'The wsLevelFlagReverse must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class WsLevelFlagsWithWsLevelFlagDescWsLevelFlagReverse_c49be2d5 implement
     {
         $this->wsLevelFlagDesc->write($writer);
         $this->wsLevelFlagReverse->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new wsLevelFlagDesc, preserving every other field.
+     */
+    public function withWsLevelFlagDesc(\SqlSemantics\Statement\Model\MySql\Role\WsLevelFlagDescForm $wsLevelFlagDesc): self
+    {
+        return new self($wsLevelFlagDesc, $this->wsLevelFlagReverse);
+    }
+
+    /**
+     * Returns a copy with a new wsLevelFlagReverse, preserving every other field.
+     */
+    public function withWsLevelFlagReverse(\SqlSemantics\Statement\Model\MySql\Role\WsLevelFlagReverseForm $wsLevelFlagReverse): self
+    {
+        return new self($this->wsLevelFlagDesc, $wsLevelFlagReverse);
     }
 }

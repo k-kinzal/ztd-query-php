@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\VacuumRelationWithQualifiedNameOptNameList_5c9dd659 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\VacuumRelationWithQualifiedNameOptNameList_5c9dd659 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class VacuumRelationWithQualifiedNameOptNameList_5c9dd659 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptVacuumRelationListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\VacuumRelationForm, \SqlSemantics\Statement\Model\PostgreSql\Role\VacuumRelationListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class VacuumRelationWithQualifiedNameOptNameList_5c9dd659 implements \SqlS
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptNameListForm $optNameList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optNameList), 'The optNameList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class VacuumRelationWithQualifiedNameOptNameList_5c9dd659 implements \SqlS
     {
         $this->qualifiedName->write($writer);
         $this->optNameList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new qualifiedName, preserving every other field.
+     */
+    public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
+    {
+        return new self($qualifiedName, $this->optNameList);
+    }
+
+    /**
+     * Returns a copy with a new optNameList, preserving every other field.
+     */
+    public function withOptNameList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptNameListForm $optNameList): self
+    {
+        return new self($this->qualifiedName, $optNameList);
     }
 }

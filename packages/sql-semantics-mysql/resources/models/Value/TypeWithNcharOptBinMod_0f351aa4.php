@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithNcharOptBinMod_0f351aa4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithNcharOptBinMod_0f351aa4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TypeWithNcharOptBinMod_0f351aa4 implements \SqlSemantics\Statement\Model\MySql\Role\TypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TypeWithNcharOptBinMod_0f351aa4 implements \SqlSemantics\Statement\M
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NcharForm $nchar,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptBinModForm $optBinMod,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($nchar), 'The nchar must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optBinMod), 'The optBinMod must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class TypeWithNcharOptBinMod_0f351aa4 implements \SqlSemantics\Statement\M
     {
         $this->nchar->write($writer);
         $this->optBinMod->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new nchar, preserving every other field.
+     */
+    public function withNchar(\SqlSemantics\Statement\Model\MySql\Role\NcharForm $nchar): self
+    {
+        return new self($nchar, $this->optBinMod);
+    }
+
+    /**
+     * Returns a copy with a new optBinMod, preserving every other field.
+     */
+    public function withOptBinMod(\SqlSemantics\Statement\Model\MySql\Role\OptBinModForm $optBinMod): self
+    {
+        return new self($this->nchar, $optBinMod);
     }
 }

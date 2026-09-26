@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateSubscriptionStmtWithCreateSubscriptionNameConnectionSconstPublicationNameListOptDefinition_e48c03e5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateSubscriptionStmtWithCreateSubscriptionNameConnectionSconstPublicationNameListOptDefinition_e48c03e5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateSubscriptionStmtWithCreateSubscriptionNameConnectionSconstPublicationNameListOptDefinition_e48c03e5 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateSubscriptionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class CreateSubscriptionStmtWithCreateSubscriptionNameConnectionSconstPublicationNameListOptDefinition_e48c03e5 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateSubscriptionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class CreateSubscriptionStmtWithCreateSubscriptionNameConnectionSconstPubl
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameListForm $nameList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptDefinitionForm $optDefinition,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($sconst), 'The sconst must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($nameList), 'The nameList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optDefinition), 'The optDefinition must be a generated immutable SQL value.');
     }
 
     /**
@@ -38,5 +44,37 @@ final class CreateSubscriptionStmtWithCreateSubscriptionNameConnectionSconstPubl
         $writer->append('PUBLICATION');
         $this->nameList->write($writer);
         $this->optDefinition->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($name, $this->sconst, $this->nameList, $this->optDefinition);
+    }
+
+    /**
+     * Returns a copy with a new sconst, preserving every other field.
+     */
+    public function withSconst(\SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst): self
+    {
+        return new self($this->name, $sconst, $this->nameList, $this->optDefinition);
+    }
+
+    /**
+     * Returns a copy with a new nameList, preserving every other field.
+     */
+    public function withNameList(\SqlSemantics\Statement\Model\PostgreSql\Role\NameListForm $nameList): self
+    {
+        return new self($this->name, $this->sconst, $nameList, $this->optDefinition);
+    }
+
+    /**
+     * Returns a copy with a new optDefinition, preserving every other field.
+     */
+    public function withOptDefinition(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDefinitionForm $optDefinition): self
+    {
+        return new self($this->name, $this->sconst, $this->nameList, $optDefinition);
     }
 }

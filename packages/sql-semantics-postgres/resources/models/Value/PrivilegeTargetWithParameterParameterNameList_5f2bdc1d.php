@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PrivilegeTargetWithParameterParameterNameList_5f2bdc1d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PrivilegeTargetWithParameterParameterNameList_5f2bdc1d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PrivilegeTargetWithParameterParameterNameList_5f2bdc1d implements \SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegeTargetForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ParameterNameListForm $parameterNameList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($parameterNameList), 'The parameterNameList must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class PrivilegeTargetWithParameterParameterNameList_5f2bdc1d implements \S
     {
         $writer->append('PARAMETER');
         $this->parameterNameList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new parameterNameList, preserving every other field.
+     */
+    public function withParameterNameList(\SqlSemantics\Statement\Model\PostgreSql\Role\ParameterNameListForm $parameterNameList): self
+    {
+        return new self($parameterNameList);
     }
 }

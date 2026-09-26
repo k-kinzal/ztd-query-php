@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncAliasClauseWithColIdTableFuncElementList_45c89410 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncAliasClauseWithColIdTableFuncElementList_45c89410 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FuncAliasClauseWithColIdTableFuncElementList_45c89410 implements \SqlSemantics\Statement\Model\PostgreSql\Role\FuncAliasClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FuncAliasClauseWithColIdTableFuncElementList_45c89410 implements \Sq
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncElementListForm $tableFuncElementList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($tableFuncElementList), 'The tableFuncElementList must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class FuncAliasClauseWithColIdTableFuncElementList_45c89410 implements \Sq
         $writer->append('(');
         $this->tableFuncElementList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($colId, $this->tableFuncElementList);
+    }
+
+    /**
+     * Returns a copy with a new tableFuncElementList, preserving every other field.
+     */
+    public function withTableFuncElementList(\SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncElementListForm $tableFuncElementList): self
+    {
+        return new self($this->colId, $tableFuncElementList);
     }
 }

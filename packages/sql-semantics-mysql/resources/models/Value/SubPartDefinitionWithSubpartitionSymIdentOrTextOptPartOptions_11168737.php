@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SubPartDefinitionWithSubpartitionSymIdentOrTextOptPartOptions_11168737 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SubPartDefinitionWithSubpartitionSymIdentOrTextOptPartOptions_11168737 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SubPartDefinitionWithSubpartitionSymIdentOrTextOptPartOptions_11168737 implements \SqlSemantics\Statement\Model\MySql\Role\SubPartDefinitionForm, \SqlSemantics\Statement\Model\MySql\Role\SubPartListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SubPartDefinitionWithSubpartitionSymIdentOrTextOptPartOptions_111687
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptPartOptionsForm $optPartOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText), 'The identOrText must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optPartOptions), 'The optPartOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SubPartDefinitionWithSubpartitionSymIdentOrTextOptPartOptions_111687
         $writer->append('SUBPARTITION');
         $this->identOrText->write($writer);
         $this->optPartOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new identOrText, preserving every other field.
+     */
+    public function withIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText): self
+    {
+        return new self($identOrText, $this->optPartOptions);
+    }
+
+    /**
+     * Returns a copy with a new optPartOptions, preserving every other field.
+     */
+    public function withOptPartOptions(\SqlSemantics\Statement\Model\MySql\Role\OptPartOptionsForm $optPartOptions): self
+    {
+        return new self($this->identOrText, $optPartOptions);
     }
 }

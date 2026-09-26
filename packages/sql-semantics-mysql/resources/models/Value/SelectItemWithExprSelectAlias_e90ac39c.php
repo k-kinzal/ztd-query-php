@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectItemWithExprSelectAlias_e90ac39c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectItemWithExprSelectAlias_e90ac39c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SelectItemWithExprSelectAlias_e90ac39c implements \SqlSemantics\Statement\Model\MySql\Role\SelectItemForm, \SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SelectItemWithExprSelectAlias_e90ac39c implements \SqlSemantics\Stat
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectAliasForm $selectAlias,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectAlias), 'The selectAlias must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class SelectItemWithExprSelectAlias_e90ac39c implements \SqlSemantics\Stat
     {
         $this->expr->write($writer);
         $this->selectAlias->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
+    {
+        return new self($expr, $this->selectAlias);
+    }
+
+    /**
+     * Returns a copy with a new selectAlias, preserving every other field.
+     */
+    public function withSelectAlias(\SqlSemantics\Statement\Model\MySql\Role\SelectAliasForm $selectAlias): self
+    {
+        return new self($this->expr, $selectAlias);
     }
 }

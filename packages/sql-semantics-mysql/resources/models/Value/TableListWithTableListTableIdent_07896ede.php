@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableListWithTableListTableIdent_07896ede $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableListWithTableListTableIdent_07896ede $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableListWithTableListTableIdent_07896ede implements \SqlSemantics\Statement\Model\MySql\Role\OptTableListForm, \SqlSemantics\Statement\Model\MySql\Role\TableListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TableListWithTableListTableIdent_07896ede implements \SqlSemantics\S
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableListForm $tableList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableList), 'The tableList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TableListWithTableListTableIdent_07896ede implements \SqlSemantics\S
         $this->tableList->write($writer);
         $writer->append(',');
         $this->tableIdent->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableList, preserving every other field.
+     */
+    public function withTableList(\SqlSemantics\Statement\Model\MySql\Role\TableListForm $tableList): self
+    {
+        return new self($tableList, $this->tableIdent);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($this->tableList, $tableIdent);
     }
 }

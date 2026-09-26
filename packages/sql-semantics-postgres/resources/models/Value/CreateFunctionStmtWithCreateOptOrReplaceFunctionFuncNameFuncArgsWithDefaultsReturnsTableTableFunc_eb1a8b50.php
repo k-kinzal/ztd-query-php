@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateFunctionStmtWithCreateOptOrReplaceFunctionFuncNameFuncArgsWithDefaultsReturnsTableTableFunc_eb1a8b50 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateFunctionStmtWithCreateOptOrReplaceFunctionFuncNameFuncArgsWithDefaultsReturnsTableTableFunc_eb1a8b50 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateFunctionStmtWithCreateOptOrReplaceFunctionFuncNameFuncArgsWithDefaultsReturnsTableTableFunc_eb1a8b50 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateFunctionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class CreateFunctionStmtWithCreateOptOrReplaceFunctionFuncNameFuncArgsWithDefaultsReturnsTableTableFunc_eb1a8b50 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateFunctionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -25,6 +27,12 @@ final class CreateFunctionStmtWithCreateOptOrReplaceFunctionFuncNameFuncArgsWith
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptCreatefuncOptListForm $optCreatefuncOptList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptRoutineBodyForm $optRoutineBody,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optOrReplace), 'The optOrReplace must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcName), 'The funcName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcArgsWithDefaults), 'The funcArgsWithDefaults must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($tableFuncColumnList), 'The tableFuncColumnList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optCreatefuncOptList), 'The optCreatefuncOptList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optRoutineBody), 'The optRoutineBody must be a generated immutable SQL value.');
     }
 
     /**
@@ -44,5 +52,53 @@ final class CreateFunctionStmtWithCreateOptOrReplaceFunctionFuncNameFuncArgsWith
         $writer->append(')');
         $this->optCreatefuncOptList->write($writer);
         $this->optRoutineBody->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optOrReplace, preserving every other field.
+     */
+    public function withOptOrReplace(\SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm $optOrReplace): self
+    {
+        return new self($optOrReplace, $this->funcName, $this->funcArgsWithDefaults, $this->tableFuncColumnList, $this->optCreatefuncOptList, $this->optRoutineBody);
+    }
+
+    /**
+     * Returns a copy with a new funcName, preserving every other field.
+     */
+    public function withFuncName(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm $funcName): self
+    {
+        return new self($this->optOrReplace, $funcName, $this->funcArgsWithDefaults, $this->tableFuncColumnList, $this->optCreatefuncOptList, $this->optRoutineBody);
+    }
+
+    /**
+     * Returns a copy with a new funcArgsWithDefaults, preserving every other field.
+     */
+    public function withFuncArgsWithDefaults(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsWithDefaultsForm $funcArgsWithDefaults): self
+    {
+        return new self($this->optOrReplace, $this->funcName, $funcArgsWithDefaults, $this->tableFuncColumnList, $this->optCreatefuncOptList, $this->optRoutineBody);
+    }
+
+    /**
+     * Returns a copy with a new tableFuncColumnList, preserving every other field.
+     */
+    public function withTableFuncColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncColumnListForm $tableFuncColumnList): self
+    {
+        return new self($this->optOrReplace, $this->funcName, $this->funcArgsWithDefaults, $tableFuncColumnList, $this->optCreatefuncOptList, $this->optRoutineBody);
+    }
+
+    /**
+     * Returns a copy with a new optCreatefuncOptList, preserving every other field.
+     */
+    public function withOptCreatefuncOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptCreatefuncOptListForm $optCreatefuncOptList): self
+    {
+        return new self($this->optOrReplace, $this->funcName, $this->funcArgsWithDefaults, $this->tableFuncColumnList, $optCreatefuncOptList, $this->optRoutineBody);
+    }
+
+    /**
+     * Returns a copy with a new optRoutineBody, preserving every other field.
+     */
+    public function withOptRoutineBody(\SqlSemantics\Statement\Model\PostgreSql\Role\OptRoutineBodyForm $optRoutineBody): self
+    {
+        return new self($this->optOrReplace, $this->funcName, $this->funcArgsWithDefaults, $this->tableFuncColumnList, $this->optCreatefuncOptList, $optRoutineBody);
     }
 }

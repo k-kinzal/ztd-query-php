@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonAggregateFuncWithJsonObjectaggJsonNameAndValueJsonObjectConstructorNullClauseOptJsonKeyUniqu_10d60da5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonAggregateFuncWithJsonObjectaggJsonNameAndValueJsonObjectConstructorNullClauseOptJsonKeyUniqu_10d60da5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JsonAggregateFuncWithJsonObjectaggJsonNameAndValueJsonObjectConstructorNullClauseOptJsonKeyUniqu_10d60da5 implements \SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprWindowlessForm, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonAggregateFuncForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class JsonAggregateFuncWithJsonObjectaggJsonNameAndValueJsonObjectConstruc
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonKeyUniquenessConstraintOptForm $jsonKeyUniquenessConstraintOpt,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonReturningClauseOptForm $jsonReturningClauseOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonNameAndValue), 'The jsonNameAndValue must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonObjectConstructorNullClauseOpt), 'The jsonObjectConstructorNullClauseOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonKeyUniquenessConstraintOpt), 'The jsonKeyUniquenessConstraintOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonReturningClauseOpt), 'The jsonReturningClauseOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -37,5 +43,37 @@ final class JsonAggregateFuncWithJsonObjectaggJsonNameAndValueJsonObjectConstruc
         $this->jsonKeyUniquenessConstraintOpt->write($writer);
         $this->jsonReturningClauseOpt->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new jsonNameAndValue, preserving every other field.
+     */
+    public function withJsonNameAndValue(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonNameAndValueForm $jsonNameAndValue): self
+    {
+        return new self($jsonNameAndValue, $this->jsonObjectConstructorNullClauseOpt, $this->jsonKeyUniquenessConstraintOpt, $this->jsonReturningClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new jsonObjectConstructorNullClauseOpt, preserving every other field.
+     */
+    public function withJsonObjectConstructorNullClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonObjectConstructorNullClauseOptForm $jsonObjectConstructorNullClauseOpt): self
+    {
+        return new self($this->jsonNameAndValue, $jsonObjectConstructorNullClauseOpt, $this->jsonKeyUniquenessConstraintOpt, $this->jsonReturningClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new jsonKeyUniquenessConstraintOpt, preserving every other field.
+     */
+    public function withJsonKeyUniquenessConstraintOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonKeyUniquenessConstraintOptForm $jsonKeyUniquenessConstraintOpt): self
+    {
+        return new self($this->jsonNameAndValue, $this->jsonObjectConstructorNullClauseOpt, $jsonKeyUniquenessConstraintOpt, $this->jsonReturningClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new jsonReturningClauseOpt, preserving every other field.
+     */
+    public function withJsonReturningClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonReturningClauseOptForm $jsonReturningClauseOpt): self
+    {
+        return new self($this->jsonNameAndValue, $this->jsonObjectConstructorNullClauseOpt, $this->jsonKeyUniquenessConstraintOpt, $jsonReturningClauseOpt);
     }
 }

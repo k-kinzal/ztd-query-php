@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DerivedTableListWithDerivedTableListEscTableRef_34aabb4e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DerivedTableListWithDerivedTableListEscTableRef_34aabb4e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DerivedTableListWithDerivedTableListEscTableRef_34aabb4e implements \SqlSemantics\Statement\Model\MySql\Role\DerivedTableListForm, \SqlSemantics\Statement\Model\MySql\Role\FromTablesForm, \SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm, \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class DerivedTableListWithDerivedTableListEscTableRef_34aabb4e implements 
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DerivedTableListForm $derivedTableList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EscTableRefForm $escTableRef,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($derivedTableList), 'The derivedTableList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($escTableRef), 'The escTableRef must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class DerivedTableListWithDerivedTableListEscTableRef_34aabb4e implements 
         $this->derivedTableList->write($writer);
         $writer->append(',');
         $this->escTableRef->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new derivedTableList, preserving every other field.
+     */
+    public function withDerivedTableList(\SqlSemantics\Statement\Model\MySql\Role\DerivedTableListForm $derivedTableList): self
+    {
+        return new self($derivedTableList, $this->escTableRef);
+    }
+
+    /**
+     * Returns a copy with a new escTableRef, preserving every other field.
+     */
+    public function withEscTableRef(\SqlSemantics\Statement\Model\MySql\Role\EscTableRefForm $escTableRef): self
+    {
+        return new self($this->derivedTableList, $escTableRef);
     }
 }

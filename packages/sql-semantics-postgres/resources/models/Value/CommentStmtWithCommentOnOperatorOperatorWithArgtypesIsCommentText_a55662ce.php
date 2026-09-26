@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CommentStmtWithCommentOnOperatorOperatorWithArgtypesIsCommentText_a55662ce $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CommentStmtWithCommentOnOperatorOperatorWithArgtypesIsCommentText_a55662ce $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CommentStmtWithCommentOnOperatorOperatorWithArgtypesIsCommentText_a55662ce implements \SqlSemantics\Statement\Model\PostgreSql\Role\CommentStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class CommentStmtWithCommentOnOperatorOperatorWithArgtypesIsCommentText_a55662ce implements \SqlSemantics\Statement\Model\PostgreSql\Role\CommentStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CommentStmtWithCommentOnOperatorOperatorWithArgtypesIsCommentText_a5
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorWithArgtypesForm $operatorWithArgtypes,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CommentTextForm $commentText,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($operatorWithArgtypes), 'The operatorWithArgtypes must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($commentText), 'The commentText must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +38,21 @@ final class CommentStmtWithCommentOnOperatorOperatorWithArgtypesIsCommentText_a5
         $this->operatorWithArgtypes->write($writer);
         $writer->append('IS');
         $this->commentText->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new operatorWithArgtypes, preserving every other field.
+     */
+    public function withOperatorWithArgtypes(\SqlSemantics\Statement\Model\PostgreSql\Role\OperatorWithArgtypesForm $operatorWithArgtypes): self
+    {
+        return new self($operatorWithArgtypes, $this->commentText);
+    }
+
+    /**
+     * Returns a copy with a new commentText, preserving every other field.
+     */
+    public function withCommentText(\SqlSemantics\Statement\Model\PostgreSql\Role\CommentTextForm $commentText): self
+    {
+        return new self($this->operatorWithArgtypes, $commentText);
     }
 }

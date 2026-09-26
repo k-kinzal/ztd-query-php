@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SignedIconstWithIconst_19070243 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SignedIconstWithIconst_19070243 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SignedIconstWithIconst_19070243 implements \SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyForm, \SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SignedIconstForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\DefArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SetStatisticsValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\VarListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\VarValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ZoneValueForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($iconst), 'The iconst must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class SignedIconstWithIconst_19070243 implements \SqlSemantics\Statement\M
     {
         $writer->append('+');
         $this->iconst->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new iconst, preserving every other field.
+     */
+    public function withIconst(\SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst): self
+    {
+        return new self($iconst);
     }
 }

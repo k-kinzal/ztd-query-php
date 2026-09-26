@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TableRefWithLateralPFuncTableFuncAliasClause_aad119d7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TableRefWithLateralPFuncTableFuncAliasClause_aad119d7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableRefWithLateralPFuncTableFuncAliasClause_aad119d7 implements \SqlSemantics\Statement\Model\PostgreSql\Role\FromListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TableRefWithLateralPFuncTableFuncAliasClause_aad119d7 implements \Sq
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncTableForm $funcTable,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncAliasClauseForm $funcAliasClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcTable), 'The funcTable must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcAliasClause), 'The funcAliasClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TableRefWithLateralPFuncTableFuncAliasClause_aad119d7 implements \Sq
         $writer->append('LATERAL');
         $this->funcTable->write($writer);
         $this->funcAliasClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new funcTable, preserving every other field.
+     */
+    public function withFuncTable(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncTableForm $funcTable): self
+    {
+        return new self($funcTable, $this->funcAliasClause);
+    }
+
+    /**
+     * Returns a copy with a new funcAliasClause, preserving every other field.
+     */
+    public function withFuncAliasClause(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncAliasClauseForm $funcAliasClause): self
+    {
+        return new self($this->funcTable, $funcAliasClause);
     }
 }

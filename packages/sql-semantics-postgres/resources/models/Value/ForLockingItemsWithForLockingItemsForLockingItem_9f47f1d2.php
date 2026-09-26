@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ForLockingItemsWithForLockingItemsForLockingItem_9f47f1d2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ForLockingItemsWithForLockingItemsForLockingItem_9f47f1d2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ForLockingItemsWithForLockingItemsForLockingItem_9f47f1d2 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ForLockingClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ForLockingItemsForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptForLockingClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ForLockingItemsWithForLockingItemsForLockingItem_9f47f1d2 implements
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ForLockingItemsForm $forLockingItems,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ForLockingItemForm $forLockingItem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($forLockingItems), 'The forLockingItems must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($forLockingItem), 'The forLockingItem must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class ForLockingItemsWithForLockingItemsForLockingItem_9f47f1d2 implements
     {
         $this->forLockingItems->write($writer);
         $this->forLockingItem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new forLockingItems, preserving every other field.
+     */
+    public function withForLockingItems(\SqlSemantics\Statement\Model\PostgreSql\Role\ForLockingItemsForm $forLockingItems): self
+    {
+        return new self($forLockingItems, $this->forLockingItem);
+    }
+
+    /**
+     * Returns a copy with a new forLockingItem, preserving every other field.
+     */
+    public function withForLockingItem(\SqlSemantics\Statement\Model\PostgreSql\Role\ForLockingItemForm $forLockingItem): self
+    {
+        return new self($this->forLockingItems, $forLockingItem);
     }
 }

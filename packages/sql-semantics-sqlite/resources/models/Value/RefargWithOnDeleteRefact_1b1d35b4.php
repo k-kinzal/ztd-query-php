@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\RefargWithOnDeleteRefact_1b1d35b4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\RefargWithOnDeleteRefact_1b1d35b4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RefargWithOnDeleteRefact_1b1d35b4 implements \SqlSemantics\Statement\Model\Sqlite\Role\RefargForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\RefactForm $refact,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($refact), 'The refact must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class RefargWithOnDeleteRefact_1b1d35b4 implements \SqlSemantics\Statement
         $writer->append('ON');
         $writer->append('DELETE');
         $this->refact->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new refact, preserving every other field.
+     */
+    public function withRefact(\SqlSemantics\Statement\Model\Sqlite\Role\RefactForm $refact): self
+    {
+        return new self($refact);
     }
 }

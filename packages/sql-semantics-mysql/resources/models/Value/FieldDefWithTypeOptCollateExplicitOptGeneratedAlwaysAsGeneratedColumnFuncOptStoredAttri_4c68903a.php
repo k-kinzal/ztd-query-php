@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldDefWithTypeOptCollateExplicitOptGeneratedAlwaysAsGeneratedColumnFuncOptStoredAttri_4c68903a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldDefWithTypeOptCollateExplicitOptGeneratedAlwaysAsGeneratedColumnFuncOptStoredAttri_4c68903a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FieldDefWithTypeOptCollateExplicitOptGeneratedAlwaysAsGeneratedColumnFuncOptStoredAttri_4c68903a implements \SqlSemantics\Statement\Model\MySql\Role\FieldDefForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -25,6 +27,12 @@ final class FieldDefWithTypeOptCollateExplicitOptGeneratedAlwaysAsGeneratedColum
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptStoredAttributeForm $optStoredAttribute,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptGcolAttributeListForm $optGcolAttributeList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($type), 'The type must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCollateExplicit), 'The optCollateExplicit must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optGeneratedAlways), 'The optGeneratedAlways must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($generatedColumnFunc), 'The generatedColumnFunc must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optStoredAttribute), 'The optStoredAttribute must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optGcolAttributeList), 'The optGcolAttributeList must be a generated immutable SQL value.');
     }
 
     /**
@@ -41,5 +49,53 @@ final class FieldDefWithTypeOptCollateExplicitOptGeneratedAlwaysAsGeneratedColum
         $writer->append(')');
         $this->optStoredAttribute->write($writer);
         $this->optGcolAttributeList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new type, preserving every other field.
+     */
+    public function withType(\SqlSemantics\Statement\Model\MySql\Role\TypeForm $type): self
+    {
+        return new self($type, $this->optCollateExplicit, $this->optGeneratedAlways, $this->generatedColumnFunc, $this->optStoredAttribute, $this->optGcolAttributeList);
+    }
+
+    /**
+     * Returns a copy with a new optCollateExplicit, preserving every other field.
+     */
+    public function withOptCollateExplicit(\SqlSemantics\Statement\Model\MySql\Role\OptCollateExplicitForm $optCollateExplicit): self
+    {
+        return new self($this->type, $optCollateExplicit, $this->optGeneratedAlways, $this->generatedColumnFunc, $this->optStoredAttribute, $this->optGcolAttributeList);
+    }
+
+    /**
+     * Returns a copy with a new optGeneratedAlways, preserving every other field.
+     */
+    public function withOptGeneratedAlways(\SqlSemantics\Statement\Model\MySql\Role\OptGeneratedAlwaysForm $optGeneratedAlways): self
+    {
+        return new self($this->type, $this->optCollateExplicit, $optGeneratedAlways, $this->generatedColumnFunc, $this->optStoredAttribute, $this->optGcolAttributeList);
+    }
+
+    /**
+     * Returns a copy with a new generatedColumnFunc, preserving every other field.
+     */
+    public function withGeneratedColumnFunc(\SqlSemantics\Statement\Model\MySql\Role\GeneratedColumnFuncForm $generatedColumnFunc): self
+    {
+        return new self($this->type, $this->optCollateExplicit, $this->optGeneratedAlways, $generatedColumnFunc, $this->optStoredAttribute, $this->optGcolAttributeList);
+    }
+
+    /**
+     * Returns a copy with a new optStoredAttribute, preserving every other field.
+     */
+    public function withOptStoredAttribute(\SqlSemantics\Statement\Model\MySql\Role\OptStoredAttributeForm $optStoredAttribute): self
+    {
+        return new self($this->type, $this->optCollateExplicit, $this->optGeneratedAlways, $this->generatedColumnFunc, $optStoredAttribute, $this->optGcolAttributeList);
+    }
+
+    /**
+     * Returns a copy with a new optGcolAttributeList, preserving every other field.
+     */
+    public function withOptGcolAttributeList(\SqlSemantics\Statement\Model\MySql\Role\OptGcolAttributeListForm $optGcolAttributeList): self
+    {
+        return new self($this->type, $this->optCollateExplicit, $this->optGeneratedAlways, $this->generatedColumnFunc, $this->optStoredAttribute, $optGcolAttributeList);
     }
 }

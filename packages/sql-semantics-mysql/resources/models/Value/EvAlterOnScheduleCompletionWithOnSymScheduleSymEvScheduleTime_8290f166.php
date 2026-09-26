@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\EvAlterOnScheduleCompletionWithOnSymScheduleSymEvScheduleTime_8290f166 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\EvAlterOnScheduleCompletionWithOnSymScheduleSymEvScheduleTime_8290f166 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class EvAlterOnScheduleCompletionWithOnSymScheduleSymEvScheduleTime_8290f166 implements \SqlSemantics\Statement\Model\MySql\Role\EvAlterOnScheduleCompletionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EvScheduleTimeForm $evScheduleTime,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($evScheduleTime), 'The evScheduleTime must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class EvAlterOnScheduleCompletionWithOnSymScheduleSymEvScheduleTime_8290f1
         $writer->append('ON');
         $writer->append('SCHEDULE');
         $this->evScheduleTime->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new evScheduleTime, preserving every other field.
+     */
+    public function withEvScheduleTime(\SqlSemantics\Statement\Model\MySql\Role\EvScheduleTimeForm $evScheduleTime): self
+    {
+        return new self($evScheduleTime);
     }
 }

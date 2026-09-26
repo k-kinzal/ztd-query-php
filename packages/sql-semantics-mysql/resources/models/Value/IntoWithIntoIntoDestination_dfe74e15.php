@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IntoWithIntoIntoDestination_dfe74e15 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IntoWithIntoIntoDestination_dfe74e15 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IntoWithIntoIntoDestination_dfe74e15 implements \SqlSemantics\Statement\Model\MySql\Role\IntoForm, \SqlSemantics\Statement\Model\MySql\Role\OptIntoForm, \SqlSemantics\Statement\Model\MySql\Role\SelectIntoForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IntoDestinationForm $intoDestination,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($intoDestination), 'The intoDestination must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class IntoWithIntoIntoDestination_dfe74e15 implements \SqlSemantics\Statem
     {
         $writer->append('INTO');
         $this->intoDestination->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new intoDestination, preserving every other field.
+     */
+    public function withIntoDestination(\SqlSemantics\Statement\Model\MySql\Role\IntoDestinationForm $intoDestination): self
+    {
+        return new self($intoDestination);
     }
 }

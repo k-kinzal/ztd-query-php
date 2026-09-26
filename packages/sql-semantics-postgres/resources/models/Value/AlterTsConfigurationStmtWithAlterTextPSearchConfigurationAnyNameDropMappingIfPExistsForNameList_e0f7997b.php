@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTsConfigurationStmtWithAlterTextPSearchConfigurationAnyNameDropMappingIfPExistsForNameList_e0f7997b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTsConfigurationStmtWithAlterTextPSearchConfigurationAnyNameDropMappingIfPExistsForNameList_e0f7997b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterTsConfigurationStmtWithAlterTextPSearchConfigurationAnyNameDropMappingIfPExistsForNameList_e0f7997b implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTsConfigurationStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterTsConfigurationStmtWithAlterTextPSearchConfigurationAnyNameDropMappingIfPExistsForNameList_e0f7997b implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTsConfigurationStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterTsConfigurationStmtWithAlterTextPSearchConfigurationAnyNameDrop
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameListForm $nameList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($nameList), 'The nameList must be a generated immutable SQL value.');
     }
 
     /**
@@ -39,5 +43,21 @@ final class AlterTsConfigurationStmtWithAlterTextPSearchConfigurationAnyNameDrop
         $writer->append('EXISTS');
         $writer->append('FOR');
         $this->nameList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new anyName, preserving every other field.
+     */
+    public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
+    {
+        return new self($anyName, $this->nameList);
+    }
+
+    /**
+     * Returns a copy with a new nameList, preserving every other field.
+     */
+    public function withNameList(\SqlSemantics\Statement\Model\PostgreSql\Role\NameListForm $nameList): self
+    {
+        return new self($this->anyName, $nameList);
     }
 }

@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Choice\DropOptionChoice_f35e6712 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Choice\DropOptionChoice_f35e6712 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum DropOptionChoice_f35e6712: string implements \SqlSemantics\Statement\Model\PostgreSql\Role\DropOptionForm, \SqlSemantics\Statement\Model\PostgreSql\Role\DropOptionListForm

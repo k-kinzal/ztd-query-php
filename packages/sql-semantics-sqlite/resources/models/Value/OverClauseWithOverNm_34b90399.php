@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\OverClauseWithOverNm_34b90399 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\OverClauseWithOverNm_34b90399 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OverClauseWithOverNm_34b90399 implements \SqlSemantics\Statement\Model\Sqlite\Role\FilterOverForm, \SqlSemantics\Statement\Model\Sqlite\Role\OverClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OverClauseWithOverNm_34b90399 implements \SqlSemantics\Statement\Mod
     {
         $writer->append('OVER');
         $this->nm->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new nm, preserving every other field.
+     */
+    public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
+    {
+        return new self($nm);
     }
 }

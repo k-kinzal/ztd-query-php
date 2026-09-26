@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptConfExprWithIndexParamsWhereClause_bba257d2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptConfExprWithIndexParamsWhereClause_bba257d2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptConfExprWithIndexParamsWhereClause_bba257d2 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptConfExprForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptConfExprWithIndexParamsWhereClause_bba257d2 implements \SqlSemant
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IndexParamsForm $indexParams,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\WhereClauseForm $where,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($indexParams), 'The indexParams must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($where), 'The where must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class OptConfExprWithIndexParamsWhereClause_bba257d2 implements \SqlSemant
         $this->indexParams->write($writer);
         $writer->append(')');
         $this->where->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new indexParams, preserving every other field.
+     */
+    public function withIndexParams(\SqlSemantics\Statement\Model\PostgreSql\Role\IndexParamsForm $indexParams): self
+    {
+        return new self($indexParams, $this->where);
+    }
+
+    /**
+     * Returns a copy with a new where, preserving every other field.
+     */
+    public function withWhere(\SqlSemantics\Statement\Model\PostgreSql\Role\WhereClauseForm $where): self
+    {
+        return new self($this->indexParams, $where);
     }
 }

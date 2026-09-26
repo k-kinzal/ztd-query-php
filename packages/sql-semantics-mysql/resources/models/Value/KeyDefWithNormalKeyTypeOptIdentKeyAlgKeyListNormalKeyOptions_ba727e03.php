@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\KeyDefWithNormalKeyTypeOptIdentKeyAlgKeyListNormalKeyOptions_ba727e03 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\KeyDefWithNormalKeyTypeOptIdentKeyAlgKeyListNormalKeyOptions_ba727e03 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class KeyDefWithNormalKeyTypeOptIdentKeyAlgKeyListNormalKeyOptions_ba727e03 implements \SqlSemantics\Statement\Model\MySql\Role\CreateFieldListForm, \SqlSemantics\Statement\Model\MySql\Role\FieldListForm, \SqlSemantics\Statement\Model\MySql\Role\FieldListItemForm, \SqlSemantics\Statement\Model\MySql\Role\KeyDefForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class KeyDefWithNormalKeyTypeOptIdentKeyAlgKeyListNormalKeyOptions_ba727e0
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyListForm $keyList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptionsForm $normalKeyOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($normalKeyType), 'The normalKeyType must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIdent), 'The optIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyAlg), 'The keyAlg must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyList), 'The keyList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($normalKeyOptions), 'The normalKeyOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -38,5 +45,45 @@ final class KeyDefWithNormalKeyTypeOptIdentKeyAlgKeyListNormalKeyOptions_ba727e0
         $this->keyList->write($writer);
         $writer->append(')');
         $this->normalKeyOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new normalKeyType, preserving every other field.
+     */
+    public function withNormalKeyType(\SqlSemantics\Statement\Model\MySql\Role\NormalKeyTypeForm $normalKeyType): self
+    {
+        return new self($normalKeyType, $this->optIdent, $this->keyAlg, $this->keyList, $this->normalKeyOptions);
+    }
+
+    /**
+     * Returns a copy with a new optIdent, preserving every other field.
+     */
+    public function withOptIdent(\SqlSemantics\Statement\Model\MySql\Role\OptIdentForm $optIdent): self
+    {
+        return new self($this->normalKeyType, $optIdent, $this->keyAlg, $this->keyList, $this->normalKeyOptions);
+    }
+
+    /**
+     * Returns a copy with a new keyAlg, preserving every other field.
+     */
+    public function withKeyAlg(\SqlSemantics\Statement\Model\MySql\Role\KeyAlgForm $keyAlg): self
+    {
+        return new self($this->normalKeyType, $this->optIdent, $keyAlg, $this->keyList, $this->normalKeyOptions);
+    }
+
+    /**
+     * Returns a copy with a new keyList, preserving every other field.
+     */
+    public function withKeyList(\SqlSemantics\Statement\Model\MySql\Role\KeyListForm $keyList): self
+    {
+        return new self($this->normalKeyType, $this->optIdent, $this->keyAlg, $keyList, $this->normalKeyOptions);
+    }
+
+    /**
+     * Returns a copy with a new normalKeyOptions, preserving every other field.
+     */
+    public function withNormalKeyOptions(\SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptionsForm $normalKeyOptions): self
+    {
+        return new self($this->normalKeyType, $this->optIdent, $this->keyAlg, $this->keyList, $normalKeyOptions);
     }
 }

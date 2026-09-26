@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableCmdWithAlterConstraintNameConstraintAttributeSpec_b7c8a6d2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableCmdWithAlterConstraintNameConstraintAttributeSpec_b7c8a6d2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterTableCmdWithAlterConstraintNameConstraintAttributeSpec_b7c8a6d2 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterTableCmdWithAlterConstraintNameConstraintAttributeSpec_b7c8a6d2
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeSpecForm $constraintAttributeSpec,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($constraintAttributeSpec), 'The constraintAttributeSpec must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class AlterTableCmdWithAlterConstraintNameConstraintAttributeSpec_b7c8a6d2
         $writer->append('CONSTRAINT');
         $this->name->write($writer);
         $this->constraintAttributeSpec->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($name, $this->constraintAttributeSpec);
+    }
+
+    /**
+     * Returns a copy with a new constraintAttributeSpec, preserving every other field.
+     */
+    public function withConstraintAttributeSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeSpecForm $constraintAttributeSpec): self
+    {
+        return new self($this->name, $constraintAttributeSpec);
     }
 }

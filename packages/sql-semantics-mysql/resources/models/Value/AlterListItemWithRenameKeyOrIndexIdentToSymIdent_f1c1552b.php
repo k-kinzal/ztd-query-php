@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterListItemWithRenameKeyOrIndexIdentToSymIdent_f1c1552b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterListItemWithRenameKeyOrIndexIdentToSymIdent_f1c1552b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterListItemWithRenameKeyOrIndexIdentToSymIdent_f1c1552b implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListItemForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterTableActionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterListItemWithRenameKeyOrIndexIdentToSymIdent_f1c1552b implements
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyOrIndex), 'The keyOrIndex must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident2), 'The ident2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class AlterListItemWithRenameKeyOrIndexIdentToSymIdent_f1c1552b implements
         $this->ident->write($writer);
         $writer->append('TO');
         $this->ident2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new keyOrIndex, preserving every other field.
+     */
+    public function withKeyOrIndex(\SqlSemantics\Statement\Model\MySql\Role\KeyOrIndexForm $keyOrIndex): self
+    {
+        return new self($keyOrIndex, $this->ident, $this->ident2);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($this->keyOrIndex, $ident, $this->ident2);
+    }
+
+    /**
+     * Returns a copy with a new ident2, preserving every other field.
+     */
+    public function withIdent2(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident2): self
+    {
+        return new self($this->keyOrIndex, $this->ident, $ident2);
     }
 }

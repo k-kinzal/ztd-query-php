@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QuerySpecificationWithSelectSymSelectPart2DerivedTableExpression_cbf94a59 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QuerySpecificationWithSelectSymSelectPart2DerivedTableExpression_cbf94a59 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class QuerySpecificationWithSelectSymSelectPart2DerivedTableExpression_cbf94a59 implements \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm, \SqlSemantics\Statement\Model\MySql\Role\QueryPrimaryForm, \SqlSemantics\Statement\Model\MySql\Role\QuerySpecificationForm, \SqlSemantics\Statement\Model\MySql\Role\SubselectForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class QuerySpecificationWithSelectSymSelectPart2DerivedTableExpression_cbf
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectPart2DerivedForm $selectPart2Derived,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableExpressionForm $tableExpression,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectPart2Derived), 'The selectPart2Derived must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableExpression), 'The tableExpression must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class QuerySpecificationWithSelectSymSelectPart2DerivedTableExpression_cbf
         $writer->append('SELECT');
         $this->selectPart2Derived->write($writer);
         $this->tableExpression->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new selectPart2Derived, preserving every other field.
+     */
+    public function withSelectPart2Derived(\SqlSemantics\Statement\Model\MySql\Role\SelectPart2DerivedForm $selectPart2Derived): self
+    {
+        return new self($selectPart2Derived, $this->tableExpression);
+    }
+
+    /**
+     * Returns a copy with a new tableExpression, preserving every other field.
+     */
+    public function withTableExpression(\SqlSemantics\Statement\Model\MySql\Role\TableExpressionForm $tableExpression): self
+    {
+        return new self($this->selectPart2Derived, $tableExpression);
     }
 }

@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\KeyUsageElementWithPrimarySym_a0d40477 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\KeyUsageElementWithPrimarySym_a0d40477 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class KeyUsageElementWithPrimarySym_a0d40477 implements \SqlSemantics\Statement\Model\MySql\Role\KeyUsageElementForm, \SqlSemantics\Statement\Model\MySql\Role\KeyUsageListForm, \SqlSemantics\Statement\Model\MySql\Role\OptKeyUsageListForm

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CopyGenericOptElemWithColLabelCopyGenericOptArg_a3afff1c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CopyGenericOptElemWithColLabelCopyGenericOptArg_a3afff1c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CopyGenericOptElemWithColLabelCopyGenericOptArg_a3afff1c implements \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CopyGenericOptElemWithColLabelCopyGenericOptArg_a3afff1c implements 
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm $colLabel,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgForm $copyGenericOptArg,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colLabel), 'The colLabel must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($copyGenericOptArg), 'The copyGenericOptArg must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class CopyGenericOptElemWithColLabelCopyGenericOptArg_a3afff1c implements 
     {
         $this->colLabel->write($writer);
         $this->copyGenericOptArg->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new colLabel, preserving every other field.
+     */
+    public function withColLabel(\SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm $colLabel): self
+    {
+        return new self($colLabel, $this->copyGenericOptArg);
+    }
+
+    /**
+     * Returns a copy with a new copyGenericOptArg, preserving every other field.
+     */
+    public function withCopyGenericOptArg(\SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgForm $copyGenericOptArg): self
+    {
+        return new self($this->colLabel, $copyGenericOptArg);
     }
 }

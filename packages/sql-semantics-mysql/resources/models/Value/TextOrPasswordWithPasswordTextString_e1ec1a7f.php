@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TextOrPasswordWithPasswordTextString_e1ec1a7f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TextOrPasswordWithPasswordTextString_e1ec1a7f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TextOrPasswordWithPasswordTextString_e1ec1a7f implements \SqlSemantics\Statement\Model\MySql\Role\TextOrPasswordForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $value,
     ) {
+        $this->assertMatchesPattern($value, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['TEXT_STRING'], 'The value must be a complete TEXT_STRING lexical spelling.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class TextOrPasswordWithPasswordTextString_e1ec1a7f implements \SqlSemanti
         $writer->append('(');
         $writer->append($this->value);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new value, preserving every other field.
+     */
+    public function withValue(string $value): self
+    {
+        return new self($value);
     }
 }

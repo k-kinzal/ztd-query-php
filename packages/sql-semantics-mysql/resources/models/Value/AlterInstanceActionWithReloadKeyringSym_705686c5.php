@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterInstanceActionWithReloadKeyringSym_705686c5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterInstanceActionWithReloadKeyringSym_705686c5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterInstanceActionWithReloadKeyringSym_705686c5 implements \SqlSemantics\Statement\Model\MySql\Role\AlterInstanceActionForm

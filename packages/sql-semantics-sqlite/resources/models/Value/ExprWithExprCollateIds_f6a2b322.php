@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithExprCollateIds_f6a2b322 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithExprCollateIds_f6a2b322 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ExprWithExprCollateIds_f6a2b322 implements \SqlSemantics\Statement\Model\Sqlite\Role\CaseOperandForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm, \SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,9 @@ final class ExprWithExprCollateIds_f6a2b322 implements \SqlSemantics\Statement\M
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
         public readonly string $ids,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 11,));
+        $this->assertMatchesPattern($ids, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['ids'], 'The ids must be a complete ids lexical spelling.');
     }
 
     /**
@@ -31,5 +36,21 @@ final class ExprWithExprCollateIds_f6a2b322 implements \SqlSemantics\Statement\M
         $this->expr->write($writer);
         $writer->append('COLLATE');
         $writer->append($this->ids);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
+    {
+        return new self($expr, $this->ids);
+    }
+
+    /**
+     * Returns a copy with a new ids, preserving every other field.
+     */
+    public function withIds(string $ids): self
+    {
+        return new self($this->expr, $ids);
     }
 }

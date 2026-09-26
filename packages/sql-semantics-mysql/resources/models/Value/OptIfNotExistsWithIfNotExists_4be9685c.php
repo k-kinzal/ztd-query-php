@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptIfNotExistsWithIfNotExists_4be9685c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptIfNotExistsWithIfNotExists_4be9685c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptIfNotExistsWithIfNotExists_4be9685c implements \SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NotForm $not,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($not), 'The not must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OptIfNotExistsWithIfNotExists_4be9685c implements \SqlSemantics\Stat
         $writer->append('IF');
         $this->not->write($writer);
         $writer->append('EXISTS');
+    }
+
+    /**
+     * Returns a copy with a new not, preserving every other field.
+     */
+    public function withNot(\SqlSemantics\Statement\Model\MySql\Role\NotForm $not): self
+    {
+        return new self($not);
     }
 }

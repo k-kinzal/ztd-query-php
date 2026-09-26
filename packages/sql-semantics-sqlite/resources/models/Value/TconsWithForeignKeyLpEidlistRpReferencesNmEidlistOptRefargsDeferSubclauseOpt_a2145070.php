@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TconsWithForeignKeyLpEidlistRpReferencesNmEidlistOptRefargsDeferSubclauseOpt_a2145070 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TconsWithForeignKeyLpEidlistRpReferencesNmEidlistOptRefargsDeferSubclauseOpt_a2145070 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TconsWithForeignKeyLpEidlistRpReferencesNmEidlistOptRefargsDeferSubclauseOpt_a2145070 implements \SqlSemantics\Statement\Model\Sqlite\Role\ConslistForm, \SqlSemantics\Statement\Model\Sqlite\Role\TconsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class TconsWithForeignKeyLpEidlistRpReferencesNmEidlistOptRefargsDeferSubc
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\RefargsForm $refargs,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\DeferSubclauseOptForm $deferSubclauseOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($eidlist), 'The eidlist must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($eidlistOpt), 'The eidlistOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($refargs), 'The refargs must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($deferSubclauseOpt), 'The deferSubclauseOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -41,5 +48,45 @@ final class TconsWithForeignKeyLpEidlistRpReferencesNmEidlistOptRefargsDeferSubc
         $this->eidlistOpt->write($writer);
         $this->refargs->write($writer);
         $this->deferSubclauseOpt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new eidlist, preserving every other field.
+     */
+    public function withEidlist(\SqlSemantics\Statement\Model\Sqlite\Role\EidlistForm $eidlist): self
+    {
+        return new self($eidlist, $this->nm, $this->eidlistOpt, $this->refargs, $this->deferSubclauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new nm, preserving every other field.
+     */
+    public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
+    {
+        return new self($this->eidlist, $nm, $this->eidlistOpt, $this->refargs, $this->deferSubclauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new eidlistOpt, preserving every other field.
+     */
+    public function withEidlistOpt(\SqlSemantics\Statement\Model\Sqlite\Role\EidlistOptForm $eidlistOpt): self
+    {
+        return new self($this->eidlist, $this->nm, $eidlistOpt, $this->refargs, $this->deferSubclauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new refargs, preserving every other field.
+     */
+    public function withRefargs(\SqlSemantics\Statement\Model\Sqlite\Role\RefargsForm $refargs): self
+    {
+        return new self($this->eidlist, $this->nm, $this->eidlistOpt, $refargs, $this->deferSubclauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new deferSubclauseOpt, preserving every other field.
+     */
+    public function withDeferSubclauseOpt(\SqlSemantics\Statement\Model\Sqlite\Role\DeferSubclauseOptForm $deferSubclauseOpt): self
+    {
+        return new self($this->eidlist, $this->nm, $this->eidlistOpt, $this->refargs, $deferSubclauseOpt);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptSetSignalInformationWithSetSymSignalInformationItemList_62c925e3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptSetSignalInformationWithSetSymSignalInformationItemList_62c925e3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptSetSignalInformationWithSetSymSignalInformationItemList_62c925e3 implements \SqlSemantics\Statement\Model\MySql\Role\OptSetSignalInformationForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SignalInformationItemListForm $signalInformationItemList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($signalInformationItemList), 'The signalInformationItemList must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OptSetSignalInformationWithSetSymSignalInformationItemList_62c925e3 
     {
         $writer->append('SET');
         $this->signalInformationItemList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new signalInformationItemList, preserving every other field.
+     */
+    public function withSignalInformationItemList(\SqlSemantics\Statement\Model\MySql\Role\SignalInformationItemListForm $signalInformationItemList): self
+    {
+        return new self($signalInformationItemList);
     }
 }

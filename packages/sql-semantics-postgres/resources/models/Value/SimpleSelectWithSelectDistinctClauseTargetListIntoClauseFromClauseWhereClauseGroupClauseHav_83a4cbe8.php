@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SimpleSelectWithSelectDistinctClauseTargetListIntoClauseFromClauseWhereClauseGroupClauseHav_83a4cbe8 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SimpleSelectWithSelectDistinctClauseTargetListIntoClauseFromClauseWhereClauseGroupClauseHav_83a4cbe8 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class SimpleSelectWithSelectDistinctClauseTargetListIntoClauseFromClauseWhereClauseGroupClauseHav_83a4cbe8 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\PreparableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionMultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtOrEmptyForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\InsertRestForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectNoParensForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SimpleSelectForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class SimpleSelectWithSelectDistinctClauseTargetListIntoClauseFromClauseWhereClauseGroupClauseHav_83a4cbe8 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\PreparableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionMultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtOrEmptyForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\InsertRestForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectNoParensForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SimpleSelectForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -27,6 +29,14 @@ final class SimpleSelectWithSelectDistinctClauseTargetListIntoClauseFromClauseWh
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\HavingClauseForm $having,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\WindowClauseForm $windowClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($distinct), 'The distinct must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($projections), 'The projections must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($intoClause), 'The intoClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($from), 'The from must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($where), 'The where must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($groupBy), 'The groupBy must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($having), 'The having must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($windowClause), 'The windowClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -43,5 +53,69 @@ final class SimpleSelectWithSelectDistinctClauseTargetListIntoClauseFromClauseWh
         $this->groupBy->write($writer);
         $this->having->write($writer);
         $this->windowClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new distinct, preserving every other field.
+     */
+    public function withDistinct(\SqlSemantics\Statement\Model\PostgreSql\Role\DistinctClauseForm $distinct): self
+    {
+        return new self($distinct, $this->projections, $this->intoClause, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause);
+    }
+
+    /**
+     * Returns a copy with a new projections, preserving every other field.
+     */
+    public function withProjections(\SqlSemantics\Statement\Model\PostgreSql\Role\TargetListForm $projections): self
+    {
+        return new self($this->distinct, $projections, $this->intoClause, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause);
+    }
+
+    /**
+     * Returns a copy with a new intoClause, preserving every other field.
+     */
+    public function withIntoClause(\SqlSemantics\Statement\Model\PostgreSql\Role\IntoClauseForm $intoClause): self
+    {
+        return new self($this->distinct, $this->projections, $intoClause, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause);
+    }
+
+    /**
+     * Returns a copy with a new from, preserving every other field.
+     */
+    public function withFrom(\SqlSemantics\Statement\Model\PostgreSql\Role\FromClauseForm $from): self
+    {
+        return new self($this->distinct, $this->projections, $this->intoClause, $from, $this->where, $this->groupBy, $this->having, $this->windowClause);
+    }
+
+    /**
+     * Returns a copy with a new where, preserving every other field.
+     */
+    public function withWhere(\SqlSemantics\Statement\Model\PostgreSql\Role\WhereClauseForm $where): self
+    {
+        return new self($this->distinct, $this->projections, $this->intoClause, $this->from, $where, $this->groupBy, $this->having, $this->windowClause);
+    }
+
+    /**
+     * Returns a copy with a new groupBy, preserving every other field.
+     */
+    public function withGroupBy(\SqlSemantics\Statement\Model\PostgreSql\Role\GroupClauseForm $groupBy): self
+    {
+        return new self($this->distinct, $this->projections, $this->intoClause, $this->from, $this->where, $groupBy, $this->having, $this->windowClause);
+    }
+
+    /**
+     * Returns a copy with a new having, preserving every other field.
+     */
+    public function withHaving(\SqlSemantics\Statement\Model\PostgreSql\Role\HavingClauseForm $having): self
+    {
+        return new self($this->distinct, $this->projections, $this->intoClause, $this->from, $this->where, $this->groupBy, $having, $this->windowClause);
+    }
+
+    /**
+     * Returns a copy with a new windowClause, preserving every other field.
+     */
+    public function withWindowClause(\SqlSemantics\Statement\Model\PostgreSql\Role\WindowClauseForm $windowClause): self
+    {
+        return new self($this->distinct, $this->projections, $this->intoClause, $this->from, $this->where, $this->groupBy, $this->having, $windowClause);
     }
 }

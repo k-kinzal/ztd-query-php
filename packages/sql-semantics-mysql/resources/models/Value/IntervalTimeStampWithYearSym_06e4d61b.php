@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IntervalTimeStampWithYearSym_06e4d61b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IntervalTimeStampWithYearSym_06e4d61b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IntervalTimeStampWithYearSym_06e4d61b implements \SqlSemantics\Statement\Model\MySql\Role\IntervalForm, \SqlSemantics\Statement\Model\MySql\Role\IntervalTimeStampForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $yearSym,
     ) {
+        $this->assertMatchesPattern($yearSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['YEAR_SYM'], 'The yearSym must be a complete YEAR_SYM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class IntervalTimeStampWithYearSym_06e4d61b implements \SqlSemantics\State
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->yearSym);
+    }
+
+    /**
+     * Returns a copy with a new yearSym, preserving every other field.
+     */
+    public function withYearSym(string $yearSym): self
+    {
+        return new self($yearSym);
     }
 }

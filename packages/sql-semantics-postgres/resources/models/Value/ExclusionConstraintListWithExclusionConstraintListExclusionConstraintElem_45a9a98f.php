@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ExclusionConstraintListWithExclusionConstraintListExclusionConstraintElem_45a9a98f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ExclusionConstraintListWithExclusionConstraintListExclusionConstraintElem_45a9a98f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ExclusionConstraintListWithExclusionConstraintListExclusionConstraintElem_45a9a98f implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExclusionConstraintListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ExclusionConstraintListWithExclusionConstraintListExclusionConstrain
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ExclusionConstraintListForm $exclusionConstraintList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ExclusionConstraintElemForm $exclusionConstraintElem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($exclusionConstraintList), 'The exclusionConstraintList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($exclusionConstraintElem), 'The exclusionConstraintElem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ExclusionConstraintListWithExclusionConstraintListExclusionConstrain
         $this->exclusionConstraintList->write($writer);
         $writer->append(',');
         $this->exclusionConstraintElem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new exclusionConstraintList, preserving every other field.
+     */
+    public function withExclusionConstraintList(\SqlSemantics\Statement\Model\PostgreSql\Role\ExclusionConstraintListForm $exclusionConstraintList): self
+    {
+        return new self($exclusionConstraintList, $this->exclusionConstraintElem);
+    }
+
+    /**
+     * Returns a copy with a new exclusionConstraintElem, preserving every other field.
+     */
+    public function withExclusionConstraintElem(\SqlSemantics\Statement\Model\PostgreSql\Role\ExclusionConstraintElemForm $exclusionConstraintElem): self
+    {
+        return new self($this->exclusionConstraintList, $exclusionConstraintElem);
     }
 }

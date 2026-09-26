@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithChangeReplicationSourceSslCrlpathEqTextStringSysNonewline_69bbfa50 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithChangeReplicationSourceSslCrlpathEqTextStringSysNonewline_69bbfa50 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SourceDefWithChangeReplicationSourceSslCrlpathEqTextStringSysNonewline_69bbfa50 implements \SqlSemantics\Statement\Model\MySql\Role\SourceDefForm, \SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SourceDefWithChangeReplicationSourceSslCrlpathEqTextStringSysNonewli
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceSslCrlpathForm $changeReplicationSourceSslCrlpath,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($changeReplicationSourceSslCrlpath), 'The changeReplicationSourceSslCrlpath must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSysNonewline), 'The textStringSysNonewline must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SourceDefWithChangeReplicationSourceSslCrlpathEqTextStringSysNonewli
         $this->changeReplicationSourceSslCrlpath->write($writer);
         $writer->append('=');
         $this->textStringSysNonewline->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new changeReplicationSourceSslCrlpath, preserving every other field.
+     */
+    public function withChangeReplicationSourceSslCrlpath(\SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceSslCrlpathForm $changeReplicationSourceSslCrlpath): self
+    {
+        return new self($changeReplicationSourceSslCrlpath, $this->textStringSysNonewline);
+    }
+
+    /**
+     * Returns a copy with a new textStringSysNonewline, preserving every other field.
+     */
+    public function withTextStringSysNonewline(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline): self
+    {
+        return new self($this->changeReplicationSourceSslCrlpath, $textStringSysNonewline);
     }
 }

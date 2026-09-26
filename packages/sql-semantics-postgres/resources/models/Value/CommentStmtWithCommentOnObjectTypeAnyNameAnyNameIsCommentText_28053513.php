@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CommentStmtWithCommentOnObjectTypeAnyNameAnyNameIsCommentText_28053513 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CommentStmtWithCommentOnObjectTypeAnyNameAnyNameIsCommentText_28053513 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CommentStmtWithCommentOnObjectTypeAnyNameAnyNameIsCommentText_28053513 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CommentStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class CommentStmtWithCommentOnObjectTypeAnyNameAnyNameIsCommentText_28053513 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CommentStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CommentStmtWithCommentOnObjectTypeAnyNameAnyNameIsCommentText_280535
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CommentTextForm $commentText,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($objectTypeAnyName), 'The objectTypeAnyName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($commentText), 'The commentText must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +40,29 @@ final class CommentStmtWithCommentOnObjectTypeAnyNameAnyNameIsCommentText_280535
         $this->anyName->write($writer);
         $writer->append('IS');
         $this->commentText->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new objectTypeAnyName, preserving every other field.
+     */
+    public function withObjectTypeAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\ObjectTypeAnyNameForm $objectTypeAnyName): self
+    {
+        return new self($objectTypeAnyName, $this->anyName, $this->commentText);
+    }
+
+    /**
+     * Returns a copy with a new anyName, preserving every other field.
+     */
+    public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
+    {
+        return new self($this->objectTypeAnyName, $anyName, $this->commentText);
+    }
+
+    /**
+     * Returns a copy with a new commentText, preserving every other field.
+     */
+    public function withCommentText(\SqlSemantics\Statement\Model\PostgreSql\Role\CommentTextForm $commentText): self
+    {
+        return new self($this->objectTypeAnyName, $this->anyName, $commentText);
     }
 }

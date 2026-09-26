@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ReferencesWithReferencesTableIdentOptRefListOptMatchClauseOptOnUpdateDelete_1f679bc6 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ReferencesWithReferencesTableIdentOptRefListOptMatchClauseOptOnUpdateDelete_1f679bc6 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ReferencesWithReferencesTableIdentOptRefListOptMatchClauseOptOnUpdateDelete_1f679bc6 implements \SqlSemantics\Statement\Model\MySql\Role\OptReferencesForm, \SqlSemantics\Statement\Model\MySql\Role\ReferencesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class ReferencesWithReferencesTableIdentOptRefListOptMatchClauseOptOnUpdat
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptMatchClauseForm $optMatchClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptOnUpdateDeleteForm $optOnUpdateDelete,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optRefList), 'The optRefList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optMatchClause), 'The optMatchClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optOnUpdateDelete), 'The optOnUpdateDelete must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +41,37 @@ final class ReferencesWithReferencesTableIdentOptRefListOptMatchClauseOptOnUpdat
         $this->optRefList->write($writer);
         $this->optMatchClause->write($writer);
         $this->optOnUpdateDelete->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($tableIdent, $this->optRefList, $this->optMatchClause, $this->optOnUpdateDelete);
+    }
+
+    /**
+     * Returns a copy with a new optRefList, preserving every other field.
+     */
+    public function withOptRefList(\SqlSemantics\Statement\Model\MySql\Role\OptRefListForm $optRefList): self
+    {
+        return new self($this->tableIdent, $optRefList, $this->optMatchClause, $this->optOnUpdateDelete);
+    }
+
+    /**
+     * Returns a copy with a new optMatchClause, preserving every other field.
+     */
+    public function withOptMatchClause(\SqlSemantics\Statement\Model\MySql\Role\OptMatchClauseForm $optMatchClause): self
+    {
+        return new self($this->tableIdent, $this->optRefList, $optMatchClause, $this->optOnUpdateDelete);
+    }
+
+    /**
+     * Returns a copy with a new optOnUpdateDelete, preserving every other field.
+     */
+    public function withOptOnUpdateDelete(\SqlSemantics\Statement\Model\MySql\Role\OptOnUpdateDeleteForm $optOnUpdateDelete): self
+    {
+        return new self($this->tableIdent, $this->optRefList, $this->optMatchClause, $optOnUpdateDelete);
     }
 }

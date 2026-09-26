@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TconsWithUniqueLpSortlistRpOnconf_1bb4e282 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TconsWithUniqueLpSortlistRpOnconf_1bb4e282 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TconsWithUniqueLpSortlistRpOnconf_1bb4e282 implements \SqlSemantics\Statement\Model\Sqlite\Role\ConslistForm, \SqlSemantics\Statement\Model\Sqlite\Role\TconsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TconsWithUniqueLpSortlistRpOnconf_1bb4e282 implements \SqlSemantics\
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm $sortlist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\OnconfForm $onconf,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($sortlist), 'The sortlist must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($onconf), 'The onconf must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class TconsWithUniqueLpSortlistRpOnconf_1bb4e282 implements \SqlSemantics\
         $this->sortlist->write($writer);
         $writer->append(')');
         $this->onconf->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new sortlist, preserving every other field.
+     */
+    public function withSortlist(\SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm $sortlist): self
+    {
+        return new self($sortlist, $this->onconf);
+    }
+
+    /**
+     * Returns a copy with a new onconf, preserving every other field.
+     */
+    public function withOnconf(\SqlSemantics\Statement\Model\Sqlite\Role\OnconfForm $onconf): self
+    {
+        return new self($this->sortlist, $onconf);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WindowFrameStartWithParamMarkerPrecedingSym_4773f42b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WindowFrameStartWithParamMarkerPrecedingSym_4773f42b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WindowFrameStartWithParamMarkerPrecedingSym_4773f42b implements \SqlSemantics\Statement\Model\MySql\Role\WindowFrameBoundForm, \SqlSemantics\Statement\Model\MySql\Role\WindowFrameExtentForm, \SqlSemantics\Statement\Model\MySql\Role\WindowFrameStartForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ParamMarkerForm $paramMarker,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($paramMarker), 'The paramMarker must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class WindowFrameStartWithParamMarkerPrecedingSym_4773f42b implements \Sql
     {
         $this->paramMarker->write($writer);
         $writer->append('PRECEDING');
+    }
+
+    /**
+     * Returns a copy with a new paramMarker, preserving every other field.
+     */
+    public function withParamMarker(\SqlSemantics\Statement\Model\MySql\Role\ParamMarkerForm $paramMarker): self
+    {
+        return new self($paramMarker);
     }
 }

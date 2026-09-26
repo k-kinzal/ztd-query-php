@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FulltextKeyOptsWithFulltextKeyOptsFulltextKeyOpt_06840da3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FulltextKeyOptsWithFulltextKeyOptsFulltextKeyOpt_06840da3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FulltextKeyOptsWithFulltextKeyOptsFulltextKeyOpt_06840da3 implements \SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FulltextKeyOptsWithFulltextKeyOptsFulltextKeyOpt_06840da3 implements
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptsForm $fulltextKeyOpts,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptForm $fulltextKeyOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fulltextKeyOpts), 'The fulltextKeyOpts must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fulltextKeyOpt), 'The fulltextKeyOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class FulltextKeyOptsWithFulltextKeyOptsFulltextKeyOpt_06840da3 implements
     {
         $this->fulltextKeyOpts->write($writer);
         $this->fulltextKeyOpt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new fulltextKeyOpts, preserving every other field.
+     */
+    public function withFulltextKeyOpts(\SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptsForm $fulltextKeyOpts): self
+    {
+        return new self($fulltextKeyOpts, $this->fulltextKeyOpt);
+    }
+
+    /**
+     * Returns a copy with a new fulltextKeyOpt, preserving every other field.
+     */
+    public function withFulltextKeyOpt(\SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptForm $fulltextKeyOpt): self
+    {
+        return new self($this->fulltextKeyOpts, $fulltextKeyOpt);
     }
 }

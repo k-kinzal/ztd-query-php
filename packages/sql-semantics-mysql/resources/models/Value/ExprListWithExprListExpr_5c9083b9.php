@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ExprListWithExprListExpr_5c9083b9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ExprListWithExprListExpr_5c9083b9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ExprListWithExprListExpr_5c9083b9 implements \SqlSemantics\Statement\Model\MySql\Role\ExprListForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ExprListWithExprListExpr_5c9083b9 implements \SqlSemantics\Statement
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprListForm $exprList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($exprList), 'The exprList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ExprListWithExprListExpr_5c9083b9 implements \SqlSemantics\Statement
         $this->exprList->write($writer);
         $writer->append(',');
         $this->expr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new exprList, preserving every other field.
+     */
+    public function withExprList(\SqlSemantics\Statement\Model\MySql\Role\ExprListForm $exprList): self
+    {
+        return new self($exprList, $this->expr);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
+    {
+        return new self($this->exprList, $expr);
     }
 }

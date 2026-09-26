@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\ChangeReplicationSourceAutoPositionChoice_05740ac9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\ChangeReplicationSourceAutoPositionChoice_05740ac9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum ChangeReplicationSourceAutoPositionChoice_05740ac9: string implements \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceAutoPositionForm

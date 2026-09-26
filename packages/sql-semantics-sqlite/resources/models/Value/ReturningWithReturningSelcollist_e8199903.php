@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ReturningWithReturningSelcollist_e8199903 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ReturningWithReturningSelcollist_e8199903 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ReturningWithReturningSelcollist_e8199903 implements \SqlSemantics\Statement\Model\Sqlite\Role\ReturningForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SelcollistForm $projections,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($projections), 'The projections must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class ReturningWithReturningSelcollist_e8199903 implements \SqlSemantics\S
     {
         $writer->append('RETURNING');
         $this->projections->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new projections, preserving every other field.
+     */
+    public function withProjections(\SqlSemantics\Statement\Model\Sqlite\Role\SelcollistForm $projections): self
+    {
+        return new self($projections);
     }
 }

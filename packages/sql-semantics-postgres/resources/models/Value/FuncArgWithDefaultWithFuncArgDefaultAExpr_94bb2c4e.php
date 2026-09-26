@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncArgWithDefaultWithFuncArgDefaultAExpr_94bb2c4e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncArgWithDefaultWithFuncArgDefaultAExpr_94bb2c4e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FuncArgWithDefaultWithFuncArgDefaultAExpr_94bb2c4e implements \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgWithDefaultForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsWithDefaultsListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FuncArgWithDefaultWithFuncArgDefaultAExpr_94bb2c4e implements \SqlSe
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgForm $funcArg,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcArg), 'The funcArg must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class FuncArgWithDefaultWithFuncArgDefaultAExpr_94bb2c4e implements \SqlSe
         $this->funcArg->write($writer);
         $writer->append('DEFAULT');
         $this->aExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new funcArg, preserving every other field.
+     */
+    public function withFuncArg(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgForm $funcArg): self
+    {
+        return new self($funcArg, $this->aExpr);
+    }
+
+    /**
+     * Returns a copy with a new aExpr, preserving every other field.
+     */
+    public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
+    {
+        return new self($this->funcArg, $aExpr);
     }
 }

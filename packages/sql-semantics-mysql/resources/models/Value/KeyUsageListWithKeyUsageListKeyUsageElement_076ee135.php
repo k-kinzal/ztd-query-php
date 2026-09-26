@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\KeyUsageListWithKeyUsageListKeyUsageElement_076ee135 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\KeyUsageListWithKeyUsageListKeyUsageElement_076ee135 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class KeyUsageListWithKeyUsageListKeyUsageElement_076ee135 implements \SqlSemantics\Statement\Model\MySql\Role\KeyUsageListForm, \SqlSemantics\Statement\Model\MySql\Role\OptKeyUsageListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class KeyUsageListWithKeyUsageListKeyUsageElement_076ee135 implements \Sql
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyUsageListForm $keyUsageList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyUsageElementForm $keyUsageElement,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyUsageList), 'The keyUsageList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyUsageElement), 'The keyUsageElement must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class KeyUsageListWithKeyUsageListKeyUsageElement_076ee135 implements \Sql
         $this->keyUsageList->write($writer);
         $writer->append(',');
         $this->keyUsageElement->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new keyUsageList, preserving every other field.
+     */
+    public function withKeyUsageList(\SqlSemantics\Statement\Model\MySql\Role\KeyUsageListForm $keyUsageList): self
+    {
+        return new self($keyUsageList, $this->keyUsageElement);
+    }
+
+    /**
+     * Returns a copy with a new keyUsageElement, preserving every other field.
+     */
+    public function withKeyUsageElement(\SqlSemantics\Statement\Model\MySql\Role\KeyUsageElementForm $keyUsageElement): self
+    {
+        return new self($this->keyUsageList, $keyUsageElement);
     }
 }

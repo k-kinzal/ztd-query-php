@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Role;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Role\VariableResetStmtForm $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Role\VariableResetStmtForm $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 interface VariableResetStmtForm extends \SqlSemantics\Statement\Element

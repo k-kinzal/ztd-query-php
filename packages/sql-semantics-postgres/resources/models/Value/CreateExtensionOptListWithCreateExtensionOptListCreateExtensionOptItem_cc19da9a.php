@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateExtensionOptListWithCreateExtensionOptListCreateExtensionOptItem_cc19da9a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateExtensionOptListWithCreateExtensionOptListCreateExtensionOptItem_cc19da9a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CreateExtensionOptListWithCreateExtensionOptListCreateExtensionOptItem_cc19da9a implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateExtensionOptListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CreateExtensionOptListWithCreateExtensionOptListCreateExtensionOptIt
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreateExtensionOptListForm $createExtensionOptList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreateExtensionOptItemForm $createExtensionOptItem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createExtensionOptList), 'The createExtensionOptList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createExtensionOptItem), 'The createExtensionOptItem must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class CreateExtensionOptListWithCreateExtensionOptListCreateExtensionOptIt
     {
         $this->createExtensionOptList->write($writer);
         $this->createExtensionOptItem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new createExtensionOptList, preserving every other field.
+     */
+    public function withCreateExtensionOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\CreateExtensionOptListForm $createExtensionOptList): self
+    {
+        return new self($createExtensionOptList, $this->createExtensionOptItem);
+    }
+
+    /**
+     * Returns a copy with a new createExtensionOptItem, preserving every other field.
+     */
+    public function withCreateExtensionOptItem(\SqlSemantics\Statement\Model\PostgreSql\Role\CreateExtensionOptItemForm $createExtensionOptItem): self
+    {
+        return new self($this->createExtensionOptList, $createExtensionOptItem);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ExclusionConstraintElemWithIndexElemWithOperatorAnyOperator_d0b88ad6 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ExclusionConstraintElemWithIndexElemWithOperatorAnyOperator_d0b88ad6 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ExclusionConstraintElemWithIndexElemWithOperatorAnyOperator_d0b88ad6 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExclusionConstraintElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ExclusionConstraintListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ExclusionConstraintElemWithIndexElemWithOperatorAnyOperator_d0b88ad6
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IndexElemForm $indexElem,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyOperatorForm $anyOperator,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($indexElem), 'The indexElem must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyOperator), 'The anyOperator must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +38,21 @@ final class ExclusionConstraintElemWithIndexElemWithOperatorAnyOperator_d0b88ad6
         $writer->append('(');
         $this->anyOperator->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new indexElem, preserving every other field.
+     */
+    public function withIndexElem(\SqlSemantics\Statement\Model\PostgreSql\Role\IndexElemForm $indexElem): self
+    {
+        return new self($indexElem, $this->anyOperator);
+    }
+
+    /**
+     * Returns a copy with a new anyOperator, preserving every other field.
+     */
+    public function withAnyOperator(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyOperatorForm $anyOperator): self
+    {
+        return new self($this->indexElem, $anyOperator);
     }
 }

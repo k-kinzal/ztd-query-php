@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\InsertRestWithInsertColumnListOverridingOverrideKindValuePSelectStmt_ad09bda0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\InsertRestWithInsertColumnListOverridingOverrideKindValuePSelectStmt_ad09bda0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class InsertRestWithInsertColumnListOverridingOverrideKindValuePSelectStmt_ad09bda0 implements \SqlSemantics\Statement\Model\PostgreSql\Role\InsertRestForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class InsertRestWithInsertColumnListOverridingOverrideKindValuePSelectStmt
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OverrideKindForm $overrideKind,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm $selectStmt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($insertColumnList), 'The insertColumnList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($overrideKind), 'The overrideKind must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($selectStmt), 'The selectStmt must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +41,29 @@ final class InsertRestWithInsertColumnListOverridingOverrideKindValuePSelectStmt
         $this->overrideKind->write($writer);
         $writer->append('VALUE');
         $this->selectStmt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new insertColumnList, preserving every other field.
+     */
+    public function withInsertColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\InsertColumnListForm $insertColumnList): self
+    {
+        return new self($insertColumnList, $this->overrideKind, $this->selectStmt);
+    }
+
+    /**
+     * Returns a copy with a new overrideKind, preserving every other field.
+     */
+    public function withOverrideKind(\SqlSemantics\Statement\Model\PostgreSql\Role\OverrideKindForm $overrideKind): self
+    {
+        return new self($this->insertColumnList, $overrideKind, $this->selectStmt);
+    }
+
+    /**
+     * Returns a copy with a new selectStmt, preserving every other field.
+     */
+    public function withSelectStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm $selectStmt): self
+    {
+        return new self($this->insertColumnList, $this->overrideKind, $selectStmt);
     }
 }

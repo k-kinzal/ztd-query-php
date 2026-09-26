@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PartitionSpecWithPartitionByColIdPartParams_fccf4441 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PartitionSpecWithPartitionByColIdPartParams_fccf4441 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PartitionSpecWithPartitionByColIdPartParams_fccf4441 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptPartitionSpecForm, \SqlSemantics\Statement\Model\PostgreSql\Role\PartitionSpecForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class PartitionSpecWithPartitionByColIdPartParams_fccf4441 implements \Sql
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PartParamsForm $partParams,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($partParams), 'The partParams must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +38,21 @@ final class PartitionSpecWithPartitionByColIdPartParams_fccf4441 implements \Sql
         $writer->append('(');
         $this->partParams->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($colId, $this->partParams);
+    }
+
+    /**
+     * Returns a copy with a new partParams, preserving every other field.
+     */
+    public function withPartParams(\SqlSemantics\Statement\Model\PostgreSql\Role\PartParamsForm $partParams): self
+    {
+        return new self($this->colId, $partParams);
     }
 }

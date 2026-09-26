@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ColumnAttributeWithColumnFormatSymColumnFormat_3c4879f2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ColumnAttributeWithColumnFormatSymColumnFormat_3c4879f2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColumnAttributeWithColumnFormatSymColumnFormat_3c4879f2 implements \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeForm, \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeListForm, \SqlSemantics\Statement\Model\MySql\Role\OptColumnAttributeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ColumnFormatForm $columnFormat,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($columnFormat), 'The columnFormat must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class ColumnAttributeWithColumnFormatSymColumnFormat_3c4879f2 implements \
     {
         $writer->append('COLUMN_FORMAT');
         $this->columnFormat->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new columnFormat, preserving every other field.
+     */
+    public function withColumnFormat(\SqlSemantics\Statement\Model\MySql\Role\ColumnFormatForm $columnFormat): self
+    {
+        return new self($columnFormat);
     }
 }

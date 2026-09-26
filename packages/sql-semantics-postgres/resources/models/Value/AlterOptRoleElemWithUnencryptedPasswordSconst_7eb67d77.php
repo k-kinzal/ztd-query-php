@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterOptRoleElemWithUnencryptedPasswordSconst_7eb67d77 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterOptRoleElemWithUnencryptedPasswordSconst_7eb67d77 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterOptRoleElemWithUnencryptedPasswordSconst_7eb67d77 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterOptRoleElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CreateOptRoleElemForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($sconst), 'The sconst must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class AlterOptRoleElemWithUnencryptedPasswordSconst_7eb67d77 implements \S
         $writer->append('UNENCRYPTED');
         $writer->append('PASSWORD');
         $this->sconst->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new sconst, preserving every other field.
+     */
+    public function withSconst(\SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst): self
+    {
+        return new self($sconst);
     }
 }

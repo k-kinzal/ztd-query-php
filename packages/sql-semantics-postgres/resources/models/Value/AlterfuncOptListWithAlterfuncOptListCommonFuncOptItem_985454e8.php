@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterfuncOptListWithAlterfuncOptListCommonFuncOptItem_985454e8 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterfuncOptListWithAlterfuncOptListCommonFuncOptItem_985454e8 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterfuncOptListWithAlterfuncOptListCommonFuncOptItem_985454e8 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterfuncOptListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterfuncOptListWithAlterfuncOptListCommonFuncOptItem_985454e8 imple
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AlterfuncOptListForm $alterfuncOptList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CommonFuncOptItemForm $commonFuncOptItem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($alterfuncOptList), 'The alterfuncOptList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($commonFuncOptItem), 'The commonFuncOptItem must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class AlterfuncOptListWithAlterfuncOptListCommonFuncOptItem_985454e8 imple
     {
         $this->alterfuncOptList->write($writer);
         $this->commonFuncOptItem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new alterfuncOptList, preserving every other field.
+     */
+    public function withAlterfuncOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\AlterfuncOptListForm $alterfuncOptList): self
+    {
+        return new self($alterfuncOptList, $this->commonFuncOptItem);
+    }
+
+    /**
+     * Returns a copy with a new commonFuncOptItem, preserving every other field.
+     */
+    public function withCommonFuncOptItem(\SqlSemantics\Statement\Model\PostgreSql\Role\CommonFuncOptItemForm $commonFuncOptItem): self
+    {
+        return new self($this->alterfuncOptList, $commonFuncOptItem);
     }
 }

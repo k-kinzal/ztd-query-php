@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptNullsOrderWithNullsLaFirstP_983eee3e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptNullsOrderWithNullsLaFirstP_983eee3e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptNullsOrderWithNullsLaFirstP_983eee3e implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptNullsOrderForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $nullsLa,
     ) {
+        $this->assertMatchesPattern($nullsLa, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['NULLS_LA'], 'The nullsLa must be a complete NULLS_LA lexical spelling.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OptNullsOrderWithNullsLaFirstP_983eee3e implements \SqlSemantics\Sta
     {
         $writer->append($this->nullsLa);
         $writer->append('FIRST');
+    }
+
+    /**
+     * Returns a copy with a new nullsLa, preserving every other field.
+     */
+    public function withNullsLa(string $nullsLa): self
+    {
+        return new self($nullsLa);
     }
 }

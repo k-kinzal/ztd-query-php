@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SimpleSelectWithTableRelationExpr_1ebd48d2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SimpleSelectWithTableRelationExpr_1ebd48d2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class SimpleSelectWithTableRelationExpr_1ebd48d2 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\PreparableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionMultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtOrEmptyForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\InsertRestForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectNoParensForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SimpleSelectForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class SimpleSelectWithTableRelationExpr_1ebd48d2 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\PreparableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionMultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtOrEmptyForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\InsertRestForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectNoParensForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SimpleSelectForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm $relationExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($relationExpr), 'The relationExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class SimpleSelectWithTableRelationExpr_1ebd48d2 implements \SqlSemantics\
     {
         $writer->append('TABLE');
         $this->relationExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new relationExpr, preserving every other field.
+     */
+    public function withRelationExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm $relationExpr): self
+    {
+        return new self($relationExpr);
     }
 }

@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WindowFrameStartWithCurrentSymRowSym_6877dda5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WindowFrameStartWithCurrentSymRowSym_6877dda5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WindowFrameStartWithCurrentSymRowSym_6877dda5 implements \SqlSemantics\Statement\Model\MySql\Role\WindowFrameBoundForm, \SqlSemantics\Statement\Model\MySql\Role\WindowFrameExtentForm, \SqlSemantics\Statement\Model\MySql\Role\WindowFrameStartForm

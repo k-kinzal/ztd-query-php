@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncArgWithParamNameFuncType_9c255b7c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncArgWithParamNameFuncType_9c255b7c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FuncArgWithParamNameFuncType_9c255b7c implements \SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgsListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgWithDefaultForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsWithDefaultsListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FuncArgWithParamNameFuncType_9c255b7c implements \SqlSemantics\State
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ParamNameForm $paramName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncTypeForm $funcType,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($paramName), 'The paramName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcType), 'The funcType must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class FuncArgWithParamNameFuncType_9c255b7c implements \SqlSemantics\State
     {
         $this->paramName->write($writer);
         $this->funcType->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new paramName, preserving every other field.
+     */
+    public function withParamName(\SqlSemantics\Statement\Model\PostgreSql\Role\ParamNameForm $paramName): self
+    {
+        return new self($paramName, $this->funcType);
+    }
+
+    /**
+     * Returns a copy with a new funcType, preserving every other field.
+     */
+    public function withFuncType(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncTypeForm $funcType): self
+    {
+        return new self($this->paramName, $funcType);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GrantUserWithUserIdentifiedSymWithIdentOrTextAsTextStringSys_03334c6f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GrantUserWithUserIdentifiedSymWithIdentOrTextAsTextStringSys_03334c6f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GrantUserWithUserIdentifiedSymWithIdentOrTextAsTextStringSys_03334c6f implements \SqlSemantics\Statement\Model\MySql\Role\GrantListForm, \SqlSemantics\Statement\Model\MySql\Role\GrantUserForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class GrantUserWithUserIdentifiedSymWithIdentOrTextAsTextStringSys_03334c6
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText), 'The identOrText must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSys), 'The textStringSys must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +40,29 @@ final class GrantUserWithUserIdentifiedSymWithIdentOrTextAsTextStringSys_03334c6
         $this->identOrText->write($writer);
         $writer->append('AS');
         $this->textStringSys->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new user, preserving every other field.
+     */
+    public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
+    {
+        return new self($user, $this->identOrText, $this->textStringSys);
+    }
+
+    /**
+     * Returns a copy with a new identOrText, preserving every other field.
+     */
+    public function withIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText): self
+    {
+        return new self($this->user, $identOrText, $this->textStringSys);
+    }
+
+    /**
+     * Returns a copy with a new textStringSys, preserving every other field.
+     */
+    public function withTextStringSys(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys): self
+    {
+        return new self($this->user, $this->identOrText, $textStringSys);
     }
 }

@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterExtensionOptListWith_6e8d39ca $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterExtensionOptListWith_6e8d39ca $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterExtensionOptListWith_6e8d39ca implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterExtensionOptListForm

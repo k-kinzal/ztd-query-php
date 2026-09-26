@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AExprWithAExprGreaterEqualsAExpr_7d19ac70 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AExprWithAExprGreaterEqualsAExpr_7d19ac70 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AExprWithAExprGreaterEqualsAExpr_7d19ac70 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CaseArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListOptForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTargetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectOffsetValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TrimListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,11 @@ final class AExprWithAExprGreaterEqualsAExpr_7d19ac70 implements \SqlSemantics\S
         public readonly string $greaterEquals,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($aExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 8,));
+        $this->assertMatchesPattern($greaterEquals, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['GREATER_EQUALS'], 'The greaterEquals must be a complete GREATER_EQUALS lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr2), 'The aExpr2 must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($aExpr2, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 8,));
     }
 
     /**
@@ -32,5 +39,29 @@ final class AExprWithAExprGreaterEqualsAExpr_7d19ac70 implements \SqlSemantics\S
         $this->aExpr->write($writer);
         $writer->append($this->greaterEquals);
         $this->aExpr2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new aExpr, preserving every other field.
+     */
+    public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
+    {
+        return new self($aExpr, $this->greaterEquals, $this->aExpr2);
+    }
+
+    /**
+     * Returns a copy with a new greaterEquals, preserving every other field.
+     */
+    public function withGreaterEquals(string $greaterEquals): self
+    {
+        return new self($this->aExpr, $greaterEquals, $this->aExpr2);
+    }
+
+    /**
+     * Returns a copy with a new aExpr2, preserving every other field.
+     */
+    public function withAExpr2(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr2): self
+    {
+        return new self($this->aExpr, $this->greaterEquals, $aExpr2);
     }
 }

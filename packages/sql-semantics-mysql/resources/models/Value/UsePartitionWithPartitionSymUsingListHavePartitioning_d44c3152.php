@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\UsePartitionWithPartitionSymUsingListHavePartitioning_d44c3152 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\UsePartitionWithPartitionSymUsingListHavePartitioning_d44c3152 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class UsePartitionWithPartitionSymUsingListHavePartitioning_d44c3152 implements \SqlSemantics\Statement\Model\MySql\Role\OptUsePartitionForm, \SqlSemantics\Statement\Model\MySql\Role\UsePartitionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class UsePartitionWithPartitionSymUsingListHavePartitioning_d44c3152 imple
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UsingListForm $usingList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\HavePartitioningForm $havePartitioning,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($usingList), 'The usingList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($havePartitioning), 'The havePartitioning must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class UsePartitionWithPartitionSymUsingListHavePartitioning_d44c3152 imple
         $this->usingList->write($writer);
         $writer->append(')');
         $this->havePartitioning->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new usingList, preserving every other field.
+     */
+    public function withUsingList(\SqlSemantics\Statement\Model\MySql\Role\UsingListForm $usingList): self
+    {
+        return new self($usingList, $this->havePartitioning);
+    }
+
+    /**
+     * Returns a copy with a new havePartitioning, preserving every other field.
+     */
+    public function withHavePartitioning(\SqlSemantics\Statement\Model\MySql\Role\HavePartitioningForm $havePartitioning): self
+    {
+        return new self($this->usingList, $havePartitioning);
     }
 }

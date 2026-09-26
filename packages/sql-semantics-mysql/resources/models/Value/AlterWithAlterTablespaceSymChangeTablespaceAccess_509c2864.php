@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterWithAlterTablespaceSymChangeTablespaceAccess_509c2864 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterWithAlterTablespaceSymChangeTablespaceAccess_509c2864 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterWithAlterTablespaceSymChangeTablespaceAccess_509c2864 implements \SqlSemantics\Statement\Model\MySql\Role\AlterForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ChangeTablespaceAccessForm $changeTablespaceAccess,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($changeTablespaceAccess), 'The changeTablespaceAccess must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class AlterWithAlterTablespaceSymChangeTablespaceAccess_509c2864 implement
         $writer->append('ALTER');
         $writer->append('TABLESPACE');
         $this->changeTablespaceAccess->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new changeTablespaceAccess, preserving every other field.
+     */
+    public function withChangeTablespaceAccess(\SqlSemantics\Statement\Model\MySql\Role\ChangeTablespaceAccessForm $changeTablespaceAccess): self
+    {
+        return new self($changeTablespaceAccess);
     }
 }

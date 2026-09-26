@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TransactionStmtWithStartTransactionTransactionModeListOrEmpty_792a0e1a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TransactionStmtWithStartTransactionTransactionModeListOrEmpty_792a0e1a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class TransactionStmtWithStartTransactionTransactionModeListOrEmpty_792a0e1a implements \SqlSemantics\Statement\Model\PostgreSql\Role\TransactionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class TransactionStmtWithStartTransactionTransactionModeListOrEmpty_792a0e1a implements \SqlSemantics\Statement\Model\PostgreSql\Role\TransactionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TransactionModeListOrEmptyForm $transactionModeListOrEmpty,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($transactionModeListOrEmpty), 'The transactionModeListOrEmpty must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class TransactionStmtWithStartTransactionTransactionModeListOrEmpty_792a0e
         $writer->append('START');
         $writer->append('TRANSACTION');
         $this->transactionModeListOrEmpty->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new transactionModeListOrEmpty, preserving every other field.
+     */
+    public function withTransactionModeListOrEmpty(\SqlSemantics\Statement\Model\PostgreSql\Role\TransactionModeListOrEmptyForm $transactionModeListOrEmpty): self
+    {
+        return new self($transactionModeListOrEmpty);
     }
 }

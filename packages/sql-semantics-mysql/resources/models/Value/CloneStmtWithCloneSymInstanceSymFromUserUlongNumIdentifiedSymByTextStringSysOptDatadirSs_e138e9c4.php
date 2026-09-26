@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CloneStmtWithCloneSymInstanceSymFromUserUlongNumIdentifiedSymByTextStringSysOptDatadirSs_e138e9c4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CloneStmtWithCloneSymInstanceSymFromUserUlongNumIdentifiedSymByTextStringSysOptDatadirSs_e138e9c4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CloneStmtWithCloneSymInstanceSymFromUserUlongNumIdentifiedSymByTextStringSysOptDatadirSs_e138e9c4 implements \SqlSemantics\Statement\Model\MySql\Role\CloneStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class CloneStmtWithCloneSymInstanceSymFromUserUlongNumIdentifiedSymByTextStringSysOptDatadirSs_e138e9c4 implements \SqlSemantics\Statement\Model\MySql\Role\CloneStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class CloneStmtWithCloneSymInstanceSymFromUserUlongNumIdentifiedSymByTextS
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptDatadirSslForm $optDatadirSsl,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ulongNum), 'The ulongNum must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSys), 'The textStringSys must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDatadirSsl), 'The optDatadirSsl must be a generated immutable SQL value.');
     }
 
     /**
@@ -40,5 +46,37 @@ final class CloneStmtWithCloneSymInstanceSymFromUserUlongNumIdentifiedSymByTextS
         $writer->append('BY');
         $this->textStringSys->write($writer);
         $this->optDatadirSsl->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new user, preserving every other field.
+     */
+    public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
+    {
+        return new self($user, $this->ulongNum, $this->textStringSys, $this->optDatadirSsl);
+    }
+
+    /**
+     * Returns a copy with a new ulongNum, preserving every other field.
+     */
+    public function withUlongNum(\SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum): self
+    {
+        return new self($this->user, $ulongNum, $this->textStringSys, $this->optDatadirSsl);
+    }
+
+    /**
+     * Returns a copy with a new textStringSys, preserving every other field.
+     */
+    public function withTextStringSys(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys): self
+    {
+        return new self($this->user, $this->ulongNum, $textStringSys, $this->optDatadirSsl);
+    }
+
+    /**
+     * Returns a copy with a new optDatadirSsl, preserving every other field.
+     */
+    public function withOptDatadirSsl(\SqlSemantics\Statement\Model\MySql\Role\OptDatadirSslForm $optDatadirSsl): self
+    {
+        return new self($this->user, $this->ulongNum, $this->textStringSys, $optDatadirSsl);
     }
 }

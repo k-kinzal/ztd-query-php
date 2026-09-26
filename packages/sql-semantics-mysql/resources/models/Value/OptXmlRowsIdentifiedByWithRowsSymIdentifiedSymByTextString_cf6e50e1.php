@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptXmlRowsIdentifiedByWithRowsSymIdentifiedSymByTextString_cf6e50e1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptXmlRowsIdentifiedByWithRowsSymIdentifiedSymByTextString_cf6e50e1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptXmlRowsIdentifiedByWithRowsSymIdentifiedSymByTextString_cf6e50e1 implements \SqlSemantics\Statement\Model\MySql\Role\OptXmlRowsIdentifiedByForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringForm $textString,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textString), 'The textString must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class OptXmlRowsIdentifiedByWithRowsSymIdentifiedSymByTextString_cf6e50e1 
         $writer->append('IDENTIFIED');
         $writer->append('BY');
         $this->textString->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new textString, preserving every other field.
+     */
+    public function withTextString(\SqlSemantics\Statement\Model\MySql\Role\TextStringForm $textString): self
+    {
+        return new self($textString);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptWindowFrameClauseWithWindowFrameUnitsWindowFrameExtentOptWindowFrameExclusion_293a5fc6 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptWindowFrameClauseWithWindowFrameUnitsWindowFrameExtentOptWindowFrameExclusion_293a5fc6 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptWindowFrameClauseWithWindowFrameUnitsWindowFrameExtentOptWindowFrameExclusion_293a5fc6 implements \SqlSemantics\Statement\Model\MySql\Role\OptWindowFrameClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class OptWindowFrameClauseWithWindowFrameUnitsWindowFrameExtentOptWindowFr
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WindowFrameExtentForm $windowFrameExtent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWindowFrameExclusionForm $optWindowFrameExclusion,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($windowFrameUnits), 'The windowFrameUnits must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($windowFrameExtent), 'The windowFrameExtent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWindowFrameExclusion), 'The optWindowFrameExclusion must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class OptWindowFrameClauseWithWindowFrameUnitsWindowFrameExtentOptWindowFr
         $this->windowFrameUnits->write($writer);
         $this->windowFrameExtent->write($writer);
         $this->optWindowFrameExclusion->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new windowFrameUnits, preserving every other field.
+     */
+    public function withWindowFrameUnits(\SqlSemantics\Statement\Model\MySql\Role\WindowFrameUnitsForm $windowFrameUnits): self
+    {
+        return new self($windowFrameUnits, $this->windowFrameExtent, $this->optWindowFrameExclusion);
+    }
+
+    /**
+     * Returns a copy with a new windowFrameExtent, preserving every other field.
+     */
+    public function withWindowFrameExtent(\SqlSemantics\Statement\Model\MySql\Role\WindowFrameExtentForm $windowFrameExtent): self
+    {
+        return new self($this->windowFrameUnits, $windowFrameExtent, $this->optWindowFrameExclusion);
+    }
+
+    /**
+     * Returns a copy with a new optWindowFrameExclusion, preserving every other field.
+     */
+    public function withOptWindowFrameExclusion(\SqlSemantics\Statement\Model\MySql\Role\OptWindowFrameExclusionForm $optWindowFrameExclusion): self
+    {
+        return new self($this->windowFrameUnits, $this->windowFrameExtent, $optWindowFrameExclusion);
     }
 }

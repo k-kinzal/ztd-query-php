@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TypedTableElementListWithTypedTableElementListTypedTableElement_4e3b2727 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TypedTableElementListWithTypedTableElementListTypedTableElement_4e3b2727 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TypedTableElementListWithTypedTableElementListTypedTableElement_4e3b2727 implements \SqlSemantics\Statement\Model\PostgreSql\Role\TypedTableElementListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TypedTableElementListWithTypedTableElementListTypedTableElement_4e3b
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypedTableElementListForm $typedTableElementList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypedTableElementForm $typedTableElement,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typedTableElementList), 'The typedTableElementList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typedTableElement), 'The typedTableElement must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TypedTableElementListWithTypedTableElementListTypedTableElement_4e3b
         $this->typedTableElementList->write($writer);
         $writer->append(',');
         $this->typedTableElement->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new typedTableElementList, preserving every other field.
+     */
+    public function withTypedTableElementList(\SqlSemantics\Statement\Model\PostgreSql\Role\TypedTableElementListForm $typedTableElementList): self
+    {
+        return new self($typedTableElementList, $this->typedTableElement);
+    }
+
+    /**
+     * Returns a copy with a new typedTableElement, preserving every other field.
+     */
+    public function withTypedTableElement(\SqlSemantics\Statement\Model\PostgreSql\Role\TypedTableElementForm $typedTableElement): self
+    {
+        return new self($this->typedTableElementList, $typedTableElement);
     }
 }

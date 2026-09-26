@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\MergeInsertWithInsertOverridingOverrideKindValuePMergeValuesClause_3b4bd7f0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\MergeInsertWithInsertOverridingOverrideKindValuePMergeValuesClause_3b4bd7f0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class MergeInsertWithInsertOverridingOverrideKindValuePMergeValuesClause_3b4bd7f0 implements \SqlSemantics\Statement\Model\PostgreSql\Role\MergeInsertForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class MergeInsertWithInsertOverridingOverrideKindValuePMergeValuesClause_3
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OverrideKindForm $overrideKind,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\MergeValuesClauseForm $mergeValuesClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($overrideKind), 'The overrideKind must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($mergeValuesClause), 'The mergeValuesClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class MergeInsertWithInsertOverridingOverrideKindValuePMergeValuesClause_3
         $this->overrideKind->write($writer);
         $writer->append('VALUE');
         $this->mergeValuesClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new overrideKind, preserving every other field.
+     */
+    public function withOverrideKind(\SqlSemantics\Statement\Model\PostgreSql\Role\OverrideKindForm $overrideKind): self
+    {
+        return new self($overrideKind, $this->mergeValuesClause);
+    }
+
+    /**
+     * Returns a copy with a new mergeValuesClause, preserving every other field.
+     */
+    public function withMergeValuesClause(\SqlSemantics\Statement\Model\PostgreSql\Role\MergeValuesClauseForm $mergeValuesClause): self
+    {
+        return new self($this->overrideKind, $mergeValuesClause);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectPart2WithSelectOptionsAndItemListOptOrderClauseOptLimitClauseOptSelectLockType_e15fddb5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectPart2WithSelectOptionsAndItemListOptOrderClauseOptLimitClauseOptSelectLockType_e15fddb5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SelectPart2WithSelectOptionsAndItemListOptOrderClauseOptLimitClauseOptSelectLockType_e15fddb5 implements \SqlSemantics\Statement\Model\MySql\Role\SelectPart2Form
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class SelectPart2WithSelectOptionsAndItemListOptOrderClauseOptLimitClauseO
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSelectLockTypeForm $optSelectLockType,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectOptionsAndItemList), 'The selectOptionsAndItemList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderBy), 'The orderBy must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLimitClause), 'The optLimitClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optSelectLockType), 'The optSelectLockType must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +40,37 @@ final class SelectPart2WithSelectOptionsAndItemListOptOrderClauseOptLimitClauseO
         $this->orderBy->write($writer);
         $this->optLimitClause->write($writer);
         $this->optSelectLockType->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new selectOptionsAndItemList, preserving every other field.
+     */
+    public function withSelectOptionsAndItemList(\SqlSemantics\Statement\Model\MySql\Role\SelectOptionsAndItemListForm $selectOptionsAndItemList): self
+    {
+        return new self($selectOptionsAndItemList, $this->orderBy, $this->optLimitClause, $this->optSelectLockType);
+    }
+
+    /**
+     * Returns a copy with a new orderBy, preserving every other field.
+     */
+    public function withOrderBy(\SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm $orderBy): self
+    {
+        return new self($this->selectOptionsAndItemList, $orderBy, $this->optLimitClause, $this->optSelectLockType);
+    }
+
+    /**
+     * Returns a copy with a new optLimitClause, preserving every other field.
+     */
+    public function withOptLimitClause(\SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause): self
+    {
+        return new self($this->selectOptionsAndItemList, $this->orderBy, $optLimitClause, $this->optSelectLockType);
+    }
+
+    /**
+     * Returns a copy with a new optSelectLockType, preserving every other field.
+     */
+    public function withOptSelectLockType(\SqlSemantics\Statement\Model\MySql\Role\OptSelectLockTypeForm $optSelectLockType): self
+    {
+        return new self($this->selectOptionsAndItemList, $this->orderBy, $this->optLimitClause, $optSelectLockType);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PartParamsWithPartParamsPartElem_63d1178a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PartParamsWithPartParamsPartElem_63d1178a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PartParamsWithPartParamsPartElem_63d1178a implements \SqlSemantics\Statement\Model\PostgreSql\Role\PartParamsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class PartParamsWithPartParamsPartElem_63d1178a implements \SqlSemantics\S
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PartParamsForm $partParams,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PartElemForm $partElem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($partParams), 'The partParams must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($partElem), 'The partElem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class PartParamsWithPartParamsPartElem_63d1178a implements \SqlSemantics\S
         $this->partParams->write($writer);
         $writer->append(',');
         $this->partElem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new partParams, preserving every other field.
+     */
+    public function withPartParams(\SqlSemantics\Statement\Model\PostgreSql\Role\PartParamsForm $partParams): self
+    {
+        return new self($partParams, $this->partElem);
+    }
+
+    /**
+     * Returns a copy with a new partElem, preserving every other field.
+     */
+    public function withPartElem(\SqlSemantics\Statement\Model\PostgreSql\Role\PartElemForm $partElem): self
+    {
+        return new self($this->partParams, $partElem);
     }
 }

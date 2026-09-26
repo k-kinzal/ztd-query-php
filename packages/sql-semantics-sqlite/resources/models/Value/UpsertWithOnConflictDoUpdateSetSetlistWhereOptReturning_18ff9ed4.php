@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\UpsertWithOnConflictDoUpdateSetSetlistWhereOptReturning_18ff9ed4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\UpsertWithOnConflictDoUpdateSetSetlistWhereOptReturning_18ff9ed4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class UpsertWithOnConflictDoUpdateSetSetlistWhereOptReturning_18ff9ed4 implements \SqlSemantics\Statement\Model\Sqlite\Role\UpsertForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class UpsertWithOnConflictDoUpdateSetSetlistWhereOptReturning_18ff9ed4 imp
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm $where,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ReturningForm $returning,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($setlist), 'The setlist must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($where), 'The where must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($returning), 'The returning must be a generated immutable SQL value.');
     }
 
     /**
@@ -37,5 +42,29 @@ final class UpsertWithOnConflictDoUpdateSetSetlistWhereOptReturning_18ff9ed4 imp
         $this->setlist->write($writer);
         $this->where->write($writer);
         $this->returning->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new setlist, preserving every other field.
+     */
+    public function withSetlist(\SqlSemantics\Statement\Model\Sqlite\Role\SetlistForm $setlist): self
+    {
+        return new self($setlist, $this->where, $this->returning);
+    }
+
+    /**
+     * Returns a copy with a new where, preserving every other field.
+     */
+    public function withWhere(\SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm $where): self
+    {
+        return new self($this->setlist, $where, $this->returning);
+    }
+
+    /**
+     * Returns a copy with a new returning, preserving every other field.
+     */
+    public function withReturning(\SqlSemantics\Statement\Model\Sqlite\Role\ReturningForm $returning): self
+    {
+        return new self($this->setlist, $this->where, $returning);
     }
 }

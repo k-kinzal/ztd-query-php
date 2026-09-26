@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptNameListWithNameList_cbe8ac11 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptNameListWithNameList_cbe8ac11 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptNameListWithNameList_cbe8ac11 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptNameListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameListForm $nameList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($nameList), 'The nameList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OptNameListWithNameList_cbe8ac11 implements \SqlSemantics\Statement\
         $writer->append('(');
         $this->nameList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new nameList, preserving every other field.
+     */
+    public function withNameList(\SqlSemantics\Statement\Model\PostgreSql\Role\NameListForm $nameList): self
+    {
+        return new self($nameList);
     }
 }

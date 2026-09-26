@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpHcondListWithSpHcondListSpHcondElement_e7ce5eea $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpHcondListWithSpHcondListSpHcondElement_e7ce5eea $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpHcondListWithSpHcondListSpHcondElement_e7ce5eea implements \SqlSemantics\Statement\Model\MySql\Role\SpHcondListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SpHcondListWithSpHcondListSpHcondElement_e7ce5eea implements \SqlSem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpHcondListForm $spHcondList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpHcondElementForm $spHcondElement,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spHcondList), 'The spHcondList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spHcondElement), 'The spHcondElement must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SpHcondListWithSpHcondListSpHcondElement_e7ce5eea implements \SqlSem
         $this->spHcondList->write($writer);
         $writer->append(',');
         $this->spHcondElement->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new spHcondList, preserving every other field.
+     */
+    public function withSpHcondList(\SqlSemantics\Statement\Model\MySql\Role\SpHcondListForm $spHcondList): self
+    {
+        return new self($spHcondList, $this->spHcondElement);
+    }
+
+    /**
+     * Returns a copy with a new spHcondElement, preserving every other field.
+     */
+    public function withSpHcondElement(\SqlSemantics\Statement\Model\MySql\Role\SpHcondElementForm $spHcondElement): self
+    {
+        return new self($this->spHcondList, $spHcondElement);
     }
 }

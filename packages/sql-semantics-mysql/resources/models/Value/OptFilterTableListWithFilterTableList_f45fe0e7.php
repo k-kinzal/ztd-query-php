@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptFilterTableListWithFilterTableList_f45fe0e7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptFilterTableListWithFilterTableList_f45fe0e7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptFilterTableListWithFilterTableList_f45fe0e7 implements \SqlSemantics\Statement\Model\MySql\Role\OptFilterTableListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FilterTableListForm $filterTableList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($filterTableList), 'The filterTableList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OptFilterTableListWithFilterTableList_f45fe0e7 implements \SqlSemant
         $writer->append('(');
         $this->filterTableList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new filterTableList, preserving every other field.
+     */
+    public function withFilterTableList(\SqlSemantics\Statement\Model\MySql\Role\FilterTableListForm $filterTableList): self
+    {
+        return new self($filterTableList);
     }
 }

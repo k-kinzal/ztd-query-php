@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\SourceLogFileChoice_cac2112c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\SourceLogFileChoice_cac2112c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum SourceLogFileChoice_cac2112c: string implements \SqlSemantics\Statement\Model\MySql\Role\SourceLogFileForm

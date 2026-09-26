@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptCollateWithCollateSymCollationNameOrDefault_db9f6f26 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptCollateWithCollateSymCollationNameOrDefault_db9f6f26 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptCollateWithCollateSymCollationNameOrDefault_db9f6f26 implements \SqlSemantics\Statement\Model\MySql\Role\OptCollateForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CollationNameOrDefaultForm $collationNameOrDefault,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($collationNameOrDefault), 'The collationNameOrDefault must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OptCollateWithCollateSymCollationNameOrDefault_db9f6f26 implements \
     {
         $writer->append('COLLATE');
         $this->collationNameOrDefault->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new collationNameOrDefault, preserving every other field.
+     */
+    public function withCollationNameOrDefault(\SqlSemantics\Statement\Model\MySql\Role\CollationNameOrDefaultForm $collationNameOrDefault): self
+    {
+        return new self($collationNameOrDefault);
     }
 }

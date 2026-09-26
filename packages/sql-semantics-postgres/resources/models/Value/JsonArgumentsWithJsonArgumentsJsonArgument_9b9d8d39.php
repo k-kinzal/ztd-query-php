@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonArgumentsWithJsonArgumentsJsonArgument_9b9d8d39 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonArgumentsWithJsonArgumentsJsonArgument_9b9d8d39 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JsonArgumentsWithJsonArgumentsJsonArgument_9b9d8d39 implements \SqlSemantics\Statement\Model\PostgreSql\Role\JsonArgumentsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class JsonArgumentsWithJsonArgumentsJsonArgument_9b9d8d39 implements \SqlS
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonArgumentsForm $jsonArguments,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonArgumentForm $jsonArgument,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonArguments), 'The jsonArguments must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonArgument), 'The jsonArgument must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class JsonArgumentsWithJsonArgumentsJsonArgument_9b9d8d39 implements \SqlS
         $this->jsonArguments->write($writer);
         $writer->append(',');
         $this->jsonArgument->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new jsonArguments, preserving every other field.
+     */
+    public function withJsonArguments(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonArgumentsForm $jsonArguments): self
+    {
+        return new self($jsonArguments, $this->jsonArgument);
+    }
+
+    /**
+     * Returns a copy with a new jsonArgument, preserving every other field.
+     */
+    public function withJsonArgument(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonArgumentForm $jsonArgument): self
+    {
+        return new self($this->jsonArguments, $jsonArgument);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CursorOptionsWithCursorOptionsInsensitive_8b759d46 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CursorOptionsWithCursorOptionsInsensitive_8b759d46 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CursorOptionsWithCursorOptionsInsensitive_8b759d46 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CursorOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CursorOptionsForm $cursorOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($cursorOptions), 'The cursorOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class CursorOptionsWithCursorOptionsInsensitive_8b759d46 implements \SqlSe
     {
         $this->cursorOptions->write($writer);
         $writer->append('INSENSITIVE');
+    }
+
+    /**
+     * Returns a copy with a new cursorOptions, preserving every other field.
+     */
+    public function withCursorOptions(\SqlSemantics\Statement\Model\PostgreSql\Role\CursorOptionsForm $cursorOptions): self
+    {
+        return new self($cursorOptions);
     }
 }

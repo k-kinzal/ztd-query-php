@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DefineStmtWithCreateOptOrReplaceAggregateFuncNameAggrArgsDefinition_8af36947 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DefineStmtWithCreateOptOrReplaceAggregateFuncNameAggrArgsDefinition_8af36947 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class DefineStmtWithCreateOptOrReplaceAggregateFuncNameAggrArgsDefinition_8af36947 implements \SqlSemantics\Statement\Model\PostgreSql\Role\DefineStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class DefineStmtWithCreateOptOrReplaceAggregateFuncNameAggrArgsDefinition_8af36947 implements \SqlSemantics\Statement\Model\PostgreSql\Role\DefineStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class DefineStmtWithCreateOptOrReplaceAggregateFuncNameAggrArgsDefinition_
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgsForm $aggrArgs,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DefinitionForm $definition,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optOrReplace), 'The optOrReplace must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcName), 'The funcName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aggrArgs), 'The aggrArgs must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($definition), 'The definition must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +42,37 @@ final class DefineStmtWithCreateOptOrReplaceAggregateFuncNameAggrArgsDefinition_
         $this->funcName->write($writer);
         $this->aggrArgs->write($writer);
         $this->definition->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optOrReplace, preserving every other field.
+     */
+    public function withOptOrReplace(\SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm $optOrReplace): self
+    {
+        return new self($optOrReplace, $this->funcName, $this->aggrArgs, $this->definition);
+    }
+
+    /**
+     * Returns a copy with a new funcName, preserving every other field.
+     */
+    public function withFuncName(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm $funcName): self
+    {
+        return new self($this->optOrReplace, $funcName, $this->aggrArgs, $this->definition);
+    }
+
+    /**
+     * Returns a copy with a new aggrArgs, preserving every other field.
+     */
+    public function withAggrArgs(\SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgsForm $aggrArgs): self
+    {
+        return new self($this->optOrReplace, $this->funcName, $aggrArgs, $this->definition);
+    }
+
+    /**
+     * Returns a copy with a new definition, preserving every other field.
+     */
+    public function withDefinition(\SqlSemantics\Statement\Model\PostgreSql\Role\DefinitionForm $definition): self
+    {
+        return new self($this->optOrReplace, $this->funcName, $this->aggrArgs, $definition);
     }
 }

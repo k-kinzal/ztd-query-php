@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ReservedKeywordWithDefault_49b636d1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ReservedKeywordWithDefault_49b636d1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ReservedKeywordWithDefault_49b636d1 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerFuncArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerFuncArgsForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AttrNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\DefArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\DefElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\DefListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ReservedKeywordForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $name,
     ) {
+        $this->assertMatchesPattern($name, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['DEFAULT'], 'The name must be a complete DEFAULT lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class ReservedKeywordWithDefault_49b636d1 implements \SqlSemantics\Stateme
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->name);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(string $name): self
+    {
+        return new self($name);
     }
 }

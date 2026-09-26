@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Role;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Role\OptInsertUpdateListForm $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Role\OptInsertUpdateListForm $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 interface OptInsertUpdateListForm extends \SqlSemantics\Statement\Element

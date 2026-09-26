@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithChangeReplicationSourceGetSourcePublicKeyEqUlongNum_4544eda1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithChangeReplicationSourceGetSourcePublicKeyEqUlongNum_4544eda1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SourceDefWithChangeReplicationSourceGetSourcePublicKeyEqUlongNum_4544eda1 implements \SqlSemantics\Statement\Model\MySql\Role\SourceDefForm, \SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SourceDefWithChangeReplicationSourceGetSourcePublicKeyEqUlongNum_454
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceGetSourcePublicKeyForm $changeReplicationSourceGetSourcePublicKey,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($changeReplicationSourceGetSourcePublicKey), 'The changeReplicationSourceGetSourcePublicKey must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ulongNum), 'The ulongNum must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SourceDefWithChangeReplicationSourceGetSourcePublicKeyEqUlongNum_454
         $this->changeReplicationSourceGetSourcePublicKey->write($writer);
         $writer->append('=');
         $this->ulongNum->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new changeReplicationSourceGetSourcePublicKey, preserving every other field.
+     */
+    public function withChangeReplicationSourceGetSourcePublicKey(\SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceGetSourcePublicKeyForm $changeReplicationSourceGetSourcePublicKey): self
+    {
+        return new self($changeReplicationSourceGetSourcePublicKey, $this->ulongNum);
+    }
+
+    /**
+     * Returns a copy with a new ulongNum, preserving every other field.
+     */
+    public function withUlongNum(\SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum): self
+    {
+        return new self($this->changeReplicationSourceGetSourcePublicKey, $ulongNum);
     }
 }

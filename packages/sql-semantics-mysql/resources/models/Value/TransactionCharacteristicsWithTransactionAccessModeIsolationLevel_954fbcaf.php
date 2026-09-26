@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TransactionCharacteristicsWithTransactionAccessModeIsolationLevel_954fbcaf $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TransactionCharacteristicsWithTransactionAccessModeIsolationLevel_954fbcaf $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TransactionCharacteristicsWithTransactionAccessModeIsolationLevel_954fbcaf implements \SqlSemantics\Statement\Model\MySql\Role\TransactionCharacteristicsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TransactionCharacteristicsWithTransactionAccessModeIsolationLevel_95
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TransactionAccessModeForm $transactionAccessMode,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IsolationLevelForm $isolationLevel,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($transactionAccessMode), 'The transactionAccessMode must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($isolationLevel), 'The isolationLevel must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TransactionCharacteristicsWithTransactionAccessModeIsolationLevel_95
         $this->transactionAccessMode->write($writer);
         $writer->append(',');
         $this->isolationLevel->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new transactionAccessMode, preserving every other field.
+     */
+    public function withTransactionAccessMode(\SqlSemantics\Statement\Model\MySql\Role\TransactionAccessModeForm $transactionAccessMode): self
+    {
+        return new self($transactionAccessMode, $this->isolationLevel);
+    }
+
+    /**
+     * Returns a copy with a new isolationLevel, preserving every other field.
+     */
+    public function withIsolationLevel(\SqlSemantics\Statement\Model\MySql\Role\IsolationLevelForm $isolationLevel): self
+    {
+        return new self($this->transactionAccessMode, $isolationLevel);
     }
 }

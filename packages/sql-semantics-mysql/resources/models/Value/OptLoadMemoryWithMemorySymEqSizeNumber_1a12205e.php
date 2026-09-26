@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptLoadMemoryWithMemorySymEqSizeNumber_1a12205e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptLoadMemoryWithMemorySymEqSizeNumber_1a12205e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptLoadMemoryWithMemorySymEqSizeNumber_1a12205e implements \SqlSemantics\Statement\Model\MySql\Role\OptLoadMemoryForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SizeNumberForm $sizeNumber,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($sizeNumber), 'The sizeNumber must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OptLoadMemoryWithMemorySymEqSizeNumber_1a12205e implements \SqlSeman
         $writer->append('MEMORY');
         $writer->append('=');
         $this->sizeNumber->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new sizeNumber, preserving every other field.
+     */
+    public function withSizeNumber(\SqlSemantics\Statement\Model\MySql\Role\SizeNumberForm $sizeNumber): self
+    {
+        return new self($sizeNumber);
     }
 }

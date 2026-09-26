@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IgnoreServerIdListWithIgnoreServerIdListIgnoreServerId_f106ddf6 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IgnoreServerIdListWithIgnoreServerIdListIgnoreServerId_f106ddf6 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IgnoreServerIdListWithIgnoreServerIdListIgnoreServerId_f106ddf6 implements \SqlSemantics\Statement\Model\MySql\Role\IgnoreServerIdListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class IgnoreServerIdListWithIgnoreServerIdListIgnoreServerId_f106ddf6 impl
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IgnoreServerIdListForm $ignoreServerIdList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IgnoreServerIdForm $ignoreServerId,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ignoreServerIdList), 'The ignoreServerIdList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ignoreServerId), 'The ignoreServerId must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class IgnoreServerIdListWithIgnoreServerIdListIgnoreServerId_f106ddf6 impl
         $this->ignoreServerIdList->write($writer);
         $writer->append(',');
         $this->ignoreServerId->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new ignoreServerIdList, preserving every other field.
+     */
+    public function withIgnoreServerIdList(\SqlSemantics\Statement\Model\MySql\Role\IgnoreServerIdListForm $ignoreServerIdList): self
+    {
+        return new self($ignoreServerIdList, $this->ignoreServerId);
+    }
+
+    /**
+     * Returns a copy with a new ignoreServerId, preserving every other field.
+     */
+    public function withIgnoreServerId(\SqlSemantics\Statement\Model\MySql\Role\IgnoreServerIdForm $ignoreServerId): self
+    {
+        return new self($this->ignoreServerIdList, $ignoreServerId);
     }
 }

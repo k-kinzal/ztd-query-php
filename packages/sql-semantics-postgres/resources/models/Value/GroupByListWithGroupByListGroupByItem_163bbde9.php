@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\GroupByListWithGroupByListGroupByItem_163bbde9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\GroupByListWithGroupByListGroupByItem_163bbde9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GroupByListWithGroupByListGroupByItem_163bbde9 implements \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class GroupByListWithGroupByListGroupByItem_163bbde9 implements \SqlSemant
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByListForm $groupByList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByItemForm $groupByItem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($groupByList), 'The groupByList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($groupByItem), 'The groupByItem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class GroupByListWithGroupByListGroupByItem_163bbde9 implements \SqlSemant
         $this->groupByList->write($writer);
         $writer->append(',');
         $this->groupByItem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new groupByList, preserving every other field.
+     */
+    public function withGroupByList(\SqlSemantics\Statement\Model\PostgreSql\Role\GroupByListForm $groupByList): self
+    {
+        return new self($groupByList, $this->groupByItem);
+    }
+
+    /**
+     * Returns a copy with a new groupByItem, preserving every other field.
+     */
+    public function withGroupByItem(\SqlSemantics\Statement\Model\PostgreSql\Role\GroupByItemForm $groupByItem): self
+    {
+        return new self($this->groupByList, $groupByItem);
     }
 }

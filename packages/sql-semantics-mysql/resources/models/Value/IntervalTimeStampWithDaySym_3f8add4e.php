@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IntervalTimeStampWithDaySym_3f8add4e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IntervalTimeStampWithDaySym_3f8add4e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IntervalTimeStampWithDaySym_3f8add4e implements \SqlSemantics\Statement\Model\MySql\Role\IntervalForm, \SqlSemantics\Statement\Model\MySql\Role\IntervalTimeStampForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $daySym,
     ) {
+        $this->assertMatchesPattern($daySym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DAY_SYM'], 'The daySym must be a complete DAY_SYM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class IntervalTimeStampWithDaySym_3f8add4e implements \SqlSemantics\Statem
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->daySym);
+    }
+
+    /**
+     * Returns a copy with a new daySym, preserving every other field.
+     */
+    public function withDaySym(string $daySym): self
+    {
+        return new self($daySym);
     }
 }

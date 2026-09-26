@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithChangeReplicationSourceSslCertEqTextStringSysNonewline_6c425c9d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithChangeReplicationSourceSslCertEqTextStringSysNonewline_6c425c9d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SourceDefWithChangeReplicationSourceSslCertEqTextStringSysNonewline_6c425c9d implements \SqlSemantics\Statement\Model\MySql\Role\SourceDefForm, \SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SourceDefWithChangeReplicationSourceSslCertEqTextStringSysNonewline_
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceSslCertForm $changeReplicationSourceSslCert,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($changeReplicationSourceSslCert), 'The changeReplicationSourceSslCert must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSysNonewline), 'The textStringSysNonewline must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SourceDefWithChangeReplicationSourceSslCertEqTextStringSysNonewline_
         $this->changeReplicationSourceSslCert->write($writer);
         $writer->append('=');
         $this->textStringSysNonewline->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new changeReplicationSourceSslCert, preserving every other field.
+     */
+    public function withChangeReplicationSourceSslCert(\SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceSslCertForm $changeReplicationSourceSslCert): self
+    {
+        return new self($changeReplicationSourceSslCert, $this->textStringSysNonewline);
+    }
+
+    /**
+     * Returns a copy with a new textStringSysNonewline, preserving every other field.
+     */
+    public function withTextStringSysNonewline(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline): self
+    {
+        return new self($this->changeReplicationSourceSslCert, $textStringSysNonewline);
     }
 }

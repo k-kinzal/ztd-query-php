@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\VarListWithVarListVarValue_47a8198d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\VarListWithVarListVarValue_47a8198d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class VarListWithVarListVarValue_47a8198d implements \SqlSemantics\Statement\Model\PostgreSql\Role\VarListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class VarListWithVarListVarValue_47a8198d implements \SqlSemantics\Stateme
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\VarListForm $varList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\VarValueForm $varValue,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($varList), 'The varList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($varValue), 'The varValue must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class VarListWithVarListVarValue_47a8198d implements \SqlSemantics\Stateme
         $this->varList->write($writer);
         $writer->append(',');
         $this->varValue->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new varList, preserving every other field.
+     */
+    public function withVarList(\SqlSemantics\Statement\Model\PostgreSql\Role\VarListForm $varList): self
+    {
+        return new self($varList, $this->varValue);
+    }
+
+    /**
+     * Returns a copy with a new varValue, preserving every other field.
+     */
+    public function withVarValue(\SqlSemantics\Statement\Model\PostgreSql\Role\VarValueForm $varValue): self
+    {
+        return new self($this->varList, $varValue);
     }
 }

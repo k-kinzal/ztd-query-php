@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StandaloneAlterTableActionWithAlterCommandsModifierListStandaloneAlterCommands_29945c1e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StandaloneAlterTableActionWithAlterCommandsModifierListStandaloneAlterCommands_29945c1e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class StandaloneAlterTableActionWithAlterCommandsModifierListStandaloneAlterCommands_29945c1e implements \SqlSemantics\Statement\Model\MySql\Role\StandaloneAlterTableActionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class StandaloneAlterTableActionWithAlterCommandsModifierListStandaloneAlt
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsModifierListForm $alterCommandsModifierList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\StandaloneAlterCommandsForm $standaloneAlterCommands,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterCommandsModifierList), 'The alterCommandsModifierList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($standaloneAlterCommands), 'The standaloneAlterCommands must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class StandaloneAlterTableActionWithAlterCommandsModifierListStandaloneAlt
         $this->alterCommandsModifierList->write($writer);
         $writer->append(',');
         $this->standaloneAlterCommands->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new alterCommandsModifierList, preserving every other field.
+     */
+    public function withAlterCommandsModifierList(\SqlSemantics\Statement\Model\MySql\Role\AlterCommandsModifierListForm $alterCommandsModifierList): self
+    {
+        return new self($alterCommandsModifierList, $this->standaloneAlterCommands);
+    }
+
+    /**
+     * Returns a copy with a new standaloneAlterCommands, preserving every other field.
+     */
+    public function withStandaloneAlterCommands(\SqlSemantics\Statement\Model\MySql\Role\StandaloneAlterCommandsForm $standaloneAlterCommands): self
+    {
+        return new self($this->alterCommandsModifierList, $standaloneAlterCommands);
     }
 }

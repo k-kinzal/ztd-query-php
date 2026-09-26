@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\Sqlite\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Choice\LpChoice_0ce700cc $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Choice\LpChoice_0ce700cc $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum LpChoice_0ce700cc: string implements \SqlSemantics\Statement\Model\Sqlite\Role\LpForm

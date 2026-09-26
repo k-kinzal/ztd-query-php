@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TextStringWithHexNum_e10148ad $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TextStringWithHexNum_e10148ad $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TextStringWithHexNum_e10148ad implements \SqlSemantics\Statement\Model\MySql\Role\OptDescribeColumnForm, \SqlSemantics\Statement\Model\MySql\Role\StringListForm, \SqlSemantics\Statement\Model\MySql\Role\TextStringForm, \SqlSemantics\Statement\Model\MySql\Role\XidForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $hexNum,
     ) {
+        $this->assertMatchesPattern($hexNum, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['HEX_NUM'], 'The hexNum must be a complete HEX_NUM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class TextStringWithHexNum_e10148ad implements \SqlSemantics\Statement\Mod
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->hexNum);
+    }
+
+    /**
+     * Returns a copy with a new hexNum, preserving every other field.
+     */
+    public function withHexNum(string $hexNum): self
+    {
+        return new self($hexNum);
     }
 }

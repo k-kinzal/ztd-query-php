@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OlapOptWithWithRollupSym_6aee56b6 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OlapOptWithWithRollupSym_6aee56b6 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OlapOptWithWithRollupSym_6aee56b6 implements \SqlSemantics\Statement\Model\MySql\Role\OlapOptForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $withRollupSym,
     ) {
+        $this->assertMatchesPattern($withRollupSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['WITH_ROLLUP_SYM'], 'The withRollupSym must be a complete WITH_ROLLUP_SYM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class OlapOptWithWithRollupSym_6aee56b6 implements \SqlSemantics\Statement
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->withRollupSym);
+    }
+
+    /**
+     * Returns a copy with a new withRollupSym, preserving every other field.
+     */
+    public function withWithRollupSym(string $withRollupSym): self
+    {
+        return new self($withRollupSym);
     }
 }

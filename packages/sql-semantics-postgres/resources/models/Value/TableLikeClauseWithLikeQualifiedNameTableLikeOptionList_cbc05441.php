@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TableLikeClauseWithLikeQualifiedNameTableLikeOptionList_cbc05441 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TableLikeClauseWithLikeQualifiedNameTableLikeOptionList_cbc05441 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableLikeClauseWithLikeQualifiedNameTableLikeOptionList_cbc05441 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptTableElementListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableElementForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableElementListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableLikeClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TableLikeClauseWithLikeQualifiedNameTableLikeOptionList_cbc05441 imp
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TableLikeOptionListForm $tableLikeOptionList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($tableLikeOptionList), 'The tableLikeOptionList must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TableLikeClauseWithLikeQualifiedNameTableLikeOptionList_cbc05441 imp
         $writer->append('LIKE');
         $this->qualifiedName->write($writer);
         $this->tableLikeOptionList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new qualifiedName, preserving every other field.
+     */
+    public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
+    {
+        return new self($qualifiedName, $this->tableLikeOptionList);
+    }
+
+    /**
+     * Returns a copy with a new tableLikeOptionList, preserving every other field.
+     */
+    public function withTableLikeOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\TableLikeOptionListForm $tableLikeOptionList): self
+    {
+        return new self($this->qualifiedName, $tableLikeOptionList);
     }
 }

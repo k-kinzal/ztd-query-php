@@ -9,17 +9,21 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithExprNotNull_025d71af $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithExprNotNull_025d71af $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ExprWithExprNotNull_025d71af implements \SqlSemantics\Statement\Model\Sqlite\Role\CaseOperandForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm, \SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 4,));
     }
 
     /**
@@ -30,5 +34,13 @@ final class ExprWithExprNotNull_025d71af implements \SqlSemantics\Statement\Mode
         $this->expr->write($writer);
         $writer->append('NOT');
         $writer->append('NULL');
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
+    {
+        return new self($expr);
     }
 }

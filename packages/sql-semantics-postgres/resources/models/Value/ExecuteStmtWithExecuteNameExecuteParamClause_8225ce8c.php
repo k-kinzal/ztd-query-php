@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ExecuteStmtWithExecuteNameExecuteParamClause_8225ce8c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ExecuteStmtWithExecuteNameExecuteParamClause_8225ce8c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class ExecuteStmtWithExecuteNameExecuteParamClause_8225ce8c implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExecuteStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class ExecuteStmtWithExecuteNameExecuteParamClause_8225ce8c implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExecuteStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ExecuteStmtWithExecuteNameExecuteParamClause_8225ce8c implements \Sq
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ExecuteParamClauseForm $executeParamClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($executeParamClause), 'The executeParamClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ExecuteStmtWithExecuteNameExecuteParamClause_8225ce8c implements \Sq
         $writer->append('EXECUTE');
         $this->name->write($writer);
         $this->executeParamClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($name, $this->executeParamClause);
+    }
+
+    /**
+     * Returns a copy with a new executeParamClause, preserving every other field.
+     */
+    public function withExecuteParamClause(\SqlSemantics\Statement\Model\PostgreSql\Role\ExecuteParamClauseForm $executeParamClause): self
+    {
+        return new self($this->name, $executeParamClause);
     }
 }

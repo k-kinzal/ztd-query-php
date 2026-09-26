@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Choice\FromInChoice_6f91678a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Choice\FromInChoice_6f91678a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum FromInChoice_6f91678a: string implements \SqlSemantics\Statement\Model\PostgreSql\Role\FromInForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptFromInForm

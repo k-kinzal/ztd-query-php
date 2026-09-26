@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PartitionCmdWithDetachPartitionQualifiedNameFinalize_1e5e96b7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PartitionCmdWithDetachPartitionQualifiedNameFinalize_1e5e96b7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PartitionCmdWithDetachPartitionQualifiedNameFinalize_1e5e96b7 implements \SqlSemantics\Statement\Model\PostgreSql\Role\PartitionCmdForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class PartitionCmdWithDetachPartitionQualifiedNameFinalize_1e5e96b7 implem
         $writer->append('PARTITION');
         $this->qualifiedName->write($writer);
         $writer->append('FINALIZE');
+    }
+
+    /**
+     * Returns a copy with a new qualifiedName, preserving every other field.
+     */
+    public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
+    {
+        return new self($qualifiedName);
     }
 }

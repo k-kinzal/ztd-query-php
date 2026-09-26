@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\Sqlite\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Choice\RefactChoice_2802cc9d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Choice\RefactChoice_2802cc9d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum RefactChoice_2802cc9d: string implements \SqlSemantics\Statement\Model\Sqlite\Role\RefactForm

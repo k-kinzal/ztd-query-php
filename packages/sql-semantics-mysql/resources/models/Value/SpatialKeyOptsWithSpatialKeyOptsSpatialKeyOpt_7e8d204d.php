@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpatialKeyOptsWithSpatialKeyOptsSpatialKeyOpt_7e8d204d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpatialKeyOptsWithSpatialKeyOptsSpatialKeyOpt_7e8d204d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpatialKeyOptsWithSpatialKeyOptsSpatialKeyOpt_7e8d204d implements \SqlSemantics\Statement\Model\MySql\Role\SpatialKeyOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\SpatialKeyOptsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SpatialKeyOptsWithSpatialKeyOptsSpatialKeyOpt_7e8d204d implements \S
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpatialKeyOptsForm $spatialKeyOpts,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpatialKeyOptForm $spatialKeyOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spatialKeyOpts), 'The spatialKeyOpts must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spatialKeyOpt), 'The spatialKeyOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class SpatialKeyOptsWithSpatialKeyOptsSpatialKeyOpt_7e8d204d implements \S
     {
         $this->spatialKeyOpts->write($writer);
         $this->spatialKeyOpt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new spatialKeyOpts, preserving every other field.
+     */
+    public function withSpatialKeyOpts(\SqlSemantics\Statement\Model\MySql\Role\SpatialKeyOptsForm $spatialKeyOpts): self
+    {
+        return new self($spatialKeyOpts, $this->spatialKeyOpt);
+    }
+
+    /**
+     * Returns a copy with a new spatialKeyOpt, preserving every other field.
+     */
+    public function withSpatialKeyOpt(\SqlSemantics\Statement\Model\MySql\Role\SpatialKeyOptForm $spatialKeyOpt): self
+    {
+        return new self($this->spatialKeyOpts, $spatialKeyOpt);
     }
 }

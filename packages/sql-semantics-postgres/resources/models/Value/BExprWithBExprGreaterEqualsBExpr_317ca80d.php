@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\BExprWithBExprGreaterEqualsBExpr_317ca80d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\BExprWithBExprGreaterEqualsBExpr_317ca80d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class BExprWithBExprGreaterEqualsBExpr_317ca80d implements \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,11 @@ final class BExprWithBExprGreaterEqualsBExpr_317ca80d implements \SqlSemantics\S
         public readonly string $greaterEquals,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($bExpr), 'The bExpr must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($bExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 8,));
+        $this->assertMatchesPattern($greaterEquals, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['GREATER_EQUALS'], 'The greaterEquals must be a complete GREATER_EQUALS lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($bExpr2), 'The bExpr2 must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($bExpr2, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 8,));
     }
 
     /**
@@ -32,5 +39,29 @@ final class BExprWithBExprGreaterEqualsBExpr_317ca80d implements \SqlSemantics\S
         $this->bExpr->write($writer);
         $writer->append($this->greaterEquals);
         $this->bExpr2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new bExpr, preserving every other field.
+     */
+    public function withBExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr): self
+    {
+        return new self($bExpr, $this->greaterEquals, $this->bExpr2);
+    }
+
+    /**
+     * Returns a copy with a new greaterEquals, preserving every other field.
+     */
+    public function withGreaterEquals(string $greaterEquals): self
+    {
+        return new self($this->bExpr, $greaterEquals, $this->bExpr2);
+    }
+
+    /**
+     * Returns a copy with a new bExpr2, preserving every other field.
+     */
+    public function withBExpr2(\SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr2): self
+    {
+        return new self($this->bExpr, $this->greaterEquals, $bExpr2);
     }
 }

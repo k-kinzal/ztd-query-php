@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\LimitClauseWithLimitSelectLimitValue_4e6813c3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\LimitClauseWithLimitSelectLimitValue_4e6813c3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class LimitClauseWithLimitSelectLimitValue_4e6813c3 implements \SqlSemantics\Statement\Model\PostgreSql\Role\LimitClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSelectLimitForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitValueForm $selectLimitValue,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($selectLimitValue), 'The selectLimitValue must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class LimitClauseWithLimitSelectLimitValue_4e6813c3 implements \SqlSemanti
     {
         $writer->append('LIMIT');
         $this->selectLimitValue->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new selectLimitValue, preserving every other field.
+     */
+    public function withSelectLimitValue(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitValueForm $selectLimitValue): self
+    {
+        return new self($selectLimitValue);
     }
 }

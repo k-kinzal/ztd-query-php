@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldLengthWithDecimalNum_8703ddb4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldLengthWithDecimalNum_8703ddb4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FieldLengthWithDecimalNum_8703ddb4 implements \SqlSemantics\Statement\Model\MySql\Role\FieldLengthForm, \SqlSemantics\Statement\Model\MySql\Role\FloatOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptFieldLengthForm, \SqlSemantics\Statement\Model\MySql\Role\StandardFloatOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $decimalNum,
     ) {
+        $this->assertMatchesPattern($decimalNum, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DECIMAL_NUM'], 'The decimalNum must be a complete DECIMAL_NUM lexical spelling.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class FieldLengthWithDecimalNum_8703ddb4 implements \SqlSemantics\Statemen
         $writer->append('(');
         $writer->append($this->decimalNum);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new decimalNum, preserving every other field.
+     */
+    public function withDecimalNum(string $decimalNum): self
+    {
+        return new self($decimalNum);
     }
 }

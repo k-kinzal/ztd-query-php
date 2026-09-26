@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FilterDefWithReplicateDoDbEqOptFilterDbList_24f1574f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FilterDefWithReplicateDoDbEqOptFilterDbList_24f1574f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FilterDefWithReplicateDoDbEqOptFilterDbList_24f1574f implements \SqlSemantics\Statement\Model\MySql\Role\FilterDefForm, \SqlSemantics\Statement\Model\MySql\Role\FilterDefsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptFilterDbListForm $optFilterDbList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optFilterDbList), 'The optFilterDbList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class FilterDefWithReplicateDoDbEqOptFilterDbList_24f1574f implements \Sql
         $writer->append('REPLICATE_DO_DB');
         $writer->append('=');
         $this->optFilterDbList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optFilterDbList, preserving every other field.
+     */
+    public function withOptFilterDbList(\SqlSemantics\Statement\Model\MySql\Role\OptFilterDbListForm $optFilterDbList): self
+    {
+        return new self($optFilterDbList);
     }
 }

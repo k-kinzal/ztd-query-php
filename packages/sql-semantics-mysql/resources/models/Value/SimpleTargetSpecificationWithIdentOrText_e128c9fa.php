@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SimpleTargetSpecificationWithIdentOrText_e128c9fa $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SimpleTargetSpecificationWithIdentOrText_e128c9fa $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SimpleTargetSpecificationWithIdentOrText_e128c9fa implements \SqlSemantics\Statement\Model\MySql\Role\SimpleTargetSpecificationForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText), 'The identOrText must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class SimpleTargetSpecificationWithIdentOrText_e128c9fa implements \SqlSem
     {
         $writer->append('@');
         $this->identOrText->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new identOrText, preserving every other field.
+     */
+    public function withIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText): self
+    {
+        return new self($identOrText);
     }
 }

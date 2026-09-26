@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OffsetClauseWithOffsetSelectFetchFirstValueRowOrRows_5d923385 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OffsetClauseWithOffsetSelectFetchFirstValueRowOrRows_5d923385 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OffsetClauseWithOffsetSelectFetchFirstValueRowOrRows_5d923385 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OffsetClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSelectLimitForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OffsetClauseWithOffsetSelectFetchFirstValueRowOrRows_5d923385 implem
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectFetchFirstValueForm $selectFetchFirstValue,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RowOrRowsForm $rowOrRows,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($selectFetchFirstValue), 'The selectFetchFirstValue must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($rowOrRows), 'The rowOrRows must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class OffsetClauseWithOffsetSelectFetchFirstValueRowOrRows_5d923385 implem
         $writer->append('OFFSET');
         $this->selectFetchFirstValue->write($writer);
         $this->rowOrRows->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new selectFetchFirstValue, preserving every other field.
+     */
+    public function withSelectFetchFirstValue(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectFetchFirstValueForm $selectFetchFirstValue): self
+    {
+        return new self($selectFetchFirstValue, $this->rowOrRows);
+    }
+
+    /**
+     * Returns a copy with a new rowOrRows, preserving every other field.
+     */
+    public function withRowOrRows(\SqlSemantics\Statement\Model\PostgreSql\Role\RowOrRowsForm $rowOrRows): self
+    {
+        return new self($this->selectFetchFirstValue, $rowOrRows);
     }
 }

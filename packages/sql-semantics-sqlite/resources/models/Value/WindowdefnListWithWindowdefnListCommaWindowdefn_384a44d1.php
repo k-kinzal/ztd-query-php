@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\WindowdefnListWithWindowdefnListCommaWindowdefn_384a44d1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\WindowdefnListWithWindowdefnListCommaWindowdefn_384a44d1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WindowdefnListWithWindowdefnListCommaWindowdefn_384a44d1 implements \SqlSemantics\Statement\Model\Sqlite\Role\WindowdefnListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class WindowdefnListWithWindowdefnListCommaWindowdefn_384a44d1 implements 
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WindowdefnListForm $windowdefnList,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WindowdefnForm $windowdefn,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($windowdefnList), 'The windowdefnList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($windowdefn), 'The windowdefn must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class WindowdefnListWithWindowdefnListCommaWindowdefn_384a44d1 implements 
         $this->windowdefnList->write($writer);
         $writer->append(',');
         $this->windowdefn->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new windowdefnList, preserving every other field.
+     */
+    public function withWindowdefnList(\SqlSemantics\Statement\Model\Sqlite\Role\WindowdefnListForm $windowdefnList): self
+    {
+        return new self($windowdefnList, $this->windowdefn);
+    }
+
+    /**
+     * Returns a copy with a new windowdefn, preserving every other field.
+     */
+    public function withWindowdefn(\SqlSemantics\Statement\Model\Sqlite\Role\WindowdefnForm $windowdefn): self
+    {
+        return new self($this->windowdefnList, $windowdefn);
     }
 }

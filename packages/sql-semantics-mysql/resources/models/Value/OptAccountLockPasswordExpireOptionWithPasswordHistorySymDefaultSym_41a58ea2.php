@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptAccountLockPasswordExpireOptionWithPasswordHistorySymDefaultSym_41a58ea2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptAccountLockPasswordExpireOptionWithPasswordHistorySymDefaultSym_41a58ea2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptAccountLockPasswordExpireOptionWithPasswordHistorySymDefaultSym_41a58ea2 implements \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionForm, \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionsForm

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StandaloneAlterCommandsWithReorganizeSymPartitionSymOptNoWriteToBinlog_24a5790f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StandaloneAlterCommandsWithReorganizeSymPartitionSymOptNoWriteToBinlog_24a5790f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class StandaloneAlterCommandsWithReorganizeSymPartitionSymOptNoWriteToBinlog_24a5790f implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\StandaloneAlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\StandaloneAlterTableActionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optNoWriteToBinlog), 'The optNoWriteToBinlog must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class StandaloneAlterCommandsWithReorganizeSymPartitionSymOptNoWriteToBinl
         $writer->append('REORGANIZE');
         $writer->append('PARTITION');
         $this->optNoWriteToBinlog->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optNoWriteToBinlog, preserving every other field.
+     */
+    public function withOptNoWriteToBinlog(\SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog): self
+    {
+        return new self($optNoWriteToBinlog);
     }
 }

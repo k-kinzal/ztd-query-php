@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RefreshMatViewStmtWithRefreshMaterializedViewOptConcurrentlyQualifiedNameOptWithData_c4d30771 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RefreshMatViewStmtWithRefreshMaterializedViewOptConcurrentlyQualifiedNameOptWithData_c4d30771 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class RefreshMatViewStmtWithRefreshMaterializedViewOptConcurrentlyQualifiedNameOptWithData_c4d30771 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RefreshMatViewStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class RefreshMatViewStmtWithRefreshMaterializedViewOptConcurrentlyQualifiedNameOptWithData_c4d30771 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RefreshMatViewStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class RefreshMatViewStmtWithRefreshMaterializedViewOptConcurrentlyQualifie
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithDataForm $optWithData,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optConcurrently), 'The optConcurrently must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optWithData), 'The optWithData must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +40,29 @@ final class RefreshMatViewStmtWithRefreshMaterializedViewOptConcurrentlyQualifie
         $this->optConcurrently->write($writer);
         $this->qualifiedName->write($writer);
         $this->optWithData->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optConcurrently, preserving every other field.
+     */
+    public function withOptConcurrently(\SqlSemantics\Statement\Model\PostgreSql\Role\OptConcurrentlyForm $optConcurrently): self
+    {
+        return new self($optConcurrently, $this->qualifiedName, $this->optWithData);
+    }
+
+    /**
+     * Returns a copy with a new qualifiedName, preserving every other field.
+     */
+    public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
+    {
+        return new self($this->optConcurrently, $qualifiedName, $this->optWithData);
+    }
+
+    /**
+     * Returns a copy with a new optWithData, preserving every other field.
+     */
+    public function withOptWithData(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithDataForm $optWithData): self
+    {
+        return new self($this->optConcurrently, $this->qualifiedName, $optWithData);
     }
 }

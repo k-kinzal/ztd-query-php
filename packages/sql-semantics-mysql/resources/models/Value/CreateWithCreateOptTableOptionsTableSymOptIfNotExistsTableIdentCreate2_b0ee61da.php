@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateWithCreateOptTableOptionsTableSymOptIfNotExistsTableIdentCreate2_b0ee61da $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateWithCreateOptTableOptionsTableSymOptIfNotExistsTableIdentCreate2_b0ee61da $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateWithCreateOptTableOptionsTableSymOptIfNotExistsTableIdentCreate2_b0ee61da implements \SqlSemantics\Statement\Model\MySql\Role\CreateForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class CreateWithCreateOptTableOptionsTableSymOptIfNotExistsTableIdentCreate2_b0ee61da implements \SqlSemantics\Statement\Model\MySql\Role\CreateForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class CreateWithCreateOptTableOptionsTableSymOptIfNotExistsTableIdentCreat
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\Create2Form $create2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optTableOptions), 'The optTableOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIfNotExists), 'The optIfNotExists must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($create2), 'The create2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +42,37 @@ final class CreateWithCreateOptTableOptionsTableSymOptIfNotExistsTableIdentCreat
         $this->optIfNotExists->write($writer);
         $this->tableIdent->write($writer);
         $this->create2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optTableOptions, preserving every other field.
+     */
+    public function withOptTableOptions(\SqlSemantics\Statement\Model\MySql\Role\OptTableOptionsForm $optTableOptions): self
+    {
+        return new self($optTableOptions, $this->optIfNotExists, $this->tableIdent, $this->create2);
+    }
+
+    /**
+     * Returns a copy with a new optIfNotExists, preserving every other field.
+     */
+    public function withOptIfNotExists(\SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists): self
+    {
+        return new self($this->optTableOptions, $optIfNotExists, $this->tableIdent, $this->create2);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($this->optTableOptions, $this->optIfNotExists, $tableIdent, $this->create2);
+    }
+
+    /**
+     * Returns a copy with a new create2, preserving every other field.
+     */
+    public function withCreate2(\SqlSemantics\Statement\Model\MySql\Role\Create2Form $create2): self
+    {
+        return new self($this->optTableOptions, $this->optIfNotExists, $this->tableIdent, $create2);
     }
 }

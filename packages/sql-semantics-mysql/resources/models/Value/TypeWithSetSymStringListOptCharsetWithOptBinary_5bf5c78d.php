@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithSetSymStringListOptCharsetWithOptBinary_5bf5c78d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithSetSymStringListOptCharsetWithOptBinary_5bf5c78d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TypeWithSetSymStringListOptCharsetWithOptBinary_5bf5c78d implements \SqlSemantics\Statement\Model\MySql\Role\TypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TypeWithSetSymStringListOptCharsetWithOptBinary_5bf5c78d implements 
         public readonly \SqlSemantics\Statement\Model\MySql\Role\StringListForm $stringList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCharsetWithOptBinaryForm $optCharsetWithOptBinary,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($stringList), 'The stringList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCharsetWithOptBinary), 'The optCharsetWithOptBinary must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class TypeWithSetSymStringListOptCharsetWithOptBinary_5bf5c78d implements 
         $this->stringList->write($writer);
         $writer->append(')');
         $this->optCharsetWithOptBinary->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new stringList, preserving every other field.
+     */
+    public function withStringList(\SqlSemantics\Statement\Model\MySql\Role\StringListForm $stringList): self
+    {
+        return new self($stringList, $this->optCharsetWithOptBinary);
+    }
+
+    /**
+     * Returns a copy with a new optCharsetWithOptBinary, preserving every other field.
+     */
+    public function withOptCharsetWithOptBinary(\SqlSemantics\Statement\Model\MySql\Role\OptCharsetWithOptBinaryForm $optCharsetWithOptBinary): self
+    {
+        return new self($this->stringList, $optCharsetWithOptBinary);
     }
 }

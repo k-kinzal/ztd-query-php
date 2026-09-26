@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpDeclsWithSpDeclsSpDecl_640896a1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpDeclsWithSpDeclsSpDecl_640896a1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpDeclsWithSpDeclsSpDecl_640896a1 implements \SqlSemantics\Statement\Model\MySql\Role\SpDeclsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SpDeclsWithSpDeclsSpDecl_640896a1 implements \SqlSemantics\Statement
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpDeclsForm $spDecls,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpDeclForm $spDecl,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spDecls), 'The spDecls must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spDecl), 'The spDecl must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SpDeclsWithSpDeclsSpDecl_640896a1 implements \SqlSemantics\Statement
         $this->spDecls->write($writer);
         $this->spDecl->write($writer);
         $writer->append(';');
+    }
+
+    /**
+     * Returns a copy with a new spDecls, preserving every other field.
+     */
+    public function withSpDecls(\SqlSemantics\Statement\Model\MySql\Role\SpDeclsForm $spDecls): self
+    {
+        return new self($spDecls, $this->spDecl);
+    }
+
+    /**
+     * Returns a copy with a new spDecl, preserving every other field.
+     */
+    public function withSpDecl(\SqlSemantics\Statement\Model\MySql\Role\SpDeclForm $spDecl): self
+    {
+        return new self($this->spDecls, $spDecl);
     }
 }

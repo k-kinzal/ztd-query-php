@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\LimitOptionWithUlonglongNum_fa7e6b0b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\LimitOptionWithUlonglongNum_fa7e6b0b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class LimitOptionWithUlonglongNum_fa7e6b0b implements \SqlSemantics\Statement\Model\MySql\Role\LimitOptionForm, \SqlSemantics\Statement\Model\MySql\Role\LimitOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $ulonglongNum,
     ) {
+        $this->assertMatchesPattern($ulonglongNum, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['ULONGLONG_NUM'], 'The ulonglongNum must be a complete ULONGLONG_NUM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class LimitOptionWithUlonglongNum_fa7e6b0b implements \SqlSemantics\Statem
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->ulonglongNum);
+    }
+
+    /**
+     * Returns a copy with a new ulonglongNum, preserving every other field.
+     */
+    public function withUlonglongNum(string $ulonglongNum): self
+    {
+        return new self($ulonglongNum);
     }
 }

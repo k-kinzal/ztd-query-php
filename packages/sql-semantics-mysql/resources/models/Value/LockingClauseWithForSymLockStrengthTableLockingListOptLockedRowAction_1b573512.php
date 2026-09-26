@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\LockingClauseWithForSymLockStrengthTableLockingListOptLockedRowAction_1b573512 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\LockingClauseWithForSymLockStrengthTableLockingListOptLockedRowAction_1b573512 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class LockingClauseWithForSymLockStrengthTableLockingListOptLockedRowAction_1b573512 implements \SqlSemantics\Statement\Model\MySql\Role\LockingClauseForm, \SqlSemantics\Statement\Model\MySql\Role\LockingClauseListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class LockingClauseWithForSymLockStrengthTableLockingListOptLockedRowActio
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableLockingListForm $tableLockingList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLockedRowActionForm $optLockedRowAction,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($lockStrength), 'The lockStrength must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableLockingList), 'The tableLockingList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLockedRowAction), 'The optLockedRowAction must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class LockingClauseWithForSymLockStrengthTableLockingListOptLockedRowActio
         $this->lockStrength->write($writer);
         $this->tableLockingList->write($writer);
         $this->optLockedRowAction->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new lockStrength, preserving every other field.
+     */
+    public function withLockStrength(\SqlSemantics\Statement\Model\MySql\Role\LockStrengthForm $lockStrength): self
+    {
+        return new self($lockStrength, $this->tableLockingList, $this->optLockedRowAction);
+    }
+
+    /**
+     * Returns a copy with a new tableLockingList, preserving every other field.
+     */
+    public function withTableLockingList(\SqlSemantics\Statement\Model\MySql\Role\TableLockingListForm $tableLockingList): self
+    {
+        return new self($this->lockStrength, $tableLockingList, $this->optLockedRowAction);
+    }
+
+    /**
+     * Returns a copy with a new optLockedRowAction, preserving every other field.
+     */
+    public function withOptLockedRowAction(\SqlSemantics\Statement\Model\MySql\Role\OptLockedRowActionForm $optLockedRowAction): self
+    {
+        return new self($this->lockStrength, $this->tableLockingList, $optLockedRowAction);
     }
 }

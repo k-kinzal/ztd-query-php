@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Role;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Role\OptDuplicateAsQeForm $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Role\OptDuplicateAsQeForm $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 interface OptDuplicateAsQeForm extends \SqlSemantics\Statement\Element

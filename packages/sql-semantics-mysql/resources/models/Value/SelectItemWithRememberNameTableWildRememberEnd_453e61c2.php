@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectItemWithRememberNameTableWildRememberEnd_453e61c2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectItemWithRememberNameTableWildRememberEnd_453e61c2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SelectItemWithRememberNameTableWildRememberEnd_453e61c2 implements \SqlSemantics\Statement\Model\MySql\Role\SelectItemForm, \SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class SelectItemWithRememberNameTableWildRememberEnd_453e61c2 implements \
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableWildForm $tableWild,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RememberEndForm $rememberEnd,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($rememberName), 'The rememberName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableWild), 'The tableWild must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($rememberEnd), 'The rememberEnd must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class SelectItemWithRememberNameTableWildRememberEnd_453e61c2 implements \
         $this->rememberName->write($writer);
         $this->tableWild->write($writer);
         $this->rememberEnd->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new rememberName, preserving every other field.
+     */
+    public function withRememberName(\SqlSemantics\Statement\Model\MySql\Role\RememberNameForm $rememberName): self
+    {
+        return new self($rememberName, $this->tableWild, $this->rememberEnd);
+    }
+
+    /**
+     * Returns a copy with a new tableWild, preserving every other field.
+     */
+    public function withTableWild(\SqlSemantics\Statement\Model\MySql\Role\TableWildForm $tableWild): self
+    {
+        return new self($this->rememberName, $tableWild, $this->rememberEnd);
+    }
+
+    /**
+     * Returns a copy with a new rememberEnd, preserving every other field.
+     */
+    public function withRememberEnd(\SqlSemantics\Statement\Model\MySql\Role\RememberEndForm $rememberEnd): self
+    {
+        return new self($this->rememberName, $this->tableWild, $rememberEnd);
     }
 }

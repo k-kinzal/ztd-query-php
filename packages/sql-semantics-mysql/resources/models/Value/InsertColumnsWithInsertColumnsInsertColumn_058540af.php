@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InsertColumnsWithInsertColumnsInsertColumn_058540af $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InsertColumnsWithInsertColumnsInsertColumn_058540af $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class InsertColumnsWithInsertColumnsInsertColumn_058540af implements \SqlSemantics\Statement\Model\MySql\Role\InsertColumnsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class InsertColumnsWithInsertColumnsInsertColumn_058540af implements \SqlS
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertColumnsForm $insertColumns,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertColumnForm $insertColumn,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($insertColumns), 'The insertColumns must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($insertColumn), 'The insertColumn must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class InsertColumnsWithInsertColumnsInsertColumn_058540af implements \SqlS
         $this->insertColumns->write($writer);
         $writer->append(',');
         $this->insertColumn->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new insertColumns, preserving every other field.
+     */
+    public function withInsertColumns(\SqlSemantics\Statement\Model\MySql\Role\InsertColumnsForm $insertColumns): self
+    {
+        return new self($insertColumns, $this->insertColumn);
+    }
+
+    /**
+     * Returns a copy with a new insertColumn, preserving every other field.
+     */
+    public function withInsertColumn(\SqlSemantics\Statement\Model\MySql\Role\InsertColumnForm $insertColumn): self
+    {
+        return new self($this->insertColumns, $insertColumn);
     }
 }

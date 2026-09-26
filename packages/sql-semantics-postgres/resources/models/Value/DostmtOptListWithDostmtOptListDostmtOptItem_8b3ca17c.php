@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DostmtOptListWithDostmtOptListDostmtOptItem_8b3ca17c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DostmtOptListWithDostmtOptListDostmtOptItem_8b3ca17c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DostmtOptListWithDostmtOptListDostmtOptItem_8b3ca17c implements \SqlSemantics\Statement\Model\PostgreSql\Role\DostmtOptListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class DostmtOptListWithDostmtOptListDostmtOptItem_8b3ca17c implements \Sql
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DostmtOptListForm $dostmtOptList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DostmtOptItemForm $dostmtOptItem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($dostmtOptList), 'The dostmtOptList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($dostmtOptItem), 'The dostmtOptItem must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class DostmtOptListWithDostmtOptListDostmtOptItem_8b3ca17c implements \Sql
     {
         $this->dostmtOptList->write($writer);
         $this->dostmtOptItem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new dostmtOptList, preserving every other field.
+     */
+    public function withDostmtOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\DostmtOptListForm $dostmtOptList): self
+    {
+        return new self($dostmtOptList, $this->dostmtOptItem);
+    }
+
+    /**
+     * Returns a copy with a new dostmtOptItem, preserving every other field.
+     */
+    public function withDostmtOptItem(\SqlSemantics\Statement\Model\PostgreSql\Role\DostmtOptItemForm $dostmtOptItem): self
+    {
+        return new self($this->dostmtOptList, $dostmtOptItem);
     }
 }

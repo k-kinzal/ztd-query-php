@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SignedLiteralWithNumLiteral_5d32f4fd $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SignedLiteralWithNumLiteral_5d32f4fd $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SignedLiteralWithNumLiteral_5d32f4fd implements \SqlSemantics\Statement\Model\MySql\Role\NowOrSignedLiteralForm, \SqlSemantics\Statement\Model\MySql\Role\SignedLiteralForm, \SqlSemantics\Statement\Model\MySql\Role\SignedLiteralOrNullForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NumLiteralForm $numLiteral,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($numLiteral), 'The numLiteral must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class SignedLiteralWithNumLiteral_5d32f4fd implements \SqlSemantics\Statem
     {
         $writer->append('+');
         $this->numLiteral->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new numLiteral, preserving every other field.
+     */
+    public function withNumLiteral(\SqlSemantics\Statement\Model\MySql\Role\NumLiteralForm $numLiteral): self
+    {
+        return new self($numLiteral);
     }
 }

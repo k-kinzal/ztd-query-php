@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonPassingClauseOptWithPassingJsonArguments_6ca3d500 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonPassingClauseOptWithPassingJsonArguments_6ca3d500 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JsonPassingClauseOptWithPassingJsonArguments_6ca3d500 implements \SqlSemantics\Statement\Model\PostgreSql\Role\JsonPassingClauseOptForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonArgumentsForm $jsonArguments,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonArguments), 'The jsonArguments must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class JsonPassingClauseOptWithPassingJsonArguments_6ca3d500 implements \Sq
     {
         $writer->append('PASSING');
         $this->jsonArguments->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new jsonArguments, preserving every other field.
+     */
+    public function withJsonArguments(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonArgumentsForm $jsonArguments): self
+    {
+        return new self($jsonArguments);
     }
 }

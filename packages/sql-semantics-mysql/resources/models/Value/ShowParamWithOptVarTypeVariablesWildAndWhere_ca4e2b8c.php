@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithOptVarTypeVariablesWildAndWhere_ca4e2b8c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithOptVarTypeVariablesWildAndWhere_ca4e2b8c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ShowParamWithOptVarTypeVariablesWildAndWhere_ca4e2b8c implements \SqlSemantics\Statement\Model\MySql\Role\ShowParamForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ShowParamWithOptVarTypeVariablesWildAndWhere_ca4e2b8c implements \Sq
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptVarTypeForm $optVarType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm $wildAndWhere,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optVarType), 'The optVarType must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($wildAndWhere), 'The wildAndWhere must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ShowParamWithOptVarTypeVariablesWildAndWhere_ca4e2b8c implements \Sq
         $this->optVarType->write($writer);
         $writer->append('VARIABLES');
         $this->wildAndWhere->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optVarType, preserving every other field.
+     */
+    public function withOptVarType(\SqlSemantics\Statement\Model\MySql\Role\OptVarTypeForm $optVarType): self
+    {
+        return new self($optVarType, $this->wildAndWhere);
+    }
+
+    /**
+     * Returns a copy with a new wildAndWhere, preserving every other field.
+     */
+    public function withWildAndWhere(\SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm $wildAndWhere): self
+    {
+        return new self($this->optVarType, $wildAndWhere);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FilterDbPairListWithFilterDbIdentFilterDbIdent_74a6fe4e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FilterDbPairListWithFilterDbIdentFilterDbIdent_74a6fe4e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FilterDbPairListWithFilterDbIdentFilterDbIdent_74a6fe4e implements \SqlSemantics\Statement\Model\MySql\Role\FilterDbPairListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FilterDbPairListWithFilterDbIdentFilterDbIdent_74a6fe4e implements \
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FilterDbIdentForm $filterDbIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FilterDbIdentForm $filterDbIdent2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($filterDbIdent), 'The filterDbIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($filterDbIdent2), 'The filterDbIdent2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class FilterDbPairListWithFilterDbIdentFilterDbIdent_74a6fe4e implements \
         $writer->append(',');
         $this->filterDbIdent2->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new filterDbIdent, preserving every other field.
+     */
+    public function withFilterDbIdent(\SqlSemantics\Statement\Model\MySql\Role\FilterDbIdentForm $filterDbIdent): self
+    {
+        return new self($filterDbIdent, $this->filterDbIdent2);
+    }
+
+    /**
+     * Returns a copy with a new filterDbIdent2, preserving every other field.
+     */
+    public function withFilterDbIdent2(\SqlSemantics\Statement\Model\MySql\Role\FilterDbIdentForm $filterDbIdent2): self
+    {
+        return new self($this->filterDbIdent, $filterDbIdent2);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterObjectDependsStmtWithAlterMaterializedViewQualifiedNameOptNoDependsOnExtensionName_fd65ae83 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterObjectDependsStmtWithAlterMaterializedViewQualifiedNameOptNoDependsOnExtensionName_fd65ae83 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterObjectDependsStmtWithAlterMaterializedViewQualifiedNameOptNoDependsOnExtensionName_fd65ae83 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterObjectDependsStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterObjectDependsStmtWithAlterMaterializedViewQualifiedNameOptNoDependsOnExtensionName_fd65ae83 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterObjectDependsStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterObjectDependsStmtWithAlterMaterializedViewQualifiedNameOptNoDep
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptNoForm $optNo,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optNo), 'The optNo must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
     }
 
     /**
@@ -38,5 +43,29 @@ final class AlterObjectDependsStmtWithAlterMaterializedViewQualifiedNameOptNoDep
         $writer->append('ON');
         $writer->append('EXTENSION');
         $this->name->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new qualifiedName, preserving every other field.
+     */
+    public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
+    {
+        return new self($qualifiedName, $this->optNo, $this->name);
+    }
+
+    /**
+     * Returns a copy with a new optNo, preserving every other field.
+     */
+    public function withOptNo(\SqlSemantics\Statement\Model\PostgreSql\Role\OptNoForm $optNo): self
+    {
+        return new self($this->qualifiedName, $optNo, $this->name);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($this->qualifiedName, $this->optNo, $name);
     }
 }

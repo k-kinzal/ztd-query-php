@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GrantWithGrantRoleOrPrivilegeListToSymUserListOptWithAdminOption_2491e436 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GrantWithGrantRoleOrPrivilegeListToSymUserListOptWithAdminOption_2491e436 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class GrantWithGrantRoleOrPrivilegeListToSymUserListOptWithAdminOption_2491e436 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\GrantForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class GrantWithGrantRoleOrPrivilegeListToSymUserListOptWithAdminOption_2491e436 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\GrantForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class GrantWithGrantRoleOrPrivilegeListToSymUserListOptWithAdminOption_249
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWithAdminOptionForm $optWithAdminOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($roleOrPrivilegeList), 'The roleOrPrivilegeList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($userList), 'The userList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWithAdminOption), 'The optWithAdminOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class GrantWithGrantRoleOrPrivilegeListToSymUserListOptWithAdminOption_249
         $writer->append('TO');
         $this->userList->write($writer);
         $this->optWithAdminOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new roleOrPrivilegeList, preserving every other field.
+     */
+    public function withRoleOrPrivilegeList(\SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeListForm $roleOrPrivilegeList): self
+    {
+        return new self($roleOrPrivilegeList, $this->userList, $this->optWithAdminOption);
+    }
+
+    /**
+     * Returns a copy with a new userList, preserving every other field.
+     */
+    public function withUserList(\SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList): self
+    {
+        return new self($this->roleOrPrivilegeList, $userList, $this->optWithAdminOption);
+    }
+
+    /**
+     * Returns a copy with a new optWithAdminOption, preserving every other field.
+     */
+    public function withOptWithAdminOption(\SqlSemantics\Statement\Model\MySql\Role\OptWithAdminOptionForm $optWithAdminOption): self
+    {
+        return new self($this->roleOrPrivilegeList, $this->userList, $optWithAdminOption);
     }
 }

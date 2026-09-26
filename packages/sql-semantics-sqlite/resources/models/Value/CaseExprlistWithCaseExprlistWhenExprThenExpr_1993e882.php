@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CaseExprlistWithCaseExprlistWhenExprThenExpr_1993e882 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CaseExprlistWithCaseExprlistWhenExprThenExpr_1993e882 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CaseExprlistWithCaseExprlistWhenExprThenExpr_1993e882 implements \SqlSemantics\Statement\Model\Sqlite\Role\CaseExprlistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CaseExprlistWithCaseExprlistWhenExprThenExpr_1993e882 implements \Sq
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($caseExprlist), 'The caseExprlist must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr2), 'The expr2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class CaseExprlistWithCaseExprlistWhenExprThenExpr_1993e882 implements \Sq
         $this->expr->write($writer);
         $writer->append('THEN');
         $this->expr2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new caseExprlist, preserving every other field.
+     */
+    public function withCaseExprlist(\SqlSemantics\Statement\Model\Sqlite\Role\CaseExprlistForm $caseExprlist): self
+    {
+        return new self($caseExprlist, $this->expr, $this->expr2);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
+    {
+        return new self($this->caseExprlist, $expr, $this->expr2);
+    }
+
+    /**
+     * Returns a copy with a new expr2, preserving every other field.
+     */
+    public function withExpr2(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr2): self
+    {
+        return new self($this->caseExprlist, $this->expr, $expr2);
     }
 }

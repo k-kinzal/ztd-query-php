@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GrantCommandWithGrantPrivilegesOnOptTableGrantIdentToSymGrantListRequireClauseGrantOptions_50dfc410 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GrantCommandWithGrantPrivilegesOnOptTableGrantIdentToSymGrantListRequireClauseGrantOptions_50dfc410 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GrantCommandWithGrantPrivilegesOnOptTableGrantIdentToSymGrantListRequireClauseGrantOptions_50dfc410 implements \SqlSemantics\Statement\Model\MySql\Role\GrantCommandForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -25,6 +27,12 @@ final class GrantCommandWithGrantPrivilegesOnOptTableGrantIdentToSymGrantListReq
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RequireClauseForm $requireClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GrantOptionsForm $grantOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($grantPrivileges), 'The grantPrivileges must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optTable), 'The optTable must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($grantIdent), 'The grantIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($grantList), 'The grantList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($requireClause), 'The requireClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($grantOptions), 'The grantOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -40,5 +48,53 @@ final class GrantCommandWithGrantPrivilegesOnOptTableGrantIdentToSymGrantListReq
         $this->grantList->write($writer);
         $this->requireClause->write($writer);
         $this->grantOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new grantPrivileges, preserving every other field.
+     */
+    public function withGrantPrivileges(\SqlSemantics\Statement\Model\MySql\Role\GrantPrivilegesForm $grantPrivileges): self
+    {
+        return new self($grantPrivileges, $this->optTable, $this->grantIdent, $this->grantList, $this->requireClause, $this->grantOptions);
+    }
+
+    /**
+     * Returns a copy with a new optTable, preserving every other field.
+     */
+    public function withOptTable(\SqlSemantics\Statement\Model\MySql\Role\OptTableForm $optTable): self
+    {
+        return new self($this->grantPrivileges, $optTable, $this->grantIdent, $this->grantList, $this->requireClause, $this->grantOptions);
+    }
+
+    /**
+     * Returns a copy with a new grantIdent, preserving every other field.
+     */
+    public function withGrantIdent(\SqlSemantics\Statement\Model\MySql\Role\GrantIdentForm $grantIdent): self
+    {
+        return new self($this->grantPrivileges, $this->optTable, $grantIdent, $this->grantList, $this->requireClause, $this->grantOptions);
+    }
+
+    /**
+     * Returns a copy with a new grantList, preserving every other field.
+     */
+    public function withGrantList(\SqlSemantics\Statement\Model\MySql\Role\GrantListForm $grantList): self
+    {
+        return new self($this->grantPrivileges, $this->optTable, $this->grantIdent, $grantList, $this->requireClause, $this->grantOptions);
+    }
+
+    /**
+     * Returns a copy with a new requireClause, preserving every other field.
+     */
+    public function withRequireClause(\SqlSemantics\Statement\Model\MySql\Role\RequireClauseForm $requireClause): self
+    {
+        return new self($this->grantPrivileges, $this->optTable, $this->grantIdent, $this->grantList, $requireClause, $this->grantOptions);
+    }
+
+    /**
+     * Returns a copy with a new grantOptions, preserving every other field.
+     */
+    public function withGrantOptions(\SqlSemantics\Statement\Model\MySql\Role\GrantOptionsForm $grantOptions): self
+    {
+        return new self($this->grantPrivileges, $this->optTable, $this->grantIdent, $this->grantList, $this->requireClause, $grantOptions);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SortbyListWithSortbyListSortby_aca43ab5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SortbyListWithSortbyListSortby_aca43ab5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SortbyListWithSortbyListSortby_aca43ab5 implements \SqlSemantics\Statement\Model\PostgreSql\Role\SortbyListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SortbyListWithSortbyListSortby_aca43ab5 implements \SqlSemantics\Sta
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SortbyListForm $sortbyList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SortbyForm $sortby,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($sortbyList), 'The sortbyList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($sortby), 'The sortby must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SortbyListWithSortbyListSortby_aca43ab5 implements \SqlSemantics\Sta
         $this->sortbyList->write($writer);
         $writer->append(',');
         $this->sortby->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new sortbyList, preserving every other field.
+     */
+    public function withSortbyList(\SqlSemantics\Statement\Model\PostgreSql\Role\SortbyListForm $sortbyList): self
+    {
+        return new self($sortbyList, $this->sortby);
+    }
+
+    /**
+     * Returns a copy with a new sortby, preserving every other field.
+     */
+    public function withSortby(\SqlSemantics\Statement\Model\PostgreSql\Role\SortbyForm $sortby): self
+    {
+        return new self($this->sortbyList, $sortby);
     }
 }

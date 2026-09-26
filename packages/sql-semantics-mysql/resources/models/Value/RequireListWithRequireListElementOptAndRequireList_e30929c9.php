@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RequireListWithRequireListElementOptAndRequireList_e30929c9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RequireListWithRequireListElementOptAndRequireList_e30929c9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RequireListWithRequireListElementOptAndRequireList_e30929c9 implements \SqlSemantics\Statement\Model\MySql\Role\RequireListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class RequireListWithRequireListElementOptAndRequireList_e30929c9 implemen
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptAndForm $optAnd,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RequireListForm $requireList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($requireListElement), 'The requireListElement must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optAnd), 'The optAnd must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($requireList), 'The requireList must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class RequireListWithRequireListElementOptAndRequireList_e30929c9 implemen
         $this->requireListElement->write($writer);
         $this->optAnd->write($writer);
         $this->requireList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new requireListElement, preserving every other field.
+     */
+    public function withRequireListElement(\SqlSemantics\Statement\Model\MySql\Role\RequireListElementForm $requireListElement): self
+    {
+        return new self($requireListElement, $this->optAnd, $this->requireList);
+    }
+
+    /**
+     * Returns a copy with a new optAnd, preserving every other field.
+     */
+    public function withOptAnd(\SqlSemantics\Statement\Model\MySql\Role\OptAndForm $optAnd): self
+    {
+        return new self($this->requireListElement, $optAnd, $this->requireList);
+    }
+
+    /**
+     * Returns a copy with a new requireList, preserving every other field.
+     */
+    public function withRequireList(\SqlSemantics\Statement\Model\MySql\Role\RequireListForm $requireList): self
+    {
+        return new self($this->requireListElement, $this->optAnd, $requireList);
     }
 }

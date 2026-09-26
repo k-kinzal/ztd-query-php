@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RequireListElementWithCipherSymTextString_c99a7d99 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RequireListElementWithCipherSymTextString_c99a7d99 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RequireListElementWithCipherSymTextString_c99a7d99 implements \SqlSemantics\Statement\Model\MySql\Role\RequireListForm, \SqlSemantics\Statement\Model\MySql\Role\RequireListElementForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $value,
     ) {
+        $this->assertMatchesPattern($value, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['TEXT_STRING'], 'The value must be a complete TEXT_STRING lexical spelling.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class RequireListElementWithCipherSymTextString_c99a7d99 implements \SqlSe
     {
         $writer->append('CIPHER');
         $writer->append($this->value);
+    }
+
+    /**
+     * Returns a copy with a new value, preserving every other field.
+     */
+    public function withValue(string $value): self
+    {
+        return new self($value);
     }
 }

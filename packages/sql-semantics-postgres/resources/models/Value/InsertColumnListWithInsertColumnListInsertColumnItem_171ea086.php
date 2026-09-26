@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\InsertColumnListWithInsertColumnListInsertColumnItem_171ea086 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\InsertColumnListWithInsertColumnListInsertColumnItem_171ea086 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class InsertColumnListWithInsertColumnListInsertColumnItem_171ea086 implements \SqlSemantics\Statement\Model\PostgreSql\Role\InsertColumnListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class InsertColumnListWithInsertColumnListInsertColumnItem_171ea086 implem
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\InsertColumnListForm $insertColumnList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\InsertColumnItemForm $insertColumnItem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($insertColumnList), 'The insertColumnList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($insertColumnItem), 'The insertColumnItem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class InsertColumnListWithInsertColumnListInsertColumnItem_171ea086 implem
         $this->insertColumnList->write($writer);
         $writer->append(',');
         $this->insertColumnItem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new insertColumnList, preserving every other field.
+     */
+    public function withInsertColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\InsertColumnListForm $insertColumnList): self
+    {
+        return new self($insertColumnList, $this->insertColumnItem);
+    }
+
+    /**
+     * Returns a copy with a new insertColumnItem, preserving every other field.
+     */
+    public function withInsertColumnItem(\SqlSemantics\Statement\Model\PostgreSql\Role\InsertColumnItemForm $insertColumnItem): self
+    {
+        return new self($this->insertColumnList, $insertColumnItem);
     }
 }

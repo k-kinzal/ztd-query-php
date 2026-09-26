@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableCmdWithReplicaIdentityPReplicaIdentity_a3cdcaa3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableCmdWithReplicaIdentityPReplicaIdentity_a3cdcaa3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterTableCmdWithReplicaIdentityPReplicaIdentity_a3cdcaa3 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ReplicaIdentityForm $replicaIdentity,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($replicaIdentity), 'The replicaIdentity must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class AlterTableCmdWithReplicaIdentityPReplicaIdentity_a3cdcaa3 implements
         $writer->append('REPLICA');
         $writer->append('IDENTITY');
         $this->replicaIdentity->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new replicaIdentity, preserving every other field.
+     */
+    public function withReplicaIdentity(\SqlSemantics\Statement\Model\PostgreSql\Role\ReplicaIdentityForm $replicaIdentity): self
+    {
+        return new self($replicaIdentity);
     }
 }

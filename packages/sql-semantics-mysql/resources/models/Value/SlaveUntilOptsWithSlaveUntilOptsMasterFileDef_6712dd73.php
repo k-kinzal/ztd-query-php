@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SlaveUntilOptsWithSlaveUntilOptsMasterFileDef_6712dd73 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SlaveUntilOptsWithSlaveUntilOptsMasterFileDef_6712dd73 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SlaveUntilOptsWithSlaveUntilOptsMasterFileDef_6712dd73 implements \SqlSemantics\Statement\Model\MySql\Role\SlaveUntilOptsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SlaveUntilOptsWithSlaveUntilOptsMasterFileDef_6712dd73 implements \S
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SlaveUntilOptsForm $slaveUntilOpts,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\MasterFileDefForm $masterFileDef,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($slaveUntilOpts), 'The slaveUntilOpts must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($masterFileDef), 'The masterFileDef must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SlaveUntilOptsWithSlaveUntilOptsMasterFileDef_6712dd73 implements \S
         $this->slaveUntilOpts->write($writer);
         $writer->append(',');
         $this->masterFileDef->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new slaveUntilOpts, preserving every other field.
+     */
+    public function withSlaveUntilOpts(\SqlSemantics\Statement\Model\MySql\Role\SlaveUntilOptsForm $slaveUntilOpts): self
+    {
+        return new self($slaveUntilOpts, $this->masterFileDef);
+    }
+
+    /**
+     * Returns a copy with a new masterFileDef, preserving every other field.
+     */
+    public function withMasterFileDef(\SqlSemantics\Statement\Model\MySql\Role\MasterFileDefForm $masterFileDef): self
+    {
+        return new self($this->slaveUntilOpts, $masterFileDef);
     }
 }

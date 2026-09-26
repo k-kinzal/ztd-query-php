@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptionValueNoOptionTypeWithNamesSymDefaultSym_e9c83fda $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptionValueNoOptionTypeWithNamesSymDefaultSym_e9c83fda $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptionValueNoOptionTypeWithNamesSymDefaultSym_e9c83fda implements \SqlSemantics\Statement\Model\MySql\Role\OptionValueForm, \SqlSemantics\Statement\Model\MySql\Role\OptionValueListForm, \SqlSemantics\Statement\Model\MySql\Role\OptionValueNoOptionTypeForm

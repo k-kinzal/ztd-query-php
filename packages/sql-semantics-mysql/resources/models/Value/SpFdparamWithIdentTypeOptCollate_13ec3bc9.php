@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpFdparamWithIdentTypeOptCollate_13ec3bc9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpFdparamWithIdentTypeOptCollate_13ec3bc9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpFdparamWithIdentTypeOptCollate_13ec3bc9 implements \SqlSemantics\Statement\Model\MySql\Role\SpFdparamForm, \SqlSemantics\Statement\Model\MySql\Role\SpFdparamListForm, \SqlSemantics\Statement\Model\MySql\Role\SpFdparamsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class SpFdparamWithIdentTypeOptCollate_13ec3bc9 implements \SqlSemantics\S
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TypeForm $type,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCollateForm $optCollate,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($type), 'The type must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCollate), 'The optCollate must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class SpFdparamWithIdentTypeOptCollate_13ec3bc9 implements \SqlSemantics\S
         $this->ident->write($writer);
         $this->type->write($writer);
         $this->optCollate->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($ident, $this->type, $this->optCollate);
+    }
+
+    /**
+     * Returns a copy with a new type, preserving every other field.
+     */
+    public function withType(\SqlSemantics\Statement\Model\MySql\Role\TypeForm $type): self
+    {
+        return new self($this->ident, $type, $this->optCollate);
+    }
+
+    /**
+     * Returns a copy with a new optCollate, preserving every other field.
+     */
+    public function withOptCollate(\SqlSemantics\Statement\Model\MySql\Role\OptCollateForm $optCollate): self
+    {
+        return new self($this->ident, $this->type, $optCollate);
     }
 }

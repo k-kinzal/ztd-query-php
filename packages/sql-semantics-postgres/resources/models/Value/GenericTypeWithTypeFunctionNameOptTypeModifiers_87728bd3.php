@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\GenericTypeWithTypeFunctionNameOptTypeModifiers_87728bd3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\GenericTypeWithTypeFunctionNameOptTypeModifiers_87728bd3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GenericTypeWithTypeFunctionNameOptTypeModifiers_87728bd3 implements \SqlSemantics\Statement\Model\PostgreSql\Role\GenericTypeForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SimpleTypenameForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class GenericTypeWithTypeFunctionNameOptTypeModifiers_87728bd3 implements 
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypeFunctionNameForm $typeFunctionName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTypeModifiersForm $optTypeModifiers,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typeFunctionName), 'The typeFunctionName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTypeModifiers), 'The optTypeModifiers must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class GenericTypeWithTypeFunctionNameOptTypeModifiers_87728bd3 implements 
     {
         $this->typeFunctionName->write($writer);
         $this->optTypeModifiers->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new typeFunctionName, preserving every other field.
+     */
+    public function withTypeFunctionName(\SqlSemantics\Statement\Model\PostgreSql\Role\TypeFunctionNameForm $typeFunctionName): self
+    {
+        return new self($typeFunctionName, $this->optTypeModifiers);
+    }
+
+    /**
+     * Returns a copy with a new optTypeModifiers, preserving every other field.
+     */
+    public function withOptTypeModifiers(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTypeModifiersForm $optTypeModifiers): self
+    {
+        return new self($this->typeFunctionName, $optTypeModifiers);
     }
 }

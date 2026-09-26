@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithProfileSymOptProfileDefsOptProfileArgsOptLimitClauseInit_d011d256 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithProfileSymOptProfileDefsOptProfileArgsOptLimitClauseInit_d011d256 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ShowParamWithProfileSymOptProfileDefsOptProfileArgsOptLimitClauseInit_d011d256 implements \SqlSemantics\Statement\Model\MySql\Role\ShowParamForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class ShowParamWithProfileSymOptProfileDefsOptProfileArgsOptLimitClauseIni
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptProfileArgsForm $optProfileArgs,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseInitForm $optLimitClauseInit,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optProfileDefs), 'The optProfileDefs must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optProfileArgs), 'The optProfileArgs must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLimitClauseInit), 'The optLimitClauseInit must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class ShowParamWithProfileSymOptProfileDefsOptProfileArgsOptLimitClauseIni
         $this->optProfileDefs->write($writer);
         $this->optProfileArgs->write($writer);
         $this->optLimitClauseInit->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optProfileDefs, preserving every other field.
+     */
+    public function withOptProfileDefs(\SqlSemantics\Statement\Model\MySql\Role\OptProfileDefsForm $optProfileDefs): self
+    {
+        return new self($optProfileDefs, $this->optProfileArgs, $this->optLimitClauseInit);
+    }
+
+    /**
+     * Returns a copy with a new optProfileArgs, preserving every other field.
+     */
+    public function withOptProfileArgs(\SqlSemantics\Statement\Model\MySql\Role\OptProfileArgsForm $optProfileArgs): self
+    {
+        return new self($this->optProfileDefs, $optProfileArgs, $this->optLimitClauseInit);
+    }
+
+    /**
+     * Returns a copy with a new optLimitClauseInit, preserving every other field.
+     */
+    public function withOptLimitClauseInit(\SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseInitForm $optLimitClauseInit): self
+    {
+        return new self($this->optProfileDefs, $this->optProfileArgs, $optLimitClauseInit);
     }
 }

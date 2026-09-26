@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CollateWithCollateIds_8425b902 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CollateWithCollateIds_8425b902 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CollateWithCollateIds_8425b902 implements \SqlSemantics\Statement\Model\Sqlite\Role\CollateForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $ids,
     ) {
+        $this->assertMatchesPattern($ids, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['ids'], 'The ids must be a complete ids lexical spelling.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class CollateWithCollateIds_8425b902 implements \SqlSemantics\Statement\Mo
     {
         $writer->append('COLLATE');
         $writer->append($this->ids);
+    }
+
+    /**
+     * Returns a copy with a new ids, preserving every other field.
+     */
+    public function withIds(string $ids): self
+    {
+        return new self($ids);
     }
 }

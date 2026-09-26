@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithVacuumNmVinto_13d1a32b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithVacuumNmVinto_13d1a32b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CmdWithVacuumNmVinto_13d1a32b implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm
+final class CmdWithVacuumNmVinto_13d1a32b implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CmdWithVacuumNmVinto_13d1a32b implements \SqlSemantics\Statement\Mod
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\VintoForm $vinto,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($vinto), 'The vinto must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class CmdWithVacuumNmVinto_13d1a32b implements \SqlSemantics\Statement\Mod
         $writer->append('VACUUM');
         $this->nm->write($writer);
         $this->vinto->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new nm, preserving every other field.
+     */
+    public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
+    {
+        return new self($nm, $this->vinto);
+    }
+
+    /**
+     * Returns a copy with a new vinto, preserving every other field.
+     */
+    public function withVinto(\SqlSemantics\Statement\Model\Sqlite\Role\VintoForm $vinto): self
+    {
+        return new self($this->nm, $vinto);
     }
 }

@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SeqOptElemWithNoMaxvalue_499ee6df $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SeqOptElemWithNoMaxvalue_499ee6df $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SeqOptElemWithNoMaxvalue_499ee6df implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptSeqOptListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SeqOptElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SeqOptListForm

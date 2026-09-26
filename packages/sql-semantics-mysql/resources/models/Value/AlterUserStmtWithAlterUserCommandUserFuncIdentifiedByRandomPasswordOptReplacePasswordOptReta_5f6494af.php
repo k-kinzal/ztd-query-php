@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterUserStmtWithAlterUserCommandUserFuncIdentifiedByRandomPasswordOptReplacePasswordOptReta_5f6494af $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterUserStmtWithAlterUserCommandUserFuncIdentifiedByRandomPasswordOptReplacePasswordOptReta_5f6494af $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterUserStmtWithAlterUserCommandUserFuncIdentifiedByRandomPasswordOptReplacePasswordOptReta_5f6494af implements \SqlSemantics\Statement\Model\MySql\Role\AlterUserStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class AlterUserStmtWithAlterUserCommandUserFuncIdentifiedByRandomPasswordOptReplacePasswordOptReta_5f6494af implements \SqlSemantics\Statement\Model\MySql\Role\AlterUserStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class AlterUserStmtWithAlterUserCommandUserFuncIdentifiedByRandomPasswordO
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptReplacePasswordForm $optReplacePassword,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptRetainCurrentPasswordForm $optRetainCurrentPassword,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterUserCommand), 'The alterUserCommand must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($userFunc), 'The userFunc must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identifiedByRandomPassword), 'The identifiedByRandomPassword must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optReplacePassword), 'The optReplacePassword must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optRetainCurrentPassword), 'The optRetainCurrentPassword must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +43,45 @@ final class AlterUserStmtWithAlterUserCommandUserFuncIdentifiedByRandomPasswordO
         $this->identifiedByRandomPassword->write($writer);
         $this->optReplacePassword->write($writer);
         $this->optRetainCurrentPassword->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new alterUserCommand, preserving every other field.
+     */
+    public function withAlterUserCommand(\SqlSemantics\Statement\Model\MySql\Role\AlterUserCommandForm $alterUserCommand): self
+    {
+        return new self($alterUserCommand, $this->userFunc, $this->identifiedByRandomPassword, $this->optReplacePassword, $this->optRetainCurrentPassword);
+    }
+
+    /**
+     * Returns a copy with a new userFunc, preserving every other field.
+     */
+    public function withUserFunc(\SqlSemantics\Statement\Model\MySql\Role\UserFuncForm $userFunc): self
+    {
+        return new self($this->alterUserCommand, $userFunc, $this->identifiedByRandomPassword, $this->optReplacePassword, $this->optRetainCurrentPassword);
+    }
+
+    /**
+     * Returns a copy with a new identifiedByRandomPassword, preserving every other field.
+     */
+    public function withIdentifiedByRandomPassword(\SqlSemantics\Statement\Model\MySql\Role\IdentifiedByRandomPasswordForm $identifiedByRandomPassword): self
+    {
+        return new self($this->alterUserCommand, $this->userFunc, $identifiedByRandomPassword, $this->optReplacePassword, $this->optRetainCurrentPassword);
+    }
+
+    /**
+     * Returns a copy with a new optReplacePassword, preserving every other field.
+     */
+    public function withOptReplacePassword(\SqlSemantics\Statement\Model\MySql\Role\OptReplacePasswordForm $optReplacePassword): self
+    {
+        return new self($this->alterUserCommand, $this->userFunc, $this->identifiedByRandomPassword, $optReplacePassword, $this->optRetainCurrentPassword);
+    }
+
+    /**
+     * Returns a copy with a new optRetainCurrentPassword, preserving every other field.
+     */
+    public function withOptRetainCurrentPassword(\SqlSemantics\Statement\Model\MySql\Role\OptRetainCurrentPasswordForm $optRetainCurrentPassword): self
+    {
+        return new self($this->alterUserCommand, $this->userFunc, $this->identifiedByRandomPassword, $this->optReplacePassword, $optRetainCurrentPassword);
     }
 }

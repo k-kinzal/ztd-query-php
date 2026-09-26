@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\VtabarglistWithVtabarglistCommaVtabarg_297de28e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\VtabarglistWithVtabarglistCommaVtabarg_297de28e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class VtabarglistWithVtabarglistCommaVtabarg_297de28e implements \SqlSemantics\Statement\Model\Sqlite\Role\VtabarglistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class VtabarglistWithVtabarglistCommaVtabarg_297de28e implements \SqlSeman
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\VtabarglistForm $vtabarglist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\VtabargForm $vtabarg,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($vtabarglist), 'The vtabarglist must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($vtabarg), 'The vtabarg must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class VtabarglistWithVtabarglistCommaVtabarg_297de28e implements \SqlSeman
         $this->vtabarglist->write($writer);
         $writer->append(',');
         $this->vtabarg->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new vtabarglist, preserving every other field.
+     */
+    public function withVtabarglist(\SqlSemantics\Statement\Model\Sqlite\Role\VtabarglistForm $vtabarglist): self
+    {
+        return new self($vtabarglist, $this->vtabarg);
+    }
+
+    /**
+     * Returns a copy with a new vtabarg, preserving every other field.
+     */
+    public function withVtabarg(\SqlSemantics\Statement\Model\Sqlite\Role\VtabargForm $vtabarg): self
+    {
+        return new self($this->vtabarglist, $vtabarg);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StartEntryWithGrammarSelectorDerivedExprExprEndOfInput_52e234ff $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StartEntryWithGrammarSelectorDerivedExprExprEndOfInput_52e234ff $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class StartEntryWithGrammarSelectorDerivedExprExprEndOfInput_52e234ff implements \SqlSemantics\Statement\Model\MySql\Role\StartEntryForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class StartEntryWithGrammarSelectorDerivedExprExprEndOfInput_52e234ff impl
         public readonly string $grammarSelectorDerivedExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
     ) {
+        $this->assertMatchesPattern($grammarSelectorDerivedExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['GRAMMAR_SELECTOR_DERIVED_EXPR'], 'The grammarSelectorDerivedExpr must be a complete GRAMMAR_SELECTOR_DERIVED_EXPR lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class StartEntryWithGrammarSelectorDerivedExprExprEndOfInput_52e234ff impl
     {
         $writer->append($this->grammarSelectorDerivedExpr);
         $this->expr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new grammarSelectorDerivedExpr, preserving every other field.
+     */
+    public function withGrammarSelectorDerivedExpr(string $grammarSelectorDerivedExpr): self
+    {
+        return new self($grammarSelectorDerivedExpr, $this->expr);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
+    {
+        return new self($this->grammarSelectorDerivedExpr, $expr);
     }
 }

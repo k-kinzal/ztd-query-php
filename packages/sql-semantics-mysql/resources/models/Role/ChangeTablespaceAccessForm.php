@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Role;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Role\ChangeTablespaceAccessForm $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Role\ChangeTablespaceAccessForm $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 interface ChangeTablespaceAccessForm extends \SqlSemantics\Statement\Element

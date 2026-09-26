@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InsertFromSubqueryWithFieldsInsertQueryExpression_b865e66a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InsertFromSubqueryWithFieldsInsertQueryExpression_b865e66a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class InsertFromSubqueryWithFieldsInsertQueryExpression_b865e66a implements \SqlSemantics\Statement\Model\MySql\Role\InsertFromSubqueryForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class InsertFromSubqueryWithFieldsInsertQueryExpression_b865e66a implement
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldsForm $fields,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertQueryExpressionForm $insertQueryExpression,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fields), 'The fields must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($insertQueryExpression), 'The insertQueryExpression must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class InsertFromSubqueryWithFieldsInsertQueryExpression_b865e66a implement
         $this->fields->write($writer);
         $writer->append(')');
         $this->insertQueryExpression->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new fields, preserving every other field.
+     */
+    public function withFields(\SqlSemantics\Statement\Model\MySql\Role\FieldsForm $fields): self
+    {
+        return new self($fields, $this->insertQueryExpression);
+    }
+
+    /**
+     * Returns a copy with a new insertQueryExpression, preserving every other field.
+     */
+    public function withInsertQueryExpression(\SqlSemantics\Statement\Model\MySql\Role\InsertQueryExpressionForm $insertQueryExpression): self
+    {
+        return new self($this->fields, $insertQueryExpression);
     }
 }

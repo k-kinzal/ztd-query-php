@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SfTailWithFunctionSymOptIfNotExistsSpNameSpFdparamListReturnsSymTypeOptCollateSpCChis_07342a0a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SfTailWithFunctionSymOptIfNotExistsSpNameSpFdparamListReturnsSymTypeOptCollateSpCChis_07342a0a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SfTailWithFunctionSymOptIfNotExistsSpNameSpFdparamListReturnsSymTypeOptCollateSpCChis_07342a0a implements \SqlSemantics\Statement\Model\MySql\Role\DefinerTailForm, \SqlSemantics\Statement\Model\MySql\Role\NoDefinerTailForm, \SqlSemantics\Statement\Model\MySql\Role\SfTailForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -26,6 +28,13 @@ final class SfTailWithFunctionSymOptIfNotExistsSpNameSpFdparamListReturnsSymType
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpCChisticsForm $spCChistics,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm $spProcStmt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIfNotExists), 'The optIfNotExists must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spName), 'The spName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spFdparamList), 'The spFdparamList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($type), 'The type must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCollate), 'The optCollate must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spCChistics), 'The spCChistics must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spProcStmt), 'The spProcStmt must be a generated immutable SQL value.');
     }
 
     /**
@@ -44,5 +53,61 @@ final class SfTailWithFunctionSymOptIfNotExistsSpNameSpFdparamListReturnsSymType
         $this->optCollate->write($writer);
         $this->spCChistics->write($writer);
         $this->spProcStmt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optIfNotExists, preserving every other field.
+     */
+    public function withOptIfNotExists(\SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists): self
+    {
+        return new self($optIfNotExists, $this->spName, $this->spFdparamList, $this->type, $this->optCollate, $this->spCChistics, $this->spProcStmt);
+    }
+
+    /**
+     * Returns a copy with a new spName, preserving every other field.
+     */
+    public function withSpName(\SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName): self
+    {
+        return new self($this->optIfNotExists, $spName, $this->spFdparamList, $this->type, $this->optCollate, $this->spCChistics, $this->spProcStmt);
+    }
+
+    /**
+     * Returns a copy with a new spFdparamList, preserving every other field.
+     */
+    public function withSpFdparamList(\SqlSemantics\Statement\Model\MySql\Role\SpFdparamListForm $spFdparamList): self
+    {
+        return new self($this->optIfNotExists, $this->spName, $spFdparamList, $this->type, $this->optCollate, $this->spCChistics, $this->spProcStmt);
+    }
+
+    /**
+     * Returns a copy with a new type, preserving every other field.
+     */
+    public function withType(\SqlSemantics\Statement\Model\MySql\Role\TypeForm $type): self
+    {
+        return new self($this->optIfNotExists, $this->spName, $this->spFdparamList, $type, $this->optCollate, $this->spCChistics, $this->spProcStmt);
+    }
+
+    /**
+     * Returns a copy with a new optCollate, preserving every other field.
+     */
+    public function withOptCollate(\SqlSemantics\Statement\Model\MySql\Role\OptCollateForm $optCollate): self
+    {
+        return new self($this->optIfNotExists, $this->spName, $this->spFdparamList, $this->type, $optCollate, $this->spCChistics, $this->spProcStmt);
+    }
+
+    /**
+     * Returns a copy with a new spCChistics, preserving every other field.
+     */
+    public function withSpCChistics(\SqlSemantics\Statement\Model\MySql\Role\SpCChisticsForm $spCChistics): self
+    {
+        return new self($this->optIfNotExists, $this->spName, $this->spFdparamList, $this->type, $this->optCollate, $spCChistics, $this->spProcStmt);
+    }
+
+    /**
+     * Returns a copy with a new spProcStmt, preserving every other field.
+     */
+    public function withSpProcStmt(\SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm $spProcStmt): self
+    {
+        return new self($this->optIfNotExists, $this->spName, $this->spFdparamList, $this->type, $this->optCollate, $this->spCChistics, $spProcStmt);
     }
 }

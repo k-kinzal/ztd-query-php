@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\FrameOptWith_3ee819af $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\FrameOptWith_3ee819af $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FrameOptWith_3ee819af implements \SqlSemantics\Statement\Model\Sqlite\Role\FrameOptForm, \SqlSemantics\Statement\Model\Sqlite\Role\WindowForm

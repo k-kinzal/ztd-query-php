@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\Sqlite\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Choice\NullsChoice_6b2c7d75 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Choice\NullsChoice_6b2c7d75 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum NullsChoice_6b2c7d75: string implements \SqlSemantics\Statement\Model\Sqlite\Role\NullsForm

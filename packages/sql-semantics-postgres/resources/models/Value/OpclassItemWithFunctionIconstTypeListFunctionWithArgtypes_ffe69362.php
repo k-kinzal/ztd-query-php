@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OpclassItemWithFunctionIconstTypeListFunctionWithArgtypes_ffe69362 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OpclassItemWithFunctionIconstTypeListFunctionWithArgtypes_ffe69362 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OpclassItemWithFunctionIconstTypeListFunctionWithArgtypes_ffe69362 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OpclassItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OpclassItemListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class OpclassItemWithFunctionIconstTypeListFunctionWithArgtypes_ffe69362 i
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypeListForm $typeList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm $functionWithArgtypes,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($iconst), 'The iconst must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typeList), 'The typeList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($functionWithArgtypes), 'The functionWithArgtypes must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +40,29 @@ final class OpclassItemWithFunctionIconstTypeListFunctionWithArgtypes_ffe69362 i
         $this->typeList->write($writer);
         $writer->append(')');
         $this->functionWithArgtypes->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new iconst, preserving every other field.
+     */
+    public function withIconst(\SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst): self
+    {
+        return new self($iconst, $this->typeList, $this->functionWithArgtypes);
+    }
+
+    /**
+     * Returns a copy with a new typeList, preserving every other field.
+     */
+    public function withTypeList(\SqlSemantics\Statement\Model\PostgreSql\Role\TypeListForm $typeList): self
+    {
+        return new self($this->iconst, $typeList, $this->functionWithArgtypes);
+    }
+
+    /**
+     * Returns a copy with a new functionWithArgtypes, preserving every other field.
+     */
+    public function withFunctionWithArgtypes(\SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm $functionWithArgtypes): self
+    {
+        return new self($this->iconst, $this->typeList, $functionWithArgtypes);
     }
 }

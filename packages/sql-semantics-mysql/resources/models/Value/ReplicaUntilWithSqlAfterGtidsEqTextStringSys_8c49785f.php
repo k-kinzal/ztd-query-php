@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ReplicaUntilWithSqlAfterGtidsEqTextStringSys_8c49785f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ReplicaUntilWithSqlAfterGtidsEqTextStringSys_8c49785f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ReplicaUntilWithSqlAfterGtidsEqTextStringSys_8c49785f implements \SqlSemantics\Statement\Model\MySql\Role\ReplicaUntilForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSys), 'The textStringSys must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class ReplicaUntilWithSqlAfterGtidsEqTextStringSys_8c49785f implements \Sq
         $writer->append('SQL_AFTER_GTIDS');
         $writer->append('=');
         $this->textStringSys->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new textStringSys, preserving every other field.
+     */
+    public function withTextStringSys(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys): self
+    {
+        return new self($textStringSys);
     }
 }

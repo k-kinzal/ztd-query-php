@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\LoadDataSetListWithLoadDataSetListLoadDataSetElem_d637b29d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\LoadDataSetListWithLoadDataSetListLoadDataSetElem_d637b29d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class LoadDataSetListWithLoadDataSetListLoadDataSetElem_d637b29d implements \SqlSemantics\Statement\Model\MySql\Role\LoadDataSetListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class LoadDataSetListWithLoadDataSetListLoadDataSetElem_d637b29d implement
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LoadDataSetListForm $loadDataSetList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LoadDataSetElemForm $loadDataSetElem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($loadDataSetList), 'The loadDataSetList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($loadDataSetElem), 'The loadDataSetElem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class LoadDataSetListWithLoadDataSetListLoadDataSetElem_d637b29d implement
         $this->loadDataSetList->write($writer);
         $writer->append(',');
         $this->loadDataSetElem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new loadDataSetList, preserving every other field.
+     */
+    public function withLoadDataSetList(\SqlSemantics\Statement\Model\MySql\Role\LoadDataSetListForm $loadDataSetList): self
+    {
+        return new self($loadDataSetList, $this->loadDataSetElem);
+    }
+
+    /**
+     * Returns a copy with a new loadDataSetElem, preserving every other field.
+     */
+    public function withLoadDataSetElem(\SqlSemantics\Statement\Model\MySql\Role\LoadDataSetElemForm $loadDataSetElem): self
+    {
+        return new self($this->loadDataSetList, $loadDataSetElem);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StartReplicaStmtWithStartSymReplicaOptReplicaThreadOptionListOptReplicaUntilOptUserOptionOptPas_3425c67b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StartReplicaStmtWithStartSymReplicaOptReplicaThreadOptionListOptReplicaUntilOptUserOptionOptPas_3425c67b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class StartReplicaStmtWithStartSymReplicaOptReplicaThreadOptionListOptReplicaUntilOptUserOptionOptPas_3425c67b implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StartReplicaStmtForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class StartReplicaStmtWithStartSymReplicaOptReplicaThreadOptionListOptReplicaUntilOptUserOptionOptPas_3425c67b implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StartReplicaStmtForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -27,6 +29,14 @@ final class StartReplicaStmtWithStartSymReplicaOptReplicaThreadOptionListOptRepl
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptPluginDirOptionForm $optPluginDirOption,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($replica), 'The replica must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optReplicaThreadOptionList), 'The optReplicaThreadOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optReplicaUntil), 'The optReplicaUntil must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUserOption), 'The optUserOption must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optPasswordOption), 'The optPasswordOption must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDefaultAuthOption), 'The optDefaultAuthOption must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optPluginDirOption), 'The optPluginDirOption must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optChannel), 'The optChannel must be a generated immutable SQL value.');
     }
 
     /**
@@ -43,5 +53,69 @@ final class StartReplicaStmtWithStartSymReplicaOptReplicaThreadOptionListOptRepl
         $this->optDefaultAuthOption->write($writer);
         $this->optPluginDirOption->write($writer);
         $this->optChannel->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new replica, preserving every other field.
+     */
+    public function withReplica(\SqlSemantics\Statement\Model\MySql\Role\ReplicaForm $replica): self
+    {
+        return new self($replica, $this->optReplicaThreadOptionList, $this->optReplicaUntil, $this->optUserOption, $this->optPasswordOption, $this->optDefaultAuthOption, $this->optPluginDirOption, $this->optChannel);
+    }
+
+    /**
+     * Returns a copy with a new optReplicaThreadOptionList, preserving every other field.
+     */
+    public function withOptReplicaThreadOptionList(\SqlSemantics\Statement\Model\MySql\Role\OptReplicaThreadOptionListForm $optReplicaThreadOptionList): self
+    {
+        return new self($this->replica, $optReplicaThreadOptionList, $this->optReplicaUntil, $this->optUserOption, $this->optPasswordOption, $this->optDefaultAuthOption, $this->optPluginDirOption, $this->optChannel);
+    }
+
+    /**
+     * Returns a copy with a new optReplicaUntil, preserving every other field.
+     */
+    public function withOptReplicaUntil(\SqlSemantics\Statement\Model\MySql\Role\OptReplicaUntilForm $optReplicaUntil): self
+    {
+        return new self($this->replica, $this->optReplicaThreadOptionList, $optReplicaUntil, $this->optUserOption, $this->optPasswordOption, $this->optDefaultAuthOption, $this->optPluginDirOption, $this->optChannel);
+    }
+
+    /**
+     * Returns a copy with a new optUserOption, preserving every other field.
+     */
+    public function withOptUserOption(\SqlSemantics\Statement\Model\MySql\Role\OptUserOptionForm $optUserOption): self
+    {
+        return new self($this->replica, $this->optReplicaThreadOptionList, $this->optReplicaUntil, $optUserOption, $this->optPasswordOption, $this->optDefaultAuthOption, $this->optPluginDirOption, $this->optChannel);
+    }
+
+    /**
+     * Returns a copy with a new optPasswordOption, preserving every other field.
+     */
+    public function withOptPasswordOption(\SqlSemantics\Statement\Model\MySql\Role\OptPasswordOptionForm $optPasswordOption): self
+    {
+        return new self($this->replica, $this->optReplicaThreadOptionList, $this->optReplicaUntil, $this->optUserOption, $optPasswordOption, $this->optDefaultAuthOption, $this->optPluginDirOption, $this->optChannel);
+    }
+
+    /**
+     * Returns a copy with a new optDefaultAuthOption, preserving every other field.
+     */
+    public function withOptDefaultAuthOption(\SqlSemantics\Statement\Model\MySql\Role\OptDefaultAuthOptionForm $optDefaultAuthOption): self
+    {
+        return new self($this->replica, $this->optReplicaThreadOptionList, $this->optReplicaUntil, $this->optUserOption, $this->optPasswordOption, $optDefaultAuthOption, $this->optPluginDirOption, $this->optChannel);
+    }
+
+    /**
+     * Returns a copy with a new optPluginDirOption, preserving every other field.
+     */
+    public function withOptPluginDirOption(\SqlSemantics\Statement\Model\MySql\Role\OptPluginDirOptionForm $optPluginDirOption): self
+    {
+        return new self($this->replica, $this->optReplicaThreadOptionList, $this->optReplicaUntil, $this->optUserOption, $this->optPasswordOption, $this->optDefaultAuthOption, $optPluginDirOption, $this->optChannel);
+    }
+
+    /**
+     * Returns a copy with a new optChannel, preserving every other field.
+     */
+    public function withOptChannel(\SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel): self
+    {
+        return new self($this->replica, $this->optReplicaThreadOptionList, $this->optReplicaUntil, $this->optUserOption, $this->optPasswordOption, $this->optDefaultAuthOption, $this->optPluginDirOption, $optChannel);
     }
 }

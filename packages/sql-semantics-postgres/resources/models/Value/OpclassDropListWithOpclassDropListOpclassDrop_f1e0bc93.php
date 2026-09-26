@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OpclassDropListWithOpclassDropListOpclassDrop_f1e0bc93 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OpclassDropListWithOpclassDropListOpclassDrop_f1e0bc93 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OpclassDropListWithOpclassDropListOpclassDrop_f1e0bc93 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OpclassDropListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OpclassDropListWithOpclassDropListOpclassDrop_f1e0bc93 implements \S
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OpclassDropListForm $opclassDropList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OpclassDropForm $opclassDrop,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($opclassDropList), 'The opclassDropList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($opclassDrop), 'The opclassDrop must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class OpclassDropListWithOpclassDropListOpclassDrop_f1e0bc93 implements \S
         $this->opclassDropList->write($writer);
         $writer->append(',');
         $this->opclassDrop->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new opclassDropList, preserving every other field.
+     */
+    public function withOpclassDropList(\SqlSemantics\Statement\Model\PostgreSql\Role\OpclassDropListForm $opclassDropList): self
+    {
+        return new self($opclassDropList, $this->opclassDrop);
+    }
+
+    /**
+     * Returns a copy with a new opclassDrop, preserving every other field.
+     */
+    public function withOpclassDrop(\SqlSemantics\Statement\Model\PostgreSql\Role\OpclassDropForm $opclassDrop): self
+    {
+        return new self($this->opclassDropList, $opclassDrop);
     }
 }

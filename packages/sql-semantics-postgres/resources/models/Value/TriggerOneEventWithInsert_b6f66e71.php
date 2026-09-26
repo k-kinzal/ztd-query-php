@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TriggerOneEventWithInsert_b6f66e71 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TriggerOneEventWithInsert_b6f66e71 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TriggerOneEventWithInsert_b6f66e71 implements \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerEventsForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerOneEventForm

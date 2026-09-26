@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithBinlogSymEventsSymBinlogInBinlogFromOptLimitClause_8becf81e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithBinlogSymEventsSymBinlogInBinlogFromOptLimitClause_8becf81e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ShowParamWithBinlogSymEventsSymBinlogInBinlogFromOptLimitClause_8becf81e implements \SqlSemantics\Statement\Model\MySql\Role\ShowParamForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class ShowParamWithBinlogSymEventsSymBinlogInBinlogFromOptLimitClause_8bec
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BinlogFromForm $binlogFrom,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($binlogIn), 'The binlogIn must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($binlogFrom), 'The binlogFrom must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLimitClause), 'The optLimitClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class ShowParamWithBinlogSymEventsSymBinlogInBinlogFromOptLimitClause_8bec
         $this->binlogIn->write($writer);
         $this->binlogFrom->write($writer);
         $this->optLimitClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new binlogIn, preserving every other field.
+     */
+    public function withBinlogIn(\SqlSemantics\Statement\Model\MySql\Role\BinlogInForm $binlogIn): self
+    {
+        return new self($binlogIn, $this->binlogFrom, $this->optLimitClause);
+    }
+
+    /**
+     * Returns a copy with a new binlogFrom, preserving every other field.
+     */
+    public function withBinlogFrom(\SqlSemantics\Statement\Model\MySql\Role\BinlogFromForm $binlogFrom): self
+    {
+        return new self($this->binlogIn, $binlogFrom, $this->optLimitClause);
+    }
+
+    /**
+     * Returns a copy with a new optLimitClause, preserving every other field.
+     */
+    public function withOptLimitClause(\SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause): self
+    {
+        return new self($this->binlogIn, $this->binlogFrom, $optLimitClause);
     }
 }

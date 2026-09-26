@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DescribeCommandWithDescribe_a3cb6a25 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DescribeCommandWithDescribe_a3cb6a25 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DescribeCommandWithDescribe_a3cb6a25 implements \SqlSemantics\Statement\Model\MySql\Role\DescribeCommandForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $describe,
     ) {
+        $this->assertMatchesPattern($describe, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DESCRIBE'], 'The describe must be a complete DESCRIBE lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class DescribeCommandWithDescribe_a3cb6a25 implements \SqlSemantics\Statem
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->describe);
+    }
+
+    /**
+     * Returns a copy with a new describe, preserving every other field.
+     */
+    public function withDescribe(string $describe): self
+    {
+        return new self($describe);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptBinaryWithBinaryCharsetCharsetName_56ff1e73 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptBinaryWithBinaryCharsetCharsetName_56ff1e73 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptBinaryWithBinaryCharsetCharsetName_56ff1e73 implements \SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptBinaryWithBinaryCharsetCharsetName_56ff1e73 implements \SqlSemant
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharsetForm $charset,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharsetNameForm $charsetName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($charset), 'The charset must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($charsetName), 'The charsetName must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class OptBinaryWithBinaryCharsetCharsetName_56ff1e73 implements \SqlSemant
         $writer->append('BINARY');
         $this->charset->write($writer);
         $this->charsetName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new charset, preserving every other field.
+     */
+    public function withCharset(\SqlSemantics\Statement\Model\MySql\Role\CharsetForm $charset): self
+    {
+        return new self($charset, $this->charsetName);
+    }
+
+    /**
+     * Returns a copy with a new charsetName, preserving every other field.
+     */
+    public function withCharsetName(\SqlSemantics\Statement\Model\MySql\Role\CharsetNameForm $charsetName): self
+    {
+        return new self($this->charset, $charsetName);
     }
 }

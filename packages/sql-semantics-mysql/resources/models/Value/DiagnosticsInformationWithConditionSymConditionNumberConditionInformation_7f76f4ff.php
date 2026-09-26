@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DiagnosticsInformationWithConditionSymConditionNumberConditionInformation_7f76f4ff $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DiagnosticsInformationWithConditionSymConditionNumberConditionInformation_7f76f4ff $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DiagnosticsInformationWithConditionSymConditionNumberConditionInformation_7f76f4ff implements \SqlSemantics\Statement\Model\MySql\Role\DiagnosticsInformationForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class DiagnosticsInformationWithConditionSymConditionNumberConditionInform
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ConditionNumberForm $conditionNumber,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ConditionInformationForm $conditionInformation,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($conditionNumber), 'The conditionNumber must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($conditionInformation), 'The conditionInformation must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class DiagnosticsInformationWithConditionSymConditionNumberConditionInform
         $writer->append('CONDITION');
         $this->conditionNumber->write($writer);
         $this->conditionInformation->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new conditionNumber, preserving every other field.
+     */
+    public function withConditionNumber(\SqlSemantics\Statement\Model\MySql\Role\ConditionNumberForm $conditionNumber): self
+    {
+        return new self($conditionNumber, $this->conditionInformation);
+    }
+
+    /**
+     * Returns a copy with a new conditionInformation, preserving every other field.
+     */
+    public function withConditionInformation(\SqlSemantics\Statement\Model\MySql\Role\ConditionInformationForm $conditionInformation): self
+    {
+        return new self($this->conditionNumber, $conditionInformation);
     }
 }

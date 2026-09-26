@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\XmlNamespaceListWithXmlNamespaceListXmlNamespaceEl_59a08796 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\XmlNamespaceListWithXmlNamespaceListXmlNamespaceEl_59a08796 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class XmlNamespaceListWithXmlNamespaceListXmlNamespaceEl_59a08796 implements \SqlSemantics\Statement\Model\PostgreSql\Role\XmlNamespaceListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class XmlNamespaceListWithXmlNamespaceListXmlNamespaceEl_59a08796 implemen
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\XmlNamespaceListForm $xmlNamespaceList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\XmlNamespaceElForm $xmlNamespaceEl,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($xmlNamespaceList), 'The xmlNamespaceList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($xmlNamespaceEl), 'The xmlNamespaceEl must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class XmlNamespaceListWithXmlNamespaceListXmlNamespaceEl_59a08796 implemen
         $this->xmlNamespaceList->write($writer);
         $writer->append(',');
         $this->xmlNamespaceEl->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new xmlNamespaceList, preserving every other field.
+     */
+    public function withXmlNamespaceList(\SqlSemantics\Statement\Model\PostgreSql\Role\XmlNamespaceListForm $xmlNamespaceList): self
+    {
+        return new self($xmlNamespaceList, $this->xmlNamespaceEl);
+    }
+
+    /**
+     * Returns a copy with a new xmlNamespaceEl, preserving every other field.
+     */
+    public function withXmlNamespaceEl(\SqlSemantics\Statement\Model\PostgreSql\Role\XmlNamespaceElForm $xmlNamespaceEl): self
+    {
+        return new self($this->xmlNamespaceList, $xmlNamespaceEl);
     }
 }

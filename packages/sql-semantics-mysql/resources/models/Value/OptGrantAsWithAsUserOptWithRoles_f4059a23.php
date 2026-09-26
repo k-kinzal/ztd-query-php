@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptGrantAsWithAsUserOptWithRoles_f4059a23 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptGrantAsWithAsUserOptWithRoles_f4059a23 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptGrantAsWithAsUserOptWithRoles_f4059a23 implements \SqlSemantics\Statement\Model\MySql\Role\OptGrantAsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptGrantAsWithAsUserOptWithRoles_f4059a23 implements \SqlSemantics\S
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserForm $user,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWithRolesForm $optWithRoles,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWithRoles), 'The optWithRoles must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class OptGrantAsWithAsUserOptWithRoles_f4059a23 implements \SqlSemantics\S
         $writer->append('AS');
         $this->user->write($writer);
         $this->optWithRoles->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new user, preserving every other field.
+     */
+    public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
+    {
+        return new self($user, $this->optWithRoles);
+    }
+
+    /**
+     * Returns a copy with a new optWithRoles, preserving every other field.
+     */
+    public function withOptWithRoles(\SqlSemantics\Statement\Model\MySql\Role\OptWithRolesForm $optWithRoles): self
+    {
+        return new self($this->user, $optWithRoles);
     }
 }

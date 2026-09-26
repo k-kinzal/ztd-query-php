@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CastTypeWithDecimalSymFloatOptions_7b45e7c9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CastTypeWithDecimalSymFloatOptions_7b45e7c9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CastTypeWithDecimalSymFloatOptions_7b45e7c9 implements \SqlSemantics\Statement\Model\MySql\Role\CastTypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CastTypeWithDecimalSymFloatOptions_7b45e7c9 implements \SqlSemantics
         public readonly string $decimalSym,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FloatOptionsForm $floatOptions,
     ) {
+        $this->assertMatchesPattern($decimalSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DECIMAL_SYM'], 'The decimalSym must be a complete DECIMAL_SYM lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($floatOptions), 'The floatOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class CastTypeWithDecimalSymFloatOptions_7b45e7c9 implements \SqlSemantics
     {
         $writer->append($this->decimalSym);
         $this->floatOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new decimalSym, preserving every other field.
+     */
+    public function withDecimalSym(string $decimalSym): self
+    {
+        return new self($decimalSym, $this->floatOptions);
+    }
+
+    /**
+     * Returns a copy with a new floatOptions, preserving every other field.
+     */
+    public function withFloatOptions(\SqlSemantics\Statement\Model\MySql\Role\FloatOptionsForm $floatOptions): self
+    {
+        return new self($this->decimalSym, $floatOptions);
     }
 }

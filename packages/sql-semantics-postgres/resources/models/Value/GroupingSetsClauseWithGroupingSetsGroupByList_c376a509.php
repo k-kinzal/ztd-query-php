@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\GroupingSetsClauseWithGroupingSetsGroupByList_c376a509 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\GroupingSetsClauseWithGroupingSetsGroupByList_c376a509 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GroupingSetsClauseWithGroupingSetsGroupByList_c376a509 implements \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupingSetsClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByListForm $groupByList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($groupByList), 'The groupByList must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +35,13 @@ final class GroupingSetsClauseWithGroupingSetsGroupByList_c376a509 implements \S
         $writer->append('(');
         $this->groupByList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new groupByList, preserving every other field.
+     */
+    public function withGroupByList(\SqlSemantics\Statement\Model\PostgreSql\Role\GroupByListForm $groupByList): self
+    {
+        return new self($groupByList);
     }
 }

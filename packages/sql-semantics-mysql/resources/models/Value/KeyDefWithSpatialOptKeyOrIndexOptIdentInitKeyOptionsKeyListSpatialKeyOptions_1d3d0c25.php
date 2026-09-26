@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\KeyDefWithSpatialOptKeyOrIndexOptIdentInitKeyOptionsKeyListSpatialKeyOptions_1d3d0c25 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\KeyDefWithSpatialOptKeyOrIndexOptIdentInitKeyOptionsKeyListSpatialKeyOptions_1d3d0c25 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class KeyDefWithSpatialOptKeyOrIndexOptIdentInitKeyOptionsKeyListSpatialKeyOptions_1d3d0c25 implements \SqlSemantics\Statement\Model\MySql\Role\CreateFieldListForm, \SqlSemantics\Statement\Model\MySql\Role\FieldListForm, \SqlSemantics\Statement\Model\MySql\Role\FieldListItemForm, \SqlSemantics\Statement\Model\MySql\Role\KeyDefForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -25,6 +27,12 @@ final class KeyDefWithSpatialOptKeyOrIndexOptIdentInitKeyOptionsKeyListSpatialKe
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyListForm $keyList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpatialKeyOptionsForm $spatialKeyOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spatial), 'The spatial must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optKeyOrIndex), 'The optKeyOrIndex must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIdent), 'The optIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($initKeyOptions), 'The initKeyOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyList), 'The keyList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spatialKeyOptions), 'The spatialKeyOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -40,5 +48,53 @@ final class KeyDefWithSpatialOptKeyOrIndexOptIdentInitKeyOptionsKeyListSpatialKe
         $this->keyList->write($writer);
         $writer->append(')');
         $this->spatialKeyOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new spatial, preserving every other field.
+     */
+    public function withSpatial(\SqlSemantics\Statement\Model\MySql\Role\SpatialForm $spatial): self
+    {
+        return new self($spatial, $this->optKeyOrIndex, $this->optIdent, $this->initKeyOptions, $this->keyList, $this->spatialKeyOptions);
+    }
+
+    /**
+     * Returns a copy with a new optKeyOrIndex, preserving every other field.
+     */
+    public function withOptKeyOrIndex(\SqlSemantics\Statement\Model\MySql\Role\OptKeyOrIndexForm $optKeyOrIndex): self
+    {
+        return new self($this->spatial, $optKeyOrIndex, $this->optIdent, $this->initKeyOptions, $this->keyList, $this->spatialKeyOptions);
+    }
+
+    /**
+     * Returns a copy with a new optIdent, preserving every other field.
+     */
+    public function withOptIdent(\SqlSemantics\Statement\Model\MySql\Role\OptIdentForm $optIdent): self
+    {
+        return new self($this->spatial, $this->optKeyOrIndex, $optIdent, $this->initKeyOptions, $this->keyList, $this->spatialKeyOptions);
+    }
+
+    /**
+     * Returns a copy with a new initKeyOptions, preserving every other field.
+     */
+    public function withInitKeyOptions(\SqlSemantics\Statement\Model\MySql\Role\InitKeyOptionsForm $initKeyOptions): self
+    {
+        return new self($this->spatial, $this->optKeyOrIndex, $this->optIdent, $initKeyOptions, $this->keyList, $this->spatialKeyOptions);
+    }
+
+    /**
+     * Returns a copy with a new keyList, preserving every other field.
+     */
+    public function withKeyList(\SqlSemantics\Statement\Model\MySql\Role\KeyListForm $keyList): self
+    {
+        return new self($this->spatial, $this->optKeyOrIndex, $this->optIdent, $this->initKeyOptions, $keyList, $this->spatialKeyOptions);
+    }
+
+    /**
+     * Returns a copy with a new spatialKeyOptions, preserving every other field.
+     */
+    public function withSpatialKeyOptions(\SqlSemantics\Statement\Model\MySql\Role\SpatialKeyOptionsForm $spatialKeyOptions): self
+    {
+        return new self($this->spatial, $this->optKeyOrIndex, $this->optIdent, $this->initKeyOptions, $this->keyList, $spatialKeyOptions);
     }
 }

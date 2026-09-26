@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AliasClauseWithAsColId_557c908a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AliasClauseWithAsColId_557c908a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AliasClauseWithAsColId_557c908a implements \SqlSemantics\Statement\Model\PostgreSql\Role\AliasClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncAliasClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptAliasClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class AliasClauseWithAsColId_557c908a implements \SqlSemantics\Statement\M
     {
         $writer->append('AS');
         $this->colId->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($colId);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CastTypeWithNcharOptFieldLength_73d65b7f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CastTypeWithNcharOptFieldLength_73d65b7f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CastTypeWithNcharOptFieldLength_73d65b7f implements \SqlSemantics\Statement\Model\MySql\Role\CastTypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CastTypeWithNcharOptFieldLength_73d65b7f implements \SqlSemantics\St
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NcharForm $nchar,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptFieldLengthForm $optFieldLength,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($nchar), 'The nchar must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optFieldLength), 'The optFieldLength must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class CastTypeWithNcharOptFieldLength_73d65b7f implements \SqlSemantics\St
     {
         $this->nchar->write($writer);
         $this->optFieldLength->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new nchar, preserving every other field.
+     */
+    public function withNchar(\SqlSemantics\Statement\Model\MySql\Role\NcharForm $nchar): self
+    {
+        return new self($nchar, $this->optFieldLength);
+    }
+
+    /**
+     * Returns a copy with a new optFieldLength, preserving every other field.
+     */
+    public function withOptFieldLength(\SqlSemantics\Statement\Model\MySql\Role\OptFieldLengthForm $optFieldLength): self
+    {
+        return new self($this->nchar, $optFieldLength);
     }
 }

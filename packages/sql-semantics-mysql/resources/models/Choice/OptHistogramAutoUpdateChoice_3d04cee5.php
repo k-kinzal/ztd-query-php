@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\OptHistogramAutoUpdateChoice_3d04cee5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\OptHistogramAutoUpdateChoice_3d04cee5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum OptHistogramAutoUpdateChoice_3d04cee5: string implements \SqlSemantics\Statement\Model\MySql\Role\OptHistogramAutoUpdateForm

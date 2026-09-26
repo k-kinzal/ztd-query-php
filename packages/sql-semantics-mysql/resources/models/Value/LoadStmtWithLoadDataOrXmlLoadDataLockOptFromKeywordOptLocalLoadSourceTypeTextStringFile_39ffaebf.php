@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourceTypeTextStringFile_39ffaebf $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourceTypeTextStringFile_39ffaebf $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourceTypeTextStringFile_39ffaebf implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\LoadStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourceTypeTextStringFile_39ffaebf implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\LoadStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -41,6 +43,28 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLoadMemoryForm $optLoadMemory,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLoadAlgorithmForm $optLoadAlgorithm,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($dataOrXml), 'The dataOrXml must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($loadDataLock), 'The loadDataLock must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optFromKeyword), 'The optFromKeyword must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLocal), 'The optLocal must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($loadSourceType), 'The loadSourceType must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringFilesystem), 'The textStringFilesystem must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optSourceCount), 'The optSourceCount must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optSourceOrder), 'The optSourceOrder must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDuplicate), 'The optDuplicate must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUsePartition), 'The optUsePartition must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLoadDataCharset), 'The optLoadDataCharset must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCompressionAlgorithm), 'The optCompressionAlgorithm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optXmlRowsIdentifiedBy), 'The optXmlRowsIdentifiedBy must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optFieldTerm), 'The optFieldTerm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLineTerm), 'The optLineTerm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIgnoreLines), 'The optIgnoreLines must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optFieldOrVarSpec), 'The optFieldOrVarSpec must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLoadDataSetSpec), 'The optLoadDataSetSpec must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLoadParallel), 'The optLoadParallel must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLoadMemory), 'The optLoadMemory must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLoadAlgorithm), 'The optLoadAlgorithm must be a generated immutable SQL value.');
     }
 
     /**
@@ -73,5 +97,181 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
         $this->optLoadParallel->write($writer);
         $this->optLoadMemory->write($writer);
         $this->optLoadAlgorithm->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new dataOrXml, preserving every other field.
+     */
+    public function withDataOrXml(\SqlSemantics\Statement\Model\MySql\Role\DataOrXmlForm $dataOrXml): self
+    {
+        return new self($dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optCompressionAlgorithm, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new loadDataLock, preserving every other field.
+     */
+    public function withLoadDataLock(\SqlSemantics\Statement\Model\MySql\Role\LoadDataLockForm $loadDataLock): self
+    {
+        return new self($this->dataOrXml, $loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optCompressionAlgorithm, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new optFromKeyword, preserving every other field.
+     */
+    public function withOptFromKeyword(\SqlSemantics\Statement\Model\MySql\Role\OptFromKeywordForm $optFromKeyword): self
+    {
+        return new self($this->dataOrXml, $this->loadDataLock, $optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optCompressionAlgorithm, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new optLocal, preserving every other field.
+     */
+    public function withOptLocal(\SqlSemantics\Statement\Model\MySql\Role\OptLocalForm $optLocal): self
+    {
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optCompressionAlgorithm, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new loadSourceType, preserving every other field.
+     */
+    public function withLoadSourceType(\SqlSemantics\Statement\Model\MySql\Role\LoadSourceTypeForm $loadSourceType): self
+    {
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optCompressionAlgorithm, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new textStringFilesystem, preserving every other field.
+     */
+    public function withTextStringFilesystem(\SqlSemantics\Statement\Model\MySql\Role\TextStringFilesystemForm $textStringFilesystem): self
+    {
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optCompressionAlgorithm, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new optSourceCount, preserving every other field.
+     */
+    public function withOptSourceCount(\SqlSemantics\Statement\Model\MySql\Role\OptSourceCountForm $optSourceCount): self
+    {
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optCompressionAlgorithm, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new optSourceOrder, preserving every other field.
+     */
+    public function withOptSourceOrder(\SqlSemantics\Statement\Model\MySql\Role\OptSourceOrderForm $optSourceOrder): self
+    {
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optCompressionAlgorithm, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new optDuplicate, preserving every other field.
+     */
+    public function withOptDuplicate(\SqlSemantics\Statement\Model\MySql\Role\OptDuplicateForm $optDuplicate): self
+    {
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optCompressionAlgorithm, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optCompressionAlgorithm, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new optUsePartition, preserving every other field.
+     */
+    public function withOptUsePartition(\SqlSemantics\Statement\Model\MySql\Role\OptUsePartitionForm $optUsePartition): self
+    {
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $optUsePartition, $this->optLoadDataCharset, $this->optCompressionAlgorithm, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new optLoadDataCharset, preserving every other field.
+     */
+    public function withOptLoadDataCharset(\SqlSemantics\Statement\Model\MySql\Role\OptLoadDataCharsetForm $optLoadDataCharset): self
+    {
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $optLoadDataCharset, $this->optCompressionAlgorithm, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new optCompressionAlgorithm, preserving every other field.
+     */
+    public function withOptCompressionAlgorithm(\SqlSemantics\Statement\Model\MySql\Role\OptCompressionAlgorithmForm $optCompressionAlgorithm): self
+    {
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $optCompressionAlgorithm, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new optXmlRowsIdentifiedBy, preserving every other field.
+     */
+    public function withOptXmlRowsIdentifiedBy(\SqlSemantics\Statement\Model\MySql\Role\OptXmlRowsIdentifiedByForm $optXmlRowsIdentifiedBy): self
+    {
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optCompressionAlgorithm, $optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new optFieldTerm, preserving every other field.
+     */
+    public function withOptFieldTerm(\SqlSemantics\Statement\Model\MySql\Role\OptFieldTermForm $optFieldTerm): self
+    {
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optCompressionAlgorithm, $this->optXmlRowsIdentifiedBy, $optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new optLineTerm, preserving every other field.
+     */
+    public function withOptLineTerm(\SqlSemantics\Statement\Model\MySql\Role\OptLineTermForm $optLineTerm): self
+    {
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optCompressionAlgorithm, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new optIgnoreLines, preserving every other field.
+     */
+    public function withOptIgnoreLines(\SqlSemantics\Statement\Model\MySql\Role\OptIgnoreLinesForm $optIgnoreLines): self
+    {
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optCompressionAlgorithm, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new optFieldOrVarSpec, preserving every other field.
+     */
+    public function withOptFieldOrVarSpec(\SqlSemantics\Statement\Model\MySql\Role\OptFieldOrVarSpecForm $optFieldOrVarSpec): self
+    {
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optCompressionAlgorithm, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new optLoadDataSetSpec, preserving every other field.
+     */
+    public function withOptLoadDataSetSpec(\SqlSemantics\Statement\Model\MySql\Role\OptLoadDataSetSpecForm $optLoadDataSetSpec): self
+    {
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optCompressionAlgorithm, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new optLoadParallel, preserving every other field.
+     */
+    public function withOptLoadParallel(\SqlSemantics\Statement\Model\MySql\Role\OptLoadParallelForm $optLoadParallel): self
+    {
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optCompressionAlgorithm, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new optLoadMemory, preserving every other field.
+     */
+    public function withOptLoadMemory(\SqlSemantics\Statement\Model\MySql\Role\OptLoadMemoryForm $optLoadMemory): self
+    {
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optCompressionAlgorithm, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $optLoadMemory, $this->optLoadAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new optLoadAlgorithm, preserving every other field.
+     */
+    public function withOptLoadAlgorithm(\SqlSemantics\Statement\Model\MySql\Role\OptLoadAlgorithmForm $optLoadAlgorithm): self
+    {
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optCompressionAlgorithm, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $optLoadAlgorithm);
     }
 }

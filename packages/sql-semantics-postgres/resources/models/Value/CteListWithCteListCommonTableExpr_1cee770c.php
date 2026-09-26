@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CteListWithCteListCommonTableExpr_1cee770c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CteListWithCteListCommonTableExpr_1cee770c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CteListWithCteListCommonTableExpr_1cee770c implements \SqlSemantics\Statement\Model\PostgreSql\Role\CteListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CteListWithCteListCommonTableExpr_1cee770c implements \SqlSemantics\
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CteListForm $cteList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CommonTableExprForm $commonTableExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($cteList), 'The cteList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($commonTableExpr), 'The commonTableExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class CteListWithCteListCommonTableExpr_1cee770c implements \SqlSemantics\
         $this->cteList->write($writer);
         $writer->append(',');
         $this->commonTableExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new cteList, preserving every other field.
+     */
+    public function withCteList(\SqlSemantics\Statement\Model\PostgreSql\Role\CteListForm $cteList): self
+    {
+        return new self($cteList, $this->commonTableExpr);
+    }
+
+    /**
+     * Returns a copy with a new commonTableExpr, preserving every other field.
+     */
+    public function withCommonTableExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\CommonTableExprForm $commonTableExpr): self
+    {
+        return new self($this->cteList, $commonTableExpr);
     }
 }

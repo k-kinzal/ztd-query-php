@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\AnylistWithAnylistAny_940e683b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\AnylistWithAnylistAny_940e683b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AnylistWithAnylistAny_940e683b implements \SqlSemantics\Statement\Model\Sqlite\Role\AnylistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AnylistWithAnylistAny_940e683b implements \SqlSemantics\Statement\Mo
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\AnylistForm $anylist,
         public readonly string $any,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($anylist), 'The anylist must be a generated immutable SQL value.');
+        $this->assertMatchesPattern($any, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['ANY'], 'The any must be a complete ANY lexical spelling.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class AnylistWithAnylistAny_940e683b implements \SqlSemantics\Statement\Mo
     {
         $this->anylist->write($writer);
         $writer->append($this->any);
+    }
+
+    /**
+     * Returns a copy with a new anylist, preserving every other field.
+     */
+    public function withAnylist(\SqlSemantics\Statement\Model\Sqlite\Role\AnylistForm $anylist): self
+    {
+        return new self($anylist, $this->any);
+    }
+
+    /**
+     * Returns a copy with a new any, preserving every other field.
+     */
+    public function withAny(string $any): self
+    {
+        return new self($this->anylist, $any);
     }
 }

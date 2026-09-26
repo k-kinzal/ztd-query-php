@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PredicateWithBitExprBetweenSymBitExprAndSymPredicate_263af825 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PredicateWithBitExprBetweenSymBitExprAndSymPredicate_263af825 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PredicateWithBitExprBetweenSymBitExprAndSymPredicate_263af825 implements \SqlSemantics\Statement\Model\MySql\Role\BoolPriForm, \SqlSemantics\Statement\Model\MySql\Role\ExprForm, \SqlSemantics\Statement\Model\MySql\Role\ExprListForm, \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\GeneratedColumnFuncForm, \SqlSemantics\Statement\Model\MySql\Role\GroupListForm, \SqlSemantics\Statement\Model\MySql\Role\GroupingExprForm, \SqlSemantics\Statement\Model\MySql\Role\InstallSetRvalueForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprListForm, \SqlSemantics\Statement\Model\MySql\Role\OptSpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\OptValuesForm, \SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm, \SqlSemantics\Statement\Model\MySql\Role\PredicateForm, \SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\SpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\ValuesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,11 @@ final class PredicateWithBitExprBetweenSymBitExprAndSymPredicate_263af825 implem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PredicateForm $predicate,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($bitExpr), 'The bitExpr must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($bitExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 6,  'mysql-5.7.44' => 7,  'mysql-8.0.44' => 12,  'mysql-8.1.0' => 12,  'mysql-8.2.0' => 12,  'mysql-8.3.0' => 12,  'mysql-8.4.7' => 12,  'mysql-9.0.1' => 12,  'mysql-9.1.0' => 12,));
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($bitExpr2), 'The bitExpr2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($predicate), 'The predicate must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($predicate, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 7,  'mysql-5.7.44' => 8,  'mysql-8.0.44' => 13,  'mysql-8.1.0' => 13,  'mysql-8.2.0' => 13,  'mysql-8.3.0' => 13,  'mysql-8.4.7' => 13,  'mysql-9.0.1' => 13,  'mysql-9.1.0' => 13,));
     }
 
     /**
@@ -34,5 +41,29 @@ final class PredicateWithBitExprBetweenSymBitExprAndSymPredicate_263af825 implem
         $this->bitExpr2->write($writer);
         $writer->append('AND');
         $this->predicate->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new bitExpr, preserving every other field.
+     */
+    public function withBitExpr(\SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr): self
+    {
+        return new self($bitExpr, $this->bitExpr2, $this->predicate);
+    }
+
+    /**
+     * Returns a copy with a new bitExpr2, preserving every other field.
+     */
+    public function withBitExpr2(\SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr2): self
+    {
+        return new self($this->bitExpr, $bitExpr2, $this->predicate);
+    }
+
+    /**
+     * Returns a copy with a new predicate, preserving every other field.
+     */
+    public function withPredicate(\SqlSemantics\Statement\Model\MySql\Role\PredicateForm $predicate): self
+    {
+        return new self($this->bitExpr, $this->bitExpr2, $predicate);
     }
 }

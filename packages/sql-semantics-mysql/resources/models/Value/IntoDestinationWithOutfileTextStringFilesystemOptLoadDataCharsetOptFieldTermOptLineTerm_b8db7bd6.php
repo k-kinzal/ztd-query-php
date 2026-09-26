@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IntoDestinationWithOutfileTextStringFilesystemOptLoadDataCharsetOptFieldTermOptLineTerm_b8db7bd6 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IntoDestinationWithOutfileTextStringFilesystemOptLoadDataCharsetOptFieldTermOptLineTerm_b8db7bd6 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IntoDestinationWithOutfileTextStringFilesystemOptLoadDataCharsetOptFieldTermOptLineTerm_b8db7bd6 implements \SqlSemantics\Statement\Model\MySql\Role\IntoDestinationForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class IntoDestinationWithOutfileTextStringFilesystemOptLoadDataCharsetOptF
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptFieldTermForm $optFieldTerm,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLineTermForm $optLineTerm,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringFilesystem), 'The textStringFilesystem must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLoadDataCharset), 'The optLoadDataCharset must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optFieldTerm), 'The optFieldTerm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLineTerm), 'The optLineTerm must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +41,37 @@ final class IntoDestinationWithOutfileTextStringFilesystemOptLoadDataCharsetOptF
         $this->optLoadDataCharset->write($writer);
         $this->optFieldTerm->write($writer);
         $this->optLineTerm->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new textStringFilesystem, preserving every other field.
+     */
+    public function withTextStringFilesystem(\SqlSemantics\Statement\Model\MySql\Role\TextStringFilesystemForm $textStringFilesystem): self
+    {
+        return new self($textStringFilesystem, $this->optLoadDataCharset, $this->optFieldTerm, $this->optLineTerm);
+    }
+
+    /**
+     * Returns a copy with a new optLoadDataCharset, preserving every other field.
+     */
+    public function withOptLoadDataCharset(\SqlSemantics\Statement\Model\MySql\Role\OptLoadDataCharsetForm $optLoadDataCharset): self
+    {
+        return new self($this->textStringFilesystem, $optLoadDataCharset, $this->optFieldTerm, $this->optLineTerm);
+    }
+
+    /**
+     * Returns a copy with a new optFieldTerm, preserving every other field.
+     */
+    public function withOptFieldTerm(\SqlSemantics\Statement\Model\MySql\Role\OptFieldTermForm $optFieldTerm): self
+    {
+        return new self($this->textStringFilesystem, $this->optLoadDataCharset, $optFieldTerm, $this->optLineTerm);
+    }
+
+    /**
+     * Returns a copy with a new optLineTerm, preserving every other field.
+     */
+    public function withOptLineTerm(\SqlSemantics\Statement\Model\MySql\Role\OptLineTermForm $optLineTerm): self
+    {
+        return new self($this->textStringFilesystem, $this->optLoadDataCharset, $this->optFieldTerm, $optLineTerm);
     }
 }

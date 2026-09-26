@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterDatabaseStmtWithAlterDatabaseIdentOrEmptyAlterDatabaseOptions_27d4d7a8 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterDatabaseStmtWithAlterDatabaseIdentOrEmptyAlterDatabaseOptions_27d4d7a8 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterDatabaseStmtWithAlterDatabaseIdentOrEmptyAlterDatabaseOptions_27d4d7a8 implements \SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class AlterDatabaseStmtWithAlterDatabaseIdentOrEmptyAlterDatabaseOptions_27d4d7a8 implements \SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterDatabaseStmtWithAlterDatabaseIdentOrEmptyAlterDatabaseOptions_2
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrEmptyForm $identOrEmpty,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseOptionsForm $alterDatabaseOptions,
     ) {
+        $this->assertMatchesPattern($database, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DATABASE'], 'The database must be a complete DATABASE lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrEmpty), 'The identOrEmpty must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterDatabaseOptions), 'The alterDatabaseOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class AlterDatabaseStmtWithAlterDatabaseIdentOrEmptyAlterDatabaseOptions_2
         $writer->append($this->database);
         $this->identOrEmpty->write($writer);
         $this->alterDatabaseOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new database, preserving every other field.
+     */
+    public function withDatabase(string $database): self
+    {
+        return new self($database, $this->identOrEmpty, $this->alterDatabaseOptions);
+    }
+
+    /**
+     * Returns a copy with a new identOrEmpty, preserving every other field.
+     */
+    public function withIdentOrEmpty(\SqlSemantics\Statement\Model\MySql\Role\IdentOrEmptyForm $identOrEmpty): self
+    {
+        return new self($this->database, $identOrEmpty, $this->alterDatabaseOptions);
+    }
+
+    /**
+     * Returns a copy with a new alterDatabaseOptions, preserving every other field.
+     */
+    public function withAlterDatabaseOptions(\SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseOptionsForm $alterDatabaseOptions): self
+    {
+        return new self($this->database, $this->identOrEmpty, $alterDatabaseOptions);
     }
 }

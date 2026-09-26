@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SearchedWhenClauseListWithSearchedWhenClauseListSearchedWhenClause_71e2c353 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SearchedWhenClauseListWithSearchedWhenClauseListSearchedWhenClause_71e2c353 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SearchedWhenClauseListWithSearchedWhenClauseListSearchedWhenClause_71e2c353 implements \SqlSemantics\Statement\Model\MySql\Role\SearchedWhenClauseListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SearchedWhenClauseListWithSearchedWhenClauseListSearchedWhenClause_7
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SearchedWhenClauseListForm $searchedWhenClauseList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SearchedWhenClauseForm $searchedWhenClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($searchedWhenClauseList), 'The searchedWhenClauseList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($searchedWhenClause), 'The searchedWhenClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class SearchedWhenClauseListWithSearchedWhenClauseListSearchedWhenClause_7
     {
         $this->searchedWhenClauseList->write($writer);
         $this->searchedWhenClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new searchedWhenClauseList, preserving every other field.
+     */
+    public function withSearchedWhenClauseList(\SqlSemantics\Statement\Model\MySql\Role\SearchedWhenClauseListForm $searchedWhenClauseList): self
+    {
+        return new self($searchedWhenClauseList, $this->searchedWhenClause);
+    }
+
+    /**
+     * Returns a copy with a new searchedWhenClause, preserving every other field.
+     */
+    public function withSearchedWhenClause(\SqlSemantics\Statement\Model\MySql\Role\SearchedWhenClauseForm $searchedWhenClause): self
+    {
+        return new self($this->searchedWhenClauseList, $searchedWhenClause);
     }
 }

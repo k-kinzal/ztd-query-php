@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterObjectDependsStmtWithAlterTriggerNameOnQualifiedNameOptNoDependsOnExtensionName_3f66d5fa $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterObjectDependsStmtWithAlterTriggerNameOnQualifiedNameOptNoDependsOnExtensionName_3f66d5fa $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterObjectDependsStmtWithAlterTriggerNameOnQualifiedNameOptNoDependsOnExtensionName_3f66d5fa implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterObjectDependsStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterObjectDependsStmtWithAlterTriggerNameOnQualifiedNameOptNoDependsOnExtensionName_3f66d5fa implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterObjectDependsStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class AlterObjectDependsStmtWithAlterTriggerNameOnQualifiedNameOptNoDepend
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptNoForm $optNo,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optNo), 'The optNo must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name2), 'The name2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -40,5 +46,37 @@ final class AlterObjectDependsStmtWithAlterTriggerNameOnQualifiedNameOptNoDepend
         $writer->append('ON');
         $writer->append('EXTENSION');
         $this->name2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($name, $this->qualifiedName, $this->optNo, $this->name2);
+    }
+
+    /**
+     * Returns a copy with a new qualifiedName, preserving every other field.
+     */
+    public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
+    {
+        return new self($this->name, $qualifiedName, $this->optNo, $this->name2);
+    }
+
+    /**
+     * Returns a copy with a new optNo, preserving every other field.
+     */
+    public function withOptNo(\SqlSemantics\Statement\Model\PostgreSql\Role\OptNoForm $optNo): self
+    {
+        return new self($this->name, $this->qualifiedName, $optNo, $this->name2);
+    }
+
+    /**
+     * Returns a copy with a new name2, preserving every other field.
+     */
+    public function withName2(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name2): self
+    {
+        return new self($this->name, $this->qualifiedName, $this->optNo, $name2);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ArrayExprListWithArrayExprListArrayExpr_8d9c85a9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ArrayExprListWithArrayExprListArrayExpr_8d9c85a9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ArrayExprListWithArrayExprListArrayExpr_8d9c85a9 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ArrayExprListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ArrayExprListWithArrayExprListArrayExpr_8d9c85a9 implements \SqlSema
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ArrayExprListForm $arrayExprList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ArrayExprForm $arrayExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($arrayExprList), 'The arrayExprList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($arrayExpr), 'The arrayExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ArrayExprListWithArrayExprListArrayExpr_8d9c85a9 implements \SqlSema
         $this->arrayExprList->write($writer);
         $writer->append(',');
         $this->arrayExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new arrayExprList, preserving every other field.
+     */
+    public function withArrayExprList(\SqlSemantics\Statement\Model\PostgreSql\Role\ArrayExprListForm $arrayExprList): self
+    {
+        return new self($arrayExprList, $this->arrayExpr);
+    }
+
+    /**
+     * Returns a copy with a new arrayExpr, preserving every other field.
+     */
+    public function withArrayExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\ArrayExprForm $arrayExpr): self
+    {
+        return new self($this->arrayExprList, $arrayExpr);
     }
 }

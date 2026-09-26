@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CreateTableArgsWithAsSelect_edfabb86 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CreateTableArgsWithAsSelect_edfabb86 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CreateTableArgsWithAsSelect_edfabb86 implements \SqlSemantics\Statement\Model\Sqlite\Role\CreateTableArgsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm $select,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($select), 'The select must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class CreateTableArgsWithAsSelect_edfabb86 implements \SqlSemantics\Statem
     {
         $writer->append('AS');
         $this->select->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new select, preserving every other field.
+     */
+    public function withSelect(\SqlSemantics\Statement\Model\Sqlite\Role\SelectForm $select): self
+    {
+        return new self($select);
     }
 }

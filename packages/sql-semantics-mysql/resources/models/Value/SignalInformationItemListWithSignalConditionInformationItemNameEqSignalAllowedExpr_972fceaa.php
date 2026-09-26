@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SignalInformationItemListWithSignalConditionInformationItemNameEqSignalAllowedExpr_972fceaa $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SignalInformationItemListWithSignalConditionInformationItemNameEqSignalAllowedExpr_972fceaa $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SignalInformationItemListWithSignalConditionInformationItemNameEqSignalAllowedExpr_972fceaa implements \SqlSemantics\Statement\Model\MySql\Role\SignalInformationItemListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SignalInformationItemListWithSignalConditionInformationItemNameEqSig
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SignalConditionInformationItemNameForm $signalConditionInformationItemName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SignalAllowedExprForm $signalAllowedExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($signalConditionInformationItemName), 'The signalConditionInformationItemName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($signalAllowedExpr), 'The signalAllowedExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SignalInformationItemListWithSignalConditionInformationItemNameEqSig
         $this->signalConditionInformationItemName->write($writer);
         $writer->append('=');
         $this->signalAllowedExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new signalConditionInformationItemName, preserving every other field.
+     */
+    public function withSignalConditionInformationItemName(\SqlSemantics\Statement\Model\MySql\Role\SignalConditionInformationItemNameForm $signalConditionInformationItemName): self
+    {
+        return new self($signalConditionInformationItemName, $this->signalAllowedExpr);
+    }
+
+    /**
+     * Returns a copy with a new signalAllowedExpr, preserving every other field.
+     */
+    public function withSignalAllowedExpr(\SqlSemantics\Statement\Model\MySql\Role\SignalAllowedExprForm $signalAllowedExpr): self
+    {
+        return new self($this->signalConditionInformationItemName, $signalAllowedExpr);
     }
 }

@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\Sqlite\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Choice\TconscommaChoice_d7313e6d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Choice\TconscommaChoice_d7313e6d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum TconscommaChoice_d7313e6d: string implements \SqlSemantics\Statement\Model\Sqlite\Role\TconscommaForm

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithLongSymOptBinary_375da842 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithLongSymOptBinary_375da842 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TypeWithLongSymOptBinary_375da842 implements \SqlSemantics\Statement\Model\MySql\Role\TypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm $optBinary,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optBinary), 'The optBinary must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class TypeWithLongSymOptBinary_375da842 implements \SqlSemantics\Statement
     {
         $writer->append('LONG');
         $this->optBinary->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optBinary, preserving every other field.
+     */
+    public function withOptBinary(\SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm $optBinary): self
+    {
+        return new self($optBinary);
     }
 }

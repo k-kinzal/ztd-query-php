@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithExprPtrExpr_6dab14bf $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithExprPtrExpr_6dab14bf $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ExprWithExprPtrExpr_6dab14bf implements \SqlSemantics\Statement\Model\Sqlite\Role\CaseOperandForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm, \SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,11 @@ final class ExprWithExprPtrExpr_6dab14bf implements \SqlSemantics\Statement\Mode
         public readonly string $ptr,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 10,));
+        $this->assertMatchesPattern($ptr, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['PTR'], 'The ptr must be a complete PTR lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr2), 'The expr2 must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($expr2, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 11,));
     }
 
     /**
@@ -32,5 +39,29 @@ final class ExprWithExprPtrExpr_6dab14bf implements \SqlSemantics\Statement\Mode
         $this->expr->write($writer);
         $writer->append($this->ptr);
         $this->expr2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
+    {
+        return new self($expr, $this->ptr, $this->expr2);
+    }
+
+    /**
+     * Returns a copy with a new ptr, preserving every other field.
+     */
+    public function withPtr(string $ptr): self
+    {
+        return new self($this->expr, $ptr, $this->expr2);
+    }
+
+    /**
+     * Returns a copy with a new expr2, preserving every other field.
+     */
+    public function withExpr2(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr2): self
+    {
+        return new self($this->expr, $this->ptr, $expr2);
     }
 }

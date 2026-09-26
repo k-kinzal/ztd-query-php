@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TriggerFollowsPrecedesClauseWithTriggerActionOrderIdentOrText_03d98e96 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TriggerFollowsPrecedesClauseWithTriggerActionOrderIdentOrText_03d98e96 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TriggerFollowsPrecedesClauseWithTriggerActionOrderIdentOrText_03d98e96 implements \SqlSemantics\Statement\Model\MySql\Role\TriggerFollowsPrecedesClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TriggerFollowsPrecedesClauseWithTriggerActionOrderIdentOrText_03d98e
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TriggerActionOrderForm $triggerActionOrder,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($triggerActionOrder), 'The triggerActionOrder must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText), 'The identOrText must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class TriggerFollowsPrecedesClauseWithTriggerActionOrderIdentOrText_03d98e
     {
         $this->triggerActionOrder->write($writer);
         $this->identOrText->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new triggerActionOrder, preserving every other field.
+     */
+    public function withTriggerActionOrder(\SqlSemantics\Statement\Model\MySql\Role\TriggerActionOrderForm $triggerActionOrder): self
+    {
+        return new self($triggerActionOrder, $this->identOrText);
+    }
+
+    /**
+     * Returns a copy with a new identOrText, preserving every other field.
+     */
+    public function withIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText): self
+    {
+        return new self($this->triggerActionOrder, $identOrText);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\NumLiteralWithFloatNum_9e659a12 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\NumLiteralWithFloatNum_9e659a12 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class NumLiteralWithFloatNum_9e659a12 implements \SqlSemantics\Statement\Model\MySql\Role\NumLiteralForm, \SqlSemantics\Statement\Model\MySql\Role\BitExprForm, \SqlSemantics\Statement\Model\MySql\Role\BoolPriForm, \SqlSemantics\Statement\Model\MySql\Role\ConditionNumberForm, \SqlSemantics\Statement\Model\MySql\Role\ExprForm, \SqlSemantics\Statement\Model\MySql\Role\ExprListForm, \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\GeneratedColumnFuncForm, \SqlSemantics\Statement\Model\MySql\Role\GroupListForm, \SqlSemantics\Statement\Model\MySql\Role\GroupingExprForm, \SqlSemantics\Statement\Model\MySql\Role\InstallSetRvalueForm, \SqlSemantics\Statement\Model\MySql\Role\LiteralForm, \SqlSemantics\Statement\Model\MySql\Role\LiteralOrNullForm, \SqlSemantics\Statement\Model\MySql\Role\NowOrSignedLiteralForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprListForm, \SqlSemantics\Statement\Model\MySql\Role\OptSpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\OptValuesForm, \SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm, \SqlSemantics\Statement\Model\MySql\Role\PartFuncExprForm, \SqlSemantics\Statement\Model\MySql\Role\PartFuncMaxForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueExprItemForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueItemForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueItemListForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueListForm, \SqlSemantics\Statement\Model\MySql\Role\PartValuesInForm, \SqlSemantics\Statement\Model\MySql\Role\PredicateForm, \SqlSemantics\Statement\Model\MySql\Role\SamplingPercentageForm, \SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\SignalAllowedExprForm, \SqlSemantics\Statement\Model\MySql\Role\SignedLiteralForm, \SqlSemantics\Statement\Model\MySql\Role\SignedLiteralOrNullForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm, \SqlSemantics\Statement\Model\MySql\Role\SpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\ValuesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $floatNum,
     ) {
+        $this->assertMatchesPattern($floatNum, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['FLOAT_NUM'], 'The floatNum must be a complete FLOAT_NUM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class NumLiteralWithFloatNum_9e659a12 implements \SqlSemantics\Statement\M
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->floatNum);
+    }
+
+    /**
+     * Returns a copy with a new floatNum, preserving every other field.
+     */
+    public function withFloatNum(string $floatNum): self
+    {
+        return new self($floatNum);
     }
 }

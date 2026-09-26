@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GrantCommandWithProxySymOnUserToSymGrantListOptGrantOption_14d62736 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GrantCommandWithProxySymOnUserToSymGrantListOptGrantOption_14d62736 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GrantCommandWithProxySymOnUserToSymGrantListOptGrantOption_14d62736 implements \SqlSemantics\Statement\Model\MySql\Role\GrantCommandForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class GrantCommandWithProxySymOnUserToSymGrantListOptGrantOption_14d62736 
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GrantListForm $grantList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptGrantOptionForm $optGrantOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($grantList), 'The grantList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optGrantOption), 'The optGrantOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +40,29 @@ final class GrantCommandWithProxySymOnUserToSymGrantListOptGrantOption_14d62736 
         $writer->append('TO');
         $this->grantList->write($writer);
         $this->optGrantOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new user, preserving every other field.
+     */
+    public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
+    {
+        return new self($user, $this->grantList, $this->optGrantOption);
+    }
+
+    /**
+     * Returns a copy with a new grantList, preserving every other field.
+     */
+    public function withGrantList(\SqlSemantics\Statement\Model\MySql\Role\GrantListForm $grantList): self
+    {
+        return new self($this->user, $grantList, $this->optGrantOption);
+    }
+
+    /**
+     * Returns a copy with a new optGrantOption, preserving every other field.
+     */
+    public function withOptGrantOption(\SqlSemantics\Statement\Model\MySql\Role\OptGrantOptionForm $optGrantOption): self
+    {
+        return new self($this->user, $this->grantList, $optGrantOption);
     }
 }

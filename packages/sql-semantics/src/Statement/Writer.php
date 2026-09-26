@@ -7,13 +7,27 @@ namespace SqlSemantics\Statement;
 /**
  * Separates SQL values without changing quoted content or lexical adjacency.
  *
- * @visibility SqlSemantics
+ * @visibility public
+ * @example Rendering an SQL fragment
+ *     $render = static fn (\SqlSemantics\Statement\Element $element): string => \SqlSemantics\Statement\Writer::render($element);
+ *     $render instanceof \Closure // => true
  */
 final class Writer
 {
     private string $sql = '';
     private string $previous = '';
     private bool $previousIdentifier = false;
+
+    /**
+     * Writes an individual SQL fragment or complete command from its structure.
+     */
+    public static function render(Element $element): string
+    {
+        $writer = new self();
+        $element->write($writer);
+
+        return $writer->toString();
+    }
 
     /**
      * Emits one fixed SQL word or an indivisible argument value.

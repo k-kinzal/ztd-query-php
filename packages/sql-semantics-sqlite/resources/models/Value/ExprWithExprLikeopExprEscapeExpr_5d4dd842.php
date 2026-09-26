@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithExprLikeopExprEscapeExpr_5d4dd842 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithExprLikeopExprEscapeExpr_5d4dd842 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ExprWithExprLikeopExprEscapeExpr_5d4dd842 implements \SqlSemantics\Statement\Model\Sqlite\Role\CaseOperandForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm, \SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,12 @@ final class ExprWithExprLikeopExprEscapeExpr_5d4dd842 implements \SqlSemantics\S
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr2,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr3,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 4,));
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($likeop), 'The likeop must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr2), 'The expr2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr3), 'The expr3 must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($expr3, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 5,));
     }
 
     /**
@@ -35,5 +43,37 @@ final class ExprWithExprLikeopExprEscapeExpr_5d4dd842 implements \SqlSemantics\S
         $this->expr2->write($writer);
         $writer->append('ESCAPE');
         $this->expr3->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
+    {
+        return new self($expr, $this->likeop, $this->expr2, $this->expr3);
+    }
+
+    /**
+     * Returns a copy with a new likeop, preserving every other field.
+     */
+    public function withLikeop(\SqlSemantics\Statement\Model\Sqlite\Role\LikeopForm $likeop): self
+    {
+        return new self($this->expr, $likeop, $this->expr2, $this->expr3);
+    }
+
+    /**
+     * Returns a copy with a new expr2, preserving every other field.
+     */
+    public function withExpr2(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr2): self
+    {
+        return new self($this->expr, $this->likeop, $expr2, $this->expr3);
+    }
+
+    /**
+     * Returns a copy with a new expr3, preserving every other field.
+     */
+    public function withExpr3(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr3): self
+    {
+        return new self($this->expr, $this->likeop, $this->expr2, $expr3);
     }
 }

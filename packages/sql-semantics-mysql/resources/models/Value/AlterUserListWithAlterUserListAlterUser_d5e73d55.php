@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterUserListWithAlterUserListAlterUser_d5e73d55 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterUserListWithAlterUserListAlterUser_d5e73d55 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterUserListWithAlterUserListAlterUser_d5e73d55 implements \SqlSemantics\Statement\Model\MySql\Role\AlterUserListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterUserListWithAlterUserListAlterUser_d5e73d55 implements \SqlSema
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterUserListForm $alterUserList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterUserForm $alterUser,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterUserList), 'The alterUserList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterUser), 'The alterUser must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class AlterUserListWithAlterUserListAlterUser_d5e73d55 implements \SqlSema
         $this->alterUserList->write($writer);
         $writer->append(',');
         $this->alterUser->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new alterUserList, preserving every other field.
+     */
+    public function withAlterUserList(\SqlSemantics\Statement\Model\MySql\Role\AlterUserListForm $alterUserList): self
+    {
+        return new self($alterUserList, $this->alterUser);
+    }
+
+    /**
+     * Returns a copy with a new alterUser, preserving every other field.
+     */
+    public function withAlterUser(\SqlSemantics\Statement\Model\MySql\Role\AlterUserForm $alterUser): self
+    {
+        return new self($this->alterUserList, $alterUser);
     }
 }

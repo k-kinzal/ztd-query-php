@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptIndexHintsListWith_7359f8d5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptIndexHintsListWith_7359f8d5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptIndexHintsListWith_7359f8d5 implements \SqlSemantics\Statement\Model\MySql\Role\OptIndexHintsListForm, \SqlSemantics\Statement\Model\MySql\Role\OptKeyDefinitionForm

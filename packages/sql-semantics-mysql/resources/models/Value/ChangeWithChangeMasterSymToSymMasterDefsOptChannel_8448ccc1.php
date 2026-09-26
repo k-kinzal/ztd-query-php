@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ChangeWithChangeMasterSymToSymMasterDefsOptChannel_8448ccc1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ChangeWithChangeMasterSymToSymMasterDefsOptChannel_8448ccc1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class ChangeWithChangeMasterSymToSymMasterDefsOptChannel_8448ccc1 implements \SqlSemantics\Statement\Model\MySql\Role\ChangeForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class ChangeWithChangeMasterSymToSymMasterDefsOptChannel_8448ccc1 implements \SqlSemantics\Statement\Model\MySql\Role\ChangeForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ChangeWithChangeMasterSymToSymMasterDefsOptChannel_8448ccc1 implemen
         public readonly \SqlSemantics\Statement\Model\MySql\Role\MasterDefsForm $masterDefs,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($masterDefs), 'The masterDefs must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optChannel), 'The optChannel must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class ChangeWithChangeMasterSymToSymMasterDefsOptChannel_8448ccc1 implemen
         $writer->append('TO');
         $this->masterDefs->write($writer);
         $this->optChannel->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new masterDefs, preserving every other field.
+     */
+    public function withMasterDefs(\SqlSemantics\Statement\Model\MySql\Role\MasterDefsForm $masterDefs): self
+    {
+        return new self($masterDefs, $this->optChannel);
+    }
+
+    /**
+     * Returns a copy with a new optChannel, preserving every other field.
+     */
+    public function withOptChannel(\SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel): self
+    {
+        return new self($this->masterDefs, $optChannel);
     }
 }

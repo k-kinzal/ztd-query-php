@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpFdparamsWithSpFdparamsSpFdparam_20e01a48 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpFdparamsWithSpFdparamsSpFdparam_20e01a48 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpFdparamsWithSpFdparamsSpFdparam_20e01a48 implements \SqlSemantics\Statement\Model\MySql\Role\SpFdparamListForm, \SqlSemantics\Statement\Model\MySql\Role\SpFdparamsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SpFdparamsWithSpFdparamsSpFdparam_20e01a48 implements \SqlSemantics\
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpFdparamsForm $spFdparams,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpFdparamForm $spFdparam,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spFdparams), 'The spFdparams must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spFdparam), 'The spFdparam must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SpFdparamsWithSpFdparamsSpFdparam_20e01a48 implements \SqlSemantics\
         $this->spFdparams->write($writer);
         $writer->append(',');
         $this->spFdparam->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new spFdparams, preserving every other field.
+     */
+    public function withSpFdparams(\SqlSemantics\Statement\Model\MySql\Role\SpFdparamsForm $spFdparams): self
+    {
+        return new self($spFdparams, $this->spFdparam);
+    }
+
+    /**
+     * Returns a copy with a new spFdparam, preserving every other field.
+     */
+    public function withSpFdparam(\SqlSemantics\Statement\Model\MySql\Role\SpFdparamForm $spFdparam): self
+    {
+        return new self($this->spFdparams, $spFdparam);
     }
 }

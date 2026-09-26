@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SetTargetWithColIdOptIndirection_11ab7089 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SetTargetWithColIdOptIndirection_11ab7089 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SetTargetWithColIdOptIndirection_11ab7089 implements \SqlSemantics\Statement\Model\PostgreSql\Role\SetTargetForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SetTargetListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SetTargetWithColIdOptIndirection_11ab7089 implements \SqlSemantics\S
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptIndirectionForm $optIndirection,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optIndirection), 'The optIndirection must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class SetTargetWithColIdOptIndirection_11ab7089 implements \SqlSemantics\S
     {
         $this->colId->write($writer);
         $this->optIndirection->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($colId, $this->optIndirection);
+    }
+
+    /**
+     * Returns a copy with a new optIndirection, preserving every other field.
+     */
+    public function withOptIndirection(\SqlSemantics\Statement\Model\PostgreSql\Role\OptIndirectionForm $optIndirection): self
+    {
+        return new self($this->colId, $optIndirection);
     }
 }

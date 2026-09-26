@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WhereClauseWith_6f332f84 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WhereClauseWith_6f332f84 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WhereClauseWith_6f332f84 implements \SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm, \SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForm, \SqlSemantics\Statement\Model\MySql\Role\WhereClauseForm

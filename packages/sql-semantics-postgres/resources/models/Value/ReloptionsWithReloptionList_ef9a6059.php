@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ReloptionsWithReloptionList_ef9a6059 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ReloptionsWithReloptionList_ef9a6059 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ReloptionsWithReloptionList_ef9a6059 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionListForm $reloptionList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($reloptionList), 'The reloptionList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class ReloptionsWithReloptionList_ef9a6059 implements \SqlSemantics\Statem
         $writer->append('(');
         $this->reloptionList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new reloptionList, preserving every other field.
+     */
+    public function withReloptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionListForm $reloptionList): self
+    {
+        return new self($reloptionList);
     }
 }

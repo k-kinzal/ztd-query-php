@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Role;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Role\SearchedWhenClauseForm $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Role\SearchedWhenClauseForm $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 interface SearchedWhenClauseForm extends \SqlSemantics\Statement\Element

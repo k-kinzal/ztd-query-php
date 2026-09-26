@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IndexOptionsWithIndexOptionsIndexOption_d896d05b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IndexOptionsWithIndexOptionsIndexOption_d896d05b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IndexOptionsWithIndexOptionsIndexOption_d896d05b implements \SqlSemantics\Statement\Model\MySql\Role\IndexOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptIndexOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class IndexOptionsWithIndexOptionsIndexOption_d896d05b implements \SqlSema
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IndexOptionsForm $indexOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IndexOptionForm $indexOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($indexOptions), 'The indexOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($indexOption), 'The indexOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class IndexOptionsWithIndexOptionsIndexOption_d896d05b implements \SqlSema
     {
         $this->indexOptions->write($writer);
         $this->indexOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new indexOptions, preserving every other field.
+     */
+    public function withIndexOptions(\SqlSemantics\Statement\Model\MySql\Role\IndexOptionsForm $indexOptions): self
+    {
+        return new self($indexOptions, $this->indexOption);
+    }
+
+    /**
+     * Returns a copy with a new indexOption, preserving every other field.
+     */
+    public function withIndexOption(\SqlSemantics\Statement\Model\MySql\Role\IndexOptionForm $indexOption): self
+    {
+        return new self($this->indexOptions, $indexOption);
     }
 }

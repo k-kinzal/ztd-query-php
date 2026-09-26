@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncTableWithFuncExprWindowlessOptOrdinality_de7dd103 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncTableWithFuncExprWindowlessOptOrdinality_de7dd103 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FuncTableWithFuncExprWindowlessOptOrdinality_de7dd103 implements \SqlSemantics\Statement\Model\PostgreSql\Role\FuncTableForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FuncTableWithFuncExprWindowlessOptOrdinality_de7dd103 implements \Sq
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprWindowlessForm $funcExprWindowless,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptOrdinalityForm $optOrdinality,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcExprWindowless), 'The funcExprWindowless must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optOrdinality), 'The optOrdinality must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class FuncTableWithFuncExprWindowlessOptOrdinality_de7dd103 implements \Sq
     {
         $this->funcExprWindowless->write($writer);
         $this->optOrdinality->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new funcExprWindowless, preserving every other field.
+     */
+    public function withFuncExprWindowless(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprWindowlessForm $funcExprWindowless): self
+    {
+        return new self($funcExprWindowless, $this->optOrdinality);
+    }
+
+    /**
+     * Returns a copy with a new optOrdinality, preserving every other field.
+     */
+    public function withOptOrdinality(\SqlSemantics\Statement\Model\PostgreSql\Role\OptOrdinalityForm $optOrdinality): self
+    {
+        return new self($this->funcExprWindowless, $optOrdinality);
     }
 }

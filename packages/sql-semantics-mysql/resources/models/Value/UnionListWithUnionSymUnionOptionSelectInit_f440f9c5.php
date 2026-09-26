@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\UnionListWithUnionSymUnionOptionSelectInit_f440f9c5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\UnionListWithUnionSymUnionOptionSelectInit_f440f9c5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class UnionListWithUnionSymUnionOptionSelectInit_f440f9c5 implements \SqlSemantics\Statement\Model\MySql\Role\OptUnionClauseForm, \SqlSemantics\Statement\Model\MySql\Role\UnionClauseForm, \SqlSemantics\Statement\Model\MySql\Role\UnionListForm, \SqlSemantics\Statement\Model\MySql\Role\UnionOptForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class UnionListWithUnionSymUnionOptionSelectInit_f440f9c5 implements \SqlS
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UnionOptionForm $unionOption,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectInitForm $selectInit,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($unionOption), 'The unionOption must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectInit), 'The selectInit must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class UnionListWithUnionSymUnionOptionSelectInit_f440f9c5 implements \SqlS
         $writer->append('UNION');
         $this->unionOption->write($writer);
         $this->selectInit->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new unionOption, preserving every other field.
+     */
+    public function withUnionOption(\SqlSemantics\Statement\Model\MySql\Role\UnionOptionForm $unionOption): self
+    {
+        return new self($unionOption, $this->selectInit);
+    }
+
+    /**
+     * Returns a copy with a new selectInit, preserving every other field.
+     */
+    public function withSelectInit(\SqlSemantics\Statement\Model\MySql\Role\SelectInitForm $selectInit): self
+    {
+        return new self($this->unionOption, $selectInit);
     }
 }

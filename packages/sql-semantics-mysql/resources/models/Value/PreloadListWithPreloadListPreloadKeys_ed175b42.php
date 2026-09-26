@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PreloadListWithPreloadListPreloadKeys_ed175b42 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PreloadListWithPreloadListPreloadKeys_ed175b42 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PreloadListWithPreloadListPreloadKeys_ed175b42 implements \SqlSemantics\Statement\Model\MySql\Role\PreloadListForm, \SqlSemantics\Statement\Model\MySql\Role\PreloadListOrPartsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class PreloadListWithPreloadListPreloadKeys_ed175b42 implements \SqlSemant
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PreloadListForm $preloadList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PreloadKeysForm $preloadKeys,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($preloadList), 'The preloadList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($preloadKeys), 'The preloadKeys must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class PreloadListWithPreloadListPreloadKeys_ed175b42 implements \SqlSemant
         $this->preloadList->write($writer);
         $writer->append(',');
         $this->preloadKeys->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new preloadList, preserving every other field.
+     */
+    public function withPreloadList(\SqlSemantics\Statement\Model\MySql\Role\PreloadListForm $preloadList): self
+    {
+        return new self($preloadList, $this->preloadKeys);
+    }
+
+    /**
+     * Returns a copy with a new preloadKeys, preserving every other field.
+     */
+    public function withPreloadKeys(\SqlSemantics\Statement\Model\MySql\Role\PreloadKeysForm $preloadKeys): self
+    {
+        return new self($this->preloadList, $preloadKeys);
     }
 }

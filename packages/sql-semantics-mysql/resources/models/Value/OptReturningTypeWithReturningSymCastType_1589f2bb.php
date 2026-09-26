@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptReturningTypeWithReturningSymCastType_1589f2bb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptReturningTypeWithReturningSymCastType_1589f2bb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptReturningTypeWithReturningSymCastType_1589f2bb implements \SqlSemantics\Statement\Model\MySql\Role\OptReturningTypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CastTypeForm $castType,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($castType), 'The castType must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OptReturningTypeWithReturningSymCastType_1589f2bb implements \SqlSem
     {
         $writer->append('RETURNING');
         $this->castType->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new castType, preserving every other field.
+     */
+    public function withCastType(\SqlSemantics\Statement\Model\MySql\Role\CastTypeForm $castType): self
+    {
+        return new self($castType);
     }
 }

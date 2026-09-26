@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\LvalueVariableWithLvalueIdentIdent_340b4df0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\LvalueVariableWithLvalueIdentIdent_340b4df0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class LvalueVariableWithLvalueIdentIdent_340b4df0 implements \SqlSemantics\Statement\Model\MySql\Role\LvalueVariableForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class LvalueVariableWithLvalueIdentIdent_340b4df0 implements \SqlSemantics
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LvalueIdentForm $lvalueIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($lvalueIdent), 'The lvalueIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class LvalueVariableWithLvalueIdentIdent_340b4df0 implements \SqlSemantics
         $this->lvalueIdent->write($writer);
         $writer->append('.');
         $this->ident->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new lvalueIdent, preserving every other field.
+     */
+    public function withLvalueIdent(\SqlSemantics\Statement\Model\MySql\Role\LvalueIdentForm $lvalueIdent): self
+    {
+        return new self($lvalueIdent, $this->ident);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($this->lvalueIdent, $ident);
     }
 }

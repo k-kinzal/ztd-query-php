@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PartOptionWithOptStorageEngineSymOptEqualIdentOrText_6c2f88e4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PartOptionWithOptStorageEngineSymOptEqualIdentOrText_6c2f88e4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PartOptionWithOptStorageEngineSymOptEqualIdentOrText_6c2f88e4 implements \SqlSemantics\Statement\Model\MySql\Role\OptPartOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\PartOptionForm, \SqlSemantics\Statement\Model\MySql\Role\PartOptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class PartOptionWithOptStorageEngineSymOptEqualIdentOrText_6c2f88e4 implem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optStorage), 'The optStorage must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText), 'The identOrText must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class PartOptionWithOptStorageEngineSymOptEqualIdentOrText_6c2f88e4 implem
         $writer->append('ENGINE');
         $this->optEqual->write($writer);
         $this->identOrText->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optStorage, preserving every other field.
+     */
+    public function withOptStorage(\SqlSemantics\Statement\Model\MySql\Role\OptStorageForm $optStorage): self
+    {
+        return new self($optStorage, $this->optEqual, $this->identOrText);
+    }
+
+    /**
+     * Returns a copy with a new optEqual, preserving every other field.
+     */
+    public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
+    {
+        return new self($this->optStorage, $optEqual, $this->identOrText);
+    }
+
+    /**
+     * Returns a copy with a new identOrText, preserving every other field.
+     */
+    public function withIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText): self
+    {
+        return new self($this->optStorage, $this->optEqual, $identOrText);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RenameStmtWithAlterGroupPRoleIdRenameToRoleId_19bf2e10 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RenameStmtWithAlterGroupPRoleIdRenameToRoleId_19bf2e10 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class RenameStmtWithAlterGroupPRoleIdRenameToRoleId_19bf2e10 implements \SqlSemantics\Statement\Model\PostgreSql\Role\RenameStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class RenameStmtWithAlterGroupPRoleIdRenameToRoleId_19bf2e10 implements \SqlSemantics\Statement\Model\PostgreSql\Role\RenameStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class RenameStmtWithAlterGroupPRoleIdRenameToRoleId_19bf2e10 implements \S
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoleIdForm $roleId,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoleIdForm $roleId2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleId), 'The roleId must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleId2), 'The roleId2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +38,21 @@ final class RenameStmtWithAlterGroupPRoleIdRenameToRoleId_19bf2e10 implements \S
         $writer->append('RENAME');
         $writer->append('TO');
         $this->roleId2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new roleId, preserving every other field.
+     */
+    public function withRoleId(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleIdForm $roleId): self
+    {
+        return new self($roleId, $this->roleId2);
+    }
+
+    /**
+     * Returns a copy with a new roleId2, preserving every other field.
+     */
+    public function withRoleId2(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleIdForm $roleId2): self
+    {
+        return new self($this->roleId, $roleId2);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\MergeStmtWithOptWithClauseMergeIntoRelationExprOptAliasUsingTableRefOnAExprMergeWhenList_76187741 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\MergeStmtWithOptWithClauseMergeIntoRelationExprOptAliasUsingTableRefOnAExprMergeWhenList_76187741 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class MergeStmtWithOptWithClauseMergeIntoRelationExprOptAliasUsingTableRefOnAExprMergeWhenList_76187741 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\MergeStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\PreparableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class MergeStmtWithOptWithClauseMergeIntoRelationExprOptAliasUsingTableRefOnAExprMergeWhenList_76187741 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\MergeStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\PreparableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -25,6 +27,12 @@ final class MergeStmtWithOptWithClauseMergeIntoRelationExprOptAliasUsingTableRef
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\MergeWhenListForm $mergeWhenList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ReturningClauseForm $returningClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($with), 'The with must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($relationExprOptAlias), 'The relationExprOptAlias must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($tableRef), 'The tableRef must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($mergeWhenList), 'The mergeWhenList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($returningClause), 'The returningClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -42,5 +50,53 @@ final class MergeStmtWithOptWithClauseMergeIntoRelationExprOptAliasUsingTableRef
         $this->aExpr->write($writer);
         $this->mergeWhenList->write($writer);
         $this->returningClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new with, preserving every other field.
+     */
+    public function withWith(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithClauseForm $with): self
+    {
+        return new self($with, $this->relationExprOptAlias, $this->tableRef, $this->aExpr, $this->mergeWhenList, $this->returningClause);
+    }
+
+    /**
+     * Returns a copy with a new relationExprOptAlias, preserving every other field.
+     */
+    public function withRelationExprOptAlias(\SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprOptAliasForm $relationExprOptAlias): self
+    {
+        return new self($this->with, $relationExprOptAlias, $this->tableRef, $this->aExpr, $this->mergeWhenList, $this->returningClause);
+    }
+
+    /**
+     * Returns a copy with a new tableRef, preserving every other field.
+     */
+    public function withTableRef(\SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm $tableRef): self
+    {
+        return new self($this->with, $this->relationExprOptAlias, $tableRef, $this->aExpr, $this->mergeWhenList, $this->returningClause);
+    }
+
+    /**
+     * Returns a copy with a new aExpr, preserving every other field.
+     */
+    public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
+    {
+        return new self($this->with, $this->relationExprOptAlias, $this->tableRef, $aExpr, $this->mergeWhenList, $this->returningClause);
+    }
+
+    /**
+     * Returns a copy with a new mergeWhenList, preserving every other field.
+     */
+    public function withMergeWhenList(\SqlSemantics\Statement\Model\PostgreSql\Role\MergeWhenListForm $mergeWhenList): self
+    {
+        return new self($this->with, $this->relationExprOptAlias, $this->tableRef, $this->aExpr, $mergeWhenList, $this->returningClause);
+    }
+
+    /**
+     * Returns a copy with a new returningClause, preserving every other field.
+     */
+    public function withReturningClause(\SqlSemantics\Statement\Model\PostgreSql\Role\ReturningClauseForm $returningClause): self
+    {
+        return new self($this->with, $this->relationExprOptAlias, $this->tableRef, $this->aExpr, $this->mergeWhenList, $returningClause);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncExprCommonSubexprWithXmlelementNamePColLabelXmlAttributes_73a54e6f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncExprCommonSubexprWithXmlelementNamePColLabelXmlAttributes_73a54e6f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FuncExprCommonSubexprWithXmlelementNamePColLabelXmlAttributes_73a54e6f implements \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CaseArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListOptForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprCommonSubexprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprWindowlessForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTargetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectFetchFirstValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectOffsetValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamsForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TrimListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FuncExprCommonSubexprWithXmlelementNamePColLabelXmlAttributes_73a54e
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm $colLabel,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributesForm $xmlAttributes,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colLabel), 'The colLabel must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($xmlAttributes), 'The xmlAttributes must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +39,21 @@ final class FuncExprCommonSubexprWithXmlelementNamePColLabelXmlAttributes_73a54e
         $writer->append(',');
         $this->xmlAttributes->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new colLabel, preserving every other field.
+     */
+    public function withColLabel(\SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm $colLabel): self
+    {
+        return new self($colLabel, $this->xmlAttributes);
+    }
+
+    /**
+     * Returns a copy with a new xmlAttributes, preserving every other field.
+     */
+    public function withXmlAttributes(\SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributesForm $xmlAttributes): self
+    {
+        return new self($this->colLabel, $xmlAttributes);
     }
 }

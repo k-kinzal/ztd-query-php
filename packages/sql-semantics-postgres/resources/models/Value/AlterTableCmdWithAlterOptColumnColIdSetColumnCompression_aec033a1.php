@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableCmdWithAlterOptColumnColIdSetColumnCompression_aec033a1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableCmdWithAlterOptColumnColIdSetColumnCompression_aec033a1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterTableCmdWithAlterOptColumnColIdSetColumnCompression_aec033a1 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterTableCmdWithAlterOptColumnColIdSetColumnCompression_aec033a1 im
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColumnCompressionForm $columnCompression,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optColumn), 'The optColumn must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($columnCompression), 'The columnCompression must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class AlterTableCmdWithAlterOptColumnColIdSetColumnCompression_aec033a1 im
         $this->colId->write($writer);
         $writer->append('SET');
         $this->columnCompression->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optColumn, preserving every other field.
+     */
+    public function withOptColumn(\SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnForm $optColumn): self
+    {
+        return new self($optColumn, $this->colId, $this->columnCompression);
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($this->optColumn, $colId, $this->columnCompression);
+    }
+
+    /**
+     * Returns a copy with a new columnCompression, preserving every other field.
+     */
+    public function withColumnCompression(\SqlSemantics\Statement\Model\PostgreSql\Role\ColumnCompressionForm $columnCompression): self
+    {
+        return new self($this->optColumn, $this->colId, $columnCompression);
     }
 }

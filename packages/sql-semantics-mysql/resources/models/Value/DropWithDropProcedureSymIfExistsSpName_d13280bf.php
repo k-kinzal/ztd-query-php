@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DropWithDropProcedureSymIfExistsSpName_d13280bf $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DropWithDropProcedureSymIfExistsSpName_d13280bf $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DropWithDropProcedureSymIfExistsSpName_d13280bf implements \SqlSemantics\Statement\Model\MySql\Role\DropForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class DropWithDropProcedureSymIfExistsSpName_d13280bf implements \SqlSeman
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ifExists), 'The ifExists must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spName), 'The spName must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class DropWithDropProcedureSymIfExistsSpName_d13280bf implements \SqlSeman
         $writer->append('PROCEDURE');
         $this->ifExists->write($writer);
         $this->spName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new ifExists, preserving every other field.
+     */
+    public function withIfExists(\SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists): self
+    {
+        return new self($ifExists, $this->spName);
+    }
+
+    /**
+     * Returns a copy with a new spName, preserving every other field.
+     */
+    public function withSpName(\SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName): self
+    {
+        return new self($this->ifExists, $spName);
     }
 }

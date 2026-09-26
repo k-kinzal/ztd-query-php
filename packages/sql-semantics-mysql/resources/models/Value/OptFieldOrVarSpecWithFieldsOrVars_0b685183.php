@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptFieldOrVarSpecWithFieldsOrVars_0b685183 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptFieldOrVarSpecWithFieldsOrVars_0b685183 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptFieldOrVarSpecWithFieldsOrVars_0b685183 implements \SqlSemantics\Statement\Model\MySql\Role\OptFieldOrVarSpecForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldsOrVarsForm $fieldsOrVars,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldsOrVars), 'The fieldsOrVars must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OptFieldOrVarSpecWithFieldsOrVars_0b685183 implements \SqlSemantics\
         $writer->append('(');
         $this->fieldsOrVars->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new fieldsOrVars, preserving every other field.
+     */
+    public function withFieldsOrVars(\SqlSemantics\Statement\Model\MySql\Role\FieldsOrVarsForm $fieldsOrVars): self
+    {
+        return new self($fieldsOrVars);
     }
 }

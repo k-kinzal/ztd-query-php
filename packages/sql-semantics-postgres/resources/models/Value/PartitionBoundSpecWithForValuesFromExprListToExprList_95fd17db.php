@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PartitionBoundSpecWithForValuesFromExprListToExprList_95fd17db $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PartitionBoundSpecWithForValuesFromExprListToExprList_95fd17db $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PartitionBoundSpecWithForValuesFromExprListToExprList_95fd17db implements \SqlSemantics\Statement\Model\PostgreSql\Role\PartitionBoundSpecForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class PartitionBoundSpecWithForValuesFromExprListToExprList_95fd17db imple
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm $exprList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm $exprList2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($exprList), 'The exprList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($exprList2), 'The exprList2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -38,5 +42,21 @@ final class PartitionBoundSpecWithForValuesFromExprListToExprList_95fd17db imple
         $writer->append('(');
         $this->exprList2->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new exprList, preserving every other field.
+     */
+    public function withExprList(\SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm $exprList): self
+    {
+        return new self($exprList, $this->exprList2);
+    }
+
+    /**
+     * Returns a copy with a new exprList2, preserving every other field.
+     */
+    public function withExprList2(\SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm $exprList2): self
+    {
+        return new self($this->exprList, $exprList2);
     }
 }

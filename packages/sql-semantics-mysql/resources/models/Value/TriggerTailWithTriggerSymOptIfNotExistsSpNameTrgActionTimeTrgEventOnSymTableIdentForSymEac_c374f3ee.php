@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TriggerTailWithTriggerSymOptIfNotExistsSpNameTrgActionTimeTrgEventOnSymTableIdentForSymEac_c374f3ee $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TriggerTailWithTriggerSymOptIfNotExistsSpNameTrgActionTimeTrgEventOnSymTableIdentForSymEac_c374f3ee $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TriggerTailWithTriggerSymOptIfNotExistsSpNameTrgActionTimeTrgEventOnSymTableIdentForSymEac_c374f3ee implements \SqlSemantics\Statement\Model\MySql\Role\DefinerTailForm, \SqlSemantics\Statement\Model\MySql\Role\NoDefinerTailForm, \SqlSemantics\Statement\Model\MySql\Role\TriggerTailForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -26,6 +28,13 @@ final class TriggerTailWithTriggerSymOptIfNotExistsSpNameTrgActionTimeTrgEventOn
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TriggerFollowsPrecedesClauseForm $triggerFollowsPrecedesClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm $spProcStmt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIfNotExists), 'The optIfNotExists must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spName), 'The spName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($trgActionTime), 'The trgActionTime must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($trgEvent), 'The trgEvent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($triggerFollowsPrecedesClause), 'The triggerFollowsPrecedesClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spProcStmt), 'The spProcStmt must be a generated immutable SQL value.');
     }
 
     /**
@@ -45,5 +54,61 @@ final class TriggerTailWithTriggerSymOptIfNotExistsSpNameTrgActionTimeTrgEventOn
         $writer->append('ROW');
         $this->triggerFollowsPrecedesClause->write($writer);
         $this->spProcStmt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optIfNotExists, preserving every other field.
+     */
+    public function withOptIfNotExists(\SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists): self
+    {
+        return new self($optIfNotExists, $this->spName, $this->trgActionTime, $this->trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt);
+    }
+
+    /**
+     * Returns a copy with a new spName, preserving every other field.
+     */
+    public function withSpName(\SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName): self
+    {
+        return new self($this->optIfNotExists, $spName, $this->trgActionTime, $this->trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt);
+    }
+
+    /**
+     * Returns a copy with a new trgActionTime, preserving every other field.
+     */
+    public function withTrgActionTime(\SqlSemantics\Statement\Model\MySql\Role\TrgActionTimeForm $trgActionTime): self
+    {
+        return new self($this->optIfNotExists, $this->spName, $trgActionTime, $this->trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt);
+    }
+
+    /**
+     * Returns a copy with a new trgEvent, preserving every other field.
+     */
+    public function withTrgEvent(\SqlSemantics\Statement\Model\MySql\Role\TrgEventForm $trgEvent): self
+    {
+        return new self($this->optIfNotExists, $this->spName, $this->trgActionTime, $trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($this->optIfNotExists, $this->spName, $this->trgActionTime, $this->trgEvent, $tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt);
+    }
+
+    /**
+     * Returns a copy with a new triggerFollowsPrecedesClause, preserving every other field.
+     */
+    public function withTriggerFollowsPrecedesClause(\SqlSemantics\Statement\Model\MySql\Role\TriggerFollowsPrecedesClauseForm $triggerFollowsPrecedesClause): self
+    {
+        return new self($this->optIfNotExists, $this->spName, $this->trgActionTime, $this->trgEvent, $this->tableIdent, $triggerFollowsPrecedesClause, $this->spProcStmt);
+    }
+
+    /**
+     * Returns a copy with a new spProcStmt, preserving every other field.
+     */
+    public function withSpProcStmt(\SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm $spProcStmt): self
+    {
+        return new self($this->optIfNotExists, $this->spName, $this->trgActionTime, $this->trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $spProcStmt);
     }
 }

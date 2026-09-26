@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\UpsertWithOnConflictDoNothingReturning_162a31bb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\UpsertWithOnConflictDoNothingReturning_162a31bb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class UpsertWithOnConflictDoNothingReturning_162a31bb implements \SqlSemantics\Statement\Model\Sqlite\Role\UpsertForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ReturningForm $returning,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($returning), 'The returning must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +35,13 @@ final class UpsertWithOnConflictDoNothingReturning_162a31bb implements \SqlSeman
         $writer->append('DO');
         $writer->append('NOTHING');
         $this->returning->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new returning, preserving every other field.
+     */
+    public function withReturning(\SqlSemantics\Statement\Model\Sqlite\Role\ReturningForm $returning): self
+    {
+        return new self($returning);
     }
 }

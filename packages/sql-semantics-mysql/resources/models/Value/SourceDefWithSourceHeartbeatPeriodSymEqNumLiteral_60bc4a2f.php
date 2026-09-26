@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithSourceHeartbeatPeriodSymEqNumLiteral_60bc4a2f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithSourceHeartbeatPeriodSymEqNumLiteral_60bc4a2f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SourceDefWithSourceHeartbeatPeriodSymEqNumLiteral_60bc4a2f implements \SqlSemantics\Statement\Model\MySql\Role\SourceDefForm, \SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NumLiteralForm $numLiteral,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($numLiteral), 'The numLiteral must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class SourceDefWithSourceHeartbeatPeriodSymEqNumLiteral_60bc4a2f implement
         $writer->append('SOURCE_HEARTBEAT_PERIOD');
         $writer->append('=');
         $this->numLiteral->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new numLiteral, preserving every other field.
+     */
+    public function withNumLiteral(\SqlSemantics\Statement\Model\MySql\Role\NumLiteralForm $numLiteral): self
+    {
+        return new self($numLiteral);
     }
 }

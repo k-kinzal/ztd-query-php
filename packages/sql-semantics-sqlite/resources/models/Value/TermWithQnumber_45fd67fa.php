@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TermWithQnumber_45fd67fa $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TermWithQnumber_45fd67fa $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TermWithQnumber_45fd67fa implements \SqlSemantics\Statement\Model\Sqlite\Role\CaseOperandForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm, \SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm, \SqlSemantics\Statement\Model\Sqlite\Role\TermForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $qnumber,
     ) {
+        $this->assertMatchesPattern($qnumber, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['QNUMBER'], 'The qnumber must be a complete QNUMBER lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class TermWithQnumber_45fd67fa implements \SqlSemantics\Statement\Model\Sq
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->qnumber);
+    }
+
+    /**
+     * Returns a copy with a new qnumber, preserving every other field.
+     */
+    public function withQnumber(string $qnumber): self
+    {
+        return new self($qnumber);
     }
 }

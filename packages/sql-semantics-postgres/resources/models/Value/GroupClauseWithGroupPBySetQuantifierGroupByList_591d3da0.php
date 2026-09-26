@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\GroupClauseWithGroupPBySetQuantifierGroupByList_591d3da0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\GroupClauseWithGroupPBySetQuantifierGroupByList_591d3da0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GroupClauseWithGroupPBySetQuantifierGroupByList_591d3da0 implements \SqlSemantics\Statement\Model\PostgreSql\Role\GroupClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class GroupClauseWithGroupPBySetQuantifierGroupByList_591d3da0 implements 
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetQuantifierForm $setQuantifier,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByListForm $groupByList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setQuantifier), 'The setQuantifier must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($groupByList), 'The groupByList must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class GroupClauseWithGroupPBySetQuantifierGroupByList_591d3da0 implements 
         $writer->append('BY');
         $this->setQuantifier->write($writer);
         $this->groupByList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new setQuantifier, preserving every other field.
+     */
+    public function withSetQuantifier(\SqlSemantics\Statement\Model\PostgreSql\Role\SetQuantifierForm $setQuantifier): self
+    {
+        return new self($setQuantifier, $this->groupByList);
+    }
+
+    /**
+     * Returns a copy with a new groupByList, preserving every other field.
+     */
+    public function withGroupByList(\SqlSemantics\Statement\Model\PostgreSql\Role\GroupByListForm $groupByList): self
+    {
+        return new self($this->setQuantifier, $groupByList);
     }
 }

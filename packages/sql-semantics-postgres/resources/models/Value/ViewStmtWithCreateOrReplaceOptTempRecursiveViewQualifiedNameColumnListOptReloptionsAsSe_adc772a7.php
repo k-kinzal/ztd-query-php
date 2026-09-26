@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ViewStmtWithCreateOrReplaceOptTempRecursiveViewQualifiedNameColumnListOptReloptionsAsSe_adc772a7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ViewStmtWithCreateOrReplaceOptTempRecursiveViewQualifiedNameColumnListOptReloptionsAsSe_adc772a7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class ViewStmtWithCreateOrReplaceOptTempRecursiveViewQualifiedNameColumnListOptReloptionsAsSe_adc772a7 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ViewStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SchemaStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class ViewStmtWithCreateOrReplaceOptTempRecursiveViewQualifiedNameColumnListOptReloptionsAsSe_adc772a7 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ViewStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SchemaStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -25,6 +27,12 @@ final class ViewStmtWithCreateOrReplaceOptTempRecursiveViewQualifiedNameColumnLi
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm $selectStmt,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptCheckOptionForm $optCheckOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTemp), 'The optTemp must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($columnList), 'The columnList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optReloptions), 'The optReloptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($selectStmt), 'The selectStmt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optCheckOption), 'The optCheckOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -46,5 +54,53 @@ final class ViewStmtWithCreateOrReplaceOptTempRecursiveViewQualifiedNameColumnLi
         $writer->append('AS');
         $this->selectStmt->write($writer);
         $this->optCheckOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optTemp, preserving every other field.
+     */
+    public function withOptTemp(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm $optTemp): self
+    {
+        return new self($optTemp, $this->qualifiedName, $this->columnList, $this->optReloptions, $this->selectStmt, $this->optCheckOption);
+    }
+
+    /**
+     * Returns a copy with a new qualifiedName, preserving every other field.
+     */
+    public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
+    {
+        return new self($this->optTemp, $qualifiedName, $this->columnList, $this->optReloptions, $this->selectStmt, $this->optCheckOption);
+    }
+
+    /**
+     * Returns a copy with a new columnList, preserving every other field.
+     */
+    public function withColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\ColumnListForm $columnList): self
+    {
+        return new self($this->optTemp, $this->qualifiedName, $columnList, $this->optReloptions, $this->selectStmt, $this->optCheckOption);
+    }
+
+    /**
+     * Returns a copy with a new optReloptions, preserving every other field.
+     */
+    public function withOptReloptions(\SqlSemantics\Statement\Model\PostgreSql\Role\OptReloptionsForm $optReloptions): self
+    {
+        return new self($this->optTemp, $this->qualifiedName, $this->columnList, $optReloptions, $this->selectStmt, $this->optCheckOption);
+    }
+
+    /**
+     * Returns a copy with a new selectStmt, preserving every other field.
+     */
+    public function withSelectStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm $selectStmt): self
+    {
+        return new self($this->optTemp, $this->qualifiedName, $this->columnList, $this->optReloptions, $selectStmt, $this->optCheckOption);
+    }
+
+    /**
+     * Returns a copy with a new optCheckOption, preserving every other field.
+     */
+    public function withOptCheckOption(\SqlSemantics\Statement\Model\PostgreSql\Role\OptCheckOptionForm $optCheckOption): self
+    {
+        return new self($this->optTemp, $this->qualifiedName, $this->columnList, $this->optReloptions, $this->selectStmt, $optCheckOption);
     }
 }

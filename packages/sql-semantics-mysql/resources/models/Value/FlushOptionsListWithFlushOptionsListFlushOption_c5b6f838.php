@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FlushOptionsListWithFlushOptionsListFlushOption_c5b6f838 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FlushOptionsListWithFlushOptionsListFlushOption_c5b6f838 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FlushOptionsListWithFlushOptionsListFlushOption_c5b6f838 implements \SqlSemantics\Statement\Model\MySql\Role\FlushOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\FlushOptionsListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FlushOptionsListWithFlushOptionsListFlushOption_c5b6f838 implements 
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FlushOptionsListForm $flushOptionsList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FlushOptionForm $flushOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($flushOptionsList), 'The flushOptionsList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($flushOption), 'The flushOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class FlushOptionsListWithFlushOptionsListFlushOption_c5b6f838 implements 
         $this->flushOptionsList->write($writer);
         $writer->append(',');
         $this->flushOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new flushOptionsList, preserving every other field.
+     */
+    public function withFlushOptionsList(\SqlSemantics\Statement\Model\MySql\Role\FlushOptionsListForm $flushOptionsList): self
+    {
+        return new self($flushOptionsList, $this->flushOption);
+    }
+
+    /**
+     * Returns a copy with a new flushOption, preserving every other field.
+     */
+    public function withFlushOption(\SqlSemantics\Statement\Model\MySql\Role\FlushOptionForm $flushOption): self
+    {
+        return new self($this->flushOptionsList, $flushOption);
     }
 }

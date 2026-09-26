@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\NumericWithDoublePPrecision_9a72dccb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\NumericWithDoublePPrecision_9a72dccb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class NumericWithDoublePPrecision_9a72dccb implements \SqlSemantics\Statement\Model\PostgreSql\Role\ConstTypenameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\NumericForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SimpleTypenameForm

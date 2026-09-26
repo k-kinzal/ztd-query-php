@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SqlStatementWithSimpleStatementOrBeginOptEndOfInput_e8dd5b0b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SqlStatementWithSimpleStatementOrBeginOptEndOfInput_e8dd5b0b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class SqlStatementWithSimpleStatementOrBeginOptEndOfInput_e8dd5b0b implements \SqlSemantics\Statement\Model\MySql\Role\SqlStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StartEntryForm
+final class SqlStatementWithSimpleStatementOrBeginOptEndOfInput_e8dd5b0b implements \SqlSemantics\Statement\Model\MySql\Role\SqlStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StartEntryForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SqlStatementWithSimpleStatementOrBeginOptEndOfInput_e8dd5b0b impleme
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm $simpleStatementOrBegin,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEndOfInputForm $optEndOfInput,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleStatementOrBegin), 'The simpleStatementOrBegin must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEndOfInput), 'The optEndOfInput must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SqlStatementWithSimpleStatementOrBeginOptEndOfInput_e8dd5b0b impleme
         $this->simpleStatementOrBegin->write($writer);
         $writer->append(';');
         $this->optEndOfInput->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new simpleStatementOrBegin, preserving every other field.
+     */
+    public function withSimpleStatementOrBegin(\SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm $simpleStatementOrBegin): self
+    {
+        return new self($simpleStatementOrBegin, $this->optEndOfInput);
+    }
+
+    /**
+     * Returns a copy with a new optEndOfInput, preserving every other field.
+     */
+    public function withOptEndOfInput(\SqlSemantics\Statement\Model\MySql\Role\OptEndOfInputForm $optEndOfInput): self
+    {
+        return new self($this->simpleStatementOrBegin, $optEndOfInput);
     }
 }

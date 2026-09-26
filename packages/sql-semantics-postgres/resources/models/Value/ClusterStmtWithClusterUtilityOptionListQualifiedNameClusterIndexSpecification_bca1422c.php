@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ClusterStmtWithClusterUtilityOptionListQualifiedNameClusterIndexSpecification_bca1422c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ClusterStmtWithClusterUtilityOptionListQualifiedNameClusterIndexSpecification_bca1422c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class ClusterStmtWithClusterUtilityOptionListQualifiedNameClusterIndexSpecification_bca1422c implements \SqlSemantics\Statement\Model\PostgreSql\Role\ClusterStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class ClusterStmtWithClusterUtilityOptionListQualifiedNameClusterIndexSpecification_bca1422c implements \SqlSemantics\Statement\Model\PostgreSql\Role\ClusterStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class ClusterStmtWithClusterUtilityOptionListQualifiedNameClusterIndexSpec
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ClusterIndexSpecificationForm $clusterIndexSpecification,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($utilityOptionList), 'The utilityOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($clusterIndexSpecification), 'The clusterIndexSpecification must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +40,29 @@ final class ClusterStmtWithClusterUtilityOptionListQualifiedNameClusterIndexSpec
         $writer->append(')');
         $this->qualifiedName->write($writer);
         $this->clusterIndexSpecification->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new utilityOptionList, preserving every other field.
+     */
+    public function withUtilityOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionListForm $utilityOptionList): self
+    {
+        return new self($utilityOptionList, $this->qualifiedName, $this->clusterIndexSpecification);
+    }
+
+    /**
+     * Returns a copy with a new qualifiedName, preserving every other field.
+     */
+    public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
+    {
+        return new self($this->utilityOptionList, $qualifiedName, $this->clusterIndexSpecification);
+    }
+
+    /**
+     * Returns a copy with a new clusterIndexSpecification, preserving every other field.
+     */
+    public function withClusterIndexSpecification(\SqlSemantics\Statement\Model\PostgreSql\Role\ClusterIndexSpecificationForm $clusterIndexSpecification): self
+    {
+        return new self($this->utilityOptionList, $this->qualifiedName, $clusterIndexSpecification);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\VcpuRangeSpecListWithVcpuRangeSpecListOptCommaVcpuNumOrRange_56b3cc9b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\VcpuRangeSpecListWithVcpuRangeSpecListOptCommaVcpuNumOrRange_56b3cc9b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class VcpuRangeSpecListWithVcpuRangeSpecListOptCommaVcpuNumOrRange_56b3cc9b implements \SqlSemantics\Statement\Model\MySql\Role\VcpuRangeSpecListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class VcpuRangeSpecListWithVcpuRangeSpecListOptCommaVcpuNumOrRange_56b3cc9
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCommaForm $optComma,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\VcpuNumOrRangeForm $vcpuNumOrRange,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($vcpuRangeSpecList), 'The vcpuRangeSpecList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optComma), 'The optComma must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($vcpuNumOrRange), 'The vcpuNumOrRange must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class VcpuRangeSpecListWithVcpuRangeSpecListOptCommaVcpuNumOrRange_56b3cc9
         $this->vcpuRangeSpecList->write($writer);
         $this->optComma->write($writer);
         $this->vcpuNumOrRange->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new vcpuRangeSpecList, preserving every other field.
+     */
+    public function withVcpuRangeSpecList(\SqlSemantics\Statement\Model\MySql\Role\VcpuRangeSpecListForm $vcpuRangeSpecList): self
+    {
+        return new self($vcpuRangeSpecList, $this->optComma, $this->vcpuNumOrRange);
+    }
+
+    /**
+     * Returns a copy with a new optComma, preserving every other field.
+     */
+    public function withOptComma(\SqlSemantics\Statement\Model\MySql\Role\OptCommaForm $optComma): self
+    {
+        return new self($this->vcpuRangeSpecList, $optComma, $this->vcpuNumOrRange);
+    }
+
+    /**
+     * Returns a copy with a new vcpuNumOrRange, preserving every other field.
+     */
+    public function withVcpuNumOrRange(\SqlSemantics\Statement\Model\MySql\Role\VcpuNumOrRangeForm $vcpuNumOrRange): self
+    {
+        return new self($this->vcpuRangeSpecList, $this->optComma, $vcpuNumOrRange);
     }
 }

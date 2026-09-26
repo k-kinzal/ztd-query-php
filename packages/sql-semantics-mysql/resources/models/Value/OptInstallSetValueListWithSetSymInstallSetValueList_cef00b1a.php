@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptInstallSetValueListWithSetSymInstallSetValueList_cef00b1a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptInstallSetValueListWithSetSymInstallSetValueList_cef00b1a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptInstallSetValueListWithSetSymInstallSetValueList_cef00b1a implements \SqlSemantics\Statement\Model\MySql\Role\OptInstallSetValueListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InstallSetValueListForm $installSetValueList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($installSetValueList), 'The installSetValueList must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OptInstallSetValueListWithSetSymInstallSetValueList_cef00b1a impleme
     {
         $writer->append('SET');
         $this->installSetValueList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new installSetValueList, preserving every other field.
+     */
+    public function withInstallSetValueList(\SqlSemantics\Statement\Model\MySql\Role\InstallSetValueListForm $installSetValueList): self
+    {
+        return new self($installSetValueList);
     }
 }

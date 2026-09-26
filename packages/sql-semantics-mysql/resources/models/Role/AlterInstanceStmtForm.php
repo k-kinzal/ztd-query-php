@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Role;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Role\AlterInstanceStmtForm $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Role\AlterInstanceStmtForm $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 interface AlterInstanceStmtForm extends \SqlSemantics\Statement\Element

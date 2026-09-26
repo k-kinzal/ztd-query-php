@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithIdjLpDistinctExprlistRp_7162d1a1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithIdjLpDistinctExprlistRp_7162d1a1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ExprWithIdjLpDistinctExprlistRp_7162d1a1 implements \SqlSemantics\Statement\Model\Sqlite\Role\CaseOperandForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm, \SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class ExprWithIdjLpDistinctExprlistRp_7162d1a1 implements \SqlSemantics\St
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\DistinctForm $distinct,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm $exprlist,
     ) {
+        $this->assertMatchesPattern($idj, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['idj'], 'The idj must be a complete idj lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($distinct), 'The distinct must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($exprlist), 'The exprlist must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class ExprWithIdjLpDistinctExprlistRp_7162d1a1 implements \SqlSemantics\St
         $this->distinct->write($writer);
         $this->exprlist->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new idj, preserving every other field.
+     */
+    public function withIdj(string $idj): self
+    {
+        return new self($idj, $this->distinct, $this->exprlist);
+    }
+
+    /**
+     * Returns a copy with a new distinct, preserving every other field.
+     */
+    public function withDistinct(\SqlSemantics\Statement\Model\Sqlite\Role\DistinctForm $distinct): self
+    {
+        return new self($this->idj, $distinct, $this->exprlist);
+    }
+
+    /**
+     * Returns a copy with a new exprlist, preserving every other field.
+     */
+    public function withExprlist(\SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm $exprlist): self
+    {
+        return new self($this->idj, $this->distinct, $exprlist);
     }
 }

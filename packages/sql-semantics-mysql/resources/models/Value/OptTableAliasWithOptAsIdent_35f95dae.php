@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptTableAliasWithOptAsIdent_35f95dae $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptTableAliasWithOptAsIdent_35f95dae $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptTableAliasWithOptAsIdent_35f95dae implements \SqlSemantics\Statement\Model\MySql\Role\OptTableAliasForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptTableAliasWithOptAsIdent_35f95dae implements \SqlSemantics\Statem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptAsForm $optAs,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optAs), 'The optAs must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class OptTableAliasWithOptAsIdent_35f95dae implements \SqlSemantics\Statem
     {
         $this->optAs->write($writer);
         $this->ident->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optAs, preserving every other field.
+     */
+    public function withOptAs(\SqlSemantics\Statement\Model\MySql\Role\OptAsForm $optAs): self
+    {
+        return new self($optAs, $this->ident);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($this->optAs, $ident);
     }
 }

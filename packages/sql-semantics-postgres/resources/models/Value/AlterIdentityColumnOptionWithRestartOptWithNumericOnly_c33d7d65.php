@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterIdentityColumnOptionWithRestartOptWithNumericOnly_c33d7d65 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterIdentityColumnOptionWithRestartOptWithNumericOnly_c33d7d65 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterIdentityColumnOptionWithRestartOptWithNumericOnly_c33d7d65 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterIdentityColumnOptionForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterIdentityColumnOptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterIdentityColumnOptionWithRestartOptWithNumericOnly_c33d7d65 impl
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyForm $numericOnly,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optWith), 'The optWith must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($numericOnly), 'The numericOnly must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class AlterIdentityColumnOptionWithRestartOptWithNumericOnly_c33d7d65 impl
         $writer->append('RESTART');
         $this->optWith->write($writer);
         $this->numericOnly->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optWith, preserving every other field.
+     */
+    public function withOptWith(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith): self
+    {
+        return new self($optWith, $this->numericOnly);
+    }
+
+    /**
+     * Returns a copy with a new numericOnly, preserving every other field.
+     */
+    public function withNumericOnly(\SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyForm $numericOnly): self
+    {
+        return new self($this->optWith, $numericOnly);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FilterDefWithReplicateRewriteDbEqOptFilterDbPairList_18447a6d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FilterDefWithReplicateRewriteDbEqOptFilterDbPairList_18447a6d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FilterDefWithReplicateRewriteDbEqOptFilterDbPairList_18447a6d implements \SqlSemantics\Statement\Model\MySql\Role\FilterDefForm, \SqlSemantics\Statement\Model\MySql\Role\FilterDefsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptFilterDbPairListForm $optFilterDbPairList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optFilterDbPairList), 'The optFilterDbPairList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class FilterDefWithReplicateRewriteDbEqOptFilterDbPairList_18447a6d implem
         $writer->append('REPLICATE_REWRITE_DB');
         $writer->append('=');
         $this->optFilterDbPairList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optFilterDbPairList, preserving every other field.
+     */
+    public function withOptFilterDbPairList(\SqlSemantics\Statement\Model\MySql\Role\OptFilterDbPairListForm $optFilterDbPairList): self
+    {
+        return new self($optFilterDbPairList);
     }
 }

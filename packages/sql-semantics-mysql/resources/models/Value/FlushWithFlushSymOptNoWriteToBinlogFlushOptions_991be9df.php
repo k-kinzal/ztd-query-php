@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FlushWithFlushSymOptNoWriteToBinlogFlushOptions_991be9df $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FlushWithFlushSymOptNoWriteToBinlogFlushOptions_991be9df $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class FlushWithFlushSymOptNoWriteToBinlogFlushOptions_991be9df implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\FlushForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class FlushWithFlushSymOptNoWriteToBinlogFlushOptions_991be9df implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\FlushForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FlushWithFlushSymOptNoWriteToBinlogFlushOptions_991be9df implements 
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FlushOptionsForm $flushOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optNoWriteToBinlog), 'The optNoWriteToBinlog must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($flushOptions), 'The flushOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class FlushWithFlushSymOptNoWriteToBinlogFlushOptions_991be9df implements 
         $writer->append('FLUSH');
         $this->optNoWriteToBinlog->write($writer);
         $this->flushOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optNoWriteToBinlog, preserving every other field.
+     */
+    public function withOptNoWriteToBinlog(\SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog): self
+    {
+        return new self($optNoWriteToBinlog, $this->flushOptions);
+    }
+
+    /**
+     * Returns a copy with a new flushOptions, preserving every other field.
+     */
+    public function withFlushOptions(\SqlSemantics\Statement\Model\MySql\Role\FlushOptionsForm $flushOptions): self
+    {
+        return new self($this->optNoWriteToBinlog, $flushOptions);
     }
 }

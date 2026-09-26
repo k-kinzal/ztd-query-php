@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AttributeWithStorageSymDiskSym_b31dd352 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AttributeWithStorageSymDiskSym_b31dd352 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AttributeWithStorageSymDiskSym_b31dd352 implements \SqlSemantics\Statement\Model\MySql\Role\AttributeForm, \SqlSemantics\Statement\Model\MySql\Role\OptAttributeForm, \SqlSemantics\Statement\Model\MySql\Role\OptAttributeListForm

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\WindowWithPartitionByNexprlistOrderbyOptFrameOpt_1f69e129 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\WindowWithPartitionByNexprlistOrderbyOptFrameOpt_1f69e129 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WindowWithPartitionByNexprlistOrderbyOptFrameOpt_1f69e129 implements \SqlSemantics\Statement\Model\Sqlite\Role\WindowForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class WindowWithPartitionByNexprlistOrderbyOptFrameOpt_1f69e129 implements
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\OrderbyOptForm $orderBy,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\FrameOptForm $frameOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nexprlist), 'The nexprlist must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($orderBy), 'The orderBy must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($frameOpt), 'The frameOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class WindowWithPartitionByNexprlistOrderbyOptFrameOpt_1f69e129 implements
         $this->nexprlist->write($writer);
         $this->orderBy->write($writer);
         $this->frameOpt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new nexprlist, preserving every other field.
+     */
+    public function withNexprlist(\SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm $nexprlist): self
+    {
+        return new self($nexprlist, $this->orderBy, $this->frameOpt);
+    }
+
+    /**
+     * Returns a copy with a new orderBy, preserving every other field.
+     */
+    public function withOrderBy(\SqlSemantics\Statement\Model\Sqlite\Role\OrderbyOptForm $orderBy): self
+    {
+        return new self($this->nexprlist, $orderBy, $this->frameOpt);
+    }
+
+    /**
+     * Returns a copy with a new frameOpt, preserving every other field.
+     */
+    public function withFrameOpt(\SqlSemantics\Statement\Model\Sqlite\Role\FrameOptForm $frameOpt): self
+    {
+        return new self($this->nexprlist, $this->orderBy, $frameOpt);
     }
 }

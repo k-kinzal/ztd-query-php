@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\EventTriggerWhenItemWithColIdInPEventTriggerValueList_4dee73fb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\EventTriggerWhenItemWithColIdInPEventTriggerValueList_4dee73fb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class EventTriggerWhenItemWithColIdInPEventTriggerValueList_4dee73fb implements \SqlSemantics\Statement\Model\PostgreSql\Role\EventTriggerWhenItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\EventTriggerWhenListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class EventTriggerWhenItemWithColIdInPEventTriggerValueList_4dee73fb imple
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\EventTriggerValueListForm $eventTriggerValueList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($eventTriggerValueList), 'The eventTriggerValueList must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class EventTriggerWhenItemWithColIdInPEventTriggerValueList_4dee73fb imple
         $writer->append('(');
         $this->eventTriggerValueList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($colId, $this->eventTriggerValueList);
+    }
+
+    /**
+     * Returns a copy with a new eventTriggerValueList, preserving every other field.
+     */
+    public function withEventTriggerValueList(\SqlSemantics\Statement\Model\PostgreSql\Role\EventTriggerValueListForm $eventTriggerValueList): self
+    {
+        return new self($this->colId, $eventTriggerValueList);
     }
 }

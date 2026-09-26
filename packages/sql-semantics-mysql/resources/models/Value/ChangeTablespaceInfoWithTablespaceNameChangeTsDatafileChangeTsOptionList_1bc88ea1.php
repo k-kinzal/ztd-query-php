@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ChangeTablespaceInfoWithTablespaceNameChangeTsDatafileChangeTsOptionList_1bc88ea1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ChangeTablespaceInfoWithTablespaceNameChangeTsDatafileChangeTsOptionList_1bc88ea1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ChangeTablespaceInfoWithTablespaceNameChangeTsDatafileChangeTsOptionList_1bc88ea1 implements \SqlSemantics\Statement\Model\MySql\Role\ChangeTablespaceInfoForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class ChangeTablespaceInfoWithTablespaceNameChangeTsDatafileChangeTsOption
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TsDatafileForm $tsDatafile,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ChangeTsOptionListForm $changeTsOptionList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tablespaceName), 'The tablespaceName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tsDatafile), 'The tsDatafile must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($changeTsOptionList), 'The changeTsOptionList must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class ChangeTablespaceInfoWithTablespaceNameChangeTsDatafileChangeTsOption
         $writer->append('CHANGE');
         $this->tsDatafile->write($writer);
         $this->changeTsOptionList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tablespaceName, preserving every other field.
+     */
+    public function withTablespaceName(\SqlSemantics\Statement\Model\MySql\Role\TablespaceNameForm $tablespaceName): self
+    {
+        return new self($tablespaceName, $this->tsDatafile, $this->changeTsOptionList);
+    }
+
+    /**
+     * Returns a copy with a new tsDatafile, preserving every other field.
+     */
+    public function withTsDatafile(\SqlSemantics\Statement\Model\MySql\Role\TsDatafileForm $tsDatafile): self
+    {
+        return new self($this->tablespaceName, $tsDatafile, $this->changeTsOptionList);
+    }
+
+    /**
+     * Returns a copy with a new changeTsOptionList, preserving every other field.
+     */
+    public function withChangeTsOptionList(\SqlSemantics\Statement\Model\MySql\Role\ChangeTsOptionListForm $changeTsOptionList): self
+    {
+        return new self($this->tablespaceName, $this->tsDatafile, $changeTsOptionList);
     }
 }

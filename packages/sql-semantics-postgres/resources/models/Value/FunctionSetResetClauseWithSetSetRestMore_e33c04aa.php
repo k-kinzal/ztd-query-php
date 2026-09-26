@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FunctionSetResetClauseWithSetSetRestMore_e33c04aa $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FunctionSetResetClauseWithSetSetRestMore_e33c04aa $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FunctionSetResetClauseWithSetSetRestMore_e33c04aa implements \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionSetResetClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterfuncOptListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CommonFuncOptItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CreatefuncOptItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CreatefuncOptListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptCreatefuncOptListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetRestMoreForm $setRestMore,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setRestMore), 'The setRestMore must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class FunctionSetResetClauseWithSetSetRestMore_e33c04aa implements \SqlSem
     {
         $writer->append('SET');
         $this->setRestMore->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new setRestMore, preserving every other field.
+     */
+    public function withSetRestMore(\SqlSemantics\Statement\Model\PostgreSql\Role\SetRestMoreForm $setRestMore): self
+    {
+        return new self($setRestMore);
     }
 }

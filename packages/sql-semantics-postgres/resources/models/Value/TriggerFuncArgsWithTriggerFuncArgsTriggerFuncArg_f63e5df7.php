@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TriggerFuncArgsWithTriggerFuncArgsTriggerFuncArg_f63e5df7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TriggerFuncArgsWithTriggerFuncArgsTriggerFuncArg_f63e5df7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TriggerFuncArgsWithTriggerFuncArgsTriggerFuncArg_f63e5df7 implements \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerFuncArgsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TriggerFuncArgsWithTriggerFuncArgsTriggerFuncArg_f63e5df7 implements
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerFuncArgsForm $triggerFuncArgs,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerFuncArgForm $triggerFuncArg,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($triggerFuncArgs), 'The triggerFuncArgs must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($triggerFuncArg), 'The triggerFuncArg must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TriggerFuncArgsWithTriggerFuncArgsTriggerFuncArg_f63e5df7 implements
         $this->triggerFuncArgs->write($writer);
         $writer->append(',');
         $this->triggerFuncArg->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new triggerFuncArgs, preserving every other field.
+     */
+    public function withTriggerFuncArgs(\SqlSemantics\Statement\Model\PostgreSql\Role\TriggerFuncArgsForm $triggerFuncArgs): self
+    {
+        return new self($triggerFuncArgs, $this->triggerFuncArg);
+    }
+
+    /**
+     * Returns a copy with a new triggerFuncArg, preserving every other field.
+     */
+    public function withTriggerFuncArg(\SqlSemantics\Statement\Model\PostgreSql\Role\TriggerFuncArgForm $triggerFuncArg): self
+    {
+        return new self($this->triggerFuncArgs, $triggerFuncArg);
     }
 }

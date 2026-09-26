@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncTableWithRowsFromRowsfromListOptOrdinality_d2a3bf98 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncTableWithRowsFromRowsfromListOptOrdinality_d2a3bf98 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FuncTableWithRowsFromRowsfromListOptOrdinality_d2a3bf98 implements \SqlSemantics\Statement\Model\PostgreSql\Role\FuncTableForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FuncTableWithRowsFromRowsfromListOptOrdinality_d2a3bf98 implements \
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RowsfromListForm $rowsfromList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptOrdinalityForm $optOrdinality,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($rowsfromList), 'The rowsfromList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optOrdinality), 'The optOrdinality must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +38,21 @@ final class FuncTableWithRowsFromRowsfromListOptOrdinality_d2a3bf98 implements \
         $this->rowsfromList->write($writer);
         $writer->append(')');
         $this->optOrdinality->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new rowsfromList, preserving every other field.
+     */
+    public function withRowsfromList(\SqlSemantics\Statement\Model\PostgreSql\Role\RowsfromListForm $rowsfromList): self
+    {
+        return new self($rowsfromList, $this->optOrdinality);
+    }
+
+    /**
+     * Returns a copy with a new optOrdinality, preserving every other field.
+     */
+    public function withOptOrdinality(\SqlSemantics\Statement\Model\PostgreSql\Role\OptOrdinalityForm $optOrdinality): self
+    {
+        return new self($this->rowsfromList, $optOrdinality);
     }
 }

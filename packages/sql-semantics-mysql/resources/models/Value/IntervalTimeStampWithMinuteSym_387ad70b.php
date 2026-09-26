@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IntervalTimeStampWithMinuteSym_387ad70b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IntervalTimeStampWithMinuteSym_387ad70b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IntervalTimeStampWithMinuteSym_387ad70b implements \SqlSemantics\Statement\Model\MySql\Role\IntervalForm, \SqlSemantics\Statement\Model\MySql\Role\IntervalTimeStampForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $minuteSym,
     ) {
+        $this->assertMatchesPattern($minuteSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['MINUTE_SYM'], 'The minuteSym must be a complete MINUTE_SYM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class IntervalTimeStampWithMinuteSym_387ad70b implements \SqlSemantics\Sta
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->minuteSym);
+    }
+
+    /**
+     * Returns a copy with a new minuteSym, preserving every other field.
+     */
+    public function withMinuteSym(string $minuteSym): self
+    {
+        return new self($minuteSym);
     }
 }

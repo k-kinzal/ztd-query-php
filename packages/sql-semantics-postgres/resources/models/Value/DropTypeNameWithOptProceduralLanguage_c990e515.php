@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DropTypeNameWithOptProceduralLanguage_c990e515 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DropTypeNameWithOptProceduralLanguage_c990e515 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DropTypeNameWithOptProceduralLanguage_c990e515 implements \SqlSemantics\Statement\Model\PostgreSql\Role\DropTypeNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ObjectTypeNameForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptProceduralForm $optProcedural,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optProcedural), 'The optProcedural must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class DropTypeNameWithOptProceduralLanguage_c990e515 implements \SqlSemant
     {
         $this->optProcedural->write($writer);
         $writer->append('LANGUAGE');
+    }
+
+    /**
+     * Returns a copy with a new optProcedural, preserving every other field.
+     */
+    public function withOptProcedural(\SqlSemantics\Statement\Model\PostgreSql\Role\OptProceduralForm $optProcedural): self
+    {
+        return new self($optProcedural);
     }
 }

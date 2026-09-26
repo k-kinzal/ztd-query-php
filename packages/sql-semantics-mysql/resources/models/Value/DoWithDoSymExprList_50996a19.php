@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DoWithDoSymExprList_50996a19 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DoWithDoSymExprList_50996a19 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DoWithDoSymExprList_50996a19 implements \SqlSemantics\Statement\Model\MySql\Role\DoForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprListForm $exprList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($exprList), 'The exprList must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class DoWithDoSymExprList_50996a19 implements \SqlSemantics\Statement\Mode
     {
         $writer->append('DO');
         $this->exprList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new exprList, preserving every other field.
+     */
+    public function withExprList(\SqlSemantics\Statement\Model\MySql\Role\ExprListForm $exprList): self
+    {
+        return new self($exprList);
     }
 }

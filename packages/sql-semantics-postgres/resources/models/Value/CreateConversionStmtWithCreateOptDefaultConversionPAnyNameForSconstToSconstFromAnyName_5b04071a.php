@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateConversionStmtWithCreateOptDefaultConversionPAnyNameForSconstToSconstFromAnyName_5b04071a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateConversionStmtWithCreateOptDefaultConversionPAnyNameForSconstToSconstFromAnyName_5b04071a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateConversionStmtWithCreateOptDefaultConversionPAnyNameForSconstToSconstFromAnyName_5b04071a implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateConversionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class CreateConversionStmtWithCreateOptDefaultConversionPAnyNameForSconstToSconstFromAnyName_5b04071a implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateConversionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class CreateConversionStmtWithCreateOptDefaultConversionPAnyNameForSconstT
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst2,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optDefault), 'The optDefault must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($sconst), 'The sconst must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($sconst2), 'The sconst2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName2), 'The anyName2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -41,5 +48,45 @@ final class CreateConversionStmtWithCreateOptDefaultConversionPAnyNameForSconstT
         $this->sconst2->write($writer);
         $writer->append('FROM');
         $this->anyName2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optDefault, preserving every other field.
+     */
+    public function withOptDefault(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDefaultForm $optDefault): self
+    {
+        return new self($optDefault, $this->anyName, $this->sconst, $this->sconst2, $this->anyName2);
+    }
+
+    /**
+     * Returns a copy with a new anyName, preserving every other field.
+     */
+    public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
+    {
+        return new self($this->optDefault, $anyName, $this->sconst, $this->sconst2, $this->anyName2);
+    }
+
+    /**
+     * Returns a copy with a new sconst, preserving every other field.
+     */
+    public function withSconst(\SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst): self
+    {
+        return new self($this->optDefault, $this->anyName, $sconst, $this->sconst2, $this->anyName2);
+    }
+
+    /**
+     * Returns a copy with a new sconst2, preserving every other field.
+     */
+    public function withSconst2(\SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst2): self
+    {
+        return new self($this->optDefault, $this->anyName, $this->sconst, $sconst2, $this->anyName2);
+    }
+
+    /**
+     * Returns a copy with a new anyName2, preserving every other field.
+     */
+    public function withAnyName2(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName2): self
+    {
+        return new self($this->optDefault, $this->anyName, $this->sconst, $this->sconst2, $anyName2);
     }
 }

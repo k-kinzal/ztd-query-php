@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\BeginStmtWithBeginSymOptWork_b7d4ff9e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\BeginStmtWithBeginSymOptWork_b7d4ff9e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class BeginStmtWithBeginSymOptWork_b7d4ff9e implements \SqlSemantics\Statement\Model\MySql\Role\BeginStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm
+final class BeginStmtWithBeginSymOptWork_b7d4ff9e implements \SqlSemantics\Statement\Model\MySql\Role\BeginStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWorkForm $optWork,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWork), 'The optWork must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class BeginStmtWithBeginSymOptWork_b7d4ff9e implements \SqlSemantics\State
     {
         $writer->append('BEGIN');
         $this->optWork->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optWork, preserving every other field.
+     */
+    public function withOptWork(\SqlSemantics\Statement\Model\MySql\Role\OptWorkForm $optWork): self
+    {
+        return new self($optWork);
     }
 }

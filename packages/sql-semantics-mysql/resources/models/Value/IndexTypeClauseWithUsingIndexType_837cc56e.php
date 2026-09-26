@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IndexTypeClauseWithUsingIndexType_837cc56e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IndexTypeClauseWithUsingIndexType_837cc56e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IndexTypeClauseWithUsingIndexType_837cc56e implements \SqlSemantics\Statement\Model\MySql\Role\IndexOptionForm, \SqlSemantics\Statement\Model\MySql\Role\IndexOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\IndexTypeClauseForm, \SqlSemantics\Statement\Model\MySql\Role\OptIndexOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptIndexTypeClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IndexTypeForm $indexType,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($indexType), 'The indexType must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class IndexTypeClauseWithUsingIndexType_837cc56e implements \SqlSemantics\
     {
         $writer->append('USING');
         $this->indexType->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new indexType, preserving every other field.
+     */
+    public function withIndexType(\SqlSemantics\Statement\Model\MySql\Role\IndexTypeForm $indexType): self
+    {
+        return new self($indexType);
     }
 }

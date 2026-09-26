@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateStmtWithCreateOptTempTableIfPNotExistsQualifiedNamePartitionOfQualifiedNameOptTyped_84f0a7e2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateStmtWithCreateOptTempTableIfPNotExistsQualifiedNamePartitionOfQualifiedNameOptTyped_84f0a7e2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateStmtWithCreateOptTempTableIfPNotExistsQualifiedNamePartitionOfQualifiedNameOptTyped_84f0a7e2 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SchemaStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class CreateStmtWithCreateOptTempTableIfPNotExistsQualifiedNamePartitionOfQualifiedNameOptTyped_84f0a7e2 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SchemaStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -29,6 +31,16 @@ final class CreateStmtWithCreateOptTempTableIfPNotExistsQualifiedNamePartitionOf
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OnCommitOptionForm $onCommitOption,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTableSpaceForm $optTableSpace,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTemp), 'The optTemp must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName2), 'The qualifiedName2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTypedTableElementList), 'The optTypedTableElementList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($partitionBoundSpec), 'The partitionBoundSpec must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optPartitionSpec), 'The optPartitionSpec must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($tableAccessMethodClause), 'The tableAccessMethodClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optWith), 'The optWith must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($onCommitOption), 'The onCommitOption must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTableSpace), 'The optTableSpace must be a generated immutable SQL value.');
     }
 
     /**
@@ -53,5 +65,85 @@ final class CreateStmtWithCreateOptTempTableIfPNotExistsQualifiedNamePartitionOf
         $this->optWith->write($writer);
         $this->onCommitOption->write($writer);
         $this->optTableSpace->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optTemp, preserving every other field.
+     */
+    public function withOptTemp(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm $optTemp): self
+    {
+        return new self($optTemp, $this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace);
+    }
+
+    /**
+     * Returns a copy with a new qualifiedName, preserving every other field.
+     */
+    public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
+    {
+        return new self($this->optTemp, $qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace);
+    }
+
+    /**
+     * Returns a copy with a new qualifiedName2, preserving every other field.
+     */
+    public function withQualifiedName2(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName2): self
+    {
+        return new self($this->optTemp, $this->qualifiedName, $qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace);
+    }
+
+    /**
+     * Returns a copy with a new optTypedTableElementList, preserving every other field.
+     */
+    public function withOptTypedTableElementList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTypedTableElementListForm $optTypedTableElementList): self
+    {
+        return new self($this->optTemp, $this->qualifiedName, $this->qualifiedName2, $optTypedTableElementList, $this->partitionBoundSpec, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace);
+    }
+
+    /**
+     * Returns a copy with a new partitionBoundSpec, preserving every other field.
+     */
+    public function withPartitionBoundSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\PartitionBoundSpecForm $partitionBoundSpec): self
+    {
+        return new self($this->optTemp, $this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $partitionBoundSpec, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace);
+    }
+
+    /**
+     * Returns a copy with a new optPartitionSpec, preserving every other field.
+     */
+    public function withOptPartitionSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\OptPartitionSpecForm $optPartitionSpec): self
+    {
+        return new self($this->optTemp, $this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace);
+    }
+
+    /**
+     * Returns a copy with a new tableAccessMethodClause, preserving every other field.
+     */
+    public function withTableAccessMethodClause(\SqlSemantics\Statement\Model\PostgreSql\Role\TableAccessMethodClauseForm $tableAccessMethodClause): self
+    {
+        return new self($this->optTemp, $this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->optPartitionSpec, $tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace);
+    }
+
+    /**
+     * Returns a copy with a new optWith, preserving every other field.
+     */
+    public function withOptWith(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith): self
+    {
+        return new self($this->optTemp, $this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->optPartitionSpec, $this->tableAccessMethodClause, $optWith, $this->onCommitOption, $this->optTableSpace);
+    }
+
+    /**
+     * Returns a copy with a new onCommitOption, preserving every other field.
+     */
+    public function withOnCommitOption(\SqlSemantics\Statement\Model\PostgreSql\Role\OnCommitOptionForm $onCommitOption): self
+    {
+        return new self($this->optTemp, $this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $onCommitOption, $this->optTableSpace);
+    }
+
+    /**
+     * Returns a copy with a new optTableSpace, preserving every other field.
+     */
+    public function withOptTableSpace(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTableSpaceForm $optTableSpace): self
+    {
+        return new self($this->optTemp, $this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $optTableSpace);
     }
 }

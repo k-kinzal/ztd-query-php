@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TextStringSysListWithTextStringSysListTextStringSys_c07b8dd1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TextStringSysListWithTextStringSysListTextStringSys_c07b8dd1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TextStringSysListWithTextStringSysListTextStringSys_c07b8dd1 implements \SqlSemantics\Statement\Model\MySql\Role\TextStringSysListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TextStringSysListWithTextStringSysListTextStringSys_c07b8dd1 impleme
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysListForm $textStringSysList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSysList), 'The textStringSysList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSys), 'The textStringSys must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TextStringSysListWithTextStringSysListTextStringSys_c07b8dd1 impleme
         $this->textStringSysList->write($writer);
         $writer->append(',');
         $this->textStringSys->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new textStringSysList, preserving every other field.
+     */
+    public function withTextStringSysList(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysListForm $textStringSysList): self
+    {
+        return new self($textStringSysList, $this->textStringSys);
+    }
+
+    /**
+     * Returns a copy with a new textStringSys, preserving every other field.
+     */
+    public function withTextStringSys(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys): self
+    {
+        return new self($this->textStringSysList, $textStringSys);
     }
 }

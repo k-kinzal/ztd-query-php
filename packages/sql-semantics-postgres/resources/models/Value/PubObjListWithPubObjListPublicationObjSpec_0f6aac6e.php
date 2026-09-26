@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PubObjListWithPubObjListPublicationObjSpec_0f6aac6e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PubObjListWithPubObjListPublicationObjSpec_0f6aac6e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PubObjListWithPubObjListPublicationObjSpec_0f6aac6e implements \SqlSemantics\Statement\Model\PostgreSql\Role\PubObjListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class PubObjListWithPubObjListPublicationObjSpec_0f6aac6e implements \SqlS
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PubObjListForm $pubObjList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PublicationObjSpecForm $publicationObjSpec,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($pubObjList), 'The pubObjList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($publicationObjSpec), 'The publicationObjSpec must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class PubObjListWithPubObjListPublicationObjSpec_0f6aac6e implements \SqlS
         $this->pubObjList->write($writer);
         $writer->append(',');
         $this->publicationObjSpec->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new pubObjList, preserving every other field.
+     */
+    public function withPubObjList(\SqlSemantics\Statement\Model\PostgreSql\Role\PubObjListForm $pubObjList): self
+    {
+        return new self($pubObjList, $this->publicationObjSpec);
+    }
+
+    /**
+     * Returns a copy with a new publicationObjSpec, preserving every other field.
+     */
+    public function withPublicationObjSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\PublicationObjSpecForm $publicationObjSpec): self
+    {
+        return new self($this->pubObjList, $publicationObjSpec);
     }
 }

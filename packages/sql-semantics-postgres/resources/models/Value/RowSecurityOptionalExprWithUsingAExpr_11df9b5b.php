@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RowSecurityOptionalExprWithUsingAExpr_11df9b5b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RowSecurityOptionalExprWithUsingAExpr_11df9b5b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RowSecurityOptionalExprWithUsingAExpr_11df9b5b implements \SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityOptionalExprForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class RowSecurityOptionalExprWithUsingAExpr_11df9b5b implements \SqlSemant
         $writer->append('(');
         $this->aExpr->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new aExpr, preserving every other field.
+     */
+    public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
+    {
+        return new self($aExpr);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ReplicaThreadOptionListWithReplicaThreadOptionListReplicaThreadOption_69ce4658 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ReplicaThreadOptionListWithReplicaThreadOptionListReplicaThreadOption_69ce4658 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ReplicaThreadOptionListWithReplicaThreadOptionListReplicaThreadOption_69ce4658 implements \SqlSemantics\Statement\Model\MySql\Role\OptReplicaThreadOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\ReplicaThreadOptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ReplicaThreadOptionListWithReplicaThreadOptionListReplicaThreadOptio
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ReplicaThreadOptionListForm $replicaThreadOptionList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ReplicaThreadOptionForm $replicaThreadOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($replicaThreadOptionList), 'The replicaThreadOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($replicaThreadOption), 'The replicaThreadOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ReplicaThreadOptionListWithReplicaThreadOptionListReplicaThreadOptio
         $this->replicaThreadOptionList->write($writer);
         $writer->append(',');
         $this->replicaThreadOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new replicaThreadOptionList, preserving every other field.
+     */
+    public function withReplicaThreadOptionList(\SqlSemantics\Statement\Model\MySql\Role\ReplicaThreadOptionListForm $replicaThreadOptionList): self
+    {
+        return new self($replicaThreadOptionList, $this->replicaThreadOption);
+    }
+
+    /**
+     * Returns a copy with a new replicaThreadOption, preserving every other field.
+     */
+    public function withReplicaThreadOption(\SqlSemantics\Statement\Model\MySql\Role\ReplicaThreadOptionForm $replicaThreadOption): self
+    {
+        return new self($this->replicaThreadOptionList, $replicaThreadOption);
     }
 }

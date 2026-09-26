@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RoleOrPrivilegeWithCreateUser_9fff189b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RoleOrPrivilegeWithCreateUser_9fff189b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RoleOrPrivilegeWithCreateUser_9fff189b implements \SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeForm, \SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $user,
     ) {
+        $this->assertMatchesPattern($user, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['USER'], 'The user must be a complete USER lexical spelling.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class RoleOrPrivilegeWithCreateUser_9fff189b implements \SqlSemantics\Stat
     {
         $writer->append('CREATE');
         $writer->append($this->user);
+    }
+
+    /**
+     * Returns a copy with a new user, preserving every other field.
+     */
+    public function withUser(string $user): self
+    {
+        return new self($user);
     }
 }

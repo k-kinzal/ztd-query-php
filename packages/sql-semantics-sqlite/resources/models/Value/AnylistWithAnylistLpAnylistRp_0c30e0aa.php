@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\AnylistWithAnylistLpAnylistRp_0c30e0aa $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\AnylistWithAnylistLpAnylistRp_0c30e0aa $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AnylistWithAnylistLpAnylistRp_0c30e0aa implements \SqlSemantics\Statement\Model\Sqlite\Role\AnylistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AnylistWithAnylistLpAnylistRp_0c30e0aa implements \SqlSemantics\Stat
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\AnylistForm $anylist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\AnylistForm $anylist2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($anylist), 'The anylist must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($anylist2), 'The anylist2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class AnylistWithAnylistLpAnylistRp_0c30e0aa implements \SqlSemantics\Stat
         $writer->append('(');
         $this->anylist2->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new anylist, preserving every other field.
+     */
+    public function withAnylist(\SqlSemantics\Statement\Model\Sqlite\Role\AnylistForm $anylist): self
+    {
+        return new self($anylist, $this->anylist2);
+    }
+
+    /**
+     * Returns a copy with a new anylist2, preserving every other field.
+     */
+    public function withAnylist2(\SqlSemantics\Statement\Model\Sqlite\Role\AnylistForm $anylist2): self
+    {
+        return new self($this->anylist, $anylist2);
     }
 }

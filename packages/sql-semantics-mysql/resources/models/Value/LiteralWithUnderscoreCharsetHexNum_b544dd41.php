@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\LiteralWithUnderscoreCharsetHexNum_b544dd41 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\LiteralWithUnderscoreCharsetHexNum_b544dd41 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class LiteralWithUnderscoreCharsetHexNum_b544dd41 implements \SqlSemantics\Statement\Model\MySql\Role\BitExprForm, \SqlSemantics\Statement\Model\MySql\Role\BoolPriForm, \SqlSemantics\Statement\Model\MySql\Role\ConditionNumberForm, \SqlSemantics\Statement\Model\MySql\Role\ExprForm, \SqlSemantics\Statement\Model\MySql\Role\ExprListForm, \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\GeneratedColumnFuncForm, \SqlSemantics\Statement\Model\MySql\Role\GroupListForm, \SqlSemantics\Statement\Model\MySql\Role\GroupingExprForm, \SqlSemantics\Statement\Model\MySql\Role\InstallSetRvalueForm, \SqlSemantics\Statement\Model\MySql\Role\LiteralForm, \SqlSemantics\Statement\Model\MySql\Role\LiteralOrNullForm, \SqlSemantics\Statement\Model\MySql\Role\NowOrSignedLiteralForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprListForm, \SqlSemantics\Statement\Model\MySql\Role\OptSpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\OptValuesForm, \SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm, \SqlSemantics\Statement\Model\MySql\Role\PartFuncExprForm, \SqlSemantics\Statement\Model\MySql\Role\PartFuncMaxForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueExprItemForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueItemForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueItemListForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueListForm, \SqlSemantics\Statement\Model\MySql\Role\PartValuesInForm, \SqlSemantics\Statement\Model\MySql\Role\PredicateForm, \SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\SignalAllowedExprForm, \SqlSemantics\Statement\Model\MySql\Role\SignedLiteralForm, \SqlSemantics\Statement\Model\MySql\Role\SignedLiteralOrNullForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm, \SqlSemantics\Statement\Model\MySql\Role\SpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\ValuesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class LiteralWithUnderscoreCharsetHexNum_b544dd41 implements \SqlSemantics
         public readonly string $underscoreCharset,
         public readonly string $hexNum,
     ) {
+        $this->assertMatchesPattern($underscoreCharset, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['UNDERSCORE_CHARSET'], 'The underscoreCharset must be a complete UNDERSCORE_CHARSET lexical spelling.');
+        $this->assertMatchesPattern($hexNum, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['HEX_NUM'], 'The hexNum must be a complete HEX_NUM lexical spelling.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class LiteralWithUnderscoreCharsetHexNum_b544dd41 implements \SqlSemantics
     {
         $writer->append($this->underscoreCharset);
         $writer->append($this->hexNum);
+    }
+
+    /**
+     * Returns a copy with a new underscoreCharset, preserving every other field.
+     */
+    public function withUnderscoreCharset(string $underscoreCharset): self
+    {
+        return new self($underscoreCharset, $this->hexNum);
+    }
+
+    /**
+     * Returns a copy with a new hexNum, preserving every other field.
+     */
+    public function withHexNum(string $hexNum): self
+    {
+        return new self($this->underscoreCharset, $hexNum);
     }
 }

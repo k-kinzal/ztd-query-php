@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CopyGenericOptArgListWithCopyGenericOptArgListCopyGenericOptArgListItem_96f941b2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CopyGenericOptArgListWithCopyGenericOptArgListCopyGenericOptArgListItem_96f941b2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CopyGenericOptArgListWithCopyGenericOptArgListCopyGenericOptArgListItem_96f941b2 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CopyGenericOptArgListWithCopyGenericOptArgListCopyGenericOptArgListI
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListForm $copyGenericOptArgList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListItemForm $copyGenericOptArgListItem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($copyGenericOptArgList), 'The copyGenericOptArgList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($copyGenericOptArgListItem), 'The copyGenericOptArgListItem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class CopyGenericOptArgListWithCopyGenericOptArgListCopyGenericOptArgListI
         $this->copyGenericOptArgList->write($writer);
         $writer->append(',');
         $this->copyGenericOptArgListItem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new copyGenericOptArgList, preserving every other field.
+     */
+    public function withCopyGenericOptArgList(\SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListForm $copyGenericOptArgList): self
+    {
+        return new self($copyGenericOptArgList, $this->copyGenericOptArgListItem);
+    }
+
+    /**
+     * Returns a copy with a new copyGenericOptArgListItem, preserving every other field.
+     */
+    public function withCopyGenericOptArgListItem(\SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListItemForm $copyGenericOptArgListItem): self
+    {
+        return new self($this->copyGenericOptArgList, $copyGenericOptArgListItem);
     }
 }

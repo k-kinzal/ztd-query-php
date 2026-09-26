@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TypenameWithSetofSimpleTypenameOptArrayBounds_5a494c27 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TypenameWithSetofSimpleTypenameOptArrayBounds_5a494c27 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TypenameWithSetofSimpleTypenameOptArrayBounds_5a494c27 implements \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgsListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\DefArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgWithDefaultForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsWithDefaultsListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncReturnForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncTypeForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TypeListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TypeNameListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TypenameWithSetofSimpleTypenameOptArrayBounds_5a494c27 implements \S
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SimpleTypenameForm $simpleTypename,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptArrayBoundsForm $optArrayBounds,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($simpleTypename), 'The simpleTypename must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optArrayBounds), 'The optArrayBounds must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TypenameWithSetofSimpleTypenameOptArrayBounds_5a494c27 implements \S
         $writer->append('SETOF');
         $this->simpleTypename->write($writer);
         $this->optArrayBounds->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new simpleTypename, preserving every other field.
+     */
+    public function withSimpleTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\SimpleTypenameForm $simpleTypename): self
+    {
+        return new self($simpleTypename, $this->optArrayBounds);
+    }
+
+    /**
+     * Returns a copy with a new optArrayBounds, preserving every other field.
+     */
+    public function withOptArrayBounds(\SqlSemantics\Statement\Model\PostgreSql\Role\OptArrayBoundsForm $optArrayBounds): self
+    {
+        return new self($this->simpleTypename, $optArrayBounds);
     }
 }

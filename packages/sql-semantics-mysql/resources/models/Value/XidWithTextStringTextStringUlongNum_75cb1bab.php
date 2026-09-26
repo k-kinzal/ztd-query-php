@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\XidWithTextStringTextStringUlongNum_75cb1bab $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\XidWithTextStringTextStringUlongNum_75cb1bab $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class XidWithTextStringTextStringUlongNum_75cb1bab implements \SqlSemantics\Statement\Model\MySql\Role\XidForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class XidWithTextStringTextStringUlongNum_75cb1bab implements \SqlSemantic
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringForm $textString2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textString), 'The textString must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textString2), 'The textString2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ulongNum), 'The ulongNum must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class XidWithTextStringTextStringUlongNum_75cb1bab implements \SqlSemantic
         $this->textString2->write($writer);
         $writer->append(',');
         $this->ulongNum->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new textString, preserving every other field.
+     */
+    public function withTextString(\SqlSemantics\Statement\Model\MySql\Role\TextStringForm $textString): self
+    {
+        return new self($textString, $this->textString2, $this->ulongNum);
+    }
+
+    /**
+     * Returns a copy with a new textString2, preserving every other field.
+     */
+    public function withTextString2(\SqlSemantics\Statement\Model\MySql\Role\TextStringForm $textString2): self
+    {
+        return new self($this->textString, $textString2, $this->ulongNum);
+    }
+
+    /**
+     * Returns a copy with a new ulongNum, preserving every other field.
+     */
+    public function withUlongNum(\SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum): self
+    {
+        return new self($this->textString, $this->textString2, $ulongNum);
     }
 }

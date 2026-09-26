@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\LogfileGroupOptionListWithLogfileGroupOptionListOptCommaLogfileGroupOption_3e331a47 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\LogfileGroupOptionListWithLogfileGroupOptionListOptCommaLogfileGroupOption_3e331a47 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class LogfileGroupOptionListWithLogfileGroupOptionListOptCommaLogfileGroupOption_3e331a47 implements \SqlSemantics\Statement\Model\MySql\Role\LogfileGroupOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\OptLogfileGroupOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class LogfileGroupOptionListWithLogfileGroupOptionListOptCommaLogfileGroup
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCommaForm $optComma,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LogfileGroupOptionForm $logfileGroupOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($logfileGroupOptionList), 'The logfileGroupOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optComma), 'The optComma must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($logfileGroupOption), 'The logfileGroupOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class LogfileGroupOptionListWithLogfileGroupOptionListOptCommaLogfileGroup
         $this->logfileGroupOptionList->write($writer);
         $this->optComma->write($writer);
         $this->logfileGroupOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new logfileGroupOptionList, preserving every other field.
+     */
+    public function withLogfileGroupOptionList(\SqlSemantics\Statement\Model\MySql\Role\LogfileGroupOptionListForm $logfileGroupOptionList): self
+    {
+        return new self($logfileGroupOptionList, $this->optComma, $this->logfileGroupOption);
+    }
+
+    /**
+     * Returns a copy with a new optComma, preserving every other field.
+     */
+    public function withOptComma(\SqlSemantics\Statement\Model\MySql\Role\OptCommaForm $optComma): self
+    {
+        return new self($this->logfileGroupOptionList, $optComma, $this->logfileGroupOption);
+    }
+
+    /**
+     * Returns a copy with a new logfileGroupOption, preserving every other field.
+     */
+    public function withLogfileGroupOption(\SqlSemantics\Statement\Model\MySql\Role\LogfileGroupOptionForm $logfileGroupOption): self
+    {
+        return new self($this->logfileGroupOptionList, $this->optComma, $logfileGroupOption);
     }
 }

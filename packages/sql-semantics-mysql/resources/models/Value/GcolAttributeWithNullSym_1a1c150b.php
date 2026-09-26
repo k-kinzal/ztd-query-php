@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GcolAttributeWithNullSym_1a1c150b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GcolAttributeWithNullSym_1a1c150b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GcolAttributeWithNullSym_1a1c150b implements \SqlSemantics\Statement\Model\MySql\Role\GcolAttributeForm, \SqlSemantics\Statement\Model\MySql\Role\GcolAttributeListForm, \SqlSemantics\Statement\Model\MySql\Role\OptGcolAttributeListForm

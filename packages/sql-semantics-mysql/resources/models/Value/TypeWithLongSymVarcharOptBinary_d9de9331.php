@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithLongSymVarcharOptBinary_d9de9331 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithLongSymVarcharOptBinary_d9de9331 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TypeWithLongSymVarcharOptBinary_d9de9331 implements \SqlSemantics\Statement\Model\MySql\Role\TypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TypeWithLongSymVarcharOptBinary_d9de9331 implements \SqlSemantics\St
         public readonly \SqlSemantics\Statement\Model\MySql\Role\VarcharForm $varchar,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm $optBinary,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($varchar), 'The varchar must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optBinary), 'The optBinary must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TypeWithLongSymVarcharOptBinary_d9de9331 implements \SqlSemantics\St
         $writer->append('LONG');
         $this->varchar->write($writer);
         $this->optBinary->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new varchar, preserving every other field.
+     */
+    public function withVarchar(\SqlSemantics\Statement\Model\MySql\Role\VarcharForm $varchar): self
+    {
+        return new self($varchar, $this->optBinary);
+    }
+
+    /**
+     * Returns a copy with a new optBinary, preserving every other field.
+     */
+    public function withOptBinary(\SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm $optBinary): self
+    {
+        return new self($this->varchar, $optBinary);
     }
 }

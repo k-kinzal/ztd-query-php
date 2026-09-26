@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\SortlistWithExprSortorderNulls_988a1693 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\SortlistWithExprSortorderNulls_988a1693 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SortlistWithExprSortorderNulls_988a1693 implements \SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class SortlistWithExprSortorderNulls_988a1693 implements \SqlSemantics\Sta
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SortorderForm $sortorder,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NullsForm $nulls,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($sortorder), 'The sortorder must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nulls), 'The nulls must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class SortlistWithExprSortorderNulls_988a1693 implements \SqlSemantics\Sta
         $this->expr->write($writer);
         $this->sortorder->write($writer);
         $this->nulls->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
+    {
+        return new self($expr, $this->sortorder, $this->nulls);
+    }
+
+    /**
+     * Returns a copy with a new sortorder, preserving every other field.
+     */
+    public function withSortorder(\SqlSemantics\Statement\Model\Sqlite\Role\SortorderForm $sortorder): self
+    {
+        return new self($this->expr, $sortorder, $this->nulls);
+    }
+
+    /**
+     * Returns a copy with a new nulls, preserving every other field.
+     */
+    public function withNulls(\SqlSemantics\Statement\Model\Sqlite\Role\NullsForm $nulls): self
+    {
+        return new self($this->expr, $this->sortorder, $nulls);
     }
 }

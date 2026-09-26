@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PartFuncWithRememberNamePartFuncExprRememberEnd_bbccc98f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PartFuncWithRememberNamePartFuncExprRememberEnd_bbccc98f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PartFuncWithRememberNamePartFuncExprRememberEnd_bbccc98f implements \SqlSemantics\Statement\Model\MySql\Role\PartFuncForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class PartFuncWithRememberNamePartFuncExprRememberEnd_bbccc98f implements 
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartFuncExprForm $partFuncExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RememberEndForm $rememberEnd,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($rememberName), 'The rememberName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partFuncExpr), 'The partFuncExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($rememberEnd), 'The rememberEnd must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class PartFuncWithRememberNamePartFuncExprRememberEnd_bbccc98f implements 
         $this->partFuncExpr->write($writer);
         $this->rememberEnd->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new rememberName, preserving every other field.
+     */
+    public function withRememberName(\SqlSemantics\Statement\Model\MySql\Role\RememberNameForm $rememberName): self
+    {
+        return new self($rememberName, $this->partFuncExpr, $this->rememberEnd);
+    }
+
+    /**
+     * Returns a copy with a new partFuncExpr, preserving every other field.
+     */
+    public function withPartFuncExpr(\SqlSemantics\Statement\Model\MySql\Role\PartFuncExprForm $partFuncExpr): self
+    {
+        return new self($this->rememberName, $partFuncExpr, $this->rememberEnd);
+    }
+
+    /**
+     * Returns a copy with a new rememberEnd, preserving every other field.
+     */
+    public function withRememberEnd(\SqlSemantics\Statement\Model\MySql\Role\RememberEndForm $rememberEnd): self
+    {
+        return new self($this->rememberName, $this->partFuncExpr, $rememberEnd);
     }
 }

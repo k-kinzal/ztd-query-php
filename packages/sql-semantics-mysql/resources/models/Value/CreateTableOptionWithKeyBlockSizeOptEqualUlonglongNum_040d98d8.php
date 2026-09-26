@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateTableOptionWithKeyBlockSizeOptEqualUlonglongNum_040d98d8 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateTableOptionWithKeyBlockSizeOptEqualUlonglongNum_040d98d8 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CreateTableOptionWithKeyBlockSizeOptEqualUlonglongNum_040d98d8 implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListItemForm, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionForm, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsSpaceSeparatedForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterTableActionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptCreateTableOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CreateTableOptionWithKeyBlockSizeOptEqualUlonglongNum_040d98d8 imple
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UlonglongNumForm $ulonglongNum,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ulonglongNum), 'The ulonglongNum must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class CreateTableOptionWithKeyBlockSizeOptEqualUlonglongNum_040d98d8 imple
         $writer->append('KEY_BLOCK_SIZE');
         $this->optEqual->write($writer);
         $this->ulonglongNum->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optEqual, preserving every other field.
+     */
+    public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
+    {
+        return new self($optEqual, $this->ulonglongNum);
+    }
+
+    /**
+     * Returns a copy with a new ulonglongNum, preserving every other field.
+     */
+    public function withUlonglongNum(\SqlSemantics\Statement\Model\MySql\Role\UlonglongNumForm $ulonglongNum): self
+    {
+        return new self($this->optEqual, $ulonglongNum);
     }
 }

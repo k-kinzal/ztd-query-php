@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterListItemWithRenameKeyOrIndexFieldIdentToSymFieldIdent_4d31222a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterListItemWithRenameKeyOrIndexFieldIdentToSymFieldIdent_4d31222a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterListItemWithRenameKeyOrIndexFieldIdentToSymFieldIdent_4d31222a implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListItemForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterTableActionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterListItemWithRenameKeyOrIndexFieldIdentToSymFieldIdent_4d31222a 
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldIdentForm $fieldIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldIdentForm $fieldIdent2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyOrIndex), 'The keyOrIndex must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldIdent), 'The fieldIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldIdent2), 'The fieldIdent2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class AlterListItemWithRenameKeyOrIndexFieldIdentToSymFieldIdent_4d31222a 
         $this->fieldIdent->write($writer);
         $writer->append('TO');
         $this->fieldIdent2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new keyOrIndex, preserving every other field.
+     */
+    public function withKeyOrIndex(\SqlSemantics\Statement\Model\MySql\Role\KeyOrIndexForm $keyOrIndex): self
+    {
+        return new self($keyOrIndex, $this->fieldIdent, $this->fieldIdent2);
+    }
+
+    /**
+     * Returns a copy with a new fieldIdent, preserving every other field.
+     */
+    public function withFieldIdent(\SqlSemantics\Statement\Model\MySql\Role\FieldIdentForm $fieldIdent): self
+    {
+        return new self($this->keyOrIndex, $fieldIdent, $this->fieldIdent2);
+    }
+
+    /**
+     * Returns a copy with a new fieldIdent2, preserving every other field.
+     */
+    public function withFieldIdent2(\SqlSemantics\Statement\Model\MySql\Role\FieldIdentForm $fieldIdent2): self
+    {
+        return new self($this->keyOrIndex, $this->fieldIdent, $fieldIdent2);
     }
 }

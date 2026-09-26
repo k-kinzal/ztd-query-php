@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RoleOrPrivilegeWithReplicationSlave_bbee8b5b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RoleOrPrivilegeWithReplicationSlave_bbee8b5b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RoleOrPrivilegeWithReplicationSlave_bbee8b5b implements \SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeForm, \SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeListForm

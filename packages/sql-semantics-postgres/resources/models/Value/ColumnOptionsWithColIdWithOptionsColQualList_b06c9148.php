@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ColumnOptionsWithColIdWithOptionsColQualList_b06c9148 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ColumnOptionsWithColIdWithOptionsColQualList_b06c9148 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColumnOptionsWithColIdWithOptionsColQualList_b06c9148 implements \SqlSemantics\Statement\Model\PostgreSql\Role\TypedTableElementForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TypedTableElementListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ColumnOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ColumnOptionsWithColIdWithOptionsColQualList_b06c9148 implements \Sq
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColQualListForm $colQualList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colQualList), 'The colQualList must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class ColumnOptionsWithColIdWithOptionsColQualList_b06c9148 implements \Sq
         $writer->append('WITH');
         $writer->append('OPTIONS');
         $this->colQualList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($colId, $this->colQualList);
+    }
+
+    /**
+     * Returns a copy with a new colQualList, preserving every other field.
+     */
+    public function withColQualList(\SqlSemantics\Statement\Model\PostgreSql\Role\ColQualListForm $colQualList): self
+    {
+        return new self($this->colId, $colQualList);
     }
 }

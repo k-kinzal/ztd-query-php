@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpatialTypeWithLinestringSym_65c18fc4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpatialTypeWithLinestringSym_65c18fc4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpatialTypeWithLinestringSym_65c18fc4 implements \SqlSemantics\Statement\Model\MySql\Role\SpatialTypeForm, \SqlSemantics\Statement\Model\MySql\Role\TypeForm

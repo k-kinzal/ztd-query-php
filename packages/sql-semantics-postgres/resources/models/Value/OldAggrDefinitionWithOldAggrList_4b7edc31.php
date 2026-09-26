@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OldAggrDefinitionWithOldAggrList_4b7edc31 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OldAggrDefinitionWithOldAggrList_4b7edc31 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OldAggrDefinitionWithOldAggrList_4b7edc31 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OldAggrDefinitionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OldAggrListForm $oldAggrList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($oldAggrList), 'The oldAggrList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OldAggrDefinitionWithOldAggrList_4b7edc31 implements \SqlSemantics\S
         $writer->append('(');
         $this->oldAggrList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new oldAggrList, preserving every other field.
+     */
+    public function withOldAggrList(\SqlSemantics\Statement\Model\PostgreSql\Role\OldAggrListForm $oldAggrList): self
+    {
+        return new self($oldAggrList);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonFormatClauseWithFormatLaJson_7d30f13c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonFormatClauseWithFormatLaJson_7d30f13c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JsonFormatClauseWithFormatLaJson_7d30f13c implements \SqlSemantics\Statement\Model\PostgreSql\Role\JsonFormatClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonFormatClauseOptForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $formatLa,
     ) {
+        $this->assertMatchesPattern($formatLa, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['FORMAT_LA'], 'The formatLa must be a complete FORMAT_LA lexical spelling.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class JsonFormatClauseWithFormatLaJson_7d30f13c implements \SqlSemantics\S
     {
         $writer->append($this->formatLa);
         $writer->append('JSON');
+    }
+
+    /**
+     * Returns a copy with a new formatLa, preserving every other field.
+     */
+    public function withFormatLa(string $formatLa): self
+    {
+        return new self($formatLa);
     }
 }

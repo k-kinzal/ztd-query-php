@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\KeyActionsWithKeyUpdateKeyDelete_94d4aa8f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\KeyActionsWithKeyUpdateKeyDelete_94d4aa8f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class KeyActionsWithKeyUpdateKeyDelete_94d4aa8f implements \SqlSemantics\Statement\Model\PostgreSql\Role\KeyActionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class KeyActionsWithKeyUpdateKeyDelete_94d4aa8f implements \SqlSemantics\S
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\KeyUpdateForm $keyUpdate,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\KeyDeleteForm $keyDelete,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($keyUpdate), 'The keyUpdate must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($keyDelete), 'The keyDelete must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class KeyActionsWithKeyUpdateKeyDelete_94d4aa8f implements \SqlSemantics\S
     {
         $this->keyUpdate->write($writer);
         $this->keyDelete->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new keyUpdate, preserving every other field.
+     */
+    public function withKeyUpdate(\SqlSemantics\Statement\Model\PostgreSql\Role\KeyUpdateForm $keyUpdate): self
+    {
+        return new self($keyUpdate, $this->keyDelete);
+    }
+
+    /**
+     * Returns a copy with a new keyDelete, preserving every other field.
+     */
+    public function withKeyDelete(\SqlSemantics\Statement\Model\PostgreSql\Role\KeyDeleteForm $keyDelete): self
+    {
+        return new self($this->keyUpdate, $keyDelete);
     }
 }

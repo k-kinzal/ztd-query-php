@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\XmltableColumnElWithColIdTypenameXmltableColumnOptionList_102f9cf2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\XmltableColumnElWithColIdTypenameXmltableColumnOptionList_102f9cf2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class XmltableColumnElWithColIdTypenameXmltableColumnOptionList_102f9cf2 implements \SqlSemantics\Statement\Model\PostgreSql\Role\XmltableColumnElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmltableColumnListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class XmltableColumnElWithColIdTypenameXmltableColumnOptionList_102f9cf2 i
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\XmltableColumnOptionListForm $xmltableColumnOptionList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($xmltableColumnOptionList), 'The xmltableColumnOptionList must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class XmltableColumnElWithColIdTypenameXmltableColumnOptionList_102f9cf2 i
         $this->colId->write($writer);
         $this->typename->write($writer);
         $this->xmltableColumnOptionList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($colId, $this->typename, $this->xmltableColumnOptionList);
+    }
+
+    /**
+     * Returns a copy with a new typename, preserving every other field.
+     */
+    public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
+    {
+        return new self($this->colId, $typename, $this->xmltableColumnOptionList);
+    }
+
+    /**
+     * Returns a copy with a new xmltableColumnOptionList, preserving every other field.
+     */
+    public function withXmltableColumnOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\XmltableColumnOptionListForm $xmltableColumnOptionList): self
+    {
+        return new self($this->colId, $this->typename, $xmltableColumnOptionList);
     }
 }

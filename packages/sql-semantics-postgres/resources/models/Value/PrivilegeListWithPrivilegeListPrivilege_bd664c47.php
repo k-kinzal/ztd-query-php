@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PrivilegeListWithPrivilegeListPrivilege_bd664c47 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PrivilegeListWithPrivilegeListPrivilege_bd664c47 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PrivilegeListWithPrivilegeListPrivilege_bd664c47 implements \SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegeListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class PrivilegeListWithPrivilegeListPrivilege_bd664c47 implements \SqlSema
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegeListForm $privilegeList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegeForm $privilege,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($privilegeList), 'The privilegeList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($privilege), 'The privilege must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class PrivilegeListWithPrivilegeListPrivilege_bd664c47 implements \SqlSema
         $this->privilegeList->write($writer);
         $writer->append(',');
         $this->privilege->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new privilegeList, preserving every other field.
+     */
+    public function withPrivilegeList(\SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegeListForm $privilegeList): self
+    {
+        return new self($privilegeList, $this->privilege);
+    }
+
+    /**
+     * Returns a copy with a new privilege, preserving every other field.
+     */
+    public function withPrivilege(\SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegeForm $privilege): self
+    {
+        return new self($this->privilegeList, $privilege);
     }
 }

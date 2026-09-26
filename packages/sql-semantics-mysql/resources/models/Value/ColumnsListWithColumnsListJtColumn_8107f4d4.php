@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ColumnsListWithColumnsListJtColumn_8107f4d4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ColumnsListWithColumnsListJtColumn_8107f4d4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColumnsListWithColumnsListJtColumn_8107f4d4 implements \SqlSemantics\Statement\Model\MySql\Role\ColumnsListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ColumnsListWithColumnsListJtColumn_8107f4d4 implements \SqlSemantics
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ColumnsListForm $columnsList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\JtColumnForm $jtColumn,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($columnsList), 'The columnsList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($jtColumn), 'The jtColumn must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ColumnsListWithColumnsListJtColumn_8107f4d4 implements \SqlSemantics
         $this->columnsList->write($writer);
         $writer->append(',');
         $this->jtColumn->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new columnsList, preserving every other field.
+     */
+    public function withColumnsList(\SqlSemantics\Statement\Model\MySql\Role\ColumnsListForm $columnsList): self
+    {
+        return new self($columnsList, $this->jtColumn);
+    }
+
+    /**
+     * Returns a copy with a new jtColumn, preserving every other field.
+     */
+    public function withJtColumn(\SqlSemantics\Statement\Model\MySql\Role\JtColumnForm $jtColumn): self
+    {
+        return new self($this->columnsList, $jtColumn);
     }
 }

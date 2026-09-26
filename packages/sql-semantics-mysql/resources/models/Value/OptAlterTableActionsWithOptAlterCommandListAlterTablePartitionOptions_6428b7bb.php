@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptAlterTableActionsWithOptAlterCommandListAlterTablePartitionOptions_6428b7bb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptAlterTableActionsWithOptAlterCommandListAlterTablePartitionOptions_6428b7bb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptAlterTableActionsWithOptAlterCommandListAlterTablePartitionOptions_6428b7bb implements \SqlSemantics\Statement\Model\MySql\Role\OptAlterTableActionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptAlterTableActionsWithOptAlterCommandListAlterTablePartitionOption
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptAlterCommandListForm $optAlterCommandList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterTablePartitionOptionsForm $alterTablePartitionOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optAlterCommandList), 'The optAlterCommandList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterTablePartitionOptions), 'The alterTablePartitionOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class OptAlterTableActionsWithOptAlterCommandListAlterTablePartitionOption
     {
         $this->optAlterCommandList->write($writer);
         $this->alterTablePartitionOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optAlterCommandList, preserving every other field.
+     */
+    public function withOptAlterCommandList(\SqlSemantics\Statement\Model\MySql\Role\OptAlterCommandListForm $optAlterCommandList): self
+    {
+        return new self($optAlterCommandList, $this->alterTablePartitionOptions);
+    }
+
+    /**
+     * Returns a copy with a new alterTablePartitionOptions, preserving every other field.
+     */
+    public function withAlterTablePartitionOptions(\SqlSemantics\Statement\Model\MySql\Role\AlterTablePartitionOptionsForm $alterTablePartitionOptions): self
+    {
+        return new self($this->optAlterCommandList, $alterTablePartitionOptions);
     }
 }

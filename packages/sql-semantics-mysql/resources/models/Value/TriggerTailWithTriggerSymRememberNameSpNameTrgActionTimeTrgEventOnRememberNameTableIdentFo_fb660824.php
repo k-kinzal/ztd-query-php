@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TriggerTailWithTriggerSymRememberNameSpNameTrgActionTimeTrgEventOnRememberNameTableIdentFo_fb660824 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TriggerTailWithTriggerSymRememberNameSpNameTrgActionTimeTrgEventOnRememberNameTableIdentFo_fb660824 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TriggerTailWithTriggerSymRememberNameSpNameTrgActionTimeTrgEventOnRememberNameTableIdentFo_fb660824 implements \SqlSemantics\Statement\Model\MySql\Role\DefinerTailForm, \SqlSemantics\Statement\Model\MySql\Role\NoDefinerTailForm, \SqlSemantics\Statement\Model\MySql\Role\TriggerTailForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -27,6 +29,14 @@ final class TriggerTailWithTriggerSymRememberNameSpNameTrgActionTimeTrgEventOnRe
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm $rememberName3,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm $spProcStmt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($rememberName), 'The rememberName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spName), 'The spName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($trgActionTime), 'The trgActionTime must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($trgEvent), 'The trgEvent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($rememberName2), 'The rememberName2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($rememberName3), 'The rememberName3 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spProcStmt), 'The spProcStmt must be a generated immutable SQL value.');
     }
 
     /**
@@ -47,5 +57,69 @@ final class TriggerTailWithTriggerSymRememberNameSpNameTrgActionTimeTrgEventOnRe
         $writer->append('EACH');
         $writer->append('ROW');
         $this->spProcStmt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new rememberName, preserving every other field.
+     */
+    public function withRememberName(\SqlSemantics\Statement\Model\MySql\Role\RememberNameForm $rememberName): self
+    {
+        return new self($rememberName, $this->spName, $this->trgActionTime, $this->trgEvent, $this->rememberName2, $this->tableIdent, $this->rememberName3, $this->spProcStmt);
+    }
+
+    /**
+     * Returns a copy with a new spName, preserving every other field.
+     */
+    public function withSpName(\SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName): self
+    {
+        return new self($this->rememberName, $spName, $this->trgActionTime, $this->trgEvent, $this->rememberName2, $this->tableIdent, $this->rememberName3, $this->spProcStmt);
+    }
+
+    /**
+     * Returns a copy with a new trgActionTime, preserving every other field.
+     */
+    public function withTrgActionTime(\SqlSemantics\Statement\Model\MySql\Role\TrgActionTimeForm $trgActionTime): self
+    {
+        return new self($this->rememberName, $this->spName, $trgActionTime, $this->trgEvent, $this->rememberName2, $this->tableIdent, $this->rememberName3, $this->spProcStmt);
+    }
+
+    /**
+     * Returns a copy with a new trgEvent, preserving every other field.
+     */
+    public function withTrgEvent(\SqlSemantics\Statement\Model\MySql\Role\TrgEventForm $trgEvent): self
+    {
+        return new self($this->rememberName, $this->spName, $this->trgActionTime, $trgEvent, $this->rememberName2, $this->tableIdent, $this->rememberName3, $this->spProcStmt);
+    }
+
+    /**
+     * Returns a copy with a new rememberName2, preserving every other field.
+     */
+    public function withRememberName2(\SqlSemantics\Statement\Model\MySql\Role\RememberNameForm $rememberName2): self
+    {
+        return new self($this->rememberName, $this->spName, $this->trgActionTime, $this->trgEvent, $rememberName2, $this->tableIdent, $this->rememberName3, $this->spProcStmt);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($this->rememberName, $this->spName, $this->trgActionTime, $this->trgEvent, $this->rememberName2, $tableIdent, $this->rememberName3, $this->spProcStmt);
+    }
+
+    /**
+     * Returns a copy with a new rememberName3, preserving every other field.
+     */
+    public function withRememberName3(\SqlSemantics\Statement\Model\MySql\Role\RememberNameForm $rememberName3): self
+    {
+        return new self($this->rememberName, $this->spName, $this->trgActionTime, $this->trgEvent, $this->rememberName2, $this->tableIdent, $rememberName3, $this->spProcStmt);
+    }
+
+    /**
+     * Returns a copy with a new spProcStmt, preserving every other field.
+     */
+    public function withSpProcStmt(\SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm $spProcStmt): self
+    {
+        return new self($this->rememberName, $this->spName, $this->trgActionTime, $this->trgEvent, $this->rememberName2, $this->tableIdent, $this->rememberName3, $spProcStmt);
     }
 }

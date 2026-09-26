@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AggrArgsListWithAggrArgsListAggrArg_4bda2a3f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AggrArgsListWithAggrArgsListAggrArg_4bda2a3f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AggrArgsListWithAggrArgsListAggrArg_4bda2a3f implements \SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgsListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AggrArgsListWithAggrArgsListAggrArg_4bda2a3f implements \SqlSemantic
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgsListForm $aggrArgsList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgForm $aggrArg,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aggrArgsList), 'The aggrArgsList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aggrArg), 'The aggrArg must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class AggrArgsListWithAggrArgsListAggrArg_4bda2a3f implements \SqlSemantic
         $this->aggrArgsList->write($writer);
         $writer->append(',');
         $this->aggrArg->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new aggrArgsList, preserving every other field.
+     */
+    public function withAggrArgsList(\SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgsListForm $aggrArgsList): self
+    {
+        return new self($aggrArgsList, $this->aggrArg);
+    }
+
+    /**
+     * Returns a copy with a new aggrArg, preserving every other field.
+     */
+    public function withAggrArg(\SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgForm $aggrArg): self
+    {
+        return new self($this->aggrArgsList, $aggrArg);
     }
 }

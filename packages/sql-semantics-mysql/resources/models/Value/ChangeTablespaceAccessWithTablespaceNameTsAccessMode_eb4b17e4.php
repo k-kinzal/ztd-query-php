@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ChangeTablespaceAccessWithTablespaceNameTsAccessMode_eb4b17e4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ChangeTablespaceAccessWithTablespaceNameTsAccessMode_eb4b17e4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ChangeTablespaceAccessWithTablespaceNameTsAccessMode_eb4b17e4 implements \SqlSemantics\Statement\Model\MySql\Role\ChangeTablespaceAccessForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ChangeTablespaceAccessWithTablespaceNameTsAccessMode_eb4b17e4 implem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TablespaceNameForm $tablespaceName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TsAccessModeForm $tsAccessMode,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tablespaceName), 'The tablespaceName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tsAccessMode), 'The tsAccessMode must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class ChangeTablespaceAccessWithTablespaceNameTsAccessMode_eb4b17e4 implem
     {
         $this->tablespaceName->write($writer);
         $this->tsAccessMode->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tablespaceName, preserving every other field.
+     */
+    public function withTablespaceName(\SqlSemantics\Statement\Model\MySql\Role\TablespaceNameForm $tablespaceName): self
+    {
+        return new self($tablespaceName, $this->tsAccessMode);
+    }
+
+    /**
+     * Returns a copy with a new tsAccessMode, preserving every other field.
+     */
+    public function withTsAccessMode(\SqlSemantics\Statement\Model\MySql\Role\TsAccessModeForm $tsAccessMode): self
+    {
+        return new self($this->tablespaceName, $tsAccessMode);
     }
 }

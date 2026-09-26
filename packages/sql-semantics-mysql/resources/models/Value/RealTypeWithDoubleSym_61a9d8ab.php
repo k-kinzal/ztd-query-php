@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RealTypeWithDoubleSym_61a9d8ab $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RealTypeWithDoubleSym_61a9d8ab $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RealTypeWithDoubleSym_61a9d8ab implements \SqlSemantics\Statement\Model\MySql\Role\CastTypeForm, \SqlSemantics\Statement\Model\MySql\Role\RealTypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $doubleSym,
     ) {
+        $this->assertMatchesPattern($doubleSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DOUBLE_SYM'], 'The doubleSym must be a complete DOUBLE_SYM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class RealTypeWithDoubleSym_61a9d8ab implements \SqlSemantics\Statement\Mo
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->doubleSym);
+    }
+
+    /**
+     * Returns a copy with a new doubleSym, preserving every other field.
+     */
+    public function withDoubleSym(string $doubleSym): self
+    {
+        return new self($doubleSym);
     }
 }

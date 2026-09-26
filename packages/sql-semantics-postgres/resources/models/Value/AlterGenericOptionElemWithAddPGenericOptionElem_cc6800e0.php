@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterGenericOptionElemWithAddPGenericOptionElem_cc6800e0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterGenericOptionElemWithAddPGenericOptionElem_cc6800e0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterGenericOptionElemWithAddPGenericOptionElem_cc6800e0 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterGenericOptionElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterGenericOptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionElemForm $genericOptionElem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($genericOptionElem), 'The genericOptionElem must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class AlterGenericOptionElemWithAddPGenericOptionElem_cc6800e0 implements 
     {
         $writer->append('ADD');
         $this->genericOptionElem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new genericOptionElem, preserving every other field.
+     */
+    public function withGenericOptionElem(\SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionElemForm $genericOptionElem): self
+    {
+        return new self($genericOptionElem);
     }
 }

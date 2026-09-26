@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GroupReplicationWithGroupReplicationStartOptGroupReplicationStartOptions_01ae7076 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GroupReplicationWithGroupReplicationStartOptGroupReplicationStartOptions_01ae7076 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class GroupReplicationWithGroupReplicationStartOptGroupReplicationStartOptions_01ae7076 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\GroupReplicationForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class GroupReplicationWithGroupReplicationStartOptGroupReplicationStartOptions_01ae7076 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\GroupReplicationForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class GroupReplicationWithGroupReplicationStartOptGroupReplicationStartOpt
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GroupReplicationStartForm $groupReplicationStart,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptGroupReplicationStartOptionsForm $optGroupReplicationStartOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($groupReplicationStart), 'The groupReplicationStart must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optGroupReplicationStartOptions), 'The optGroupReplicationStartOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class GroupReplicationWithGroupReplicationStartOptGroupReplicationStartOpt
     {
         $this->groupReplicationStart->write($writer);
         $this->optGroupReplicationStartOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new groupReplicationStart, preserving every other field.
+     */
+    public function withGroupReplicationStart(\SqlSemantics\Statement\Model\MySql\Role\GroupReplicationStartForm $groupReplicationStart): self
+    {
+        return new self($groupReplicationStart, $this->optGroupReplicationStartOptions);
+    }
+
+    /**
+     * Returns a copy with a new optGroupReplicationStartOptions, preserving every other field.
+     */
+    public function withOptGroupReplicationStartOptions(\SqlSemantics\Statement\Model\MySql\Role\OptGroupReplicationStartOptionsForm $optGroupReplicationStartOptions): self
+    {
+        return new self($this->groupReplicationStart, $optGroupReplicationStartOptions);
     }
 }

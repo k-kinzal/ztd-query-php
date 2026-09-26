@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\LimitOptionsWithLimitOptionOffsetSymLimitOption_2254dcb3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\LimitOptionsWithLimitOptionOffsetSymLimitOption_2254dcb3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class LimitOptionsWithLimitOptionOffsetSymLimitOption_2254dcb3 implements \SqlSemantics\Statement\Model\MySql\Role\LimitOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class LimitOptionsWithLimitOptionOffsetSymLimitOption_2254dcb3 implements 
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LimitOptionForm $limitOption,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LimitOptionForm $limitOption2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($limitOption), 'The limitOption must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($limitOption2), 'The limitOption2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class LimitOptionsWithLimitOptionOffsetSymLimitOption_2254dcb3 implements 
         $this->limitOption->write($writer);
         $writer->append('OFFSET');
         $this->limitOption2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new limitOption, preserving every other field.
+     */
+    public function withLimitOption(\SqlSemantics\Statement\Model\MySql\Role\LimitOptionForm $limitOption): self
+    {
+        return new self($limitOption, $this->limitOption2);
+    }
+
+    /**
+     * Returns a copy with a new limitOption2, preserving every other field.
+     */
+    public function withLimitOption2(\SqlSemantics\Statement\Model\MySql\Role\LimitOptionForm $limitOption2): self
+    {
+        return new self($this->limitOption, $limitOption2);
     }
 }

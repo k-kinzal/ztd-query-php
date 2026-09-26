@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptProviderWithForNonReservedWordOrSconst_d64fc618 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptProviderWithForNonReservedWordOrSconst_d64fc618 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptProviderWithForNonReservedWordOrSconst_d64fc618 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptProviderForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NonReservedWordOrSconstForm $nonReservedWordOrSconst,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($nonReservedWordOrSconst), 'The nonReservedWordOrSconst must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OptProviderWithForNonReservedWordOrSconst_d64fc618 implements \SqlSe
     {
         $writer->append('FOR');
         $this->nonReservedWordOrSconst->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new nonReservedWordOrSconst, preserving every other field.
+     */
+    public function withNonReservedWordOrSconst(\SqlSemantics\Statement\Model\PostgreSql\Role\NonReservedWordOrSconstForm $nonReservedWordOrSconst): self
+    {
+        return new self($nonReservedWordOrSconst);
     }
 }

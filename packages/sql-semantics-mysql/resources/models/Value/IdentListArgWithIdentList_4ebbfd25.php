@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IdentListArgWithIdentList_4ebbfd25 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IdentListArgWithIdentList_4ebbfd25 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IdentListArgWithIdentList_4ebbfd25 implements \SqlSemantics\Statement\Model\MySql\Role\IdentListArgForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentListForm $identList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identList), 'The identList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class IdentListArgWithIdentList_4ebbfd25 implements \SqlSemantics\Statemen
         $writer->append('(');
         $this->identList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new identList, preserving every other field.
+     */
+    public function withIdentList(\SqlSemantics\Statement\Model\MySql\Role\IdentListForm $identList): self
+    {
+        return new self($identList);
     }
 }

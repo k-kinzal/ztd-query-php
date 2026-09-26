@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CastTypeWithMultipolygonSym_c3aafe9f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CastTypeWithMultipolygonSym_c3aafe9f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CastTypeWithMultipolygonSym_c3aafe9f implements \SqlSemantics\Statement\Model\MySql\Role\CastTypeForm

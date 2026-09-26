@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DecNumWithFloatNum_9c0d1538 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DecNumWithFloatNum_9c0d1538 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DecNumWithFloatNum_9c0d1538 implements \SqlSemantics\Statement\Model\MySql\Role\DecNumForm, \SqlSemantics\Statement\Model\MySql\Role\DecNumErrorForm, \SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm, \SqlSemantics\Statement\Model\MySql\Role\RealUlonglongNumForm, \SqlSemantics\Statement\Model\MySql\Role\SizeNumberForm, \SqlSemantics\Statement\Model\MySql\Role\ThreadIdListForm, \SqlSemantics\Statement\Model\MySql\Role\ThreadIdListOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\WsLevelNumberForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $floatNum,
     ) {
+        $this->assertMatchesPattern($floatNum, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['FLOAT_NUM'], 'The floatNum must be a complete FLOAT_NUM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class DecNumWithFloatNum_9c0d1538 implements \SqlSemantics\Statement\Model
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->floatNum);
+    }
+
+    /**
+     * Returns a copy with a new floatNum, preserving every other field.
+     */
+    public function withFloatNum(string $floatNum): self
+    {
+        return new self($floatNum);
     }
 }

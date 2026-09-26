@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithCreateTableCreateTableArgs_51837b7b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithCreateTableCreateTableArgs_51837b7b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CmdWithCreateTableCreateTableArgs_51837b7b implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm
+final class CmdWithCreateTableCreateTableArgs_51837b7b implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CmdWithCreateTableCreateTableArgs_51837b7b implements \SqlSemantics\
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CreateTableForm $createTable,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CreateTableArgsForm $createTableArgs,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($createTable), 'The createTable must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($createTableArgs), 'The createTableArgs must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class CmdWithCreateTableCreateTableArgs_51837b7b implements \SqlSemantics\
     {
         $this->createTable->write($writer);
         $this->createTableArgs->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new createTable, preserving every other field.
+     */
+    public function withCreateTable(\SqlSemantics\Statement\Model\Sqlite\Role\CreateTableForm $createTable): self
+    {
+        return new self($createTable, $this->createTableArgs);
+    }
+
+    /**
+     * Returns a copy with a new createTableArgs, preserving every other field.
+     */
+    public function withCreateTableArgs(\SqlSemantics\Statement\Model\Sqlite\Role\CreateTableArgsForm $createTableArgs): self
+    {
+        return new self($this->createTable, $createTableArgs);
     }
 }

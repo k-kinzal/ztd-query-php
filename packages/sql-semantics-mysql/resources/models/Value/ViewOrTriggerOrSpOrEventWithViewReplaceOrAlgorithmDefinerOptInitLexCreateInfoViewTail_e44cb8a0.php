@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewOrTriggerOrSpOrEventWithViewReplaceOrAlgorithmDefinerOptInitLexCreateInfoViewTail_e44cb8a0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewOrTriggerOrSpOrEventWithViewReplaceOrAlgorithmDefinerOptInitLexCreateInfoViewTail_e44cb8a0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ViewOrTriggerOrSpOrEventWithViewReplaceOrAlgorithmDefinerOptInitLexCreateInfoViewTail_e44cb8a0 implements \SqlSemantics\Statement\Model\MySql\Role\ViewOrTriggerOrSpOrEventForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class ViewOrTriggerOrSpOrEventWithViewReplaceOrAlgorithmDefinerOptInitLexC
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InitLexCreateInfoForm $initLexCreateInfo,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ViewTailForm $viewTail,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($viewReplaceOrAlgorithm), 'The viewReplaceOrAlgorithm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($definerOpt), 'The definerOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($initLexCreateInfo), 'The initLexCreateInfo must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($viewTail), 'The viewTail must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +40,37 @@ final class ViewOrTriggerOrSpOrEventWithViewReplaceOrAlgorithmDefinerOptInitLexC
         $this->definerOpt->write($writer);
         $this->initLexCreateInfo->write($writer);
         $this->viewTail->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new viewReplaceOrAlgorithm, preserving every other field.
+     */
+    public function withViewReplaceOrAlgorithm(\SqlSemantics\Statement\Model\MySql\Role\ViewReplaceOrAlgorithmForm $viewReplaceOrAlgorithm): self
+    {
+        return new self($viewReplaceOrAlgorithm, $this->definerOpt, $this->initLexCreateInfo, $this->viewTail);
+    }
+
+    /**
+     * Returns a copy with a new definerOpt, preserving every other field.
+     */
+    public function withDefinerOpt(\SqlSemantics\Statement\Model\MySql\Role\DefinerOptForm $definerOpt): self
+    {
+        return new self($this->viewReplaceOrAlgorithm, $definerOpt, $this->initLexCreateInfo, $this->viewTail);
+    }
+
+    /**
+     * Returns a copy with a new initLexCreateInfo, preserving every other field.
+     */
+    public function withInitLexCreateInfo(\SqlSemantics\Statement\Model\MySql\Role\InitLexCreateInfoForm $initLexCreateInfo): self
+    {
+        return new self($this->viewReplaceOrAlgorithm, $this->definerOpt, $initLexCreateInfo, $this->viewTail);
+    }
+
+    /**
+     * Returns a copy with a new viewTail, preserving every other field.
+     */
+    public function withViewTail(\SqlSemantics\Statement\Model\MySql\Role\ViewTailForm $viewTail): self
+    {
+        return new self($this->viewReplaceOrAlgorithm, $this->definerOpt, $this->initLexCreateInfo, $viewTail);
     }
 }

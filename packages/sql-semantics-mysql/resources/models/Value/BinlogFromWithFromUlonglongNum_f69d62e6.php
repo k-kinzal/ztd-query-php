@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\BinlogFromWithFromUlonglongNum_f69d62e6 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\BinlogFromWithFromUlonglongNum_f69d62e6 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class BinlogFromWithFromUlonglongNum_f69d62e6 implements \SqlSemantics\Statement\Model\MySql\Role\BinlogFromForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UlonglongNumForm $ulonglongNum,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ulonglongNum), 'The ulonglongNum must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class BinlogFromWithFromUlonglongNum_f69d62e6 implements \SqlSemantics\Sta
     {
         $writer->append('FROM');
         $this->ulonglongNum->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new ulonglongNum, preserving every other field.
+     */
+    public function withUlonglongNum(\SqlSemantics\Statement\Model\MySql\Role\UlonglongNumForm $ulonglongNum): self
+    {
+        return new self($ulonglongNum);
     }
 }

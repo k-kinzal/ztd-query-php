@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\UdfExprListWithUdfExprListUdfExpr_948cbced $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\UdfExprListWithUdfExprListUdfExpr_948cbced $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class UdfExprListWithUdfExprListUdfExpr_948cbced implements \SqlSemantics\Statement\Model\MySql\Role\OptUdfExprListForm, \SqlSemantics\Statement\Model\MySql\Role\UdfExprListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class UdfExprListWithUdfExprListUdfExpr_948cbced implements \SqlSemantics\
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UdfExprListForm $udfExprList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UdfExprForm $udfExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($udfExprList), 'The udfExprList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($udfExpr), 'The udfExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class UdfExprListWithUdfExprListUdfExpr_948cbced implements \SqlSemantics\
         $this->udfExprList->write($writer);
         $writer->append(',');
         $this->udfExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new udfExprList, preserving every other field.
+     */
+    public function withUdfExprList(\SqlSemantics\Statement\Model\MySql\Role\UdfExprListForm $udfExprList): self
+    {
+        return new self($udfExprList, $this->udfExpr);
+    }
+
+    /**
+     * Returns a copy with a new udfExpr, preserving every other field.
+     */
+    public function withUdfExpr(\SqlSemantics\Statement\Model\MySql\Role\UdfExprForm $udfExpr): self
+    {
+        return new self($this->udfExprList, $udfExpr);
     }
 }

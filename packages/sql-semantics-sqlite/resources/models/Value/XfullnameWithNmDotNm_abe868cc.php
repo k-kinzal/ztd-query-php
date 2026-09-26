@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\XfullnameWithNmDotNm_abe868cc $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\XfullnameWithNmDotNm_abe868cc $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class XfullnameWithNmDotNm_abe868cc implements \SqlSemantics\Statement\Model\Sqlite\Role\XfullnameForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class XfullnameWithNmDotNm_abe868cc implements \SqlSemantics\Statement\Mod
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm2), 'The nm2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class XfullnameWithNmDotNm_abe868cc implements \SqlSemantics\Statement\Mod
         $this->nm->write($writer);
         $writer->append('.');
         $this->nm2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new nm, preserving every other field.
+     */
+    public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
+    {
+        return new self($nm, $this->nm2);
+    }
+
+    /**
+     * Returns a copy with a new nm2, preserving every other field.
+     */
+    public function withNm2(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm2): self
+    {
+        return new self($this->nm, $nm2);
     }
 }

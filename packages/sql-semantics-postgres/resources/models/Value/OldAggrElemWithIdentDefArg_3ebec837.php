@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OldAggrElemWithIdentDefArg_3ebec837 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OldAggrElemWithIdentDefArg_3ebec837 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OldAggrElemWithIdentDefArg_3ebec837 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OldAggrElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OldAggrListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OldAggrElemWithIdentDefArg_3ebec837 implements \SqlSemantics\Stateme
         public readonly string $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DefArgForm $defArg,
     ) {
+        $this->assertMatchesPattern($name, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['IDENT'], 'The name must be a complete IDENT lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($defArg), 'The defArg must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class OldAggrElemWithIdentDefArg_3ebec837 implements \SqlSemantics\Stateme
         $writer->append($this->name, true);
         $writer->append('=');
         $this->defArg->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(string $name): self
+    {
+        return new self($name, $this->defArg);
+    }
+
+    /**
+     * Returns a copy with a new defArg, preserving every other field.
+     */
+    public function withDefArg(\SqlSemantics\Statement\Model\PostgreSql\Role\DefArgForm $defArg): self
+    {
+        return new self($this->name, $defArg);
     }
 }

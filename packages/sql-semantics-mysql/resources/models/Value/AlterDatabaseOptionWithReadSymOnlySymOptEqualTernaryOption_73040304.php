@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterDatabaseOptionWithReadSymOnlySymOptEqualTernaryOption_73040304 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterDatabaseOptionWithReadSymOnlySymOptEqualTernaryOption_73040304 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterDatabaseOptionWithReadSymOnlySymOptEqualTernaryOption_73040304 implements \SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseOptionForm, \SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterDatabaseOptionWithReadSymOnlySymOptEqualTernaryOption_73040304 
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TernaryOptionForm $ternaryOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ternaryOption), 'The ternaryOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class AlterDatabaseOptionWithReadSymOnlySymOptEqualTernaryOption_73040304 
         $writer->append('ONLY');
         $this->optEqual->write($writer);
         $this->ternaryOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optEqual, preserving every other field.
+     */
+    public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
+    {
+        return new self($optEqual, $this->ternaryOption);
+    }
+
+    /**
+     * Returns a copy with a new ternaryOption, preserving every other field.
+     */
+    public function withTernaryOption(\SqlSemantics\Statement\Model\MySql\Role\TernaryOptionForm $ternaryOption): self
+    {
+        return new self($this->optEqual, $ternaryOption);
     }
 }

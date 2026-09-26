@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ColumnStorageWithStorageDefault_ea22ad60 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ColumnStorageWithStorageDefault_ea22ad60 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColumnStorageWithStorageDefault_ea22ad60 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ColumnStorageForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnStorageForm

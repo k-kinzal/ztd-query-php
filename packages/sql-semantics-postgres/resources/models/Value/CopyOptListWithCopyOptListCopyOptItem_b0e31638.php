@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CopyOptListWithCopyOptListCopyOptItem_b0e31638 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CopyOptListWithCopyOptListCopyOptItem_b0e31638 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CopyOptListWithCopyOptListCopyOptItem_b0e31638 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CopyOptListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CopyOptListWithCopyOptListCopyOptItem_b0e31638 implements \SqlSemant
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CopyOptListForm $copyOptList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CopyOptItemForm $copyOptItem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($copyOptList), 'The copyOptList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($copyOptItem), 'The copyOptItem must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class CopyOptListWithCopyOptListCopyOptItem_b0e31638 implements \SqlSemant
     {
         $this->copyOptList->write($writer);
         $this->copyOptItem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new copyOptList, preserving every other field.
+     */
+    public function withCopyOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\CopyOptListForm $copyOptList): self
+    {
+        return new self($copyOptList, $this->copyOptItem);
+    }
+
+    /**
+     * Returns a copy with a new copyOptItem, preserving every other field.
+     */
+    public function withCopyOptItem(\SqlSemantics\Statement\Model\PostgreSql\Role\CopyOptItemForm $copyOptItem): self
+    {
+        return new self($this->copyOptList, $copyOptItem);
     }
 }

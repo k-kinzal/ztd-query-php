@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ColConstraintElemWithUniqueOptUniqueNullTreatmentOptDefinitionOptConsTableSpace_27dcc042 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ColConstraintElemWithUniqueOptUniqueNullTreatmentOptDefinitionOptConsTableSpace_27dcc042 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColConstraintElemWithUniqueOptUniqueNullTreatmentOptDefinitionOptConsTableSpace_27dcc042 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ColConstraintForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ColConstraintElemForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class ColConstraintElemWithUniqueOptUniqueNullTreatmentOptDefinitionOptCon
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptDefinitionForm $optDefinition,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptConsTableSpaceForm $optConsTableSpace,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optUniqueNullTreatment), 'The optUniqueNullTreatment must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optDefinition), 'The optDefinition must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optConsTableSpace), 'The optConsTableSpace must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class ColConstraintElemWithUniqueOptUniqueNullTreatmentOptDefinitionOptCon
         $this->optUniqueNullTreatment->write($writer);
         $this->optDefinition->write($writer);
         $this->optConsTableSpace->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optUniqueNullTreatment, preserving every other field.
+     */
+    public function withOptUniqueNullTreatment(\SqlSemantics\Statement\Model\PostgreSql\Role\OptUniqueNullTreatmentForm $optUniqueNullTreatment): self
+    {
+        return new self($optUniqueNullTreatment, $this->optDefinition, $this->optConsTableSpace);
+    }
+
+    /**
+     * Returns a copy with a new optDefinition, preserving every other field.
+     */
+    public function withOptDefinition(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDefinitionForm $optDefinition): self
+    {
+        return new self($this->optUniqueNullTreatment, $optDefinition, $this->optConsTableSpace);
+    }
+
+    /**
+     * Returns a copy with a new optConsTableSpace, preserving every other field.
+     */
+    public function withOptConsTableSpace(\SqlSemantics\Statement\Model\PostgreSql\Role\OptConsTableSpaceForm $optConsTableSpace): self
+    {
+        return new self($this->optUniqueNullTreatment, $this->optDefinition, $optConsTableSpace);
     }
 }

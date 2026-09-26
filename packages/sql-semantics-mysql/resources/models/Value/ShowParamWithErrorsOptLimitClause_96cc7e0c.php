@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithErrorsOptLimitClause_96cc7e0c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithErrorsOptLimitClause_96cc7e0c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ShowParamWithErrorsOptLimitClause_96cc7e0c implements \SqlSemantics\Statement\Model\MySql\Role\ShowParamForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLimitClause), 'The optLimitClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class ShowParamWithErrorsOptLimitClause_96cc7e0c implements \SqlSemantics\
     {
         $writer->append('ERRORS');
         $this->optLimitClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optLimitClause, preserving every other field.
+     */
+    public function withOptLimitClause(\SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause): self
+    {
+        return new self($optLimitClause);
     }
 }

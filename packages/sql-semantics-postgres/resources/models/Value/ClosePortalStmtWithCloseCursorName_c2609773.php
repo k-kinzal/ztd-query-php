@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ClosePortalStmtWithCloseCursorName_c2609773 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ClosePortalStmtWithCloseCursorName_c2609773 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class ClosePortalStmtWithCloseCursorName_c2609773 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ClosePortalStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class ClosePortalStmtWithCloseCursorName_c2609773 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ClosePortalStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CursorNameForm $cursorName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($cursorName), 'The cursorName must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class ClosePortalStmtWithCloseCursorName_c2609773 implements \SqlSemantics
     {
         $writer->append('CLOSE');
         $this->cursorName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new cursorName, preserving every other field.
+     */
+    public function withCursorName(\SqlSemantics\Statement\Model\PostgreSql\Role\CursorNameForm $cursorName): self
+    {
+        return new self($cursorName);
     }
 }

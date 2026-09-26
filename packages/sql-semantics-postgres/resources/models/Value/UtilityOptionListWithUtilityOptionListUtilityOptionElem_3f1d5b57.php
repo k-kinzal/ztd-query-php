@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\UtilityOptionListWithUtilityOptionListUtilityOptionElem_3f1d5b57 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\UtilityOptionListWithUtilityOptionListUtilityOptionElem_3f1d5b57 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class UtilityOptionListWithUtilityOptionListUtilityOptionElem_3f1d5b57 implements \SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class UtilityOptionListWithUtilityOptionListUtilityOptionElem_3f1d5b57 imp
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionListForm $utilityOptionList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionElemForm $utilityOptionElem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($utilityOptionList), 'The utilityOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($utilityOptionElem), 'The utilityOptionElem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class UtilityOptionListWithUtilityOptionListUtilityOptionElem_3f1d5b57 imp
         $this->utilityOptionList->write($writer);
         $writer->append(',');
         $this->utilityOptionElem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new utilityOptionList, preserving every other field.
+     */
+    public function withUtilityOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionListForm $utilityOptionList): self
+    {
+        return new self($utilityOptionList, $this->utilityOptionElem);
+    }
+
+    /**
+     * Returns a copy with a new utilityOptionElem, preserving every other field.
+     */
+    public function withUtilityOptionElem(\SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionElemForm $utilityOptionElem): self
+    {
+        return new self($this->utilityOptionList, $utilityOptionElem);
     }
 }

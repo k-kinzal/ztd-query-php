@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectInit2WithSelectPart2UnionClause_dd0d3cd3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectInit2WithSelectPart2UnionClause_dd0d3cd3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SelectInit2WithSelectPart2UnionClause_dd0d3cd3 implements \SqlSemantics\Statement\Model\MySql\Role\SelectInit2Form
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SelectInit2WithSelectPart2UnionClause_dd0d3cd3 implements \SqlSemant
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectPart2Form $selectPart2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UnionClauseForm $unionClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectPart2), 'The selectPart2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($unionClause), 'The unionClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class SelectInit2WithSelectPart2UnionClause_dd0d3cd3 implements \SqlSemant
     {
         $this->selectPart2->write($writer);
         $this->unionClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new selectPart2, preserving every other field.
+     */
+    public function withSelectPart2(\SqlSemantics\Statement\Model\MySql\Role\SelectPart2Form $selectPart2): self
+    {
+        return new self($selectPart2, $this->unionClause);
+    }
+
+    /**
+     * Returns a copy with a new unionClause, preserving every other field.
+     */
+    public function withUnionClause(\SqlSemantics\Statement\Model\MySql\Role\UnionClauseForm $unionClause): self
+    {
+        return new self($this->selectPart2, $unionClause);
     }
 }

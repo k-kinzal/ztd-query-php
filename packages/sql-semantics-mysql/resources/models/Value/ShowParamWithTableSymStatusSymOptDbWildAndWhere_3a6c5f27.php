@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithTableSymStatusSymOptDbWildAndWhere_3a6c5f27 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithTableSymStatusSymOptDbWildAndWhere_3a6c5f27 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ShowParamWithTableSymStatusSymOptDbWildAndWhere_3a6c5f27 implements \SqlSemantics\Statement\Model\MySql\Role\ShowParamForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ShowParamWithTableSymStatusSymOptDbWildAndWhere_3a6c5f27 implements 
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptDbForm $optDb,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm $wildAndWhere,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDb), 'The optDb must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($wildAndWhere), 'The wildAndWhere must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class ShowParamWithTableSymStatusSymOptDbWildAndWhere_3a6c5f27 implements 
         $writer->append('STATUS');
         $this->optDb->write($writer);
         $this->wildAndWhere->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optDb, preserving every other field.
+     */
+    public function withOptDb(\SqlSemantics\Statement\Model\MySql\Role\OptDbForm $optDb): self
+    {
+        return new self($optDb, $this->wildAndWhere);
+    }
+
+    /**
+     * Returns a copy with a new wildAndWhere, preserving every other field.
+     */
+    public function withWildAndWhere(\SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm $wildAndWhere): self
+    {
+        return new self($this->optDb, $wildAndWhere);
     }
 }

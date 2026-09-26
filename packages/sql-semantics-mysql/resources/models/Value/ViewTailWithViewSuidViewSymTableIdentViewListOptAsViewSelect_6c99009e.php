@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewTailWithViewSuidViewSymTableIdentViewListOptAsViewSelect_6c99009e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewTailWithViewSuidViewSymTableIdentViewListOptAsViewSelect_6c99009e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ViewTailWithViewSuidViewSymTableIdentViewListOptAsViewSelect_6c99009e implements \SqlSemantics\Statement\Model\MySql\Role\DefinerTailForm, \SqlSemantics\Statement\Model\MySql\Role\NoDefinerTailForm, \SqlSemantics\Statement\Model\MySql\Role\ViewTailForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class ViewTailWithViewSuidViewSymTableIdentViewListOptAsViewSelect_6c99009
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ViewListOptForm $viewListOpt,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ViewSelectForm $viewSelect,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($viewSuid), 'The viewSuid must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($viewListOpt), 'The viewListOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($viewSelect), 'The viewSelect must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +42,37 @@ final class ViewTailWithViewSuidViewSymTableIdentViewListOptAsViewSelect_6c99009
         $this->viewListOpt->write($writer);
         $writer->append('AS');
         $this->viewSelect->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new viewSuid, preserving every other field.
+     */
+    public function withViewSuid(\SqlSemantics\Statement\Model\MySql\Role\ViewSuidForm $viewSuid): self
+    {
+        return new self($viewSuid, $this->tableIdent, $this->viewListOpt, $this->viewSelect);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($this->viewSuid, $tableIdent, $this->viewListOpt, $this->viewSelect);
+    }
+
+    /**
+     * Returns a copy with a new viewListOpt, preserving every other field.
+     */
+    public function withViewListOpt(\SqlSemantics\Statement\Model\MySql\Role\ViewListOptForm $viewListOpt): self
+    {
+        return new self($this->viewSuid, $this->tableIdent, $viewListOpt, $this->viewSelect);
+    }
+
+    /**
+     * Returns a copy with a new viewSelect, preserving every other field.
+     */
+    public function withViewSelect(\SqlSemantics\Statement\Model\MySql\Role\ViewSelectForm $viewSelect): self
+    {
+        return new self($this->viewSuid, $this->tableIdent, $this->viewListOpt, $viewSelect);
     }
 }

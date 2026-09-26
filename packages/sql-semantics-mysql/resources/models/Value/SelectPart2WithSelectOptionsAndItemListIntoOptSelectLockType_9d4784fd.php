@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectPart2WithSelectOptionsAndItemListIntoOptSelectLockType_9d4784fd $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectPart2WithSelectOptionsAndItemListIntoOptSelectLockType_9d4784fd $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SelectPart2WithSelectOptionsAndItemListIntoOptSelectLockType_9d4784fd implements \SqlSemantics\Statement\Model\MySql\Role\SelectPart2Form
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class SelectPart2WithSelectOptionsAndItemListIntoOptSelectLockType_9d4784f
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IntoForm $into,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSelectLockTypeForm $optSelectLockType,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectOptionsAndItemList), 'The selectOptionsAndItemList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($into), 'The into must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optSelectLockType), 'The optSelectLockType must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class SelectPart2WithSelectOptionsAndItemListIntoOptSelectLockType_9d4784f
         $this->selectOptionsAndItemList->write($writer);
         $this->into->write($writer);
         $this->optSelectLockType->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new selectOptionsAndItemList, preserving every other field.
+     */
+    public function withSelectOptionsAndItemList(\SqlSemantics\Statement\Model\MySql\Role\SelectOptionsAndItemListForm $selectOptionsAndItemList): self
+    {
+        return new self($selectOptionsAndItemList, $this->into, $this->optSelectLockType);
+    }
+
+    /**
+     * Returns a copy with a new into, preserving every other field.
+     */
+    public function withInto(\SqlSemantics\Statement\Model\MySql\Role\IntoForm $into): self
+    {
+        return new self($this->selectOptionsAndItemList, $into, $this->optSelectLockType);
+    }
+
+    /**
+     * Returns a copy with a new optSelectLockType, preserving every other field.
+     */
+    public function withOptSelectLockType(\SqlSemantics\Statement\Model\MySql\Role\OptSelectLockTypeForm $optSelectLockType): self
+    {
+        return new self($this->selectOptionsAndItemList, $this->into, $optSelectLockType);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\LimitClauseWithLimitLimitOptions_7cedcf7b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\LimitClauseWithLimitLimitOptions_7cedcf7b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class LimitClauseWithLimitLimitOptions_7cedcf7b implements \SqlSemantics\Statement\Model\MySql\Role\LimitClauseForm, \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm, \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseInitForm, \SqlSemantics\Statement\Model\MySql\Role\OptSelectFromForm, \SqlSemantics\Statement\Model\MySql\Role\OptUnionOrderOrLimitForm, \SqlSemantics\Statement\Model\MySql\Role\OrderOrLimitForm, \SqlSemantics\Statement\Model\MySql\Role\UnionOptForm, \SqlSemantics\Statement\Model\MySql\Role\UnionOrderOrLimitForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LimitOptionsForm $limitOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($limitOptions), 'The limitOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class LimitClauseWithLimitLimitOptions_7cedcf7b implements \SqlSemantics\S
     {
         $writer->append('LIMIT');
         $this->limitOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new limitOptions, preserving every other field.
+     */
+    public function withLimitOptions(\SqlSemantics\Statement\Model\MySql\Role\LimitOptionsForm $limitOptions): self
+    {
+        return new self($limitOptions);
     }
 }

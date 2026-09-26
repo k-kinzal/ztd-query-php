@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateWithCreateSpatialIndexSymIdentInitKeyOptionsOnTableIdentKeyListSpatialKeyOption_fccf64fb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateWithCreateSpatialIndexSymIdentInitKeyOptionsOnTableIdentKeyListSpatialKeyOption_fccf64fb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateWithCreateSpatialIndexSymIdentInitKeyOptionsOnTableIdentKeyListSpatialKeyOption_fccf64fb implements \SqlSemantics\Statement\Model\MySql\Role\CreateForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class CreateWithCreateSpatialIndexSymIdentInitKeyOptionsOnTableIdentKeyListSpatialKeyOption_fccf64fb implements \SqlSemantics\Statement\Model\MySql\Role\CreateForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -26,6 +28,13 @@ final class CreateWithCreateSpatialIndexSymIdentInitKeyOptionsOnTableIdentKeyLis
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpatialKeyOptionsForm $spatialKeyOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIndexLockAlgorithmForm $optIndexLockAlgorithm,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spatial), 'The spatial must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($initKeyOptions), 'The initKeyOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyList), 'The keyList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spatialKeyOptions), 'The spatialKeyOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIndexLockAlgorithm), 'The optIndexLockAlgorithm must be a generated immutable SQL value.');
     }
 
     /**
@@ -45,5 +54,61 @@ final class CreateWithCreateSpatialIndexSymIdentInitKeyOptionsOnTableIdentKeyLis
         $writer->append(')');
         $this->spatialKeyOptions->write($writer);
         $this->optIndexLockAlgorithm->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new spatial, preserving every other field.
+     */
+    public function withSpatial(\SqlSemantics\Statement\Model\MySql\Role\SpatialForm $spatial): self
+    {
+        return new self($spatial, $this->ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $this->spatialKeyOptions, $this->optIndexLockAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($this->spatial, $ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $this->spatialKeyOptions, $this->optIndexLockAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new initKeyOptions, preserving every other field.
+     */
+    public function withInitKeyOptions(\SqlSemantics\Statement\Model\MySql\Role\InitKeyOptionsForm $initKeyOptions): self
+    {
+        return new self($this->spatial, $this->ident, $initKeyOptions, $this->tableIdent, $this->keyList, $this->spatialKeyOptions, $this->optIndexLockAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($this->spatial, $this->ident, $this->initKeyOptions, $tableIdent, $this->keyList, $this->spatialKeyOptions, $this->optIndexLockAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new keyList, preserving every other field.
+     */
+    public function withKeyList(\SqlSemantics\Statement\Model\MySql\Role\KeyListForm $keyList): self
+    {
+        return new self($this->spatial, $this->ident, $this->initKeyOptions, $this->tableIdent, $keyList, $this->spatialKeyOptions, $this->optIndexLockAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new spatialKeyOptions, preserving every other field.
+     */
+    public function withSpatialKeyOptions(\SqlSemantics\Statement\Model\MySql\Role\SpatialKeyOptionsForm $spatialKeyOptions): self
+    {
+        return new self($this->spatial, $this->ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $spatialKeyOptions, $this->optIndexLockAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new optIndexLockAlgorithm, preserving every other field.
+     */
+    public function withOptIndexLockAlgorithm(\SqlSemantics\Statement\Model\MySql\Role\OptIndexLockAlgorithmForm $optIndexLockAlgorithm): self
+    {
+        return new self($this->spatial, $this->ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $this->spatialKeyOptions, $optIndexLockAlgorithm);
     }
 }

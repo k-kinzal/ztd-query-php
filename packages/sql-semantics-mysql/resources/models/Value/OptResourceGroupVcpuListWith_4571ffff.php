@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptResourceGroupVcpuListWith_4571ffff $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptResourceGroupVcpuListWith_4571ffff $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptResourceGroupVcpuListWith_4571ffff implements \SqlSemantics\Statement\Model\MySql\Role\OptResourceGroupVcpuListForm

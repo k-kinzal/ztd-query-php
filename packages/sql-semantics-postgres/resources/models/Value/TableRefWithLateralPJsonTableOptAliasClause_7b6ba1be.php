@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TableRefWithLateralPJsonTableOptAliasClause_7b6ba1be $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TableRefWithLateralPJsonTableOptAliasClause_7b6ba1be $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableRefWithLateralPJsonTableOptAliasClause_7b6ba1be implements \SqlSemantics\Statement\Model\PostgreSql\Role\FromListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TableRefWithLateralPJsonTableOptAliasClause_7b6ba1be implements \Sql
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableForm $jsonTable,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptAliasClauseForm $optAliasClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonTable), 'The jsonTable must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optAliasClause), 'The optAliasClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TableRefWithLateralPJsonTableOptAliasClause_7b6ba1be implements \Sql
         $writer->append('LATERAL');
         $this->jsonTable->write($writer);
         $this->optAliasClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new jsonTable, preserving every other field.
+     */
+    public function withJsonTable(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableForm $jsonTable): self
+    {
+        return new self($jsonTable, $this->optAliasClause);
+    }
+
+    /**
+     * Returns a copy with a new optAliasClause, preserving every other field.
+     */
+    public function withOptAliasClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptAliasClauseForm $optAliasClause): self
+    {
+        return new self($this->jsonTable, $optAliasClause);
     }
 }

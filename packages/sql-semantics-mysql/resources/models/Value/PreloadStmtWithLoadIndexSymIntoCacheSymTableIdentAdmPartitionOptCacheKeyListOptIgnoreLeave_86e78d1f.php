@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PreloadStmtWithLoadIndexSymIntoCacheSymTableIdentAdmPartitionOptCacheKeyListOptIgnoreLeave_86e78d1f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PreloadStmtWithLoadIndexSymIntoCacheSymTableIdentAdmPartitionOptCacheKeyListOptIgnoreLeave_86e78d1f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class PreloadStmtWithLoadIndexSymIntoCacheSymTableIdentAdmPartitionOptCacheKeyListOptIgnoreLeave_86e78d1f implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\PreloadStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class PreloadStmtWithLoadIndexSymIntoCacheSymTableIdentAdmPartitionOptCacheKeyListOptIgnoreLeave_86e78d1f implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\PreloadStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class PreloadStmtWithLoadIndexSymIntoCacheSymTableIdentAdmPartitionOptCach
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCacheKeyListForm $optCacheKeyList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIgnoreLeavesForm $optIgnoreLeaves,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($admPartition), 'The admPartition must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCacheKeyList), 'The optCacheKeyList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIgnoreLeaves), 'The optIgnoreLeaves must be a generated immutable SQL value.');
     }
 
     /**
@@ -38,5 +44,37 @@ final class PreloadStmtWithLoadIndexSymIntoCacheSymTableIdentAdmPartitionOptCach
         $this->admPartition->write($writer);
         $this->optCacheKeyList->write($writer);
         $this->optIgnoreLeaves->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($tableIdent, $this->admPartition, $this->optCacheKeyList, $this->optIgnoreLeaves);
+    }
+
+    /**
+     * Returns a copy with a new admPartition, preserving every other field.
+     */
+    public function withAdmPartition(\SqlSemantics\Statement\Model\MySql\Role\AdmPartitionForm $admPartition): self
+    {
+        return new self($this->tableIdent, $admPartition, $this->optCacheKeyList, $this->optIgnoreLeaves);
+    }
+
+    /**
+     * Returns a copy with a new optCacheKeyList, preserving every other field.
+     */
+    public function withOptCacheKeyList(\SqlSemantics\Statement\Model\MySql\Role\OptCacheKeyListForm $optCacheKeyList): self
+    {
+        return new self($this->tableIdent, $this->admPartition, $optCacheKeyList, $this->optIgnoreLeaves);
+    }
+
+    /**
+     * Returns a copy with a new optIgnoreLeaves, preserving every other field.
+     */
+    public function withOptIgnoreLeaves(\SqlSemantics\Statement\Model\MySql\Role\OptIgnoreLeavesForm $optIgnoreLeaves): self
+    {
+        return new self($this->tableIdent, $this->admPartition, $this->optCacheKeyList, $optIgnoreLeaves);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SumExprWithCountSymOptAllOptWindowingClause_23a36c19 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SumExprWithCountSymOptAllOptWindowingClause_23a36c19 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SumExprWithCountSymOptAllOptWindowingClause_23a36c19 implements \SqlSemantics\Statement\Model\MySql\Role\BitExprForm, \SqlSemantics\Statement\Model\MySql\Role\BoolPriForm, \SqlSemantics\Statement\Model\MySql\Role\ExprForm, \SqlSemantics\Statement\Model\MySql\Role\ExprListForm, \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\GeneratedColumnFuncForm, \SqlSemantics\Statement\Model\MySql\Role\GroupListForm, \SqlSemantics\Statement\Model\MySql\Role\GroupingExprForm, \SqlSemantics\Statement\Model\MySql\Role\InstallSetRvalueForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprListForm, \SqlSemantics\Statement\Model\MySql\Role\OptSpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\OptValuesForm, \SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm, \SqlSemantics\Statement\Model\MySql\Role\PartFuncExprForm, \SqlSemantics\Statement\Model\MySql\Role\PartFuncMaxForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueExprItemForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueItemForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueItemListForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueListForm, \SqlSemantics\Statement\Model\MySql\Role\PartValuesInForm, \SqlSemantics\Statement\Model\MySql\Role\PredicateForm, \SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\SetFunctionSpecificationForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm, \SqlSemantics\Statement\Model\MySql\Role\SpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\SumExprForm, \SqlSemantics\Statement\Model\MySql\Role\ValuesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SumExprWithCountSymOptAllOptWindowingClause_23a36c19 implements \Sql
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptAllForm $optAll,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWindowingClauseForm $optWindowingClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optAll), 'The optAll must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWindowingClause), 'The optWindowingClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +38,21 @@ final class SumExprWithCountSymOptAllOptWindowingClause_23a36c19 implements \Sql
         $writer->append('*');
         $writer->append(')');
         $this->optWindowingClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optAll, preserving every other field.
+     */
+    public function withOptAll(\SqlSemantics\Statement\Model\MySql\Role\OptAllForm $optAll): self
+    {
+        return new self($optAll, $this->optWindowingClause);
+    }
+
+    /**
+     * Returns a copy with a new optWindowingClause, preserving every other field.
+     */
+    public function withOptWindowingClause(\SqlSemantics\Statement\Model\MySql\Role\OptWindowingClauseForm $optWindowingClause): self
+    {
+        return new self($this->optAll, $optWindowingClause);
     }
 }

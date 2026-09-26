@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\QualifiedNameListWithQualifiedNameListQualifiedName_62423088 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\QualifiedNameListWithQualifiedNameListQualifiedName_62423088 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class QualifiedNameListWithQualifiedNameListQualifiedName_62423088 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintsSetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegeTargetForm, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class QualifiedNameListWithQualifiedNameListQualifiedName_62423088 impleme
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameListForm $qualifiedNameList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedNameList), 'The qualifiedNameList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class QualifiedNameListWithQualifiedNameListQualifiedName_62423088 impleme
         $this->qualifiedNameList->write($writer);
         $writer->append(',');
         $this->qualifiedName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new qualifiedNameList, preserving every other field.
+     */
+    public function withQualifiedNameList(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameListForm $qualifiedNameList): self
+    {
+        return new self($qualifiedNameList, $this->qualifiedName);
+    }
+
+    /**
+     * Returns a copy with a new qualifiedName, preserving every other field.
+     */
+    public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
+    {
+        return new self($this->qualifiedNameList, $qualifiedName);
     }
 }

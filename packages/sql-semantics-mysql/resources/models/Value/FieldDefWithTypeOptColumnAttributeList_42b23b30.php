@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldDefWithTypeOptColumnAttributeList_42b23b30 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldDefWithTypeOptColumnAttributeList_42b23b30 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FieldDefWithTypeOptColumnAttributeList_42b23b30 implements \SqlSemantics\Statement\Model\MySql\Role\FieldDefForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FieldDefWithTypeOptColumnAttributeList_42b23b30 implements \SqlSeman
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TypeForm $type,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptColumnAttributeListForm $optColumnAttributeList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($type), 'The type must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optColumnAttributeList), 'The optColumnAttributeList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class FieldDefWithTypeOptColumnAttributeList_42b23b30 implements \SqlSeman
     {
         $this->type->write($writer);
         $this->optColumnAttributeList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new type, preserving every other field.
+     */
+    public function withType(\SqlSemantics\Statement\Model\MySql\Role\TypeForm $type): self
+    {
+        return new self($type, $this->optColumnAttributeList);
+    }
+
+    /**
+     * Returns a copy with a new optColumnAttributeList, preserving every other field.
+     */
+    public function withOptColumnAttributeList(\SqlSemantics\Statement\Model\MySql\Role\OptColumnAttributeListForm $optColumnAttributeList): self
+    {
+        return new self($this->type, $optColumnAttributeList);
     }
 }

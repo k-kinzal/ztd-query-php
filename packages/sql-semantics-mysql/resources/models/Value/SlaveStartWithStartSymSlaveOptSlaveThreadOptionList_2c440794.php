@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SlaveStartWithStartSymSlaveOptSlaveThreadOptionList_2c440794 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SlaveStartWithStartSymSlaveOptSlaveThreadOptionList_2c440794 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SlaveStartWithStartSymSlaveOptSlaveThreadOptionList_2c440794 implements \SqlSemantics\Statement\Model\MySql\Role\SlaveStartForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSlaveThreadOptionListForm $optSlaveThreadOptionList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optSlaveThreadOptionList), 'The optSlaveThreadOptionList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class SlaveStartWithStartSymSlaveOptSlaveThreadOptionList_2c440794 impleme
         $writer->append('START');
         $writer->append('SLAVE');
         $this->optSlaveThreadOptionList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optSlaveThreadOptionList, preserving every other field.
+     */
+    public function withOptSlaveThreadOptionList(\SqlSemantics\Statement\Model\MySql\Role\OptSlaveThreadOptionListForm $optSlaveThreadOptionList): self
+    {
+        return new self($optSlaveThreadOptionList);
     }
 }

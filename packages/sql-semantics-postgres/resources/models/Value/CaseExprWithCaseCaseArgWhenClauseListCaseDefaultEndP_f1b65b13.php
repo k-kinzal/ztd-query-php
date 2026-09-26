@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CaseExprWithCaseCaseArgWhenClauseListCaseDefaultEndP_f1b65b13 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CaseExprWithCaseCaseArgWhenClauseListCaseDefaultEndP_f1b65b13 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CaseExprWithCaseCaseArgWhenClauseListCaseDefaultEndP_f1b65b13 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CaseArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CaseExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListOptForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTargetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectFetchFirstValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectOffsetValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TrimListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CaseExprWithCaseCaseArgWhenClauseListCaseDefaultEndP_f1b65b13 implem
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\WhenClauseListForm $whenClauseList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CaseDefaultForm $caseDefault,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($caseArg), 'The caseArg must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($whenClauseList), 'The whenClauseList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($caseDefault), 'The caseDefault must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class CaseExprWithCaseCaseArgWhenClauseListCaseDefaultEndP_f1b65b13 implem
         $this->whenClauseList->write($writer);
         $this->caseDefault->write($writer);
         $writer->append('END');
+    }
+
+    /**
+     * Returns a copy with a new caseArg, preserving every other field.
+     */
+    public function withCaseArg(\SqlSemantics\Statement\Model\PostgreSql\Role\CaseArgForm $caseArg): self
+    {
+        return new self($caseArg, $this->whenClauseList, $this->caseDefault);
+    }
+
+    /**
+     * Returns a copy with a new whenClauseList, preserving every other field.
+     */
+    public function withWhenClauseList(\SqlSemantics\Statement\Model\PostgreSql\Role\WhenClauseListForm $whenClauseList): self
+    {
+        return new self($this->caseArg, $whenClauseList, $this->caseDefault);
+    }
+
+    /**
+     * Returns a copy with a new caseDefault, preserving every other field.
+     */
+    public function withCaseDefault(\SqlSemantics\Statement\Model\PostgreSql\Role\CaseDefaultForm $caseDefault): self
+    {
+        return new self($this->caseArg, $this->whenClauseList, $caseDefault);
     }
 }

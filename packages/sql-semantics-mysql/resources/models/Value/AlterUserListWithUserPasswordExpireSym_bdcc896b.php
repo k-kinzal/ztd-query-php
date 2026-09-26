@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterUserListWithUserPasswordExpireSym_bdcc896b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterUserListWithUserPasswordExpireSym_bdcc896b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterUserListWithUserPasswordExpireSym_bdcc896b implements \SqlSemantics\Statement\Model\MySql\Role\AlterUserListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserForm $user,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class AlterUserListWithUserPasswordExpireSym_bdcc896b implements \SqlSeman
         $this->user->write($writer);
         $writer->append('PASSWORD');
         $writer->append('EXPIRE');
+    }
+
+    /**
+     * Returns a copy with a new user, preserving every other field.
+     */
+    public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
+    {
+        return new self($user);
     }
 }

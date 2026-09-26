@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\GrantRoleStmtWithGrantPrivilegeListToRoleListOptGrantedBy_9a297464 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\GrantRoleStmtWithGrantPrivilegeListToRoleListOptGrantedBy_9a297464 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class GrantRoleStmtWithGrantPrivilegeListToRoleListOptGrantedBy_9a297464 implements \SqlSemantics\Statement\Model\PostgreSql\Role\GrantRoleStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class GrantRoleStmtWithGrantPrivilegeListToRoleListOptGrantedBy_9a297464 implements \SqlSemantics\Statement\Model\PostgreSql\Role\GrantRoleStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class GrantRoleStmtWithGrantPrivilegeListToRoleListOptGrantedBy_9a297464 i
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoleListForm $roleList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptGrantedByForm $optGrantedBy,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($privilegeList), 'The privilegeList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleList), 'The roleList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optGrantedBy), 'The optGrantedBy must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class GrantRoleStmtWithGrantPrivilegeListToRoleListOptGrantedBy_9a297464 i
         $writer->append('TO');
         $this->roleList->write($writer);
         $this->optGrantedBy->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new privilegeList, preserving every other field.
+     */
+    public function withPrivilegeList(\SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegeListForm $privilegeList): self
+    {
+        return new self($privilegeList, $this->roleList, $this->optGrantedBy);
+    }
+
+    /**
+     * Returns a copy with a new roleList, preserving every other field.
+     */
+    public function withRoleList(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleListForm $roleList): self
+    {
+        return new self($this->privilegeList, $roleList, $this->optGrantedBy);
+    }
+
+    /**
+     * Returns a copy with a new optGrantedBy, preserving every other field.
+     */
+    public function withOptGrantedBy(\SqlSemantics\Statement\Model\PostgreSql\Role\OptGrantedByForm $optGrantedBy): self
+    {
+        return new self($this->privilegeList, $this->roleList, $optGrantedBy);
     }
 }

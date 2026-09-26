@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FlushOptionsWithTableOrTablesOptTableListOptFlushLock_ade860b1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FlushOptionsWithTableOrTablesOptTableListOptFlushLock_ade860b1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FlushOptionsWithTableOrTablesOptTableListOptFlushLock_ade860b1 implements \SqlSemantics\Statement\Model\MySql\Role\FlushOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class FlushOptionsWithTableOrTablesOptTableListOptFlushLock_ade860b1 imple
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptTableListForm $optTableList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptFlushLockForm $optFlushLock,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableOrTables), 'The tableOrTables must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optTableList), 'The optTableList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optFlushLock), 'The optFlushLock must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class FlushOptionsWithTableOrTablesOptTableListOptFlushLock_ade860b1 imple
         $this->tableOrTables->write($writer);
         $this->optTableList->write($writer);
         $this->optFlushLock->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableOrTables, preserving every other field.
+     */
+    public function withTableOrTables(\SqlSemantics\Statement\Model\MySql\Role\TableOrTablesForm $tableOrTables): self
+    {
+        return new self($tableOrTables, $this->optTableList, $this->optFlushLock);
+    }
+
+    /**
+     * Returns a copy with a new optTableList, preserving every other field.
+     */
+    public function withOptTableList(\SqlSemantics\Statement\Model\MySql\Role\OptTableListForm $optTableList): self
+    {
+        return new self($this->tableOrTables, $optTableList, $this->optFlushLock);
+    }
+
+    /**
+     * Returns a copy with a new optFlushLock, preserving every other field.
+     */
+    public function withOptFlushLock(\SqlSemantics\Statement\Model\MySql\Role\OptFlushLockForm $optFlushLock): self
+    {
+        return new self($this->tableOrTables, $this->optTableList, $optFlushLock);
     }
 }

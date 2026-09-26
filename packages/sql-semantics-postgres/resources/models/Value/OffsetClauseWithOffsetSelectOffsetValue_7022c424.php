@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OffsetClauseWithOffsetSelectOffsetValue_7022c424 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OffsetClauseWithOffsetSelectOffsetValue_7022c424 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OffsetClauseWithOffsetSelectOffsetValue_7022c424 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OffsetClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSelectLimitForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectOffsetValueForm $selectOffsetValue,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($selectOffsetValue), 'The selectOffsetValue must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OffsetClauseWithOffsetSelectOffsetValue_7022c424 implements \SqlSema
     {
         $writer->append('OFFSET');
         $this->selectOffsetValue->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new selectOffsetValue, preserving every other field.
+     */
+    public function withSelectOffsetValue(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectOffsetValueForm $selectOffsetValue): self
+    {
+        return new self($selectOffsetValue);
     }
 }

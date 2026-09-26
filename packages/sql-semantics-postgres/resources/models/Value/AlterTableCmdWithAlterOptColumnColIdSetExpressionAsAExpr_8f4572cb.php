@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableCmdWithAlterOptColumnColIdSetExpressionAsAExpr_8f4572cb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableCmdWithAlterOptColumnColIdSetExpressionAsAExpr_8f4572cb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterTableCmdWithAlterOptColumnColIdSetExpressionAsAExpr_8f4572cb implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterTableCmdWithAlterOptColumnColIdSetExpressionAsAExpr_8f4572cb im
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optColumn), 'The optColumn must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -38,5 +43,29 @@ final class AlterTableCmdWithAlterOptColumnColIdSetExpressionAsAExpr_8f4572cb im
         $writer->append('(');
         $this->aExpr->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new optColumn, preserving every other field.
+     */
+    public function withOptColumn(\SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnForm $optColumn): self
+    {
+        return new self($optColumn, $this->colId, $this->aExpr);
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($this->optColumn, $colId, $this->aExpr);
+    }
+
+    /**
+     * Returns a copy with a new aExpr, preserving every other field.
+     */
+    public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
+    {
+        return new self($this->optColumn, $this->colId, $aExpr);
     }
 }

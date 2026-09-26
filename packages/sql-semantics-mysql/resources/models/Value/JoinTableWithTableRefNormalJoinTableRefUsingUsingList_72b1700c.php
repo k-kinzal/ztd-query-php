@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\JoinTableWithTableRefNormalJoinTableRefUsingUsingList_72b1700c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\JoinTableWithTableRefNormalJoinTableRefUsingUsingList_72b1700c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JoinTableWithTableRefNormalJoinTableRefUsingUsingList_72b1700c implements \SqlSemantics\Statement\Model\MySql\Role\DerivedTableListForm, \SqlSemantics\Statement\Model\MySql\Role\EscTableRefForm, \SqlSemantics\Statement\Model\MySql\Role\FromTablesForm, \SqlSemantics\Statement\Model\MySql\Role\JoinTableForm, \SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm, \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedForm, \SqlSemantics\Statement\Model\MySql\Role\TableRefForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class JoinTableWithTableRefNormalJoinTableRefUsingUsingList_72b1700c imple
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableRefForm $tableRef2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UsingListForm $usingList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableRef), 'The tableRef must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($normalJoin), 'The normalJoin must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableRef2), 'The tableRef2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($usingList), 'The usingList must be a generated immutable SQL value.');
     }
 
     /**
@@ -37,5 +43,37 @@ final class JoinTableWithTableRefNormalJoinTableRefUsingUsingList_72b1700c imple
         $writer->append('(');
         $this->usingList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new tableRef, preserving every other field.
+     */
+    public function withTableRef(\SqlSemantics\Statement\Model\MySql\Role\TableRefForm $tableRef): self
+    {
+        return new self($tableRef, $this->normalJoin, $this->tableRef2, $this->usingList);
+    }
+
+    /**
+     * Returns a copy with a new normalJoin, preserving every other field.
+     */
+    public function withNormalJoin(\SqlSemantics\Statement\Model\MySql\Role\NormalJoinForm $normalJoin): self
+    {
+        return new self($this->tableRef, $normalJoin, $this->tableRef2, $this->usingList);
+    }
+
+    /**
+     * Returns a copy with a new tableRef2, preserving every other field.
+     */
+    public function withTableRef2(\SqlSemantics\Statement\Model\MySql\Role\TableRefForm $tableRef2): self
+    {
+        return new self($this->tableRef, $this->normalJoin, $tableRef2, $this->usingList);
+    }
+
+    /**
+     * Returns a copy with a new usingList, preserving every other field.
+     */
+    public function withUsingList(\SqlSemantics\Statement\Model\MySql\Role\UsingListForm $usingList): self
+    {
+        return new self($this->tableRef, $this->normalJoin, $this->tableRef2, $usingList);
     }
 }

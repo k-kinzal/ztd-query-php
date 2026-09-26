@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TypeNameListWithTypeNameListTypename_eac08c04 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TypeNameListWithTypeNameListTypename_eac08c04 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TypeNameListWithTypeNameListTypename_eac08c04 implements \SqlSemantics\Statement\Model\PostgreSql\Role\TypeNameListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TypeNameListWithTypeNameListTypename_eac08c04 implements \SqlSemanti
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypeNameListForm $typeNameList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typeNameList), 'The typeNameList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TypeNameListWithTypeNameListTypename_eac08c04 implements \SqlSemanti
         $this->typeNameList->write($writer);
         $writer->append(',');
         $this->typename->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new typeNameList, preserving every other field.
+     */
+    public function withTypeNameList(\SqlSemantics\Statement\Model\PostgreSql\Role\TypeNameListForm $typeNameList): self
+    {
+        return new self($typeNameList, $this->typename);
+    }
+
+    /**
+     * Returns a copy with a new typename, preserving every other field.
+     */
+    public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
+    {
+        return new self($this->typeNameList, $typename);
     }
 }

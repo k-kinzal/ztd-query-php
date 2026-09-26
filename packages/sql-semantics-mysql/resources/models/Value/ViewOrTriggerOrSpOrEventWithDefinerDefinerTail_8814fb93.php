@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewOrTriggerOrSpOrEventWithDefinerDefinerTail_8814fb93 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewOrTriggerOrSpOrEventWithDefinerDefinerTail_8814fb93 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ViewOrTriggerOrSpOrEventWithDefinerDefinerTail_8814fb93 implements \SqlSemantics\Statement\Model\MySql\Role\ViewOrTriggerOrSpOrEventForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ViewOrTriggerOrSpOrEventWithDefinerDefinerTail_8814fb93 implements \
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DefinerForm $definer,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DefinerTailForm $definerTail,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($definer), 'The definer must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($definerTail), 'The definerTail must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class ViewOrTriggerOrSpOrEventWithDefinerDefinerTail_8814fb93 implements \
     {
         $this->definer->write($writer);
         $this->definerTail->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new definer, preserving every other field.
+     */
+    public function withDefiner(\SqlSemantics\Statement\Model\MySql\Role\DefinerForm $definer): self
+    {
+        return new self($definer, $this->definerTail);
+    }
+
+    /**
+     * Returns a copy with a new definerTail, preserving every other field.
+     */
+    public function withDefinerTail(\SqlSemantics\Statement\Model\MySql\Role\DefinerTailForm $definerTail): self
+    {
+        return new self($this->definer, $definerTail);
     }
 }

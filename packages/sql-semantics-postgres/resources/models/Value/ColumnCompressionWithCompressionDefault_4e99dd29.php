@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ColumnCompressionWithCompressionDefault_4e99dd29 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ColumnCompressionWithCompressionDefault_4e99dd29 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColumnCompressionWithCompressionDefault_4e99dd29 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ColumnCompressionForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnCompressionForm

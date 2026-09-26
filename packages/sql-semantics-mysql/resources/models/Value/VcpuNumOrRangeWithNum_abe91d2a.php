@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\VcpuNumOrRangeWithNum_abe91d2a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\VcpuNumOrRangeWithNum_abe91d2a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class VcpuNumOrRangeWithNum_abe91d2a implements \SqlSemantics\Statement\Model\MySql\Role\VcpuNumOrRangeForm, \SqlSemantics\Statement\Model\MySql\Role\VcpuRangeSpecListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $value,
     ) {
+        $this->assertMatchesPattern($value, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['NUM'], 'The value must be a complete NUM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class VcpuNumOrRangeWithNum_abe91d2a implements \SqlSemantics\Statement\Mo
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->value);
+    }
+
+    /**
+     * Returns a copy with a new value, preserving every other field.
+     */
+    public function withValue(string $value): self
+    {
+        return new self($value);
     }
 }

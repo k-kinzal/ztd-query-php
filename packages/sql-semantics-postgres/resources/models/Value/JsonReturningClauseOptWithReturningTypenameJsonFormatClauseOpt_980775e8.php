@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonReturningClauseOptWithReturningTypenameJsonFormatClauseOpt_980775e8 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonReturningClauseOptWithReturningTypenameJsonFormatClauseOpt_980775e8 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JsonReturningClauseOptWithReturningTypenameJsonFormatClauseOpt_980775e8 implements \SqlSemantics\Statement\Model\PostgreSql\Role\JsonReturningClauseOptForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class JsonReturningClauseOptWithReturningTypenameJsonFormatClauseOpt_98077
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonFormatClauseOptForm $jsonFormatClauseOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonFormatClauseOpt), 'The jsonFormatClauseOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class JsonReturningClauseOptWithReturningTypenameJsonFormatClauseOpt_98077
         $writer->append('RETURNING');
         $this->typename->write($writer);
         $this->jsonFormatClauseOpt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new typename, preserving every other field.
+     */
+    public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
+    {
+        return new self($typename, $this->jsonFormatClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new jsonFormatClauseOpt, preserving every other field.
+     */
+    public function withJsonFormatClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonFormatClauseOptForm $jsonFormatClauseOpt): self
+    {
+        return new self($this->typename, $jsonFormatClauseOpt);
     }
 }

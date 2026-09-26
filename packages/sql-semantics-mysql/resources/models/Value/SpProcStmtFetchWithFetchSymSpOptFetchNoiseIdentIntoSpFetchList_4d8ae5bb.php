@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpProcStmtFetchWithFetchSymSpOptFetchNoiseIdentIntoSpFetchList_4d8ae5bb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpProcStmtFetchWithFetchSymSpOptFetchNoiseIdentIntoSpFetchList_4d8ae5bb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpProcStmtFetchWithFetchSymSpOptFetchNoiseIdentIntoSpFetchList_4d8ae5bb implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtFetchForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class SpProcStmtFetchWithFetchSymSpOptFetchNoiseIdentIntoSpFetchList_4d8ae
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpFetchListForm $spFetchList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spOptFetchNoise), 'The spOptFetchNoise must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spFetchList), 'The spFetchList must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class SpProcStmtFetchWithFetchSymSpOptFetchNoiseIdentIntoSpFetchList_4d8ae
         $this->ident->write($writer);
         $writer->append('INTO');
         $this->spFetchList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new spOptFetchNoise, preserving every other field.
+     */
+    public function withSpOptFetchNoise(\SqlSemantics\Statement\Model\MySql\Role\SpOptFetchNoiseForm $spOptFetchNoise): self
+    {
+        return new self($spOptFetchNoise, $this->ident, $this->spFetchList);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($this->spOptFetchNoise, $ident, $this->spFetchList);
+    }
+
+    /**
+     * Returns a copy with a new spFetchList, preserving every other field.
+     */
+    public function withSpFetchList(\SqlSemantics\Statement\Model\MySql\Role\SpFetchListForm $spFetchList): self
+    {
+        return new self($this->spOptFetchNoise, $this->ident, $spFetchList);
     }
 }

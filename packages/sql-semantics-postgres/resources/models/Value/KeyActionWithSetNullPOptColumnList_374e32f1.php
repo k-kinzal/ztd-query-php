@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\KeyActionWithSetNullPOptColumnList_374e32f1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\KeyActionWithSetNullPOptColumnList_374e32f1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class KeyActionWithSetNullPOptColumnList_374e32f1 implements \SqlSemantics\Statement\Model\PostgreSql\Role\KeyActionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnListForm $optColumnList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optColumnList), 'The optColumnList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class KeyActionWithSetNullPOptColumnList_374e32f1 implements \SqlSemantics
         $writer->append('SET');
         $writer->append('NULL');
         $this->optColumnList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optColumnList, preserving every other field.
+     */
+    public function withOptColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnListForm $optColumnList): self
+    {
+        return new self($optColumnList);
     }
 }

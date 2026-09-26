@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\RangeOrRowsWithRangeRowsGroups_a1c269da $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\RangeOrRowsWithRangeRowsGroups_a1c269da $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RangeOrRowsWithRangeRowsGroups_a1c269da implements \SqlSemantics\Statement\Model\Sqlite\Role\RangeOrRowsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $rangeRowsGroups,
     ) {
+        $this->assertMatchesPattern($rangeRowsGroups, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['RANGE|ROWS|GROUPS'], 'The rangeRowsGroups must be a complete RANGE|ROWS|GROUPS lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class RangeOrRowsWithRangeRowsGroups_a1c269da implements \SqlSemantics\Sta
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->rangeRowsGroups);
+    }
+
+    /**
+     * Returns a copy with a new rangeRowsGroups, preserving every other field.
+     */
+    public function withRangeRowsGroups(string $rangeRowsGroups): self
+    {
+        return new self($rangeRowsGroups);
     }
 }

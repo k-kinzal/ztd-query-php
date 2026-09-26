@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterOptRoleListWithAlterOptRoleListAlterOptRoleElem_e20dc52b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterOptRoleListWithAlterOptRoleListAlterOptRoleElem_e20dc52b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterOptRoleListWithAlterOptRoleListAlterOptRoleElem_e20dc52b implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterOptRoleListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterOptRoleListWithAlterOptRoleListAlterOptRoleElem_e20dc52b implem
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AlterOptRoleListForm $alterOptRoleList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AlterOptRoleElemForm $alterOptRoleElem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($alterOptRoleList), 'The alterOptRoleList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($alterOptRoleElem), 'The alterOptRoleElem must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class AlterOptRoleListWithAlterOptRoleListAlterOptRoleElem_e20dc52b implem
     {
         $this->alterOptRoleList->write($writer);
         $this->alterOptRoleElem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new alterOptRoleList, preserving every other field.
+     */
+    public function withAlterOptRoleList(\SqlSemantics\Statement\Model\PostgreSql\Role\AlterOptRoleListForm $alterOptRoleList): self
+    {
+        return new self($alterOptRoleList, $this->alterOptRoleElem);
+    }
+
+    /**
+     * Returns a copy with a new alterOptRoleElem, preserving every other field.
+     */
+    public function withAlterOptRoleElem(\SqlSemantics\Statement\Model\PostgreSql\Role\AlterOptRoleElemForm $alterOptRoleElem): self
+    {
+        return new self($this->alterOptRoleList, $alterOptRoleElem);
     }
 }

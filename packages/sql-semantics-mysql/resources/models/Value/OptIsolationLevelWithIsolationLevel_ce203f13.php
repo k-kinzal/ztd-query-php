@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptIsolationLevelWithIsolationLevel_ce203f13 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptIsolationLevelWithIsolationLevel_ce203f13 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptIsolationLevelWithIsolationLevel_ce203f13 implements \SqlSemantics\Statement\Model\MySql\Role\OptIsolationLevelForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IsolationLevelForm $isolationLevel,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($isolationLevel), 'The isolationLevel must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OptIsolationLevelWithIsolationLevel_ce203f13 implements \SqlSemantic
     {
         $writer->append(',');
         $this->isolationLevel->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new isolationLevel, preserving every other field.
+     */
+    public function withIsolationLevel(\SqlSemantics\Statement\Model\MySql\Role\IsolationLevelForm $isolationLevel): self
+    {
+        return new self($isolationLevel);
     }
 }

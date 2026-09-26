@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PasswordWithTextString_cb58587a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PasswordWithTextString_cb58587a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PasswordWithTextString_cb58587a implements \SqlSemantics\Statement\Model\MySql\Role\PasswordForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $value,
     ) {
+        $this->assertMatchesPattern($value, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['TEXT_STRING'], 'The value must be a complete TEXT_STRING lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class PasswordWithTextString_cb58587a implements \SqlSemantics\Statement\M
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->value);
+    }
+
+    /**
+     * Returns a copy with a new value, preserving every other field.
+     */
+    public function withValue(string $value): self
+    {
+        return new self($value);
     }
 }

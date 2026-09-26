@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\HandlerRkeyFunctionWithHandlerRkeyModeValues_000b2fb3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\HandlerRkeyFunctionWithHandlerRkeyModeValues_000b2fb3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class HandlerRkeyFunctionWithHandlerRkeyModeValues_000b2fb3 implements \SqlSemantics\Statement\Model\MySql\Role\HandlerRkeyFunctionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class HandlerRkeyFunctionWithHandlerRkeyModeValues_000b2fb3 implements \Sq
         public readonly \SqlSemantics\Statement\Model\MySql\Role\HandlerRkeyModeForm $handlerRkeyMode,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ValuesForm $values,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($handlerRkeyMode), 'The handlerRkeyMode must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($values), 'The values must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class HandlerRkeyFunctionWithHandlerRkeyModeValues_000b2fb3 implements \Sq
         $writer->append('(');
         $this->values->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new handlerRkeyMode, preserving every other field.
+     */
+    public function withHandlerRkeyMode(\SqlSemantics\Statement\Model\MySql\Role\HandlerRkeyModeForm $handlerRkeyMode): self
+    {
+        return new self($handlerRkeyMode, $this->values);
+    }
+
+    /**
+     * Returns a copy with a new values, preserving every other field.
+     */
+    public function withValues(\SqlSemantics\Statement\Model\MySql\Role\ValuesForm $values): self
+    {
+        return new self($this->handlerRkeyMode, $values);
     }
 }

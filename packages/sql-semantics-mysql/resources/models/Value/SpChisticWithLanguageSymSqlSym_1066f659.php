@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpChisticWithLanguageSymSqlSym_1066f659 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpChisticWithLanguageSymSqlSym_1066f659 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpChisticWithLanguageSymSqlSym_1066f659 implements \SqlSemantics\Statement\Model\MySql\Role\SpCChisticForm, \SqlSemantics\Statement\Model\MySql\Role\SpChisticForm

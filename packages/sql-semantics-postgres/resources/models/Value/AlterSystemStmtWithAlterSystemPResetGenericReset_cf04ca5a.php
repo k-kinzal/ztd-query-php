@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterSystemStmtWithAlterSystemPResetGenericReset_cf04ca5a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterSystemStmtWithAlterSystemPResetGenericReset_cf04ca5a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterSystemStmtWithAlterSystemPResetGenericReset_cf04ca5a implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterSystemStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterSystemStmtWithAlterSystemPResetGenericReset_cf04ca5a implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterSystemStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GenericResetForm $genericReset,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($genericReset), 'The genericReset must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class AlterSystemStmtWithAlterSystemPResetGenericReset_cf04ca5a implements
         $writer->append('SYSTEM');
         $writer->append('RESET');
         $this->genericReset->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new genericReset, preserving every other field.
+     */
+    public function withGenericReset(\SqlSemantics\Statement\Model\PostgreSql\Role\GenericResetForm $genericReset): self
+    {
+        return new self($genericReset);
     }
 }

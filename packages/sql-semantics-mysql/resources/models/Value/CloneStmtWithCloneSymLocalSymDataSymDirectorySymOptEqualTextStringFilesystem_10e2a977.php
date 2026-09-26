@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CloneStmtWithCloneSymLocalSymDataSymDirectorySymOptEqualTextStringFilesystem_10e2a977 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CloneStmtWithCloneSymLocalSymDataSymDirectorySymOptEqualTextStringFilesystem_10e2a977 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CloneStmtWithCloneSymLocalSymDataSymDirectorySymOptEqualTextStringFilesystem_10e2a977 implements \SqlSemantics\Statement\Model\MySql\Role\CloneStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class CloneStmtWithCloneSymLocalSymDataSymDirectorySymOptEqualTextStringFilesystem_10e2a977 implements \SqlSemantics\Statement\Model\MySql\Role\CloneStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CloneStmtWithCloneSymLocalSymDataSymDirectorySymOptEqualTextStringFi
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringFilesystemForm $textStringFilesystem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringFilesystem), 'The textStringFilesystem must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +38,21 @@ final class CloneStmtWithCloneSymLocalSymDataSymDirectorySymOptEqualTextStringFi
         $writer->append('DIRECTORY');
         $this->optEqual->write($writer);
         $this->textStringFilesystem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optEqual, preserving every other field.
+     */
+    public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
+    {
+        return new self($optEqual, $this->textStringFilesystem);
+    }
+
+    /**
+     * Returns a copy with a new textStringFilesystem, preserving every other field.
+     */
+    public function withTextStringFilesystem(\SqlSemantics\Statement\Model\MySql\Role\TextStringFilesystemForm $textStringFilesystem): self
+    {
+        return new self($this->optEqual, $textStringFilesystem);
     }
 }

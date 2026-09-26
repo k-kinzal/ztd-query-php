@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\NonReservedWordWithIdent_aa8e4e33 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\NonReservedWordWithIdent_aa8e4e33 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class NonReservedWordWithIdent_aa8e4e33 implements \SqlSemantics\Statement\Model\PostgreSql\Role\NonReservedWordForm, \SqlSemantics\Statement\Model\PostgreSql\Role\NonReservedWordOrSconstForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoleIdForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AuthIdentForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GranteeForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GranteeListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptBooleanOrStringForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoleListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\VarListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\VarValueForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $name,
     ) {
+        $this->assertMatchesPattern($name, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['IDENT'], 'The name must be a complete IDENT lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class NonReservedWordWithIdent_aa8e4e33 implements \SqlSemantics\Statement
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->name, true);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(string $name): self
+    {
+        return new self($name);
     }
 }

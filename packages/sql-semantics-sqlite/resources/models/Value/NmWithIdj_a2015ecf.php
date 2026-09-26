@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\NmWithIdj_a2015ecf $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\NmWithIdj_a2015ecf $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class NmWithIdj_a2015ecf implements \SqlSemantics\Statement\Model\Sqlite\Role\AddColumnFullnameForm, \SqlSemantics\Statement\Model\Sqlite\Role\FullnameForm, \SqlSemantics\Statement\Model\Sqlite\Role\IdlistForm, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm, \SqlSemantics\Statement\Model\Sqlite\Role\NmnumForm, \SqlSemantics\Statement\Model\Sqlite\Role\TableOptionForm, \SqlSemantics\Statement\Model\Sqlite\Role\TableOptionSetForm, \SqlSemantics\Statement\Model\Sqlite\Role\TrnmForm, \SqlSemantics\Statement\Model\Sqlite\Role\WithnmForm, \SqlSemantics\Statement\Model\Sqlite\Role\XfullnameForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $name,
     ) {
+        $this->assertMatchesPattern($name, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['idj'], 'The name must be a complete idj lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class NmWithIdj_a2015ecf implements \SqlSemantics\Statement\Model\Sqlite\R
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->name);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(string $name): self
+    {
+        return new self($name);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\XmlNamespaceElWithBExprAsColLabel_114b201e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\XmlNamespaceElWithBExprAsColLabel_114b201e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class XmlNamespaceElWithBExprAsColLabel_114b201e implements \SqlSemantics\Statement\Model\PostgreSql\Role\XmlNamespaceElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlNamespaceListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class XmlNamespaceElWithBExprAsColLabel_114b201e implements \SqlSemantics\
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm $colLabel,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($bExpr), 'The bExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colLabel), 'The colLabel must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class XmlNamespaceElWithBExprAsColLabel_114b201e implements \SqlSemantics\
         $this->bExpr->write($writer);
         $writer->append('AS');
         $this->colLabel->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new bExpr, preserving every other field.
+     */
+    public function withBExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr): self
+    {
+        return new self($bExpr, $this->colLabel);
+    }
+
+    /**
+     * Returns a copy with a new colLabel, preserving every other field.
+     */
+    public function withColLabel(\SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm $colLabel): self
+    {
+        return new self($this->bExpr, $colLabel);
     }
 }

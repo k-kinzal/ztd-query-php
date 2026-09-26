@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptOrdinalityWithWithLaOrdinality_ca961587 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptOrdinalityWithWithLaOrdinality_ca961587 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptOrdinalityWithWithLaOrdinality_ca961587 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptOrdinalityForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $withLa,
     ) {
+        $this->assertMatchesPattern($withLa, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['WITH_LA'], 'The withLa must be a complete WITH_LA lexical spelling.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OptOrdinalityWithWithLaOrdinality_ca961587 implements \SqlSemantics\
     {
         $writer->append($this->withLa);
         $writer->append('ORDINALITY');
+    }
+
+    /**
+     * Returns a copy with a new withLa, preserving every other field.
+     */
+    public function withWithLa(string $withLa): self
+    {
+        return new self($withLa);
     }
 }

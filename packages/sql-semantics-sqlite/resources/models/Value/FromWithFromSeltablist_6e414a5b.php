@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\FromWithFromSeltablist_6e414a5b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\FromWithFromSeltablist_6e414a5b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FromWithFromSeltablist_6e414a5b implements \SqlSemantics\Statement\Model\Sqlite\Role\FromForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SeltablistForm $seltablist,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($seltablist), 'The seltablist must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class FromWithFromSeltablist_6e414a5b implements \SqlSemantics\Statement\M
     {
         $writer->append('FROM');
         $this->seltablist->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new seltablist, preserving every other field.
+     */
+    public function withSeltablist(\SqlSemantics\Statement\Model\Sqlite\Role\SeltablistForm $seltablist): self
+    {
+        return new self($seltablist);
     }
 }

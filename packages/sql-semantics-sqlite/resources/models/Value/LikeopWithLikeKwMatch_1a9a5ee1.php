@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\LikeopWithLikeKwMatch_1a9a5ee1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\LikeopWithLikeKwMatch_1a9a5ee1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class LikeopWithLikeKwMatch_1a9a5ee1 implements \SqlSemantics\Statement\Model\Sqlite\Role\LikeopForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $likeKwMatch,
     ) {
+        $this->assertMatchesPattern($likeKwMatch, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['LIKE_KW|MATCH'], 'The likeKwMatch must be a complete LIKE_KW|MATCH lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class LikeopWithLikeKwMatch_1a9a5ee1 implements \SqlSemantics\Statement\Mo
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->likeKwMatch);
+    }
+
+    /**
+     * Returns a copy with a new likeKwMatch, preserving every other field.
+     */
+    public function withLikeKwMatch(string $likeKwMatch): self
+    {
+        return new self($likeKwMatch);
     }
 }

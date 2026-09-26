@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SetRestMoreWithNamesOptEncoding_0ab561bf $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SetRestMoreWithNamesOptEncoding_0ab561bf $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SetRestMoreWithNamesOptEncoding_0ab561bf implements \SqlSemantics\Statement\Model\PostgreSql\Role\SetRestForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SetRestMoreForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptEncodingForm $optEncoding,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optEncoding), 'The optEncoding must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class SetRestMoreWithNamesOptEncoding_0ab561bf implements \SqlSemantics\St
     {
         $writer->append('NAMES');
         $this->optEncoding->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optEncoding, preserving every other field.
+     */
+    public function withOptEncoding(\SqlSemantics\Statement\Model\PostgreSql\Role\OptEncodingForm $optEncoding): self
+    {
+        return new self($optEncoding);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateOpClassStmtWithCreateOperatorClassAnyNameOptDefaultForTypePTypenameUsingNameOptOpfamilyAsO_9481b124 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateOpClassStmtWithCreateOperatorClassAnyNameOptDefaultForTypePTypenameUsingNameOptOpfamilyAsO_9481b124 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateOpClassStmtWithCreateOperatorClassAnyNameOptDefaultForTypePTypenameUsingNameOptOpfamilyAsO_9481b124 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateOpClassStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class CreateOpClassStmtWithCreateOperatorClassAnyNameOptDefaultForTypePTypenameUsingNameOptOpfamilyAsO_9481b124 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateOpClassStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -25,6 +27,12 @@ final class CreateOpClassStmtWithCreateOperatorClassAnyNameOptDefaultForTypePTyp
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptOpfamilyForm $optOpfamily,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OpclassItemListForm $opclassItemList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optDefault), 'The optDefault must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optOpfamily), 'The optOpfamily must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($opclassItemList), 'The opclassItemList must be a generated immutable SQL value.');
     }
 
     /**
@@ -45,5 +53,53 @@ final class CreateOpClassStmtWithCreateOperatorClassAnyNameOptDefaultForTypePTyp
         $this->optOpfamily->write($writer);
         $writer->append('AS');
         $this->opclassItemList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new anyName, preserving every other field.
+     */
+    public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
+    {
+        return new self($anyName, $this->optDefault, $this->typename, $this->name, $this->optOpfamily, $this->opclassItemList);
+    }
+
+    /**
+     * Returns a copy with a new optDefault, preserving every other field.
+     */
+    public function withOptDefault(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDefaultForm $optDefault): self
+    {
+        return new self($this->anyName, $optDefault, $this->typename, $this->name, $this->optOpfamily, $this->opclassItemList);
+    }
+
+    /**
+     * Returns a copy with a new typename, preserving every other field.
+     */
+    public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
+    {
+        return new self($this->anyName, $this->optDefault, $typename, $this->name, $this->optOpfamily, $this->opclassItemList);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($this->anyName, $this->optDefault, $this->typename, $name, $this->optOpfamily, $this->opclassItemList);
+    }
+
+    /**
+     * Returns a copy with a new optOpfamily, preserving every other field.
+     */
+    public function withOptOpfamily(\SqlSemantics\Statement\Model\PostgreSql\Role\OptOpfamilyForm $optOpfamily): self
+    {
+        return new self($this->anyName, $this->optDefault, $this->typename, $this->name, $optOpfamily, $this->opclassItemList);
+    }
+
+    /**
+     * Returns a copy with a new opclassItemList, preserving every other field.
+     */
+    public function withOpclassItemList(\SqlSemantics\Statement\Model\PostgreSql\Role\OpclassItemListForm $opclassItemList): self
+    {
+        return new self($this->anyName, $this->optDefault, $this->typename, $this->name, $this->optOpfamily, $opclassItemList);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithExprIsnullNotnull_b1183766 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithExprIsnullNotnull_b1183766 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ExprWithExprIsnullNotnull_b1183766 implements \SqlSemantics\Statement\Model\Sqlite\Role\CaseOperandForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm, \SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,9 @@ final class ExprWithExprIsnullNotnull_b1183766 implements \SqlSemantics\Statemen
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
         public readonly string $isnullNotnull,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 4,));
+        $this->assertMatchesPattern($isnullNotnull, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['ISNULL|NOTNULL'], 'The isnullNotnull must be a complete ISNULL|NOTNULL lexical spelling.');
     }
 
     /**
@@ -30,5 +35,21 @@ final class ExprWithExprIsnullNotnull_b1183766 implements \SqlSemantics\Statemen
     {
         $this->expr->write($writer);
         $writer->append($this->isnullNotnull);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
+    {
+        return new self($expr, $this->isnullNotnull);
+    }
+
+    /**
+     * Returns a copy with a new isnullNotnull, preserving every other field.
+     */
+    public function withIsnullNotnull(string $isnullNotnull): self
+    {
+        return new self($this->expr, $isnullNotnull);
     }
 }

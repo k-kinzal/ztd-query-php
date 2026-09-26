@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RelationExprOptAliasWithRelationExprAsColId_bfdae2ca $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RelationExprOptAliasWithRelationExprAsColId_bfdae2ca $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RelationExprOptAliasWithRelationExprAsColId_bfdae2ca implements \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprOptAliasForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class RelationExprOptAliasWithRelationExprAsColId_bfdae2ca implements \Sql
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm $relationExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($relationExpr), 'The relationExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class RelationExprOptAliasWithRelationExprAsColId_bfdae2ca implements \Sql
         $this->relationExpr->write($writer);
         $writer->append('AS');
         $this->colId->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new relationExpr, preserving every other field.
+     */
+    public function withRelationExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm $relationExpr): self
+    {
+        return new self($relationExpr, $this->colId);
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($this->relationExpr, $colId);
     }
 }

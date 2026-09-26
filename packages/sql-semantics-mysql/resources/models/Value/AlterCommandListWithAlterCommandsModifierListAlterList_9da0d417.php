@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterCommandListWithAlterCommandsModifierListAlterList_9da0d417 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterCommandListWithAlterCommandsModifierListAlterList_9da0d417 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterCommandListWithAlterCommandsModifierListAlterList_9da0d417 implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterCommandListWithAlterCommandsModifierListAlterList_9da0d417 impl
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsModifierListForm $alterCommandsModifierList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterListForm $alterList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterCommandsModifierList), 'The alterCommandsModifierList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterList), 'The alterList must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class AlterCommandListWithAlterCommandsModifierListAlterList_9da0d417 impl
         $this->alterCommandsModifierList->write($writer);
         $writer->append(',');
         $this->alterList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new alterCommandsModifierList, preserving every other field.
+     */
+    public function withAlterCommandsModifierList(\SqlSemantics\Statement\Model\MySql\Role\AlterCommandsModifierListForm $alterCommandsModifierList): self
+    {
+        return new self($alterCommandsModifierList, $this->alterList);
+    }
+
+    /**
+     * Returns a copy with a new alterList, preserving every other field.
+     */
+    public function withAlterList(\SqlSemantics\Statement\Model\MySql\Role\AlterListForm $alterList): self
+    {
+        return new self($this->alterCommandsModifierList, $alterList);
     }
 }

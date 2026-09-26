@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FromListWithFromListTableRef_1cc17d12 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FromListWithFromListTableRef_1cc17d12 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FromListWithFromListTableRef_1cc17d12 implements \SqlSemantics\Statement\Model\PostgreSql\Role\FromListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FromListWithFromListTableRef_1cc17d12 implements \SqlSemantics\State
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FromListForm $fromList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm $tableRef,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($fromList), 'The fromList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($tableRef), 'The tableRef must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class FromListWithFromListTableRef_1cc17d12 implements \SqlSemantics\State
         $this->fromList->write($writer);
         $writer->append(',');
         $this->tableRef->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new fromList, preserving every other field.
+     */
+    public function withFromList(\SqlSemantics\Statement\Model\PostgreSql\Role\FromListForm $fromList): self
+    {
+        return new self($fromList, $this->tableRef);
+    }
+
+    /**
+     * Returns a copy with a new tableRef, preserving every other field.
+     */
+    public function withTableRef(\SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm $tableRef): self
+    {
+        return new self($this->fromList, $tableRef);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\OneselectWithSelectDistinctSelcollistFromWhereOptGroupbyOptHavingOptWindowClauseOrderbyO_9a3dd714 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\OneselectWithSelectDistinctSelcollistFromWhereOptGroupbyOptHavingOptWindowClauseOrderbyO_9a3dd714 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class OneselectWithSelectDistinctSelcollistFromWhereOptGroupbyOptHavingOptWindowClauseOrderbyO_9a3dd714 implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Model\Sqlite\Role\OneselectForm, \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm, \SqlSemantics\Statement\Model\Sqlite\Role\SelectnowithForm
+final class OneselectWithSelectDistinctSelcollistFromWhereOptGroupbyOptHavingOptWindowClauseOrderbyO_9a3dd714 implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Model\Sqlite\Role\OneselectForm, \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm, \SqlSemantics\Statement\Model\Sqlite\Role\SelectnowithForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -28,6 +30,15 @@ final class OneselectWithSelectDistinctSelcollistFromWhereOptGroupbyOptHavingOpt
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\OrderbyOptForm $orderBy,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\LimitOptForm $pagination,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($distinct), 'The distinct must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($projections), 'The projections must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($from), 'The from must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($where), 'The where must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($groupBy), 'The groupBy must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($having), 'The having must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($windowClause), 'The windowClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($orderBy), 'The orderBy must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($pagination), 'The pagination must be a generated immutable SQL value.');
     }
 
     /**
@@ -45,5 +56,77 @@ final class OneselectWithSelectDistinctSelcollistFromWhereOptGroupbyOptHavingOpt
         $this->windowClause->write($writer);
         $this->orderBy->write($writer);
         $this->pagination->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new distinct, preserving every other field.
+     */
+    public function withDistinct(\SqlSemantics\Statement\Model\Sqlite\Role\DistinctForm $distinct): self
+    {
+        return new self($distinct, $this->projections, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause, $this->orderBy, $this->pagination);
+    }
+
+    /**
+     * Returns a copy with a new projections, preserving every other field.
+     */
+    public function withProjections(\SqlSemantics\Statement\Model\Sqlite\Role\SelcollistForm $projections): self
+    {
+        return new self($this->distinct, $projections, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause, $this->orderBy, $this->pagination);
+    }
+
+    /**
+     * Returns a copy with a new from, preserving every other field.
+     */
+    public function withFrom(\SqlSemantics\Statement\Model\Sqlite\Role\FromForm $from): self
+    {
+        return new self($this->distinct, $this->projections, $from, $this->where, $this->groupBy, $this->having, $this->windowClause, $this->orderBy, $this->pagination);
+    }
+
+    /**
+     * Returns a copy with a new where, preserving every other field.
+     */
+    public function withWhere(\SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm $where): self
+    {
+        return new self($this->distinct, $this->projections, $this->from, $where, $this->groupBy, $this->having, $this->windowClause, $this->orderBy, $this->pagination);
+    }
+
+    /**
+     * Returns a copy with a new groupBy, preserving every other field.
+     */
+    public function withGroupBy(\SqlSemantics\Statement\Model\Sqlite\Role\GroupbyOptForm $groupBy): self
+    {
+        return new self($this->distinct, $this->projections, $this->from, $this->where, $groupBy, $this->having, $this->windowClause, $this->orderBy, $this->pagination);
+    }
+
+    /**
+     * Returns a copy with a new having, preserving every other field.
+     */
+    public function withHaving(\SqlSemantics\Statement\Model\Sqlite\Role\HavingOptForm $having): self
+    {
+        return new self($this->distinct, $this->projections, $this->from, $this->where, $this->groupBy, $having, $this->windowClause, $this->orderBy, $this->pagination);
+    }
+
+    /**
+     * Returns a copy with a new windowClause, preserving every other field.
+     */
+    public function withWindowClause(\SqlSemantics\Statement\Model\Sqlite\Role\WindowClauseForm $windowClause): self
+    {
+        return new self($this->distinct, $this->projections, $this->from, $this->where, $this->groupBy, $this->having, $windowClause, $this->orderBy, $this->pagination);
+    }
+
+    /**
+     * Returns a copy with a new orderBy, preserving every other field.
+     */
+    public function withOrderBy(\SqlSemantics\Statement\Model\Sqlite\Role\OrderbyOptForm $orderBy): self
+    {
+        return new self($this->distinct, $this->projections, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause, $orderBy, $this->pagination);
+    }
+
+    /**
+     * Returns a copy with a new pagination, preserving every other field.
+     */
+    public function withPagination(\SqlSemantics\Statement\Model\Sqlite\Role\LimitOptForm $pagination): self
+    {
+        return new self($this->distinct, $this->projections, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause, $this->orderBy, $pagination);
     }
 }

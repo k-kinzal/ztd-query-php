@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StandaloneAlterCommandsWithDiscardSymTablespaceSym_54cac5f9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StandaloneAlterCommandsWithDiscardSymTablespaceSym_54cac5f9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class StandaloneAlterCommandsWithDiscardSymTablespaceSym_54cac5f9 implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\StandaloneAlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\StandaloneAlterTableActionForm

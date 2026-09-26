@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterGenericOptionElemWithDropGenericOptionName_20ce5324 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterGenericOptionElemWithDropGenericOptionName_20ce5324 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterGenericOptionElemWithDropGenericOptionName_20ce5324 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterGenericOptionElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterGenericOptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionNameForm $genericOptionName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($genericOptionName), 'The genericOptionName must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class AlterGenericOptionElemWithDropGenericOptionName_20ce5324 implements 
     {
         $writer->append('DROP');
         $this->genericOptionName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new genericOptionName, preserving every other field.
+     */
+    public function withGenericOptionName(\SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionNameForm $genericOptionName): self
+    {
+        return new self($genericOptionName);
     }
 }

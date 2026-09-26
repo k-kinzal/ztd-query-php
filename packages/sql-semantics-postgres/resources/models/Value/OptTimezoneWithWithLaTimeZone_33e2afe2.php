@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptTimezoneWithWithLaTimeZone_33e2afe2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptTimezoneWithWithLaTimeZone_33e2afe2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptTimezoneWithWithLaTimeZone_33e2afe2 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptTimezoneForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $withLa,
     ) {
+        $this->assertMatchesPattern($withLa, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['WITH_LA'], 'The withLa must be a complete WITH_LA lexical spelling.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OptTimezoneWithWithLaTimeZone_33e2afe2 implements \SqlSemantics\Stat
         $writer->append($this->withLa);
         $writer->append('TIME');
         $writer->append('ZONE');
+    }
+
+    /**
+     * Returns a copy with a new withLa, preserving every other field.
+     */
+    public function withWithLa(string $withLa): self
+    {
+        return new self($withLa);
     }
 }

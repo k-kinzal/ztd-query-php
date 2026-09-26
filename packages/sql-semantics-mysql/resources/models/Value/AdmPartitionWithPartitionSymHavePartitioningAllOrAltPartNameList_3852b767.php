@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AdmPartitionWithPartitionSymHavePartitioningAllOrAltPartNameList_3852b767 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AdmPartitionWithPartitionSymHavePartitioningAllOrAltPartNameList_3852b767 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AdmPartitionWithPartitionSymHavePartitioningAllOrAltPartNameList_3852b767 implements \SqlSemantics\Statement\Model\MySql\Role\AdmPartitionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AdmPartitionWithPartitionSymHavePartitioningAllOrAltPartNameList_385
         public readonly \SqlSemantics\Statement\Model\MySql\Role\HavePartitioningForm $havePartitioning,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AllOrAltPartNameListForm $allOrAltPartNameList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($havePartitioning), 'The havePartitioning must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($allOrAltPartNameList), 'The allOrAltPartNameList must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class AdmPartitionWithPartitionSymHavePartitioningAllOrAltPartNameList_385
         $writer->append('(');
         $this->allOrAltPartNameList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new havePartitioning, preserving every other field.
+     */
+    public function withHavePartitioning(\SqlSemantics\Statement\Model\MySql\Role\HavePartitioningForm $havePartitioning): self
+    {
+        return new self($havePartitioning, $this->allOrAltPartNameList);
+    }
+
+    /**
+     * Returns a copy with a new allOrAltPartNameList, preserving every other field.
+     */
+    public function withAllOrAltPartNameList(\SqlSemantics\Statement\Model\MySql\Role\AllOrAltPartNameListForm $allOrAltPartNameList): self
+    {
+        return new self($this->havePartitioning, $allOrAltPartNameList);
     }
 }

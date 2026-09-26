@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CopyGenericOptListWithCopyGenericOptListCopyGenericOptElem_c2bdd59c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CopyGenericOptListWithCopyGenericOptListCopyGenericOptElem_c2bdd59c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CopyGenericOptListWithCopyGenericOptListCopyGenericOptElem_c2bdd59c implements \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CopyGenericOptListWithCopyGenericOptListCopyGenericOptElem_c2bdd59c 
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptListForm $copyGenericOptList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptElemForm $copyGenericOptElem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($copyGenericOptList), 'The copyGenericOptList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($copyGenericOptElem), 'The copyGenericOptElem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class CopyGenericOptListWithCopyGenericOptListCopyGenericOptElem_c2bdd59c 
         $this->copyGenericOptList->write($writer);
         $writer->append(',');
         $this->copyGenericOptElem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new copyGenericOptList, preserving every other field.
+     */
+    public function withCopyGenericOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptListForm $copyGenericOptList): self
+    {
+        return new self($copyGenericOptList, $this->copyGenericOptElem);
+    }
+
+    /**
+     * Returns a copy with a new copyGenericOptElem, preserving every other field.
+     */
+    public function withCopyGenericOptElem(\SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptElemForm $copyGenericOptElem): self
+    {
+        return new self($this->copyGenericOptList, $copyGenericOptElem);
     }
 }

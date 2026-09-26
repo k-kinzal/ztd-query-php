@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TransactionModeItemWithIsolationLevelIsoLevel_0821c5ed $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TransactionModeItemWithIsolationLevelIsoLevel_0821c5ed $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TransactionModeItemWithIsolationLevelIsoLevel_0821c5ed implements \SqlSemantics\Statement\Model\PostgreSql\Role\TransactionModeItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TransactionModeListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TransactionModeListOrEmptyForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IsoLevelForm $isoLevel,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($isoLevel), 'The isoLevel must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class TransactionModeItemWithIsolationLevelIsoLevel_0821c5ed implements \S
         $writer->append('ISOLATION');
         $writer->append('LEVEL');
         $this->isoLevel->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new isoLevel, preserving every other field.
+     */
+    public function withIsoLevel(\SqlSemantics\Statement\Model\PostgreSql\Role\IsoLevelForm $isoLevel): self
+    {
+        return new self($isoLevel);
     }
 }

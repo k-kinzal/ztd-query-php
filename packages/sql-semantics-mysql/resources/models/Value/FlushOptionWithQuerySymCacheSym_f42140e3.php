@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FlushOptionWithQuerySymCacheSym_f42140e3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FlushOptionWithQuerySymCacheSym_f42140e3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FlushOptionWithQuerySymCacheSym_f42140e3 implements \SqlSemantics\Statement\Model\MySql\Role\FlushOptionForm, \SqlSemantics\Statement\Model\MySql\Role\FlushOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\FlushOptionsListForm

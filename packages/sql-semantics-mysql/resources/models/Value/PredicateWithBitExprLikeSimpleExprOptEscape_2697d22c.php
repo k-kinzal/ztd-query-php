@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PredicateWithBitExprLikeSimpleExprOptEscape_2697d22c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PredicateWithBitExprLikeSimpleExprOptEscape_2697d22c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PredicateWithBitExprLikeSimpleExprOptEscape_2697d22c implements \SqlSemantics\Statement\Model\MySql\Role\BoolPriForm, \SqlSemantics\Statement\Model\MySql\Role\ExprForm, \SqlSemantics\Statement\Model\MySql\Role\ExprListForm, \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\GeneratedColumnFuncForm, \SqlSemantics\Statement\Model\MySql\Role\GroupListForm, \SqlSemantics\Statement\Model\MySql\Role\GroupingExprForm, \SqlSemantics\Statement\Model\MySql\Role\InstallSetRvalueForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprListForm, \SqlSemantics\Statement\Model\MySql\Role\OptSpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\OptValuesForm, \SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm, \SqlSemantics\Statement\Model\MySql\Role\PredicateForm, \SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\SpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\ValuesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,10 @@ final class PredicateWithBitExprLikeSimpleExprOptEscape_2697d22c implements \Sql
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm $simpleExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEscapeForm $optEscape,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($bitExpr), 'The bitExpr must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($bitExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 8,  'mysql-5.7.44' => 9,));
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleExpr), 'The simpleExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEscape), 'The optEscape must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +39,29 @@ final class PredicateWithBitExprLikeSimpleExprOptEscape_2697d22c implements \Sql
         $writer->append('LIKE');
         $this->simpleExpr->write($writer);
         $this->optEscape->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new bitExpr, preserving every other field.
+     */
+    public function withBitExpr(\SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr): self
+    {
+        return new self($bitExpr, $this->simpleExpr, $this->optEscape);
+    }
+
+    /**
+     * Returns a copy with a new simpleExpr, preserving every other field.
+     */
+    public function withSimpleExpr(\SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm $simpleExpr): self
+    {
+        return new self($this->bitExpr, $simpleExpr, $this->optEscape);
+    }
+
+    /**
+     * Returns a copy with a new optEscape, preserving every other field.
+     */
+    public function withOptEscape(\SqlSemantics\Statement\Model\MySql\Role\OptEscapeForm $optEscape): self
+    {
+        return new self($this->bitExpr, $this->simpleExpr, $optEscape);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IdentifiedWithPluginAsAuthWithIdentifiedSymWithIdentOrTextAsTextStringHash_8cc3642a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IdentifiedWithPluginAsAuthWithIdentifiedSymWithIdentOrTextAsTextStringHash_8cc3642a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IdentifiedWithPluginAsAuthWithIdentifiedSymWithIdentOrTextAsTextStringHash_8cc3642a implements \SqlSemantics\Statement\Model\MySql\Role\IdentificationForm, \SqlSemantics\Statement\Model\MySql\Role\IdentifiedWithPluginAsAuthForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class IdentifiedWithPluginAsAuthWithIdentifiedSymWithIdentOrTextAsTextStri
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringHashForm $textStringHash,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText), 'The identOrText must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringHash), 'The textStringHash must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class IdentifiedWithPluginAsAuthWithIdentifiedSymWithIdentOrTextAsTextStri
         $this->identOrText->write($writer);
         $writer->append('AS');
         $this->textStringHash->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new identOrText, preserving every other field.
+     */
+    public function withIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText): self
+    {
+        return new self($identOrText, $this->textStringHash);
+    }
+
+    /**
+     * Returns a copy with a new textStringHash, preserving every other field.
+     */
+    public function withTextStringHash(\SqlSemantics\Statement\Model\MySql\Role\TextStringHashForm $textStringHash): self
+    {
+        return new self($this->identOrText, $textStringHash);
     }
 }

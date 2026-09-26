@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SingleMultiWithFromTableIdentOptUsePartitionWhereClauseOptOrderClauseDeleteLimitClause_59df5ae1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SingleMultiWithFromTableIdentOptUsePartitionWhereClauseOptOrderClauseDeleteLimitClause_59df5ae1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SingleMultiWithFromTableIdentOptUsePartitionWhereClauseOptOrderClauseDeleteLimitClause_59df5ae1 implements \SqlSemantics\Statement\Model\MySql\Role\SingleMultiForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class SingleMultiWithFromTableIdentOptUsePartitionWhereClauseOptOrderClaus
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm $orderBy,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DeleteLimitClauseForm $deleteLimitClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUsePartition), 'The optUsePartition must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($where), 'The where must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderBy), 'The orderBy must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($deleteLimitClause), 'The deleteLimitClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -37,5 +44,45 @@ final class SingleMultiWithFromTableIdentOptUsePartitionWhereClauseOptOrderClaus
         $this->where->write($writer);
         $this->orderBy->write($writer);
         $this->deleteLimitClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($tableIdent, $this->optUsePartition, $this->where, $this->orderBy, $this->deleteLimitClause);
+    }
+
+    /**
+     * Returns a copy with a new optUsePartition, preserving every other field.
+     */
+    public function withOptUsePartition(\SqlSemantics\Statement\Model\MySql\Role\OptUsePartitionForm $optUsePartition): self
+    {
+        return new self($this->tableIdent, $optUsePartition, $this->where, $this->orderBy, $this->deleteLimitClause);
+    }
+
+    /**
+     * Returns a copy with a new where, preserving every other field.
+     */
+    public function withWhere(\SqlSemantics\Statement\Model\MySql\Role\WhereClauseForm $where): self
+    {
+        return new self($this->tableIdent, $this->optUsePartition, $where, $this->orderBy, $this->deleteLimitClause);
+    }
+
+    /**
+     * Returns a copy with a new orderBy, preserving every other field.
+     */
+    public function withOrderBy(\SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm $orderBy): self
+    {
+        return new self($this->tableIdent, $this->optUsePartition, $this->where, $orderBy, $this->deleteLimitClause);
+    }
+
+    /**
+     * Returns a copy with a new deleteLimitClause, preserving every other field.
+     */
+    public function withDeleteLimitClause(\SqlSemantics\Statement\Model\MySql\Role\DeleteLimitClauseForm $deleteLimitClause): self
+    {
+        return new self($this->tableIdent, $this->optUsePartition, $this->where, $this->orderBy, $deleteLimitClause);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IdentifiedWithPluginByPasswordWithIdentifiedSymWithIdentOrTextByTextStringPassword_42647618 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IdentifiedWithPluginByPasswordWithIdentifiedSymWithIdentOrTextByTextStringPassword_42647618 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IdentifiedWithPluginByPasswordWithIdentifiedSymWithIdentOrTextByTextStringPassword_42647618 implements \SqlSemantics\Statement\Model\MySql\Role\IdentificationForm, \SqlSemantics\Statement\Model\MySql\Role\IdentifiedWithPluginByPasswordForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class IdentifiedWithPluginByPasswordWithIdentifiedSymWithIdentOrTextByText
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringPasswordForm $textStringPassword,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText), 'The identOrText must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringPassword), 'The textStringPassword must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class IdentifiedWithPluginByPasswordWithIdentifiedSymWithIdentOrTextByText
         $this->identOrText->write($writer);
         $writer->append('BY');
         $this->textStringPassword->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new identOrText, preserving every other field.
+     */
+    public function withIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText): self
+    {
+        return new self($identOrText, $this->textStringPassword);
+    }
+
+    /**
+     * Returns a copy with a new textStringPassword, preserving every other field.
+     */
+    public function withTextStringPassword(\SqlSemantics\Statement\Model\MySql\Role\TextStringPasswordForm $textStringPassword): self
+    {
+        return new self($this->identOrText, $textStringPassword);
     }
 }

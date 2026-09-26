@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ReindexStmtWithReindexOptReindexOptionListReindexTargetAllOptConcurrentlyOptSingleName_90355f77 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ReindexStmtWithReindexOptReindexOptionListReindexTargetAllOptConcurrentlyOptSingleName_90355f77 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class ReindexStmtWithReindexOptReindexOptionListReindexTargetAllOptConcurrentlyOptSingleName_90355f77 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ReindexStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class ReindexStmtWithReindexOptReindexOptionListReindexTargetAllOptConcurrentlyOptSingleName_90355f77 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ReindexStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class ReindexStmtWithReindexOptReindexOptionListReindexTargetAllOptConcurr
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptConcurrentlyForm $optConcurrently,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptSingleNameForm $optSingleName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optReindexOptionList), 'The optReindexOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($reindexTargetAll), 'The reindexTargetAll must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optConcurrently), 'The optConcurrently must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optSingleName), 'The optSingleName must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +41,37 @@ final class ReindexStmtWithReindexOptReindexOptionListReindexTargetAllOptConcurr
         $this->reindexTargetAll->write($writer);
         $this->optConcurrently->write($writer);
         $this->optSingleName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optReindexOptionList, preserving every other field.
+     */
+    public function withOptReindexOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptReindexOptionListForm $optReindexOptionList): self
+    {
+        return new self($optReindexOptionList, $this->reindexTargetAll, $this->optConcurrently, $this->optSingleName);
+    }
+
+    /**
+     * Returns a copy with a new reindexTargetAll, preserving every other field.
+     */
+    public function withReindexTargetAll(\SqlSemantics\Statement\Model\PostgreSql\Role\ReindexTargetAllForm $reindexTargetAll): self
+    {
+        return new self($this->optReindexOptionList, $reindexTargetAll, $this->optConcurrently, $this->optSingleName);
+    }
+
+    /**
+     * Returns a copy with a new optConcurrently, preserving every other field.
+     */
+    public function withOptConcurrently(\SqlSemantics\Statement\Model\PostgreSql\Role\OptConcurrentlyForm $optConcurrently): self
+    {
+        return new self($this->optReindexOptionList, $this->reindexTargetAll, $optConcurrently, $this->optSingleName);
+    }
+
+    /**
+     * Returns a copy with a new optSingleName, preserving every other field.
+     */
+    public function withOptSingleName(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSingleNameForm $optSingleName): self
+    {
+        return new self($this->optReindexOptionList, $this->reindexTargetAll, $this->optConcurrently, $optSingleName);
     }
 }

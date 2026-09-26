@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TempWithTemp_af9945b3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TempWithTemp_af9945b3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TempWithTemp_af9945b3 implements \SqlSemantics\Statement\Model\Sqlite\Role\TempForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $temp,
     ) {
+        $this->assertMatchesPattern($temp, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['TEMP'], 'The temp must be a complete TEMP lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class TempWithTemp_af9945b3 implements \SqlSemantics\Statement\Model\Sqlit
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->temp);
+    }
+
+    /**
+     * Returns a copy with a new temp, preserving every other field.
+     */
+    public function withTemp(string $temp): self
+    {
+        return new self($temp);
     }
 }

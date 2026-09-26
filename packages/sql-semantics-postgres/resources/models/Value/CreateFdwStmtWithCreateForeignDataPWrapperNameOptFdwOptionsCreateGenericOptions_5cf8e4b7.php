@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateFdwStmtWithCreateForeignDataPWrapperNameOptFdwOptionsCreateGenericOptions_5cf8e4b7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateFdwStmtWithCreateForeignDataPWrapperNameOptFdwOptionsCreateGenericOptions_5cf8e4b7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateFdwStmtWithCreateForeignDataPWrapperNameOptFdwOptionsCreateGenericOptions_5cf8e4b7 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateFdwStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class CreateFdwStmtWithCreateForeignDataPWrapperNameOptFdwOptionsCreateGenericOptions_5cf8e4b7 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateFdwStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CreateFdwStmtWithCreateForeignDataPWrapperNameOptFdwOptionsCreateGen
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptFdwOptionsForm $optFdwOptions,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreateGenericOptionsForm $createGenericOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optFdwOptions), 'The optFdwOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createGenericOptions), 'The createGenericOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +41,29 @@ final class CreateFdwStmtWithCreateForeignDataPWrapperNameOptFdwOptionsCreateGen
         $this->name->write($writer);
         $this->optFdwOptions->write($writer);
         $this->createGenericOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($name, $this->optFdwOptions, $this->createGenericOptions);
+    }
+
+    /**
+     * Returns a copy with a new optFdwOptions, preserving every other field.
+     */
+    public function withOptFdwOptions(\SqlSemantics\Statement\Model\PostgreSql\Role\OptFdwOptionsForm $optFdwOptions): self
+    {
+        return new self($this->name, $optFdwOptions, $this->createGenericOptions);
+    }
+
+    /**
+     * Returns a copy with a new createGenericOptions, preserving every other field.
+     */
+    public function withCreateGenericOptions(\SqlSemantics\Statement\Model\PostgreSql\Role\CreateGenericOptionsForm $createGenericOptions): self
+    {
+        return new self($this->name, $this->optFdwOptions, $createGenericOptions);
     }
 }

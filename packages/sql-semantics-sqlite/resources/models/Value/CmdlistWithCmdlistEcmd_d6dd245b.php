@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdlistWithCmdlistEcmd_d6dd245b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdlistWithCmdlistEcmd_d6dd245b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CmdlistWithCmdlistEcmd_d6dd245b implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdlistForm, \SqlSemantics\Statement\Model\Sqlite\Role\InputForm
+final class CmdlistWithCmdlistEcmd_d6dd245b implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdlistForm, \SqlSemantics\Statement\Model\Sqlite\Role\InputForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CmdlistWithCmdlistEcmd_d6dd245b implements \SqlSemantics\Statement\M
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CmdlistForm $cmdlist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\EcmdForm $ecmd,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($cmdlist), 'The cmdlist must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($ecmd), 'The ecmd must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class CmdlistWithCmdlistEcmd_d6dd245b implements \SqlSemantics\Statement\M
     {
         $this->cmdlist->write($writer);
         $this->ecmd->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new cmdlist, preserving every other field.
+     */
+    public function withCmdlist(\SqlSemantics\Statement\Model\Sqlite\Role\CmdlistForm $cmdlist): self
+    {
+        return new self($cmdlist, $this->ecmd);
+    }
+
+    /**
+     * Returns a copy with a new ecmd, preserving every other field.
+     */
+    public function withEcmd(\SqlSemantics\Statement\Model\Sqlite\Role\EcmdForm $ecmd): self
+    {
+        return new self($this->cmdlist, $ecmd);
     }
 }

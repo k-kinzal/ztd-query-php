@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SelectNoParensWithSelectClauseOptSortClauseForLockingClauseOptSelectLimit_ba938154 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SelectNoParensWithSelectClauseOptSortClauseForLockingClauseOptSelectLimit_ba938154 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class SelectNoParensWithSelectClauseOptSortClauseForLockingClauseOptSelectLimit_ba938154 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\PreparableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionMultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtOrEmptyForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\InsertRestForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectNoParensForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class SelectNoParensWithSelectClauseOptSortClauseForLockingClauseOptSelectLimit_ba938154 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\PreparableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionMultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtOrEmptyForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\InsertRestForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectNoParensForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class SelectNoParensWithSelectClauseOptSortClauseForLockingClauseOptSelect
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ForLockingClauseForm $forLockingClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptSelectLimitForm $optSelectLimit,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($selectClause), 'The selectClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optSortClause), 'The optSortClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($forLockingClause), 'The forLockingClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optSelectLimit), 'The optSelectLimit must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +40,37 @@ final class SelectNoParensWithSelectClauseOptSortClauseForLockingClauseOptSelect
         $this->optSortClause->write($writer);
         $this->forLockingClause->write($writer);
         $this->optSelectLimit->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new selectClause, preserving every other field.
+     */
+    public function withSelectClause(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectClauseForm $selectClause): self
+    {
+        return new self($selectClause, $this->optSortClause, $this->forLockingClause, $this->optSelectLimit);
+    }
+
+    /**
+     * Returns a copy with a new optSortClause, preserving every other field.
+     */
+    public function withOptSortClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSortClauseForm $optSortClause): self
+    {
+        return new self($this->selectClause, $optSortClause, $this->forLockingClause, $this->optSelectLimit);
+    }
+
+    /**
+     * Returns a copy with a new forLockingClause, preserving every other field.
+     */
+    public function withForLockingClause(\SqlSemantics\Statement\Model\PostgreSql\Role\ForLockingClauseForm $forLockingClause): self
+    {
+        return new self($this->selectClause, $this->optSortClause, $forLockingClause, $this->optSelectLimit);
+    }
+
+    /**
+     * Returns a copy with a new optSelectLimit, preserving every other field.
+     */
+    public function withOptSelectLimit(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSelectLimitForm $optSelectLimit): self
+    {
+        return new self($this->selectClause, $this->optSortClause, $this->forLockingClause, $optSelectLimit);
     }
 }

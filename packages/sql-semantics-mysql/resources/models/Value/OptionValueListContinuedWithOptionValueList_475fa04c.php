@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptionValueListContinuedWithOptionValueList_475fa04c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptionValueListContinuedWithOptionValueList_475fa04c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptionValueListContinuedWithOptionValueList_475fa04c implements \SqlSemantics\Statement\Model\MySql\Role\OptionValueListContinuedForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptionValueListForm $optionValueList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optionValueList), 'The optionValueList must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OptionValueListContinuedWithOptionValueList_475fa04c implements \Sql
     {
         $writer->append(',');
         $this->optionValueList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optionValueList, preserving every other field.
+     */
+    public function withOptionValueList(\SqlSemantics\Statement\Model\MySql\Role\OptionValueListForm $optionValueList): self
+    {
+        return new self($optionValueList);
     }
 }

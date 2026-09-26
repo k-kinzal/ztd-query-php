@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StatementInformationWithStatementInformationStatementInformationItem_4bbc08fc $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StatementInformationWithStatementInformationStatementInformationItem_4bbc08fc $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class StatementInformationWithStatementInformationStatementInformationItem_4bbc08fc implements \SqlSemantics\Statement\Model\MySql\Role\DiagnosticsInformationForm, \SqlSemantics\Statement\Model\MySql\Role\StatementInformationForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class StatementInformationWithStatementInformationStatementInformationItem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\StatementInformationForm $statementInformation,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\StatementInformationItemForm $statementInformationItem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($statementInformation), 'The statementInformation must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($statementInformationItem), 'The statementInformationItem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class StatementInformationWithStatementInformationStatementInformationItem
         $this->statementInformation->write($writer);
         $writer->append(',');
         $this->statementInformationItem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new statementInformation, preserving every other field.
+     */
+    public function withStatementInformation(\SqlSemantics\Statement\Model\MySql\Role\StatementInformationForm $statementInformation): self
+    {
+        return new self($statementInformation, $this->statementInformationItem);
+    }
+
+    /**
+     * Returns a copy with a new statementInformationItem, preserving every other field.
+     */
+    public function withStatementInformationItem(\SqlSemantics\Statement\Model\MySql\Role\StatementInformationItemForm $statementInformationItem): self
+    {
+        return new self($this->statementInformation, $statementInformationItem);
     }
 }

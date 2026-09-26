@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TransactionStmtWithRollbackOptTransactionToColId_0df0af3b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TransactionStmtWithRollbackOptTransactionToColId_0df0af3b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class TransactionStmtWithRollbackOptTransactionToColId_0df0af3b implements \SqlSemantics\Statement\Model\PostgreSql\Role\TransactionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class TransactionStmtWithRollbackOptTransactionToColId_0df0af3b implements \SqlSemantics\Statement\Model\PostgreSql\Role\TransactionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TransactionStmtWithRollbackOptTransactionToColId_0df0af3b implements
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTransactionForm $optTransaction,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTransaction), 'The optTransaction must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class TransactionStmtWithRollbackOptTransactionToColId_0df0af3b implements
         $this->optTransaction->write($writer);
         $writer->append('TO');
         $this->colId->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optTransaction, preserving every other field.
+     */
+    public function withOptTransaction(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTransactionForm $optTransaction): self
+    {
+        return new self($optTransaction, $this->colId);
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($this->optTransaction, $colId);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateStatsStmtWithCreateStatisticsOptQualifiedNameOptNameListOnStatsParamsFromFromList_ea424d58 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateStatsStmtWithCreateStatisticsOptQualifiedNameOptNameListOnStatsParamsFromFromList_ea424d58 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateStatsStmtWithCreateStatisticsOptQualifiedNameOptNameListOnStatsParamsFromFromList_ea424d58 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateStatsStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class CreateStatsStmtWithCreateStatisticsOptQualifiedNameOptNameListOnStatsParamsFromFromList_ea424d58 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateStatsStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class CreateStatsStmtWithCreateStatisticsOptQualifiedNameOptNameListOnStat
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamsForm $statsParams,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FromListForm $fromList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optQualifiedName), 'The optQualifiedName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optNameList), 'The optNameList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($statsParams), 'The statsParams must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($fromList), 'The fromList must be a generated immutable SQL value.');
     }
 
     /**
@@ -38,5 +44,37 @@ final class CreateStatsStmtWithCreateStatisticsOptQualifiedNameOptNameListOnStat
         $this->statsParams->write($writer);
         $writer->append('FROM');
         $this->fromList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optQualifiedName, preserving every other field.
+     */
+    public function withOptQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\OptQualifiedNameForm $optQualifiedName): self
+    {
+        return new self($optQualifiedName, $this->optNameList, $this->statsParams, $this->fromList);
+    }
+
+    /**
+     * Returns a copy with a new optNameList, preserving every other field.
+     */
+    public function withOptNameList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptNameListForm $optNameList): self
+    {
+        return new self($this->optQualifiedName, $optNameList, $this->statsParams, $this->fromList);
+    }
+
+    /**
+     * Returns a copy with a new statsParams, preserving every other field.
+     */
+    public function withStatsParams(\SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamsForm $statsParams): self
+    {
+        return new self($this->optQualifiedName, $this->optNameList, $statsParams, $this->fromList);
+    }
+
+    /**
+     * Returns a copy with a new fromList, preserving every other field.
+     */
+    public function withFromList(\SqlSemantics\Statement\Model\PostgreSql\Role\FromListForm $fromList): self
+    {
+        return new self($this->optQualifiedName, $this->optNameList, $this->statsParams, $fromList);
     }
 }

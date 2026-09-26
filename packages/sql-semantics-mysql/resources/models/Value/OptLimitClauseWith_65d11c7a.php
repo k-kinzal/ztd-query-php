@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptLimitClauseWith_65d11c7a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptLimitClauseWith_65d11c7a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptLimitClauseWith_65d11c7a implements \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm, \SqlSemantics\Statement\Model\MySql\Role\OptSelectFromForm

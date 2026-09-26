@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RenameListWithUserToSymUser_5c51183b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RenameListWithUserToSymUser_5c51183b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RenameListWithUserToSymUser_5c51183b implements \SqlSemantics\Statement\Model\MySql\Role\RenameListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class RenameListWithUserToSymUser_5c51183b implements \SqlSemantics\Statem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserForm $user,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserForm $user2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user2), 'The user2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class RenameListWithUserToSymUser_5c51183b implements \SqlSemantics\Statem
         $this->user->write($writer);
         $writer->append('TO');
         $this->user2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new user, preserving every other field.
+     */
+    public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
+    {
+        return new self($user, $this->user2);
+    }
+
+    /**
+     * Returns a copy with a new user2, preserving every other field.
+     */
+    public function withUser2(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user2): self
+    {
+        return new self($this->user, $user2);
     }
 }

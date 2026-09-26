@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ValuesListWithValuesListNoBraces_38a2ab42 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ValuesListWithValuesListNoBraces_38a2ab42 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ValuesListWithValuesListNoBraces_38a2ab42 implements \SqlSemantics\Statement\Model\MySql\Role\ValuesListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ValuesListWithValuesListNoBraces_38a2ab42 implements \SqlSemantics\S
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ValuesListForm $valuesList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NoBracesForm $noBraces,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($valuesList), 'The valuesList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($noBraces), 'The noBraces must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ValuesListWithValuesListNoBraces_38a2ab42 implements \SqlSemantics\S
         $this->valuesList->write($writer);
         $writer->append(',');
         $this->noBraces->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new valuesList, preserving every other field.
+     */
+    public function withValuesList(\SqlSemantics\Statement\Model\MySql\Role\ValuesListForm $valuesList): self
+    {
+        return new self($valuesList, $this->noBraces);
+    }
+
+    /**
+     * Returns a copy with a new noBraces, preserving every other field.
+     */
+    public function withNoBraces(\SqlSemantics\Statement\Model\MySql\Role\NoBracesForm $noBraces): self
+    {
+        return new self($this->valuesList, $noBraces);
     }
 }

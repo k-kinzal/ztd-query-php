@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DefAclOptionWithForUserRoleList_c992b544 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DefAclOptionWithForUserRoleList_c992b544 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DefAclOptionWithForUserRoleList_c992b544 implements \SqlSemantics\Statement\Model\PostgreSql\Role\DefAclOptionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoleListForm $roleList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleList), 'The roleList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class DefAclOptionWithForUserRoleList_c992b544 implements \SqlSemantics\St
         $writer->append('FOR');
         $writer->append('USER');
         $this->roleList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new roleList, preserving every other field.
+     */
+    public function withRoleList(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleListForm $roleList): self
+    {
+        return new self($roleList);
     }
 }

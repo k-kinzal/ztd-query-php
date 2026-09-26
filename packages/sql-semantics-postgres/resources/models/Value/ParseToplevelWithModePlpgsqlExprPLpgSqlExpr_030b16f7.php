@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ParseToplevelWithModePlpgsqlExprPLpgSqlExpr_030b16f7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ParseToplevelWithModePlpgsqlExprPLpgSqlExpr_030b16f7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ParseToplevelWithModePlpgsqlExprPLpgSqlExpr_030b16f7 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ParseToplevelWithModePlpgsqlExprPLpgSqlExpr_030b16f7 implements \Sql
         public readonly string $modePlpgsqlExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PLpgSqlExprForm $pLpgSqlExpr,
     ) {
+        $this->assertMatchesPattern($modePlpgsqlExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['MODE_PLPGSQL_EXPR'], 'The modePlpgsqlExpr must be a complete MODE_PLPGSQL_EXPR lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($pLpgSqlExpr), 'The pLpgSqlExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class ParseToplevelWithModePlpgsqlExprPLpgSqlExpr_030b16f7 implements \Sql
     {
         $writer->append($this->modePlpgsqlExpr);
         $this->pLpgSqlExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new modePlpgsqlExpr, preserving every other field.
+     */
+    public function withModePlpgsqlExpr(string $modePlpgsqlExpr): self
+    {
+        return new self($modePlpgsqlExpr, $this->pLpgSqlExpr);
+    }
+
+    /**
+     * Returns a copy with a new pLpgSqlExpr, preserving every other field.
+     */
+    public function withPLpgSqlExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\PLpgSqlExprForm $pLpgSqlExpr): self
+    {
+        return new self($this->modePlpgsqlExpr, $pLpgSqlExpr);
     }
 }

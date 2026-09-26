@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterCommandsWithOptimizePartitionSymOptNoWriteToBinlogAllOrAltPartNameListOptNoWriteToBinlo_153743e4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterCommandsWithOptimizePartitionSymOptNoWriteToBinlogAllOrAltPartNameListOptNoWriteToBinlo_153743e4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterCommandsWithOptimizePartitionSymOptNoWriteToBinlogAllOrAltPartNameListOptNoWriteToBinlo_153743e4 implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterCommandsWithOptimizePartitionSymOptNoWriteToBinlogAllOrAltPartN
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AllOrAltPartNameListForm $allOrAltPartNameList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optNoWriteToBinlog), 'The optNoWriteToBinlog must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($allOrAltPartNameList), 'The allOrAltPartNameList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optNoWriteToBinlog2), 'The optNoWriteToBinlog2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class AlterCommandsWithOptimizePartitionSymOptNoWriteToBinlogAllOrAltPartN
         $this->optNoWriteToBinlog->write($writer);
         $this->allOrAltPartNameList->write($writer);
         $this->optNoWriteToBinlog2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optNoWriteToBinlog, preserving every other field.
+     */
+    public function withOptNoWriteToBinlog(\SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog): self
+    {
+        return new self($optNoWriteToBinlog, $this->allOrAltPartNameList, $this->optNoWriteToBinlog2);
+    }
+
+    /**
+     * Returns a copy with a new allOrAltPartNameList, preserving every other field.
+     */
+    public function withAllOrAltPartNameList(\SqlSemantics\Statement\Model\MySql\Role\AllOrAltPartNameListForm $allOrAltPartNameList): self
+    {
+        return new self($this->optNoWriteToBinlog, $allOrAltPartNameList, $this->optNoWriteToBinlog2);
+    }
+
+    /**
+     * Returns a copy with a new optNoWriteToBinlog2, preserving every other field.
+     */
+    public function withOptNoWriteToBinlog2(\SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog2): self
+    {
+        return new self($this->optNoWriteToBinlog, $this->allOrAltPartNameList, $optNoWriteToBinlog2);
     }
 }

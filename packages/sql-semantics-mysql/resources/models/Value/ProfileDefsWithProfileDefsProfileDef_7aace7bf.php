@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ProfileDefsWithProfileDefsProfileDef_7aace7bf $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ProfileDefsWithProfileDefsProfileDef_7aace7bf $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ProfileDefsWithProfileDefsProfileDef_7aace7bf implements \SqlSemantics\Statement\Model\MySql\Role\OptProfileDefsForm, \SqlSemantics\Statement\Model\MySql\Role\ProfileDefsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ProfileDefsWithProfileDefsProfileDef_7aace7bf implements \SqlSemanti
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ProfileDefsForm $profileDefs,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ProfileDefForm $profileDef,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($profileDefs), 'The profileDefs must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($profileDef), 'The profileDef must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ProfileDefsWithProfileDefsProfileDef_7aace7bf implements \SqlSemanti
         $this->profileDefs->write($writer);
         $writer->append(',');
         $this->profileDef->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new profileDefs, preserving every other field.
+     */
+    public function withProfileDefs(\SqlSemantics\Statement\Model\MySql\Role\ProfileDefsForm $profileDefs): self
+    {
+        return new self($profileDefs, $this->profileDef);
+    }
+
+    /**
+     * Returns a copy with a new profileDef, preserving every other field.
+     */
+    public function withProfileDef(\SqlSemantics\Statement\Model\MySql\Role\ProfileDefForm $profileDef): self
+    {
+        return new self($this->profileDefs, $profileDef);
     }
 }

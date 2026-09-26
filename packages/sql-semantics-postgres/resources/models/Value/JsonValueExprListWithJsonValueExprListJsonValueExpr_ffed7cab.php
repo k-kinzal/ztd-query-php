@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonValueExprListWithJsonValueExprListJsonValueExpr_ffed7cab $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonValueExprListWithJsonValueExprListJsonValueExpr_ffed7cab $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JsonValueExprListWithJsonValueExprListJsonValueExpr_ffed7cab implements \SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class JsonValueExprListWithJsonValueExprListJsonValueExpr_ffed7cab impleme
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprListForm $jsonValueExprList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprForm $jsonValueExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonValueExprList), 'The jsonValueExprList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonValueExpr), 'The jsonValueExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class JsonValueExprListWithJsonValueExprListJsonValueExpr_ffed7cab impleme
         $this->jsonValueExprList->write($writer);
         $writer->append(',');
         $this->jsonValueExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new jsonValueExprList, preserving every other field.
+     */
+    public function withJsonValueExprList(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprListForm $jsonValueExprList): self
+    {
+        return new self($jsonValueExprList, $this->jsonValueExpr);
+    }
+
+    /**
+     * Returns a copy with a new jsonValueExpr, preserving every other field.
+     */
+    public function withJsonValueExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprForm $jsonValueExpr): self
+    {
+        return new self($this->jsonValueExprList, $jsonValueExpr);
     }
 }

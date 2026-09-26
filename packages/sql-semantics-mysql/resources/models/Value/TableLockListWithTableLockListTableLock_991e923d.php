@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableLockListWithTableLockListTableLock_991e923d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableLockListWithTableLockListTableLock_991e923d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableLockListWithTableLockListTableLock_991e923d implements \SqlSemantics\Statement\Model\MySql\Role\TableLockListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TableLockListWithTableLockListTableLock_991e923d implements \SqlSema
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableLockListForm $tableLockList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableLockForm $tableLock,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableLockList), 'The tableLockList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableLock), 'The tableLock must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TableLockListWithTableLockListTableLock_991e923d implements \SqlSema
         $this->tableLockList->write($writer);
         $writer->append(',');
         $this->tableLock->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableLockList, preserving every other field.
+     */
+    public function withTableLockList(\SqlSemantics\Statement\Model\MySql\Role\TableLockListForm $tableLockList): self
+    {
+        return new self($tableLockList, $this->tableLock);
+    }
+
+    /**
+     * Returns a copy with a new tableLock, preserving every other field.
+     */
+    public function withTableLock(\SqlSemantics\Statement\Model\MySql\Role\TableLockForm $tableLock): self
+    {
+        return new self($this->tableLockList, $tableLock);
     }
 }

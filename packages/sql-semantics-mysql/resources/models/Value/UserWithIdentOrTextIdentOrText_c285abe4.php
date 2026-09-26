@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\UserWithIdentOrTextIdentOrText_c285abe4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\UserWithIdentOrTextIdentOrText_c285abe4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class UserWithIdentOrTextIdentOrText_c285abe4 implements \SqlSemantics\Statement\Model\MySql\Role\GrantListForm, \SqlSemantics\Statement\Model\MySql\Role\GrantUserForm, \SqlSemantics\Statement\Model\MySql\Role\UserForm, \SqlSemantics\Statement\Model\MySql\Role\UserListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class UserWithIdentOrTextIdentOrText_c285abe4 implements \SqlSemantics\Sta
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText), 'The identOrText must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText2), 'The identOrText2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class UserWithIdentOrTextIdentOrText_c285abe4 implements \SqlSemantics\Sta
         $this->identOrText->write($writer);
         $writer->append('@');
         $this->identOrText2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new identOrText, preserving every other field.
+     */
+    public function withIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText): self
+    {
+        return new self($identOrText, $this->identOrText2);
+    }
+
+    /**
+     * Returns a copy with a new identOrText2, preserving every other field.
+     */
+    public function withIdentOrText2(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText2): self
+    {
+        return new self($this->identOrText, $identOrText2);
     }
 }

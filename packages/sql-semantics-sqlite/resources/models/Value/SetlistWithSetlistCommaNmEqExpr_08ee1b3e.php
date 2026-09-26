@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\SetlistWithSetlistCommaNmEqExpr_08ee1b3e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\SetlistWithSetlistCommaNmEqExpr_08ee1b3e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SetlistWithSetlistCommaNmEqExpr_08ee1b3e implements \SqlSemantics\Statement\Model\Sqlite\Role\SetlistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class SetlistWithSetlistCommaNmEqExpr_08ee1b3e implements \SqlSemantics\St
         public readonly string $eq,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($setlist), 'The setlist must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
+        $this->assertMatchesPattern($eq, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['EQ'], 'The eq must be a complete EQ lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +41,37 @@ final class SetlistWithSetlistCommaNmEqExpr_08ee1b3e implements \SqlSemantics\St
         $this->nm->write($writer);
         $writer->append($this->eq);
         $this->expr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new setlist, preserving every other field.
+     */
+    public function withSetlist(\SqlSemantics\Statement\Model\Sqlite\Role\SetlistForm $setlist): self
+    {
+        return new self($setlist, $this->nm, $this->eq, $this->expr);
+    }
+
+    /**
+     * Returns a copy with a new nm, preserving every other field.
+     */
+    public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
+    {
+        return new self($this->setlist, $nm, $this->eq, $this->expr);
+    }
+
+    /**
+     * Returns a copy with a new eq, preserving every other field.
+     */
+    public function withEq(string $eq): self
+    {
+        return new self($this->setlist, $this->nm, $eq, $this->expr);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
+    {
+        return new self($this->setlist, $this->nm, $this->eq, $expr);
     }
 }

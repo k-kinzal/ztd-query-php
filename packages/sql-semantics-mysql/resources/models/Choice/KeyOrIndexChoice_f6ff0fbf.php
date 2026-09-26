@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\KeyOrIndexChoice_f6ff0fbf $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\KeyOrIndexChoice_f6ff0fbf $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum KeyOrIndexChoice_f6ff0fbf: string implements \SqlSemantics\Statement\Model\MySql\Role\KeyOrIndexForm, \SqlSemantics\Statement\Model\MySql\Role\NormalKeyTypeForm, \SqlSemantics\Statement\Model\MySql\Role\OptKeyOrIndexForm

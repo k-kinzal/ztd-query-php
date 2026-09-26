@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TriggerDeclWithTempTriggerIfnotexistsNmDbnmTriggerTimeTriggerEventOnFullnameForeachClauseW_09bb7d8c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TriggerDeclWithTempTriggerIfnotexistsNmDbnmTriggerTimeTriggerEventOnFullnameForeachClauseW_09bb7d8c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TriggerDeclWithTempTriggerIfnotexistsNmDbnmTriggerTimeTriggerEventOnFullnameForeachClauseW_09bb7d8c implements \SqlSemantics\Statement\Model\Sqlite\Role\TriggerDeclForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -28,6 +30,15 @@ final class TriggerDeclWithTempTriggerIfnotexistsNmDbnmTriggerTimeTriggerEventOn
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ForeachClauseForm $foreachClause,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WhenClauseForm $whenClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($temp), 'The temp must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($ifnotexists), 'The ifnotexists must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($dbnm), 'The dbnm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($triggerTime), 'The triggerTime must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($triggerEvent), 'The triggerEvent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($fullname), 'The fullname must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($foreachClause), 'The foreachClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($whenClause), 'The whenClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -46,5 +57,77 @@ final class TriggerDeclWithTempTriggerIfnotexistsNmDbnmTriggerTimeTriggerEventOn
         $this->fullname->write($writer);
         $this->foreachClause->write($writer);
         $this->whenClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new temp, preserving every other field.
+     */
+    public function withTemp(\SqlSemantics\Statement\Model\Sqlite\Role\TempForm $temp): self
+    {
+        return new self($temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->triggerTime, $this->triggerEvent, $this->fullname, $this->foreachClause, $this->whenClause);
+    }
+
+    /**
+     * Returns a copy with a new ifnotexists, preserving every other field.
+     */
+    public function withIfnotexists(\SqlSemantics\Statement\Model\Sqlite\Role\IfnotexistsForm $ifnotexists): self
+    {
+        return new self($this->temp, $ifnotexists, $this->nm, $this->dbnm, $this->triggerTime, $this->triggerEvent, $this->fullname, $this->foreachClause, $this->whenClause);
+    }
+
+    /**
+     * Returns a copy with a new nm, preserving every other field.
+     */
+    public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
+    {
+        return new self($this->temp, $this->ifnotexists, $nm, $this->dbnm, $this->triggerTime, $this->triggerEvent, $this->fullname, $this->foreachClause, $this->whenClause);
+    }
+
+    /**
+     * Returns a copy with a new dbnm, preserving every other field.
+     */
+    public function withDbnm(\SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm): self
+    {
+        return new self($this->temp, $this->ifnotexists, $this->nm, $dbnm, $this->triggerTime, $this->triggerEvent, $this->fullname, $this->foreachClause, $this->whenClause);
+    }
+
+    /**
+     * Returns a copy with a new triggerTime, preserving every other field.
+     */
+    public function withTriggerTime(\SqlSemantics\Statement\Model\Sqlite\Role\TriggerTimeForm $triggerTime): self
+    {
+        return new self($this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $triggerTime, $this->triggerEvent, $this->fullname, $this->foreachClause, $this->whenClause);
+    }
+
+    /**
+     * Returns a copy with a new triggerEvent, preserving every other field.
+     */
+    public function withTriggerEvent(\SqlSemantics\Statement\Model\Sqlite\Role\TriggerEventForm $triggerEvent): self
+    {
+        return new self($this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->triggerTime, $triggerEvent, $this->fullname, $this->foreachClause, $this->whenClause);
+    }
+
+    /**
+     * Returns a copy with a new fullname, preserving every other field.
+     */
+    public function withFullname(\SqlSemantics\Statement\Model\Sqlite\Role\FullnameForm $fullname): self
+    {
+        return new self($this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->triggerTime, $this->triggerEvent, $fullname, $this->foreachClause, $this->whenClause);
+    }
+
+    /**
+     * Returns a copy with a new foreachClause, preserving every other field.
+     */
+    public function withForeachClause(\SqlSemantics\Statement\Model\Sqlite\Role\ForeachClauseForm $foreachClause): self
+    {
+        return new self($this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->triggerTime, $this->triggerEvent, $this->fullname, $foreachClause, $this->whenClause);
+    }
+
+    /**
+     * Returns a copy with a new whenClause, preserving every other field.
+     */
+    public function withWhenClause(\SqlSemantics\Statement\Model\Sqlite\Role\WhenClauseForm $whenClause): self
+    {
+        return new self($this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->triggerTime, $this->triggerEvent, $this->fullname, $this->foreachClause, $whenClause);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithRollbackTransOpt_00f0c935 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithRollbackTransOpt_00f0c935 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CmdWithRollbackTransOpt_00f0c935 implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm
+final class CmdWithRollbackTransOpt_00f0c935 implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TransOptForm $transOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($transOpt), 'The transOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class CmdWithRollbackTransOpt_00f0c935 implements \SqlSemantics\Statement\
     {
         $writer->append('ROLLBACK');
         $this->transOpt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new transOpt, preserving every other field.
+     */
+    public function withTransOpt(\SqlSemantics\Statement\Model\Sqlite\Role\TransOptForm $transOpt): self
+    {
+        return new self($transOpt);
     }
 }

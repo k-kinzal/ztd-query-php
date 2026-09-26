@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithIntTypeOptFieldLengthFieldOptions_94ef4a3a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithIntTypeOptFieldLengthFieldOptions_94ef4a3a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TypeWithIntTypeOptFieldLengthFieldOptions_94ef4a3a implements \SqlSemantics\Statement\Model\MySql\Role\TypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class TypeWithIntTypeOptFieldLengthFieldOptions_94ef4a3a implements \SqlSe
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptFieldLengthForm $optFieldLength,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldOptionsForm $fieldOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($intType), 'The intType must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optFieldLength), 'The optFieldLength must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldOptions), 'The fieldOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class TypeWithIntTypeOptFieldLengthFieldOptions_94ef4a3a implements \SqlSe
         $this->intType->write($writer);
         $this->optFieldLength->write($writer);
         $this->fieldOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new intType, preserving every other field.
+     */
+    public function withIntType(\SqlSemantics\Statement\Model\MySql\Role\IntTypeForm $intType): self
+    {
+        return new self($intType, $this->optFieldLength, $this->fieldOptions);
+    }
+
+    /**
+     * Returns a copy with a new optFieldLength, preserving every other field.
+     */
+    public function withOptFieldLength(\SqlSemantics\Statement\Model\MySql\Role\OptFieldLengthForm $optFieldLength): self
+    {
+        return new self($this->intType, $optFieldLength, $this->fieldOptions);
+    }
+
+    /**
+     * Returns a copy with a new fieldOptions, preserving every other field.
+     */
+    public function withFieldOptions(\SqlSemantics\Statement\Model\MySql\Role\FieldOptionsForm $fieldOptions): self
+    {
+        return new self($this->intType, $this->optFieldLength, $fieldOptions);
     }
 }

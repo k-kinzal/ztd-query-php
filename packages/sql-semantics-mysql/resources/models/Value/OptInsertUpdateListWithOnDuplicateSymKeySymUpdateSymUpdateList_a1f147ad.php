@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptInsertUpdateListWithOnDuplicateSymKeySymUpdateSymUpdateList_a1f147ad $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptInsertUpdateListWithOnDuplicateSymKeySymUpdateSymUpdateList_a1f147ad $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptInsertUpdateListWithOnDuplicateSymKeySymUpdateSymUpdateList_a1f147ad implements \SqlSemantics\Statement\Model\MySql\Role\OptInsertUpdateListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UpdateListForm $updateList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($updateList), 'The updateList must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +35,13 @@ final class OptInsertUpdateListWithOnDuplicateSymKeySymUpdateSymUpdateList_a1f14
         $writer->append('KEY');
         $writer->append('UPDATE');
         $this->updateList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new updateList, preserving every other field.
+     */
+    public function withUpdateList(\SqlSemantics\Statement\Model\MySql\Role\UpdateListForm $updateList): self
+    {
+        return new self($updateList);
     }
 }

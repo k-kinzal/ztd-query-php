@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptExplainOptionsWithAnalyzeSymOptExplainFormatOptExplainInto_437bb234 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptExplainOptionsWithAnalyzeSymOptExplainFormatOptExplainInto_437bb234 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptExplainOptionsWithAnalyzeSymOptExplainFormatOptExplainInto_437bb234 implements \SqlSemantics\Statement\Model\MySql\Role\OptExplainOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptExplainOptionsWithAnalyzeSymOptExplainFormatOptExplainInto_437bb2
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptExplainFormatForm $optExplainFormat,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptExplainIntoForm $optExplainInto,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optExplainFormat), 'The optExplainFormat must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optExplainInto), 'The optExplainInto must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class OptExplainOptionsWithAnalyzeSymOptExplainFormatOptExplainInto_437bb2
         $writer->append('ANALYZE');
         $this->optExplainFormat->write($writer);
         $this->optExplainInto->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optExplainFormat, preserving every other field.
+     */
+    public function withOptExplainFormat(\SqlSemantics\Statement\Model\MySql\Role\OptExplainFormatForm $optExplainFormat): self
+    {
+        return new self($optExplainFormat, $this->optExplainInto);
+    }
+
+    /**
+     * Returns a copy with a new optExplainInto, preserving every other field.
+     */
+    public function withOptExplainInto(\SqlSemantics\Statement\Model\MySql\Role\OptExplainIntoForm $optExplainInto): self
+    {
+        return new self($this->optExplainFormat, $optExplainInto);
     }
 }

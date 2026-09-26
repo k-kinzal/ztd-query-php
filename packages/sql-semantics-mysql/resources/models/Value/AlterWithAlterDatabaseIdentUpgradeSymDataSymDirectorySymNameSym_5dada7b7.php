@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterWithAlterDatabaseIdentUpgradeSymDataSymDirectorySymNameSym_5dada7b7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterWithAlterDatabaseIdentUpgradeSymDataSymDirectorySymNameSym_5dada7b7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterWithAlterDatabaseIdentUpgradeSymDataSymDirectorySymNameSym_5dada7b7 implements \SqlSemantics\Statement\Model\MySql\Role\AlterForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterWithAlterDatabaseIdentUpgradeSymDataSymDirectorySymNameSym_5dad
         public readonly string $database,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
     ) {
+        $this->assertMatchesPattern($database, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DATABASE'], 'The database must be a complete DATABASE lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +39,21 @@ final class AlterWithAlterDatabaseIdentUpgradeSymDataSymDirectorySymNameSym_5dad
         $writer->append('DATA');
         $writer->append('DIRECTORY');
         $writer->append('NAME');
+    }
+
+    /**
+     * Returns a copy with a new database, preserving every other field.
+     */
+    public function withDatabase(string $database): self
+    {
+        return new self($database, $this->ident);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($this->database, $ident);
     }
 }

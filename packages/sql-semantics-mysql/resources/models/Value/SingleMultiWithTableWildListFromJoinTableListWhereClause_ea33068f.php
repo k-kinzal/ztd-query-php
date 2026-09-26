@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SingleMultiWithTableWildListFromJoinTableListWhereClause_ea33068f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SingleMultiWithTableWildListFromJoinTableListWhereClause_ea33068f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SingleMultiWithTableWildListFromJoinTableListWhereClause_ea33068f implements \SqlSemantics\Statement\Model\MySql\Role\SingleMultiForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class SingleMultiWithTableWildListFromJoinTableListWhereClause_ea33068f im
         public readonly \SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm $joinTableList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WhereClauseForm $where,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableWildList), 'The tableWildList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($joinTableList), 'The joinTableList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($where), 'The where must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class SingleMultiWithTableWildListFromJoinTableListWhereClause_ea33068f im
         $writer->append('FROM');
         $this->joinTableList->write($writer);
         $this->where->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableWildList, preserving every other field.
+     */
+    public function withTableWildList(\SqlSemantics\Statement\Model\MySql\Role\TableWildListForm $tableWildList): self
+    {
+        return new self($tableWildList, $this->joinTableList, $this->where);
+    }
+
+    /**
+     * Returns a copy with a new joinTableList, preserving every other field.
+     */
+    public function withJoinTableList(\SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm $joinTableList): self
+    {
+        return new self($this->tableWildList, $joinTableList, $this->where);
+    }
+
+    /**
+     * Returns a copy with a new where, preserving every other field.
+     */
+    public function withWhere(\SqlSemantics\Statement\Model\MySql\Role\WhereClauseForm $where): self
+    {
+        return new self($this->tableWildList, $this->joinTableList, $where);
     }
 }

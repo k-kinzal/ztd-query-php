@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonAggregateFuncWithJsonArrayaggJsonValueExprJsonArrayAggregateOrderByClauseOptJsonArrayConstru_f339643a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonAggregateFuncWithJsonArrayaggJsonValueExprJsonArrayAggregateOrderByClauseOptJsonArrayConstru_f339643a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JsonAggregateFuncWithJsonArrayaggJsonValueExprJsonArrayAggregateOrderByClauseOptJsonArrayConstru_f339643a implements \SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprWindowlessForm, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonAggregateFuncForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class JsonAggregateFuncWithJsonArrayaggJsonValueExprJsonArrayAggregateOrde
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonArrayConstructorNullClauseOptForm $jsonArrayConstructorNullClauseOpt,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonReturningClauseOptForm $jsonReturningClauseOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonValueExpr), 'The jsonValueExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonArrayAggregateOrderByClauseOpt), 'The jsonArrayAggregateOrderByClauseOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonArrayConstructorNullClauseOpt), 'The jsonArrayConstructorNullClauseOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonReturningClauseOpt), 'The jsonReturningClauseOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -37,5 +43,37 @@ final class JsonAggregateFuncWithJsonArrayaggJsonValueExprJsonArrayAggregateOrde
         $this->jsonArrayConstructorNullClauseOpt->write($writer);
         $this->jsonReturningClauseOpt->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new jsonValueExpr, preserving every other field.
+     */
+    public function withJsonValueExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprForm $jsonValueExpr): self
+    {
+        return new self($jsonValueExpr, $this->jsonArrayAggregateOrderByClauseOpt, $this->jsonArrayConstructorNullClauseOpt, $this->jsonReturningClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new jsonArrayAggregateOrderByClauseOpt, preserving every other field.
+     */
+    public function withJsonArrayAggregateOrderByClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonArrayAggregateOrderByClauseOptForm $jsonArrayAggregateOrderByClauseOpt): self
+    {
+        return new self($this->jsonValueExpr, $jsonArrayAggregateOrderByClauseOpt, $this->jsonArrayConstructorNullClauseOpt, $this->jsonReturningClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new jsonArrayConstructorNullClauseOpt, preserving every other field.
+     */
+    public function withJsonArrayConstructorNullClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonArrayConstructorNullClauseOptForm $jsonArrayConstructorNullClauseOpt): self
+    {
+        return new self($this->jsonValueExpr, $this->jsonArrayAggregateOrderByClauseOpt, $jsonArrayConstructorNullClauseOpt, $this->jsonReturningClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new jsonReturningClauseOpt, preserving every other field.
+     */
+    public function withJsonReturningClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonReturningClauseOptForm $jsonReturningClauseOpt): self
+    {
+        return new self($this->jsonValueExpr, $this->jsonArrayAggregateOrderByClauseOpt, $this->jsonArrayConstructorNullClauseOpt, $jsonReturningClauseOpt);
     }
 }

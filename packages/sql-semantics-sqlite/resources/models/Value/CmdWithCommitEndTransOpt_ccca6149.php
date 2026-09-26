@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithCommitEndTransOpt_ccca6149 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithCommitEndTransOpt_ccca6149 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CmdWithCommitEndTransOpt_ccca6149 implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm
+final class CmdWithCommitEndTransOpt_ccca6149 implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CmdWithCommitEndTransOpt_ccca6149 implements \SqlSemantics\Statement
         public readonly string $commitEnd,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TransOptForm $transOpt,
     ) {
+        $this->assertMatchesPattern($commitEnd, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['COMMIT|END'], 'The commitEnd must be a complete COMMIT|END lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($transOpt), 'The transOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class CmdWithCommitEndTransOpt_ccca6149 implements \SqlSemantics\Statement
     {
         $writer->append($this->commitEnd);
         $this->transOpt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new commitEnd, preserving every other field.
+     */
+    public function withCommitEnd(string $commitEnd): self
+    {
+        return new self($commitEnd, $this->transOpt);
+    }
+
+    /**
+     * Returns a copy with a new transOpt, preserving every other field.
+     */
+    public function withTransOpt(\SqlSemantics\Statement\Model\Sqlite\Role\TransOptForm $transOpt): self
+    {
+        return new self($this->commitEnd, $transOpt);
     }
 }

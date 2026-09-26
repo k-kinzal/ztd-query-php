@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithEngineSymAllShowEngineParam_2fae534e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithEngineSymAllShowEngineParam_2fae534e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ShowParamWithEngineSymAllShowEngineParam_2fae534e implements \SqlSemantics\Statement\Model\MySql\Role\ShowParamForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ShowEngineParamForm $showEngineParam,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($showEngineParam), 'The showEngineParam must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class ShowParamWithEngineSymAllShowEngineParam_2fae534e implements \SqlSem
         $writer->append('ENGINE');
         $writer->append('ALL');
         $this->showEngineParam->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new showEngineParam, preserving every other field.
+     */
+    public function withShowEngineParam(\SqlSemantics\Statement\Model\MySql\Role\ShowEngineParamForm $showEngineParam): self
+    {
+        return new self($showEngineParam);
     }
 }

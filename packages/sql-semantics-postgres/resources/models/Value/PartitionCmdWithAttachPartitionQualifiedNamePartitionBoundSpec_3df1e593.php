@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PartitionCmdWithAttachPartitionQualifiedNamePartitionBoundSpec_3df1e593 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PartitionCmdWithAttachPartitionQualifiedNamePartitionBoundSpec_3df1e593 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PartitionCmdWithAttachPartitionQualifiedNamePartitionBoundSpec_3df1e593 implements \SqlSemantics\Statement\Model\PostgreSql\Role\PartitionCmdForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class PartitionCmdWithAttachPartitionQualifiedNamePartitionBoundSpec_3df1e
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PartitionBoundSpecForm $partitionBoundSpec,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($partitionBoundSpec), 'The partitionBoundSpec must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class PartitionCmdWithAttachPartitionQualifiedNamePartitionBoundSpec_3df1e
         $writer->append('PARTITION');
         $this->qualifiedName->write($writer);
         $this->partitionBoundSpec->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new qualifiedName, preserving every other field.
+     */
+    public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
+    {
+        return new self($qualifiedName, $this->partitionBoundSpec);
+    }
+
+    /**
+     * Returns a copy with a new partitionBoundSpec, preserving every other field.
+     */
+    public function withPartitionBoundSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\PartitionBoundSpecForm $partitionBoundSpec): self
+    {
+        return new self($this->qualifiedName, $partitionBoundSpec);
     }
 }

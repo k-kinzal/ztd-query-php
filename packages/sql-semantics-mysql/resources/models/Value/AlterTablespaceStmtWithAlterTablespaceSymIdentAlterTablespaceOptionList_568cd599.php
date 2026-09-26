@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterTablespaceStmtWithAlterTablespaceSymIdentAlterTablespaceOptionList_568cd599 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterTablespaceStmtWithAlterTablespaceSymIdentAlterTablespaceOptionList_568cd599 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterTablespaceStmtWithAlterTablespaceSymIdentAlterTablespaceOptionList_568cd599 implements \SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class AlterTablespaceStmtWithAlterTablespaceSymIdentAlterTablespaceOptionList_568cd599 implements \SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterTablespaceStmtWithAlterTablespaceSymIdentAlterTablespaceOptionL
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceOptionListForm $alterTablespaceOptionList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterTablespaceOptionList), 'The alterTablespaceOptionList must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class AlterTablespaceStmtWithAlterTablespaceSymIdentAlterTablespaceOptionL
         $writer->append('TABLESPACE');
         $this->ident->write($writer);
         $this->alterTablespaceOptionList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($ident, $this->alterTablespaceOptionList);
+    }
+
+    /**
+     * Returns a copy with a new alterTablespaceOptionList, preserving every other field.
+     */
+    public function withAlterTablespaceOptionList(\SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceOptionListForm $alterTablespaceOptionList): self
+    {
+        return new self($this->ident, $alterTablespaceOptionList);
     }
 }

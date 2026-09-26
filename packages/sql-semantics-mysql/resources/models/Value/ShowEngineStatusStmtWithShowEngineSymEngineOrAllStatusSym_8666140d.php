@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowEngineStatusStmtWithShowEngineSymEngineOrAllStatusSym_8666140d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowEngineStatusStmtWithShowEngineSymEngineOrAllStatusSym_8666140d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class ShowEngineStatusStmtWithShowEngineSymEngineOrAllStatusSym_8666140d implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ShowEngineStatusStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class ShowEngineStatusStmtWithShowEngineSymEngineOrAllStatusSym_8666140d implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ShowEngineStatusStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EngineOrAllForm $engineOrAll,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($engineOrAll), 'The engineOrAll must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class ShowEngineStatusStmtWithShowEngineSymEngineOrAllStatusSym_8666140d i
         $writer->append('ENGINE');
         $this->engineOrAll->write($writer);
         $writer->append('STATUS');
+    }
+
+    /**
+     * Returns a copy with a new engineOrAll, preserving every other field.
+     */
+    public function withEngineOrAll(\SqlSemantics\Statement\Model\MySql\Role\EngineOrAllForm $engineOrAll): self
+    {
+        return new self($engineOrAll);
     }
 }

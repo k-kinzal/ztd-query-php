@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CommonFuncOptItemWithParallelColId_d1f497b1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CommonFuncOptItemWithParallelColId_d1f497b1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CommonFuncOptItemWithParallelColId_d1f497b1 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterfuncOptListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CommonFuncOptItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CreatefuncOptItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CreatefuncOptListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptCreatefuncOptListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class CommonFuncOptItemWithParallelColId_d1f497b1 implements \SqlSemantics
     {
         $writer->append('PARALLEL');
         $this->colId->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($colId);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SubselectWithSubselectStartQueryExpressionBodySubselectEnd_4d4f9abf $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SubselectWithSubselectStartQueryExpressionBodySubselectEnd_4d4f9abf $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SubselectWithSubselectStartQueryExpressionBodySubselectEnd_4d4f9abf implements \SqlSemantics\Statement\Model\MySql\Role\SubselectForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class SubselectWithSubselectStartQueryExpressionBodySubselectEnd_4d4f9abf 
         public readonly \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm $queryExpressionBody,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SubselectEndForm $subselectEnd,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($subselectStart), 'The subselectStart must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($queryExpressionBody), 'The queryExpressionBody must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($subselectEnd), 'The subselectEnd must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class SubselectWithSubselectStartQueryExpressionBodySubselectEnd_4d4f9abf 
         $this->subselectStart->write($writer);
         $this->queryExpressionBody->write($writer);
         $this->subselectEnd->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new subselectStart, preserving every other field.
+     */
+    public function withSubselectStart(\SqlSemantics\Statement\Model\MySql\Role\SubselectStartForm $subselectStart): self
+    {
+        return new self($subselectStart, $this->queryExpressionBody, $this->subselectEnd);
+    }
+
+    /**
+     * Returns a copy with a new queryExpressionBody, preserving every other field.
+     */
+    public function withQueryExpressionBody(\SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm $queryExpressionBody): self
+    {
+        return new self($this->subselectStart, $queryExpressionBody, $this->subselectEnd);
+    }
+
+    /**
+     * Returns a copy with a new subselectEnd, preserving every other field.
+     */
+    public function withSubselectEnd(\SqlSemantics\Statement\Model\MySql\Role\SubselectEndForm $subselectEnd): self
+    {
+        return new self($this->subselectStart, $this->queryExpressionBody, $subselectEnd);
     }
 }

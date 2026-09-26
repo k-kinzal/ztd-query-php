@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithSourceTlsCiphersuitesSymEqSourceTlsCiphersuitesDef_dcb5a621 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithSourceTlsCiphersuitesSymEqSourceTlsCiphersuitesDef_dcb5a621 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SourceDefWithSourceTlsCiphersuitesSymEqSourceTlsCiphersuitesDef_dcb5a621 implements \SqlSemantics\Statement\Model\MySql\Role\SourceDefForm, \SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SourceTlsCiphersuitesDefForm $sourceTlsCiphersuitesDef,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($sourceTlsCiphersuitesDef), 'The sourceTlsCiphersuitesDef must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class SourceDefWithSourceTlsCiphersuitesSymEqSourceTlsCiphersuitesDef_dcb5
         $writer->append('SOURCE_TLS_CIPHERSUITES');
         $writer->append('=');
         $this->sourceTlsCiphersuitesDef->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new sourceTlsCiphersuitesDef, preserving every other field.
+     */
+    public function withSourceTlsCiphersuitesDef(\SqlSemantics\Statement\Model\MySql\Role\SourceTlsCiphersuitesDefForm $sourceTlsCiphersuitesDef): self
+    {
+        return new self($sourceTlsCiphersuitesDef);
     }
 }

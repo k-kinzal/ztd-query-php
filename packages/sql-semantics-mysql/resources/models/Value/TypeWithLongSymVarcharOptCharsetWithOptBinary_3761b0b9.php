@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithLongSymVarcharOptCharsetWithOptBinary_3761b0b9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithLongSymVarcharOptCharsetWithOptBinary_3761b0b9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TypeWithLongSymVarcharOptCharsetWithOptBinary_3761b0b9 implements \SqlSemantics\Statement\Model\MySql\Role\TypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TypeWithLongSymVarcharOptCharsetWithOptBinary_3761b0b9 implements \S
         public readonly \SqlSemantics\Statement\Model\MySql\Role\VarcharForm $varchar,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCharsetWithOptBinaryForm $optCharsetWithOptBinary,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($varchar), 'The varchar must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCharsetWithOptBinary), 'The optCharsetWithOptBinary must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TypeWithLongSymVarcharOptCharsetWithOptBinary_3761b0b9 implements \S
         $writer->append('LONG');
         $this->varchar->write($writer);
         $this->optCharsetWithOptBinary->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new varchar, preserving every other field.
+     */
+    public function withVarchar(\SqlSemantics\Statement\Model\MySql\Role\VarcharForm $varchar): self
+    {
+        return new self($varchar, $this->optCharsetWithOptBinary);
+    }
+
+    /**
+     * Returns a copy with a new optCharsetWithOptBinary, preserving every other field.
+     */
+    public function withOptCharsetWithOptBinary(\SqlSemantics\Statement\Model\MySql\Role\OptCharsetWithOptBinaryForm $optCharsetWithOptBinary): self
+    {
+        return new self($this->varchar, $optCharsetWithOptBinary);
     }
 }

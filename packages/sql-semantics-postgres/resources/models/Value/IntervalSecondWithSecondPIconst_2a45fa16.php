@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\IntervalSecondWithSecondPIconst_2a45fa16 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\IntervalSecondWithSecondPIconst_2a45fa16 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IntervalSecondWithSecondPIconst_2a45fa16 implements \SqlSemantics\Statement\Model\PostgreSql\Role\IntervalSecondForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptIntervalForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($iconst), 'The iconst must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class IntervalSecondWithSecondPIconst_2a45fa16 implements \SqlSemantics\St
         $writer->append('(');
         $this->iconst->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new iconst, preserving every other field.
+     */
+    public function withIconst(\SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst): self
+    {
+        return new self($iconst);
     }
 }

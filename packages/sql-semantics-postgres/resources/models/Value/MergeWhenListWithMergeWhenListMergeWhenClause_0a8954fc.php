@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\MergeWhenListWithMergeWhenListMergeWhenClause_0a8954fc $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\MergeWhenListWithMergeWhenListMergeWhenClause_0a8954fc $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class MergeWhenListWithMergeWhenListMergeWhenClause_0a8954fc implements \SqlSemantics\Statement\Model\PostgreSql\Role\MergeWhenListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class MergeWhenListWithMergeWhenListMergeWhenClause_0a8954fc implements \S
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\MergeWhenListForm $mergeWhenList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\MergeWhenClauseForm $mergeWhenClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($mergeWhenList), 'The mergeWhenList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($mergeWhenClause), 'The mergeWhenClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class MergeWhenListWithMergeWhenListMergeWhenClause_0a8954fc implements \S
     {
         $this->mergeWhenList->write($writer);
         $this->mergeWhenClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new mergeWhenList, preserving every other field.
+     */
+    public function withMergeWhenList(\SqlSemantics\Statement\Model\PostgreSql\Role\MergeWhenListForm $mergeWhenList): self
+    {
+        return new self($mergeWhenList, $this->mergeWhenClause);
+    }
+
+    /**
+     * Returns a copy with a new mergeWhenClause, preserving every other field.
+     */
+    public function withMergeWhenClause(\SqlSemantics\Statement\Model\PostgreSql\Role\MergeWhenClauseForm $mergeWhenClause): self
+    {
+        return new self($this->mergeWhenList, $mergeWhenClause);
     }
 }

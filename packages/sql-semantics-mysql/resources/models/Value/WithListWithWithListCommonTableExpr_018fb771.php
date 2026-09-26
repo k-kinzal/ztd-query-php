@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WithListWithWithListCommonTableExpr_018fb771 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WithListWithWithListCommonTableExpr_018fb771 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WithListWithWithListCommonTableExpr_018fb771 implements \SqlSemantics\Statement\Model\MySql\Role\WithListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class WithListWithWithListCommonTableExpr_018fb771 implements \SqlSemantic
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WithListForm $withList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CommonTableExprForm $commonTableExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($withList), 'The withList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($commonTableExpr), 'The commonTableExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class WithListWithWithListCommonTableExpr_018fb771 implements \SqlSemantic
         $this->withList->write($writer);
         $writer->append(',');
         $this->commonTableExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new withList, preserving every other field.
+     */
+    public function withWithList(\SqlSemantics\Statement\Model\MySql\Role\WithListForm $withList): self
+    {
+        return new self($withList, $this->commonTableExpr);
+    }
+
+    /**
+     * Returns a copy with a new commonTableExpr, preserving every other field.
+     */
+    public function withCommonTableExpr(\SqlSemantics\Statement\Model\MySql\Role\CommonTableExprForm $commonTableExpr): self
+    {
+        return new self($this->withList, $commonTableExpr);
     }
 }

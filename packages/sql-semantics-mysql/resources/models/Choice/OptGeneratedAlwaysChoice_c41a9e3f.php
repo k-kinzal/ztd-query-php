@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\OptGeneratedAlwaysChoice_c41a9e3f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\OptGeneratedAlwaysChoice_c41a9e3f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum OptGeneratedAlwaysChoice_c41a9e3f: string implements \SqlSemantics\Statement\Model\MySql\Role\OptGeneratedAlwaysForm

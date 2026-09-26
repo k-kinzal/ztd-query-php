@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptionValueListWithOptionValueListOptionValue_0cde6392 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptionValueListWithOptionValueListOptionValue_0cde6392 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptionValueListWithOptionValueListOptionValue_0cde6392 implements \SqlSemantics\Statement\Model\MySql\Role\OptionValueListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptionValueListWithOptionValueListOptionValue_0cde6392 implements \S
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptionValueListForm $optionValueList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptionValueForm $optionValue,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optionValueList), 'The optionValueList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optionValue), 'The optionValue must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class OptionValueListWithOptionValueListOptionValue_0cde6392 implements \S
         $this->optionValueList->write($writer);
         $writer->append(',');
         $this->optionValue->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optionValueList, preserving every other field.
+     */
+    public function withOptionValueList(\SqlSemantics\Statement\Model\MySql\Role\OptionValueListForm $optionValueList): self
+    {
+        return new self($optionValueList, $this->optionValue);
+    }
+
+    /**
+     * Returns a copy with a new optionValue, preserving every other field.
+     */
+    public function withOptionValue(\SqlSemantics\Statement\Model\MySql\Role\OptionValueForm $optionValue): self
+    {
+        return new self($this->optionValueList, $optionValue);
     }
 }

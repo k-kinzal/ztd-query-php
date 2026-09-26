@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GrantUserWithUserIdentifiedSymByPasswordTextString_5edfa118 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GrantUserWithUserIdentifiedSymByPasswordTextString_5edfa118 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GrantUserWithUserIdentifiedSymByPasswordTextString_5edfa118 implements \SqlSemantics\Statement\Model\MySql\Role\GrantListForm, \SqlSemantics\Statement\Model\MySql\Role\GrantUserForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class GrantUserWithUserIdentifiedSymByPasswordTextString_5edfa118 implemen
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserForm $user,
         public readonly string $value,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
+        $this->assertMatchesPattern($value, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['TEXT_STRING'], 'The value must be a complete TEXT_STRING lexical spelling.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class GrantUserWithUserIdentifiedSymByPasswordTextString_5edfa118 implemen
         $writer->append('BY');
         $writer->append('PASSWORD');
         $writer->append($this->value);
+    }
+
+    /**
+     * Returns a copy with a new user, preserving every other field.
+     */
+    public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
+    {
+        return new self($user, $this->value);
+    }
+
+    /**
+     * Returns a copy with a new value, preserving every other field.
+     */
+    public function withValue(string $value): self
+    {
+        return new self($this->user, $value);
     }
 }

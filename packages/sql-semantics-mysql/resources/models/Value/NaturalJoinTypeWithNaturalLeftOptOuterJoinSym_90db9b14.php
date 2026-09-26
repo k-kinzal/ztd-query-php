@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\NaturalJoinTypeWithNaturalLeftOptOuterJoinSym_90db9b14 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\NaturalJoinTypeWithNaturalLeftOptOuterJoinSym_90db9b14 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class NaturalJoinTypeWithNaturalLeftOptOuterJoinSym_90db9b14 implements \SqlSemantics\Statement\Model\MySql\Role\NaturalJoinTypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptOuterForm $optOuter,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optOuter), 'The optOuter must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class NaturalJoinTypeWithNaturalLeftOptOuterJoinSym_90db9b14 implements \S
         $writer->append('LEFT');
         $this->optOuter->write($writer);
         $writer->append('JOIN');
+    }
+
+    /**
+     * Returns a copy with a new optOuter, preserving every other field.
+     */
+    public function withOptOuter(\SqlSemantics\Statement\Model\MySql\Role\OptOuterForm $optOuter): self
+    {
+        return new self($optOuter);
     }
 }

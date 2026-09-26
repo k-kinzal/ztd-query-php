@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PreloadKeysPartsWithTableIdentAdmPartitionCacheKeysSpecOptIgnoreLeaves_0f5ae70c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PreloadKeysPartsWithTableIdentAdmPartitionCacheKeysSpecOptIgnoreLeaves_0f5ae70c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PreloadKeysPartsWithTableIdentAdmPartitionCacheKeysSpecOptIgnoreLeaves_0f5ae70c implements \SqlSemantics\Statement\Model\MySql\Role\PreloadKeysPartsForm, \SqlSemantics\Statement\Model\MySql\Role\PreloadListOrPartsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class PreloadKeysPartsWithTableIdentAdmPartitionCacheKeysSpecOptIgnoreLeav
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CacheKeysSpecForm $cacheKeysSpec,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIgnoreLeavesForm $optIgnoreLeaves,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($admPartition), 'The admPartition must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($cacheKeysSpec), 'The cacheKeysSpec must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIgnoreLeaves), 'The optIgnoreLeaves must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +40,37 @@ final class PreloadKeysPartsWithTableIdentAdmPartitionCacheKeysSpecOptIgnoreLeav
         $this->admPartition->write($writer);
         $this->cacheKeysSpec->write($writer);
         $this->optIgnoreLeaves->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($tableIdent, $this->admPartition, $this->cacheKeysSpec, $this->optIgnoreLeaves);
+    }
+
+    /**
+     * Returns a copy with a new admPartition, preserving every other field.
+     */
+    public function withAdmPartition(\SqlSemantics\Statement\Model\MySql\Role\AdmPartitionForm $admPartition): self
+    {
+        return new self($this->tableIdent, $admPartition, $this->cacheKeysSpec, $this->optIgnoreLeaves);
+    }
+
+    /**
+     * Returns a copy with a new cacheKeysSpec, preserving every other field.
+     */
+    public function withCacheKeysSpec(\SqlSemantics\Statement\Model\MySql\Role\CacheKeysSpecForm $cacheKeysSpec): self
+    {
+        return new self($this->tableIdent, $this->admPartition, $cacheKeysSpec, $this->optIgnoreLeaves);
+    }
+
+    /**
+     * Returns a copy with a new optIgnoreLeaves, preserving every other field.
+     */
+    public function withOptIgnoreLeaves(\SqlSemantics\Statement\Model\MySql\Role\OptIgnoreLeavesForm $optIgnoreLeaves): self
+    {
+        return new self($this->tableIdent, $this->admPartition, $this->cacheKeysSpec, $optIgnoreLeaves);
     }
 }

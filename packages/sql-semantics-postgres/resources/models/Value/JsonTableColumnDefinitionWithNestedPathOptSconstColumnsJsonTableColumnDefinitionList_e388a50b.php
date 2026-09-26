@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonTableColumnDefinitionWithNestedPathOptSconstColumnsJsonTableColumnDefinitionList_e388a50b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonTableColumnDefinitionWithNestedPathOptSconstColumnsJsonTableColumnDefinitionList_e388a50b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JsonTableColumnDefinitionWithNestedPathOptSconstColumnsJsonTableColumnDefinitionList_e388a50b implements \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionForm, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class JsonTableColumnDefinitionWithNestedPathOptSconstColumnsJsonTableColu
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionListForm $jsonTableColumnDefinitionList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($pathOpt), 'The pathOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($sconst), 'The sconst must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonTableColumnDefinitionList), 'The jsonTableColumnDefinitionList must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +41,29 @@ final class JsonTableColumnDefinitionWithNestedPathOptSconstColumnsJsonTableColu
         $writer->append('(');
         $this->jsonTableColumnDefinitionList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new pathOpt, preserving every other field.
+     */
+    public function withPathOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\PathOptForm $pathOpt): self
+    {
+        return new self($pathOpt, $this->sconst, $this->jsonTableColumnDefinitionList);
+    }
+
+    /**
+     * Returns a copy with a new sconst, preserving every other field.
+     */
+    public function withSconst(\SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst): self
+    {
+        return new self($this->pathOpt, $sconst, $this->jsonTableColumnDefinitionList);
+    }
+
+    /**
+     * Returns a copy with a new jsonTableColumnDefinitionList, preserving every other field.
+     */
+    public function withJsonTableColumnDefinitionList(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionListForm $jsonTableColumnDefinitionList): self
+    {
+        return new self($this->pathOpt, $this->sconst, $jsonTableColumnDefinitionList);
     }
 }

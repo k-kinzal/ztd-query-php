@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ReplaceWithReplaceReplaceLockOptionInsert2InsertFieldSpec_d77d1c9e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ReplaceWithReplaceReplaceLockOptionInsert2InsertFieldSpec_d77d1c9e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ReplaceWithReplaceReplaceLockOptionInsert2InsertFieldSpec_d77d1c9e implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ExplanableCommandForm, \SqlSemantics\Statement\Model\MySql\Role\ReplaceForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class ReplaceWithReplaceReplaceLockOptionInsert2InsertFieldSpec_d77d1c9e i
         public readonly \SqlSemantics\Statement\Model\MySql\Role\Insert2Form $insert2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertFieldSpecForm $insertFieldSpec,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($replaceLockOption), 'The replaceLockOption must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($insert2), 'The insert2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($insertFieldSpec), 'The insertFieldSpec must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class ReplaceWithReplaceReplaceLockOptionInsert2InsertFieldSpec_d77d1c9e i
         $this->replaceLockOption->write($writer);
         $this->insert2->write($writer);
         $this->insertFieldSpec->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new replaceLockOption, preserving every other field.
+     */
+    public function withReplaceLockOption(\SqlSemantics\Statement\Model\MySql\Role\ReplaceLockOptionForm $replaceLockOption): self
+    {
+        return new self($replaceLockOption, $this->insert2, $this->insertFieldSpec);
+    }
+
+    /**
+     * Returns a copy with a new insert2, preserving every other field.
+     */
+    public function withInsert2(\SqlSemantics\Statement\Model\MySql\Role\Insert2Form $insert2): self
+    {
+        return new self($this->replaceLockOption, $insert2, $this->insertFieldSpec);
+    }
+
+    /**
+     * Returns a copy with a new insertFieldSpec, preserving every other field.
+     */
+    public function withInsertFieldSpec(\SqlSemantics\Statement\Model\MySql\Role\InsertFieldSpecForm $insertFieldSpec): self
+    {
+        return new self($this->replaceLockOption, $this->insert2, $insertFieldSpec);
     }
 }

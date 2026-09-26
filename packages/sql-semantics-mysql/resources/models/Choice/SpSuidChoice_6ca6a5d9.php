@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\SpSuidChoice_6ca6a5d9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\SpSuidChoice_6ca6a5d9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum SpSuidChoice_6ca6a5d9: string implements \SqlSemantics\Statement\Model\MySql\Role\SpCChisticForm, \SqlSemantics\Statement\Model\MySql\Role\SpChisticForm, \SqlSemantics\Statement\Model\MySql\Role\SpSuidForm

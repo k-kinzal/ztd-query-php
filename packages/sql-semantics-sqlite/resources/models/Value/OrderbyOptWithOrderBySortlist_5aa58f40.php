@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\OrderbyOptWithOrderBySortlist_5aa58f40 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\OrderbyOptWithOrderBySortlist_5aa58f40 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OrderbyOptWithOrderBySortlist_5aa58f40 implements \SqlSemantics\Statement\Model\Sqlite\Role\OrderbyOptForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm $sortlist,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($sortlist), 'The sortlist must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OrderbyOptWithOrderBySortlist_5aa58f40 implements \SqlSemantics\Stat
         $writer->append('ORDER');
         $writer->append('BY');
         $this->sortlist->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new sortlist, preserving every other field.
+     */
+    public function withSortlist(\SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm $sortlist): self
+    {
+        return new self($sortlist);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableElementListWithTableElementListTableElement_229f8430 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableElementListWithTableElementListTableElement_229f8430 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableElementListWithTableElementListTableElement_229f8430 implements \SqlSemantics\Statement\Model\MySql\Role\TableElementListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TableElementListWithTableElementListTableElement_229f8430 implements
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableElementListForm $tableElementList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableElementForm $tableElement,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableElementList), 'The tableElementList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableElement), 'The tableElement must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TableElementListWithTableElementListTableElement_229f8430 implements
         $this->tableElementList->write($writer);
         $writer->append(',');
         $this->tableElement->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableElementList, preserving every other field.
+     */
+    public function withTableElementList(\SqlSemantics\Statement\Model\MySql\Role\TableElementListForm $tableElementList): self
+    {
+        return new self($tableElementList, $this->tableElement);
+    }
+
+    /**
+     * Returns a copy with a new tableElement, preserving every other field.
+     */
+    public function withTableElement(\SqlSemantics\Statement\Model\MySql\Role\TableElementForm $tableElement): self
+    {
+        return new self($this->tableElementList, $tableElement);
     }
 }

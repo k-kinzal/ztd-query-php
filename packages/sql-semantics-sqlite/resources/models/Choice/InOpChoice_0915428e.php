@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\Sqlite\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Choice\InOpChoice_0915428e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Choice\InOpChoice_0915428e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum InOpChoice_0915428e: string implements \SqlSemantics\Statement\Model\Sqlite\Role\InOpForm

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterGenericOptionListWithAlterGenericOptionListAlterGenericOptionElem_d6da97ff $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterGenericOptionListWithAlterGenericOptionListAlterGenericOptionElem_d6da97ff $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterGenericOptionListWithAlterGenericOptionListAlterGenericOptionElem_d6da97ff implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterGenericOptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterGenericOptionListWithAlterGenericOptionListAlterGenericOptionEl
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AlterGenericOptionListForm $alterGenericOptionList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AlterGenericOptionElemForm $alterGenericOptionElem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($alterGenericOptionList), 'The alterGenericOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($alterGenericOptionElem), 'The alterGenericOptionElem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class AlterGenericOptionListWithAlterGenericOptionListAlterGenericOptionEl
         $this->alterGenericOptionList->write($writer);
         $writer->append(',');
         $this->alterGenericOptionElem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new alterGenericOptionList, preserving every other field.
+     */
+    public function withAlterGenericOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\AlterGenericOptionListForm $alterGenericOptionList): self
+    {
+        return new self($alterGenericOptionList, $this->alterGenericOptionElem);
+    }
+
+    /**
+     * Returns a copy with a new alterGenericOptionElem, preserving every other field.
+     */
+    public function withAlterGenericOptionElem(\SqlSemantics\Statement\Model\PostgreSql\Role\AlterGenericOptionElemForm $alterGenericOptionElem): self
+    {
+        return new self($this->alterGenericOptionList, $alterGenericOptionElem);
     }
 }

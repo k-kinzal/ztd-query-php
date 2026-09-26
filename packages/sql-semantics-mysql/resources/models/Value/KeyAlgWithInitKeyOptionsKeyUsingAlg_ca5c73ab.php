@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\KeyAlgWithInitKeyOptionsKeyUsingAlg_ca5c73ab $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\KeyAlgWithInitKeyOptionsKeyUsingAlg_ca5c73ab $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class KeyAlgWithInitKeyOptionsKeyUsingAlg_ca5c73ab implements \SqlSemantics\Statement\Model\MySql\Role\KeyAlgForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class KeyAlgWithInitKeyOptionsKeyUsingAlg_ca5c73ab implements \SqlSemantic
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InitKeyOptionsForm $initKeyOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyUsingAlgForm $keyUsingAlg,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($initKeyOptions), 'The initKeyOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyUsingAlg), 'The keyUsingAlg must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class KeyAlgWithInitKeyOptionsKeyUsingAlg_ca5c73ab implements \SqlSemantic
     {
         $this->initKeyOptions->write($writer);
         $this->keyUsingAlg->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new initKeyOptions, preserving every other field.
+     */
+    public function withInitKeyOptions(\SqlSemantics\Statement\Model\MySql\Role\InitKeyOptionsForm $initKeyOptions): self
+    {
+        return new self($initKeyOptions, $this->keyUsingAlg);
+    }
+
+    /**
+     * Returns a copy with a new keyUsingAlg, preserving every other field.
+     */
+    public function withKeyUsingAlg(\SqlSemantics\Statement\Model\MySql\Role\KeyUsingAlgForm $keyUsingAlg): self
+    {
+        return new self($this->initKeyOptions, $keyUsingAlg);
     }
 }

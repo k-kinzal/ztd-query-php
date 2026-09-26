@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CollationNameWithBinarySym_36e1af5b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CollationNameWithBinarySym_36e1af5b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CollationNameWithBinarySym_36e1af5b implements \SqlSemantics\Statement\Model\MySql\Role\CollationNameForm, \SqlSemantics\Statement\Model\MySql\Role\CollationNameOrDefaultForm

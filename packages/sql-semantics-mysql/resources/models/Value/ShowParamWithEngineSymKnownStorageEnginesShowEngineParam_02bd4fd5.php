@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithEngineSymKnownStorageEnginesShowEngineParam_02bd4fd5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithEngineSymKnownStorageEnginesShowEngineParam_02bd4fd5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ShowParamWithEngineSymKnownStorageEnginesShowEngineParam_02bd4fd5 implements \SqlSemantics\Statement\Model\MySql\Role\ShowParamForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ShowParamWithEngineSymKnownStorageEnginesShowEngineParam_02bd4fd5 im
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KnownStorageEnginesForm $knownStorageEngines,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ShowEngineParamForm $showEngineParam,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($knownStorageEngines), 'The knownStorageEngines must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($showEngineParam), 'The showEngineParam must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ShowParamWithEngineSymKnownStorageEnginesShowEngineParam_02bd4fd5 im
         $writer->append('ENGINE');
         $this->knownStorageEngines->write($writer);
         $this->showEngineParam->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new knownStorageEngines, preserving every other field.
+     */
+    public function withKnownStorageEngines(\SqlSemantics\Statement\Model\MySql\Role\KnownStorageEnginesForm $knownStorageEngines): self
+    {
+        return new self($knownStorageEngines, $this->showEngineParam);
+    }
+
+    /**
+     * Returns a copy with a new showEngineParam, preserving every other field.
+     */
+    public function withShowEngineParam(\SqlSemantics\Statement\Model\MySql\Role\ShowEngineParamForm $showEngineParam): self
+    {
+        return new self($this->knownStorageEngines, $showEngineParam);
     }
 }

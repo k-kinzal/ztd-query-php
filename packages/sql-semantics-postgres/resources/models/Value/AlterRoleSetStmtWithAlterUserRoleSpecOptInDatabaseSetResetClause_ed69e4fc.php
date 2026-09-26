@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterRoleSetStmtWithAlterUserRoleSpecOptInDatabaseSetResetClause_ed69e4fc $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterRoleSetStmtWithAlterUserRoleSpecOptInDatabaseSetResetClause_ed69e4fc $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterRoleSetStmtWithAlterUserRoleSpecOptInDatabaseSetResetClause_ed69e4fc implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterRoleSetStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterRoleSetStmtWithAlterUserRoleSpecOptInDatabaseSetResetClause_ed69e4fc implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterRoleSetStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterRoleSetStmtWithAlterUserRoleSpecOptInDatabaseSetResetClause_ed6
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptInDatabaseForm $optInDatabase,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetResetClauseForm $setResetClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleSpec), 'The roleSpec must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optInDatabase), 'The optInDatabase must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setResetClause), 'The setResetClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class AlterRoleSetStmtWithAlterUserRoleSpecOptInDatabaseSetResetClause_ed6
         $this->roleSpec->write($writer);
         $this->optInDatabase->write($writer);
         $this->setResetClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new roleSpec, preserving every other field.
+     */
+    public function withRoleSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec): self
+    {
+        return new self($roleSpec, $this->optInDatabase, $this->setResetClause);
+    }
+
+    /**
+     * Returns a copy with a new optInDatabase, preserving every other field.
+     */
+    public function withOptInDatabase(\SqlSemantics\Statement\Model\PostgreSql\Role\OptInDatabaseForm $optInDatabase): self
+    {
+        return new self($this->roleSpec, $optInDatabase, $this->setResetClause);
+    }
+
+    /**
+     * Returns a copy with a new setResetClause, preserving every other field.
+     */
+    public function withSetResetClause(\SqlSemantics\Statement\Model\PostgreSql\Role\SetResetClauseForm $setResetClause): self
+    {
+        return new self($this->roleSpec, $this->optInDatabase, $setResetClause);
     }
 }

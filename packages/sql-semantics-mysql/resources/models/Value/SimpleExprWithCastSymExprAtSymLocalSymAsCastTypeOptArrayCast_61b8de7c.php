@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SimpleExprWithCastSymExprAtSymLocalSymAsCastTypeOptArrayCast_61b8de7c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SimpleExprWithCastSymExprAtSymLocalSymAsCastTypeOptArrayCast_61b8de7c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SimpleExprWithCastSymExprAtSymLocalSymAsCastTypeOptArrayCast_61b8de7c implements \SqlSemantics\Statement\Model\MySql\Role\BitExprForm, \SqlSemantics\Statement\Model\MySql\Role\BoolPriForm, \SqlSemantics\Statement\Model\MySql\Role\ExprForm, \SqlSemantics\Statement\Model\MySql\Role\ExprListForm, \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\GeneratedColumnFuncForm, \SqlSemantics\Statement\Model\MySql\Role\GroupListForm, \SqlSemantics\Statement\Model\MySql\Role\GroupingExprForm, \SqlSemantics\Statement\Model\MySql\Role\InstallSetRvalueForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprListForm, \SqlSemantics\Statement\Model\MySql\Role\OptSpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\OptValuesForm, \SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm, \SqlSemantics\Statement\Model\MySql\Role\PartFuncExprForm, \SqlSemantics\Statement\Model\MySql\Role\PartFuncMaxForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueExprItemForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueItemForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueItemListForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueListForm, \SqlSemantics\Statement\Model\MySql\Role\PartValuesInForm, \SqlSemantics\Statement\Model\MySql\Role\PredicateForm, \SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm, \SqlSemantics\Statement\Model\MySql\Role\SpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\ValuesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class SimpleExprWithCastSymExprAtSymLocalSymAsCastTypeOptArrayCast_61b8de7
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CastTypeForm $castType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptArrayCastForm $optArrayCast,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($castType), 'The castType must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optArrayCast), 'The optArrayCast must be a generated immutable SQL value.');
     }
 
     /**
@@ -38,5 +43,29 @@ final class SimpleExprWithCastSymExprAtSymLocalSymAsCastTypeOptArrayCast_61b8de7
         $this->castType->write($writer);
         $this->optArrayCast->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
+    {
+        return new self($expr, $this->castType, $this->optArrayCast);
+    }
+
+    /**
+     * Returns a copy with a new castType, preserving every other field.
+     */
+    public function withCastType(\SqlSemantics\Statement\Model\MySql\Role\CastTypeForm $castType): self
+    {
+        return new self($this->expr, $castType, $this->optArrayCast);
+    }
+
+    /**
+     * Returns a copy with a new optArrayCast, preserving every other field.
+     */
+    public function withOptArrayCast(\SqlSemantics\Statement\Model\MySql\Role\OptArrayCastForm $optArrayCast): self
+    {
+        return new self($this->expr, $this->castType, $optArrayCast);
     }
 }

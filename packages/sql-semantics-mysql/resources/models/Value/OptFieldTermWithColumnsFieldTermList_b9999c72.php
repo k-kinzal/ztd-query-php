@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptFieldTermWithColumnsFieldTermList_b9999c72 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptFieldTermWithColumnsFieldTermList_b9999c72 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptFieldTermWithColumnsFieldTermList_b9999c72 implements \SqlSemantics\Statement\Model\MySql\Role\OptFieldTermForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptFieldTermWithColumnsFieldTermList_b9999c72 implements \SqlSemanti
         public readonly string $columns,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldTermListForm $fieldTermList,
     ) {
+        $this->assertMatchesPattern($columns, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['COLUMNS'], 'The columns must be a complete COLUMNS lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldTermList), 'The fieldTermList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class OptFieldTermWithColumnsFieldTermList_b9999c72 implements \SqlSemanti
     {
         $writer->append($this->columns);
         $this->fieldTermList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new columns, preserving every other field.
+     */
+    public function withColumns(string $columns): self
+    {
+        return new self($columns, $this->fieldTermList);
+    }
+
+    /**
+     * Returns a copy with a new fieldTermList, preserving every other field.
+     */
+    public function withFieldTermList(\SqlSemantics\Statement\Model\MySql\Role\FieldTermListForm $fieldTermList): self
+    {
+        return new self($this->columns, $fieldTermList);
     }
 }

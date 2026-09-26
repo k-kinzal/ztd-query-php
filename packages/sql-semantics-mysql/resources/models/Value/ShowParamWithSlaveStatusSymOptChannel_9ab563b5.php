@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithSlaveStatusSymOptChannel_9ab563b5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithSlaveStatusSymOptChannel_9ab563b5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ShowParamWithSlaveStatusSymOptChannel_9ab563b5 implements \SqlSemantics\Statement\Model\MySql\Role\ShowParamForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optChannel), 'The optChannel must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class ShowParamWithSlaveStatusSymOptChannel_9ab563b5 implements \SqlSemant
         $writer->append('SLAVE');
         $writer->append('STATUS');
         $this->optChannel->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optChannel, preserving every other field.
+     */
+    public function withOptChannel(\SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel): self
+    {
+        return new self($optChannel);
     }
 }

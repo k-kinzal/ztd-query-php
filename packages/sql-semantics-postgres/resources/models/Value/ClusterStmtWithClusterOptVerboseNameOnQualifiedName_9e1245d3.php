@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ClusterStmtWithClusterOptVerboseNameOnQualifiedName_9e1245d3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ClusterStmtWithClusterOptVerboseNameOnQualifiedName_9e1245d3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class ClusterStmtWithClusterOptVerboseNameOnQualifiedName_9e1245d3 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ClusterStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class ClusterStmtWithClusterOptVerboseNameOnQualifiedName_9e1245d3 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ClusterStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class ClusterStmtWithClusterOptVerboseNameOnQualifiedName_9e1245d3 impleme
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optVerbose), 'The optVerbose must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class ClusterStmtWithClusterOptVerboseNameOnQualifiedName_9e1245d3 impleme
         $this->name->write($writer);
         $writer->append('ON');
         $this->qualifiedName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optVerbose, preserving every other field.
+     */
+    public function withOptVerbose(\SqlSemantics\Statement\Model\PostgreSql\Role\OptVerboseForm $optVerbose): self
+    {
+        return new self($optVerbose, $this->name, $this->qualifiedName);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($this->optVerbose, $name, $this->qualifiedName);
+    }
+
+    /**
+     * Returns a copy with a new qualifiedName, preserving every other field.
+     */
+    public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
+    {
+        return new self($this->optVerbose, $this->name, $qualifiedName);
     }
 }

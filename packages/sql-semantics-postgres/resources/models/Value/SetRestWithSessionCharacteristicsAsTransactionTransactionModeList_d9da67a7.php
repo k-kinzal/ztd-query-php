@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SetRestWithSessionCharacteristicsAsTransactionTransactionModeList_d9da67a7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SetRestWithSessionCharacteristicsAsTransactionTransactionModeList_d9da67a7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SetRestWithSessionCharacteristicsAsTransactionTransactionModeList_d9da67a7 implements \SqlSemantics\Statement\Model\PostgreSql\Role\SetRestForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TransactionModeListForm $transactionModeList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($transactionModeList), 'The transactionModeList must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +35,13 @@ final class SetRestWithSessionCharacteristicsAsTransactionTransactionModeList_d9
         $writer->append('AS');
         $writer->append('TRANSACTION');
         $this->transactionModeList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new transactionModeList, preserving every other field.
+     */
+    public function withTransactionModeList(\SqlSemantics\Statement\Model\PostgreSql\Role\TransactionModeListForm $transactionModeList): self
+    {
+        return new self($transactionModeList);
     }
 }

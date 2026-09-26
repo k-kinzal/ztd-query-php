@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\FrameBoundSWithUnboundedPreceding_3bf546a5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\FrameBoundSWithUnboundedPreceding_3bf546a5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FrameBoundSWithUnboundedPreceding_3bf546a5 implements \SqlSemantics\Statement\Model\Sqlite\Role\FrameBoundSForm

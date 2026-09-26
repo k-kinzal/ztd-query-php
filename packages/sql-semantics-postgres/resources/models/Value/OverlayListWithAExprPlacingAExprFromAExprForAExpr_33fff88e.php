@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OverlayListWithAExprPlacingAExprFromAExprForAExpr_33fff88e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OverlayListWithAExprPlacingAExprFromAExprForAExpr_33fff88e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OverlayListWithAExprPlacingAExprFromAExprForAExpr_33fff88e implements \SqlSemantics\Statement\Model\PostgreSql\Role\OverlayListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class OverlayListWithAExprPlacingAExprFromAExprForAExpr_33fff88e implement
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr3,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr4,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr2), 'The aExpr2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr3), 'The aExpr3 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr4), 'The aExpr4 must be a generated immutable SQL value.');
     }
 
     /**
@@ -37,5 +43,37 @@ final class OverlayListWithAExprPlacingAExprFromAExprForAExpr_33fff88e implement
         $this->aExpr3->write($writer);
         $writer->append('FOR');
         $this->aExpr4->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new aExpr, preserving every other field.
+     */
+    public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
+    {
+        return new self($aExpr, $this->aExpr2, $this->aExpr3, $this->aExpr4);
+    }
+
+    /**
+     * Returns a copy with a new aExpr2, preserving every other field.
+     */
+    public function withAExpr2(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr2): self
+    {
+        return new self($this->aExpr, $aExpr2, $this->aExpr3, $this->aExpr4);
+    }
+
+    /**
+     * Returns a copy with a new aExpr3, preserving every other field.
+     */
+    public function withAExpr3(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr3): self
+    {
+        return new self($this->aExpr, $this->aExpr2, $aExpr3, $this->aExpr4);
+    }
+
+    /**
+     * Returns a copy with a new aExpr4, preserving every other field.
+     */
+    public function withAExpr4(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr4): self
+    {
+        return new self($this->aExpr, $this->aExpr2, $this->aExpr3, $aExpr4);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptHistogramUpdateParamWithOptHistogramNumBucketsOptHistogramAutoUpdate_3044e68c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptHistogramUpdateParamWithOptHistogramNumBucketsOptHistogramAutoUpdate_3044e68c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptHistogramUpdateParamWithOptHistogramNumBucketsOptHistogramAutoUpdate_3044e68c implements \SqlSemantics\Statement\Model\MySql\Role\OptHistogramUpdateParamForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptHistogramUpdateParamWithOptHistogramNumBucketsOptHistogramAutoUpd
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptHistogramNumBucketsForm $optHistogramNumBuckets,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptHistogramAutoUpdateForm $optHistogramAutoUpdate,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optHistogramNumBuckets), 'The optHistogramNumBuckets must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optHistogramAutoUpdate), 'The optHistogramAutoUpdate must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class OptHistogramUpdateParamWithOptHistogramNumBucketsOptHistogramAutoUpd
     {
         $this->optHistogramNumBuckets->write($writer);
         $this->optHistogramAutoUpdate->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optHistogramNumBuckets, preserving every other field.
+     */
+    public function withOptHistogramNumBuckets(\SqlSemantics\Statement\Model\MySql\Role\OptHistogramNumBucketsForm $optHistogramNumBuckets): self
+    {
+        return new self($optHistogramNumBuckets, $this->optHistogramAutoUpdate);
+    }
+
+    /**
+     * Returns a copy with a new optHistogramAutoUpdate, preserving every other field.
+     */
+    public function withOptHistogramAutoUpdate(\SqlSemantics\Statement\Model\MySql\Role\OptHistogramAutoUpdateForm $optHistogramAutoUpdate): self
+    {
+        return new self($this->optHistogramNumBuckets, $optHistogramAutoUpdate);
     }
 }

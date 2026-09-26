@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\WithClauseWithWithLaCteList_76f3e2d4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\WithClauseWithWithLaCteList_76f3e2d4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WithClauseWithWithLaCteList_76f3e2d4 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\WithClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class WithClauseWithWithLaCteList_76f3e2d4 implements \SqlSemantics\Statem
         public readonly string $withLa,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CteListForm $cteList,
     ) {
+        $this->assertMatchesPattern($withLa, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['WITH_LA'], 'The withLa must be a complete WITH_LA lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($cteList), 'The cteList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class WithClauseWithWithLaCteList_76f3e2d4 implements \SqlSemantics\Statem
     {
         $writer->append($this->withLa);
         $this->cteList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new withLa, preserving every other field.
+     */
+    public function withWithLa(string $withLa): self
+    {
+        return new self($withLa, $this->cteList);
+    }
+
+    /**
+     * Returns a copy with a new cteList, preserving every other field.
+     */
+    public function withCteList(\SqlSemantics\Statement\Model\PostgreSql\Role\CteListForm $cteList): self
+    {
+        return new self($this->withLa, $cteList);
     }
 }

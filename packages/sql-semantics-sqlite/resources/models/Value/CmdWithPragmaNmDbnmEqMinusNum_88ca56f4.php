@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithPragmaNmDbnmEqMinusNum_88ca56f4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithPragmaNmDbnmEqMinusNum_88ca56f4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CmdWithPragmaNmDbnmEqMinusNum_88ca56f4 implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm
+final class CmdWithPragmaNmDbnmEqMinusNum_88ca56f4 implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class CmdWithPragmaNmDbnmEqMinusNum_88ca56f4 implements \SqlSemantics\Stat
         public readonly string $eq,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\MinusNumForm $minusNum,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($dbnm), 'The dbnm must be a generated immutable SQL value.');
+        $this->assertMatchesPattern($eq, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['EQ'], 'The eq must be a complete EQ lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($minusNum), 'The minusNum must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +41,37 @@ final class CmdWithPragmaNmDbnmEqMinusNum_88ca56f4 implements \SqlSemantics\Stat
         $this->dbnm->write($writer);
         $writer->append($this->eq);
         $this->minusNum->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new nm, preserving every other field.
+     */
+    public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
+    {
+        return new self($nm, $this->dbnm, $this->eq, $this->minusNum);
+    }
+
+    /**
+     * Returns a copy with a new dbnm, preserving every other field.
+     */
+    public function withDbnm(\SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm): self
+    {
+        return new self($this->nm, $dbnm, $this->eq, $this->minusNum);
+    }
+
+    /**
+     * Returns a copy with a new eq, preserving every other field.
+     */
+    public function withEq(string $eq): self
+    {
+        return new self($this->nm, $this->dbnm, $eq, $this->minusNum);
+    }
+
+    /**
+     * Returns a copy with a new minusNum, preserving every other field.
+     */
+    public function withMinusNum(\SqlSemantics\Statement\Model\Sqlite\Role\MinusNumForm $minusNum): self
+    {
+        return new self($this->nm, $this->dbnm, $this->eq, $minusNum);
     }
 }

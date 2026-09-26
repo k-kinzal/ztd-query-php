@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableStmtWithAlterTableIfPExistsRelationExprAlterTableCmds_f1ff37a2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableStmtWithAlterTableIfPExistsRelationExprAlterTableCmds_f1ff37a2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterTableStmtWithAlterTableIfPExistsRelationExprAlterTableCmds_f1ff37a2 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterTableStmtWithAlterTableIfPExistsRelationExprAlterTableCmds_f1ff37a2 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterTableStmtWithAlterTableIfPExistsRelationExprAlterTableCmds_f1ff
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm $relationExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdsForm $alterTableCmds,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($relationExpr), 'The relationExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($alterTableCmds), 'The alterTableCmds must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +38,21 @@ final class AlterTableStmtWithAlterTableIfPExistsRelationExprAlterTableCmds_f1ff
         $writer->append('EXISTS');
         $this->relationExpr->write($writer);
         $this->alterTableCmds->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new relationExpr, preserving every other field.
+     */
+    public function withRelationExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm $relationExpr): self
+    {
+        return new self($relationExpr, $this->alterTableCmds);
+    }
+
+    /**
+     * Returns a copy with a new alterTableCmds, preserving every other field.
+     */
+    public function withAlterTableCmds(\SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdsForm $alterTableCmds): self
+    {
+        return new self($this->relationExpr, $alterTableCmds);
     }
 }

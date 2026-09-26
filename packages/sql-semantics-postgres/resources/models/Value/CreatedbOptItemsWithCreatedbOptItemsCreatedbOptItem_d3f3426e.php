@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreatedbOptItemsWithCreatedbOptItemsCreatedbOptItem_d3f3426e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreatedbOptItemsWithCreatedbOptItemsCreatedbOptItem_d3f3426e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CreatedbOptItemsWithCreatedbOptItemsCreatedbOptItem_d3f3426e implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreatedbOptItemsForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CreatedbOptListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CreatedbOptItemsWithCreatedbOptItemsCreatedbOptItem_d3f3426e impleme
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreatedbOptItemsForm $createdbOptItems,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreatedbOptItemForm $createdbOptItem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createdbOptItems), 'The createdbOptItems must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createdbOptItem), 'The createdbOptItem must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class CreatedbOptItemsWithCreatedbOptItemsCreatedbOptItem_d3f3426e impleme
     {
         $this->createdbOptItems->write($writer);
         $this->createdbOptItem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new createdbOptItems, preserving every other field.
+     */
+    public function withCreatedbOptItems(\SqlSemantics\Statement\Model\PostgreSql\Role\CreatedbOptItemsForm $createdbOptItems): self
+    {
+        return new self($createdbOptItems, $this->createdbOptItem);
+    }
+
+    /**
+     * Returns a copy with a new createdbOptItem, preserving every other field.
+     */
+    public function withCreatedbOptItem(\SqlSemantics\Statement\Model\PostgreSql\Role\CreatedbOptItemForm $createdbOptItem): self
+    {
+        return new self($this->createdbOptItems, $createdbOptItem);
     }
 }

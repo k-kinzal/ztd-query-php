@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateDatabaseOptionsWithCreateDatabaseOptionsCreateDatabaseOption_d4673b72 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateDatabaseOptionsWithCreateDatabaseOptionsCreateDatabaseOption_d4673b72 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CreateDatabaseOptionsWithCreateDatabaseOptionsCreateDatabaseOption_d4673b72 implements \SqlSemantics\Statement\Model\MySql\Role\CreateDatabaseOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptCreateDatabaseOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CreateDatabaseOptionsWithCreateDatabaseOptionsCreateDatabaseOption_d
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateDatabaseOptionsForm $createDatabaseOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateDatabaseOptionForm $createDatabaseOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createDatabaseOptions), 'The createDatabaseOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createDatabaseOption), 'The createDatabaseOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class CreateDatabaseOptionsWithCreateDatabaseOptionsCreateDatabaseOption_d
     {
         $this->createDatabaseOptions->write($writer);
         $this->createDatabaseOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new createDatabaseOptions, preserving every other field.
+     */
+    public function withCreateDatabaseOptions(\SqlSemantics\Statement\Model\MySql\Role\CreateDatabaseOptionsForm $createDatabaseOptions): self
+    {
+        return new self($createDatabaseOptions, $this->createDatabaseOption);
+    }
+
+    /**
+     * Returns a copy with a new createDatabaseOption, preserving every other field.
+     */
+    public function withCreateDatabaseOption(\SqlSemantics\Statement\Model\MySql\Role\CreateDatabaseOptionForm $createDatabaseOption): self
+    {
+        return new self($this->createDatabaseOptions, $createDatabaseOption);
     }
 }

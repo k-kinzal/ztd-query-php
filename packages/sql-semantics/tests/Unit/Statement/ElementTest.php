@@ -16,6 +16,8 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\SqlSemantics\Facade\Semantics::class)]
 #[UsesClass(\SqlSemantics\Statement\Statement::class)]
 #[UsesClass(\SqlSemantics\Statement\Writer::class)]
+#[UsesClass(\SqlSemantics\Statement\Assertion::class)]
+#[UsesClass(\SqlSemantics\Statement\ImmutableGraph::class)]
 #[UsesClass(\SqlSemantics\Core\Ast\DialectParser::class)]
 #[UsesClass(\SqlSemantics\Platform\MySql\Platform::class)]
 #[UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]

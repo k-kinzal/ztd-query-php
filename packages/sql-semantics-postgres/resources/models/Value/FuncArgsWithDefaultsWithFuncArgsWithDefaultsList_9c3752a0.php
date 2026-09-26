@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncArgsWithDefaultsWithFuncArgsWithDefaultsList_9c3752a0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncArgsWithDefaultsWithFuncArgsWithDefaultsList_9c3752a0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FuncArgsWithDefaultsWithFuncArgsWithDefaultsList_9c3752a0 implements \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsWithDefaultsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsWithDefaultsListForm $funcArgsWithDefaultsList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcArgsWithDefaultsList), 'The funcArgsWithDefaultsList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class FuncArgsWithDefaultsWithFuncArgsWithDefaultsList_9c3752a0 implements
         $writer->append('(');
         $this->funcArgsWithDefaultsList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new funcArgsWithDefaultsList, preserving every other field.
+     */
+    public function withFuncArgsWithDefaultsList(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsWithDefaultsListForm $funcArgsWithDefaultsList): self
+    {
+        return new self($funcArgsWithDefaultsList);
     }
 }

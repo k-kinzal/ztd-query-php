@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QueryExpressionOptionListWithQueryExpressionOptionListQueryExpressionOption_d48e0c57 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QueryExpressionOptionListWithQueryExpressionOptionListQueryExpressionOption_d48e0c57 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class QueryExpressionOptionListWithQueryExpressionOptionListQueryExpressionOption_d48e0c57 implements \SqlSemantics\Statement\Model\MySql\Role\OptQueryExpressionOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionOptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class QueryExpressionOptionListWithQueryExpressionOptionListQueryExpressio
         public readonly \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionOptionListForm $queryExpressionOptionList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionOptionForm $queryExpressionOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($queryExpressionOptionList), 'The queryExpressionOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($queryExpressionOption), 'The queryExpressionOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class QueryExpressionOptionListWithQueryExpressionOptionListQueryExpressio
     {
         $this->queryExpressionOptionList->write($writer);
         $this->queryExpressionOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new queryExpressionOptionList, preserving every other field.
+     */
+    public function withQueryExpressionOptionList(\SqlSemantics\Statement\Model\MySql\Role\QueryExpressionOptionListForm $queryExpressionOptionList): self
+    {
+        return new self($queryExpressionOptionList, $this->queryExpressionOption);
+    }
+
+    /**
+     * Returns a copy with a new queryExpressionOption, preserving every other field.
+     */
+    public function withQueryExpressionOption(\SqlSemantics\Statement\Model\MySql\Role\QueryExpressionOptionForm $queryExpressionOption): self
+    {
+        return new self($this->queryExpressionOptionList, $queryExpressionOption);
     }
 }

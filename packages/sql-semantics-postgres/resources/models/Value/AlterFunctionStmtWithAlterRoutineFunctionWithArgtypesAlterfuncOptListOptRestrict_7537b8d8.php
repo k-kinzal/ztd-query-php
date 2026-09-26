@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterFunctionStmtWithAlterRoutineFunctionWithArgtypesAlterfuncOptListOptRestrict_7537b8d8 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterFunctionStmtWithAlterRoutineFunctionWithArgtypesAlterfuncOptListOptRestrict_7537b8d8 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterFunctionStmtWithAlterRoutineFunctionWithArgtypesAlterfuncOptListOptRestrict_7537b8d8 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterFunctionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterFunctionStmtWithAlterRoutineFunctionWithArgtypesAlterfuncOptListOptRestrict_7537b8d8 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterFunctionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterFunctionStmtWithAlterRoutineFunctionWithArgtypesAlterfuncOptLis
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AlterfuncOptListForm $alterfuncOptList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptRestrictForm $optRestrict,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($functionWithArgtypes), 'The functionWithArgtypes must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($alterfuncOptList), 'The alterfuncOptList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optRestrict), 'The optRestrict must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class AlterFunctionStmtWithAlterRoutineFunctionWithArgtypesAlterfuncOptLis
         $this->functionWithArgtypes->write($writer);
         $this->alterfuncOptList->write($writer);
         $this->optRestrict->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new functionWithArgtypes, preserving every other field.
+     */
+    public function withFunctionWithArgtypes(\SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm $functionWithArgtypes): self
+    {
+        return new self($functionWithArgtypes, $this->alterfuncOptList, $this->optRestrict);
+    }
+
+    /**
+     * Returns a copy with a new alterfuncOptList, preserving every other field.
+     */
+    public function withAlterfuncOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\AlterfuncOptListForm $alterfuncOptList): self
+    {
+        return new self($this->functionWithArgtypes, $alterfuncOptList, $this->optRestrict);
+    }
+
+    /**
+     * Returns a copy with a new optRestrict, preserving every other field.
+     */
+    public function withOptRestrict(\SqlSemantics\Statement\Model\PostgreSql\Role\OptRestrictForm $optRestrict): self
+    {
+        return new self($this->functionWithArgtypes, $this->alterfuncOptList, $optRestrict);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\HandlerNameWithNameAttrs_9d1f4cad $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\HandlerNameWithNameAttrs_9d1f4cad $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class HandlerNameWithNameAttrs_9d1f4cad implements \SqlSemantics\Statement\Model\PostgreSql\Role\HandlerNameForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class HandlerNameWithNameAttrs_9d1f4cad implements \SqlSemantics\Statement
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AttrsForm $attrs,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($attrs), 'The attrs must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class HandlerNameWithNameAttrs_9d1f4cad implements \SqlSemantics\Statement
     {
         $this->name->write($writer);
         $this->attrs->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($name, $this->attrs);
+    }
+
+    /**
+     * Returns a copy with a new attrs, preserving every other field.
+     */
+    public function withAttrs(\SqlSemantics\Statement\Model\PostgreSql\Role\AttrsForm $attrs): self
+    {
+        return new self($this->name, $attrs);
     }
 }

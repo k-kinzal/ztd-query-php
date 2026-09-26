@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldTermListWithFieldTermListFieldTerm_00595581 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldTermListWithFieldTermListFieldTerm_00595581 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FieldTermListWithFieldTermListFieldTerm_00595581 implements \SqlSemantics\Statement\Model\MySql\Role\FieldTermListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FieldTermListWithFieldTermListFieldTerm_00595581 implements \SqlSema
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldTermListForm $fieldTermList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldTermForm $fieldTerm,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldTermList), 'The fieldTermList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldTerm), 'The fieldTerm must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class FieldTermListWithFieldTermListFieldTerm_00595581 implements \SqlSema
     {
         $this->fieldTermList->write($writer);
         $this->fieldTerm->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new fieldTermList, preserving every other field.
+     */
+    public function withFieldTermList(\SqlSemantics\Statement\Model\MySql\Role\FieldTermListForm $fieldTermList): self
+    {
+        return new self($fieldTermList, $this->fieldTerm);
+    }
+
+    /**
+     * Returns a copy with a new fieldTerm, preserving every other field.
+     */
+    public function withFieldTerm(\SqlSemantics\Statement\Model\MySql\Role\FieldTermForm $fieldTerm): self
+    {
+        return new self($this->fieldTermList, $fieldTerm);
     }
 }

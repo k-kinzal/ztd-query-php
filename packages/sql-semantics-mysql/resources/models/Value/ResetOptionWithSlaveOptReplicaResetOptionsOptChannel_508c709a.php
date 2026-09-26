@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ResetOptionWithSlaveOptReplicaResetOptionsOptChannel_508c709a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ResetOptionWithSlaveOptReplicaResetOptionsOptChannel_508c709a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ResetOptionWithSlaveOptReplicaResetOptionsOptChannel_508c709a implements \SqlSemantics\Statement\Model\MySql\Role\ResetOptionForm, \SqlSemantics\Statement\Model\MySql\Role\ResetOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ResetOptionWithSlaveOptReplicaResetOptionsOptChannel_508c709a implem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptReplicaResetOptionsForm $optReplicaResetOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optReplicaResetOptions), 'The optReplicaResetOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optChannel), 'The optChannel must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ResetOptionWithSlaveOptReplicaResetOptionsOptChannel_508c709a implem
         $writer->append('SLAVE');
         $this->optReplicaResetOptions->write($writer);
         $this->optChannel->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optReplicaResetOptions, preserving every other field.
+     */
+    public function withOptReplicaResetOptions(\SqlSemantics\Statement\Model\MySql\Role\OptReplicaResetOptionsForm $optReplicaResetOptions): self
+    {
+        return new self($optReplicaResetOptions, $this->optChannel);
+    }
+
+    /**
+     * Returns a copy with a new optChannel, preserving every other field.
+     */
+    public function withOptChannel(\SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel): self
+    {
+        return new self($this->optReplicaResetOptions, $optChannel);
     }
 }

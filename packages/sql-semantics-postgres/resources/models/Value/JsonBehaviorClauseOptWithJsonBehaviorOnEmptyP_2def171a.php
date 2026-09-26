@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonBehaviorClauseOptWithJsonBehaviorOnEmptyP_2def171a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonBehaviorClauseOptWithJsonBehaviorOnEmptyP_2def171a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JsonBehaviorClauseOptWithJsonBehaviorOnEmptyP_2def171a implements \SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorClauseOptForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorForm $jsonBehavior,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonBehavior), 'The jsonBehavior must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class JsonBehaviorClauseOptWithJsonBehaviorOnEmptyP_2def171a implements \S
         $this->jsonBehavior->write($writer);
         $writer->append('ON');
         $writer->append('EMPTY');
+    }
+
+    /**
+     * Returns a copy with a new jsonBehavior, preserving every other field.
+     */
+    public function withJsonBehavior(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorForm $jsonBehavior): self
+    {
+        return new self($jsonBehavior);
     }
 }

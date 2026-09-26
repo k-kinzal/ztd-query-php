@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WsLevelListItemWithWsLevelNumberWsLevelFlags_816157c2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WsLevelListItemWithWsLevelNumberWsLevelFlags_816157c2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WsLevelListItemWithWsLevelNumberWsLevelFlags_816157c2 implements \SqlSemantics\Statement\Model\MySql\Role\WsLevelListForm, \SqlSemantics\Statement\Model\MySql\Role\WsLevelListItemForm, \SqlSemantics\Statement\Model\MySql\Role\WsLevelListOrRangeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class WsLevelListItemWithWsLevelNumberWsLevelFlags_816157c2 implements \Sq
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WsLevelNumberForm $wsLevelNumber,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WsLevelFlagsForm $wsLevelFlags,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($wsLevelNumber), 'The wsLevelNumber must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($wsLevelFlags), 'The wsLevelFlags must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class WsLevelListItemWithWsLevelNumberWsLevelFlags_816157c2 implements \Sq
     {
         $this->wsLevelNumber->write($writer);
         $this->wsLevelFlags->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new wsLevelNumber, preserving every other field.
+     */
+    public function withWsLevelNumber(\SqlSemantics\Statement\Model\MySql\Role\WsLevelNumberForm $wsLevelNumber): self
+    {
+        return new self($wsLevelNumber, $this->wsLevelFlags);
+    }
+
+    /**
+     * Returns a copy with a new wsLevelFlags, preserving every other field.
+     */
+    public function withWsLevelFlags(\SqlSemantics\Statement\Model\MySql\Role\WsLevelFlagsForm $wsLevelFlags): self
+    {
+        return new self($this->wsLevelNumber, $wsLevelFlags);
     }
 }

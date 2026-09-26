@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SeqOptListWithSeqOptListSeqOptElem_b85c544d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SeqOptListWithSeqOptListSeqOptElem_b85c544d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SeqOptListWithSeqOptListSeqOptElem_b85c544d implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptSeqOptListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SeqOptListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SeqOptListWithSeqOptListSeqOptElem_b85c544d implements \SqlSemantics
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SeqOptListForm $seqOptList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SeqOptElemForm $seqOptElem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($seqOptList), 'The seqOptList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($seqOptElem), 'The seqOptElem must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class SeqOptListWithSeqOptListSeqOptElem_b85c544d implements \SqlSemantics
     {
         $this->seqOptList->write($writer);
         $this->seqOptElem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new seqOptList, preserving every other field.
+     */
+    public function withSeqOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\SeqOptListForm $seqOptList): self
+    {
+        return new self($seqOptList, $this->seqOptElem);
+    }
+
+    /**
+     * Returns a copy with a new seqOptElem, preserving every other field.
+     */
+    public function withSeqOptElem(\SqlSemantics\Statement\Model\PostgreSql\Role\SeqOptElemForm $seqOptElem): self
+    {
+        return new self($this->seqOptList, $seqOptElem);
     }
 }

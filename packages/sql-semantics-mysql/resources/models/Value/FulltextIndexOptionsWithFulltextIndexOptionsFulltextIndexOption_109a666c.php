@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FulltextIndexOptionsWithFulltextIndexOptionsFulltextIndexOption_109a666c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FulltextIndexOptionsWithFulltextIndexOptionsFulltextIndexOption_109a666c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FulltextIndexOptionsWithFulltextIndexOptionsFulltextIndexOption_109a666c implements \SqlSemantics\Statement\Model\MySql\Role\FulltextIndexOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptFulltextIndexOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FulltextIndexOptionsWithFulltextIndexOptionsFulltextIndexOption_109a
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FulltextIndexOptionsForm $fulltextIndexOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FulltextIndexOptionForm $fulltextIndexOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fulltextIndexOptions), 'The fulltextIndexOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fulltextIndexOption), 'The fulltextIndexOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class FulltextIndexOptionsWithFulltextIndexOptionsFulltextIndexOption_109a
     {
         $this->fulltextIndexOptions->write($writer);
         $this->fulltextIndexOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new fulltextIndexOptions, preserving every other field.
+     */
+    public function withFulltextIndexOptions(\SqlSemantics\Statement\Model\MySql\Role\FulltextIndexOptionsForm $fulltextIndexOptions): self
+    {
+        return new self($fulltextIndexOptions, $this->fulltextIndexOption);
+    }
+
+    /**
+     * Returns a copy with a new fulltextIndexOption, preserving every other field.
+     */
+    public function withFulltextIndexOption(\SqlSemantics\Statement\Model\MySql\Role\FulltextIndexOptionForm $fulltextIndexOption): self
+    {
+        return new self($this->fulltextIndexOptions, $fulltextIndexOption);
     }
 }

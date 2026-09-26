@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateSelectWithSelectSymSelectOptionsSelectItemListTableExpression_cb9159ec $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateSelectWithSelectSymSelectOptionsSelectItemListTableExpression_cb9159ec $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CreateSelectWithSelectSymSelectOptionsSelectItemListTableExpression_cb9159ec implements \SqlSemantics\Statement\Model\MySql\Role\CreateSelectForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CreateSelectWithSelectSymSelectOptionsSelectItemListTableExpression_
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm $projections,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableExpressionForm $tableExpression,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($options), 'The options must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($projections), 'The projections must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableExpression), 'The tableExpression must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class CreateSelectWithSelectSymSelectOptionsSelectItemListTableExpression_
         $this->options->write($writer);
         $this->projections->write($writer);
         $this->tableExpression->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new options, preserving every other field.
+     */
+    public function withOptions(\SqlSemantics\Statement\Model\MySql\Role\SelectOptionsForm $options): self
+    {
+        return new self($options, $this->projections, $this->tableExpression);
+    }
+
+    /**
+     * Returns a copy with a new projections, preserving every other field.
+     */
+    public function withProjections(\SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm $projections): self
+    {
+        return new self($this->options, $projections, $this->tableExpression);
+    }
+
+    /**
+     * Returns a copy with a new tableExpression, preserving every other field.
+     */
+    public function withTableExpression(\SqlSemantics\Statement\Model\MySql\Role\TableExpressionForm $tableExpression): self
+    {
+        return new self($this->options, $this->projections, $tableExpression);
     }
 }

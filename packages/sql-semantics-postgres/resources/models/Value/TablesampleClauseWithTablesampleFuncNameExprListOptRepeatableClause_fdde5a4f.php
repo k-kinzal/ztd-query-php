@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TablesampleClauseWithTablesampleFuncNameExprListOptRepeatableClause_fdde5a4f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TablesampleClauseWithTablesampleFuncNameExprListOptRepeatableClause_fdde5a4f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TablesampleClauseWithTablesampleFuncNameExprListOptRepeatableClause_fdde5a4f implements \SqlSemantics\Statement\Model\PostgreSql\Role\TablesampleClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class TablesampleClauseWithTablesampleFuncNameExprListOptRepeatableClause_
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm $exprList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptRepeatableClauseForm $optRepeatableClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcName), 'The funcName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($exprList), 'The exprList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optRepeatableClause), 'The optRepeatableClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +40,29 @@ final class TablesampleClauseWithTablesampleFuncNameExprListOptRepeatableClause_
         $this->exprList->write($writer);
         $writer->append(')');
         $this->optRepeatableClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new funcName, preserving every other field.
+     */
+    public function withFuncName(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm $funcName): self
+    {
+        return new self($funcName, $this->exprList, $this->optRepeatableClause);
+    }
+
+    /**
+     * Returns a copy with a new exprList, preserving every other field.
+     */
+    public function withExprList(\SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm $exprList): self
+    {
+        return new self($this->funcName, $exprList, $this->optRepeatableClause);
+    }
+
+    /**
+     * Returns a copy with a new optRepeatableClause, preserving every other field.
+     */
+    public function withOptRepeatableClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptRepeatableClauseForm $optRepeatableClause): self
+    {
+        return new self($this->funcName, $this->exprList, $optRepeatableClause);
     }
 }

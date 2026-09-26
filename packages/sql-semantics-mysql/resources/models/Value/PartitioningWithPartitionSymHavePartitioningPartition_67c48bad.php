@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PartitioningWithPartitionSymHavePartitioningPartition_67c48bad $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PartitioningWithPartitionSymHavePartitioningPartition_67c48bad $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PartitioningWithPartitionSymHavePartitioningPartition_67c48bad implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\OptCreatePartitioningForm, \SqlSemantics\Statement\Model\MySql\Role\OptPartitioningForm, \SqlSemantics\Statement\Model\MySql\Role\PartitioningForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class PartitioningWithPartitionSymHavePartitioningPartition_67c48bad imple
         public readonly \SqlSemantics\Statement\Model\MySql\Role\HavePartitioningForm $havePartitioning,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartitionForm $partition,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($havePartitioning), 'The havePartitioning must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partition), 'The partition must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class PartitioningWithPartitionSymHavePartitioningPartition_67c48bad imple
         $writer->append('PARTITION');
         $this->havePartitioning->write($writer);
         $this->partition->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new havePartitioning, preserving every other field.
+     */
+    public function withHavePartitioning(\SqlSemantics\Statement\Model\MySql\Role\HavePartitioningForm $havePartitioning): self
+    {
+        return new self($havePartitioning, $this->partition);
+    }
+
+    /**
+     * Returns a copy with a new partition, preserving every other field.
+     */
+    public function withPartition(\SqlSemantics\Statement\Model\MySql\Role\PartitionForm $partition): self
+    {
+        return new self($this->havePartitioning, $partition);
     }
 }

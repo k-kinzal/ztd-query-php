@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Role;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Role\ParameterNameListForm $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Role\ParameterNameListForm $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 interface ParameterNameListForm extends \SqlSemantics\Statement\Element

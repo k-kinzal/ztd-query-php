@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SlaveThreadOptionWithRelayThread_ff2f8382 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SlaveThreadOptionWithRelayThread_ff2f8382 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SlaveThreadOptionWithRelayThread_ff2f8382 implements \SqlSemantics\Statement\Model\MySql\Role\OptSlaveThreadOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\SlaveThreadOptionForm, \SqlSemantics\Statement\Model\MySql\Role\SlaveThreadOptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $relayThread,
     ) {
+        $this->assertMatchesPattern($relayThread, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['RELAY_THREAD'], 'The relayThread must be a complete RELAY_THREAD lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class SlaveThreadOptionWithRelayThread_ff2f8382 implements \SqlSemantics\S
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->relayThread);
+    }
+
+    /**
+     * Returns a copy with a new relayThread, preserving every other field.
+     */
+    public function withRelayThread(string $relayThread): self
+    {
+        return new self($relayThread);
     }
 }

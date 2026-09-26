@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AggregateWithArgtypesListWithAggregateWithArgtypesListAggregateWithArgtypes_b46e6084 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AggregateWithArgtypesListWithAggregateWithArgtypesListAggregateWithArgtypes_b46e6084 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AggregateWithArgtypesListWithAggregateWithArgtypesListAggregateWithArgtypes_b46e6084 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AggregateWithArgtypesListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AggregateWithArgtypesListWithAggregateWithArgtypesListAggregateWithA
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AggregateWithArgtypesListForm $aggregateWithArgtypesList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AggregateWithArgtypesForm $aggregateWithArgtypes,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aggregateWithArgtypesList), 'The aggregateWithArgtypesList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aggregateWithArgtypes), 'The aggregateWithArgtypes must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class AggregateWithArgtypesListWithAggregateWithArgtypesListAggregateWithA
         $this->aggregateWithArgtypesList->write($writer);
         $writer->append(',');
         $this->aggregateWithArgtypes->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new aggregateWithArgtypesList, preserving every other field.
+     */
+    public function withAggregateWithArgtypesList(\SqlSemantics\Statement\Model\PostgreSql\Role\AggregateWithArgtypesListForm $aggregateWithArgtypesList): self
+    {
+        return new self($aggregateWithArgtypesList, $this->aggregateWithArgtypes);
+    }
+
+    /**
+     * Returns a copy with a new aggregateWithArgtypes, preserving every other field.
+     */
+    public function withAggregateWithArgtypes(\SqlSemantics\Statement\Model\PostgreSql\Role\AggregateWithArgtypesForm $aggregateWithArgtypes): self
+    {
+        return new self($this->aggregateWithArgtypesList, $aggregateWithArgtypes);
     }
 }

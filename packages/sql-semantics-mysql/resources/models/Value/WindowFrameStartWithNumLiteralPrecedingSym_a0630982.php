@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WindowFrameStartWithNumLiteralPrecedingSym_a0630982 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WindowFrameStartWithNumLiteralPrecedingSym_a0630982 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WindowFrameStartWithNumLiteralPrecedingSym_a0630982 implements \SqlSemantics\Statement\Model\MySql\Role\WindowFrameBoundForm, \SqlSemantics\Statement\Model\MySql\Role\WindowFrameExtentForm, \SqlSemantics\Statement\Model\MySql\Role\WindowFrameStartForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NumLiteralForm $numLiteral,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($numLiteral), 'The numLiteral must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class WindowFrameStartWithNumLiteralPrecedingSym_a0630982 implements \SqlS
     {
         $this->numLiteral->write($writer);
         $writer->append('PRECEDING');
+    }
+
+    /**
+     * Returns a copy with a new numLiteral, preserving every other field.
+     */
+    public function withNumLiteral(\SqlSemantics\Statement\Model\MySql\Role\NumLiteralForm $numLiteral): self
+    {
+        return new self($numLiteral);
     }
 }

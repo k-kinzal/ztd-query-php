@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonTableColumnDefinitionWithColIdTypenameJsonFormatClauseJsonTableColumnPathClauseOptJsonWrapperBehavio_839d0923 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonTableColumnDefinitionWithColIdTypenameJsonFormatClauseJsonTableColumnPathClauseOptJsonWrapperBehavio_839d0923 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JsonTableColumnDefinitionWithColIdTypenameJsonFormatClauseJsonTableColumnPathClauseOptJsonWrapperBehavio_839d0923 implements \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionForm, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -26,6 +28,13 @@ final class JsonTableColumnDefinitionWithColIdTypenameJsonFormatClauseJsonTableC
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonQuotesClauseOptForm $jsonQuotesClauseOpt,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorClauseOptForm $jsonBehaviorClauseOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonFormatClause), 'The jsonFormatClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonTableColumnPathClauseOpt), 'The jsonTableColumnPathClauseOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonWrapperBehavior), 'The jsonWrapperBehavior must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonQuotesClauseOpt), 'The jsonQuotesClauseOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonBehaviorClauseOpt), 'The jsonBehaviorClauseOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -40,5 +49,61 @@ final class JsonTableColumnDefinitionWithColIdTypenameJsonFormatClauseJsonTableC
         $this->jsonWrapperBehavior->write($writer);
         $this->jsonQuotesClauseOpt->write($writer);
         $this->jsonBehaviorClauseOpt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($colId, $this->typename, $this->jsonFormatClause, $this->jsonTableColumnPathClauseOpt, $this->jsonWrapperBehavior, $this->jsonQuotesClauseOpt, $this->jsonBehaviorClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new typename, preserving every other field.
+     */
+    public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
+    {
+        return new self($this->colId, $typename, $this->jsonFormatClause, $this->jsonTableColumnPathClauseOpt, $this->jsonWrapperBehavior, $this->jsonQuotesClauseOpt, $this->jsonBehaviorClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new jsonFormatClause, preserving every other field.
+     */
+    public function withJsonFormatClause(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonFormatClauseForm $jsonFormatClause): self
+    {
+        return new self($this->colId, $this->typename, $jsonFormatClause, $this->jsonTableColumnPathClauseOpt, $this->jsonWrapperBehavior, $this->jsonQuotesClauseOpt, $this->jsonBehaviorClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new jsonTableColumnPathClauseOpt, preserving every other field.
+     */
+    public function withJsonTableColumnPathClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnPathClauseOptForm $jsonTableColumnPathClauseOpt): self
+    {
+        return new self($this->colId, $this->typename, $this->jsonFormatClause, $jsonTableColumnPathClauseOpt, $this->jsonWrapperBehavior, $this->jsonQuotesClauseOpt, $this->jsonBehaviorClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new jsonWrapperBehavior, preserving every other field.
+     */
+    public function withJsonWrapperBehavior(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonWrapperBehaviorForm $jsonWrapperBehavior): self
+    {
+        return new self($this->colId, $this->typename, $this->jsonFormatClause, $this->jsonTableColumnPathClauseOpt, $jsonWrapperBehavior, $this->jsonQuotesClauseOpt, $this->jsonBehaviorClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new jsonQuotesClauseOpt, preserving every other field.
+     */
+    public function withJsonQuotesClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonQuotesClauseOptForm $jsonQuotesClauseOpt): self
+    {
+        return new self($this->colId, $this->typename, $this->jsonFormatClause, $this->jsonTableColumnPathClauseOpt, $this->jsonWrapperBehavior, $jsonQuotesClauseOpt, $this->jsonBehaviorClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new jsonBehaviorClauseOpt, preserving every other field.
+     */
+    public function withJsonBehaviorClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorClauseOptForm $jsonBehaviorClauseOpt): self
+    {
+        return new self($this->colId, $this->typename, $this->jsonFormatClause, $this->jsonTableColumnPathClauseOpt, $this->jsonWrapperBehavior, $this->jsonQuotesClauseOpt, $jsonBehaviorClauseOpt);
     }
 }

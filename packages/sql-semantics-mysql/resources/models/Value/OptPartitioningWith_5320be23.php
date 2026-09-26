@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptPartitioningWith_5320be23 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptPartitioningWith_5320be23 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptPartitioningWith_5320be23 implements \SqlSemantics\Statement\Model\MySql\Role\OptCreatePartitioningForm, \SqlSemantics\Statement\Model\MySql\Role\OptPartitioningForm

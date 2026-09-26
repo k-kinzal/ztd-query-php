@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableLockWithTableIdentOptTableAliasLockOption_e396abc1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableLockWithTableIdentOptTableAliasLockOption_e396abc1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableLockWithTableIdentOptTableAliasLockOption_e396abc1 implements \SqlSemantics\Statement\Model\MySql\Role\TableLockForm, \SqlSemantics\Statement\Model\MySql\Role\TableLockListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class TableLockWithTableIdentOptTableAliasLockOption_e396abc1 implements \
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptTableAliasForm $optTableAlias,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LockOptionForm $lockOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optTableAlias), 'The optTableAlias must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($lockOption), 'The lockOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class TableLockWithTableIdentOptTableAliasLockOption_e396abc1 implements \
         $this->tableIdent->write($writer);
         $this->optTableAlias->write($writer);
         $this->lockOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($tableIdent, $this->optTableAlias, $this->lockOption);
+    }
+
+    /**
+     * Returns a copy with a new optTableAlias, preserving every other field.
+     */
+    public function withOptTableAlias(\SqlSemantics\Statement\Model\MySql\Role\OptTableAliasForm $optTableAlias): self
+    {
+        return new self($this->tableIdent, $optTableAlias, $this->lockOption);
+    }
+
+    /**
+     * Returns a copy with a new lockOption, preserving every other field.
+     */
+    public function withLockOption(\SqlSemantics\Statement\Model\MySql\Role\LockOptionForm $lockOption): self
+    {
+        return new self($this->tableIdent, $this->optTableAlias, $lockOption);
     }
 }

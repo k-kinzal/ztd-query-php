@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ObjectPrivilegeWithCreateRoutineSym_ed81b2fd $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ObjectPrivilegeWithCreateRoutineSym_ed81b2fd $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ObjectPrivilegeWithCreateRoutineSym_ed81b2fd implements \SqlSemantics\Statement\Model\MySql\Role\GrantPrivilegesForm, \SqlSemantics\Statement\Model\MySql\Role\ObjectPrivilegeForm, \SqlSemantics\Statement\Model\MySql\Role\ObjectPrivilegeListForm

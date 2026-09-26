@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpChisticWithReadsSymSqlSymDataSym_c9f0d3ea $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpChisticWithReadsSymSqlSymDataSym_c9f0d3ea $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpChisticWithReadsSymSqlSymDataSym_c9f0d3ea implements \SqlSemantics\Statement\Model\MySql\Role\SpCChisticForm, \SqlSemantics\Statement\Model\MySql\Role\SpChisticForm

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterTablespaceOptionsWithAlterTablespaceOptionsAlterTablespaceOption_514a8fd4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterTablespaceOptionsWithAlterTablespaceOptionsAlterTablespaceOption_514a8fd4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterTablespaceOptionsWithAlterTablespaceOptionsAlterTablespaceOption_514a8fd4 implements \SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterTablespaceOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterTablespaceOptionsWithAlterTablespaceOptionsAlterTablespaceOptio
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceOptionsForm $alterTablespaceOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceOptionForm $alterTablespaceOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterTablespaceOptions), 'The alterTablespaceOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterTablespaceOption), 'The alterTablespaceOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class AlterTablespaceOptionsWithAlterTablespaceOptionsAlterTablespaceOptio
         $this->alterTablespaceOptions->write($writer);
         $writer->append(',');
         $this->alterTablespaceOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new alterTablespaceOptions, preserving every other field.
+     */
+    public function withAlterTablespaceOptions(\SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceOptionsForm $alterTablespaceOptions): self
+    {
+        return new self($alterTablespaceOptions, $this->alterTablespaceOption);
+    }
+
+    /**
+     * Returns a copy with a new alterTablespaceOption, preserving every other field.
+     */
+    public function withAlterTablespaceOption(\SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceOptionForm $alterTablespaceOption): self
+    {
+        return new self($this->alterTablespaceOptions, $alterTablespaceOption);
     }
 }

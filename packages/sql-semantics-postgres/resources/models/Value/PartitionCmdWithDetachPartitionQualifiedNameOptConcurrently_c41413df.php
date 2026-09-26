@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PartitionCmdWithDetachPartitionQualifiedNameOptConcurrently_c41413df $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PartitionCmdWithDetachPartitionQualifiedNameOptConcurrently_c41413df $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PartitionCmdWithDetachPartitionQualifiedNameOptConcurrently_c41413df implements \SqlSemantics\Statement\Model\PostgreSql\Role\PartitionCmdForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class PartitionCmdWithDetachPartitionQualifiedNameOptConcurrently_c41413df
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptConcurrentlyForm $optConcurrently,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optConcurrently), 'The optConcurrently must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class PartitionCmdWithDetachPartitionQualifiedNameOptConcurrently_c41413df
         $writer->append('PARTITION');
         $this->qualifiedName->write($writer);
         $this->optConcurrently->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new qualifiedName, preserving every other field.
+     */
+    public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
+    {
+        return new self($qualifiedName, $this->optConcurrently);
+    }
+
+    /**
+     * Returns a copy with a new optConcurrently, preserving every other field.
+     */
+    public function withOptConcurrently(\SqlSemantics\Statement\Model\PostgreSql\Role\OptConcurrentlyForm $optConcurrently): self
+    {
+        return new self($this->qualifiedName, $optConcurrently);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptHistogramWithUpdateSymHistogramSymOnSymIdentStringListOptHistogramUpdateParam_1ccea86d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptHistogramWithUpdateSymHistogramSymOnSymIdentStringListOptHistogramUpdateParam_1ccea86d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptHistogramWithUpdateSymHistogramSymOnSymIdentStringListOptHistogramUpdateParam_1ccea86d implements \SqlSemantics\Statement\Model\MySql\Role\OptHistogramForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptHistogramWithUpdateSymHistogramSymOnSymIdentStringListOptHistogra
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentStringListForm $identStringList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptHistogramUpdateParamForm $optHistogramUpdateParam,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identStringList), 'The identStringList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optHistogramUpdateParam), 'The optHistogramUpdateParam must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class OptHistogramWithUpdateSymHistogramSymOnSymIdentStringListOptHistogra
         $writer->append('ON');
         $this->identStringList->write($writer);
         $this->optHistogramUpdateParam->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new identStringList, preserving every other field.
+     */
+    public function withIdentStringList(\SqlSemantics\Statement\Model\MySql\Role\IdentStringListForm $identStringList): self
+    {
+        return new self($identStringList, $this->optHistogramUpdateParam);
+    }
+
+    /**
+     * Returns a copy with a new optHistogramUpdateParam, preserving every other field.
+     */
+    public function withOptHistogramUpdateParam(\SqlSemantics\Statement\Model\MySql\Role\OptHistogramUpdateParamForm $optHistogramUpdateParam): self
+    {
+        return new self($this->identStringList, $optHistogramUpdateParam);
     }
 }

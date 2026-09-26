@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\MasterDefsWithMasterDefsMasterDef_98a7a6bb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\MasterDefsWithMasterDefsMasterDef_98a7a6bb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class MasterDefsWithMasterDefsMasterDef_98a7a6bb implements \SqlSemantics\Statement\Model\MySql\Role\MasterDefsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class MasterDefsWithMasterDefsMasterDef_98a7a6bb implements \SqlSemantics\
         public readonly \SqlSemantics\Statement\Model\MySql\Role\MasterDefsForm $masterDefs,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\MasterDefForm $masterDef,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($masterDefs), 'The masterDefs must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($masterDef), 'The masterDef must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class MasterDefsWithMasterDefsMasterDef_98a7a6bb implements \SqlSemantics\
         $this->masterDefs->write($writer);
         $writer->append(',');
         $this->masterDef->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new masterDefs, preserving every other field.
+     */
+    public function withMasterDefs(\SqlSemantics\Statement\Model\MySql\Role\MasterDefsForm $masterDefs): self
+    {
+        return new self($masterDefs, $this->masterDef);
+    }
+
+    /**
+     * Returns a copy with a new masterDef, preserving every other field.
+     */
+    public function withMasterDef(\SqlSemantics\Statement\Model\MySql\Role\MasterDefForm $masterDef): self
+    {
+        return new self($this->masterDefs, $masterDef);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptSchemaEltListWithOptSchemaEltListSchemaStmt_b2872bbe $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptSchemaEltListWithOptSchemaEltListSchemaStmt_b2872bbe $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptSchemaEltListWithOptSchemaEltListSchemaStmt_b2872bbe implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptSchemaEltListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptSchemaEltListWithOptSchemaEltListSchemaStmt_b2872bbe implements \
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptSchemaEltListForm $optSchemaEltList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SchemaStmtForm $schemaStmt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optSchemaEltList), 'The optSchemaEltList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($schemaStmt), 'The schemaStmt must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class OptSchemaEltListWithOptSchemaEltListSchemaStmt_b2872bbe implements \
     {
         $this->optSchemaEltList->write($writer);
         $this->schemaStmt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optSchemaEltList, preserving every other field.
+     */
+    public function withOptSchemaEltList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSchemaEltListForm $optSchemaEltList): self
+    {
+        return new self($optSchemaEltList, $this->schemaStmt);
+    }
+
+    /**
+     * Returns a copy with a new schemaStmt, preserving every other field.
+     */
+    public function withSchemaStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\SchemaStmtForm $schemaStmt): self
+    {
+        return new self($this->optSchemaEltList, $schemaStmt);
     }
 }

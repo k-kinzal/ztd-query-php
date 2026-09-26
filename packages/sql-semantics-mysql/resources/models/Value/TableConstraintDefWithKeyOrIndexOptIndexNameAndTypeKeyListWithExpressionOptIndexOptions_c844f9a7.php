@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableConstraintDefWithKeyOrIndexOptIndexNameAndTypeKeyListWithExpressionOptIndexOptions_c844f9a7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableConstraintDefWithKeyOrIndexOptIndexNameAndTypeKeyListWithExpressionOptIndexOptions_c844f9a7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableConstraintDefWithKeyOrIndexOptIndexNameAndTypeKeyListWithExpressionOptIndexOptions_c844f9a7 implements \SqlSemantics\Statement\Model\MySql\Role\TableConstraintDefForm, \SqlSemantics\Statement\Model\MySql\Role\TableElementForm, \SqlSemantics\Statement\Model\MySql\Role\TableElementListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class TableConstraintDefWithKeyOrIndexOptIndexNameAndTypeKeyListWithExpres
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyListWithExpressionForm $keyListWithExpression,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIndexOptionsForm $optIndexOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyOrIndex), 'The keyOrIndex must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIndexNameAndType), 'The optIndexNameAndType must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyListWithExpression), 'The keyListWithExpression must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIndexOptions), 'The optIndexOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +42,37 @@ final class TableConstraintDefWithKeyOrIndexOptIndexNameAndTypeKeyListWithExpres
         $this->keyListWithExpression->write($writer);
         $writer->append(')');
         $this->optIndexOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new keyOrIndex, preserving every other field.
+     */
+    public function withKeyOrIndex(\SqlSemantics\Statement\Model\MySql\Role\KeyOrIndexForm $keyOrIndex): self
+    {
+        return new self($keyOrIndex, $this->optIndexNameAndType, $this->keyListWithExpression, $this->optIndexOptions);
+    }
+
+    /**
+     * Returns a copy with a new optIndexNameAndType, preserving every other field.
+     */
+    public function withOptIndexNameAndType(\SqlSemantics\Statement\Model\MySql\Role\OptIndexNameAndTypeForm $optIndexNameAndType): self
+    {
+        return new self($this->keyOrIndex, $optIndexNameAndType, $this->keyListWithExpression, $this->optIndexOptions);
+    }
+
+    /**
+     * Returns a copy with a new keyListWithExpression, preserving every other field.
+     */
+    public function withKeyListWithExpression(\SqlSemantics\Statement\Model\MySql\Role\KeyListWithExpressionForm $keyListWithExpression): self
+    {
+        return new self($this->keyOrIndex, $this->optIndexNameAndType, $keyListWithExpression, $this->optIndexOptions);
+    }
+
+    /**
+     * Returns a copy with a new optIndexOptions, preserving every other field.
+     */
+    public function withOptIndexOptions(\SqlSemantics\Statement\Model\MySql\Role\OptIndexOptionsForm $optIndexOptions): self
+    {
+        return new self($this->keyOrIndex, $this->optIndexNameAndType, $this->keyListWithExpression, $optIndexOptions);
     }
 }

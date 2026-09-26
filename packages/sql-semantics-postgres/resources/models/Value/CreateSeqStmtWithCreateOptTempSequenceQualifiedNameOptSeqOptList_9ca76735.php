@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateSeqStmtWithCreateOptTempSequenceQualifiedNameOptSeqOptList_9ca76735 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateSeqStmtWithCreateOptTempSequenceQualifiedNameOptSeqOptList_9ca76735 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateSeqStmtWithCreateOptTempSequenceQualifiedNameOptSeqOptList_9ca76735 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateSeqStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SchemaStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class CreateSeqStmtWithCreateOptTempSequenceQualifiedNameOptSeqOptList_9ca76735 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateSeqStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SchemaStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CreateSeqStmtWithCreateOptTempSequenceQualifiedNameOptSeqOptList_9ca
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptSeqOptListForm $optSeqOptList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTemp), 'The optTemp must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optSeqOptList), 'The optSeqOptList must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class CreateSeqStmtWithCreateOptTempSequenceQualifiedNameOptSeqOptList_9ca
         $writer->append('SEQUENCE');
         $this->qualifiedName->write($writer);
         $this->optSeqOptList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optTemp, preserving every other field.
+     */
+    public function withOptTemp(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm $optTemp): self
+    {
+        return new self($optTemp, $this->qualifiedName, $this->optSeqOptList);
+    }
+
+    /**
+     * Returns a copy with a new qualifiedName, preserving every other field.
+     */
+    public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
+    {
+        return new self($this->optTemp, $qualifiedName, $this->optSeqOptList);
+    }
+
+    /**
+     * Returns a copy with a new optSeqOptList, preserving every other field.
+     */
+    public function withOptSeqOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSeqOptListForm $optSeqOptList): self
+    {
+        return new self($this->optTemp, $this->qualifiedName, $optSeqOptList);
     }
 }

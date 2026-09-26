@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithRaiseLpRaisetypeCommaExprRp_5b2f59dd $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithRaiseLpRaisetypeCommaExprRp_5b2f59dd $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ExprWithRaiseLpRaisetypeCommaExprRp_5b2f59dd implements \SqlSemantics\Statement\Model\Sqlite\Role\CaseOperandForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm, \SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ExprWithRaiseLpRaisetypeCommaExprRp_5b2f59dd implements \SqlSemantic
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\RaisetypeForm $raisetype,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($raisetype), 'The raisetype must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +38,21 @@ final class ExprWithRaiseLpRaisetypeCommaExprRp_5b2f59dd implements \SqlSemantic
         $writer->append(',');
         $this->expr->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new raisetype, preserving every other field.
+     */
+    public function withRaisetype(\SqlSemantics\Statement\Model\Sqlite\Role\RaisetypeForm $raisetype): self
+    {
+        return new self($raisetype, $this->expr);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
+    {
+        return new self($this->raisetype, $expr);
     }
 }

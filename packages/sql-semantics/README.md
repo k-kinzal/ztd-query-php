@@ -82,6 +82,30 @@ $statement->command;    // the typed model of the statement
 $statement->toString(); // 'WITH changed AS( UPDATE accounts SET balance = balance + 10 WHERE id = 7 RETURNING id , balance ) SELECT id , balance FROM changed ;'
 ```
 
+Update a SQLite WHERE clause with structured values while keeping the original statement:
+
+```php
+use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
+use SqlSemantics\Statement\Model\Sqlite\Value\EcmdWithCmdxSemi_b7577a8f as CommandEnvelope;
+use SqlSemantics\Statement\Model\Sqlite\Value\ExprWithExprEqNeExpr_49d16f16 as Comparison;
+use SqlSemantics\Statement\Model\Sqlite\Value\ExprWithIdj_e1794d68 as Field;
+use SqlSemantics\Statement\Model\Sqlite\Value\OneselectWithSelectDistinctSelcollistFromWhereOptGroupbyOptHavingOptOrderbyOptLimitOpt_218e0475 as Select;
+use SqlSemantics\Statement\Model\Sqlite\Value\TermWithInteger_298801b2 as IntegerValue;
+use SqlSemantics\Statement\Model\Sqlite\Value\WhereOptWithWhereExpr_93445e09 as Where;
+
+$original = (new Semantics(SqliteDialect::Sqlite))->analyze('SELECT foo FROM items');
+$command = $original->command;
+
+if ($command instanceof CommandEnvelope && $command->cmdx instanceof Select) {
+    $where = new Where(new Comparison(new Field('foo'), '=', new IntegerValue('1')));
+    $select = $command->cmdx->withWhere($where);
+    $updated = $original->withCommand($command->withCmdx($select));
+
+    $original->toString(); // 'SELECT foo FROM items'
+    $updated->toString();  // 'SELECT foo FROM items WHERE foo = 1'
+}
+```
+
 See [statement models](docs/statements.md) for building statements without SQL, and [schema binding](docs/binding.md) for names, types, and NULL facts.
 
 ## License

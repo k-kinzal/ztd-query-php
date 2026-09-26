@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\JtColumnWithNestedSymPathSymTextLiteralColumnsClause_09e28380 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\JtColumnWithNestedSymPathSymTextLiteralColumnsClause_09e28380 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JtColumnWithNestedSymPathSymTextLiteralColumnsClause_09e28380 implements \SqlSemantics\Statement\Model\MySql\Role\ColumnsListForm, \SqlSemantics\Statement\Model\MySql\Role\JtColumnForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class JtColumnWithNestedSymPathSymTextLiteralColumnsClause_09e28380 implem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextLiteralForm $textLiteral,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ColumnsClauseForm $columnsClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textLiteral), 'The textLiteral must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($columnsClause), 'The columnsClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class JtColumnWithNestedSymPathSymTextLiteralColumnsClause_09e28380 implem
         $writer->append('PATH');
         $this->textLiteral->write($writer);
         $this->columnsClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new textLiteral, preserving every other field.
+     */
+    public function withTextLiteral(\SqlSemantics\Statement\Model\MySql\Role\TextLiteralForm $textLiteral): self
+    {
+        return new self($textLiteral, $this->columnsClause);
+    }
+
+    /**
+     * Returns a copy with a new columnsClause, preserving every other field.
+     */
+    public function withColumnsClause(\SqlSemantics\Statement\Model\MySql\Role\ColumnsClauseForm $columnsClause): self
+    {
+        return new self($this->textLiteral, $columnsClause);
     }
 }

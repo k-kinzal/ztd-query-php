@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CallStmtWithCallSymSpNameOptParenExprList_b6edf390 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CallStmtWithCallSymSpNameOptParenExprList_b6edf390 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CallStmtWithCallSymSpNameOptParenExprList_b6edf390 implements \SqlSemantics\Statement\Model\MySql\Role\CallStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class CallStmtWithCallSymSpNameOptParenExprList_b6edf390 implements \SqlSemantics\Statement\Model\MySql\Role\CallStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CallStmtWithCallSymSpNameOptParenExprList_b6edf390 implements \SqlSe
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptParenExprListForm $optParenExprList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spName), 'The spName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optParenExprList), 'The optParenExprList must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class CallStmtWithCallSymSpNameOptParenExprList_b6edf390 implements \SqlSe
         $writer->append('CALL');
         $this->spName->write($writer);
         $this->optParenExprList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new spName, preserving every other field.
+     */
+    public function withSpName(\SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName): self
+    {
+        return new self($spName, $this->optParenExprList);
+    }
+
+    /**
+     * Returns a copy with a new optParenExprList, preserving every other field.
+     */
+    public function withOptParenExprList(\SqlSemantics\Statement\Model\MySql\Role\OptParenExprListForm $optParenExprList): self
+    {
+        return new self($this->spName, $optParenExprList);
     }
 }

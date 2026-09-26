@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QueryExpressionOptionWithSqlBigResult_20c9f9f1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QueryExpressionOptionWithSqlBigResult_20c9f9f1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class QueryExpressionOptionWithSqlBigResult_20c9f9f1 implements \SqlSemantics\Statement\Model\MySql\Role\OptQueryExpressionOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionOptionForm, \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\SelectOptionForm, \SqlSemantics\Statement\Model\MySql\Role\SelectOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\SelectOptionsForm

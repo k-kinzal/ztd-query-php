@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TypetokenWithTypenameLpSignedRp_53bc47cf $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TypetokenWithTypenameLpSignedRp_53bc47cf $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TypetokenWithTypenameLpSignedRp_53bc47cf implements \SqlSemantics\Statement\Model\Sqlite\Role\TypetokenForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TypetokenWithTypenameLpSignedRp_53bc47cf implements \SqlSemantics\St
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TypenameForm $typename,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SignedForm $signed,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($signed), 'The signed must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class TypetokenWithTypenameLpSignedRp_53bc47cf implements \SqlSemantics\St
         $writer->append('(');
         $this->signed->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new typename, preserving every other field.
+     */
+    public function withTypename(\SqlSemantics\Statement\Model\Sqlite\Role\TypenameForm $typename): self
+    {
+        return new self($typename, $this->signed);
+    }
+
+    /**
+     * Returns a copy with a new signed, preserving every other field.
+     */
+    public function withSigned(\SqlSemantics\Statement\Model\Sqlite\Role\SignedForm $signed): self
+    {
+        return new self($this->typename, $signed);
     }
 }

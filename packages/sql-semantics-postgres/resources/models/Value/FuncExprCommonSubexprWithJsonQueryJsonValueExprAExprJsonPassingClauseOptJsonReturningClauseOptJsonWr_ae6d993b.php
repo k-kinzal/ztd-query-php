@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncExprCommonSubexprWithJsonQueryJsonValueExprAExprJsonPassingClauseOptJsonReturningClauseOptJsonWr_ae6d993b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncExprCommonSubexprWithJsonQueryJsonValueExprAExprJsonPassingClauseOptJsonReturningClauseOptJsonWr_ae6d993b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FuncExprCommonSubexprWithJsonQueryJsonValueExprAExprJsonPassingClauseOptJsonReturningClauseOptJsonWr_ae6d993b implements \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CaseArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListOptForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprCommonSubexprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprWindowlessForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTargetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectFetchFirstValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectOffsetValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamsForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TrimListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -26,6 +28,13 @@ final class FuncExprCommonSubexprWithJsonQueryJsonValueExprAExprJsonPassingClaus
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonQuotesClauseOptForm $jsonQuotesClauseOpt,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorClauseOptForm $jsonBehaviorClauseOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonValueExpr), 'The jsonValueExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonPassingClauseOpt), 'The jsonPassingClauseOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonReturningClauseOpt), 'The jsonReturningClauseOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonWrapperBehavior), 'The jsonWrapperBehavior must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonQuotesClauseOpt), 'The jsonQuotesClauseOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonBehaviorClauseOpt), 'The jsonBehaviorClauseOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -44,5 +53,61 @@ final class FuncExprCommonSubexprWithJsonQueryJsonValueExprAExprJsonPassingClaus
         $this->jsonQuotesClauseOpt->write($writer);
         $this->jsonBehaviorClauseOpt->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new jsonValueExpr, preserving every other field.
+     */
+    public function withJsonValueExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprForm $jsonValueExpr): self
+    {
+        return new self($jsonValueExpr, $this->aExpr, $this->jsonPassingClauseOpt, $this->jsonReturningClauseOpt, $this->jsonWrapperBehavior, $this->jsonQuotesClauseOpt, $this->jsonBehaviorClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new aExpr, preserving every other field.
+     */
+    public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
+    {
+        return new self($this->jsonValueExpr, $aExpr, $this->jsonPassingClauseOpt, $this->jsonReturningClauseOpt, $this->jsonWrapperBehavior, $this->jsonQuotesClauseOpt, $this->jsonBehaviorClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new jsonPassingClauseOpt, preserving every other field.
+     */
+    public function withJsonPassingClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonPassingClauseOptForm $jsonPassingClauseOpt): self
+    {
+        return new self($this->jsonValueExpr, $this->aExpr, $jsonPassingClauseOpt, $this->jsonReturningClauseOpt, $this->jsonWrapperBehavior, $this->jsonQuotesClauseOpt, $this->jsonBehaviorClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new jsonReturningClauseOpt, preserving every other field.
+     */
+    public function withJsonReturningClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonReturningClauseOptForm $jsonReturningClauseOpt): self
+    {
+        return new self($this->jsonValueExpr, $this->aExpr, $this->jsonPassingClauseOpt, $jsonReturningClauseOpt, $this->jsonWrapperBehavior, $this->jsonQuotesClauseOpt, $this->jsonBehaviorClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new jsonWrapperBehavior, preserving every other field.
+     */
+    public function withJsonWrapperBehavior(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonWrapperBehaviorForm $jsonWrapperBehavior): self
+    {
+        return new self($this->jsonValueExpr, $this->aExpr, $this->jsonPassingClauseOpt, $this->jsonReturningClauseOpt, $jsonWrapperBehavior, $this->jsonQuotesClauseOpt, $this->jsonBehaviorClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new jsonQuotesClauseOpt, preserving every other field.
+     */
+    public function withJsonQuotesClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonQuotesClauseOptForm $jsonQuotesClauseOpt): self
+    {
+        return new self($this->jsonValueExpr, $this->aExpr, $this->jsonPassingClauseOpt, $this->jsonReturningClauseOpt, $this->jsonWrapperBehavior, $jsonQuotesClauseOpt, $this->jsonBehaviorClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new jsonBehaviorClauseOpt, preserving every other field.
+     */
+    public function withJsonBehaviorClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorClauseOptForm $jsonBehaviorClauseOpt): self
+    {
+        return new self($this->jsonValueExpr, $this->aExpr, $this->jsonPassingClauseOpt, $this->jsonReturningClauseOpt, $this->jsonWrapperBehavior, $this->jsonQuotesClauseOpt, $jsonBehaviorClauseOpt);
     }
 }
