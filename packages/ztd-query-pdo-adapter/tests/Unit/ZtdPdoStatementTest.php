@@ -22,13 +22,13 @@ use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Exception\MissingPrimaryKeyException;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
+use ZtdQuery\QueryExecutor;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
-use ZtdQuery\Session;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\ShadowStore;
 
@@ -40,7 +40,7 @@ use ZtdQuery\Shadow\ShadowStore;
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\StatementExecution::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\Bindings::class)]
 #[CoversClass(BufferedRow::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\DriverSessionFactory::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\DriverPlatform::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(ParameterKind::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(ParameterBinder::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(PreparedQuery::class)]
@@ -84,9 +84,9 @@ final class ZtdPdoStatementTest extends TestCase
         $inner = $pdo->prepare('INSERT INTO t VALUES (1)');
         self::assertNotFalse($inner);
 
-        $session = new Session(static::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), static::createStub(ConnectionInterface::class));
+        $executor = \Tests\Fake\QueryExecutorBuilder::create(static::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), static::createStub(ConnectionInterface::class));
 
-        $stmt = new ZtdPdoStatement($inner, $session, null);
+        $stmt = new ZtdPdoStatement($inner, $executor, null);
         self::assertTrue($stmt->execute());
     }
 
@@ -99,8 +99,8 @@ final class ZtdPdoStatementTest extends TestCase
 
         $plan = new RewritePlan('SELECT 1', QueryKind::SKIPPED);
 
-        $session = new Session(static::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), static::createStub(ConnectionInterface::class));
-        $stmt = new ZtdPdoStatement($inner, $session, $plan);
+        $executor = \Tests\Fake\QueryExecutorBuilder::create(static::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), static::createStub(ConnectionInterface::class));
+        $stmt = new ZtdPdoStatement($inner, $executor, $plan);
         self::assertFalse($stmt->execute());
     }
 
@@ -113,8 +113,8 @@ final class ZtdPdoStatementTest extends TestCase
 
         $plan = new RewritePlan('SELECT * FROM t', QueryKind::READ);
 
-        $session = new Session(static::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), static::createStub(ConnectionInterface::class));
-        $stmt = new ZtdPdoStatement($inner, $session, $plan);
+        $executor = \Tests\Fake\QueryExecutorBuilder::create(static::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), static::createStub(ConnectionInterface::class));
+        $stmt = new ZtdPdoStatement($inner, $executor, $plan);
         self::assertTrue($stmt->execute());
     }
 
@@ -126,8 +126,8 @@ final class ZtdPdoStatementTest extends TestCase
         self::assertNotFalse($inner);
 
         $plan = new RewritePlan('INSERT INTO t VALUES (1)', QueryKind::READ);
-        $session = new Session(static::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), static::createStub(ConnectionInterface::class));
-        $stmt = new ZtdPdoStatement($inner, $session, $plan);
+        $executor = \Tests\Fake\QueryExecutorBuilder::create(static::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), static::createStub(ConnectionInterface::class));
+        $stmt = new ZtdPdoStatement($inner, $executor, $plan);
 
         self::assertTrue($stmt->execute());
         $count = $pdo->query('SELECT COUNT(*) FROM t');
@@ -170,7 +170,7 @@ final class ZtdPdoStatementTest extends TestCase
         $shadowStore->set('users', [['id' => 1, 'name' => 'Alice']]);
         $typeResolver = static::createStub(ResultColumnTypeResolver::class);
         $typeResolver->method('resolve')->willReturn(new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'));
-        $session = new Session(
+        $executor = \Tests\Fake\QueryExecutorBuilder::create(
             static::createStub(SqlRewriter::class),
             $shadowStore,
             new ResultSelectRunner(),
@@ -183,7 +183,7 @@ final class ZtdPdoStatementTest extends TestCase
             QueryKind::WRITE_SIMULATED,
             new UpdateMutation('users', []),
         );
-        $stmt = new ZtdPdoStatement($inner, $session, $plan);
+        $stmt = new ZtdPdoStatement($inner, $executor, $plan);
 
         try {
             $stmt->execute();
@@ -203,9 +203,9 @@ final class ZtdPdoStatementTest extends TestCase
         $inner = $pdo->prepare('INSERT INTO t VALUES (:id, :name)');
         self::assertNotFalse($inner);
 
-        $session = new Session(static::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), static::createStub(ConnectionInterface::class));
+        $executor = \Tests\Fake\QueryExecutorBuilder::create(static::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), static::createStub(ConnectionInterface::class));
 
-        $stmt = new ZtdPdoStatement($inner, $session, null);
+        $stmt = new ZtdPdoStatement($inner, $executor, null);
         self::assertTrue($stmt->bindValue(1, 'test'));
     }
 
@@ -220,9 +220,9 @@ final class ZtdPdoStatementTest extends TestCase
         self::assertNotFalse($inner);
         $inner->execute();
 
-        $session = new Session(static::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), static::createStub(ConnectionInterface::class));
+        $executor = \Tests\Fake\QueryExecutorBuilder::create(static::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), static::createStub(ConnectionInterface::class));
 
-        $stmt = new ZtdPdoStatement($inner, $session, null);
+        $stmt = new ZtdPdoStatement($inner, $executor, null);
         self::assertSame(0, $stmt->rowCount());
     }
 
@@ -234,9 +234,9 @@ final class ZtdPdoStatementTest extends TestCase
         self::assertNotFalse($inner);
         $inner->execute();
 
-        $session = new Session(static::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), static::createStub(ConnectionInterface::class));
+        $executor = \Tests\Fake\QueryExecutorBuilder::create(static::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), static::createStub(ConnectionInterface::class));
 
-        $stmt = new ZtdPdoStatement($inner, $session, null);
+        $stmt = new ZtdPdoStatement($inner, $executor, null);
         self::assertTrue($stmt->closeCursor());
     }
 
@@ -248,9 +248,9 @@ final class ZtdPdoStatementTest extends TestCase
         self::assertNotFalse($inner);
         $inner->execute();
 
-        $session = new Session(static::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), static::createStub(ConnectionInterface::class));
+        $executor = \Tests\Fake\QueryExecutorBuilder::create(static::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), static::createStub(ConnectionInterface::class));
 
-        $stmt = new ZtdPdoStatement($inner, $session, null);
+        $stmt = new ZtdPdoStatement($inner, $executor, null);
         self::assertSame(3, $stmt->columnCount());
     }
     public function testBindColumnFillsTheVariableTheColumnIsReadInto(): void
@@ -258,8 +258,8 @@ final class ZtdPdoStatementTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $inner = $native->prepare('SELECT 7 AS id');
         self::assertNotFalse($inner);
-        $session = (new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->create(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), ZtdConfig::default());
-        $statement = new ZtdPdoStatement($inner, $session, null);
+        $executor = new QueryExecutor(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), new \ZtdQuery\Platform\Sqlite\SqlitePlatform(), ZtdConfig::default());
+        $statement = new ZtdPdoStatement($inner, $executor, null);
         $id = null;
 
         $statement->bindColumn('id', $id);
@@ -396,8 +396,8 @@ final class ZtdPdoStatementTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $inner = $native->prepare('SELECT 1 AS id');
         self::assertNotFalse($inner);
-        $session = (new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->create(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), ZtdConfig::default());
-        $statement = new ZtdPdoStatement($inner, $session, null);
+        $executor = new QueryExecutor(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), new \ZtdQuery\Platform\Sqlite\SqlitePlatform(), ZtdConfig::default());
+        $statement = new ZtdPdoStatement($inner, $executor, null);
         $statement->execute();
         self::assertSame('00000', $statement->errorCode());
     }
@@ -407,8 +407,8 @@ final class ZtdPdoStatementTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $inner = $native->prepare('SELECT 1 AS id');
         self::assertNotFalse($inner);
-        $session = (new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->create(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), ZtdConfig::default());
-        $statement = new ZtdPdoStatement($inner, $session, null);
+        $executor = new QueryExecutor(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), new \ZtdQuery\Platform\Sqlite\SqlitePlatform(), ZtdConfig::default());
+        $statement = new ZtdPdoStatement($inner, $executor, null);
         self::assertSame('', $statement->errorCode());
     }
 
@@ -417,8 +417,8 @@ final class ZtdPdoStatementTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $inner = $native->prepare('SELECT 1 AS id');
         self::assertNotFalse($inner);
-        $session = (new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->create(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), ZtdConfig::default());
-        $statement = new ZtdPdoStatement($inner, $session, null);
+        $executor = new QueryExecutor(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), new \ZtdQuery\Platform\Sqlite\SqlitePlatform(), ZtdConfig::default());
+        $statement = new ZtdPdoStatement($inner, $executor, null);
         $statement->execute();
         self::assertSame('00000', $statement->errorInfo()[0]);
     }
@@ -428,8 +428,8 @@ final class ZtdPdoStatementTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $inner = $native->prepare('SELECT 1 AS id');
         self::assertNotFalse($inner);
-        $session = (new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->create(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), ZtdConfig::default());
-        $statement = new ZtdPdoStatement($inner, $session, null);
+        $executor = new QueryExecutor(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), new \ZtdQuery\Platform\Sqlite\SqlitePlatform(), ZtdConfig::default());
+        $statement = new ZtdPdoStatement($inner, $executor, null);
         $statement->execute();
         $this->expectException(PDOException::class);
         $statement->getAttribute(PDO::ATTR_CURSOR);
@@ -440,8 +440,8 @@ final class ZtdPdoStatementTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $inner = $native->prepare('SELECT 1 AS id');
         self::assertNotFalse($inner);
-        $session = (new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->create(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), ZtdConfig::default());
-        $statement = new ZtdPdoStatement($inner, $session, null);
+        $executor = new QueryExecutor(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), new \ZtdQuery\Platform\Sqlite\SqlitePlatform(), ZtdConfig::default());
+        $statement = new ZtdPdoStatement($inner, $executor, null);
         $statement->execute();
         try {
             $expected = $inner->setAttribute(PDO::ATTR_CURSOR, PDO::CURSOR_FWDONLY);
@@ -458,8 +458,8 @@ final class ZtdPdoStatementTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $inner = $native->prepare('SELECT 1 AS id');
         self::assertNotFalse($inner);
-        $session = (new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->create(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), ZtdConfig::default());
-        $statement = new ZtdPdoStatement($inner, $session, null);
+        $executor = new QueryExecutor(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), new \ZtdQuery\Platform\Sqlite\SqlitePlatform(), ZtdConfig::default());
+        $statement = new ZtdPdoStatement($inner, $executor, null);
         $statement->execute();
         $meta = $statement->getColumnMeta(0);
 
@@ -471,8 +471,8 @@ final class ZtdPdoStatementTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $inner = $native->prepare('SELECT 1 AS id');
         self::assertNotFalse($inner);
-        $session = (new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->create(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), ZtdConfig::default());
-        $statement = new ZtdPdoStatement($inner, $session, null);
+        $executor = new QueryExecutor(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), new \ZtdQuery\Platform\Sqlite\SqlitePlatform(), ZtdConfig::default());
+        $statement = new ZtdPdoStatement($inner, $executor, null);
         $statement->execute();
         $this->expectException(PDOException::class);
         $statement->nextRowset();
@@ -483,8 +483,8 @@ final class ZtdPdoStatementTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $inner = $native->prepare('SELECT 1 AS id');
         self::assertNotFalse($inner);
-        $session = (new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->create(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), ZtdConfig::default());
-        $statement = new ZtdPdoStatement($inner, $session, null);
+        $executor = new QueryExecutor(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), new \ZtdQuery\Platform\Sqlite\SqlitePlatform(), ZtdConfig::default());
+        $statement = new ZtdPdoStatement($inner, $executor, null);
 
         ob_start();
         $dumped = $statement->debugDumpParams();
@@ -512,8 +512,8 @@ final class ZtdPdoStatementTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $inner = $native->prepare('SELECT 1 AS id');
         self::assertNotFalse($inner);
-        $session = (new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->create(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), ZtdConfig::default());
-        $statement = new ZtdPdoStatement($inner, $session, null);
+        $executor = new QueryExecutor(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), new \ZtdQuery\Platform\Sqlite\SqlitePlatform(), ZtdConfig::default());
+        $statement = new ZtdPdoStatement($inner, $executor, null);
         $statement->execute();
 
         self::assertCount(1, iterator_to_array($statement->getIterator()));
@@ -590,8 +590,8 @@ final class ZtdPdoStatementTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $inner = $native->prepare("SELECT 'alice' AS name, 7 AS score UNION ALL SELECT 'bob', 9");
         self::assertNotFalse($inner);
-        $session = (new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->create(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), ZtdConfig::default());
-        $statement = new ZtdPdoStatement($inner, $session, null);
+        $executor = new QueryExecutor(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), new \ZtdQuery\Platform\Sqlite\SqlitePlatform(), ZtdConfig::default());
+        $statement = new ZtdPdoStatement($inner, $executor, null);
         self::assertTrue($statement->execute());
         self::assertSame(['alice' => 7, 'bob' => 9], $statement->fetchAll(PDO::FETCH_KEY_PAIR));
     }
@@ -601,8 +601,8 @@ final class ZtdPdoStatementTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $inner = $native->prepare("SELECT 1 AS id, 'alice' AS name");
         self::assertNotFalse($inner);
-        $session = (new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->create(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), ZtdConfig::default());
-        $statement = new ZtdPdoStatement($inner, $session, null);
+        $executor = new QueryExecutor(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), new \ZtdQuery\Platform\Sqlite\SqlitePlatform(), ZtdConfig::default());
+        $statement = new ZtdPdoStatement($inner, $executor, null);
         self::assertTrue($statement->execute());
         self::assertSame(['alice'], $statement->fetchAll(PDO::FETCH_COLUMN, 1));
         self::assertTrue($statement->execute());
@@ -631,8 +631,8 @@ final class ZtdPdoStatementTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $inner = $native->query("SELECT 7 AS id, 'Ada' AS name");
         self::assertNotFalse($inner);
-        $session = (new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->create(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), ZtdConfig::default());
-        $statement = new ZtdPdoStatement($inner, $session, null);
+        $executor = new QueryExecutor(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), new \ZtdQuery\Platform\Sqlite\SqlitePlatform(), ZtdConfig::default());
+        $statement = new ZtdPdoStatement($inner, $executor, null);
         $row = $statement->fetchObject();
         self::assertIsObject($row);
         self::assertSame(['id' => 7, 'name' => 'Ada'], get_object_vars($row));

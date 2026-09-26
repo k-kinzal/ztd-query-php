@@ -13,7 +13,7 @@ use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Platform\MySql\Connection\MySqlSessionSqlModeReflector;
 use ZtdQuery\Platform\MySql\Connection\Result\MySqlResultColumnTypeResolver;
-use ZtdQuery\Platform\MySql\MySqlSessionFactory;
+use ZtdQuery\Platform\MySql\MySqlPlatform;
 use ZtdQuery\Platform\MySql\Rewrite\MySqlQueryGuard;
 use ZtdQuery\Platform\MySql\Rewrite\MySqlRewriter;
 use ZtdQuery\Platform\MySql\Rewrite\Transformer\DeleteTransformer;
@@ -108,7 +108,7 @@ use ZtdQuery\Sql\SqlTokenStream;
 #[UsesClass(\ZtdQuery\Platform\MySql\Sql\Value\StringCoercion::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Sql\Dml\UpdateAssignmentExtractor::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Sql\Dml\UpdateSourceExtractor::class)]
-#[CoversClass(MySqlSessionFactory::class)]
+#[CoversClass(MySqlPlatform::class)]
 #[UsesClass(MySqlLexerProfile::class)]
 #[UsesClass(MySqlMutationResolver::class)]
 #[UsesClass(MySqlCastRenderer::class)]
@@ -139,9 +139,9 @@ use ZtdQuery\Sql\SqlTokenStream;
 #[UsesClass(\ZtdQuery\Platform\MySql\Sql\Relation\MySqlSelectRelationParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Schema\View\MySqlViewDefinitionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\View\MySqlViewShadowRenderer::class)]
-final class MySqlSessionFactoryTest extends TestCase
+final class MySqlPlatformTest extends TestCase
 {
-    public function testCreateRegistersReflectedViews(): void
+    public function testReflectViewsRegistersReflectedViews(): void
     {
         $empty = self::createStub(StatementInterface::class);
         $empty->method('fetchAll')->willReturn([]);
@@ -161,15 +161,15 @@ final class MySqlSessionFactoryTest extends TestCase
             },
         );
 
-        $session = (new MySqlSessionFactory())->create($connection, ZtdConfig::default());
+        $executor = new \ZtdQuery\QueryExecutor($connection, new MySqlPlatform(), ZtdConfig::default());
 
         self::assertSame(
             "WITH `active_users` AS (SELECT 1 AS id)\nSELECT * FROM active_users",
-            $session->rewrite('SELECT * FROM active_users')->sql(),
+            $executor->rewrite('SELECT * FROM active_users')->sql(),
         );
     }
 
-    public function testCreateReturnsSession(): void
+    public function testCreateRewriterProvidesIndependentSqlBehavior(): void
     {
         $statement = self::createStub(StatementInterface::class);
         $statement->method('fetchAll')->willReturn([]);
@@ -178,13 +178,13 @@ final class MySqlSessionFactoryTest extends TestCase
         $connection->method('query')->willReturn($statement);
 
         $config = new ZtdConfig();
-        $factory = new MySqlSessionFactory();
-        $session = $factory->create($connection, $config);
+        $platform = new MySqlPlatform();
+        $executor = new \ZtdQuery\QueryExecutor($connection, $platform, $config);
 
-        self::assertInstanceOf(MySqlResultColumnTypeResolver::class, $session->resultColumnTypeResolver());
+        self::assertInstanceOf(MySqlResultColumnTypeResolver::class, $executor->platform()->resultColumnTypeResolver());
     }
 
-    public function testCreateAppliesReflectedAnsiQuotesModeToProductionLexing(): void
+    public function testReflectSchemaAppliesReflectedAnsiQuotesModeToProductionLexing(): void
     {
         $empty = self::createStub(StatementInterface::class);
         $empty->method('fetchAll')->willReturn([]);
@@ -199,12 +199,27 @@ final class MySqlSessionFactoryTest extends TestCase
         $previousMode = Context::getMode();
 
         try {
-            (new MySqlSessionFactory())->create($connection, ZtdConfig::default());
+            new \ZtdQuery\QueryExecutor($connection, new MySqlPlatform(), ZtdConfig::default());
             $tokens = SqlTokenStream::tokenize('"column"', MySqlLexerProfile::create())->significantTokens();
 
             self::assertSame(SqlTokenKind::QuotedIdentifier, $tokens[0]->kind);
         } finally {
             Context::setMode($previousMode);
         }
+    }
+
+    public function testCopySupportDescribesTheDialect(): void
+    {
+        self::assertNull((new MySqlPlatform())->copySupport());
+    }
+
+    public function testParameterBindingCompilerDescribesTheDialect(): void
+    {
+        self::assertNull((new MySqlPlatform())->parameterBindingCompiler());
+    }
+
+    public function testResultColumnTypeResolverDescribesTheDialect(): void
+    {
+        self::assertInstanceOf(MySqlResultColumnTypeResolver::class, (new MySqlPlatform())->resultColumnTypeResolver());
     }
 }

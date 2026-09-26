@@ -7,649 +7,151 @@ namespace Tests\Unit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use Tests\Fake\FakeConnection;
-use Tests\Fake\FakeSqlRewriter;
-use Tests\Fake\FakeStatement;
-use ZtdQuery\Config\ZtdConfig;
-use ZtdQuery\Connection\Exception\DatabaseException;
-use ZtdQuery\Connection\ResultSet;
-use ZtdQuery\Exception\ForeignKeyViolationException;
-use ZtdQuery\Exception\MissingPrimaryKeyException;
-use ZtdQuery\Platform\CopySupport;
-use ZtdQuery\Platform\CopyTarget;
-use ZtdQuery\Platform\MissingResultColumnTypeResolver;
-use ZtdQuery\Platform\ParameterBindingCompiler;
-use ZtdQuery\Platform\ResultColumnTypeResolver;
-use ZtdQuery\ResultSelectRunner;
-use ZtdQuery\Rewrite\QueryKind;
-use ZtdQuery\Rewrite\RewritePlan;
-use ZtdQuery\RewriteRefusal;
-use ZtdQuery\Schema\Key\CandidateKeySet;
-use ZtdQuery\Schema\Key\ForeignKeyDefinition;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
+use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Session;
-use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
-use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
-use ZtdQuery\Shadow\Mutation\Row\UpdateMutation;
-use ZtdQuery\Shadow\ReferentialIntegrityEnforcer;
-use ZtdQuery\Shadow\Row\RowPairing;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTransactions;
 use ZtdQuery\Sql\TransactionStatement;
 
 #[CoversClass(Session::class)]
-#[UsesClass(ZtdConfig::class)]
+#[UsesClass(\ZtdQuery\Schema\RowSet::class)]
 #[UsesClass(ShadowStore::class)]
 #[UsesClass(ShadowTransactions::class)]
 #[UsesClass(TableDefinitionRegistry::class)]
+#[UsesClass(ViewDefinitionSet::class)]
 #[UsesClass(TableDefinition::class)]
-#[UsesClass(CandidateKeySet::class)]
-#[UsesClass(ResultSelectRunner::class)]
-#[UsesClass(ResultSet::class)]
-#[UsesClass(DatabaseException::class)]
-#[UsesClass(RewritePlan::class)]
-#[UsesClass(UpdateMutation::class)]
-#[UsesClass(InsertMutation::class)]
-#[UsesClass(MutationRowIdentity::class)]
-#[UsesClass(ForeignKeyDefinition::class)]
-#[UsesClass(ForeignKeyViolationException::class)]
-#[UsesClass(ReferentialIntegrityEnforcer::class)]
-#[UsesClass(MissingPrimaryKeyException::class)]
-#[UsesClass(CopyTarget::class)]
-#[UsesClass(MissingResultColumnTypeResolver::class)]
-#[UsesClass(TransactionStatement::class)]
-#[UsesClass(\ZtdQuery\Shadow\ShadowApplication::class)]
-#[UsesClass(\ZtdQuery\Shadow\Mutation\MutationImpact::class)]
-#[UsesClass(\ZtdQuery\GenericExecuteResult::class)]
+#[UsesClass(\ZtdQuery\Schema\Key\CandidateKeySet::class)]
 #[UsesClass(\ZtdQuery\Shadow\ShadowSavepoint::class)]
-#[UsesClass(\ZtdQuery\Shadow\Mutation\RowConstraints::class)]
-#[UsesClass(\ZtdQuery\Shadow\Mutation\ConflictSearch::class)]
-#[UsesClass(\ZtdQuery\Shadow\ForeignKeyCascade::class)]
-#[UsesClass(\ZtdQuery\Shadow\ForeignKeyEnds::class)]
-#[UsesClass(\ZtdQuery\Shadow\ForeignKeyIntegrity::class)]
-#[UsesClass(\ZtdQuery\Shadow\ParentKeyLookup::class)]
-#[UsesClass(\ZtdQuery\Shadow\Row\RowMatch::class)]
-#[UsesClass(\ZtdQuery\Shadow\Row\RowMultiset::class)]
-#[UsesClass(\ZtdQuery\Shadow\Row\TableTransition::class)]
-#[UsesClass(\ZtdQuery\Shadow\TableTransitions::class)]
-#[UsesClass(RewriteRefusal::class)]
-#[UsesClass(RowPairing::class)]
-#[UsesClass(\ZtdQuery\Schema\RowSet::class)]
+#[UsesClass(TransactionStatement::class)]
 final class SessionTest extends TestCase
 {
-    public function testDisableEnableDisableEnableAndDisable(): void
+    public function testStoreRegistryViewsAndTableDefinitionBelongToOneSession(): void
     {
-        $shadowStore = new ShadowStore();
-        $registry = new TableDefinitionRegistry();
-        $rewriter = new FakeSqlRewriter($shadowStore, $registry);
-        $connection = new FakeConnection();
-        $session = new Session(
-            $rewriter,
-            $shadowStore,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            $connection,
-        );
+        $first = new Session();
+        $second = new Session();
+        $definition = new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], ['id'], []);
+        $first->registry()->register('items', $definition);
+        $first->store()->set('items', [['id' => 1]]);
+        self::assertSame($definition, $first->tableDefinition('items'));
+        self::assertNull($second->tableDefinition('items'));
+        self::assertSame([], $second->store()->get('items'));
+        self::assertNotSame($first->views(), $second->views());
+    }
 
-        self::assertTrue($session->isEnabled());
-        self::assertNull($session->tableDefinition('users'));
-        self::assertNull($session->copySupport());
-        self::assertNull($session->copyTarget('users', null));
-        self::assertNull($session->parameterBindingCompiler());
-        self::assertInstanceOf(MissingResultColumnTypeResolver::class, $session->resultColumnTypeResolver());
-
+    public function testEnableDisableAndIsEnabledDoNotDiscardFixtures(): void
+    {
+        $session = new Session();
+        $session->store()->set('items', [['id' => 1]]);
         $session->disable();
         self::assertFalse($session->isEnabled());
-
         $session->enable();
         self::assertTrue($session->isEnabled());
+        self::assertSame([['id' => 1]], $session->store()->get('items'));
     }
 
-    public function testTableDefinitionReturnsRegisteredSchemaOrNull(): void
+    public function testBeginTransactionAndRollBackTransactionRestoreRowsAndSchema(): void
     {
-        $shadowStore = new ShadowStore();
-        $registry = new TableDefinitionRegistry();
+        $session = new Session();
         $definition = new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], ['id'], []);
-        $registry->register('users', $definition);
-        $session = new Session(
-            new FakeSqlRewriter($shadowStore, $registry),
-            $shadowStore,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-            registry: $registry,
-        );
-
-        self::assertSame($definition, $session->tableDefinition('users'));
-        self::assertNull($session->tableDefinition('missing'));
+        $session->registry()->register('items', $definition);
+        $session->store()->set('items', [['id' => 1]]);
+        $session->beginTransaction();
+        $session->registry()->unregister('items');
+        $session->store()->set('items', [['id' => 2]]);
+        $session->rollBackTransaction();
+        self::assertSame($definition, $session->tableDefinition('items'));
+        self::assertSame([['id' => 1]], $session->store()->get('items'));
     }
 
-    public function testParameterBindingCompilerResultColumnTypeResolverParameterBindingCompilerDelegatesCopyTargetsToTheConfiguredPlatformSupport(): void
+    public function testCommitTransactionKeepsVirtualWrites(): void
     {
-        $shadowStore = new ShadowStore();
-        $registry = new TableDefinitionRegistry();
-        $definition = new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], ['id'], []);
-        $registry->register('users', $definition);
-        $target = new CopyTarget(['public', 'users'], ['id']);
-        $copy = self::createStub(CopySupport::class);
-        $copy->method('tableName')->willReturnMap([
-            ['public.users', 'users'],
-            ['missing', 'missing'],
-        ]);
-        $copy->method('target')->willReturn($target);
-        $compiler = self::createStub(ParameterBindingCompiler::class);
-        $typeResolver = self::createStub(ResultColumnTypeResolver::class);
-        $session = new Session(
-            new FakeSqlRewriter($shadowStore, $registry),
-            $shadowStore,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-            registry: $registry,
-            copySupport: $copy,
-            parameterBindingCompiler: $compiler,
-            resultColumnTypeResolver: $typeResolver,
-        );
-
-        self::assertSame($copy, $session->copySupport());
-        self::assertSame($target, $session->copyTarget('public.users', 'id'));
-        self::assertNull($session->copyTarget('missing', null));
-        self::assertSame($compiler, $session->parameterBindingCompiler());
-        self::assertSame($typeResolver, $session->resultColumnTypeResolver());
+        $session = new Session();
+        $session->beginTransaction();
+        $session->store()->set('items', [['id' => 1]]);
+        $session->commitTransaction();
+        $session->rollBackTransaction();
+        self::assertSame([['id' => 1]], $session->store()->get('items'));
     }
 
-    public function testSplitStatementsUsesPlatformRewriter(): void
+    public function testTransactionsAndApplyTransactionStatementShareTheSameSnapshots(): void
     {
-        $shadowStore = new ShadowStore();
-        $rewriter = new FakeSqlRewriter($shadowStore, new TableDefinitionRegistry());
-        $session = new Session(
-            $rewriter,
-            $shadowStore,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-        );
-
-        self::assertSame(
-            ['SELECT 1', 'SELECT 2'],
-            $session->splitStatements(' SELECT 1; SELECT 2 '),
-        );
+        $session = new Session();
+        $session->applyTransactionStatement(TransactionStatement::begin());
+        $session->transactions()->savepoint('before_write');
+        $session->store()->set('items', [['id' => 1]]);
+        $session->transactions()->rollBackTo('before_write');
+        self::assertSame([], $session->store()->get('items'));
     }
 
-    public function testBeginTransactionRollBackTransactionBeginTransactionUsesProvidedTransactionManagerForSchemaRollback(): void
+    public function testRememberInsertIdAndLastInsertIdRetainTheLastGeneratedIdentity(): void
     {
-        $shadowStore = new ShadowStore();
-        $registry = new TableDefinitionRegistry();
-        $definition = new TableDefinition(['id'], ['id' => 'INT'], ['id'], [], []);
-        $registry->register('users', $definition);
-        $session = new Session(
-            new FakeSqlRewriter($shadowStore, $registry),
-            $shadowStore,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-            new ShadowTransactions($shadowStore, $registry),
-        );
-
-        $session->transactions()->begin();
-        $registry->unregister('users');
-        $session->transactions()->rollBack();
-
-        self::assertSame($definition, $registry->get('users'));
-    }
-
-    public function testMutationFailureIsConvertedToDatabaseException(): void
-    {
-        $shadowStore = new ShadowStore();
-        $shadowStore->set('users', [['id' => 1, 'name' => 'Alice']]);
-        $registry = new TableDefinitionRegistry();
-        $session = new Session(
-            new FakeSqlRewriter($shadowStore, $registry),
-            $shadowStore,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-        );
-        $plan = new RewritePlan(
-            "SELECT 1 AS id, 'Bob' AS name",
-            QueryKind::WRITE_SIMULATED,
-            new UpdateMutation('users', []),
-        );
-
-        try {
-            $session->processExecutedStatement($plan, new FakeStatement([['id' => 1, 'name' => 'Bob']]));
-            self::fail('Expected a database exception.');
-        } catch (DatabaseException $exception) {
-            self::assertSame(0, $exception->getCode());
-            self::assertInstanceOf(MissingPrimaryKeyException::class, $exception->getPrevious());
-        }
-    }
-
-    public function testForeignKeyFailureRestoresShadowState(): void
-    {
-        $shadowStore = new ShadowStore();
-        $shadowStore->set('parents', []);
-        $shadowStore->set('children', []);
-        $registry = new TableDefinitionRegistry();
-        $registry->register('parents', new TableDefinition(['id'], ['id' => 'INT'], ['id'], ['id'], []));
-        $registry->register('children', new TableDefinition(
-            ['id', 'parent_id'],
-            ['id' => 'INT', 'parent_id' => 'INT'],
-            ['id'],
-            ['id'],
-            [],
-            foreignKeys: ['fk_parent' => new ForeignKeyDefinition(['parent_id'], 'parents', ['id'])],
-        ));
-        $session = new Session(
-            new FakeSqlRewriter($shadowStore, $registry),
-            $shadowStore,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-            registry: $registry,
-        );
-        $plan = new RewritePlan(
-            'SELECT 1 AS id, 999 AS parent_id',
-            QueryKind::WRITE_SIMULATED,
-            new InsertMutation('children'),
-        );
-
-        try {
-            $session->processExecutedStatement($plan, new FakeStatement([['id' => 1, 'parent_id' => 999]]));
-            self::fail('Expected a database exception.');
-        } catch (DatabaseException $exception) {
-            self::assertInstanceOf(ForeignKeyViolationException::class, $exception->getPrevious());
-            self::assertSame([], $shadowStore->get('children'));
-        }
-    }
-
-    public function testIsEnabledFollowsWhatWasAskedFor(): void
-    {
-        $store = new ShadowStore();
-        $registry = new TableDefinitionRegistry();
-        $session = new Session(
-            new FakeSqlRewriter($store, $registry),
-            $store,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-            registry: $registry,
-        );
-
-        self::assertTrue($session->isEnabled());
-
-        $session->disable();
-
-        self::assertFalse($session->isEnabled());
-    }
-
-    public function testDisableStopsZtdWithoutTouchingTheShadow(): void
-    {
-        $store = new ShadowStore();
-        $store->set('users', [['id' => 1]]);
-        $registry = new TableDefinitionRegistry();
-        $session = new Session(
-            new FakeSqlRewriter($store, $registry),
-            $store,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-            registry: $registry,
-        );
-
-        $session->disable();
-
-        self::assertSame([['id' => 1]], $store->get('users'));
-    }
-
-    public function testShouldExecuteIsFalseOnlyForAPlanNothingIsToBeRunFor(): void
-    {
-        $store = new ShadowStore();
-        $registry = new TableDefinitionRegistry();
-        $session = new Session(
-            new FakeSqlRewriter($store, $registry),
-            $store,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-            registry: $registry,
-        );
-
-        self::assertTrue($session->shouldExecute(new RewritePlan('SELECT 1', QueryKind::READ)));
-        self::assertFalse($session->shouldExecute(new RewritePlan('SELECT 1', QueryKind::SKIPPED)));
-    }
-
-    public function testNeedsPostProcessingIsTrueForTheKindsThatChangeTheShadow(): void
-    {
-        $store = new ShadowStore();
-        $registry = new TableDefinitionRegistry();
-        $session = new Session(
-            new FakeSqlRewriter($store, $registry),
-            $store,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-            registry: $registry,
-        );
-
-        self::assertTrue($session->needsPostProcessing(new RewritePlan('x', QueryKind::WRITE_SIMULATED)));
-        self::assertTrue($session->needsPostProcessing(new RewritePlan('x', QueryKind::DDL_SIMULATED)));
-        self::assertFalse($session->needsPostProcessing(new RewritePlan('x', QueryKind::READ)));
-    }
-
-    public function testCreateEmptyWriteResultAnswersASimulatedWriteWithNothingToFetch(): void
-    {
-        $store = new ShadowStore();
-        $registry = new TableDefinitionRegistry();
-        $session = new Session(
-            new FakeSqlRewriter($store, $registry),
-            $store,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-            registry: $registry,
-        );
-
-        $result = $session->createEmptyWriteResult();
-
-        self::assertSame(QueryKind::WRITE_SIMULATED, $result->kind());
-        self::assertSame([], $result->fetchAll());
-    }
-
-    public function testLastInsertIdIsFalseUntilSomethingHasBeenInserted(): void
-    {
-        $store = new ShadowStore();
-        $registry = new TableDefinitionRegistry();
-        $session = new Session(
-            new FakeSqlRewriter($store, $registry),
-            $store,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-            registry: $registry,
-        );
-
+        $session = new Session();
         self::assertFalse($session->lastInsertId());
+        $session->rememberInsertId('42');
+        $session->rememberInsertId(null);
+        self::assertSame('42', $session->lastInsertId());
     }
 
-    public function testTransactionStatementIsNothingForAStatementThatIsNotOne(): void
+    public function testRegistryReturnsTheSuppliedVirtualCatalog(): void
     {
-        $store = new ShadowStore();
         $registry = new TableDefinitionRegistry();
-        $session = new Session(
-            new FakeSqlRewriter($store, $registry),
-            $store,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-            registry: $registry,
-        );
-
-        self::assertNull($session->transactionStatement('SELECT 1'));
+        self::assertSame($registry, (new Session(registry: $registry))->registry());
     }
 
-    public function testCommitTransactionKeepsWhatTheTransactionDid(): void
+    public function testViewsReturnsTheSuppliedViewDefinitions(): void
     {
-        $store = new ShadowStore();
-        $store->set('users', [['id' => 1]]);
-        $registry = new TableDefinitionRegistry();
-        $session = new Session(
-            new FakeSqlRewriter($store, $registry),
-            $store,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-            registry: $registry,
-        );
-
-        $session->transactions()->begin();
-        $store->set('users', []);
-        $session->transactions()->commit();
-        $session->transactions()->rollBack();
-
-        self::assertSame([], $store->get('users'));
+        $views = new ViewDefinitionSet();
+        self::assertSame($views, (new Session(views: $views))->views());
     }
 
-    public function testApplyTransactionStatementDoesWhatTheStatementSays(): void
+    public function testTableDefinitionSeesCatalogChanges(): void
     {
-        $store = new ShadowStore();
-        $store->set('users', [['id' => 1]]);
-        $registry = new TableDefinitionRegistry();
-        $session = new Session(
-            new FakeSqlRewriter($store, $registry),
-            $store,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-            registry: $registry,
-        );
-
-        TransactionStatement::begin()->apply($session->transactions());
-        $store->set('users', []);
-        TransactionStatement::rollback()->apply($session->transactions());
-
-        self::assertSame([['id' => 1]], $store->get('users'));
+        $session = new Session();
+        $definition = new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], ['id'], []);
+        $session->registry()->register('items', $definition);
+        self::assertSame($definition, $session->tableDefinition('items'));
+        $session->registry()->unregister('items');
+        self::assertNull($session->tableDefinition('items'));
     }
 
-    public function testCopySupportIsNothingWhereTheDialectHasNoCopy(): void
+    public function testDisableLeavesOtherSessionsEnabled(): void
     {
-        $store = new ShadowStore();
-        $registry = new TableDefinitionRegistry();
-        $session = new Session(
-            new FakeSqlRewriter($store, $registry),
-            $store,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-            registry: $registry,
-        );
-
-        self::assertNull($session->copySupport());
+        $first = new Session();
+        $second = new Session();
+        $first->disable();
+        self::assertFalse($first->isEnabled());
+        self::assertTrue($second->isEnabled());
     }
 
-    public function testCopyTargetIsNothingWhereTheDialectHasNoCopy(): void
+    public function testIsEnabledStartsTrueForNewSessions(): void
     {
-        $store = new ShadowStore();
-        $registry = new TableDefinitionRegistry();
-        $session = new Session(
-            new FakeSqlRewriter($store, $registry),
-            $store,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-            registry: $registry,
-        );
-
-        self::assertNull($session->copyTarget('users', null));
+        self::assertTrue((new Session())->isEnabled());
     }
 
-    public function testParameterBindingCompilerIsNothingWhereTheDriverBindsThemItself(): void
+    public function testRollBackTransactionWithoutATransactionKeepsFixtures(): void
     {
-        $store = new ShadowStore();
-        $registry = new TableDefinitionRegistry();
-        $session = new Session(
-            new FakeSqlRewriter($store, $registry),
-            $store,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-            registry: $registry,
-        );
-
-        self::assertNull($session->parameterBindingCompiler());
+        $session = new Session();
+        $session->store()->set('items', [['id' => 1]]);
+        $session->rollBackTransaction();
+        self::assertSame([['id' => 1]], $session->store()->get('items'));
     }
 
-    public function testRewriteAnswersThePlanTheRewriterGives(): void
+    public function testApplyTransactionStatementRollsBackVirtualWrites(): void
     {
-        $store = new ShadowStore();
-        $registry = new TableDefinitionRegistry();
-        $session = new Session(
-            new FakeSqlRewriter($store, $registry),
-            $store,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-            registry: $registry,
-        );
-
-        $plan = $session->rewrite('SELECT 1');
-
-        self::assertSame(QueryKind::READ, $plan->kind());
+        $session = new Session();
+        $session->applyTransactionStatement(TransactionStatement::begin());
+        $session->store()->set('items', [['id' => 1]]);
+        $session->applyTransactionStatement(TransactionStatement::rollback());
+        self::assertSame([], $session->store()->get('items'));
     }
 
-    public function testProcessExecutedStatementReadsAReadStatementStraightBack(): void
+    public function testLastInsertIdDoesNotLeakBetweenSessions(): void
     {
-        $store = new ShadowStore();
-        $registry = new TableDefinitionRegistry();
-        $session = new Session(
-            new FakeSqlRewriter($store, $registry),
-            $store,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-            registry: $registry,
-        );
-        $plan = new RewritePlan('SELECT 1', QueryKind::READ);
-
-        $result = $session->processExecutedStatement($plan, new FakeStatement([['id' => 1]]));
-
-        self::assertSame([['id' => 1]], $result->fetchAll());
-    }
-
-    public function testApplyShadowWritesTheMutationAndAnswersWhatItCameTo(): void
-    {
-        $store = new ShadowStore();
-        $store->set('users', []);
-        $registry = new TableDefinitionRegistry();
-        $session = new Session(
-            new FakeSqlRewriter($store, $registry),
-            $store,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-            registry: $registry,
-        );
-
-        $impact = $session->applyShadow(new InsertMutation('users'), new ResultSet([['id' => 1]], []), 'INSERT');
-
-        self::assertTrue($impact->isInsertLike());
-        self::assertSame([['id' => 1]], $store->get('users'));
-    }
-
-    public function testExecStatementAnswersHowManyRowsAReadStatementCameTo(): void
-    {
-        $store = new ShadowStore();
-        $registry = new TableDefinitionRegistry();
-        $session = new Session(
-            new FakeSqlRewriter($store, $registry),
-            $store,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-            registry: $registry,
-        );
-
-        self::assertSame(0, $session->execStatement('SELECT 1'));
-    }
-
-    public function testRunResultSelectAndApplyShadowReadsBackWhatTheStatementWouldHaveWritten(): void
-    {
-        $store = new ShadowStore();
-        $store->set('users', []);
-        $registry = new TableDefinitionRegistry();
-        $session = new Session(
-            new FakeSqlRewriter($store, $registry),
-            $store,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-            registry: $registry,
-        );
-        $plan = new RewritePlan('SELECT 1', QueryKind::WRITE_SIMULATED, new InsertMutation('users'));
-
-        $rows = $session->runResultSelectAndApplyShadow(
-            $plan,
-            static fn (string $sql): FakeStatement => new FakeStatement([['id' => 1]]),
-        );
-
-        self::assertSame([['id' => 1]], $rows);
-    }
-
-    public function testEnableTurnsZtdBackOn(): void
-    {
-        $store = new ShadowStore();
-        $registry = new TableDefinitionRegistry();
-        $session = new Session(
-            new FakeSqlRewriter($store, $registry),
-            $store,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-            registry: $registry,
-        );
-        $session->disable();
-
-        $session->enable();
-
-        self::assertTrue($session->isEnabled());
-    }
-
-    public function testRollBackTransactionPutsTheShadowBackToWhereItBegan(): void
-    {
-        $store = new ShadowStore();
-        $store->set('users', [['id' => 1]]);
-        $registry = new TableDefinitionRegistry();
-        $session = new Session(
-            new FakeSqlRewriter($store, $registry),
-            $store,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-            registry: $registry,
-        );
-
-        $session->transactions()->begin();
-        $store->set('users', []);
-        $session->transactions()->rollBack();
-
-        self::assertSame([['id' => 1]], $store->get('users'));
-    }
-
-    public function testResultColumnTypeResolverAnswersTheOneTheSessionWasBuiltWith(): void
-    {
-        $store = new ShadowStore();
-        $registry = new TableDefinitionRegistry();
-        $session = new Session(
-            new FakeSqlRewriter($store, $registry),
-            $store,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-            registry: $registry,
-        );
-
-        self::assertInstanceOf(MissingResultColumnTypeResolver::class, $session->resultColumnTypeResolver());
-    }
-
-    public function testTransactionsAnswersWhatATransactionStatementIsAppliedTo(): void
-    {
-        $store = new ShadowStore();
-        $store->set('users', [['id' => 1]]);
-        $registry = new TableDefinitionRegistry();
-        $session = new Session(
-            new FakeSqlRewriter($store, $registry),
-            $store,
-            new ResultSelectRunner(),
-            ZtdConfig::default(),
-            new FakeConnection(),
-            registry: $registry,
-        );
-
-        TransactionStatement::begin()->apply($session->transactions());
-        $store->set('users', []);
-        TransactionStatement::rollback()->apply($session->transactions());
-
-        self::assertSame([['id' => 1]], $store->get('users'));
+        $first = new Session();
+        $second = new Session();
+        $first->rememberInsertId('7');
+        self::assertFalse($second->lastInsertId());
     }
 }

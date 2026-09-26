@@ -8,8 +8,8 @@ use mysqli_result;
 use mysqli_stmt;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqliException;
 use ZtdQuery\ExecuteResult;
+use ZtdQuery\QueryExecutor;
 use ZtdQuery\Rewrite\RewritePlan;
-use ZtdQuery\Session;
 
 /**
  * Coordinates native execution and shadow post-processing for a prepared statement.
@@ -25,7 +25,7 @@ final class StatementExecution
     /**
      * Retain the native statement and its shadow execution plan.
      */
-    public function __construct(private readonly mysqli_stmt $delegate, private readonly Session $session, private readonly ?RewritePlan $plan)
+    public function __construct(private readonly mysqli_stmt $delegate, private readonly QueryExecutor $executor, private readonly ?RewritePlan $plan)
     {
     }
 
@@ -74,17 +74,17 @@ final class StatementExecution
     public function execute(?array $params = null): bool
     {
         $this->result = null;
-        if ($this->plan !== null && !$this->session->shouldExecute($this->plan)) {
+        if ($this->plan !== null && !$this->executor->shouldExecute($this->plan)) {
             return false;
         }
-        if ($this->plan === null || !$this->session->needsPostProcessing($this->plan)) {
+        if ($this->plan === null || !$this->executor->needsPostProcessing($this->plan)) {
             return $this->delegate->execute($params);
         }
         if (!$this->delegate->execute($params)) {
             return false;
         }
         $this->cachedMysqliResult = $this->delegate->get_result();
-        $this->result = (new MysqliResultProcessor())->process($this->session, $this->plan, $this->cachedMysqliResult, $this->delegate->affected_rows);
+        $this->result = (new MysqliResultProcessor())->process($this->executor, $this->plan, $this->cachedMysqliResult, $this->delegate->affected_rows);
         return $this->result->isSuccess();
     }
 

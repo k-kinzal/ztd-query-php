@@ -13,7 +13,7 @@ use ZtdQuery\Adapter\Pdo\Driver\PdoConnection;
 use ZtdQuery\Adapter\Pdo\Session\PreparedQuery;
 use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 use ZtdQuery\Config\ZtdConfig;
-use ZtdQuery\Platform\Sqlite\SqliteSessionFactory;
+use ZtdQuery\Platform\Sqlite\SqlitePlatform;
 
 #[CoversClass(PreparedQuery::class)]
 #[UsesClass(ZtdPdoException::class)]
@@ -24,7 +24,7 @@ use ZtdQuery\Platform\Sqlite\SqliteSessionFactory;
 #[UsesClass(\ZtdQuery\Adapter\Pdo\Session\StatementExecution::class)]
 #[UsesClass(\ZtdQuery\Adapter\Pdo\Session\Bindings::class)]
 #[UsesClass(\ZtdQuery\Adapter\Pdo\Session\BufferedRow::class)]
-#[UsesClass(\ZtdQuery\Adapter\Pdo\Session\DriverSessionFactory::class)]
+#[UsesClass(\ZtdQuery\Adapter\Pdo\Session\DriverPlatform::class)]
 #[UsesClass(\ZtdQuery\Adapter\Pdo\Session\ParameterKind::class)]
 #[UsesClass(\ZtdQuery\Adapter\Pdo\Session\ParameterBinder::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
@@ -35,13 +35,13 @@ final class PreparedQueryTest extends TestCase
     {
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE items (id INTEGER PRIMARY KEY, value TEXT)');
-        $session = (new SqliteSessionFactory())->create(new PdoConnection($native), ZtdConfig::default());
-        $query = new PreparedQuery($session, 'SELECT value FROM items WHERE id = ?', static fn (string $sql): PDOStatement|false => $native->prepare($sql));
-        $session->execStatement("INSERT INTO items VALUES (1, 'before')");
+        $executor = new \ZtdQuery\QueryExecutor(new PdoConnection($native), new SqlitePlatform(), ZtdConfig::default());
+        $query = new PreparedQuery($executor, 'SELECT value FROM items WHERE id = ?', static fn (string $sql): PDOStatement|false => $native->prepare($sql));
+        $executor->execStatement("INSERT INTO items VALUES (1, 'before')");
         $before = $query->prepare($query->rewrite()->sql());
         self::assertTrue($before->execute([1]));
         self::assertSame('before', $before->fetchColumn());
-        $session->execStatement("UPDATE items SET value = 'after' WHERE id = 1");
+        $executor->execStatement("UPDATE items SET value = 'after' WHERE id = 1");
         $after = $query->prepare($query->rewrite()->sql());
         self::assertTrue($after->execute([1]));
         self::assertSame('after', $after->fetchColumn());
@@ -53,8 +53,8 @@ final class PreparedQueryTest extends TestCase
     public function testPrepareReportsASilentDriverFailure(): void
     {
         $native = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT]);
-        $session = (new SqliteSessionFactory())->create(new PdoConnection($native), ZtdConfig::default());
-        $query = new PreparedQuery($session, 'SELECT 1', static fn (string $sql): PDOStatement|false => $native->prepare($sql));
+        $executor = new \ZtdQuery\QueryExecutor(new PdoConnection($native), new SqlitePlatform(), ZtdConfig::default());
+        $query = new PreparedQuery($executor, 'SELECT 1', static fn (string $sql): PDOStatement|false => $native->prepare($sql));
         $this->expectException(ZtdPdoException::class);
         $this->expectExceptionMessage('PDO failed to prepare rewritten SQL.');
         $query->prepare('SELECT * FROM missing_table');

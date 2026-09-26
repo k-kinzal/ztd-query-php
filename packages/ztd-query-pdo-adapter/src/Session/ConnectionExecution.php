@@ -11,9 +11,9 @@ use ZtdQuery\Adapter\Pdo\Driver\PdoConnection;
 use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\Exception\DatabaseException;
-use ZtdQuery\Platform\SessionFactory;
+use ZtdQuery\Platform;
+use ZtdQuery\QueryExecutor;
 use ZtdQuery\Rewrite\RewritePlan;
-use ZtdQuery\Session;
 
 /**
  * Coordinates native connection execution with its shadow session.
@@ -22,15 +22,15 @@ use ZtdQuery\Session;
  */
 final class ConnectionExecution
 {
-    private readonly Session $session;
+    private readonly QueryExecutor $executor;
 
     /**
      * Create a shadow session for the supplied native connection.
      */
-    public function __construct(private readonly PDO $pdo, ?ZtdConfig $config = null, ?SessionFactory $factory = null)
+    public function __construct(private readonly PDO $pdo, ?ZtdConfig $config = null, ?Platform $platform = null)
     {
-        $resolvedFactory = $factory ?? (new DriverSessionFactory())->forConnection($pdo);
-        $this->session = $resolvedFactory->create(new PdoConnection($pdo), $config ?? ZtdConfig::default());
+        $resolvedPlatform = $platform ?? (new DriverPlatform())->forConnection($pdo);
+        $this->executor = new QueryExecutor(new PdoConnection($pdo), $resolvedPlatform, $config ?? ZtdConfig::default());
     }
 
     /**
@@ -42,11 +42,11 @@ final class ConnectionExecution
     }
 
     /**
-     * Return the shadow session shared by all statements on this connection.
+     * Return the core executor shared by all statements on this connection.
      */
-    public function session(): Session
+    public function executor(): QueryExecutor
     {
-        return $this->session;
+        return $this->executor;
     }
 
     /**
@@ -54,20 +54,20 @@ final class ConnectionExecution
      *
      * @template TOption
      * @param array<TOption> $options Opaque options forwarded to the native driver.
-     * @param Closure(PDOStatement, Session, RewritePlan, PreparedQuery, int): PDOStatement $wrap
+     * @param Closure(PDOStatement, QueryExecutor, RewritePlan, PreparedQuery, int): PDOStatement $wrap
      * @throws ZtdPdoException When rewriting cannot prepare the statement.
      */
     public function prepare(string $query, array $options, Closure $wrap): PDOStatement|false
     {
-        if (!$this->session->isEnabled()) {
+        if (!$this->executor->session()->isEnabled()) {
             return $this->pdo->prepare($query, $options);
         }
 
         try {
             $native = $this->pdo;
-            $execution = new PreparedQuery($this->session, $query, static fn (string $sql): PDOStatement|false => $native->prepare($sql, $options));
+            $execution = new PreparedQuery($this->executor, $query, static fn (string $sql): PDOStatement|false => $native->prepare($sql, $options));
             $plan = $execution->rewrite();
-            $compiled = $this->session->parameterBindingCompiler()?->compile($plan->sql(), null);
+            $compiled = $this->executor->platform()->parameterBindingCompiler()?->compile($plan->sql(), null);
             $statement = $execution->prepare($compiled['sql'] ?? $plan->sql());
         } catch (DatabaseException $exception) {
             throw new ZtdPdoException($exception->getMessage(), 0, $exception);
@@ -77,7 +77,7 @@ final class ConnectionExecution
 
         return $wrap(
             $statement,
-            $this->session,
+            $this->executor,
             $plan,
             $execution,
             is_int($defaultFetchMode) ? $defaultFetchMode : PDO::FETCH_BOTH,
@@ -93,12 +93,12 @@ final class ConnectionExecution
      */
     public function query(string $query, ?int $fetchMode, array $fetchModeArgs, Closure $prepare): PDOStatement|false
     {
-        if ($this->session->isEnabled()) {
-            $transactionStatement = $this->session->transactionStatement($query);
+        if ($this->executor->session()->isEnabled()) {
+            $transactionStatement = $this->executor->transactionStatement($query);
             if ($transactionStatement !== null) {
                 $statement = $this->pdo->query($query, $fetchMode, ...$fetchModeArgs);
                 if ($statement !== false) {
-                    $this->session->applyTransactionStatement($transactionStatement);
+                    $this->executor->session()->applyTransactionStatement($transactionStatement);
                 }
 
                 return $statement;
@@ -129,11 +129,11 @@ final class ConnectionExecution
      */
     public function exec(string $statement, Closure $execute): int|false
     {
-        if (!$this->session->isEnabled()) {
+        if (!$this->executor->session()->isEnabled()) {
             return $this->pdo->exec($statement);
         }
 
-        $statements = $this->session->splitStatements($statement);
+        $statements = $this->executor->splitStatements($statement);
         if (count($statements) > 1) {
             $affectedRows = 0;
             foreach ($statements as $one) {
@@ -147,18 +147,18 @@ final class ConnectionExecution
             return $affectedRows;
         }
 
-        $transactionStatement = $this->session->transactionStatement($statement);
+        $transactionStatement = $this->executor->transactionStatement($statement);
         if ($transactionStatement !== null) {
             $result = $this->pdo->exec($statement);
             if ($result !== false) {
-                $this->session->applyTransactionStatement($transactionStatement);
+                $this->executor->session()->applyTransactionStatement($transactionStatement);
             }
 
             return $result;
         }
 
         try {
-            return $this->session->execStatement($statement);
+            return $this->executor->execStatement($statement);
         } catch (DatabaseException $e) {
             throw new ZtdPdoException($e->getMessage(), 0, $e);
         }
@@ -171,7 +171,7 @@ final class ConnectionExecution
     {
         $result = $this->pdo->beginTransaction();
         if ($result) {
-            $this->session->beginTransaction();
+            $this->executor->session()->beginTransaction();
         }
 
         return $result;
@@ -184,7 +184,7 @@ final class ConnectionExecution
     {
         $result = $this->pdo->commit();
         if ($result) {
-            $this->session->commitTransaction();
+            $this->executor->session()->commitTransaction();
         }
 
         return $result;
@@ -197,7 +197,7 @@ final class ConnectionExecution
     {
         $result = $this->pdo->rollBack();
         if ($result) {
-            $this->session->rollBackTransaction();
+            $this->executor->session()->rollBackTransaction();
         }
 
         return $result;
@@ -208,8 +208,8 @@ final class ConnectionExecution
      */
     public function lastInsertId(?string $name = null): string|false
     {
-        if ($this->session->isEnabled() && $name === null) {
-            $lastInsertId = $this->session->lastInsertId();
+        if ($this->executor->session()->isEnabled() && $name === null) {
+            $lastInsertId = $this->executor->session()->lastInsertId();
             if ($lastInsertId !== false) {
                 return $lastInsertId;
             }

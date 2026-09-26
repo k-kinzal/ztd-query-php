@@ -16,13 +16,13 @@ use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Connection\ResultSet;
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\QueryExecutor;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\RewriteRefusal;
 use ZtdQuery\Schema\Key\CandidateKeySet;
 use ZtdQuery\Schema\TableDefinitionRegistry;
-use ZtdQuery\Session;
 use ZtdQuery\Shadow\Mutation\MutationImpact;
 use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
 use ZtdQuery\Shadow\ReferentialIntegrityEnforcer;
@@ -31,6 +31,8 @@ use ZtdQuery\Shadow\ShadowTransactions;
 use ZtdQuery\Simulator\StatementSimulator;
 
 #[UsesClass(ZtdConfig::class)]
+#[UsesClass(\ZtdQuery\Session::class)]
+#[UsesClass(\ZtdQuery\Schema\ViewDefinitionSet::class)]
 #[UsesClass(DatabaseException::class)]
 #[UsesClass(UnsupportedSqlException::class)]
 #[UsesClass(RewritePlan::class)]
@@ -43,7 +45,7 @@ use ZtdQuery\Simulator\StatementSimulator;
 #[UsesClass(ShadowStore::class)]
 #[UsesClass(ShadowTransactions::class)]
 #[UsesClass(ReferentialIntegrityEnforcer::class)]
-#[UsesClass(Session::class)]
+#[UsesClass(QueryExecutor::class)]
 #[CoversClass(StatementSimulator::class)]
 #[UsesClass(\ZtdQuery\Shadow\ForeignKeyCascade::class)]
 #[UsesClass(\ZtdQuery\Shadow\ForeignKeyEnds::class)]
@@ -62,14 +64,14 @@ final class StatementSimulatorTest extends TestCase
     {
         $shadowStore = new ShadowStore();
         $connection = static::createStub(ConnectionInterface::class);
-        $session = new Session(
+        $executor = \Tests\Fake\QueryExecutorBuilder::create(
             new ExceptionThrowingRewriter(new UnsupportedSqlException('DROP TABLE users', 'Unsupported')),
             $shadowStore,
             new ResultSelectRunner(),
             ZtdConfig::default(),
             $connection
         );
-        $simulator = new StatementSimulator($session);
+        $simulator = new StatementSimulator($executor);
 
         $this->expectException(DatabaseException::class);
 
@@ -80,14 +82,14 @@ final class StatementSimulatorTest extends TestCase
     {
         $shadowStore = new ShadowStore();
         $connection = static::createStub(ConnectionInterface::class);
-        $session = new Session(
+        $executor = \Tests\Fake\QueryExecutorBuilder::create(
             new FixedRewriter(new RewritePlan('SELECT 1 AS id', QueryKind::READ)),
             $shadowStore,
             new ResultSelectRunner(),
             ZtdConfig::default(),
             $connection
         );
-        $simulator = new StatementSimulator($session);
+        $simulator = new StatementSimulator($executor);
 
         $statement = static::createStub(StatementInterface::class);
         $statement->method('rowCount')->willReturn(1);
@@ -103,14 +105,14 @@ final class StatementSimulatorTest extends TestCase
     {
         $shadowStore = new ShadowStore();
         $connection = static::createStub(ConnectionInterface::class);
-        $session = new Session(
+        $executor = \Tests\Fake\QueryExecutorBuilder::create(
             new FixedRewriter(new RewritePlan('SELECT 1 AS id', QueryKind::READ)),
             $shadowStore,
             new ResultSelectRunner(),
             ZtdConfig::default(),
             $connection
         );
-        $simulator = new StatementSimulator($session);
+        $simulator = new StatementSimulator($executor);
 
         $result = $simulator->simulate('SELECT 1 AS id', fn () => false);
 
@@ -128,14 +130,14 @@ final class StatementSimulatorTest extends TestCase
         ]);
         $connection->method('query')->willReturn($resultStatement);
 
-        $session = new Session(
+        $executor = \Tests\Fake\QueryExecutorBuilder::create(
             new FixedRewriter(new RewritePlan('SELECT 2 AS id, \'Bob\' AS name', QueryKind::WRITE_SIMULATED, new InsertMutation('users'))),
             $store,
             new ResultSelectRunner(),
             ZtdConfig::default(),
             $connection
         );
-        $simulator = new StatementSimulator($session);
+        $simulator = new StatementSimulator($executor);
 
         $executorStatement = static::createStub(StatementInterface::class);
         $executorStatement->method('fetchAll')->willReturn([
@@ -157,14 +159,14 @@ final class StatementSimulatorTest extends TestCase
     {
         $shadowStore = new ShadowStore();
         $connection = static::createStub(ConnectionInterface::class);
-        $session = new Session(
+        $executor = \Tests\Fake\QueryExecutorBuilder::create(
             new FixedRewriter(new RewritePlan('SELECT 1 AS id', QueryKind::WRITE_SIMULATED)),
             $shadowStore,
             new ResultSelectRunner(),
             ZtdConfig::default(),
             $connection
         );
-        $simulator = new StatementSimulator($session);
+        $simulator = new StatementSimulator($executor);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Missing shadow mutation');

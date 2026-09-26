@@ -12,8 +12,8 @@ use ReturnTypeWillChange;
 use ZtdQuery\Adapter\Mysqli\Native\MysqliStatementBindingBridge;
 use ZtdQuery\Adapter\Mysqli\Native\MysqliStatementPropertyReader;
 use ZtdQuery\Adapter\Mysqli\Session\StatementExecution;
+use ZtdQuery\QueryExecutor;
 use ZtdQuery\Rewrite\RewritePlan;
-use ZtdQuery\Session;
 
 /**
  * mysqli_stmt wrapper that applies ZTD rewrite/simulation on execute().
@@ -48,10 +48,10 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     /**
      * Wrap the prepared statement with its session and optional rewrite plan.
      */
-    public function __construct(mysqli_stmt $delegate, Session $session, ?RewritePlan $plan)
+    public function __construct(mysqli_stmt $delegate, QueryExecutor $executor, ?RewritePlan $plan)
     {
         parent::__construct($delegate);
-        $this->execution = new StatementExecution($delegate, $session, $plan);
+        $this->execution = new StatementExecution($delegate, $executor, $plan);
     }
 
     /**
