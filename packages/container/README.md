@@ -12,7 +12,7 @@ Container definitions for [testcontainers-php](https://github.com/k-kinzal/testc
 | `MySql81Container` | `mysql:8.1.0` |
 | `MySql82Container` | `mysql:8.2.0` |
 | `MySql83Container` | `mysql:8.3.0` |
-| `MySql84Container` | `container-registry.oracle.com/mysql/community-server:8.4.7` |
+| `MySql84Container` | `container-registry.oracle.com/mysql/community-server:8.4.12` |
 | `MySql90Container` | `container-registry.oracle.com/mysql/community-server:9.0.1` |
 | `MySql91Container` | `container-registry.oracle.com/mysql/community-server:9.1.0` |
 | `PostgreSql16Container` | `postgres:16.6` |
