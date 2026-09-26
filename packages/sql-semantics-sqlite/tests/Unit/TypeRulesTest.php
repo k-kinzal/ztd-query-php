@@ -70,52 +70,50 @@ final class TypeRulesTest extends TestCase
     public function testReadPreservesModifiers(): void
     {
         $schema = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE items (value DECIMAL(10, 2))');
-        self::assertSame(['10', '2'], $schema->tables[0]->columns[0]->type->modifiers);
+        self::assertSame(10, $schema->tables[0]->columns[0]->type->precision);
+        self::assertSame(2, $schema->tables[0]->columns[0]->type->scale);
     }
 
-    public function testCanonicalResolvesInteger(): void
+    public function testSupportsTheDeclaredTypeVocabulary(): void
     {
-        self::assertSame('integer', (new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->canonical('INT'));
+        self::assertTrue((new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->supports(\SqlSemantics\Core\Type\Builtin::Integer));
+        self::assertFalse((new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->supports(\SqlSemantics\Core\Type\Builtin::TsVector) && (new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->supports(\SqlSemantics\Core\Type\Builtin::MediumInt) && (new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->supports(\SqlSemantics\Core\Type\Builtin::Any));
     }
 
-    public function testAffinityUsesDeclaredTypePrecedence(): void
+    public function testLiteralClassifiesIntegerToken(): void
     {
-        self::assertSame('integer', (new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->affinity('FLOATING POINT'));
-    }
-
-    public function testTypeNameClassifiesIntegerToken(): void
-    {
-        self::assertSame('integer', (new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->typeName(new Token(1, 'INTEGER', '42', 0)));
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Integer, (new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->literal(new Token(1, 'INTEGER', '42', 0))?->name);
+        self::assertNull((new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->literal(new Token(1, 'IDENT', 'value', 0)));
     }
 
     public function testIntegerModelsLargeMagnitude(): void
     {
-        self::assertSame('integer', (new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->integer('2147483648'));
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Integer, (new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->integer('2147483648'));
     }
 
     public function testCommonPreservesHomogeneousType(): void
     {
         $source = new Node('value', 0, []);
-        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(Dialect::Sqlite, 'integer'), Nullability::NotNull, $source, symbol: '1');
-        self::assertSame('integer', (new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->common([$expression], $source)->name);
+        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(Dialect::Sqlite, \SqlSemantics\Core\Type\Builtin::Integer), Nullability::NotNull, $source, symbol: '1');
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Integer, (new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->common([$expression], $source)->name);
     }
 
     public function testBooleanNamesPredicateResult(): void
     {
-        self::assertSame('integer', (new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->boolean()->name);
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Integer, (new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->boolean()->name);
     }
 
     public function testArithmeticRetainsLanguageSemantics(): void
     {
         $source = new Node('value', 0, []);
-        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(Dialect::Sqlite, 'integer'), Nullability::NotNull, $source, symbol: '1');
-        self::assertSame('dynamic', (new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->arithmetic('+', [$expression], $source)->name);
+        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(Dialect::Sqlite, \SqlSemantics\Core\Type\Builtin::Integer), Nullability::NotNull, $source, symbol: '1');
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Dynamic, (new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->arithmetic(\SqlSemantics\Core\Model\Operator::Plus, [$expression], $source)->name);
     }
 
     public function testPredicateAcceptsBooleanResults(): void
     {
         $source = new Node('value', 0, []);
-        $expression = new Expression(ExpressionKind::Literal, (new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->boolean(), Nullability::NotNull, $source);
+        $expression = new Expression(ExpressionKind::Literal, (new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->boolean(), Nullability::NotNull, $source, symbol: 'TRUE');
         (new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->predicate($expression);
         self::assertSame($source, $expression->source);
     }
@@ -123,14 +121,14 @@ final class TypeRulesTest extends TestCase
     public function testCoalescePreservesOperands(): void
     {
         $source = new Node('value', 0, []);
-        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(Dialect::Sqlite, 'integer'), Nullability::NotNull, $source, symbol: '1');
+        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(Dialect::Sqlite, \SqlSemantics\Core\Type\Builtin::Integer), Nullability::NotNull, $source, symbol: '1');
         self::assertSame([$expression], (new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->coalesce([$expression], $expression->type));
     }
 
     public function testProjectPreservesTypedValues(): void
     {
         $source = new Node('value', 0, []);
-        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(Dialect::Sqlite, 'integer'), Nullability::NotNull, $source, symbol: '1');
+        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(Dialect::Sqlite, \SqlSemantics\Core\Type\Builtin::Integer), Nullability::NotNull, $source, symbol: '1');
         self::assertSame($expression, (new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->project($expression));
     }
     #[\PHPUnit\Framework\Attributes\TestWith(['ANY'])]
@@ -138,9 +136,10 @@ final class TypeRulesTest extends TestCase
     public function testReadPreservesAnyValuesInStrictTables(string $declaredType): void
     {
         $table = (new \SqlParser\Sqlite\SqliteParser())->parse('CREATE TABLE t (value ' . $declaredType . ') STRICT');
-        $type = (new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->read($table->find('typetoken')[0], $table);
-        self::assertSame('any', $type->name);
-        self::assertSame('blob', $type->affinity);
+        $values = Dialect::Sqlite->platform()->values(Dialect::Sqlite->platform()->parser()->version());
+        $type = (new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->read($table->find('typetoken')[0], $values, $table)->type;
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Any, $type->name);
+        self::assertSame(\SqlSemantics\Core\Type\Affinity::Blob, $type->affinity);
     }
 
 }

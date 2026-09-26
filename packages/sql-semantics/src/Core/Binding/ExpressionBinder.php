@@ -8,6 +8,7 @@ use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
 use SqlSemantics\Core\Ast\Tree;
 use SqlSemantics\Core\Model\Expression;
+use SqlSemantics\Core\Model\Operator;
 
 /**
  * Lowers scalar grammar nodes by their tree structure, preserving expression boundaries.
@@ -111,17 +112,23 @@ final class ExpressionBinder
     public function operation(Node $node, array $children, Scope $scope): ?Expression
     {
         $rules = new ExpressionRules($scope->identifiers->dialect);
-        if (count($children) === 2 && in_array(strtoupper(Tree::text($children[0])), ['+', '-', 'NOT'], true)) {
-            return $rules->operator(Tree::text($children[0]), [$this->bind($children[1], $scope)], $node);
+        if (count($children) === 2) {
+            $operator = Operator::fromSpelling(Tree::text($children[0]));
+            if (in_array($operator, [Operator::Plus, Operator::Minus, Operator::Not], true)) {
+                return $rules->operator($operator, [$this->bind($children[1], $scope)], $node);
+            }
         }
         if (count($children) >= 2) {
             $tail = strtoupper(implode(' ', array_map(Tree::text(...), array_slice($children, 1))));
             if (in_array($tail, ['IS NULL', 'IS NOT NULL', 'ISNULL', 'NOTNULL'], true)) {
-                return $rules->operator(in_array($tail, ['IS NULL', 'ISNULL'], true) ? 'IS NULL' : 'IS NOT NULL', [$this->bind($children[0], $scope)], $node);
+                return $rules->operator(in_array($tail, ['IS NULL', 'ISNULL'], true) ? Operator::IsNull : Operator::IsNotNull, [$this->bind($children[0], $scope)], $node);
             }
         }
-        if (count($children) === 3 && in_array(strtoupper(Tree::text($children[1])), ['+', '-', '*', '=', '<>', '!=', '<', '>', '<=', '>=', 'AND', 'OR', 'IS', '<=>'], true)) {
-            return $rules->operator(Tree::text($children[1]), [$this->bind($children[0], $scope), $this->bind($children[2], $scope)], $node);
+        if (count($children) === 3) {
+            $operator = Operator::fromSpelling(Tree::text($children[1]));
+            if ($operator !== null && $operator->isBinary()) {
+                return $rules->operator($operator, [$this->bind($children[0], $scope), $this->bind($children[2], $scope)], $node);
+            }
         }
 
         return null;

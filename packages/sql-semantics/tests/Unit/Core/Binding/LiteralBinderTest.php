@@ -54,6 +54,15 @@ use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 #[CoversClass(\SqlSemantics\Core\Schema\TableDefinition::class)]
 #[CoversClass(SemanticException::class)]
 #[CoversClass(\SqlSemantics\Core\Type\TypeDescriptor::class)]
+#[CoversClass(\SqlSemantics\Core\Type\Builtin::class)]
+#[CoversClass(\SqlSemantics\Core\Type\TypeName::class)]
+#[CoversClass(\SqlSemantics\Core\Type\TypeDeclaration::class)]
+#[CoversClass(\SqlSemantics\Core\Model\Operator::class)]
+#[CoversClass(\SqlSemantics\Core\Ast\Numbers::class)]
+#[CoversClass(\SqlSemantics\Core\Schema\Invariant::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\MySql\TypeReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\TypeReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\Sqlite\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Policy\SyntaxRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\QueryRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
@@ -77,9 +86,9 @@ final class LiteralBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build();
         $statement = (new Binder($schema))->bind('SELECT 2147483647, 2147483648, 9223372036854775808');
-        self::assertSame('integer', $statement->outputs[0]->expression->type->name);
-        self::assertSame('bigint', $statement->outputs[1]->expression->type->name);
-        self::assertSame('numeric', $statement->outputs[2]->expression->type->name);
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Integer, $statement->outputs[0]->expression->type->name);
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::BigInt, $statement->outputs[1]->expression->type->name);
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Numeric, $statement->outputs[2]->expression->type->name);
     }
 
     public function testBindParametersRemainExplicitlyUnknownWithoutBindings(): void
@@ -88,57 +97,59 @@ final class LiteralBinderTest extends TestCase
         $statement = (new Binder($schema))->bind('SELECT $1');
         self::assertSame(\SqlSemantics\Core\Model\ExpressionKind::Parameter, $statement->outputs[0]->expression->kind);
         self::assertSame(Nullability::Unknown, $statement->outputs[0]->expression->nullability);
-        self::assertSame('unknown', $statement->outputs[0]->expression->type->name);
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Unknown, $statement->outputs[0]->expression->type->name);
     }
 
     #[DataProvider('providerDecimalIntegers')]
-    public function testIntegerResolvesDecimalBoundaries(string $literal, string $expected): void
+    public function testIntegerResolvesDecimalBoundaries(string $literal, \SqlSemantics\Core\Type\Builtin $expected): void
     {
         self::assertSame($expected, (new \SqlSemantics\Core\Binding\LiteralBinder(PostgreSqlDialect::PostgreSql))->integer($literal));
     }
 
     /**
-     * @return iterable<string, array{string, string}>
+     * @return iterable<string, array{string, \SqlSemantics\Core\Type\Builtin}>
      */
     public static function providerDecimalIntegers(): iterable
     {
-        yield '0' => ['0', 'integer'];
-        yield '00001' => ['00001', 'integer'];
-        yield '2147483646' => ['2147483646', 'integer'];
-        yield '2147483647' => ['2147483647', 'integer'];
-        yield '2147483648' => ['2147483648', 'bigint'];
-        yield '999999999' => ['999999999', 'integer'];
-        yield '9999999999' => ['9999999999', 'bigint'];
-        yield '10000000000' => ['10000000000', 'bigint'];
-        yield '0002147483648' => ['0002147483648', 'bigint'];
-        yield '9223372036854775806' => ['9223372036854775806', 'bigint'];
-        yield '9223372036854775807' => ['9223372036854775807', 'bigint'];
-        yield '9223372036854775808' => ['9223372036854775808', 'numeric'];
-        yield '10000000000000000000' => ['10000000000000000000', 'numeric'];
+        yield '0' => ['0', \SqlSemantics\Core\Type\Builtin::Integer];
+        yield '00001' => ['00001', \SqlSemantics\Core\Type\Builtin::Integer];
+        yield '2147483646' => ['2147483646', \SqlSemantics\Core\Type\Builtin::Integer];
+        yield '2147483647' => ['2147483647', \SqlSemantics\Core\Type\Builtin::Integer];
+        yield '2147483648' => ['2147483648', \SqlSemantics\Core\Type\Builtin::BigInt];
+        yield '999999999' => ['999999999', \SqlSemantics\Core\Type\Builtin::Integer];
+        yield '9999999999' => ['9999999999', \SqlSemantics\Core\Type\Builtin::BigInt];
+        yield '10000000000' => ['10000000000', \SqlSemantics\Core\Type\Builtin::BigInt];
+        yield '0002147483648' => ['0002147483648', \SqlSemantics\Core\Type\Builtin::BigInt];
+        yield '9223372036854775806' => ['9223372036854775806', \SqlSemantics\Core\Type\Builtin::BigInt];
+        yield '9223372036854775807' => ['9223372036854775807', \SqlSemantics\Core\Type\Builtin::BigInt];
+        yield '9223372036854775808' => ['9223372036854775808', \SqlSemantics\Core\Type\Builtin::Numeric];
+        yield '10000000000000000000' => ['10000000000000000000', \SqlSemantics\Core\Type\Builtin::Numeric];
     }
 
     public function testBindDistinguishesMysqlUnsignedAndDecimalBoundaries(): void
     {
         $schema = (new SchemaBuilder(MySqlDialect::MySql))->build();
         $statement = (new Binder($schema))->bind('SELECT 2147483648, 9223372036854775808, 18446744073709551616');
-        self::assertSame('bigint', $statement->outputs[0]->expression->type->name);
-        self::assertSame('bigint unsigned', $statement->outputs[1]->expression->type->name);
-        self::assertSame('numeric', $statement->outputs[2]->expression->type->name);
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::BigInt, $statement->outputs[0]->expression->type->name);
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::BigInt, $statement->outputs[1]->expression->type->name);
+        self::assertTrue($statement->outputs[1]->expression->type->unsigned);
+        self::assertFalse($statement->outputs[0]->expression->type->unsigned);
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Numeric, $statement->outputs[2]->expression->type->name);
     }
 
     public function testBindDistinguishesSqliteOverflowAsReal(): void
     {
         $schema = (new SchemaBuilder(SqliteDialect::Sqlite))->build();
         $statement = (new Binder($schema))->bind('SELECT 9223372036854775807, 9223372036854775808');
-        self::assertSame('integer', $statement->outputs[0]->expression->type->name);
-        self::assertSame('real', $statement->outputs[1]->expression->type->name);
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Integer, $statement->outputs[0]->expression->type->name);
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Real, $statement->outputs[1]->expression->type->name);
     }
 
-    public function testTypeNameRetainsLiteralCategoriesAndRejectsIdentifiers(): void
+    public function testLiteralRetainsLiteralCategoriesAndRejectsIdentifiers(): void
     {
         $reader = new \SqlSemantics\Core\Binding\LiteralBinder(PostgreSqlDialect::PostgreSql);
-        self::assertSame('numeric', $reader->typeName(new \SqlParser\Lexer\Token(1, 'FCONST', '1.25', 0)));
-        self::assertSame('unknown', $reader->typeName(new \SqlParser\Lexer\Token(1, 'SCONST', "'value'", 0)));
-        self::assertNull($reader->typeName(new \SqlParser\Lexer\Token(1, 'IDENT', 'value', 0)));
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Numeric, $reader->literal(new \SqlParser\Lexer\Token(1, 'FCONST', '1.25', 0))?->name);
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Unknown, $reader->literal(new \SqlParser\Lexer\Token(1, 'SCONST', "'value'", 0))?->name);
+        self::assertNull($reader->literal(new \SqlParser\Lexer\Token(1, 'IDENT', 'value', 0)));
     }
 }

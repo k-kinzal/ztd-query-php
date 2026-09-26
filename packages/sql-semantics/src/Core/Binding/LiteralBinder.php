@@ -8,6 +8,7 @@ use SqlParser\Lexer\Token;
 use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\Model\Expression;
 use SqlSemantics\Core\Model\ExpressionKind;
+use SqlSemantics\Core\Type\Builtin;
 use SqlSemantics\Core\Type\Nullability;
 use SqlSemantics\Core\Type\TypeDescriptor;
 
@@ -30,31 +31,29 @@ final class LiteralBinder
      */
     public function bind(Token $token): ?Expression
     {
-        $name = $token->name;
-        $text = strtoupper($token->text);
-        if (in_array($name, $this->dialect->platform()->syntax()->nodes('parameterToken'), true)) {
-            return new Expression(ExpressionKind::Parameter, new TypeDescriptor($this->dialect, 'unknown'), Nullability::Unknown, $token, symbol: $token->text);
+        if (in_array($token->name, $this->dialect->platform()->syntax()->nodes('parameterToken'), true)) {
+            return new Expression(ExpressionKind::Parameter, new TypeDescriptor($this->dialect, Builtin::Unknown), Nullability::Unknown, $token, symbol: $token->text);
         }
-        $type = $this->typeName($token);
+        $type = $this->literal($token);
         if ($type === null) {
             return null;
         }
 
-        return new Expression(ExpressionKind::Literal, new TypeDescriptor($this->dialect, $type), $text === 'NULL' ? Nullability::AlwaysNull : Nullability::NotNull, $token, symbol: $token->text);
+        return new Expression(ExpressionKind::Literal, $type, strtoupper($token->text) === 'NULL' ? Nullability::AlwaysNull : Nullability::NotNull, $token, symbol: $token->text);
     }
 
     /**
-     * Classifies a literal's lexical category without converting its contents.
+     * Types a literal terminal without converting its contents, or returns null for a non-literal.
      */
-    public function typeName(Token $token): ?string
+    public function literal(Token $token): ?TypeDescriptor
     {
-        return $this->dialect->platform()->types()->typeName($token);
+        return $this->dialect->platform()->types()->literal($token);
     }
 
     /**
      * Chooses an integer type using the supplied scalar policy.
      */
-    public function integer(string $text): string
+    public function integer(string $text): Builtin
     {
         return $this->dialect->platform()->types()->integer($text);
     }

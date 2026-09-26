@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Core\Model;
 
+use InvalidArgumentException;
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
+use SqlSemantics\Core\Schema\Invariant;
 use SqlSemantics\Core\Type\Nullability;
 use SqlSemantics\Core\Type\TypeDescriptor;
 
@@ -26,9 +28,11 @@ final class Expression
      * @param Nullability $nullability Conservative NULL fact at this evaluation stage
      * @param Node|Token $source Original syntax object, never a reparsed copy
      * @param list<Expression> $operands Ordered inputs to the operation
-     * @param ColumnBinding|null $binding Resolved declaration for a column reference
-     * @param string|null $symbol Operator, parameter name, or literal spelling
+     * @param ColumnBinding|null $binding Resolved declaration; exactly a column reference has one
+     * @param Operator|null $operator Applied operator; exactly an operator expression has one
+     * @param string|null $symbol Literal or parameter spelling; exactly those kinds have one
      * @param list<string> $nullExtendedBy Join IDs that can introduce NULL into this result
+     * @throws InvalidArgumentException When the fields do not match the kind
      */
     public function __construct(
         public readonly ExpressionKind $kind,
@@ -37,9 +41,15 @@ final class Expression
         public readonly Node|Token $source,
         public readonly array $operands = [],
         public readonly ?ColumnBinding $binding = null,
+        public readonly ?Operator $operator = null,
         public readonly ?string $symbol = null,
         public readonly array $nullExtendedBy = [],
     ) {
+        Invariant::members($operands, self::class);
+        Invariant::names($nullExtendedBy);
+        Invariant::ensure(($kind === ExpressionKind::Column) === ($binding !== null), 'Exactly a column reference has a binding.');
+        Invariant::ensure(($kind === ExpressionKind::Operator) === ($operator !== null), 'Exactly an operator expression has an operator.');
+        Invariant::ensure(in_array($kind, [ExpressionKind::Literal, ExpressionKind::Parameter], true) === ($symbol !== null), 'Exactly literals and parameters have a spelling.');
     }
 
     /**

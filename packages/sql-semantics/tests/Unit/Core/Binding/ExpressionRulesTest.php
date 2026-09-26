@@ -55,6 +55,15 @@ use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 #[CoversClass(\SqlSemantics\Core\Schema\TableDefinition::class)]
 #[CoversClass(SemanticException::class)]
 #[CoversClass(\SqlSemantics\Core\Type\TypeDescriptor::class)]
+#[CoversClass(\SqlSemantics\Core\Type\Builtin::class)]
+#[CoversClass(\SqlSemantics\Core\Type\TypeName::class)]
+#[CoversClass(\SqlSemantics\Core\Type\TypeDeclaration::class)]
+#[CoversClass(\SqlSemantics\Core\Model\Operator::class)]
+#[CoversClass(\SqlSemantics\Core\Ast\Numbers::class)]
+#[CoversClass(\SqlSemantics\Core\Schema\Invariant::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\MySql\TypeReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\TypeReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\Sqlite\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Policy\SyntaxRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\QueryRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
@@ -110,8 +119,8 @@ final class ExpressionRulesTest extends TestCase
         $statement = (new Binder($schema))->bind('SELECT COALESCE(id, 2147483648) FROM users');
         $expression = $statement->outputs[0]->expression;
         self::assertSame(\SqlSemantics\Core\Model\ExpressionKind::Cast, $expression->operands[0]->kind);
-        self::assertSame('bigint', $expression->operands[0]->type->name);
-        self::assertSame('integer', $expression->operands[0]->operands[0]->type->name);
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::BigInt, $expression->operands[0]->type->name);
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Integer, $expression->operands[0]->operands[0]->type->name);
         self::assertSame('id', $expression->lineage()[0]->column->name);
     }
 
@@ -119,7 +128,7 @@ final class ExpressionRulesTest extends TestCase
     {
         $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build();
         $statement = (new Binder($schema))->bind('SELECT -2147483648, -9223372036854775808');
-        self::assertSame('integer', $statement->outputs[0]->expression->type->name);
-        self::assertSame('bigint', $statement->outputs[1]->expression->type->name);
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Integer, $statement->outputs[0]->expression->type->name);
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::BigInt, $statement->outputs[1]->expression->type->name);
     }
 }

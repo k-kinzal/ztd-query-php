@@ -70,52 +70,50 @@ final class TypeRulesTest extends TestCase
     public function testReadPreservesModifiers(): void
     {
         $schema = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE items (value DECIMAL(10, 2))');
-        self::assertSame(['10', '2'], $schema->tables[0]->columns[0]->type->modifiers);
+        self::assertSame(10, $schema->tables[0]->columns[0]->type->precision);
+        self::assertSame(2, $schema->tables[0]->columns[0]->type->scale);
     }
 
-    public function testCanonicalResolvesInteger(): void
+    public function testSupportsTheDeclaredTypeVocabulary(): void
     {
-        self::assertSame('integer', (new \SqlSemantics\Platform\MySql\TypeRules(Dialect::MySql))->canonical('INT'));
+        self::assertTrue((new \SqlSemantics\Platform\MySql\TypeRules(Dialect::MySql))->supports(\SqlSemantics\Core\Type\Builtin::Integer));
+        self::assertFalse((new \SqlSemantics\Platform\MySql\TypeRules(Dialect::MySql))->supports(\SqlSemantics\Core\Type\Builtin::TsVector) && (new \SqlSemantics\Platform\MySql\TypeRules(Dialect::MySql))->supports(\SqlSemantics\Core\Type\Builtin::MediumInt) && (new \SqlSemantics\Platform\MySql\TypeRules(Dialect::MySql))->supports(\SqlSemantics\Core\Type\Builtin::Any));
     }
 
-    public function testAffinityUsesDeclaredTypePrecedence(): void
+    public function testLiteralClassifiesIntegerToken(): void
     {
-        self::assertSame('integer', (new \SqlSemantics\Platform\MySql\TypeRules(Dialect::MySql))->affinity('FLOATING POINT'));
-    }
-
-    public function testTypeNameClassifiesIntegerToken(): void
-    {
-        self::assertSame('integer', (new \SqlSemantics\Platform\MySql\TypeRules(Dialect::MySql))->typeName(new Token(1, 'NUM', '42', 0)));
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Integer, (new \SqlSemantics\Platform\MySql\TypeRules(Dialect::MySql))->literal(new Token(1, 'NUM', '42', 0))?->name);
+        self::assertNull((new \SqlSemantics\Platform\MySql\TypeRules(Dialect::MySql))->literal(new Token(1, 'IDENT', 'value', 0)));
     }
 
     public function testIntegerModelsLargeMagnitude(): void
     {
-        self::assertSame('integer', (new \SqlSemantics\Platform\MySql\TypeRules(Dialect::MySql))->integer('2147483648'));
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Integer, (new \SqlSemantics\Platform\MySql\TypeRules(Dialect::MySql))->integer('2147483648'));
     }
 
     public function testCommonPreservesHomogeneousType(): void
     {
         $source = new Node('value', 0, []);
-        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(Dialect::MySql, 'integer'), Nullability::NotNull, $source, symbol: '1');
-        self::assertSame('integer', (new \SqlSemantics\Platform\MySql\TypeRules(Dialect::MySql))->common([$expression], $source)->name);
+        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(Dialect::MySql, \SqlSemantics\Core\Type\Builtin::Integer), Nullability::NotNull, $source, symbol: '1');
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Integer, (new \SqlSemantics\Platform\MySql\TypeRules(Dialect::MySql))->common([$expression], $source)->name);
     }
 
     public function testBooleanNamesPredicateResult(): void
     {
-        self::assertSame('integer', (new \SqlSemantics\Platform\MySql\TypeRules(Dialect::MySql))->boolean()->name);
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Integer, (new \SqlSemantics\Platform\MySql\TypeRules(Dialect::MySql))->boolean()->name);
     }
 
     public function testArithmeticRetainsLanguageSemantics(): void
     {
         $source = new Node('value', 0, []);
-        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(Dialect::MySql, 'integer'), Nullability::NotNull, $source, symbol: '1');
-        self::assertSame('bigint', (new \SqlSemantics\Platform\MySql\TypeRules(Dialect::MySql))->arithmetic('+', [$expression], $source)->name);
+        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(Dialect::MySql, \SqlSemantics\Core\Type\Builtin::Integer), Nullability::NotNull, $source, symbol: '1');
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::BigInt, (new \SqlSemantics\Platform\MySql\TypeRules(Dialect::MySql))->arithmetic(\SqlSemantics\Core\Model\Operator::Plus, [$expression], $source)->name);
     }
 
     public function testPredicateAcceptsBooleanResults(): void
     {
         $source = new Node('value', 0, []);
-        $expression = new Expression(ExpressionKind::Literal, (new \SqlSemantics\Platform\MySql\TypeRules(Dialect::MySql))->boolean(), Nullability::NotNull, $source);
+        $expression = new Expression(ExpressionKind::Literal, (new \SqlSemantics\Platform\MySql\TypeRules(Dialect::MySql))->boolean(), Nullability::NotNull, $source, symbol: 'TRUE');
         (new \SqlSemantics\Platform\MySql\TypeRules(Dialect::MySql))->predicate($expression);
         self::assertSame($source, $expression->source);
     }
@@ -123,14 +121,14 @@ final class TypeRulesTest extends TestCase
     public function testCoalescePreservesOperands(): void
     {
         $source = new Node('value', 0, []);
-        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(Dialect::MySql, 'integer'), Nullability::NotNull, $source, symbol: '1');
+        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(Dialect::MySql, \SqlSemantics\Core\Type\Builtin::Integer), Nullability::NotNull, $source, symbol: '1');
         self::assertSame([$expression], (new \SqlSemantics\Platform\MySql\TypeRules(Dialect::MySql))->coalesce([$expression], $expression->type));
     }
 
     public function testProjectPreservesTypedValues(): void
     {
         $source = new Node('value', 0, []);
-        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(Dialect::MySql, 'integer'), Nullability::NotNull, $source, symbol: '1');
+        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(Dialect::MySql, \SqlSemantics\Core\Type\Builtin::Integer), Nullability::NotNull, $source, symbol: '1');
         self::assertSame($expression, (new \SqlSemantics\Platform\MySql\TypeRules(Dialect::MySql))->project($expression));
     }
 }

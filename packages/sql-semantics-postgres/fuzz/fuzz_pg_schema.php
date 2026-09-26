@@ -35,6 +35,9 @@ $constraints = GenerationPlan::constrained('CreateStmt', [
     'ColQualList' => [ProductionPattern::nonEmpty(), ProductionPattern::exactly()],
     'qualified_name' => [ProductionPattern::exactly('ColId')],
     'OptInherit' => [ProductionPattern::exactly()],
+    'Typename' => [ProductionPattern::excluding(ProductionPattern::containing('SETOF'))],
+    'opt_type_modifiers' => [ProductionPattern::exactly()],
+    'Bit' => [ProductionPattern::exactly('BitWithoutLength')],
 ])->requiringNonEmpty();
 
 /** @var PhpFuzzer\Config $config */

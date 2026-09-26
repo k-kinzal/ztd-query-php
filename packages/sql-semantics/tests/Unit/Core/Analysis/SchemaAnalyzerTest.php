@@ -53,6 +53,14 @@ use SqlSemantics\Statement\Writer;
 #[CoversClass(\SqlSemantics\Core\Schema\TableDefinition::class)]
 #[CoversClass(SemanticException::class)]
 #[CoversClass(\SqlSemantics\Core\Type\TypeDescriptor::class)]
+#[CoversClass(\SqlSemantics\Core\Type\Builtin::class)]
+#[CoversClass(\SqlSemantics\Core\Type\TypeName::class)]
+#[CoversClass(\SqlSemantics\Core\Type\TypeDeclaration::class)]
+#[CoversClass(\SqlSemantics\Core\Model\Operator::class)]
+#[CoversClass(\SqlSemantics\Core\Ast\Numbers::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\MySql\TypeReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\TypeReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\Sqlite\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Policy\SyntaxRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\QueryRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
@@ -87,7 +95,7 @@ final class SchemaAnalyzerTest extends TestCase
         $reader = new \SqlSemantics\Core\Analysis\SchemaAnalyzer(MySqlDialect::MySql, grammarVersion: 'mysql-8.0.44');
         $state = $reader->analyze('CREATE TABLE t (id INT) ENGINE=InnoDB');
         self::assertSame('mysql-8.0.44', $state->grammarVersion);
-        self::assertSame('integer', $state->tables[0]->columns[0]->type->name);
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Integer, $state->tables[0]->columns[0]->type->name);
     }
 
     public function testReadPreservesCompatibilitySyntaxErrors(): void

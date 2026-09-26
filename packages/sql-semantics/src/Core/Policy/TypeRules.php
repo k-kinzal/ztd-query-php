@@ -6,8 +6,12 @@ namespace SqlSemantics\Core\Policy;
 
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
+use SqlSemantics\Core\Analysis\ValueReader;
 use SqlSemantics\Core\Model\Expression;
+use SqlSemantics\Core\Model\Operator;
 use SqlSemantics\Core\SemanticException;
+use SqlSemantics\Core\Type\Builtin;
+use SqlSemantics\Core\Type\TypeDeclaration;
 use SqlSemantics\Core\Type\TypeDescriptor;
 
 /**
@@ -18,29 +22,30 @@ use SqlSemantics\Core\Type\TypeDescriptor;
 interface TypeRules
 {
     /**
-     * Reads a declared type, including table-dependent storage rules and modifiers.
+     * Reads a declared type into typed facts, including table-dependent storage rules and implied column facts.
+     *
+     * @param ValueReader $values Lowers declaration parts that the type keeps as typed values
+     * @param Node|null $table Enclosing table declaration, for options that change how a type is stored
+     * @throws SemanticException When the declaration is outside the modeled surface or invalid
      */
-    public function read(Node $node, ?Node $table = null): TypeDescriptor;
+    public function read(Node $node, ValueReader $values, ?Node $table = null): TypeDeclaration;
 
     /**
-     * Resolves the built-in aliases modeled for this dialect.
+     * Reports whether this dialect has the built-in type.
      */
-    public function canonical(string $name): ?string;
+    public function supports(Builtin $type): bool;
 
     /**
-     * Computes storage affinity in the documented precedence order.
+     * Types a literal terminal without converting its contents, or returns null for a non-literal.
+     *
+     * @throws SemanticException When the literal form is outside the modeled surface
      */
-    public function affinity(string $name): string;
-
-    /**
-     * Classifies a literal's lexical category without converting its contents.
-     */
-    public function typeName(Token $token): ?string;
+    public function literal(Token $token): ?TypeDescriptor;
 
     /**
      * Chooses an integer width from its decimal spelling.
      */
-    public function integer(string $text): string;
+    public function integer(string $text): Builtin;
 
     /**
      * @param list<Expression> $expressions
@@ -58,7 +63,7 @@ interface TypeRules
      *
      * @param non-empty-list<Expression> $operands
      */
-    public function arithmetic(string $operator, array $operands, Node $source): TypeDescriptor;
+    public function arithmetic(Operator $operator, array $operands, Node $source): TypeDescriptor;
 
     /**
      * @throws SemanticException

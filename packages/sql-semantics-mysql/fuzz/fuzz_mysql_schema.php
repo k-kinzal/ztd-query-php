@@ -36,12 +36,14 @@ $patterns = $old ? [
     'field_list' => [ProductionPattern::exactly('field_list_item')],
     'field_list_item' => [ProductionPattern::exactly('column_def')],
     'opt_attribute_list' => [ProductionPattern::exactly('attribute')],
+    'field_length' => [ProductionPattern::excluding(ProductionPattern::anyOf(ProductionPattern::containing('ULONGLONG_NUM'), ProductionPattern::containing('DECIMAL_NUM')))],
 ] : [
     'create_table_stmt' => [ProductionPattern::containing('table_element_list')],
     'table_element_list' => [ProductionPattern::exactly('table_element')],
     'table_element' => [ProductionPattern::exactly('column_def')],
     'column_attribute_list' => [ProductionPattern::exactly('column_attribute')],
     'opt_duplicate_as_qe' => [ProductionPattern::exactly()],
+    'field_length' => [ProductionPattern::excluding(ProductionPattern::anyOf(ProductionPattern::containing('ULONGLONG_NUM'), ProductionPattern::containing('DECIMAL_NUM')))],
 ];
 $constraints = GenerationPlan::constrained('create_table_stmt', $patterns)->requiringNonEmpty();
 

@@ -50,6 +50,15 @@ use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 #[CoversClass(\SqlSemantics\Core\Schema\TableDefinition::class)]
 #[CoversClass(SemanticException::class)]
 #[CoversClass(\SqlSemantics\Core\Type\TypeDescriptor::class)]
+#[CoversClass(\SqlSemantics\Core\Type\Builtin::class)]
+#[CoversClass(\SqlSemantics\Core\Type\TypeName::class)]
+#[CoversClass(\SqlSemantics\Core\Type\TypeDeclaration::class)]
+#[CoversClass(\SqlSemantics\Core\Model\Operator::class)]
+#[CoversClass(\SqlSemantics\Core\Ast\Numbers::class)]
+#[CoversClass(\SqlSemantics\Core\Schema\Invariant::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\MySql\TypeReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\TypeReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\Sqlite\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Policy\SyntaxRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\QueryRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
@@ -76,6 +85,6 @@ final class JoinTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Core\Model\Join::class, $statement->from);
         self::assertSame($statement->relations[0], $statement->from->left);
         self::assertSame($statement->relations[1], $statement->from->right);
-        self::assertSame('=', $statement->from->condition?->symbol);
+        self::assertSame(\SqlSemantics\Core\Model\Operator::Equal, $statement->from->condition?->operator);
     }
 }

@@ -9,7 +9,9 @@ use SqlSemantics\Core\Ast\Tree;
 use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\Model\Expression;
 use SqlSemantics\Core\Model\ExpressionKind;
+use SqlSemantics\Core\Model\Operator;
 use SqlSemantics\Core\SemanticException;
+use SqlSemantics\Core\Type\Builtin;
 use SqlSemantics\Core\Type\Nullability;
 use SqlSemantics\Core\Type\TypeDescriptor;
 
@@ -40,15 +42,15 @@ final class ExpressionRules
         if ($name === 'COALESCE') {
             $operands = $this->dialect->platform()->types()->coalesce($operands, $type);
             $nullability = NullFacts::coalesce($operands);
-            return new Expression(ExpressionKind::Coalesce, $type, $nullability, $source, $operands, symbol: $name, nullExtendedBy: NullFacts::extensions($operands, $nullability));
+            return new Expression(ExpressionKind::Coalesce, $type, $nullability, $source, $operands, nullExtendedBy: NullFacts::extensions($operands, $nullability));
         }
         if ($name === 'NULLIF') {
-            if ($operands[0]->type->name !== $operands[1]->type->name && $operands[1]->type->name !== 'unknown') {
+            if (!$operands[0]->type->is($operands[1]->type->name) && !$operands[1]->type->is(Builtin::Unknown)) {
                 Tree::unsupported($source, 'NULLIF overload with different input types');
             }
             $type = $operands[0]->type;
             $nullability = $operands[0]->nullability === Nullability::AlwaysNull ? Nullability::AlwaysNull : Nullability::MaybeNull;
-            return new Expression(ExpressionKind::NullIf, $type, $nullability, $source, $operands, symbol: $name, nullExtendedBy: NullFacts::extensions($operands, $nullability));
+            return new Expression(ExpressionKind::NullIf, $type, $nullability, $source, $operands, nullExtendedBy: NullFacts::extensions($operands, $nullability));
         }
 
         Tree::unsupported($source, 'function');
@@ -59,43 +61,40 @@ final class ExpressionRules
      */
     public function coerce(Expression $operand, TypeDescriptor $type): Expression
     {
-        if ($operand->type->name === $type->name) {
+        if ($operand->type->is($type->name)) {
             return $operand;
         }
 
-        return new Expression(ExpressionKind::Cast, $type, $operand->nullability, $operand->source, [$operand], symbol: 'implicit', nullExtendedBy: $operand->nullExtendedBy);
+        return new Expression(ExpressionKind::Cast, $type, $operand->nullability, $operand->source, [$operand], nullExtendedBy: $operand->nullExtendedBy);
     }
 
     /**
      * @param non-empty-list<Expression> $operands
      */
-    public function operator(string $operator, array $operands, Node $source): Expression
+    public function operator(Operator $operator, array $operands, Node $source): Expression
     {
-        $operator = strtoupper($operator);
         $nullability = NullFacts::strict($operands);
         $types = new TypeResolution($this->dialect);
-        if (in_array($operator, ['IS NULL', 'IS NOT NULL'], true)) {
+        if ($operator->isNullTest()) {
             $type = $types->boolean();
             $nullability = Nullability::NotNull;
-        } elseif (in_array($operator, ['AND', 'OR', 'NOT'], true)) {
+        } elseif ($operator->isLogical()) {
             foreach ($operands as $operand) {
                 $this->predicate($operand);
             }
             $type = $types->boolean();
             $nullability = NullFacts::coalesce($operands) === Nullability::NotNull && NullFacts::strict($operands) === Nullability::NotNull ? Nullability::NotNull : Nullability::MaybeNull;
-        } elseif (in_array($operator, ['=', '<>', '!=', '<', '>', '<=', '>=', 'IS', 'IS NOT', '<=>'], true)) {
+        } elseif ($operator->isComparison()) {
             $types->common($operands, $source);
             $type = $types->boolean();
-            if (in_array($operator, ['IS', 'IS NOT', '<=>'], true)) {
+            if (in_array($operator, [Operator::Is, Operator::NullSafeEqual], true)) {
                 $nullability = Nullability::NotNull;
             }
-        } elseif (in_array($operator, ['+', '-', '*'], true)) {
-            $type = $this->arithmetic($operator, $operands, $source);
         } else {
-            Tree::unsupported($source, 'operator');
+            $type = $this->arithmetic($operator, $operands, $source);
         }
 
-        return new Expression(ExpressionKind::Operator, $type, $nullability, $source, $operands, symbol: $operator, nullExtendedBy: NullFacts::extensions($operands, $nullability));
+        return new Expression(ExpressionKind::Operator, $type, $nullability, $source, $operands, operator: $operator, nullExtendedBy: NullFacts::extensions($operands, $nullability));
     }
 
     /**
@@ -103,7 +102,7 @@ final class ExpressionRules
      *
      * @param non-empty-list<Expression> $operands
      */
-    public function arithmetic(string $operator, array $operands, Node $source): TypeDescriptor
+    public function arithmetic(Operator $operator, array $operands, Node $source): TypeDescriptor
     {
         return $this->dialect->platform()->types()->arithmetic($operator, $operands, $source);
     }

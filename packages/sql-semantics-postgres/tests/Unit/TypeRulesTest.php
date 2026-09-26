@@ -70,52 +70,50 @@ final class TypeRulesTest extends TestCase
     public function testReadPreservesModifiers(): void
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE items (value DECIMAL(10, 2))');
-        self::assertSame(['10', '2'], $schema->tables[0]->columns[0]->type->modifiers);
+        self::assertSame(10, $schema->tables[0]->columns[0]->type->precision);
+        self::assertSame(2, $schema->tables[0]->columns[0]->type->scale);
     }
 
-    public function testCanonicalResolvesInteger(): void
+    public function testSupportsTheDeclaredTypeVocabulary(): void
     {
-        self::assertSame('integer', (new \SqlSemantics\Platform\PostgreSql\TypeRules(Dialect::PostgreSql))->canonical('INT'));
+        self::assertTrue((new \SqlSemantics\Platform\PostgreSql\TypeRules(Dialect::PostgreSql))->supports(\SqlSemantics\Core\Type\Builtin::Integer));
+        self::assertFalse((new \SqlSemantics\Platform\PostgreSql\TypeRules(Dialect::PostgreSql))->supports(\SqlSemantics\Core\Type\Builtin::TsVector) && (new \SqlSemantics\Platform\PostgreSql\TypeRules(Dialect::PostgreSql))->supports(\SqlSemantics\Core\Type\Builtin::MediumInt) && (new \SqlSemantics\Platform\PostgreSql\TypeRules(Dialect::PostgreSql))->supports(\SqlSemantics\Core\Type\Builtin::Any));
     }
 
-    public function testAffinityUsesDeclaredTypePrecedence(): void
+    public function testLiteralClassifiesIntegerToken(): void
     {
-        self::assertSame('integer', (new \SqlSemantics\Platform\PostgreSql\TypeRules(Dialect::PostgreSql))->affinity('FLOATING POINT'));
-    }
-
-    public function testTypeNameClassifiesIntegerToken(): void
-    {
-        self::assertSame('integer', (new \SqlSemantics\Platform\PostgreSql\TypeRules(Dialect::PostgreSql))->typeName(new Token(1, 'ICONST', '42', 0)));
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Integer, (new \SqlSemantics\Platform\PostgreSql\TypeRules(Dialect::PostgreSql))->literal(new Token(1, 'ICONST', '42', 0))?->name);
+        self::assertNull((new \SqlSemantics\Platform\PostgreSql\TypeRules(Dialect::PostgreSql))->literal(new Token(1, 'IDENT', 'value', 0)));
     }
 
     public function testIntegerModelsLargeMagnitude(): void
     {
-        self::assertSame('bigint', (new \SqlSemantics\Platform\PostgreSql\TypeRules(Dialect::PostgreSql))->integer('2147483648'));
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::BigInt, (new \SqlSemantics\Platform\PostgreSql\TypeRules(Dialect::PostgreSql))->integer('2147483648'));
     }
 
     public function testCommonPreservesHomogeneousType(): void
     {
         $source = new Node('value', 0, []);
-        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(Dialect::PostgreSql, 'integer'), Nullability::NotNull, $source, symbol: '1');
-        self::assertSame('integer', (new \SqlSemantics\Platform\PostgreSql\TypeRules(Dialect::PostgreSql))->common([$expression], $source)->name);
+        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Core\Type\Builtin::Integer), Nullability::NotNull, $source, symbol: '1');
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Integer, (new \SqlSemantics\Platform\PostgreSql\TypeRules(Dialect::PostgreSql))->common([$expression], $source)->name);
     }
 
     public function testBooleanNamesPredicateResult(): void
     {
-        self::assertSame('boolean', (new \SqlSemantics\Platform\PostgreSql\TypeRules(Dialect::PostgreSql))->boolean()->name);
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Boolean, (new \SqlSemantics\Platform\PostgreSql\TypeRules(Dialect::PostgreSql))->boolean()->name);
     }
 
     public function testArithmeticRetainsLanguageSemantics(): void
     {
         $source = new Node('value', 0, []);
-        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(Dialect::PostgreSql, 'integer'), Nullability::NotNull, $source, symbol: '1');
-        self::assertSame('integer', (new \SqlSemantics\Platform\PostgreSql\TypeRules(Dialect::PostgreSql))->arithmetic('+', [$expression], $source)->name);
+        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Core\Type\Builtin::Integer), Nullability::NotNull, $source, symbol: '1');
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Integer, (new \SqlSemantics\Platform\PostgreSql\TypeRules(Dialect::PostgreSql))->arithmetic(\SqlSemantics\Core\Model\Operator::Plus, [$expression], $source)->name);
     }
 
     public function testPredicateAcceptsBooleanResults(): void
     {
         $source = new Node('value', 0, []);
-        $expression = new Expression(ExpressionKind::Literal, (new \SqlSemantics\Platform\PostgreSql\TypeRules(Dialect::PostgreSql))->boolean(), Nullability::NotNull, $source);
+        $expression = new Expression(ExpressionKind::Literal, (new \SqlSemantics\Platform\PostgreSql\TypeRules(Dialect::PostgreSql))->boolean(), Nullability::NotNull, $source, symbol: 'TRUE');
         (new \SqlSemantics\Platform\PostgreSql\TypeRules(Dialect::PostgreSql))->predicate($expression);
         self::assertSame($source, $expression->source);
     }
@@ -123,14 +121,14 @@ final class TypeRulesTest extends TestCase
     public function testCoalescePreservesOperands(): void
     {
         $source = new Node('value', 0, []);
-        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(Dialect::PostgreSql, 'integer'), Nullability::NotNull, $source, symbol: '1');
+        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Core\Type\Builtin::Integer), Nullability::NotNull, $source, symbol: '1');
         self::assertSame([$expression], (new \SqlSemantics\Platform\PostgreSql\TypeRules(Dialect::PostgreSql))->coalesce([$expression], $expression->type));
     }
 
     public function testProjectPreservesTypedValues(): void
     {
         $source = new Node('value', 0, []);
-        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(Dialect::PostgreSql, 'integer'), Nullability::NotNull, $source, symbol: '1');
+        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Core\Type\Builtin::Integer), Nullability::NotNull, $source, symbol: '1');
         self::assertSame($expression, (new \SqlSemantics\Platform\PostgreSql\TypeRules(Dialect::PostgreSql))->project($expression));
     }
 }

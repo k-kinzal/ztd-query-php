@@ -6,10 +6,14 @@ namespace SqlSemantics\Platform\Sqlite;
 
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
+use SqlSemantics\Core\Analysis\ValueReader;
 use SqlSemantics\Core\Ast\Tree;
 use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\Model\Expression;
+use SqlSemantics\Core\Model\Operator;
 use SqlSemantics\Core\Policy\TypeRules as Contract;
+use SqlSemantics\Core\Type\Builtin;
+use SqlSemantics\Core\Type\TypeDeclaration;
 use SqlSemantics\Core\Type\TypeDescriptor;
 
 /**
@@ -19,6 +23,27 @@ use SqlSemantics\Core\Type\TypeDescriptor;
  */
 final class TypeRules implements Contract
 {
+    private const SUPPORTED = [
+        Builtin::Unknown,
+        Builtin::Dynamic,
+        Builtin::Any,
+        Builtin::TinyInt,
+        Builtin::SmallInt,
+        Builtin::MediumInt,
+        Builtin::Integer,
+        Builtin::BigInt,
+        Builtin::Numeric,
+        Builtin::Real,
+        Builtin::DoublePrecision,
+        Builtin::Boolean,
+        Builtin::Char,
+        Builtin::VarChar,
+        Builtin::Text,
+        Builtin::Blob,
+        Builtin::Date,
+        Builtin::DateTime,
+    ];
+
     /**
      * Retains the language identity used in semantic output.
      */
@@ -27,86 +52,25 @@ final class TypeRules implements Contract
     }
 
     /**
-     * Reads a declared type, including table-dependent storage rules and modifiers.
+     * Reads a declared type name, its affinity, and the table options that change it.
      */
-    public function read(Node $node, ?Node $table = null): TypeDescriptor
+    public function read(Node $node, ValueReader $values, ?Node $table = null): TypeDeclaration
     {
-        $tokens = $node->tokens();
-        $words = [];
-        $modifiers = [];
-        $inModifiers = false;
-        foreach ($tokens as $token) {
-            if ($token->text === '(') {
-                $inModifiers = true;
-            } elseif ($token->text === ')') {
-                $inModifiers = false;
-            } elseif ($token->text !== ',') {
-                if ($inModifiers) {
-                    $modifiers[] = $token->text;
-                } else {
-                    $words[] = strtoupper((new NameRules())->name($token));
-                }
-            }
-        }
-        $name = implode(' ', $words);
-        $affinity = $this->affinity($name);
-        if ($name === 'ANY' && $table !== null) {
-            foreach (Tree::outer($table, ['table_option']) as $option) {
-                if (strtoupper(Tree::text($option)) === 'STRICT') {
-                    $affinity = 'blob';
-                }
-            }
-        }
-        return new TypeDescriptor($this->dialect, strtolower($name), $modifiers, $affinity);
+        return (new TypeReader($this->dialect))->read($node, $table);
     }
 
     /**
-     * Resolves the built-in aliases modeled for this dialect.
+     * Reports whether this dialect has the built-in type.
      */
-    public function canonical(string $name): ?string
+    public function supports(Builtin $type): bool
     {
-        return match ($name) {
-            'INT', 'INTEGER', 'INT4' => 'integer',
-            'SMALLINT', 'INT2' => 'smallint',
-            'BIGINT', 'INT8' => 'bigint',
-            'DEC', 'DECIMAL', 'NUMERIC' => 'numeric',
-            'REAL' => 'real',
-            'FLOAT4' => 'real',
-            'DOUBLE', 'DOUBLE PRECISION', 'FLOAT8' => 'double precision',
-            'BOOL', 'BOOLEAN' => 'boolean',
-            'VARCHAR', 'CHARACTER VARYING', 'CHAR VARYING' => 'varchar',
-            'CHAR', 'CHARACTER' => 'char',
-            'TEXT', 'DATE', 'TIME', 'TIMESTAMP', 'JSON' => strtolower($name),
-            'TINYINT', 'MEDIUMINT', 'DATETIME', 'BLOB' => null,
-            'UUID', 'BYTEA', 'JSONB', 'TIMESTAMPTZ', 'TIMETZ', 'INTERVAL' => null,
-            default => null,
-        };
+        return in_array($type, self::SUPPORTED, true);
     }
 
     /**
-     * Computes storage affinity from a declaration name.
+     * Types a literal terminal without converting its contents.
      */
-    public function affinity(string $name): string
-    {
-        if (str_contains($name, 'INT')) {
-            return 'integer';
-        }
-        if (str_contains($name, 'CHAR') || str_contains($name, 'CLOB') || str_contains($name, 'TEXT')) {
-            return 'text';
-        }
-        if ($name === '' || str_contains($name, 'BLOB')) {
-            return 'blob';
-        }
-        if (str_contains($name, 'REAL') || str_contains($name, 'FLOA') || str_contains($name, 'DOUB')) {
-            return 'real';
-        }
-        return 'numeric';
-    }
-
-    /**
-     * Classifies a literal's lexical category without converting its contents.
-     */
-    public function typeName(Token $token): ?string
+    public function literal(Token $token): ?TypeDescriptor
     {
         $name = $token->name;
         $number = str_replace('_', '', $token->text);
@@ -114,27 +78,26 @@ final class TypeRules implements Contract
             Tree::unsupported($token, 'non-decimal numeric literal');
         }
         $text = strtoupper($token->text);
-        return match (true) {
+        $type = match (true) {
             in_array($name, ['ICONST', 'NUM', 'INTEGER'], true) => $this->integer($number),
-            $name === 'LONG_NUM' => 'bigint',
-            $name === 'ULONGLONG_NUM' => 'bigint unsigned',
-            $name === 'FCONST' => ctype_digit($number) ? $this->integer($number) : 'numeric',
-            $name === 'DECIMAL_NUM' => 'numeric',
-            in_array($name, ['FLOAT_NUM', 'FLOAT'], true) => 'real',
-            in_array($name, ['SCONST', 'USCONST', 'TEXT_STRING', 'STRING'], true) => 'text',
-            in_array($name, ['NULL_P', 'NULL_SYM', 'NULL'], true) => 'unknown',
-            in_array($text, ['TRUE', 'FALSE'], true) && !in_array($name, ['IDENT', 'IDENT_QUOTED', 'ID'], true) => 'integer',
+            $name === 'FCONST' => ctype_digit($number) ? $this->integer($number) : Builtin::Numeric,
+            in_array($name, ['FLOAT_NUM', 'FLOAT'], true) => Builtin::Real,
+            in_array($name, ['SCONST', 'USCONST', 'TEXT_STRING', 'STRING'], true) => Builtin::Text,
+            in_array($name, ['NULL_P', 'NULL_SYM', 'NULL'], true) => Builtin::Unknown,
+            in_array($text, ['TRUE', 'FALSE'], true) && !in_array($name, ['IDENT', 'IDENT_QUOTED', 'ID'], true) => Builtin::Integer,
             default => null,
         };
+
+        return $type === null ? null : new TypeDescriptor($this->dialect, $type);
     }
 
     /**
-     * Chooses a Sqlite integer width from its decimal spelling.
+     * Chooses a Sqlite integer width from its decimal spelling; an overflowing literal is a real.
      */
-    public function integer(string $text): string
+    public function integer(string $text): Builtin
     {
         $digits = ltrim($text, '0');
-        return strlen($digits) < 19 || strlen($digits) === 19 && strcmp($digits, '9223372036854775807') <= 0 ? 'integer' : 'real';
+        return strlen($digits) < 19 || strlen($digits) === 19 && strcmp($digits, '9223372036854775807') <= 0 ? Builtin::Integer : Builtin::Real;
     }
 
     /**
@@ -144,18 +107,20 @@ final class TypeRules implements Contract
     {
         $types = [];
         foreach ($expressions as $expression) {
-            if ($expression->type->name !== 'unknown') {
+            if (!$expression->type->is(Builtin::Unknown)) {
                 $types[] = $expression->type;
             }
         }
         if ($types === []) {
-            return new TypeDescriptor($this->dialect, 'unknown');
+            return new TypeDescriptor($this->dialect, Builtin::Unknown);
         }
-        $names = array_values(array_unique(array_map(static fn (TypeDescriptor $type): string => $type->name, $types)));
-        if (count($names) === 1) {
-            return new TypeDescriptor($this->dialect, $types[0]->name, affinity: $types[0]->affinity);
+        foreach ($types as $type) {
+            if (!$type->is($types[0]->name)) {
+                return new TypeDescriptor($this->dialect, Builtin::Dynamic);
+            }
         }
-        return new TypeDescriptor($this->dialect, 'dynamic');
+
+        return new TypeDescriptor($this->dialect, $types[0]->name, affinity: $types[0]->affinity);
     }
 
     /**
@@ -163,17 +128,17 @@ final class TypeRules implements Contract
      */
     public function boolean(): TypeDescriptor
     {
-        return new TypeDescriptor($this->dialect, 'integer');
+        return new TypeDescriptor($this->dialect, Builtin::Integer);
     }
 
     /**
-     * Resolves supported numeric operations, including signed literal boundaries.
+     * Arithmetic results take the storage class of their run-time operands.
      *
      * @param non-empty-list<Expression> $operands
      */
-    public function arithmetic(string $operator, array $operands, Node $source): TypeDescriptor
+    public function arithmetic(Operator $operator, array $operands, Node $source): TypeDescriptor
     {
-        return new TypeDescriptor($this->dialect, 'dynamic');
+        return new TypeDescriptor($this->dialect, Builtin::Dynamic);
     }
 
     /**

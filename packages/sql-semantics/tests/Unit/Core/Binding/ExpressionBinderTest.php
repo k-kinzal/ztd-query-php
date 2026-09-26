@@ -55,6 +55,15 @@ use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 #[CoversClass(\SqlSemantics\Core\Schema\TableDefinition::class)]
 #[CoversClass(SemanticException::class)]
 #[CoversClass(\SqlSemantics\Core\Type\TypeDescriptor::class)]
+#[CoversClass(\SqlSemantics\Core\Type\Builtin::class)]
+#[CoversClass(\SqlSemantics\Core\Type\TypeName::class)]
+#[CoversClass(\SqlSemantics\Core\Type\TypeDeclaration::class)]
+#[CoversClass(\SqlSemantics\Core\Model\Operator::class)]
+#[CoversClass(\SqlSemantics\Core\Ast\Numbers::class)]
+#[CoversClass(\SqlSemantics\Core\Schema\Invariant::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\MySql\TypeReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\TypeReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\Sqlite\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Policy\SyntaxRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\QueryRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
@@ -81,8 +90,8 @@ final class ExpressionBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder($dialect))->build();
         $statement = (new Binder($schema))->bind('SELECT 1+2*3 AS result');
-        self::assertSame('+', $statement->outputs[0]->expression->symbol);
-        self::assertSame('*', $statement->outputs[0]->expression->operands[1]->symbol);
+        self::assertSame(\SqlSemantics\Core\Model\Operator::Plus, $statement->outputs[0]->expression->operator);
+        self::assertSame(\SqlSemantics\Core\Model\Operator::Multiply, $statement->outputs[0]->expression->operands[1]->operator);
     }
 
     #[TestWith([PostgreSqlDialect::PostgreSql])]
@@ -92,9 +101,9 @@ final class ExpressionBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT -(score + 1) AS negative FROM users WHERE NOT (score > 0)');
-        self::assertSame('-', $statement->outputs[0]->expression->symbol);
-        self::assertSame('+', $statement->outputs[0]->expression->operands[0]->symbol);
-        self::assertSame('NOT', $statement->where?->symbol);
+        self::assertSame(\SqlSemantics\Core\Model\Operator::Minus, $statement->outputs[0]->expression->operator);
+        self::assertSame(\SqlSemantics\Core\Model\Operator::Plus, $statement->outputs[0]->expression->operands[0]->operator);
+        self::assertSame(\SqlSemantics\Core\Model\Operator::Not, $statement->where?->operator);
     }
 
     public function testTokenRejectsUnmodeledTerminals(): void

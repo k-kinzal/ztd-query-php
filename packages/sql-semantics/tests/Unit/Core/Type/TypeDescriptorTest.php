@@ -13,6 +13,15 @@ use SqlSemantics\Core\SemanticException;
 use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 
 #[CoversClass(\SqlSemantics\Core\Type\TypeDescriptor::class)]
+#[CoversClass(\SqlSemantics\Core\Type\Builtin::class)]
+#[CoversClass(\SqlSemantics\Core\Type\TypeName::class)]
+#[CoversClass(\SqlSemantics\Core\Type\TypeDeclaration::class)]
+#[CoversClass(\SqlSemantics\Core\Model\Operator::class)]
+#[CoversClass(\SqlSemantics\Core\Ast\Numbers::class)]
+#[CoversClass(\SqlSemantics\Core\Schema\Invariant::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\MySql\TypeReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\TypeReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\Sqlite\TypeReader::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\ExpressionRules::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\FromBinder::class)]
@@ -69,11 +78,28 @@ use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 #[Medium]
 final class TypeDescriptorTest extends TestCase
 {
+    public function testIsComparesOnlyTheTypeIdentity(): void
+    {
+        $type = new \SqlSemantics\Core\Type\TypeDescriptor(SqliteDialect::Sqlite, \SqlSemantics\Core\Type\Builtin::VarChar, length: 20);
+        self::assertTrue($type->is(\SqlSemantics\Core\Type\Builtin::VarChar));
+        self::assertFalse($type->is(\SqlSemantics\Core\Type\Builtin::Text));
+        self::assertFalse($type->is(new \SqlSemantics\Core\Type\TypeName(['varchar'])));
+        $named = new \SqlSemantics\Core\Type\TypeDescriptor(SqliteDialect::Sqlite, new \SqlSemantics\Core\Type\TypeName(['UNSIGNED', 'BIG', 'INT']));
+        self::assertTrue($named->is(new \SqlSemantics\Core\Type\TypeName(['UNSIGNED', 'BIG', 'INT'])));
+        self::assertFalse($named->is(\SqlSemantics\Core\Type\Builtin::BigInt));
+    }
+
+    public function testLabelNamesBuiltinAndNamedTypesForDiagnostics(): void
+    {
+        self::assertSame('double precision', (new \SqlSemantics\Core\Type\TypeDescriptor(SqliteDialect::Sqlite, \SqlSemantics\Core\Type\Builtin::DoublePrecision))->label());
+        self::assertSame('app.money', (new \SqlSemantics\Core\Type\TypeDescriptor(SqliteDialect::Sqlite, new \SqlSemantics\Core\Type\TypeName(['app', 'money'])))->label());
+    }
+
     public function testDistinguishesStorageAffinityFromDeclaredType(): void
     {
         $table = (new SchemaBuilder(SqliteDialect::Sqlite))->build('CREATE TABLE users (code VARCHAR(20))')->tables[0];
-        self::assertSame('varchar', $table->columns[0]->type->name);
-        self::assertSame(['20'], $table->columns[0]->type->modifiers);
-        self::assertSame('text', $table->columns[0]->type->affinity);
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::VarChar, $table->columns[0]->type->name);
+        self::assertSame(20, $table->columns[0]->type->length);
+        self::assertSame(\SqlSemantics\Core\Type\Affinity::Text, $table->columns[0]->type->affinity);
     }
 }

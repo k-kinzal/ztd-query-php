@@ -56,6 +56,15 @@ use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 #[CoversClass(\SqlSemantics\Core\Schema\TableDefinition::class)]
 #[CoversClass(SemanticException::class)]
 #[CoversClass(\SqlSemantics\Core\Type\TypeDescriptor::class)]
+#[CoversClass(\SqlSemantics\Core\Type\Builtin::class)]
+#[CoversClass(\SqlSemantics\Core\Type\TypeName::class)]
+#[CoversClass(\SqlSemantics\Core\Type\TypeDeclaration::class)]
+#[CoversClass(\SqlSemantics\Core\Model\Operator::class)]
+#[CoversClass(\SqlSemantics\Core\Ast\Numbers::class)]
+#[CoversClass(\SqlSemantics\Core\Schema\Invariant::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\MySql\TypeReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\TypeReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\Sqlite\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Policy\SyntaxRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\QueryRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
@@ -106,11 +115,11 @@ final class NullFactsTest extends TestCase
     #[DataProvider('providerFacts')]
     public function testStrictAndCoalesceFacts(Nullability $left, Nullability $right, Nullability $strict, Nullability $coalesce): void
     {
-        $type = new \SqlSemantics\Core\Type\TypeDescriptor(PostgreSqlDialect::PostgreSql, 'integer');
+        $type = new \SqlSemantics\Core\Type\TypeDescriptor(PostgreSqlDialect::PostgreSql, \SqlSemantics\Core\Type\Builtin::Integer);
         $source = new \SqlParser\Parser\Node('expr', 0, []);
         $operands = [
-            new \SqlSemantics\Core\Model\Expression(\SqlSemantics\Core\Model\ExpressionKind::Literal, $type, $left, $source),
-            new \SqlSemantics\Core\Model\Expression(\SqlSemantics\Core\Model\ExpressionKind::Literal, $type, $right, $source),
+            new \SqlSemantics\Core\Model\Expression(\SqlSemantics\Core\Model\ExpressionKind::Literal, $type, $left, $source, symbol: '1'),
+            new \SqlSemantics\Core\Model\Expression(\SqlSemantics\Core\Model\ExpressionKind::Literal, $type, $right, $source, symbol: '1'),
         ];
         self::assertSame($strict, \SqlSemantics\Core\Binding\NullFacts::strict($operands));
         self::assertSame($coalesce, \SqlSemantics\Core\Binding\NullFacts::coalesce($operands));

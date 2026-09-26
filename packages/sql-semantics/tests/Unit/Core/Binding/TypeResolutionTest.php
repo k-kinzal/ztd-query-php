@@ -52,6 +52,15 @@ use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 #[CoversClass(\SqlSemantics\Core\Schema\TableDefinition::class)]
 #[CoversClass(SemanticException::class)]
 #[CoversClass(\SqlSemantics\Core\Type\TypeDescriptor::class)]
+#[CoversClass(\SqlSemantics\Core\Type\Builtin::class)]
+#[CoversClass(\SqlSemantics\Core\Type\TypeName::class)]
+#[CoversClass(\SqlSemantics\Core\Type\TypeDeclaration::class)]
+#[CoversClass(\SqlSemantics\Core\Model\Operator::class)]
+#[CoversClass(\SqlSemantics\Core\Ast\Numbers::class)]
+#[CoversClass(\SqlSemantics\Core\Schema\Invariant::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\MySql\TypeReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\TypeReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\Sqlite\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Policy\SyntaxRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\QueryRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
@@ -75,7 +84,7 @@ final class TypeResolutionTest extends TestCase
     {
         $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT COALESCE(id, 2147483648) FROM users');
-        self::assertSame('bigint', $statement->outputs[0]->expression->type->name);
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::BigInt, $statement->outputs[0]->expression->type->name);
     }
 
     public function testRejectsUnmodeledCoercion(): void
@@ -88,8 +97,8 @@ final class TypeResolutionTest extends TestCase
 
     public function testBooleanUsesDialectSpecificResultTypes(): void
     {
-        self::assertSame('boolean', (new \SqlSemantics\Core\Binding\TypeResolution(PostgreSqlDialect::PostgreSql))->boolean()->name);
-        self::assertSame('integer', (new \SqlSemantics\Core\Binding\TypeResolution(MySqlDialect::MySql))->boolean()->name);
-        self::assertSame('integer', (new \SqlSemantics\Core\Binding\TypeResolution(SqliteDialect::Sqlite))->boolean()->name);
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Boolean, (new \SqlSemantics\Core\Binding\TypeResolution(PostgreSqlDialect::PostgreSql))->boolean()->name);
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Integer, (new \SqlSemantics\Core\Binding\TypeResolution(MySqlDialect::MySql))->boolean()->name);
+        self::assertSame(\SqlSemantics\Core\Type\Builtin::Integer, (new \SqlSemantics\Core\Binding\TypeResolution(SqliteDialect::Sqlite))->boolean()->name);
     }
 }

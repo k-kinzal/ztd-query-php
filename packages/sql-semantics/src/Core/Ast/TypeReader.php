@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace SqlSemantics\Core\Ast;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Core\Analysis\ValueReader;
 use SqlSemantics\Core\Dialect;
-use SqlSemantics\Core\Type\TypeDescriptor;
+use SqlSemantics\Core\Type\TypeDeclaration;
 
 /**
- * Interprets a declared type without erasing its modifiers.
+ * Interprets a declared type into typed facts using the dialect's type policy.
  *
  * @visibility SqlSemantics
  */
@@ -23,26 +24,10 @@ final class TypeReader
     }
 
     /**
-     * Reads a declared type, including table-dependent storage rules and modifiers.
+     * Reads a declared type, including table-dependent storage rules and the column facts it implies.
      */
-    public function read(Node $node, ?Node $table = null): TypeDescriptor
+    public function read(Node $node, ValueReader $values, ?Node $table = null): TypeDeclaration
     {
-        return $this->dialect->platform()->types()->read($node, $table);
-    }
-
-    /**
-     * Resolves the built-in aliases modeled for this dialect.
-     */
-    public function canonical(string $name): ?string
-    {
-        return $this->dialect->platform()->types()->canonical($name);
-    }
-
-    /**
-     * Computes storage affinity using the supplied declaration policy.
-     */
-    public function affinity(string $name): string
-    {
-        return $this->dialect->platform()->types()->affinity($name);
+        return $this->dialect->platform()->types()->read($node, $values, $table);
     }
 }
