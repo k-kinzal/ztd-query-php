@@ -237,6 +237,39 @@ final class SqlGeneratorFactoryTest extends TestCase
         self::assertSame('7', $generator->generate(GenerationPlan::lexical('integer_literal', ['min' => 7, 'max' => 7])));
     }
 
+    public function testForMySqlRealizesTheDocumentedSelectExample(): void
+    {
+        $grammar = new Grammar('statement', [
+            'statement' => new ProductionRule('statement', [new Production([
+                new Terminal('SELECT_SYM'),
+                new \SqlFaker\Grammar\Model\NonTerminal('expression'),
+                new Terminal('FROM'),
+                new \SqlFaker\Grammar\Model\NonTerminal('identifier'),
+            ])]),
+            'expression' => new ProductionRule('expression', [
+                new Production([new \SqlFaker\Grammar\Model\NonTerminal('identifier')]),
+                new Production([new \SqlFaker\Grammar\Model\NonTerminal('integer')]),
+                new Production([
+                    new \SqlFaker\Grammar\Model\NonTerminal('expression'),
+                    new Terminal('+'),
+                    new \SqlFaker\Grammar\Model\NonTerminal('expression'),
+                ]),
+            ]),
+            'identifier' => new ProductionRule('identifier', [new Production([new Terminal('IDENT')])]),
+            'integer' => new ProductionRule('integer', [new Production([new Terminal('NUM')])]),
+        ]);
+        $generator = SqlGeneratorFactory::forMySql(Factory::create(), $grammar, 'mysql-8.4.7');
+        $plan = GenerationPlan::constrained('statement', [
+            'expression' => [
+                \SqlFaker\Generation\Plan\ProductionPattern::exactly('expression', '+', 'expression'),
+                \SqlFaker\Generation\Plan\ProductionPattern::exactly('identifier'),
+                \SqlFaker\Generation\Plan\ProductionPattern::exactly('integer'),
+            ],
+        ])->withLexemes(['NUM' => ['1']]);
+
+        self::assertSame('SELECT _sqlfaker_identifier + 1 FROM _sqlfaker_identifier', $generator->generate($plan));
+    }
+
     public function testForPostgreSqlPreservesTheGrammarEntryPointAndBindsLexicalDefinitions(): void
     {
         $faker = Factory::create();

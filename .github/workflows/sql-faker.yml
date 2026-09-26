@@ -7,6 +7,7 @@ on:
   pull_request:
     paths:
       - 'packages/container/**'
+      - 'packages/requirements/**'
       - 'packages/sql-faker/**'
       - '.github/workflows/sql-faker.yml'
       - '.github/workflows/sql-faker-fuzz.yml'
@@ -127,6 +128,48 @@ jobs:
         run: composer check-platform-reqs
       - name: Replay every seed corpus and require full production coverage
         run: php bin/seeds.php check
+
+  requirements:
+    name: Requirements
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+        with:
+          php-version: '8.3'
+          extensions: dom, mbstring, xml, xmlwriter
+          coverage: none
+      - name: Install the traceability tool
+        run: composer install --working-dir=../requirements --no-interaction --prefer-dist
+      - name: Validate the algorithm specification against its document
+        run: |
+          php ../requirements/bin/requirements lint
+          php ../requirements/bin/requirements format --check
+          php ../requirements/bin/requirements check
+      - name: Enforce coverage and keep the checked-in coverage snapshot reproducible
+        run: |
+          php ../requirements/bin/requirements coverage --write-snapshot /tmp/current-snapshot.json
+          cmp requirements-snapshot.json /tmp/current-snapshot.json
+      - name: Enforce coverage of changed source units
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch --no-tags origin "$BASE_REF"
+          snapshot="origin/$BASE_REF:packages/sql-faker/requirements-snapshot.json"
+          if git cat-file -e "$snapshot" 2>/dev/null; then
+            git show "$snapshot" > /tmp/base-snapshot.json
+            php ../requirements/bin/requirements coverage --snapshot /tmp/base-snapshot.json --min-diff-coverage 100
+          else
+            echo 'Initial adoption: review the scope and enforce the configured total coverage gate.'
+          fi
+      # The linked unit tests run in the test job. `requirements spec` is not run here because the
+      # specifications verified by fuzzing have no linked tests and would be reported as unverified.
 
   bench:
     name: Benchmark

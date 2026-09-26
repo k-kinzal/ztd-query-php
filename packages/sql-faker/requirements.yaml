@@ -1,0 +1,15 @@
+$schema: 'https://raw.githubusercontent.com/k-kinzal/ztd-query-php/main/packages/requirements/schemas/config.schema.json'
+version: 1
+definitions:
+  - 'requirements/*.yaml'
+runners:
+  unit:
+    extension: phpunit
+    command:
+      - php
+      - vendor/bin/phpunit
+      - '--testsuite'
+      - unit
+    timeout: 120
+coverage:
+  minimum: 100
