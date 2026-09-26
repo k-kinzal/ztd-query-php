@@ -4,17 +4,34 @@ declare(strict_types=1);
 
 namespace Requirements\Console;
 
-use InvalidArgumentException;
-use Requirements\Model\Item;
+use JsonException;
+use Requirements\Input\InvalidInputException;
 use Requirements\Model\Project;
 use Requirements\Report\Analyzer;
 use Requirements\Report\Coverage;
 use Requirements\Report\Snapshot;
-use Requirements\Test\Verifier;
+use Requirements\Verification\Verifier;
+use RuntimeException;
 
+/**
+ * Executes a command against a loaded project and returns its report.
+ *
+ * Every report has "passed"; the other fields depend on the command.
+ */
 final class Executor
 {
-    /** @return array<string, mixed> */
+    /**
+     * Executes a command.
+     *
+     * @param Project $project The loaded project
+     * @param Options $options The command and its options
+     *
+     * @return array<string, mixed> The report
+     *
+     * @throws InvalidInputException When the command is unknown, an option is invalid or a coverage snapshot cannot be used
+     * @throws JsonException When a document or the snapshot cannot be encoded
+     * @throws RuntimeException When a definition cannot be formatted
+     */
     public function execute(Project $project, Options $options): array
     {
         if ($options->command === 'lint') {
@@ -31,12 +48,12 @@ final class Executor
             $rows = [];
             foreach ($results as $id => $result) {
                 $passed = $passed && in_array($result->status, ['passed', 'unsupported', 'not-applicable', 'not-run'], true);
-                $rows[$id] = [...$this->describe($items[$id]), ...$result->toArray()];
+                $rows[$id] = [...ItemRecord::describe($items[$id]), ...$result->toArray()];
             }
             return ['passed' => $passed, 'no_test' => $options->flag('no-test'), 'specifications' => $rows, 'errors' => $results === [] ? ['No specifications or requirements selected.'] : []];
         }
         if (!in_array($options->command, ['check', 'coverage'], true)) {
-            throw new InvalidArgumentException('Unknown command: ' . $options->command);
+            throw new InvalidInputException('Unknown command: ' . $options->command);
         }
         $analysis = (new Analyzer())->analyze($project, $options->flag('live'));
         if ($options->command === 'check') {
@@ -47,19 +64,12 @@ final class Executor
         $snapshot = $options->text('write-snapshot');
         if ($snapshot !== null) {
             if ($analysis->errors !== []) {
-                throw new InvalidArgumentException('Cannot write a coverage snapshot with invalid source evidence.');
+                throw new InvalidInputException('Cannot write a coverage snapshot with invalid source evidence.');
             }
             if (file_put_contents($snapshot, json_encode((new Snapshot())->create($analysis, $project), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n") === false) {
-                throw new InvalidArgumentException("Cannot write coverage snapshot: $snapshot");
+                throw new InvalidInputException("Cannot write coverage snapshot: $snapshot");
             }
         }
         return $report;
     }
-
-    /** @return array<string, mixed> */
-    private function describe(Item $item): array
-    {
-        return ['id' => $item->id, 'kind' => $item->kind, 'statement' => $item->statement, 'support' => $item->status, 'source' => $item->source?->id, 'origin' => $item->origin, 'reason' => $item->reason, 'labels' => $item->labels, 'category' => $item->category, 'requirements' => $item->requirements, 'related' => $item->related, 'design' => $item->data['design'] ?? [], 'metadata' => $item->data['metadata'] ?? [], 'test_references' => $item->data['tests'] ?? []];
-    }
-
 }

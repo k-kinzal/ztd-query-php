@@ -7,16 +7,42 @@ namespace Requirements\Source;
 use DOMDocument;
 use DOMElement;
 use League\CommonMark\CommonMarkConverter;
+use League\CommonMark\Exception\CommonMarkException;
+use Override;
 use Requirements\Model\Source;
 use RuntimeException;
 use Symfony\Component\DomCrawler\Crawler;
 
+/**
+ * Selects elements of HTML, XML, IETF XML and Markdown sources with CSS selectors.
+ *
+ * Markdown is rendered to HTML first. XML may not declare a DTD or entities. An evidence
+ * selector may also be an exact Text Fragment within an HTML scope. A selection may not
+ * contain both an element and one of its descendants.
+ */
 final class DomSource implements SourceExtension
 {
+    /**
+     * @param ResourceLoader $loader Reads the source document
+     */
     public function __construct(private readonly ResourceLoader $loader = new ResourceLoader())
     {
     }
 
+    /**
+     * Selects the elements a CSS selector or Text Fragment identifies.
+     *
+     * @param Source $source The source declaration
+     * @param string $selector A CSS selector, or an exact Text Fragment within the HTML scope
+     * @param string $directory The configuration directory
+     * @param bool $live Whether to read the current URI instead of a pinned snapshot
+     *
+     * @return list<Unit> One unit per element, located by its node path
+     *
+     * @throws CommonMarkException When a Markdown source cannot be rendered
+     * @throws RuntimeException When the source is unsafe or malformed, a fragment is misused or ancestors and descendants are selected together
+     */
+    #[Override]
     public function select(Source $source, string $selector, string $directory, bool $live): array
     {
         $text = TextFragment::isFragment($selector) ? TextFragment::text($selector) : null;
