@@ -70,9 +70,11 @@
 <span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a>    }</span>
 <span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a></span>
 <span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a><span class="tok-com">     * Reads the declared built-in type and preserves its modifiers.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">34</span><span class="tok-com">     * Reads the declared built-in type and preserves its modifiers.</span></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-com">     * Reads a declared type, including table-dependent storage rules and modifiers.</span></span>
 <span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">read</span>(<span class="tok-id">Node</span> <span class="tok-var">$node</span>): <span class="tok-id">TypeDescriptor</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">36</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">read</span>(<span class="tok-id">Node</span> <span class="tok-var">$node</span>): <span class="tok-id">TypeDescriptor</span></span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">read</span>(<span class="tok-id">Node</span> <span class="tok-var">$node</span>, ?<span class="tok-id">Node</span> <span class="tok-var">$table</span> = <span class="tok-id">null</span>): <span class="tok-id">TypeDescriptor</span></span>
 <span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a>    {</span>
 <span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a>        <span class="tok-var">$tokens</span> = <span class="tok-var">$node</span>-&gt;<span class="tok-id">tokens</span>();</span>
 <span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a>        <span class="tok-var">$words</span> = [];</span>
