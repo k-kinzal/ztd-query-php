@@ -17,13 +17,14 @@ final class OpclassItemWithOperatorIconstOperatorWithArgtypesOpclassPurposeOptRe
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorWithArgtypesForm $operatorWithArgtypes,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OpclassPurposeForm $opclassPurpose,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptRecheckForm $optRecheck,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($iconst), 'The iconst must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($operatorWithArgtypes), 'The operatorWithArgtypes must be a generated immutable SQL value.');
@@ -36,10 +37,15 @@ final class OpclassItemWithOperatorIconstOperatorWithArgtypesOpclassPurposeOptRe
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('OPERATOR');
+        $writer->comments($this->comments, 1);
         $this->iconst->write($writer);
+        $writer->comments($this->comments, 2);
         $this->operatorWithArgtypes->write($writer);
+        $writer->comments($this->comments, 3);
         $this->opclassPurpose->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optRecheck->write($writer);
     }
 
@@ -48,7 +54,7 @@ final class OpclassItemWithOperatorIconstOperatorWithArgtypesOpclassPurposeOptRe
      */
     public function withIconst(\SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst): self
     {
-        return new self($iconst, $this->operatorWithArgtypes, $this->opclassPurpose, $this->optRecheck);
+        return new self($iconst, $this->operatorWithArgtypes, $this->opclassPurpose, $this->optRecheck, $this->comments);
     }
 
     /**
@@ -56,7 +62,7 @@ final class OpclassItemWithOperatorIconstOperatorWithArgtypesOpclassPurposeOptRe
      */
     public function withOperatorWithArgtypes(\SqlSemantics\Statement\Model\PostgreSql\Role\OperatorWithArgtypesForm $operatorWithArgtypes): self
     {
-        return new self($this->iconst, $operatorWithArgtypes, $this->opclassPurpose, $this->optRecheck);
+        return new self($this->iconst, $operatorWithArgtypes, $this->opclassPurpose, $this->optRecheck, $this->comments);
     }
 
     /**
@@ -64,7 +70,7 @@ final class OpclassItemWithOperatorIconstOperatorWithArgtypesOpclassPurposeOptRe
      */
     public function withOpclassPurpose(\SqlSemantics\Statement\Model\PostgreSql\Role\OpclassPurposeForm $opclassPurpose): self
     {
-        return new self($this->iconst, $this->operatorWithArgtypes, $opclassPurpose, $this->optRecheck);
+        return new self($this->iconst, $this->operatorWithArgtypes, $opclassPurpose, $this->optRecheck, $this->comments);
     }
 
     /**
@@ -72,6 +78,14 @@ final class OpclassItemWithOperatorIconstOperatorWithArgtypesOpclassPurposeOptRe
      */
     public function withOptRecheck(\SqlSemantics\Statement\Model\PostgreSql\Role\OptRecheckForm $optRecheck): self
     {
-        return new self($this->iconst, $this->operatorWithArgtypes, $this->opclassPurpose, $optRecheck);
+        return new self($this->iconst, $this->operatorWithArgtypes, $this->opclassPurpose, $optRecheck, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->iconst, $this->operatorWithArgtypes, $this->opclassPurpose, $this->optRecheck, $comments);
     }
 }

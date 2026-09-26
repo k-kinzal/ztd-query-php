@@ -17,10 +17,11 @@ final class TextLiteralWithNcharString_cea3e07e implements \SqlSemantics\Stateme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $ncharString,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($ncharString, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['NCHAR_STRING'], 'The ncharString must be a complete NCHAR_STRING lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class TextLiteralWithNcharString_cea3e07e implements \SqlSemantics\Stateme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->ncharString);
     }
 
@@ -38,6 +40,14 @@ final class TextLiteralWithNcharString_cea3e07e implements \SqlSemantics\Stateme
      */
     public function withNcharString(string $ncharString): self
     {
-        return new self($ncharString);
+        return new self($ncharString, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ncharString, $comments);
     }
 }

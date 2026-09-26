@@ -17,12 +17,13 @@ final class RequireListWithRequireListElementOptAndRequireList_e30929c9 implemen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RequireListElementForm $requireListElement,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptAndForm $optAnd,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RequireListForm $requireList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($requireListElement), 'The requireListElement must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optAnd), 'The optAnd must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class RequireListWithRequireListElementOptAndRequireList_e30929c9 implemen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->requireListElement->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optAnd->write($writer);
+        $writer->comments($this->comments, 2);
         $this->requireList->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class RequireListWithRequireListElementOptAndRequireList_e30929c9 implemen
      */
     public function withRequireListElement(\SqlSemantics\Statement\Model\MySql\Role\RequireListElementForm $requireListElement): self
     {
-        return new self($requireListElement, $this->optAnd, $this->requireList);
+        return new self($requireListElement, $this->optAnd, $this->requireList, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class RequireListWithRequireListElementOptAndRequireList_e30929c9 implemen
      */
     public function withOptAnd(\SqlSemantics\Statement\Model\MySql\Role\OptAndForm $optAnd): self
     {
-        return new self($this->requireListElement, $optAnd, $this->requireList);
+        return new self($this->requireListElement, $optAnd, $this->requireList, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class RequireListWithRequireListElementOptAndRequireList_e30929c9 implemen
      */
     public function withRequireList(\SqlSemantics\Statement\Model\MySql\Role\RequireListForm $requireList): self
     {
-        return new self($this->requireListElement, $this->optAnd, $requireList);
+        return new self($this->requireListElement, $this->optAnd, $requireList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->requireListElement, $this->optAnd, $this->requireList, $comments);
     }
 }

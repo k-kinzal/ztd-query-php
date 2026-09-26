@@ -17,11 +17,12 @@ final class AggregateWithArgtypesListWithAggregateWithArgtypesListAggregateWithA
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AggregateWithArgtypesListForm $aggregateWithArgtypesList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AggregateWithArgtypesForm $aggregateWithArgtypes,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aggregateWithArgtypesList), 'The aggregateWithArgtypesList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aggregateWithArgtypes), 'The aggregateWithArgtypes must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class AggregateWithArgtypesListWithAggregateWithArgtypesListAggregateWithA
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->aggregateWithArgtypesList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->aggregateWithArgtypes->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class AggregateWithArgtypesListWithAggregateWithArgtypesListAggregateWithA
      */
     public function withAggregateWithArgtypesList(\SqlSemantics\Statement\Model\PostgreSql\Role\AggregateWithArgtypesListForm $aggregateWithArgtypesList): self
     {
-        return new self($aggregateWithArgtypesList, $this->aggregateWithArgtypes);
+        return new self($aggregateWithArgtypesList, $this->aggregateWithArgtypes, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class AggregateWithArgtypesListWithAggregateWithArgtypesListAggregateWithA
      */
     public function withAggregateWithArgtypes(\SqlSemantics\Statement\Model\PostgreSql\Role\AggregateWithArgtypesForm $aggregateWithArgtypes): self
     {
-        return new self($this->aggregateWithArgtypesList, $aggregateWithArgtypes);
+        return new self($this->aggregateWithArgtypesList, $aggregateWithArgtypes, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->aggregateWithArgtypesList, $this->aggregateWithArgtypes, $comments);
     }
 }

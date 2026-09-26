@@ -17,11 +17,12 @@ final class OptAccountLockPasswordExpireOptionWithPasswordExpireSymIntervalSymRe
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm $realUlongNum,
         public readonly string $daySym,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($realUlongNum), 'The realUlongNum must be a generated immutable SQL value.');
         $this->assertMatchesPattern($daySym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DAY_SYM'], 'The daySym must be a complete DAY_SYM lexical spelling.');
@@ -32,10 +33,15 @@ final class OptAccountLockPasswordExpireOptionWithPasswordExpireSymIntervalSymRe
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('PASSWORD');
+        $writer->comments($this->comments, 1);
         $writer->append('EXPIRE');
+        $writer->comments($this->comments, 2);
         $writer->append('INTERVAL');
+        $writer->comments($this->comments, 3);
         $this->realUlongNum->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append($this->daySym);
     }
 
@@ -44,7 +50,7 @@ final class OptAccountLockPasswordExpireOptionWithPasswordExpireSymIntervalSymRe
      */
     public function withRealUlongNum(\SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm $realUlongNum): self
     {
-        return new self($realUlongNum, $this->daySym);
+        return new self($realUlongNum, $this->daySym, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class OptAccountLockPasswordExpireOptionWithPasswordExpireSymIntervalSymRe
      */
     public function withDaySym(string $daySym): self
     {
-        return new self($this->realUlongNum, $daySym);
+        return new self($this->realUlongNum, $daySym, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->realUlongNum, $this->daySym, $comments);
     }
 }

@@ -13,7 +13,7 @@ SQL Semantics is the semantic phase of a database front end for MySQL, PostgreSQ
 
 ## Support Syntax
 
-The following grammar versions are supported. Pass the dialect of your database package and, optionally, the version tag to `Semantics` or `SchemaBuilder`; omitting the version tag uses the default for that database. Schema binding with `SchemaBuilder` and `Binder` requires MySQL 8.0 or later.
+The following grammar versions are supported. Pass the dialect of your database package and, optionally, the version tag to `Semantics` or `Schema`; omitting the version tag uses the default for that database. State declarations support all listed versions; SELECT binding with `Binder` requires MySQL 8.0 or later.
 
 ### MySQL
 

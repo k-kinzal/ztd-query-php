@@ -28,6 +28,7 @@ register_shutdown_function(static function (): void {
     }
 });
 
+use Container\Endpoint;
 use Container\PostgreSql17Container;
 use Faker\Factory;
 use Fuzz\Target\PgEquivalence;
@@ -52,10 +53,9 @@ if ($style === null) {
 
 fwrite(STDERR, "Starting PostgreSQL container...\n");
 
-$instance = Testcontainers::run(PostgreSql17Container::class);
-
-$port = $instance->getMappedPort(5432);
-$host = str_replace('localhost', '127.0.0.1', $instance->getHost());
+$endpoint = Testcontainers::run(PostgreSql17Container::class)->getData(Endpoint::class);
+$host = $endpoint->host;
+$port = $endpoint->port;
 
 fwrite(STDERR, "PostgreSQL ready on {$host}:{$port}\n");
 fwrite(STDERR, "Grammar version: pg-17.2, style: {$style->value}\n");
@@ -66,7 +66,7 @@ $provider = new PostgreSqlProvider(Factory::create(), $grammarVersion, $coverage
 $planner = $provider->planner();
 $constraints = GenerationPlan::fromRule('stmt')->requiringNonEmpty();
 $target = new PgEquivalence(
-    "host={$host} port={$port} dbname=test user=test password=test",
+    "host={$host} port={$port} dbname={$endpoint->database} user={$endpoint->username} password={$endpoint->password}",
     new Formatter(new PostgreSqlParser($grammarVersion), new FormatOptions($style)),
     $style,
 );

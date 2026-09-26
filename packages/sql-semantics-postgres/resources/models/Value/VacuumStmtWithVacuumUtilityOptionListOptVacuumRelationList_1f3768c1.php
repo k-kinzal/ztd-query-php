@@ -17,11 +17,12 @@ final class VacuumStmtWithVacuumUtilityOptionListOptVacuumRelationList_1f3768c1 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionListForm $utilityOptionList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptVacuumRelationListForm $optVacuumRelationList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($utilityOptionList), 'The utilityOptionList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optVacuumRelationList), 'The optVacuumRelationList must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class VacuumStmtWithVacuumUtilityOptionListOptVacuumRelationList_1f3768c1 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('VACUUM');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->utilityOptionList->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
+        $writer->comments($this->comments, 4);
         $this->optVacuumRelationList->write($writer);
     }
 
@@ -44,7 +50,7 @@ final class VacuumStmtWithVacuumUtilityOptionListOptVacuumRelationList_1f3768c1 
      */
     public function withUtilityOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionListForm $utilityOptionList): self
     {
-        return new self($utilityOptionList, $this->optVacuumRelationList);
+        return new self($utilityOptionList, $this->optVacuumRelationList, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class VacuumStmtWithVacuumUtilityOptionListOptVacuumRelationList_1f3768c1 
      */
     public function withOptVacuumRelationList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptVacuumRelationListForm $optVacuumRelationList): self
     {
-        return new self($this->utilityOptionList, $optVacuumRelationList);
+        return new self($this->utilityOptionList, $optVacuumRelationList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->utilityOptionList, $this->optVacuumRelationList, $comments);
     }
 }

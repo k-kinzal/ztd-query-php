@@ -17,11 +17,12 @@ final class StartEntryWithGrammarSelectorPartPartitionClauseEndOfInput_e5b5ad55 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $grammarSelectorPart,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartitionClauseForm $partitionClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($grammarSelectorPart, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['GRAMMAR_SELECTOR_PART'], 'The grammarSelectorPart must be a complete GRAMMAR_SELECTOR_PART lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partitionClause), 'The partitionClause must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class StartEntryWithGrammarSelectorPartPartitionClauseEndOfInput_e5b5ad55 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->grammarSelectorPart);
+        $writer->comments($this->comments, 1);
         $this->partitionClause->write($writer);
+        $writer->comments($this->comments, 2);
     }
 
     /**
@@ -41,7 +45,7 @@ final class StartEntryWithGrammarSelectorPartPartitionClauseEndOfInput_e5b5ad55 
      */
     public function withGrammarSelectorPart(string $grammarSelectorPart): self
     {
-        return new self($grammarSelectorPart, $this->partitionClause);
+        return new self($grammarSelectorPart, $this->partitionClause, $this->comments);
     }
 
     /**
@@ -49,6 +53,14 @@ final class StartEntryWithGrammarSelectorPartPartitionClauseEndOfInput_e5b5ad55 
      */
     public function withPartitionClause(\SqlSemantics\Statement\Model\MySql\Role\PartitionClauseForm $partitionClause): self
     {
-        return new self($this->grammarSelectorPart, $partitionClause);
+        return new self($this->grammarSelectorPart, $partitionClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->grammarSelectorPart, $this->partitionClause, $comments);
     }
 }

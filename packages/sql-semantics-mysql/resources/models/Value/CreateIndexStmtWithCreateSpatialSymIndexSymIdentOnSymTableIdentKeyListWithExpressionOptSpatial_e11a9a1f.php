@@ -17,7 +17,7 @@ final class CreateIndexStmtWithCreateSpatialSymIndexSymIdentOnSymTableIdentKeyLi
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
@@ -25,6 +25,7 @@ final class CreateIndexStmtWithCreateSpatialSymIndexSymIdentOnSymTableIdentKeyLi
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyListWithExpressionForm $keyListWithExpression,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSpatialIndexOptionsForm $optSpatialIndexOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIndexLockAndAlgorithmForm $optIndexLockAndAlgorithm,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
@@ -38,16 +39,27 @@ final class CreateIndexStmtWithCreateSpatialSymIndexSymIdentOnSymTableIdentKeyLi
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $writer->append('SPATIAL');
+        $writer->comments($this->comments, 2);
         $writer->append('INDEX');
+        $writer->comments($this->comments, 3);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('ON');
+        $writer->comments($this->comments, 5);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append('(');
+        $writer->comments($this->comments, 7);
         $this->keyListWithExpression->write($writer);
+        $writer->comments($this->comments, 8);
         $writer->append(')');
+        $writer->comments($this->comments, 9);
         $this->optSpatialIndexOptions->write($writer);
+        $writer->comments($this->comments, 10);
         $this->optIndexLockAndAlgorithm->write($writer);
     }
 
@@ -56,7 +68,7 @@ final class CreateIndexStmtWithCreateSpatialSymIndexSymIdentOnSymTableIdentKeyLi
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($ident, $this->tableIdent, $this->keyListWithExpression, $this->optSpatialIndexOptions, $this->optIndexLockAndAlgorithm);
+        return new self($ident, $this->tableIdent, $this->keyListWithExpression, $this->optSpatialIndexOptions, $this->optIndexLockAndAlgorithm, $this->comments);
     }
 
     /**
@@ -64,7 +76,7 @@ final class CreateIndexStmtWithCreateSpatialSymIndexSymIdentOnSymTableIdentKeyLi
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($this->ident, $tableIdent, $this->keyListWithExpression, $this->optSpatialIndexOptions, $this->optIndexLockAndAlgorithm);
+        return new self($this->ident, $tableIdent, $this->keyListWithExpression, $this->optSpatialIndexOptions, $this->optIndexLockAndAlgorithm, $this->comments);
     }
 
     /**
@@ -72,7 +84,7 @@ final class CreateIndexStmtWithCreateSpatialSymIndexSymIdentOnSymTableIdentKeyLi
      */
     public function withKeyListWithExpression(\SqlSemantics\Statement\Model\MySql\Role\KeyListWithExpressionForm $keyListWithExpression): self
     {
-        return new self($this->ident, $this->tableIdent, $keyListWithExpression, $this->optSpatialIndexOptions, $this->optIndexLockAndAlgorithm);
+        return new self($this->ident, $this->tableIdent, $keyListWithExpression, $this->optSpatialIndexOptions, $this->optIndexLockAndAlgorithm, $this->comments);
     }
 
     /**
@@ -80,7 +92,7 @@ final class CreateIndexStmtWithCreateSpatialSymIndexSymIdentOnSymTableIdentKeyLi
      */
     public function withOptSpatialIndexOptions(\SqlSemantics\Statement\Model\MySql\Role\OptSpatialIndexOptionsForm $optSpatialIndexOptions): self
     {
-        return new self($this->ident, $this->tableIdent, $this->keyListWithExpression, $optSpatialIndexOptions, $this->optIndexLockAndAlgorithm);
+        return new self($this->ident, $this->tableIdent, $this->keyListWithExpression, $optSpatialIndexOptions, $this->optIndexLockAndAlgorithm, $this->comments);
     }
 
     /**
@@ -88,6 +100,14 @@ final class CreateIndexStmtWithCreateSpatialSymIndexSymIdentOnSymTableIdentKeyLi
      */
     public function withOptIndexLockAndAlgorithm(\SqlSemantics\Statement\Model\MySql\Role\OptIndexLockAndAlgorithmForm $optIndexLockAndAlgorithm): self
     {
-        return new self($this->ident, $this->tableIdent, $this->keyListWithExpression, $this->optSpatialIndexOptions, $optIndexLockAndAlgorithm);
+        return new self($this->ident, $this->tableIdent, $this->keyListWithExpression, $this->optSpatialIndexOptions, $optIndexLockAndAlgorithm, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ident, $this->tableIdent, $this->keyListWithExpression, $this->optSpatialIndexOptions, $this->optIndexLockAndAlgorithm, $comments);
     }
 }

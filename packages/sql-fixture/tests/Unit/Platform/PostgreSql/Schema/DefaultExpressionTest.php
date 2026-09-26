@@ -47,7 +47,9 @@ final class DefaultExpressionTest extends TestCase
             ['TIMESTAMP DEFAULT now()', 'now()'],
             ['INT DEFAULT (2 + 3)', '(2 + 3)'],
             ['TEXT', null],
-            ["TEXT DEFAULT 'open'::text", "'open'::text"],
+            ["TEXT DEFAULT 'open'::text", 'open'],
+            ["VARCHAR(20) DEFAULT 'none'::character varying", 'none'],
+            ['TEXT DEFAULT NULL::character varying', null],
             ['INT DEFAULT 1', 1],
             ['INT DEFAULT 0', 0],
         ];

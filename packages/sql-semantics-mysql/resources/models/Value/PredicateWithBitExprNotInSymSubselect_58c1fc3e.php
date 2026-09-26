@@ -17,12 +17,13 @@ final class PredicateWithBitExprNotInSymSubselect_58c1fc3e implements \SqlSemant
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NotForm $not,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SubselectForm $subselect,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($bitExpr), 'The bitExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($not), 'The not must be a generated immutable SQL value.');
@@ -34,11 +35,17 @@ final class PredicateWithBitExprNotInSymSubselect_58c1fc3e implements \SqlSemant
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->bitExpr->write($writer);
+        $writer->comments($this->comments, 1);
         $this->not->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('IN');
+        $writer->comments($this->comments, 3);
         $writer->append('(');
+        $writer->comments($this->comments, 4);
         $this->subselect->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
     }
 
@@ -47,7 +54,7 @@ final class PredicateWithBitExprNotInSymSubselect_58c1fc3e implements \SqlSemant
      */
     public function withBitExpr(\SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr): self
     {
-        return new self($bitExpr, $this->not, $this->subselect);
+        return new self($bitExpr, $this->not, $this->subselect, $this->comments);
     }
 
     /**
@@ -55,7 +62,7 @@ final class PredicateWithBitExprNotInSymSubselect_58c1fc3e implements \SqlSemant
      */
     public function withNot(\SqlSemantics\Statement\Model\MySql\Role\NotForm $not): self
     {
-        return new self($this->bitExpr, $not, $this->subselect);
+        return new self($this->bitExpr, $not, $this->subselect, $this->comments);
     }
 
     /**
@@ -63,6 +70,14 @@ final class PredicateWithBitExprNotInSymSubselect_58c1fc3e implements \SqlSemant
      */
     public function withSubselect(\SqlSemantics\Statement\Model\MySql\Role\SubselectForm $subselect): self
     {
-        return new self($this->bitExpr, $this->not, $subselect);
+        return new self($this->bitExpr, $this->not, $subselect, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->bitExpr, $this->not, $this->subselect, $comments);
     }
 }

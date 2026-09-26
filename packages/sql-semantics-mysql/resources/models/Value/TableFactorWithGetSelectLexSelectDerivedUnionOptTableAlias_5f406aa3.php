@@ -17,12 +17,13 @@ final class TableFactorWithGetSelectLexSelectDerivedUnionOptTableAlias_5f406aa3 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GetSelectLexForm $getSelectLex,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedUnionForm $selectDerivedUnion,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptTableAliasForm $optTableAlias,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($getSelectLex), 'The getSelectLex must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectDerivedUnion), 'The selectDerivedUnion must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class TableFactorWithGetSelectLexSelectDerivedUnionOptTableAlias_5f406aa3 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->getSelectLex->write($writer);
+        $writer->comments($this->comments, 2);
         $this->selectDerivedUnion->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
+        $writer->comments($this->comments, 4);
         $this->optTableAlias->write($writer);
     }
 
@@ -46,7 +52,7 @@ final class TableFactorWithGetSelectLexSelectDerivedUnionOptTableAlias_5f406aa3 
      */
     public function withGetSelectLex(\SqlSemantics\Statement\Model\MySql\Role\GetSelectLexForm $getSelectLex): self
     {
-        return new self($getSelectLex, $this->selectDerivedUnion, $this->optTableAlias);
+        return new self($getSelectLex, $this->selectDerivedUnion, $this->optTableAlias, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class TableFactorWithGetSelectLexSelectDerivedUnionOptTableAlias_5f406aa3 
      */
     public function withSelectDerivedUnion(\SqlSemantics\Statement\Model\MySql\Role\SelectDerivedUnionForm $selectDerivedUnion): self
     {
-        return new self($this->getSelectLex, $selectDerivedUnion, $this->optTableAlias);
+        return new self($this->getSelectLex, $selectDerivedUnion, $this->optTableAlias, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class TableFactorWithGetSelectLexSelectDerivedUnionOptTableAlias_5f406aa3 
      */
     public function withOptTableAlias(\SqlSemantics\Statement\Model\MySql\Role\OptTableAliasForm $optTableAlias): self
     {
-        return new self($this->getSelectLex, $this->selectDerivedUnion, $optTableAlias);
+        return new self($this->getSelectLex, $this->selectDerivedUnion, $optTableAlias, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->getSelectLex, $this->selectDerivedUnion, $this->optTableAlias, $comments);
     }
 }

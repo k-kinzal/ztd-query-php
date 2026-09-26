@@ -17,10 +17,11 @@ final class OptOnUpdateDeleteWithOnSymDeleteSymDeleteOption_34b47242 implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DeleteOptionForm $deleteOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($deleteOption), 'The deleteOption must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class OptOnUpdateDeleteWithOnSymDeleteSymDeleteOption_34b47242 implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ON');
+        $writer->comments($this->comments, 1);
         $writer->append('DELETE');
+        $writer->comments($this->comments, 2);
         $this->deleteOption->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class OptOnUpdateDeleteWithOnSymDeleteSymDeleteOption_34b47242 implements 
      */
     public function withDeleteOption(\SqlSemantics\Statement\Model\MySql\Role\DeleteOptionForm $deleteOption): self
     {
-        return new self($deleteOption);
+        return new self($deleteOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->deleteOption, $comments);
     }
 }

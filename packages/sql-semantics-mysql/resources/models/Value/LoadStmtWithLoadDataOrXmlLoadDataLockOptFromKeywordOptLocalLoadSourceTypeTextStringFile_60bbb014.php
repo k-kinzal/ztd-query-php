@@ -17,7 +17,7 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DataOrXmlForm $dataOrXml,
@@ -41,6 +41,7 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLoadParallelForm $optLoadParallel,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLoadMemoryForm $optLoadMemory,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLoadAlgorithmForm $optLoadAlgorithm,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($dataOrXml), 'The dataOrXml must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($loadDataLock), 'The loadDataLock must be a generated immutable SQL value.');
@@ -70,29 +71,53 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('LOAD');
+        $writer->comments($this->comments, 1);
         $this->dataOrXml->write($writer);
+        $writer->comments($this->comments, 2);
         $this->loadDataLock->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optFromKeyword->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optLocal->write($writer);
+        $writer->comments($this->comments, 5);
         $this->loadSourceType->write($writer);
+        $writer->comments($this->comments, 6);
         $this->textStringFilesystem->write($writer);
+        $writer->comments($this->comments, 7);
         $this->optSourceCount->write($writer);
+        $writer->comments($this->comments, 8);
         $this->optSourceOrder->write($writer);
+        $writer->comments($this->comments, 9);
         $this->optDuplicate->write($writer);
+        $writer->comments($this->comments, 10);
         $writer->append('INTO');
+        $writer->comments($this->comments, 11);
         $writer->append('TABLE');
+        $writer->comments($this->comments, 12);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 13);
         $this->optUsePartition->write($writer);
+        $writer->comments($this->comments, 14);
         $this->optLoadDataCharset->write($writer);
+        $writer->comments($this->comments, 15);
         $this->optXmlRowsIdentifiedBy->write($writer);
+        $writer->comments($this->comments, 16);
         $this->optFieldTerm->write($writer);
+        $writer->comments($this->comments, 17);
         $this->optLineTerm->write($writer);
+        $writer->comments($this->comments, 18);
         $this->optIgnoreLines->write($writer);
+        $writer->comments($this->comments, 19);
         $this->optFieldOrVarSpec->write($writer);
+        $writer->comments($this->comments, 20);
         $this->optLoadDataSetSpec->write($writer);
+        $writer->comments($this->comments, 21);
         $this->optLoadParallel->write($writer);
+        $writer->comments($this->comments, 22);
         $this->optLoadMemory->write($writer);
+        $writer->comments($this->comments, 23);
         $this->optLoadAlgorithm->write($writer);
     }
 
@@ -101,7 +126,7 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
      */
     public function withDataOrXml(\SqlSemantics\Statement\Model\MySql\Role\DataOrXmlForm $dataOrXml): self
     {
-        return new self($dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+        return new self($dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm, $this->comments);
     }
 
     /**
@@ -109,7 +134,7 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
      */
     public function withLoadDataLock(\SqlSemantics\Statement\Model\MySql\Role\LoadDataLockForm $loadDataLock): self
     {
-        return new self($this->dataOrXml, $loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+        return new self($this->dataOrXml, $loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm, $this->comments);
     }
 
     /**
@@ -117,7 +142,7 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
      */
     public function withOptFromKeyword(\SqlSemantics\Statement\Model\MySql\Role\OptFromKeywordForm $optFromKeyword): self
     {
-        return new self($this->dataOrXml, $this->loadDataLock, $optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+        return new self($this->dataOrXml, $this->loadDataLock, $optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm, $this->comments);
     }
 
     /**
@@ -125,7 +150,7 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
      */
     public function withOptLocal(\SqlSemantics\Statement\Model\MySql\Role\OptLocalForm $optLocal): self
     {
-        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm, $this->comments);
     }
 
     /**
@@ -133,7 +158,7 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
      */
     public function withLoadSourceType(\SqlSemantics\Statement\Model\MySql\Role\LoadSourceTypeForm $loadSourceType): self
     {
-        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm, $this->comments);
     }
 
     /**
@@ -141,7 +166,7 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
      */
     public function withTextStringFilesystem(\SqlSemantics\Statement\Model\MySql\Role\TextStringFilesystemForm $textStringFilesystem): self
     {
-        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm, $this->comments);
     }
 
     /**
@@ -149,7 +174,7 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
      */
     public function withOptSourceCount(\SqlSemantics\Statement\Model\MySql\Role\OptSourceCountForm $optSourceCount): self
     {
-        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm, $this->comments);
     }
 
     /**
@@ -157,7 +182,7 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
      */
     public function withOptSourceOrder(\SqlSemantics\Statement\Model\MySql\Role\OptSourceOrderForm $optSourceOrder): self
     {
-        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm, $this->comments);
     }
 
     /**
@@ -165,7 +190,7 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
      */
     public function withOptDuplicate(\SqlSemantics\Statement\Model\MySql\Role\OptDuplicateForm $optDuplicate): self
     {
-        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm, $this->comments);
     }
 
     /**
@@ -173,7 +198,7 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm, $this->comments);
     }
 
     /**
@@ -181,7 +206,7 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
      */
     public function withOptUsePartition(\SqlSemantics\Statement\Model\MySql\Role\OptUsePartitionForm $optUsePartition): self
     {
-        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm, $this->comments);
     }
 
     /**
@@ -189,7 +214,7 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
      */
     public function withOptLoadDataCharset(\SqlSemantics\Statement\Model\MySql\Role\OptLoadDataCharsetForm $optLoadDataCharset): self
     {
-        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm, $this->comments);
     }
 
     /**
@@ -197,7 +222,7 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
      */
     public function withOptXmlRowsIdentifiedBy(\SqlSemantics\Statement\Model\MySql\Role\OptXmlRowsIdentifiedByForm $optXmlRowsIdentifiedBy): self
     {
-        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm, $this->comments);
     }
 
     /**
@@ -205,7 +230,7 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
      */
     public function withOptFieldTerm(\SqlSemantics\Statement\Model\MySql\Role\OptFieldTermForm $optFieldTerm): self
     {
-        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm, $this->comments);
     }
 
     /**
@@ -213,7 +238,7 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
      */
     public function withOptLineTerm(\SqlSemantics\Statement\Model\MySql\Role\OptLineTermForm $optLineTerm): self
     {
-        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm, $this->comments);
     }
 
     /**
@@ -221,7 +246,7 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
      */
     public function withOptIgnoreLines(\SqlSemantics\Statement\Model\MySql\Role\OptIgnoreLinesForm $optIgnoreLines): self
     {
-        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm, $this->comments);
     }
 
     /**
@@ -229,7 +254,7 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
      */
     public function withOptFieldOrVarSpec(\SqlSemantics\Statement\Model\MySql\Role\OptFieldOrVarSpecForm $optFieldOrVarSpec): self
     {
-        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm, $this->comments);
     }
 
     /**
@@ -237,7 +262,7 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
      */
     public function withOptLoadDataSetSpec(\SqlSemantics\Statement\Model\MySql\Role\OptLoadDataSetSpecForm $optLoadDataSetSpec): self
     {
-        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm, $this->comments);
     }
 
     /**
@@ -245,7 +270,7 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
      */
     public function withOptLoadParallel(\SqlSemantics\Statement\Model\MySql\Role\OptLoadParallelForm $optLoadParallel): self
     {
-        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm);
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm, $this->comments);
     }
 
     /**
@@ -253,7 +278,7 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
      */
     public function withOptLoadMemory(\SqlSemantics\Statement\Model\MySql\Role\OptLoadMemoryForm $optLoadMemory): self
     {
-        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $optLoadMemory, $this->optLoadAlgorithm);
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $optLoadMemory, $this->optLoadAlgorithm, $this->comments);
     }
 
     /**
@@ -261,6 +286,14 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
      */
     public function withOptLoadAlgorithm(\SqlSemantics\Statement\Model\MySql\Role\OptLoadAlgorithmForm $optLoadAlgorithm): self
     {
-        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $optLoadAlgorithm);
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $optLoadAlgorithm, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm, $comments);
     }
 }

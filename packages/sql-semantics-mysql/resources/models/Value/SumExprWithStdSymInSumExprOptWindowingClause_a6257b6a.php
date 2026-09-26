@@ -17,12 +17,13 @@ final class SumExprWithStdSymInSumExprOptWindowingClause_a6257b6a implements \Sq
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $stdSym,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InSumExprForm $inSumExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWindowingClauseForm $optWindowingClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($stdSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['STD_SYM'], 'The stdSym must be a complete STD_SYM lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($inSumExpr), 'The inSumExpr must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class SumExprWithStdSymInSumExprOptWindowingClause_a6257b6a implements \Sq
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->stdSym);
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->inSumExpr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
+        $writer->comments($this->comments, 4);
         $this->optWindowingClause->write($writer);
     }
 
@@ -46,7 +52,7 @@ final class SumExprWithStdSymInSumExprOptWindowingClause_a6257b6a implements \Sq
      */
     public function withStdSym(string $stdSym): self
     {
-        return new self($stdSym, $this->inSumExpr, $this->optWindowingClause);
+        return new self($stdSym, $this->inSumExpr, $this->optWindowingClause, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class SumExprWithStdSymInSumExprOptWindowingClause_a6257b6a implements \Sq
      */
     public function withInSumExpr(\SqlSemantics\Statement\Model\MySql\Role\InSumExprForm $inSumExpr): self
     {
-        return new self($this->stdSym, $inSumExpr, $this->optWindowingClause);
+        return new self($this->stdSym, $inSumExpr, $this->optWindowingClause, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class SumExprWithStdSymInSumExprOptWindowingClause_a6257b6a implements \Sq
      */
     public function withOptWindowingClause(\SqlSemantics\Statement\Model\MySql\Role\OptWindowingClauseForm $optWindowingClause): self
     {
-        return new self($this->stdSym, $this->inSumExpr, $optWindowingClause);
+        return new self($this->stdSym, $this->inSumExpr, $optWindowingClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->stdSym, $this->inSumExpr, $this->optWindowingClause, $comments);
     }
 }

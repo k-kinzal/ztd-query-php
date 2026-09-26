@@ -17,11 +17,12 @@ final class PartOptionListWithPartOptionListPartOption_1a58106d implements \SqlS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartOptionListForm $partOptionList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartOptionForm $partOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partOptionList), 'The partOptionList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partOption), 'The partOption must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class PartOptionListWithPartOptionListPartOption_1a58106d implements \SqlS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->partOptionList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->partOption->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class PartOptionListWithPartOptionListPartOption_1a58106d implements \SqlS
      */
     public function withPartOptionList(\SqlSemantics\Statement\Model\MySql\Role\PartOptionListForm $partOptionList): self
     {
-        return new self($partOptionList, $this->partOption);
+        return new self($partOptionList, $this->partOption, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class PartOptionListWithPartOptionListPartOption_1a58106d implements \SqlS
      */
     public function withPartOption(\SqlSemantics\Statement\Model\MySql\Role\PartOptionForm $partOption): self
     {
-        return new self($this->partOptionList, $partOption);
+        return new self($this->partOptionList, $partOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->partOptionList, $this->partOption, $comments);
     }
 }

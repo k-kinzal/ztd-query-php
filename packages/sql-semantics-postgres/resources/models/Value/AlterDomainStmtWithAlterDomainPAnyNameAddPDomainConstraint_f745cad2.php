@@ -17,11 +17,12 @@ final class AlterDomainStmtWithAlterDomainPAnyNameAddPDomainConstraint_f745cad2 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DomainConstraintForm $domainConstraint,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($domainConstraint), 'The domainConstraint must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class AlterDomainStmtWithAlterDomainPAnyNameAddPDomainConstraint_f745cad2 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('DOMAIN');
+        $writer->comments($this->comments, 2);
         $this->anyName->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('ADD');
+        $writer->comments($this->comments, 4);
         $this->domainConstraint->write($writer);
     }
 
@@ -44,7 +50,7 @@ final class AlterDomainStmtWithAlterDomainPAnyNameAddPDomainConstraint_f745cad2 
      */
     public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
     {
-        return new self($anyName, $this->domainConstraint);
+        return new self($anyName, $this->domainConstraint, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class AlterDomainStmtWithAlterDomainPAnyNameAddPDomainConstraint_f745cad2 
      */
     public function withDomainConstraint(\SqlSemantics\Statement\Model\PostgreSql\Role\DomainConstraintForm $domainConstraint): self
     {
-        return new self($this->anyName, $domainConstraint);
+        return new self($this->anyName, $domainConstraint, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->anyName, $this->domainConstraint, $comments);
     }
 }

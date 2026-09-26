@@ -17,10 +17,11 @@ final class PartitionBoundSpecWithForValuesInPExprList_98768898 implements \SqlS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm $exprList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($exprList), 'The exprList must be a generated immutable SQL value.');
     }
@@ -30,11 +31,17 @@ final class PartitionBoundSpecWithForValuesInPExprList_98768898 implements \SqlS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('FOR');
+        $writer->comments($this->comments, 1);
         $writer->append('VALUES');
+        $writer->comments($this->comments, 2);
         $writer->append('IN');
+        $writer->comments($this->comments, 3);
         $writer->append('(');
+        $writer->comments($this->comments, 4);
         $this->exprList->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
     }
 
@@ -43,6 +50,14 @@ final class PartitionBoundSpecWithForValuesInPExprList_98768898 implements \SqlS
      */
     public function withExprList(\SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm $exprList): self
     {
-        return new self($exprList);
+        return new self($exprList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->exprList, $comments);
     }
 }

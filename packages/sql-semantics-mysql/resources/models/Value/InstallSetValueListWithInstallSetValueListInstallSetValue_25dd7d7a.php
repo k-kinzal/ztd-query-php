@@ -17,11 +17,12 @@ final class InstallSetValueListWithInstallSetValueListInstallSetValue_25dd7d7a i
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InstallSetValueListForm $installSetValueList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InstallSetValueForm $installSetValue,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($installSetValueList), 'The installSetValueList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($installSetValue), 'The installSetValue must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class InstallSetValueListWithInstallSetValueListInstallSetValue_25dd7d7a i
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->installSetValueList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->installSetValue->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class InstallSetValueListWithInstallSetValueListInstallSetValue_25dd7d7a i
      */
     public function withInstallSetValueList(\SqlSemantics\Statement\Model\MySql\Role\InstallSetValueListForm $installSetValueList): self
     {
-        return new self($installSetValueList, $this->installSetValue);
+        return new self($installSetValueList, $this->installSetValue, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class InstallSetValueListWithInstallSetValueListInstallSetValue_25dd7d7a i
      */
     public function withInstallSetValue(\SqlSemantics\Statement\Model\MySql\Role\InstallSetValueForm $installSetValue): self
     {
-        return new self($this->installSetValueList, $installSetValue);
+        return new self($this->installSetValueList, $installSetValue, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->installSetValueList, $this->installSetValue, $comments);
     }
 }

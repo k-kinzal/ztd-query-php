@@ -17,11 +17,12 @@ final class TruncateWithTruncateSymOptTableSymTableName_7a93bd0e implements \Sql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptTableSymForm $optTableSym,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableNameForm $tableName,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optTableSym), 'The optTableSym must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableName), 'The tableName must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class TruncateWithTruncateSymOptTableSymTableName_7a93bd0e implements \Sql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('TRUNCATE');
+        $writer->comments($this->comments, 1);
         $this->optTableSym->write($writer);
+        $writer->comments($this->comments, 2);
         $this->tableName->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class TruncateWithTruncateSymOptTableSymTableName_7a93bd0e implements \Sql
      */
     public function withOptTableSym(\SqlSemantics\Statement\Model\MySql\Role\OptTableSymForm $optTableSym): self
     {
-        return new self($optTableSym, $this->tableName);
+        return new self($optTableSym, $this->tableName, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class TruncateWithTruncateSymOptTableSymTableName_7a93bd0e implements \Sql
      */
     public function withTableName(\SqlSemantics\Statement\Model\MySql\Role\TableNameForm $tableName): self
     {
-        return new self($this->optTableSym, $tableName);
+        return new self($this->optTableSym, $tableName, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optTableSym, $this->tableName, $comments);
     }
 }

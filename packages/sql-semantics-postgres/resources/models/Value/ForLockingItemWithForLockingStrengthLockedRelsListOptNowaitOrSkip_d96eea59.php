@@ -17,12 +17,13 @@ final class ForLockingItemWithForLockingStrengthLockedRelsListOptNowaitOrSkip_d9
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ForLockingStrengthForm $forLockingStrength,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\LockedRelsListForm $lockedRelsList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptNowaitOrSkipForm $optNowaitOrSkip,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($forLockingStrength), 'The forLockingStrength must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($lockedRelsList), 'The lockedRelsList must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class ForLockingItemWithForLockingStrengthLockedRelsListOptNowaitOrSkip_d9
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->forLockingStrength->write($writer);
+        $writer->comments($this->comments, 1);
         $this->lockedRelsList->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optNowaitOrSkip->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class ForLockingItemWithForLockingStrengthLockedRelsListOptNowaitOrSkip_d9
      */
     public function withForLockingStrength(\SqlSemantics\Statement\Model\PostgreSql\Role\ForLockingStrengthForm $forLockingStrength): self
     {
-        return new self($forLockingStrength, $this->lockedRelsList, $this->optNowaitOrSkip);
+        return new self($forLockingStrength, $this->lockedRelsList, $this->optNowaitOrSkip, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class ForLockingItemWithForLockingStrengthLockedRelsListOptNowaitOrSkip_d9
      */
     public function withLockedRelsList(\SqlSemantics\Statement\Model\PostgreSql\Role\LockedRelsListForm $lockedRelsList): self
     {
-        return new self($this->forLockingStrength, $lockedRelsList, $this->optNowaitOrSkip);
+        return new self($this->forLockingStrength, $lockedRelsList, $this->optNowaitOrSkip, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class ForLockingItemWithForLockingStrengthLockedRelsListOptNowaitOrSkip_d9
      */
     public function withOptNowaitOrSkip(\SqlSemantics\Statement\Model\PostgreSql\Role\OptNowaitOrSkipForm $optNowaitOrSkip): self
     {
-        return new self($this->forLockingStrength, $this->lockedRelsList, $optNowaitOrSkip);
+        return new self($this->forLockingStrength, $this->lockedRelsList, $optNowaitOrSkip, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->forLockingStrength, $this->lockedRelsList, $this->optNowaitOrSkip, $comments);
     }
 }

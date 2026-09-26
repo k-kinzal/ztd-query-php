@@ -17,11 +17,12 @@ final class GrantListWithGrantListGrantUser_53bd58f5 implements \SqlSemantics\St
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GrantListForm $grantList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GrantUserForm $grantUser,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($grantList), 'The grantList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($grantUser), 'The grantUser must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class GrantListWithGrantListGrantUser_53bd58f5 implements \SqlSemantics\St
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->grantList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->grantUser->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class GrantListWithGrantListGrantUser_53bd58f5 implements \SqlSemantics\St
      */
     public function withGrantList(\SqlSemantics\Statement\Model\MySql\Role\GrantListForm $grantList): self
     {
-        return new self($grantList, $this->grantUser);
+        return new self($grantList, $this->grantUser, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class GrantListWithGrantListGrantUser_53bd58f5 implements \SqlSemantics\St
      */
     public function withGrantUser(\SqlSemantics\Statement\Model\MySql\Role\GrantUserForm $grantUser): self
     {
-        return new self($this->grantList, $grantUser);
+        return new self($this->grantList, $grantUser, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->grantList, $this->grantUser, $comments);
     }
 }

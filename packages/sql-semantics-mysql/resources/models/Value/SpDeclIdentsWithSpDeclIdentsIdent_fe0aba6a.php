@@ -17,11 +17,12 @@ final class SpDeclIdentsWithSpDeclIdentsIdent_fe0aba6a implements \SqlSemantics\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpDeclIdentsForm $spDeclIdents,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spDeclIdents), 'The spDeclIdents must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class SpDeclIdentsWithSpDeclIdentsIdent_fe0aba6a implements \SqlSemantics\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->spDeclIdents->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->ident->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class SpDeclIdentsWithSpDeclIdentsIdent_fe0aba6a implements \SqlSemantics\
      */
     public function withSpDeclIdents(\SqlSemantics\Statement\Model\MySql\Role\SpDeclIdentsForm $spDeclIdents): self
     {
-        return new self($spDeclIdents, $this->ident);
+        return new self($spDeclIdents, $this->ident, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class SpDeclIdentsWithSpDeclIdentsIdent_fe0aba6a implements \SqlSemantics\
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($this->spDeclIdents, $ident);
+        return new self($this->spDeclIdents, $ident, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->spDeclIdents, $this->ident, $comments);
     }
 }

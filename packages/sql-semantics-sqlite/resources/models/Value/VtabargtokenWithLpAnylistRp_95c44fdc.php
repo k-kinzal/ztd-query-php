@@ -17,11 +17,12 @@ final class VtabargtokenWithLpAnylistRp_95c44fdc implements \SqlSemantics\Statem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\LpForm $lp,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\AnylistForm $anylist,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($lp), 'The lp must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($anylist), 'The anylist must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class VtabargtokenWithLpAnylistRp_95c44fdc implements \SqlSemantics\Statem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->lp->write($writer);
+        $writer->comments($this->comments, 1);
         $this->anylist->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(')');
     }
 
@@ -42,7 +46,7 @@ final class VtabargtokenWithLpAnylistRp_95c44fdc implements \SqlSemantics\Statem
      */
     public function withLp(\SqlSemantics\Statement\Model\Sqlite\Role\LpForm $lp): self
     {
-        return new self($lp, $this->anylist);
+        return new self($lp, $this->anylist, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class VtabargtokenWithLpAnylistRp_95c44fdc implements \SqlSemantics\Statem
      */
     public function withAnylist(\SqlSemantics\Statement\Model\Sqlite\Role\AnylistForm $anylist): self
     {
-        return new self($this->lp, $anylist);
+        return new self($this->lp, $anylist, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->lp, $this->anylist, $comments);
     }
 }

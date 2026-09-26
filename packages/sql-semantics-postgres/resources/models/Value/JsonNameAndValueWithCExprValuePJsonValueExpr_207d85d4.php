@@ -17,11 +17,12 @@ final class JsonNameAndValueWithCExprValuePJsonValueExpr_207d85d4 implements \Sq
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm $cExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprForm $jsonValueExpr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($cExpr), 'The cExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonValueExpr), 'The jsonValueExpr must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class JsonNameAndValueWithCExprValuePJsonValueExpr_207d85d4 implements \Sq
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->cExpr->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('VALUE');
+        $writer->comments($this->comments, 2);
         $this->jsonValueExpr->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class JsonNameAndValueWithCExprValuePJsonValueExpr_207d85d4 implements \Sq
      */
     public function withCExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm $cExpr): self
     {
-        return new self($cExpr, $this->jsonValueExpr);
+        return new self($cExpr, $this->jsonValueExpr, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class JsonNameAndValueWithCExprValuePJsonValueExpr_207d85d4 implements \Sq
      */
     public function withJsonValueExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprForm $jsonValueExpr): self
     {
-        return new self($this->cExpr, $jsonValueExpr);
+        return new self($this->cExpr, $jsonValueExpr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->cExpr, $this->jsonValueExpr, $comments);
     }
 }

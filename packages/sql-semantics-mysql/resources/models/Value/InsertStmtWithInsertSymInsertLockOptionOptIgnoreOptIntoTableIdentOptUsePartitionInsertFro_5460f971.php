@@ -17,7 +17,7 @@ final class InsertStmtWithInsertSymInsertLockOptionOptIgnoreOptIntoTableIdentOpt
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertLockOptionForm $insertLockOption,
@@ -28,6 +28,7 @@ final class InsertStmtWithInsertSymInsertLockOptionOptIgnoreOptIntoTableIdentOpt
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertFromConstructorForm $insertFromConstructor,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptValuesReferenceForm $optValuesReference,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptInsertUpdateListForm $optInsertUpdateList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($insertLockOption), 'The insertLockOption must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIgnore), 'The optIgnore must be a generated immutable SQL value.');
@@ -44,14 +45,23 @@ final class InsertStmtWithInsertSymInsertLockOptionOptIgnoreOptIntoTableIdentOpt
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('INSERT');
+        $writer->comments($this->comments, 1);
         $this->insertLockOption->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optIgnore->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optInto->write($writer);
+        $writer->comments($this->comments, 4);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optUsePartition->write($writer);
+        $writer->comments($this->comments, 6);
         $this->insertFromConstructor->write($writer);
+        $writer->comments($this->comments, 7);
         $this->optValuesReference->write($writer);
+        $writer->comments($this->comments, 8);
         $this->optInsertUpdateList->write($writer);
     }
 
@@ -60,7 +70,7 @@ final class InsertStmtWithInsertSymInsertLockOptionOptIgnoreOptIntoTableIdentOpt
      */
     public function withInsertLockOption(\SqlSemantics\Statement\Model\MySql\Role\InsertLockOptionForm $insertLockOption): self
     {
-        return new self($insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $this->insertFromConstructor, $this->optValuesReference, $this->optInsertUpdateList);
+        return new self($insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $this->insertFromConstructor, $this->optValuesReference, $this->optInsertUpdateList, $this->comments);
     }
 
     /**
@@ -68,7 +78,7 @@ final class InsertStmtWithInsertSymInsertLockOptionOptIgnoreOptIntoTableIdentOpt
      */
     public function withOptIgnore(\SqlSemantics\Statement\Model\MySql\Role\OptIgnoreForm $optIgnore): self
     {
-        return new self($this->insertLockOption, $optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $this->insertFromConstructor, $this->optValuesReference, $this->optInsertUpdateList);
+        return new self($this->insertLockOption, $optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $this->insertFromConstructor, $this->optValuesReference, $this->optInsertUpdateList, $this->comments);
     }
 
     /**
@@ -76,7 +86,7 @@ final class InsertStmtWithInsertSymInsertLockOptionOptIgnoreOptIntoTableIdentOpt
      */
     public function withOptInto(\SqlSemantics\Statement\Model\MySql\Role\OptIntoForm $optInto): self
     {
-        return new self($this->insertLockOption, $this->optIgnore, $optInto, $this->tableIdent, $this->optUsePartition, $this->insertFromConstructor, $this->optValuesReference, $this->optInsertUpdateList);
+        return new self($this->insertLockOption, $this->optIgnore, $optInto, $this->tableIdent, $this->optUsePartition, $this->insertFromConstructor, $this->optValuesReference, $this->optInsertUpdateList, $this->comments);
     }
 
     /**
@@ -84,7 +94,7 @@ final class InsertStmtWithInsertSymInsertLockOptionOptIgnoreOptIntoTableIdentOpt
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($this->insertLockOption, $this->optIgnore, $this->optInto, $tableIdent, $this->optUsePartition, $this->insertFromConstructor, $this->optValuesReference, $this->optInsertUpdateList);
+        return new self($this->insertLockOption, $this->optIgnore, $this->optInto, $tableIdent, $this->optUsePartition, $this->insertFromConstructor, $this->optValuesReference, $this->optInsertUpdateList, $this->comments);
     }
 
     /**
@@ -92,7 +102,7 @@ final class InsertStmtWithInsertSymInsertLockOptionOptIgnoreOptIntoTableIdentOpt
      */
     public function withOptUsePartition(\SqlSemantics\Statement\Model\MySql\Role\OptUsePartitionForm $optUsePartition): self
     {
-        return new self($this->insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $optUsePartition, $this->insertFromConstructor, $this->optValuesReference, $this->optInsertUpdateList);
+        return new self($this->insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $optUsePartition, $this->insertFromConstructor, $this->optValuesReference, $this->optInsertUpdateList, $this->comments);
     }
 
     /**
@@ -100,7 +110,7 @@ final class InsertStmtWithInsertSymInsertLockOptionOptIgnoreOptIntoTableIdentOpt
      */
     public function withInsertFromConstructor(\SqlSemantics\Statement\Model\MySql\Role\InsertFromConstructorForm $insertFromConstructor): self
     {
-        return new self($this->insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $insertFromConstructor, $this->optValuesReference, $this->optInsertUpdateList);
+        return new self($this->insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $insertFromConstructor, $this->optValuesReference, $this->optInsertUpdateList, $this->comments);
     }
 
     /**
@@ -108,7 +118,7 @@ final class InsertStmtWithInsertSymInsertLockOptionOptIgnoreOptIntoTableIdentOpt
      */
     public function withOptValuesReference(\SqlSemantics\Statement\Model\MySql\Role\OptValuesReferenceForm $optValuesReference): self
     {
-        return new self($this->insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $this->insertFromConstructor, $optValuesReference, $this->optInsertUpdateList);
+        return new self($this->insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $this->insertFromConstructor, $optValuesReference, $this->optInsertUpdateList, $this->comments);
     }
 
     /**
@@ -116,6 +126,14 @@ final class InsertStmtWithInsertSymInsertLockOptionOptIgnoreOptIntoTableIdentOpt
      */
     public function withOptInsertUpdateList(\SqlSemantics\Statement\Model\MySql\Role\OptInsertUpdateListForm $optInsertUpdateList): self
     {
-        return new self($this->insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $this->insertFromConstructor, $this->optValuesReference, $optInsertUpdateList);
+        return new self($this->insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $this->insertFromConstructor, $this->optValuesReference, $optInsertUpdateList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $this->insertFromConstructor, $this->optValuesReference, $this->optInsertUpdateList, $comments);
     }
 }

@@ -17,13 +17,14 @@ final class BoolPriWithBoolPriCompOpAllOrAnyTableSubquery_17ee7fe5 implements \S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BoolPriForm $boolPri,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CompOpForm $compOp,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AllOrAnyForm $allOrAny,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableSubqueryForm $tableSubquery,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($boolPri), 'The boolPri must be a generated immutable SQL value.');
         $this->assertOperandBindingStrength($boolPri, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-8.0.44' => 14,  'mysql-8.1.0' => 14,  'mysql-8.2.0' => 14,  'mysql-8.3.0' => 14,  'mysql-8.4.7' => 14,  'mysql-9.0.1' => 14,  'mysql-9.1.0' => 14,));
@@ -37,9 +38,13 @@ final class BoolPriWithBoolPriCompOpAllOrAnyTableSubquery_17ee7fe5 implements \S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->boolPri->write($writer);
+        $writer->comments($this->comments, 1);
         $this->compOp->write($writer);
+        $writer->comments($this->comments, 2);
         $this->allOrAny->write($writer);
+        $writer->comments($this->comments, 3);
         $this->tableSubquery->write($writer);
     }
 
@@ -48,7 +53,7 @@ final class BoolPriWithBoolPriCompOpAllOrAnyTableSubquery_17ee7fe5 implements \S
      */
     public function withBoolPri(\SqlSemantics\Statement\Model\MySql\Role\BoolPriForm $boolPri): self
     {
-        return new self($boolPri, $this->compOp, $this->allOrAny, $this->tableSubquery);
+        return new self($boolPri, $this->compOp, $this->allOrAny, $this->tableSubquery, $this->comments);
     }
 
     /**
@@ -56,7 +61,7 @@ final class BoolPriWithBoolPriCompOpAllOrAnyTableSubquery_17ee7fe5 implements \S
      */
     public function withCompOp(\SqlSemantics\Statement\Model\MySql\Role\CompOpForm $compOp): self
     {
-        return new self($this->boolPri, $compOp, $this->allOrAny, $this->tableSubquery);
+        return new self($this->boolPri, $compOp, $this->allOrAny, $this->tableSubquery, $this->comments);
     }
 
     /**
@@ -64,7 +69,7 @@ final class BoolPriWithBoolPriCompOpAllOrAnyTableSubquery_17ee7fe5 implements \S
      */
     public function withAllOrAny(\SqlSemantics\Statement\Model\MySql\Role\AllOrAnyForm $allOrAny): self
     {
-        return new self($this->boolPri, $this->compOp, $allOrAny, $this->tableSubquery);
+        return new self($this->boolPri, $this->compOp, $allOrAny, $this->tableSubquery, $this->comments);
     }
 
     /**
@@ -72,6 +77,14 @@ final class BoolPriWithBoolPriCompOpAllOrAnyTableSubquery_17ee7fe5 implements \S
      */
     public function withTableSubquery(\SqlSemantics\Statement\Model\MySql\Role\TableSubqueryForm $tableSubquery): self
     {
-        return new self($this->boolPri, $this->compOp, $this->allOrAny, $tableSubquery);
+        return new self($this->boolPri, $this->compOp, $this->allOrAny, $tableSubquery, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->boolPri, $this->compOp, $this->allOrAny, $this->tableSubquery, $comments);
     }
 }

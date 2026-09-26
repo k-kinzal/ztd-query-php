@@ -17,12 +17,13 @@ final class UpsertWithOnConflictLpSortlistRpWhereOptDoNothingUpsert_820f0d71 imp
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm $sortlist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm $where,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\UpsertForm $upsert,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($sortlist), 'The sortlist must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($where), 'The where must be a generated immutable SQL value.');
@@ -34,14 +35,23 @@ final class UpsertWithOnConflictLpSortlistRpWhereOptDoNothingUpsert_820f0d71 imp
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ON');
+        $writer->comments($this->comments, 1);
         $writer->append('CONFLICT');
+        $writer->comments($this->comments, 2);
         $writer->append('(');
+        $writer->comments($this->comments, 3);
         $this->sortlist->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
+        $writer->comments($this->comments, 5);
         $this->where->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append('DO');
+        $writer->comments($this->comments, 7);
         $writer->append('NOTHING');
+        $writer->comments($this->comments, 8);
         $this->upsert->write($writer);
     }
 
@@ -50,7 +60,7 @@ final class UpsertWithOnConflictLpSortlistRpWhereOptDoNothingUpsert_820f0d71 imp
      */
     public function withSortlist(\SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm $sortlist): self
     {
-        return new self($sortlist, $this->where, $this->upsert);
+        return new self($sortlist, $this->where, $this->upsert, $this->comments);
     }
 
     /**
@@ -58,7 +68,7 @@ final class UpsertWithOnConflictLpSortlistRpWhereOptDoNothingUpsert_820f0d71 imp
      */
     public function withWhere(\SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm $where): self
     {
-        return new self($this->sortlist, $where, $this->upsert);
+        return new self($this->sortlist, $where, $this->upsert, $this->comments);
     }
 
     /**
@@ -66,6 +76,14 @@ final class UpsertWithOnConflictLpSortlistRpWhereOptDoNothingUpsert_820f0d71 imp
      */
     public function withUpsert(\SqlSemantics\Statement\Model\Sqlite\Role\UpsertForm $upsert): self
     {
-        return new self($this->sortlist, $this->where, $upsert);
+        return new self($this->sortlist, $this->where, $upsert, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->sortlist, $this->where, $this->upsert, $comments);
     }
 }

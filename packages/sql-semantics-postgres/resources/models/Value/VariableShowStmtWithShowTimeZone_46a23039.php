@@ -15,12 +15,31 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
 final class VariableShowStmtWithShowTimeZone_46a23039 implements \SqlSemantics\Statement\Model\PostgreSql\Role\VariableShowStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
     /**
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
+     */
+    public function __construct(
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
+    ) {
+    }
+
+    /**
      * Writes SQL entirely from this value's fields.
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SHOW');
+        $writer->comments($this->comments, 1);
         $writer->append('TIME');
+        $writer->comments($this->comments, 2);
         $writer->append('ZONE');
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($comments);
     }
 }

@@ -17,7 +17,7 @@ final class AlterUserStmtWithAlterUserCommandUserFuncIdentifiedByPasswordOptRepl
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterUserCommandForm $alterUserCommand,
@@ -25,6 +25,7 @@ final class AlterUserStmtWithAlterUserCommandUserFuncIdentifiedByPasswordOptRepl
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentifiedByPasswordForm $identifiedByPassword,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptReplacePasswordForm $optReplacePassword,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptRetainCurrentPasswordForm $optRetainCurrentPassword,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterUserCommand), 'The alterUserCommand must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($userFunc), 'The userFunc must be a generated immutable SQL value.');
@@ -38,10 +39,15 @@ final class AlterUserStmtWithAlterUserCommandUserFuncIdentifiedByPasswordOptRepl
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->alterUserCommand->write($writer);
+        $writer->comments($this->comments, 1);
         $this->userFunc->write($writer);
+        $writer->comments($this->comments, 2);
         $this->identifiedByPassword->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optReplacePassword->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optRetainCurrentPassword->write($writer);
     }
 
@@ -50,7 +56,7 @@ final class AlterUserStmtWithAlterUserCommandUserFuncIdentifiedByPasswordOptRepl
      */
     public function withAlterUserCommand(\SqlSemantics\Statement\Model\MySql\Role\AlterUserCommandForm $alterUserCommand): self
     {
-        return new self($alterUserCommand, $this->userFunc, $this->identifiedByPassword, $this->optReplacePassword, $this->optRetainCurrentPassword);
+        return new self($alterUserCommand, $this->userFunc, $this->identifiedByPassword, $this->optReplacePassword, $this->optRetainCurrentPassword, $this->comments);
     }
 
     /**
@@ -58,7 +64,7 @@ final class AlterUserStmtWithAlterUserCommandUserFuncIdentifiedByPasswordOptRepl
      */
     public function withUserFunc(\SqlSemantics\Statement\Model\MySql\Role\UserFuncForm $userFunc): self
     {
-        return new self($this->alterUserCommand, $userFunc, $this->identifiedByPassword, $this->optReplacePassword, $this->optRetainCurrentPassword);
+        return new self($this->alterUserCommand, $userFunc, $this->identifiedByPassword, $this->optReplacePassword, $this->optRetainCurrentPassword, $this->comments);
     }
 
     /**
@@ -66,7 +72,7 @@ final class AlterUserStmtWithAlterUserCommandUserFuncIdentifiedByPasswordOptRepl
      */
     public function withIdentifiedByPassword(\SqlSemantics\Statement\Model\MySql\Role\IdentifiedByPasswordForm $identifiedByPassword): self
     {
-        return new self($this->alterUserCommand, $this->userFunc, $identifiedByPassword, $this->optReplacePassword, $this->optRetainCurrentPassword);
+        return new self($this->alterUserCommand, $this->userFunc, $identifiedByPassword, $this->optReplacePassword, $this->optRetainCurrentPassword, $this->comments);
     }
 
     /**
@@ -74,7 +80,7 @@ final class AlterUserStmtWithAlterUserCommandUserFuncIdentifiedByPasswordOptRepl
      */
     public function withOptReplacePassword(\SqlSemantics\Statement\Model\MySql\Role\OptReplacePasswordForm $optReplacePassword): self
     {
-        return new self($this->alterUserCommand, $this->userFunc, $this->identifiedByPassword, $optReplacePassword, $this->optRetainCurrentPassword);
+        return new self($this->alterUserCommand, $this->userFunc, $this->identifiedByPassword, $optReplacePassword, $this->optRetainCurrentPassword, $this->comments);
     }
 
     /**
@@ -82,6 +88,14 @@ final class AlterUserStmtWithAlterUserCommandUserFuncIdentifiedByPasswordOptRepl
      */
     public function withOptRetainCurrentPassword(\SqlSemantics\Statement\Model\MySql\Role\OptRetainCurrentPasswordForm $optRetainCurrentPassword): self
     {
-        return new self($this->alterUserCommand, $this->userFunc, $this->identifiedByPassword, $this->optReplacePassword, $optRetainCurrentPassword);
+        return new self($this->alterUserCommand, $this->userFunc, $this->identifiedByPassword, $this->optReplacePassword, $optRetainCurrentPassword, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->alterUserCommand, $this->userFunc, $this->identifiedByPassword, $this->optReplacePassword, $this->optRetainCurrentPassword, $comments);
     }
 }

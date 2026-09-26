@@ -17,11 +17,12 @@ final class TconsWithUniqueLpSortlistRpOnconf_1bb4e282 implements \SqlSemantics\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm $sortlist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\OnconfForm $onconf,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($sortlist), 'The sortlist must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($onconf), 'The onconf must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class TconsWithUniqueLpSortlistRpOnconf_1bb4e282 implements \SqlSemantics\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('UNIQUE');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->sortlist->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
+        $writer->comments($this->comments, 4);
         $this->onconf->write($writer);
     }
 
@@ -44,7 +50,7 @@ final class TconsWithUniqueLpSortlistRpOnconf_1bb4e282 implements \SqlSemantics\
      */
     public function withSortlist(\SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm $sortlist): self
     {
-        return new self($sortlist, $this->onconf);
+        return new self($sortlist, $this->onconf, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class TconsWithUniqueLpSortlistRpOnconf_1bb4e282 implements \SqlSemantics\
      */
     public function withOnconf(\SqlSemantics\Statement\Model\Sqlite\Role\OnconfForm $onconf): self
     {
-        return new self($this->sortlist, $onconf);
+        return new self($this->sortlist, $onconf, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->sortlist, $this->onconf, $comments);
     }
 }

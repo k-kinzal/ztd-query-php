@@ -17,10 +17,11 @@ final class CmdWithVacuumVinto_5a4cdae3 implements \SqlSemantics\Statement\Model
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\VintoForm $vinto,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($vinto), 'The vinto must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class CmdWithVacuumVinto_5a4cdae3 implements \SqlSemantics\Statement\Model
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('VACUUM');
+        $writer->comments($this->comments, 1);
         $this->vinto->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class CmdWithVacuumVinto_5a4cdae3 implements \SqlSemantics\Statement\Model
      */
     public function withVinto(\SqlSemantics\Statement\Model\Sqlite\Role\VintoForm $vinto): self
     {
-        return new self($vinto);
+        return new self($vinto, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->vinto, $comments);
     }
 }

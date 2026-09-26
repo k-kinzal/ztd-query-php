@@ -17,11 +17,12 @@ final class DefAclOptionListWithDefAclOptionListDefAclOption_801c52bb implements
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DefAclOptionListForm $defAclOptionList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DefAclOptionForm $defAclOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($defAclOptionList), 'The defAclOptionList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($defAclOption), 'The defAclOption must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class DefAclOptionListWithDefAclOptionListDefAclOption_801c52bb implements
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->defAclOptionList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->defAclOption->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class DefAclOptionListWithDefAclOptionListDefAclOption_801c52bb implements
      */
     public function withDefAclOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\DefAclOptionListForm $defAclOptionList): self
     {
-        return new self($defAclOptionList, $this->defAclOption);
+        return new self($defAclOptionList, $this->defAclOption, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class DefAclOptionListWithDefAclOptionListDefAclOption_801c52bb implements
      */
     public function withDefAclOption(\SqlSemantics\Statement\Model\PostgreSql\Role\DefAclOptionForm $defAclOption): self
     {
-        return new self($this->defAclOptionList, $defAclOption);
+        return new self($this->defAclOptionList, $defAclOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->defAclOptionList, $this->defAclOption, $comments);
     }
 }

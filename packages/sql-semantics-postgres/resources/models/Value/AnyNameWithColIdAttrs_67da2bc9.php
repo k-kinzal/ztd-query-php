@@ -17,11 +17,12 @@ final class AnyNameWithColIdAttrs_67da2bc9 implements \SqlSemantics\Statement\Mo
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AttrsForm $attrs,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($attrs), 'The attrs must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class AnyNameWithColIdAttrs_67da2bc9 implements \SqlSemantics\Statement\Mo
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->colId->write($writer);
+        $writer->comments($this->comments, 1);
         $this->attrs->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class AnyNameWithColIdAttrs_67da2bc9 implements \SqlSemantics\Statement\Mo
      */
     public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
     {
-        return new self($colId, $this->attrs);
+        return new self($colId, $this->attrs, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class AnyNameWithColIdAttrs_67da2bc9 implements \SqlSemantics\Statement\Mo
      */
     public function withAttrs(\SqlSemantics\Statement\Model\PostgreSql\Role\AttrsForm $attrs): self
     {
-        return new self($this->colId, $attrs);
+        return new self($this->colId, $attrs, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->colId, $this->attrs, $comments);
     }
 }

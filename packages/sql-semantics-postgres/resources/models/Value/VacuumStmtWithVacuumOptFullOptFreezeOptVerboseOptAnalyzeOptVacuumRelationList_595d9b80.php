@@ -17,7 +17,7 @@ final class VacuumStmtWithVacuumOptFullOptFreezeOptVerboseOptAnalyzeOptVacuumRel
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptFullForm $optFull,
@@ -25,6 +25,7 @@ final class VacuumStmtWithVacuumOptFullOptFreezeOptVerboseOptAnalyzeOptVacuumRel
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptVerboseForm $optVerbose,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptAnalyzeForm $optAnalyze,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptVacuumRelationListForm $optVacuumRelationList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optFull), 'The optFull must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optFreeze), 'The optFreeze must be a generated immutable SQL value.');
@@ -38,11 +39,17 @@ final class VacuumStmtWithVacuumOptFullOptFreezeOptVerboseOptAnalyzeOptVacuumRel
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('VACUUM');
+        $writer->comments($this->comments, 1);
         $this->optFull->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optFreeze->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optVerbose->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optAnalyze->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optVacuumRelationList->write($writer);
     }
 
@@ -51,7 +58,7 @@ final class VacuumStmtWithVacuumOptFullOptFreezeOptVerboseOptAnalyzeOptVacuumRel
      */
     public function withOptFull(\SqlSemantics\Statement\Model\PostgreSql\Role\OptFullForm $optFull): self
     {
-        return new self($optFull, $this->optFreeze, $this->optVerbose, $this->optAnalyze, $this->optVacuumRelationList);
+        return new self($optFull, $this->optFreeze, $this->optVerbose, $this->optAnalyze, $this->optVacuumRelationList, $this->comments);
     }
 
     /**
@@ -59,7 +66,7 @@ final class VacuumStmtWithVacuumOptFullOptFreezeOptVerboseOptAnalyzeOptVacuumRel
      */
     public function withOptFreeze(\SqlSemantics\Statement\Model\PostgreSql\Role\OptFreezeForm $optFreeze): self
     {
-        return new self($this->optFull, $optFreeze, $this->optVerbose, $this->optAnalyze, $this->optVacuumRelationList);
+        return new self($this->optFull, $optFreeze, $this->optVerbose, $this->optAnalyze, $this->optVacuumRelationList, $this->comments);
     }
 
     /**
@@ -67,7 +74,7 @@ final class VacuumStmtWithVacuumOptFullOptFreezeOptVerboseOptAnalyzeOptVacuumRel
      */
     public function withOptVerbose(\SqlSemantics\Statement\Model\PostgreSql\Role\OptVerboseForm $optVerbose): self
     {
-        return new self($this->optFull, $this->optFreeze, $optVerbose, $this->optAnalyze, $this->optVacuumRelationList);
+        return new self($this->optFull, $this->optFreeze, $optVerbose, $this->optAnalyze, $this->optVacuumRelationList, $this->comments);
     }
 
     /**
@@ -75,7 +82,7 @@ final class VacuumStmtWithVacuumOptFullOptFreezeOptVerboseOptAnalyzeOptVacuumRel
      */
     public function withOptAnalyze(\SqlSemantics\Statement\Model\PostgreSql\Role\OptAnalyzeForm $optAnalyze): self
     {
-        return new self($this->optFull, $this->optFreeze, $this->optVerbose, $optAnalyze, $this->optVacuumRelationList);
+        return new self($this->optFull, $this->optFreeze, $this->optVerbose, $optAnalyze, $this->optVacuumRelationList, $this->comments);
     }
 
     /**
@@ -83,6 +90,14 @@ final class VacuumStmtWithVacuumOptFullOptFreezeOptVerboseOptAnalyzeOptVacuumRel
      */
     public function withOptVacuumRelationList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptVacuumRelationListForm $optVacuumRelationList): self
     {
-        return new self($this->optFull, $this->optFreeze, $this->optVerbose, $this->optAnalyze, $optVacuumRelationList);
+        return new self($this->optFull, $this->optFreeze, $this->optVerbose, $this->optAnalyze, $optVacuumRelationList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optFull, $this->optFreeze, $this->optVerbose, $this->optAnalyze, $this->optVacuumRelationList, $comments);
     }
 }

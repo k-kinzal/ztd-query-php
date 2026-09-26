@@ -17,7 +17,7 @@ final class TriggerTailWithTriggerSymSpNameTrgActionTimeTrgEventOnTableIdentForS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName,
@@ -26,6 +26,7 @@ final class TriggerTailWithTriggerSymSpNameTrgActionTimeTrgEventOnTableIdentForS
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TriggerFollowsPrecedesClauseForm $triggerFollowsPrecedesClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm $spProcStmt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spName), 'The spName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($trgActionTime), 'The trgActionTime must be a generated immutable SQL value.');
@@ -40,16 +41,27 @@ final class TriggerTailWithTriggerSymSpNameTrgActionTimeTrgEventOnTableIdentForS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('TRIGGER');
+        $writer->comments($this->comments, 1);
         $this->spName->write($writer);
+        $writer->comments($this->comments, 2);
         $this->trgActionTime->write($writer);
+        $writer->comments($this->comments, 3);
         $this->trgEvent->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('ON');
+        $writer->comments($this->comments, 5);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append('FOR');
+        $writer->comments($this->comments, 7);
         $writer->append('EACH');
+        $writer->comments($this->comments, 8);
         $writer->append('ROW');
+        $writer->comments($this->comments, 9);
         $this->triggerFollowsPrecedesClause->write($writer);
+        $writer->comments($this->comments, 10);
         $this->spProcStmt->write($writer);
     }
 
@@ -58,7 +70,7 @@ final class TriggerTailWithTriggerSymSpNameTrgActionTimeTrgEventOnTableIdentForS
      */
     public function withSpName(\SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName): self
     {
-        return new self($spName, $this->trgActionTime, $this->trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt);
+        return new self($spName, $this->trgActionTime, $this->trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt, $this->comments);
     }
 
     /**
@@ -66,7 +78,7 @@ final class TriggerTailWithTriggerSymSpNameTrgActionTimeTrgEventOnTableIdentForS
      */
     public function withTrgActionTime(\SqlSemantics\Statement\Model\MySql\Role\TrgActionTimeForm $trgActionTime): self
     {
-        return new self($this->spName, $trgActionTime, $this->trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt);
+        return new self($this->spName, $trgActionTime, $this->trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt, $this->comments);
     }
 
     /**
@@ -74,7 +86,7 @@ final class TriggerTailWithTriggerSymSpNameTrgActionTimeTrgEventOnTableIdentForS
      */
     public function withTrgEvent(\SqlSemantics\Statement\Model\MySql\Role\TrgEventForm $trgEvent): self
     {
-        return new self($this->spName, $this->trgActionTime, $trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt);
+        return new self($this->spName, $this->trgActionTime, $trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt, $this->comments);
     }
 
     /**
@@ -82,7 +94,7 @@ final class TriggerTailWithTriggerSymSpNameTrgActionTimeTrgEventOnTableIdentForS
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($this->spName, $this->trgActionTime, $this->trgEvent, $tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt);
+        return new self($this->spName, $this->trgActionTime, $this->trgEvent, $tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt, $this->comments);
     }
 
     /**
@@ -90,7 +102,7 @@ final class TriggerTailWithTriggerSymSpNameTrgActionTimeTrgEventOnTableIdentForS
      */
     public function withTriggerFollowsPrecedesClause(\SqlSemantics\Statement\Model\MySql\Role\TriggerFollowsPrecedesClauseForm $triggerFollowsPrecedesClause): self
     {
-        return new self($this->spName, $this->trgActionTime, $this->trgEvent, $this->tableIdent, $triggerFollowsPrecedesClause, $this->spProcStmt);
+        return new self($this->spName, $this->trgActionTime, $this->trgEvent, $this->tableIdent, $triggerFollowsPrecedesClause, $this->spProcStmt, $this->comments);
     }
 
     /**
@@ -98,6 +110,14 @@ final class TriggerTailWithTriggerSymSpNameTrgActionTimeTrgEventOnTableIdentForS
      */
     public function withSpProcStmt(\SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm $spProcStmt): self
     {
-        return new self($this->spName, $this->trgActionTime, $this->trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $spProcStmt);
+        return new self($this->spName, $this->trgActionTime, $this->trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $spProcStmt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->spName, $this->trgActionTime, $this->trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt, $comments);
     }
 }

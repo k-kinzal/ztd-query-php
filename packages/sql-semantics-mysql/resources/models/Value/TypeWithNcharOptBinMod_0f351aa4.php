@@ -17,11 +17,12 @@ final class TypeWithNcharOptBinMod_0f351aa4 implements \SqlSemantics\Statement\M
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NcharForm $nchar,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptBinModForm $optBinMod,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($nchar), 'The nchar must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optBinMod), 'The optBinMod must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class TypeWithNcharOptBinMod_0f351aa4 implements \SqlSemantics\Statement\M
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->nchar->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optBinMod->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class TypeWithNcharOptBinMod_0f351aa4 implements \SqlSemantics\Statement\M
      */
     public function withNchar(\SqlSemantics\Statement\Model\MySql\Role\NcharForm $nchar): self
     {
-        return new self($nchar, $this->optBinMod);
+        return new self($nchar, $this->optBinMod, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class TypeWithNcharOptBinMod_0f351aa4 implements \SqlSemantics\Statement\M
      */
     public function withOptBinMod(\SqlSemantics\Statement\Model\MySql\Role\OptBinModForm $optBinMod): self
     {
-        return new self($this->nchar, $optBinMod);
+        return new self($this->nchar, $optBinMod, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->nchar, $this->optBinMod, $comments);
     }
 }

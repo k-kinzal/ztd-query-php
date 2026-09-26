@@ -77,4 +77,16 @@ final class StructuredGenerator
 
         return '{' . implode(',', $values) . '}';
     }
+
+    /**
+     * Generates an IPv4 network in CIDR notation with no bits set right of the mask.
+     *
+     * @return string A /24 network such as `192.0.2.0/24`
+     */
+    public function generateCidr(Generator $faker): string
+    {
+        $octets = explode('.', $faker->ipv4());
+
+        return sprintf('%s.%s.%s.0/24', $octets[0], $octets[1], $octets[2]);
+    }
 }

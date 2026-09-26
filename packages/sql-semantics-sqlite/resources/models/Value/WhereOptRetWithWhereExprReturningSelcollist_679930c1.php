@@ -17,11 +17,12 @@ final class WhereOptRetWithWhereExprReturningSelcollist_679930c1 implements \Sql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SelcollistForm $projections,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($projections), 'The projections must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class WhereOptRetWithWhereExprReturningSelcollist_679930c1 implements \Sql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('WHERE');
+        $writer->comments($this->comments, 1);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('RETURNING');
+        $writer->comments($this->comments, 3);
         $this->projections->write($writer);
     }
 
@@ -43,7 +48,7 @@ final class WhereOptRetWithWhereExprReturningSelcollist_679930c1 implements \Sql
      */
     public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
     {
-        return new self($expr, $this->projections);
+        return new self($expr, $this->projections, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class WhereOptRetWithWhereExprReturningSelcollist_679930c1 implements \Sql
      */
     public function withProjections(\SqlSemantics\Statement\Model\Sqlite\Role\SelcollistForm $projections): self
     {
-        return new self($this->expr, $projections);
+        return new self($this->expr, $projections, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->expr, $this->projections, $comments);
     }
 }

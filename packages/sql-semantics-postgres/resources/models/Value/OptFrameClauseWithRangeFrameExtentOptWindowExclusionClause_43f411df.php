@@ -17,11 +17,12 @@ final class OptFrameClauseWithRangeFrameExtentOptWindowExclusionClause_43f411df 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FrameExtentForm $frameExtent,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWindowExclusionClauseForm $optWindowExclusionClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($frameExtent), 'The frameExtent must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optWindowExclusionClause), 'The optWindowExclusionClause must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class OptFrameClauseWithRangeFrameExtentOptWindowExclusionClause_43f411df 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('RANGE');
+        $writer->comments($this->comments, 1);
         $this->frameExtent->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optWindowExclusionClause->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class OptFrameClauseWithRangeFrameExtentOptWindowExclusionClause_43f411df 
      */
     public function withFrameExtent(\SqlSemantics\Statement\Model\PostgreSql\Role\FrameExtentForm $frameExtent): self
     {
-        return new self($frameExtent, $this->optWindowExclusionClause);
+        return new self($frameExtent, $this->optWindowExclusionClause, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class OptFrameClauseWithRangeFrameExtentOptWindowExclusionClause_43f411df 
      */
     public function withOptWindowExclusionClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWindowExclusionClauseForm $optWindowExclusionClause): self
     {
-        return new self($this->frameExtent, $optWindowExclusionClause);
+        return new self($this->frameExtent, $optWindowExclusionClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->frameExtent, $this->optWindowExclusionClause, $comments);
     }
 }

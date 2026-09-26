@@ -17,10 +17,11 @@ final class AlterTableCmdWithSetAccessMethodSetAccessMethodName_f7df5d5c impleme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetAccessMethodNameForm $setAccessMethodName,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setAccessMethodName), 'The setAccessMethodName must be a generated immutable SQL value.');
     }
@@ -30,9 +31,13 @@ final class AlterTableCmdWithSetAccessMethodSetAccessMethodName_f7df5d5c impleme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SET');
+        $writer->comments($this->comments, 1);
         $writer->append('ACCESS');
+        $writer->comments($this->comments, 2);
         $writer->append('METHOD');
+        $writer->comments($this->comments, 3);
         $this->setAccessMethodName->write($writer);
     }
 
@@ -41,6 +46,14 @@ final class AlterTableCmdWithSetAccessMethodSetAccessMethodName_f7df5d5c impleme
      */
     public function withSetAccessMethodName(\SqlSemantics\Statement\Model\PostgreSql\Role\SetAccessMethodNameForm $setAccessMethodName): self
     {
-        return new self($setAccessMethodName);
+        return new self($setAccessMethodName, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->setAccessMethodName, $comments);
     }
 }

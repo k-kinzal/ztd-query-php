@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
+use Container\Endpoint;
 use Container\MySql80Container;
 use Container\MySql84Container;
 use mysqli;
@@ -30,8 +31,9 @@ final class MysqliLoadDataTest extends TestCase
     public function testLocalInfileLoadsOnlyTheShadowTable(): void
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $rawMysqli->set_charset('utf8mb4');
             $table = 'load_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, name VARCHAR(100))', $table));

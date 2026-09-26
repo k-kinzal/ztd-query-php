@@ -17,11 +17,12 @@ final class ViewSelectAuxWithCreateViewSelectParenUnionOpt_a7302c97 implements \
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateViewSelectParenForm $createViewSelectParen,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UnionOptForm $unionOpt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createViewSelectParen), 'The createViewSelectParen must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($unionOpt), 'The unionOpt must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class ViewSelectAuxWithCreateViewSelectParenUnionOpt_a7302c97 implements \
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->createViewSelectParen->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(')');
+        $writer->comments($this->comments, 3);
         $this->unionOpt->write($writer);
     }
 
@@ -43,7 +48,7 @@ final class ViewSelectAuxWithCreateViewSelectParenUnionOpt_a7302c97 implements \
      */
     public function withCreateViewSelectParen(\SqlSemantics\Statement\Model\MySql\Role\CreateViewSelectParenForm $createViewSelectParen): self
     {
-        return new self($createViewSelectParen, $this->unionOpt);
+        return new self($createViewSelectParen, $this->unionOpt, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class ViewSelectAuxWithCreateViewSelectParenUnionOpt_a7302c97 implements \
      */
     public function withUnionOpt(\SqlSemantics\Statement\Model\MySql\Role\UnionOptForm $unionOpt): self
     {
-        return new self($this->createViewSelectParen, $unionOpt);
+        return new self($this->createViewSelectParen, $unionOpt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->createViewSelectParen, $this->unionOpt, $comments);
     }
 }

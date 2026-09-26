@@ -17,12 +17,13 @@ final class AlterUserWithUserDropFactorDropFactor_be850b18 implements \SqlSemant
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserForm $user,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FactorForm $factor,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FactorForm $factor2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($factor), 'The factor must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class AlterUserWithUserDropFactorDropFactor_be850b18 implements \SqlSemant
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->user->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('DROP');
+        $writer->comments($this->comments, 2);
         $this->factor->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('DROP');
+        $writer->comments($this->comments, 4);
         $this->factor2->write($writer);
     }
 
@@ -46,7 +52,7 @@ final class AlterUserWithUserDropFactorDropFactor_be850b18 implements \SqlSemant
      */
     public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
     {
-        return new self($user, $this->factor, $this->factor2);
+        return new self($user, $this->factor, $this->factor2, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class AlterUserWithUserDropFactorDropFactor_be850b18 implements \SqlSemant
      */
     public function withFactor(\SqlSemantics\Statement\Model\MySql\Role\FactorForm $factor): self
     {
-        return new self($this->user, $factor, $this->factor2);
+        return new self($this->user, $factor, $this->factor2, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class AlterUserWithUserDropFactorDropFactor_be850b18 implements \SqlSemant
      */
     public function withFactor2(\SqlSemantics\Statement\Model\MySql\Role\FactorForm $factor2): self
     {
-        return new self($this->user, $this->factor, $factor2);
+        return new self($this->user, $this->factor, $factor2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->user, $this->factor, $this->factor2, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class SumExprWithJsonArrayaggInSumExprOptWindowingClause_1d83d334 implemen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InSumExprForm $inSumExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWindowingClauseForm $optWindowingClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($inSumExpr), 'The inSumExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWindowingClause), 'The optWindowingClause must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class SumExprWithJsonArrayaggInSumExprOptWindowingClause_1d83d334 implemen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('JSON_ARRAYAGG');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->inSumExpr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
+        $writer->comments($this->comments, 4);
         $this->optWindowingClause->write($writer);
     }
 
@@ -44,7 +50,7 @@ final class SumExprWithJsonArrayaggInSumExprOptWindowingClause_1d83d334 implemen
      */
     public function withInSumExpr(\SqlSemantics\Statement\Model\MySql\Role\InSumExprForm $inSumExpr): self
     {
-        return new self($inSumExpr, $this->optWindowingClause);
+        return new self($inSumExpr, $this->optWindowingClause, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class SumExprWithJsonArrayaggInSumExprOptWindowingClause_1d83d334 implemen
      */
     public function withOptWindowingClause(\SqlSemantics\Statement\Model\MySql\Role\OptWindowingClauseForm $optWindowingClause): self
     {
-        return new self($this->inSumExpr, $optWindowingClause);
+        return new self($this->inSumExpr, $optWindowingClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->inSumExpr, $this->optWindowingClause, $comments);
     }
 }

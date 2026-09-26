@@ -17,12 +17,13 @@ final class SecLabelStmtWithSecurityLabelOptProviderOnAggregateAggregateWithArgt
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptProviderForm $optProvider,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AggregateWithArgtypesForm $aggregateWithArgtypes,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SecurityLabelForm $securityLabel,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optProvider), 'The optProvider must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aggregateWithArgtypes), 'The aggregateWithArgtypes must be a generated immutable SQL value.');
@@ -34,13 +35,21 @@ final class SecLabelStmtWithSecurityLabelOptProviderOnAggregateAggregateWithArgt
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SECURITY');
+        $writer->comments($this->comments, 1);
         $writer->append('LABEL');
+        $writer->comments($this->comments, 2);
         $this->optProvider->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('ON');
+        $writer->comments($this->comments, 4);
         $writer->append('AGGREGATE');
+        $writer->comments($this->comments, 5);
         $this->aggregateWithArgtypes->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append('IS');
+        $writer->comments($this->comments, 7);
         $this->securityLabel->write($writer);
     }
 
@@ -49,7 +58,7 @@ final class SecLabelStmtWithSecurityLabelOptProviderOnAggregateAggregateWithArgt
      */
     public function withOptProvider(\SqlSemantics\Statement\Model\PostgreSql\Role\OptProviderForm $optProvider): self
     {
-        return new self($optProvider, $this->aggregateWithArgtypes, $this->securityLabel);
+        return new self($optProvider, $this->aggregateWithArgtypes, $this->securityLabel, $this->comments);
     }
 
     /**
@@ -57,7 +66,7 @@ final class SecLabelStmtWithSecurityLabelOptProviderOnAggregateAggregateWithArgt
      */
     public function withAggregateWithArgtypes(\SqlSemantics\Statement\Model\PostgreSql\Role\AggregateWithArgtypesForm $aggregateWithArgtypes): self
     {
-        return new self($this->optProvider, $aggregateWithArgtypes, $this->securityLabel);
+        return new self($this->optProvider, $aggregateWithArgtypes, $this->securityLabel, $this->comments);
     }
 
     /**
@@ -65,6 +74,14 @@ final class SecLabelStmtWithSecurityLabelOptProviderOnAggregateAggregateWithArgt
      */
     public function withSecurityLabel(\SqlSemantics\Statement\Model\PostgreSql\Role\SecurityLabelForm $securityLabel): self
     {
-        return new self($this->optProvider, $this->aggregateWithArgtypes, $securityLabel);
+        return new self($this->optProvider, $this->aggregateWithArgtypes, $securityLabel, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optProvider, $this->aggregateWithArgtypes, $this->securityLabel, $comments);
     }
 }

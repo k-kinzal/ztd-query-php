@@ -17,10 +17,11 @@ final class NotWithNot2Sym_871a4e53 implements \SqlSemantics\Statement\Model\MyS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $not2Sym,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($not2Sym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['NOT2_SYM'], 'The not2Sym must be a complete NOT2_SYM lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class NotWithNot2Sym_871a4e53 implements \SqlSemantics\Statement\Model\MyS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->not2Sym);
     }
 
@@ -38,6 +40,14 @@ final class NotWithNot2Sym_871a4e53 implements \SqlSemantics\Statement\Model\MyS
      */
     public function withNot2Sym(string $not2Sym): self
     {
-        return new self($not2Sym);
+        return new self($not2Sym, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->not2Sym, $comments);
     }
 }

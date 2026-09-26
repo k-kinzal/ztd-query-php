@@ -17,12 +17,13 @@ final class DropOpClassStmtWithDropOperatorClassIfPExistsAnyNameUsingNameOptDrop
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
@@ -34,14 +35,23 @@ final class DropOpClassStmtWithDropOperatorClassIfPExistsAnyNameUsingNameOptDrop
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('DROP');
+        $writer->comments($this->comments, 1);
         $writer->append('OPERATOR');
+        $writer->comments($this->comments, 2);
         $writer->append('CLASS');
+        $writer->comments($this->comments, 3);
         $writer->append('IF');
+        $writer->comments($this->comments, 4);
         $writer->append('EXISTS');
+        $writer->comments($this->comments, 5);
         $this->anyName->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append('USING');
+        $writer->comments($this->comments, 7);
         $this->name->write($writer);
+        $writer->comments($this->comments, 8);
         $this->optDropBehavior->write($writer);
     }
 
@@ -50,7 +60,7 @@ final class DropOpClassStmtWithDropOperatorClassIfPExistsAnyNameUsingNameOptDrop
      */
     public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
     {
-        return new self($anyName, $this->name, $this->optDropBehavior);
+        return new self($anyName, $this->name, $this->optDropBehavior, $this->comments);
     }
 
     /**
@@ -58,7 +68,7 @@ final class DropOpClassStmtWithDropOperatorClassIfPExistsAnyNameUsingNameOptDrop
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($this->anyName, $name, $this->optDropBehavior);
+        return new self($this->anyName, $name, $this->optDropBehavior, $this->comments);
     }
 
     /**
@@ -66,6 +76,14 @@ final class DropOpClassStmtWithDropOperatorClassIfPExistsAnyNameUsingNameOptDrop
      */
     public function withOptDropBehavior(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior): self
     {
-        return new self($this->anyName, $this->name, $optDropBehavior);
+        return new self($this->anyName, $this->name, $optDropBehavior, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->anyName, $this->name, $this->optDropBehavior, $comments);
     }
 }

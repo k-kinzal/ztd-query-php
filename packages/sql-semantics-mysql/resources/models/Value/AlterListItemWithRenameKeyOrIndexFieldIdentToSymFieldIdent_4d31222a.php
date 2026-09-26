@@ -17,12 +17,13 @@ final class AlterListItemWithRenameKeyOrIndexFieldIdentToSymFieldIdent_4d31222a 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyOrIndexForm $keyOrIndex,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldIdentForm $fieldIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldIdentForm $fieldIdent2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyOrIndex), 'The keyOrIndex must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldIdent), 'The fieldIdent must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class AlterListItemWithRenameKeyOrIndexFieldIdentToSymFieldIdent_4d31222a 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('RENAME');
+        $writer->comments($this->comments, 1);
         $this->keyOrIndex->write($writer);
+        $writer->comments($this->comments, 2);
         $this->fieldIdent->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('TO');
+        $writer->comments($this->comments, 4);
         $this->fieldIdent2->write($writer);
     }
 
@@ -46,7 +52,7 @@ final class AlterListItemWithRenameKeyOrIndexFieldIdentToSymFieldIdent_4d31222a 
      */
     public function withKeyOrIndex(\SqlSemantics\Statement\Model\MySql\Role\KeyOrIndexForm $keyOrIndex): self
     {
-        return new self($keyOrIndex, $this->fieldIdent, $this->fieldIdent2);
+        return new self($keyOrIndex, $this->fieldIdent, $this->fieldIdent2, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class AlterListItemWithRenameKeyOrIndexFieldIdentToSymFieldIdent_4d31222a 
      */
     public function withFieldIdent(\SqlSemantics\Statement\Model\MySql\Role\FieldIdentForm $fieldIdent): self
     {
-        return new self($this->keyOrIndex, $fieldIdent, $this->fieldIdent2);
+        return new self($this->keyOrIndex, $fieldIdent, $this->fieldIdent2, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class AlterListItemWithRenameKeyOrIndexFieldIdentToSymFieldIdent_4d31222a 
      */
     public function withFieldIdent2(\SqlSemantics\Statement\Model\MySql\Role\FieldIdentForm $fieldIdent2): self
     {
-        return new self($this->keyOrIndex, $this->fieldIdent, $fieldIdent2);
+        return new self($this->keyOrIndex, $this->fieldIdent, $fieldIdent2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->keyOrIndex, $this->fieldIdent, $this->fieldIdent2, $comments);
     }
 }

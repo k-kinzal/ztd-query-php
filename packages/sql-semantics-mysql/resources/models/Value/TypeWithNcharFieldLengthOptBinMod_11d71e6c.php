@@ -17,12 +17,13 @@ final class TypeWithNcharFieldLengthOptBinMod_11d71e6c implements \SqlSemantics\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NcharForm $nchar,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldLengthForm $fieldLength,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptBinModForm $optBinMod,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($nchar), 'The nchar must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldLength), 'The fieldLength must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class TypeWithNcharFieldLengthOptBinMod_11d71e6c implements \SqlSemantics\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->nchar->write($writer);
+        $writer->comments($this->comments, 1);
         $this->fieldLength->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optBinMod->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class TypeWithNcharFieldLengthOptBinMod_11d71e6c implements \SqlSemantics\
      */
     public function withNchar(\SqlSemantics\Statement\Model\MySql\Role\NcharForm $nchar): self
     {
-        return new self($nchar, $this->fieldLength, $this->optBinMod);
+        return new self($nchar, $this->fieldLength, $this->optBinMod, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class TypeWithNcharFieldLengthOptBinMod_11d71e6c implements \SqlSemantics\
      */
     public function withFieldLength(\SqlSemantics\Statement\Model\MySql\Role\FieldLengthForm $fieldLength): self
     {
-        return new self($this->nchar, $fieldLength, $this->optBinMod);
+        return new self($this->nchar, $fieldLength, $this->optBinMod, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class TypeWithNcharFieldLengthOptBinMod_11d71e6c implements \SqlSemantics\
      */
     public function withOptBinMod(\SqlSemantics\Statement\Model\MySql\Role\OptBinModForm $optBinMod): self
     {
-        return new self($this->nchar, $this->fieldLength, $optBinMod);
+        return new self($this->nchar, $this->fieldLength, $optBinMod, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->nchar, $this->fieldLength, $this->optBinMod, $comments);
     }
 }

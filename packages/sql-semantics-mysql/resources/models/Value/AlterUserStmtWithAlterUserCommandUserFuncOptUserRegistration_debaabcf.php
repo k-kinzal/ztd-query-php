@@ -17,12 +17,13 @@ final class AlterUserStmtWithAlterUserCommandUserFuncOptUserRegistration_debaabc
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterUserCommandForm $alterUserCommand,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserFuncForm $userFunc,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUserRegistrationForm $optUserRegistration,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterUserCommand), 'The alterUserCommand must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($userFunc), 'The userFunc must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class AlterUserStmtWithAlterUserCommandUserFuncOptUserRegistration_debaabc
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->alterUserCommand->write($writer);
+        $writer->comments($this->comments, 1);
         $this->userFunc->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optUserRegistration->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class AlterUserStmtWithAlterUserCommandUserFuncOptUserRegistration_debaabc
      */
     public function withAlterUserCommand(\SqlSemantics\Statement\Model\MySql\Role\AlterUserCommandForm $alterUserCommand): self
     {
-        return new self($alterUserCommand, $this->userFunc, $this->optUserRegistration);
+        return new self($alterUserCommand, $this->userFunc, $this->optUserRegistration, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class AlterUserStmtWithAlterUserCommandUserFuncOptUserRegistration_debaabc
      */
     public function withUserFunc(\SqlSemantics\Statement\Model\MySql\Role\UserFuncForm $userFunc): self
     {
-        return new self($this->alterUserCommand, $userFunc, $this->optUserRegistration);
+        return new self($this->alterUserCommand, $userFunc, $this->optUserRegistration, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class AlterUserStmtWithAlterUserCommandUserFuncOptUserRegistration_debaabc
      */
     public function withOptUserRegistration(\SqlSemantics\Statement\Model\MySql\Role\OptUserRegistrationForm $optUserRegistration): self
     {
-        return new self($this->alterUserCommand, $this->userFunc, $optUserRegistration);
+        return new self($this->alterUserCommand, $this->userFunc, $optUserRegistration, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->alterUserCommand, $this->userFunc, $this->optUserRegistration, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class FieldTermListWithFieldTermListFieldTerm_00595581 implements \SqlSema
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldTermListForm $fieldTermList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldTermForm $fieldTerm,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldTermList), 'The fieldTermList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldTerm), 'The fieldTerm must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class FieldTermListWithFieldTermListFieldTerm_00595581 implements \SqlSema
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->fieldTermList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->fieldTerm->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class FieldTermListWithFieldTermListFieldTerm_00595581 implements \SqlSema
      */
     public function withFieldTermList(\SqlSemantics\Statement\Model\MySql\Role\FieldTermListForm $fieldTermList): self
     {
-        return new self($fieldTermList, $this->fieldTerm);
+        return new self($fieldTermList, $this->fieldTerm, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class FieldTermListWithFieldTermListFieldTerm_00595581 implements \SqlSema
      */
     public function withFieldTerm(\SqlSemantics\Statement\Model\MySql\Role\FieldTermForm $fieldTerm): self
     {
-        return new self($this->fieldTermList, $fieldTerm);
+        return new self($this->fieldTermList, $fieldTerm, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->fieldTermList, $this->fieldTerm, $comments);
     }
 }

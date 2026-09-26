@@ -17,10 +17,11 @@ final class ShowParamWithEngineSymAllShowEngineParam_2fae534e implements \SqlSem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ShowEngineParamForm $showEngineParam,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($showEngineParam), 'The showEngineParam must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class ShowParamWithEngineSymAllShowEngineParam_2fae534e implements \SqlSem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ENGINE');
+        $writer->comments($this->comments, 1);
         $writer->append('ALL');
+        $writer->comments($this->comments, 2);
         $this->showEngineParam->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class ShowParamWithEngineSymAllShowEngineParam_2fae534e implements \SqlSem
      */
     public function withShowEngineParam(\SqlSemantics\Statement\Model\MySql\Role\ShowEngineParamForm $showEngineParam): self
     {
-        return new self($showEngineParam);
+        return new self($showEngineParam, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->showEngineParam, $comments);
     }
 }

@@ -17,10 +17,11 @@ final class ShowWithShowShowParam_55980fc6 implements \SqlSemantics\Statement\Mo
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ShowParamForm $showParam,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($showParam), 'The showParam must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class ShowWithShowShowParam_55980fc6 implements \SqlSemantics\Statement\Mo
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SHOW');
+        $writer->comments($this->comments, 1);
         $this->showParam->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class ShowWithShowShowParam_55980fc6 implements \SqlSemantics\Statement\Mo
      */
     public function withShowParam(\SqlSemantics\Statement\Model\MySql\Role\ShowParamForm $showParam): self
     {
-        return new self($showParam);
+        return new self($showParam, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->showParam, $comments);
     }
 }

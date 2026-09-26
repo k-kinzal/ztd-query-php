@@ -17,13 +17,14 @@ final class IndexElemOptionsWithOptCollateOptQualifiedNameOptAscDescOptNullsOrde
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptCollateForm $optCollate,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptQualifiedNameForm $optQualifiedName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptAscDescForm $optAscDesc,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptNullsOrderForm $optNullsOrder,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optCollate), 'The optCollate must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optQualifiedName), 'The optQualifiedName must be a generated immutable SQL value.');
@@ -36,9 +37,13 @@ final class IndexElemOptionsWithOptCollateOptQualifiedNameOptAscDescOptNullsOrde
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optCollate->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optQualifiedName->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optAscDesc->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optNullsOrder->write($writer);
     }
 
@@ -47,7 +52,7 @@ final class IndexElemOptionsWithOptCollateOptQualifiedNameOptAscDescOptNullsOrde
      */
     public function withOptCollate(\SqlSemantics\Statement\Model\PostgreSql\Role\OptCollateForm $optCollate): self
     {
-        return new self($optCollate, $this->optQualifiedName, $this->optAscDesc, $this->optNullsOrder);
+        return new self($optCollate, $this->optQualifiedName, $this->optAscDesc, $this->optNullsOrder, $this->comments);
     }
 
     /**
@@ -55,7 +60,7 @@ final class IndexElemOptionsWithOptCollateOptQualifiedNameOptAscDescOptNullsOrde
      */
     public function withOptQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\OptQualifiedNameForm $optQualifiedName): self
     {
-        return new self($this->optCollate, $optQualifiedName, $this->optAscDesc, $this->optNullsOrder);
+        return new self($this->optCollate, $optQualifiedName, $this->optAscDesc, $this->optNullsOrder, $this->comments);
     }
 
     /**
@@ -63,7 +68,7 @@ final class IndexElemOptionsWithOptCollateOptQualifiedNameOptAscDescOptNullsOrde
      */
     public function withOptAscDesc(\SqlSemantics\Statement\Model\PostgreSql\Role\OptAscDescForm $optAscDesc): self
     {
-        return new self($this->optCollate, $this->optQualifiedName, $optAscDesc, $this->optNullsOrder);
+        return new self($this->optCollate, $this->optQualifiedName, $optAscDesc, $this->optNullsOrder, $this->comments);
     }
 
     /**
@@ -71,6 +76,14 @@ final class IndexElemOptionsWithOptCollateOptQualifiedNameOptAscDescOptNullsOrde
      */
     public function withOptNullsOrder(\SqlSemantics\Statement\Model\PostgreSql\Role\OptNullsOrderForm $optNullsOrder): self
     {
-        return new self($this->optCollate, $this->optQualifiedName, $this->optAscDesc, $optNullsOrder);
+        return new self($this->optCollate, $this->optQualifiedName, $this->optAscDesc, $optNullsOrder, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optCollate, $this->optQualifiedName, $this->optAscDesc, $this->optNullsOrder, $comments);
     }
 }

@@ -17,13 +17,14 @@ final class JoinTableWithTableRefNormalJoinTableRefUsingUsingList_72b1700c imple
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableRefForm $tableRef,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NormalJoinForm $normalJoin,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableRefForm $tableRef2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UsingListForm $usingList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableRef), 'The tableRef must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($normalJoin), 'The normalJoin must be a generated immutable SQL value.');
@@ -36,12 +37,19 @@ final class JoinTableWithTableRefNormalJoinTableRefUsingUsingList_72b1700c imple
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableRef->write($writer);
+        $writer->comments($this->comments, 1);
         $this->normalJoin->write($writer);
+        $writer->comments($this->comments, 2);
         $this->tableRef2->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('USING');
+        $writer->comments($this->comments, 4);
         $writer->append('(');
+        $writer->comments($this->comments, 5);
         $this->usingList->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append(')');
     }
 
@@ -50,7 +58,7 @@ final class JoinTableWithTableRefNormalJoinTableRefUsingUsingList_72b1700c imple
      */
     public function withTableRef(\SqlSemantics\Statement\Model\MySql\Role\TableRefForm $tableRef): self
     {
-        return new self($tableRef, $this->normalJoin, $this->tableRef2, $this->usingList);
+        return new self($tableRef, $this->normalJoin, $this->tableRef2, $this->usingList, $this->comments);
     }
 
     /**
@@ -58,7 +66,7 @@ final class JoinTableWithTableRefNormalJoinTableRefUsingUsingList_72b1700c imple
      */
     public function withNormalJoin(\SqlSemantics\Statement\Model\MySql\Role\NormalJoinForm $normalJoin): self
     {
-        return new self($this->tableRef, $normalJoin, $this->tableRef2, $this->usingList);
+        return new self($this->tableRef, $normalJoin, $this->tableRef2, $this->usingList, $this->comments);
     }
 
     /**
@@ -66,7 +74,7 @@ final class JoinTableWithTableRefNormalJoinTableRefUsingUsingList_72b1700c imple
      */
     public function withTableRef2(\SqlSemantics\Statement\Model\MySql\Role\TableRefForm $tableRef2): self
     {
-        return new self($this->tableRef, $this->normalJoin, $tableRef2, $this->usingList);
+        return new self($this->tableRef, $this->normalJoin, $tableRef2, $this->usingList, $this->comments);
     }
 
     /**
@@ -74,6 +82,14 @@ final class JoinTableWithTableRefNormalJoinTableRefUsingUsingList_72b1700c imple
      */
     public function withUsingList(\SqlSemantics\Statement\Model\MySql\Role\UsingListForm $usingList): self
     {
-        return new self($this->tableRef, $this->normalJoin, $this->tableRef2, $usingList);
+        return new self($this->tableRef, $this->normalJoin, $this->tableRef2, $usingList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableRef, $this->normalJoin, $this->tableRef2, $this->usingList, $comments);
     }
 }

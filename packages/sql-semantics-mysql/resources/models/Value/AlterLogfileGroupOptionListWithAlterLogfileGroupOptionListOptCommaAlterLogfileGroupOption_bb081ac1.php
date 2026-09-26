@@ -17,12 +17,13 @@ final class AlterLogfileGroupOptionListWithAlterLogfileGroupOptionListOptCommaAl
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterLogfileGroupOptionListForm $alterLogfileGroupOptionList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCommaForm $optComma,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterLogfileGroupOptionForm $alterLogfileGroupOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterLogfileGroupOptionList), 'The alterLogfileGroupOptionList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optComma), 'The optComma must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class AlterLogfileGroupOptionListWithAlterLogfileGroupOptionListOptCommaAl
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->alterLogfileGroupOptionList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optComma->write($writer);
+        $writer->comments($this->comments, 2);
         $this->alterLogfileGroupOption->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class AlterLogfileGroupOptionListWithAlterLogfileGroupOptionListOptCommaAl
      */
     public function withAlterLogfileGroupOptionList(\SqlSemantics\Statement\Model\MySql\Role\AlterLogfileGroupOptionListForm $alterLogfileGroupOptionList): self
     {
-        return new self($alterLogfileGroupOptionList, $this->optComma, $this->alterLogfileGroupOption);
+        return new self($alterLogfileGroupOptionList, $this->optComma, $this->alterLogfileGroupOption, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class AlterLogfileGroupOptionListWithAlterLogfileGroupOptionListOptCommaAl
      */
     public function withOptComma(\SqlSemantics\Statement\Model\MySql\Role\OptCommaForm $optComma): self
     {
-        return new self($this->alterLogfileGroupOptionList, $optComma, $this->alterLogfileGroupOption);
+        return new self($this->alterLogfileGroupOptionList, $optComma, $this->alterLogfileGroupOption, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class AlterLogfileGroupOptionListWithAlterLogfileGroupOptionListOptCommaAl
      */
     public function withAlterLogfileGroupOption(\SqlSemantics\Statement\Model\MySql\Role\AlterLogfileGroupOptionForm $alterLogfileGroupOption): self
     {
-        return new self($this->alterLogfileGroupOptionList, $this->optComma, $alterLogfileGroupOption);
+        return new self($this->alterLogfileGroupOptionList, $this->optComma, $alterLogfileGroupOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->alterLogfileGroupOptionList, $this->optComma, $this->alterLogfileGroupOption, $comments);
     }
 }

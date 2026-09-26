@@ -17,12 +17,13 @@ final class TableLockWithTableIdentOptTableAliasLockOption_e396abc1 implements \
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptTableAliasForm $optTableAlias,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LockOptionForm $lockOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optTableAlias), 'The optTableAlias must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class TableLockWithTableIdentOptTableAliasLockOption_e396abc1 implements \
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optTableAlias->write($writer);
+        $writer->comments($this->comments, 2);
         $this->lockOption->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class TableLockWithTableIdentOptTableAliasLockOption_e396abc1 implements \
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($tableIdent, $this->optTableAlias, $this->lockOption);
+        return new self($tableIdent, $this->optTableAlias, $this->lockOption, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class TableLockWithTableIdentOptTableAliasLockOption_e396abc1 implements \
      */
     public function withOptTableAlias(\SqlSemantics\Statement\Model\MySql\Role\OptTableAliasForm $optTableAlias): self
     {
-        return new self($this->tableIdent, $optTableAlias, $this->lockOption);
+        return new self($this->tableIdent, $optTableAlias, $this->lockOption, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class TableLockWithTableIdentOptTableAliasLockOption_e396abc1 implements \
      */
     public function withLockOption(\SqlSemantics\Statement\Model\MySql\Role\LockOptionForm $lockOption): self
     {
-        return new self($this->tableIdent, $this->optTableAlias, $lockOption);
+        return new self($this->tableIdent, $this->optTableAlias, $lockOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableIdent, $this->optTableAlias, $this->lockOption, $comments);
     }
 }

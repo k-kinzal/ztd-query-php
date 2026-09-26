@@ -17,12 +17,13 @@ final class SimpleSelectWithSelectClauseUnionSetQuantifierSelectClause_80993a60 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectClauseForm $selectClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetQuantifierForm $setQuantifier,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectClauseForm $selectClause2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($selectClause), 'The selectClause must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setQuantifier), 'The setQuantifier must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class SimpleSelectWithSelectClauseUnionSetQuantifierSelectClause_80993a60 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->selectClause->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('UNION');
+        $writer->comments($this->comments, 2);
         $this->setQuantifier->write($writer);
+        $writer->comments($this->comments, 3);
         $this->selectClause2->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class SimpleSelectWithSelectClauseUnionSetQuantifierSelectClause_80993a60 
      */
     public function withSelectClause(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectClauseForm $selectClause): self
     {
-        return new self($selectClause, $this->setQuantifier, $this->selectClause2);
+        return new self($selectClause, $this->setQuantifier, $this->selectClause2, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class SimpleSelectWithSelectClauseUnionSetQuantifierSelectClause_80993a60 
      */
     public function withSetQuantifier(\SqlSemantics\Statement\Model\PostgreSql\Role\SetQuantifierForm $setQuantifier): self
     {
-        return new self($this->selectClause, $setQuantifier, $this->selectClause2);
+        return new self($this->selectClause, $setQuantifier, $this->selectClause2, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class SimpleSelectWithSelectClauseUnionSetQuantifierSelectClause_80993a60 
      */
     public function withSelectClause2(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectClauseForm $selectClause2): self
     {
-        return new self($this->selectClause, $this->setQuantifier, $selectClause2);
+        return new self($this->selectClause, $this->setQuantifier, $selectClause2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->selectClause, $this->setQuantifier, $this->selectClause2, $comments);
     }
 }

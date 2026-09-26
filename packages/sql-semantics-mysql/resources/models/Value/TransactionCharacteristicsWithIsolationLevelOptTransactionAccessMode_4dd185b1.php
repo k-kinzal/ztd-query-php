@@ -17,11 +17,12 @@ final class TransactionCharacteristicsWithIsolationLevelOptTransactionAccessMode
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IsolationLevelForm $isolationLevel,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptTransactionAccessModeForm $optTransactionAccessMode,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($isolationLevel), 'The isolationLevel must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optTransactionAccessMode), 'The optTransactionAccessMode must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class TransactionCharacteristicsWithIsolationLevelOptTransactionAccessMode
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->isolationLevel->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optTransactionAccessMode->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class TransactionCharacteristicsWithIsolationLevelOptTransactionAccessMode
      */
     public function withIsolationLevel(\SqlSemantics\Statement\Model\MySql\Role\IsolationLevelForm $isolationLevel): self
     {
-        return new self($isolationLevel, $this->optTransactionAccessMode);
+        return new self($isolationLevel, $this->optTransactionAccessMode, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class TransactionCharacteristicsWithIsolationLevelOptTransactionAccessMode
      */
     public function withOptTransactionAccessMode(\SqlSemantics\Statement\Model\MySql\Role\OptTransactionAccessModeForm $optTransactionAccessMode): self
     {
-        return new self($this->isolationLevel, $optTransactionAccessMode);
+        return new self($this->isolationLevel, $optTransactionAccessMode, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->isolationLevel, $this->optTransactionAccessMode, $comments);
     }
 }

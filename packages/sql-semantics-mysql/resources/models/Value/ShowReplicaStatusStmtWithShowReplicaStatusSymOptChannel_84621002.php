@@ -17,11 +17,12 @@ final class ShowReplicaStatusStmtWithShowReplicaStatusSymOptChannel_84621002 imp
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ReplicaForm $replica,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($replica), 'The replica must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optChannel), 'The optChannel must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class ShowReplicaStatusStmtWithShowReplicaStatusSymOptChannel_84621002 imp
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SHOW');
+        $writer->comments($this->comments, 1);
         $this->replica->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('STATUS');
+        $writer->comments($this->comments, 3);
         $this->optChannel->write($writer);
     }
 
@@ -43,7 +48,7 @@ final class ShowReplicaStatusStmtWithShowReplicaStatusSymOptChannel_84621002 imp
      */
     public function withReplica(\SqlSemantics\Statement\Model\MySql\Role\ReplicaForm $replica): self
     {
-        return new self($replica, $this->optChannel);
+        return new self($replica, $this->optChannel, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class ShowReplicaStatusStmtWithShowReplicaStatusSymOptChannel_84621002 imp
      */
     public function withOptChannel(\SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel): self
     {
-        return new self($this->replica, $optChannel);
+        return new self($this->replica, $optChannel, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->replica, $this->optChannel, $comments);
     }
 }

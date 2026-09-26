@@ -36,7 +36,8 @@ use ZtdQuery\Session;
  * @visibility public
  * @example Simulate writes without changing the native table
  *     $container = \Testcontainers\Testcontainers::run(\Container\MySql80Container::class);
- *     $native = new \mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+ *     $endpoint = $container->getData(\Container\Endpoint::class);
+ *     $native = new \mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
  *     $native->set_charset('utf8mb4');
  *     $native->query('CREATE TABLE accounts (id INT PRIMARY KEY, balance INT)');
  *     $native->query('INSERT INTO accounts VALUES (1, 10)');

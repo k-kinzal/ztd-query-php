@@ -17,10 +17,11 @@ final class CreateExtensionOptItemWithVersionPNonReservedWordOrSconst_dc57caf6 i
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NonReservedWordOrSconstForm $nonReservedWordOrSconst,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($nonReservedWordOrSconst), 'The nonReservedWordOrSconst must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class CreateExtensionOptItemWithVersionPNonReservedWordOrSconst_dc57caf6 i
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('VERSION');
+        $writer->comments($this->comments, 1);
         $this->nonReservedWordOrSconst->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class CreateExtensionOptItemWithVersionPNonReservedWordOrSconst_dc57caf6 i
      */
     public function withNonReservedWordOrSconst(\SqlSemantics\Statement\Model\PostgreSql\Role\NonReservedWordOrSconstForm $nonReservedWordOrSconst): self
     {
-        return new self($nonReservedWordOrSconst);
+        return new self($nonReservedWordOrSconst, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->nonReservedWordOrSconst, $comments);
     }
 }

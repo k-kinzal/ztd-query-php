@@ -17,13 +17,14 @@ final class CreateAsStmtWithCreateOptTempTableCreateAsTargetAsSelectStmtOptWithD
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm $optTemp,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreateAsTargetForm $createAsTarget,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm $selectStmt,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithDataForm $optWithData,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTemp), 'The optTemp must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createAsTarget), 'The createAsTarget must be a generated immutable SQL value.');
@@ -36,12 +37,19 @@ final class CreateAsStmtWithCreateOptTempTableCreateAsTargetAsSelectStmtOptWithD
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $this->optTemp->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('TABLE');
+        $writer->comments($this->comments, 3);
         $this->createAsTarget->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('AS');
+        $writer->comments($this->comments, 5);
         $this->selectStmt->write($writer);
+        $writer->comments($this->comments, 6);
         $this->optWithData->write($writer);
     }
 
@@ -50,7 +58,7 @@ final class CreateAsStmtWithCreateOptTempTableCreateAsTargetAsSelectStmtOptWithD
      */
     public function withOptTemp(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm $optTemp): self
     {
-        return new self($optTemp, $this->createAsTarget, $this->selectStmt, $this->optWithData);
+        return new self($optTemp, $this->createAsTarget, $this->selectStmt, $this->optWithData, $this->comments);
     }
 
     /**
@@ -58,7 +66,7 @@ final class CreateAsStmtWithCreateOptTempTableCreateAsTargetAsSelectStmtOptWithD
      */
     public function withCreateAsTarget(\SqlSemantics\Statement\Model\PostgreSql\Role\CreateAsTargetForm $createAsTarget): self
     {
-        return new self($this->optTemp, $createAsTarget, $this->selectStmt, $this->optWithData);
+        return new self($this->optTemp, $createAsTarget, $this->selectStmt, $this->optWithData, $this->comments);
     }
 
     /**
@@ -66,7 +74,7 @@ final class CreateAsStmtWithCreateOptTempTableCreateAsTargetAsSelectStmtOptWithD
      */
     public function withSelectStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm $selectStmt): self
     {
-        return new self($this->optTemp, $this->createAsTarget, $selectStmt, $this->optWithData);
+        return new self($this->optTemp, $this->createAsTarget, $selectStmt, $this->optWithData, $this->comments);
     }
 
     /**
@@ -74,6 +82,14 @@ final class CreateAsStmtWithCreateOptTempTableCreateAsTargetAsSelectStmtOptWithD
      */
     public function withOptWithData(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithDataForm $optWithData): self
     {
-        return new self($this->optTemp, $this->createAsTarget, $this->selectStmt, $optWithData);
+        return new self($this->optTemp, $this->createAsTarget, $this->selectStmt, $optWithData, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optTemp, $this->createAsTarget, $this->selectStmt, $this->optWithData, $comments);
     }
 }

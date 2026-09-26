@@ -17,10 +17,11 @@ final class RoleIdentOrTextWithLexHostname_6e6fdaca implements \SqlSemantics\Sta
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $lexHostname,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($lexHostname, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['LEX_HOSTNAME'], 'The lexHostname must be a complete LEX_HOSTNAME lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class RoleIdentOrTextWithLexHostname_6e6fdaca implements \SqlSemantics\Sta
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->lexHostname);
     }
 
@@ -38,6 +40,14 @@ final class RoleIdentOrTextWithLexHostname_6e6fdaca implements \SqlSemantics\Sta
      */
     public function withLexHostname(string $lexHostname): self
     {
-        return new self($lexHostname);
+        return new self($lexHostname, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->lexHostname, $comments);
     }
 }

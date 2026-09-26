@@ -17,11 +17,12 @@ final class FuncAliasClauseWithAsColIdTableFuncElementList_1c520e5e implements \
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncElementListForm $tableFuncElementList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($tableFuncElementList), 'The tableFuncElementList must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class FuncAliasClauseWithAsColIdTableFuncElementList_1c520e5e implements \
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('AS');
+        $writer->comments($this->comments, 1);
         $this->colId->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('(');
+        $writer->comments($this->comments, 3);
         $this->tableFuncElementList->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
     }
 
@@ -44,7 +50,7 @@ final class FuncAliasClauseWithAsColIdTableFuncElementList_1c520e5e implements \
      */
     public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
     {
-        return new self($colId, $this->tableFuncElementList);
+        return new self($colId, $this->tableFuncElementList, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class FuncAliasClauseWithAsColIdTableFuncElementList_1c520e5e implements \
      */
     public function withTableFuncElementList(\SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncElementListForm $tableFuncElementList): self
     {
-        return new self($this->colId, $tableFuncElementList);
+        return new self($this->colId, $tableFuncElementList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->colId, $this->tableFuncElementList, $comments);
     }
 }

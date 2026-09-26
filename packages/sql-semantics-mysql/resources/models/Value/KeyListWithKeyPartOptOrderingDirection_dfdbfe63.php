@@ -17,11 +17,12 @@ final class KeyListWithKeyPartOptOrderingDirection_dfdbfe63 implements \SqlSeman
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyPartForm $keyPart,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptOrderingDirectionForm $optOrderingDirection,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyPart), 'The keyPart must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optOrderingDirection), 'The optOrderingDirection must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class KeyListWithKeyPartOptOrderingDirection_dfdbfe63 implements \SqlSeman
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->keyPart->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optOrderingDirection->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class KeyListWithKeyPartOptOrderingDirection_dfdbfe63 implements \SqlSeman
      */
     public function withKeyPart(\SqlSemantics\Statement\Model\MySql\Role\KeyPartForm $keyPart): self
     {
-        return new self($keyPart, $this->optOrderingDirection);
+        return new self($keyPart, $this->optOrderingDirection, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class KeyListWithKeyPartOptOrderingDirection_dfdbfe63 implements \SqlSeman
      */
     public function withOptOrderingDirection(\SqlSemantics\Statement\Model\MySql\Role\OptOrderingDirectionForm $optOrderingDirection): self
     {
-        return new self($this->keyPart, $optOrderingDirection);
+        return new self($this->keyPart, $optOrderingDirection, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->keyPart, $this->optOrderingDirection, $comments);
     }
 }

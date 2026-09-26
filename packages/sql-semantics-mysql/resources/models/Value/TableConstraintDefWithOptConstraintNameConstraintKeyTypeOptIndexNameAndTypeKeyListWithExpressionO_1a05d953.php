@@ -17,7 +17,7 @@ final class TableConstraintDefWithOptConstraintNameConstraintKeyTypeOptIndexName
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptConstraintNameForm $optConstraintName,
@@ -25,6 +25,7 @@ final class TableConstraintDefWithOptConstraintNameConstraintKeyTypeOptIndexName
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIndexNameAndTypeForm $optIndexNameAndType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyListWithExpressionForm $keyListWithExpression,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIndexOptionsForm $optIndexOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optConstraintName), 'The optConstraintName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($constraintKeyType), 'The constraintKeyType must be a generated immutable SQL value.');
@@ -38,12 +39,19 @@ final class TableConstraintDefWithOptConstraintNameConstraintKeyTypeOptIndexName
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optConstraintName->write($writer);
+        $writer->comments($this->comments, 1);
         $this->constraintKeyType->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optIndexNameAndType->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('(');
+        $writer->comments($this->comments, 4);
         $this->keyListWithExpression->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
+        $writer->comments($this->comments, 6);
         $this->optIndexOptions->write($writer);
     }
 
@@ -52,7 +60,7 @@ final class TableConstraintDefWithOptConstraintNameConstraintKeyTypeOptIndexName
      */
     public function withOptConstraintName(\SqlSemantics\Statement\Model\MySql\Role\OptConstraintNameForm $optConstraintName): self
     {
-        return new self($optConstraintName, $this->constraintKeyType, $this->optIndexNameAndType, $this->keyListWithExpression, $this->optIndexOptions);
+        return new self($optConstraintName, $this->constraintKeyType, $this->optIndexNameAndType, $this->keyListWithExpression, $this->optIndexOptions, $this->comments);
     }
 
     /**
@@ -60,7 +68,7 @@ final class TableConstraintDefWithOptConstraintNameConstraintKeyTypeOptIndexName
      */
     public function withConstraintKeyType(\SqlSemantics\Statement\Model\MySql\Role\ConstraintKeyTypeForm $constraintKeyType): self
     {
-        return new self($this->optConstraintName, $constraintKeyType, $this->optIndexNameAndType, $this->keyListWithExpression, $this->optIndexOptions);
+        return new self($this->optConstraintName, $constraintKeyType, $this->optIndexNameAndType, $this->keyListWithExpression, $this->optIndexOptions, $this->comments);
     }
 
     /**
@@ -68,7 +76,7 @@ final class TableConstraintDefWithOptConstraintNameConstraintKeyTypeOptIndexName
      */
     public function withOptIndexNameAndType(\SqlSemantics\Statement\Model\MySql\Role\OptIndexNameAndTypeForm $optIndexNameAndType): self
     {
-        return new self($this->optConstraintName, $this->constraintKeyType, $optIndexNameAndType, $this->keyListWithExpression, $this->optIndexOptions);
+        return new self($this->optConstraintName, $this->constraintKeyType, $optIndexNameAndType, $this->keyListWithExpression, $this->optIndexOptions, $this->comments);
     }
 
     /**
@@ -76,7 +84,7 @@ final class TableConstraintDefWithOptConstraintNameConstraintKeyTypeOptIndexName
      */
     public function withKeyListWithExpression(\SqlSemantics\Statement\Model\MySql\Role\KeyListWithExpressionForm $keyListWithExpression): self
     {
-        return new self($this->optConstraintName, $this->constraintKeyType, $this->optIndexNameAndType, $keyListWithExpression, $this->optIndexOptions);
+        return new self($this->optConstraintName, $this->constraintKeyType, $this->optIndexNameAndType, $keyListWithExpression, $this->optIndexOptions, $this->comments);
     }
 
     /**
@@ -84,6 +92,14 @@ final class TableConstraintDefWithOptConstraintNameConstraintKeyTypeOptIndexName
      */
     public function withOptIndexOptions(\SqlSemantics\Statement\Model\MySql\Role\OptIndexOptionsForm $optIndexOptions): self
     {
-        return new self($this->optConstraintName, $this->constraintKeyType, $this->optIndexNameAndType, $this->keyListWithExpression, $optIndexOptions);
+        return new self($this->optConstraintName, $this->constraintKeyType, $this->optIndexNameAndType, $this->keyListWithExpression, $optIndexOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optConstraintName, $this->constraintKeyType, $this->optIndexNameAndType, $this->keyListWithExpression, $this->optIndexOptions, $comments);
     }
 }

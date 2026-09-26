@@ -17,11 +17,12 @@ final class ChangeReplicationStmtWithChangeReplicationSourceSymToSymSourceDefsOp
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm $sourceDefs,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($sourceDefs), 'The sourceDefs must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optChannel), 'The optChannel must be a generated immutable SQL value.');
@@ -32,11 +33,17 @@ final class ChangeReplicationStmtWithChangeReplicationSourceSymToSymSourceDefsOp
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CHANGE');
+        $writer->comments($this->comments, 1);
         $writer->append('REPLICATION');
+        $writer->comments($this->comments, 2);
         $writer->append('SOURCE');
+        $writer->comments($this->comments, 3);
         $writer->append('TO');
+        $writer->comments($this->comments, 4);
         $this->sourceDefs->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optChannel->write($writer);
     }
 
@@ -45,7 +52,7 @@ final class ChangeReplicationStmtWithChangeReplicationSourceSymToSymSourceDefsOp
      */
     public function withSourceDefs(\SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm $sourceDefs): self
     {
-        return new self($sourceDefs, $this->optChannel);
+        return new self($sourceDefs, $this->optChannel, $this->comments);
     }
 
     /**
@@ -53,6 +60,14 @@ final class ChangeReplicationStmtWithChangeReplicationSourceSymToSymSourceDefsOp
      */
     public function withOptChannel(\SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel): self
     {
-        return new self($this->sourceDefs, $optChannel);
+        return new self($this->sourceDefs, $optChannel, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->sourceDefs, $this->optChannel, $comments);
     }
 }

@@ -17,7 +17,7 @@ final class IndexStmtWithCreateOptUniqueIndexOptConcurrentlyIfPNotExistsNameOnRe
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptUniqueForm $optUnique,
@@ -31,6 +31,7 @@ final class IndexStmtWithCreateOptUniqueIndexOptConcurrentlyIfPNotExistsNameOnRe
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptReloptionsForm $optReloptions,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTableSpaceForm $optTableSpace,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\WhereClauseForm $where,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optUnique), 'The optUnique must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optConcurrently), 'The optConcurrently must be a generated immutable SQL value.');
@@ -50,24 +51,43 @@ final class IndexStmtWithCreateOptUniqueIndexOptConcurrentlyIfPNotExistsNameOnRe
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $this->optUnique->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('INDEX');
+        $writer->comments($this->comments, 3);
         $this->optConcurrently->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('IF');
+        $writer->comments($this->comments, 5);
         $writer->append('NOT');
+        $writer->comments($this->comments, 6);
         $writer->append('EXISTS');
+        $writer->comments($this->comments, 7);
         $this->name->write($writer);
+        $writer->comments($this->comments, 8);
         $writer->append('ON');
+        $writer->comments($this->comments, 9);
         $this->relationExpr->write($writer);
+        $writer->comments($this->comments, 10);
         $this->accessMethodClause->write($writer);
+        $writer->comments($this->comments, 11);
         $writer->append('(');
+        $writer->comments($this->comments, 12);
         $this->indexParams->write($writer);
+        $writer->comments($this->comments, 13);
         $writer->append(')');
+        $writer->comments($this->comments, 14);
         $this->optInclude->write($writer);
+        $writer->comments($this->comments, 15);
         $this->optUniqueNullTreatment->write($writer);
+        $writer->comments($this->comments, 16);
         $this->optReloptions->write($writer);
+        $writer->comments($this->comments, 17);
         $this->optTableSpace->write($writer);
+        $writer->comments($this->comments, 18);
         $this->where->write($writer);
     }
 
@@ -76,7 +96,7 @@ final class IndexStmtWithCreateOptUniqueIndexOptConcurrentlyIfPNotExistsNameOnRe
      */
     public function withOptUnique(\SqlSemantics\Statement\Model\PostgreSql\Role\OptUniqueForm $optUnique): self
     {
-        return new self($optUnique, $this->optConcurrently, $this->name, $this->relationExpr, $this->accessMethodClause, $this->indexParams, $this->optInclude, $this->optUniqueNullTreatment, $this->optReloptions, $this->optTableSpace, $this->where);
+        return new self($optUnique, $this->optConcurrently, $this->name, $this->relationExpr, $this->accessMethodClause, $this->indexParams, $this->optInclude, $this->optUniqueNullTreatment, $this->optReloptions, $this->optTableSpace, $this->where, $this->comments);
     }
 
     /**
@@ -84,7 +104,7 @@ final class IndexStmtWithCreateOptUniqueIndexOptConcurrentlyIfPNotExistsNameOnRe
      */
     public function withOptConcurrently(\SqlSemantics\Statement\Model\PostgreSql\Role\OptConcurrentlyForm $optConcurrently): self
     {
-        return new self($this->optUnique, $optConcurrently, $this->name, $this->relationExpr, $this->accessMethodClause, $this->indexParams, $this->optInclude, $this->optUniqueNullTreatment, $this->optReloptions, $this->optTableSpace, $this->where);
+        return new self($this->optUnique, $optConcurrently, $this->name, $this->relationExpr, $this->accessMethodClause, $this->indexParams, $this->optInclude, $this->optUniqueNullTreatment, $this->optReloptions, $this->optTableSpace, $this->where, $this->comments);
     }
 
     /**
@@ -92,7 +112,7 @@ final class IndexStmtWithCreateOptUniqueIndexOptConcurrentlyIfPNotExistsNameOnRe
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($this->optUnique, $this->optConcurrently, $name, $this->relationExpr, $this->accessMethodClause, $this->indexParams, $this->optInclude, $this->optUniqueNullTreatment, $this->optReloptions, $this->optTableSpace, $this->where);
+        return new self($this->optUnique, $this->optConcurrently, $name, $this->relationExpr, $this->accessMethodClause, $this->indexParams, $this->optInclude, $this->optUniqueNullTreatment, $this->optReloptions, $this->optTableSpace, $this->where, $this->comments);
     }
 
     /**
@@ -100,7 +120,7 @@ final class IndexStmtWithCreateOptUniqueIndexOptConcurrentlyIfPNotExistsNameOnRe
      */
     public function withRelationExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm $relationExpr): self
     {
-        return new self($this->optUnique, $this->optConcurrently, $this->name, $relationExpr, $this->accessMethodClause, $this->indexParams, $this->optInclude, $this->optUniqueNullTreatment, $this->optReloptions, $this->optTableSpace, $this->where);
+        return new self($this->optUnique, $this->optConcurrently, $this->name, $relationExpr, $this->accessMethodClause, $this->indexParams, $this->optInclude, $this->optUniqueNullTreatment, $this->optReloptions, $this->optTableSpace, $this->where, $this->comments);
     }
 
     /**
@@ -108,7 +128,7 @@ final class IndexStmtWithCreateOptUniqueIndexOptConcurrentlyIfPNotExistsNameOnRe
      */
     public function withAccessMethodClause(\SqlSemantics\Statement\Model\PostgreSql\Role\AccessMethodClauseForm $accessMethodClause): self
     {
-        return new self($this->optUnique, $this->optConcurrently, $this->name, $this->relationExpr, $accessMethodClause, $this->indexParams, $this->optInclude, $this->optUniqueNullTreatment, $this->optReloptions, $this->optTableSpace, $this->where);
+        return new self($this->optUnique, $this->optConcurrently, $this->name, $this->relationExpr, $accessMethodClause, $this->indexParams, $this->optInclude, $this->optUniqueNullTreatment, $this->optReloptions, $this->optTableSpace, $this->where, $this->comments);
     }
 
     /**
@@ -116,7 +136,7 @@ final class IndexStmtWithCreateOptUniqueIndexOptConcurrentlyIfPNotExistsNameOnRe
      */
     public function withIndexParams(\SqlSemantics\Statement\Model\PostgreSql\Role\IndexParamsForm $indexParams): self
     {
-        return new self($this->optUnique, $this->optConcurrently, $this->name, $this->relationExpr, $this->accessMethodClause, $indexParams, $this->optInclude, $this->optUniqueNullTreatment, $this->optReloptions, $this->optTableSpace, $this->where);
+        return new self($this->optUnique, $this->optConcurrently, $this->name, $this->relationExpr, $this->accessMethodClause, $indexParams, $this->optInclude, $this->optUniqueNullTreatment, $this->optReloptions, $this->optTableSpace, $this->where, $this->comments);
     }
 
     /**
@@ -124,7 +144,7 @@ final class IndexStmtWithCreateOptUniqueIndexOptConcurrentlyIfPNotExistsNameOnRe
      */
     public function withOptInclude(\SqlSemantics\Statement\Model\PostgreSql\Role\OptIncludeForm $optInclude): self
     {
-        return new self($this->optUnique, $this->optConcurrently, $this->name, $this->relationExpr, $this->accessMethodClause, $this->indexParams, $optInclude, $this->optUniqueNullTreatment, $this->optReloptions, $this->optTableSpace, $this->where);
+        return new self($this->optUnique, $this->optConcurrently, $this->name, $this->relationExpr, $this->accessMethodClause, $this->indexParams, $optInclude, $this->optUniqueNullTreatment, $this->optReloptions, $this->optTableSpace, $this->where, $this->comments);
     }
 
     /**
@@ -132,7 +152,7 @@ final class IndexStmtWithCreateOptUniqueIndexOptConcurrentlyIfPNotExistsNameOnRe
      */
     public function withOptUniqueNullTreatment(\SqlSemantics\Statement\Model\PostgreSql\Role\OptUniqueNullTreatmentForm $optUniqueNullTreatment): self
     {
-        return new self($this->optUnique, $this->optConcurrently, $this->name, $this->relationExpr, $this->accessMethodClause, $this->indexParams, $this->optInclude, $optUniqueNullTreatment, $this->optReloptions, $this->optTableSpace, $this->where);
+        return new self($this->optUnique, $this->optConcurrently, $this->name, $this->relationExpr, $this->accessMethodClause, $this->indexParams, $this->optInclude, $optUniqueNullTreatment, $this->optReloptions, $this->optTableSpace, $this->where, $this->comments);
     }
 
     /**
@@ -140,7 +160,7 @@ final class IndexStmtWithCreateOptUniqueIndexOptConcurrentlyIfPNotExistsNameOnRe
      */
     public function withOptReloptions(\SqlSemantics\Statement\Model\PostgreSql\Role\OptReloptionsForm $optReloptions): self
     {
-        return new self($this->optUnique, $this->optConcurrently, $this->name, $this->relationExpr, $this->accessMethodClause, $this->indexParams, $this->optInclude, $this->optUniqueNullTreatment, $optReloptions, $this->optTableSpace, $this->where);
+        return new self($this->optUnique, $this->optConcurrently, $this->name, $this->relationExpr, $this->accessMethodClause, $this->indexParams, $this->optInclude, $this->optUniqueNullTreatment, $optReloptions, $this->optTableSpace, $this->where, $this->comments);
     }
 
     /**
@@ -148,7 +168,7 @@ final class IndexStmtWithCreateOptUniqueIndexOptConcurrentlyIfPNotExistsNameOnRe
      */
     public function withOptTableSpace(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTableSpaceForm $optTableSpace): self
     {
-        return new self($this->optUnique, $this->optConcurrently, $this->name, $this->relationExpr, $this->accessMethodClause, $this->indexParams, $this->optInclude, $this->optUniqueNullTreatment, $this->optReloptions, $optTableSpace, $this->where);
+        return new self($this->optUnique, $this->optConcurrently, $this->name, $this->relationExpr, $this->accessMethodClause, $this->indexParams, $this->optInclude, $this->optUniqueNullTreatment, $this->optReloptions, $optTableSpace, $this->where, $this->comments);
     }
 
     /**
@@ -156,6 +176,14 @@ final class IndexStmtWithCreateOptUniqueIndexOptConcurrentlyIfPNotExistsNameOnRe
      */
     public function withWhere(\SqlSemantics\Statement\Model\PostgreSql\Role\WhereClauseForm $where): self
     {
-        return new self($this->optUnique, $this->optConcurrently, $this->name, $this->relationExpr, $this->accessMethodClause, $this->indexParams, $this->optInclude, $this->optUniqueNullTreatment, $this->optReloptions, $this->optTableSpace, $where);
+        return new self($this->optUnique, $this->optConcurrently, $this->name, $this->relationExpr, $this->accessMethodClause, $this->indexParams, $this->optInclude, $this->optUniqueNullTreatment, $this->optReloptions, $this->optTableSpace, $where, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optUnique, $this->optConcurrently, $this->name, $this->relationExpr, $this->accessMethodClause, $this->indexParams, $this->optInclude, $this->optUniqueNullTreatment, $this->optReloptions, $this->optTableSpace, $this->where, $comments);
     }
 }

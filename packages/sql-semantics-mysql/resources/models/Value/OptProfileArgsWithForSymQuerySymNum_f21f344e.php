@@ -17,10 +17,11 @@ final class OptProfileArgsWithForSymQuerySymNum_f21f344e implements \SqlSemantic
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $value,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($value, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['NUM'], 'The value must be a complete NUM lexical spelling.');
     }
@@ -30,8 +31,11 @@ final class OptProfileArgsWithForSymQuerySymNum_f21f344e implements \SqlSemantic
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('FOR');
+        $writer->comments($this->comments, 1);
         $writer->append('QUERY');
+        $writer->comments($this->comments, 2);
         $writer->append($this->value);
     }
 
@@ -40,6 +44,14 @@ final class OptProfileArgsWithForSymQuerySymNum_f21f344e implements \SqlSemantic
      */
     public function withValue(string $value): self
     {
-        return new self($value);
+        return new self($value, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->value, $comments);
     }
 }

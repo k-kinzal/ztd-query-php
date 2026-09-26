@@ -17,11 +17,12 @@ final class CreateTableOptionsSpaceSeparatedWithCreateTableOptionCreateTableOpti
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionForm $createTableOption,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsSpaceSeparatedForm $createTableOptionsSpaceSeparated,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createTableOption), 'The createTableOption must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createTableOptionsSpaceSeparated), 'The createTableOptionsSpaceSeparated must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class CreateTableOptionsSpaceSeparatedWithCreateTableOptionCreateTableOpti
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->createTableOption->write($writer);
+        $writer->comments($this->comments, 1);
         $this->createTableOptionsSpaceSeparated->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class CreateTableOptionsSpaceSeparatedWithCreateTableOptionCreateTableOpti
      */
     public function withCreateTableOption(\SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionForm $createTableOption): self
     {
-        return new self($createTableOption, $this->createTableOptionsSpaceSeparated);
+        return new self($createTableOption, $this->createTableOptionsSpaceSeparated, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class CreateTableOptionsSpaceSeparatedWithCreateTableOptionCreateTableOpti
      */
     public function withCreateTableOptionsSpaceSeparated(\SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsSpaceSeparatedForm $createTableOptionsSpaceSeparated): self
     {
-        return new self($this->createTableOption, $createTableOptionsSpaceSeparated);
+        return new self($this->createTableOption, $createTableOptionsSpaceSeparated, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->createTableOption, $this->createTableOptionsSpaceSeparated, $comments);
     }
 }

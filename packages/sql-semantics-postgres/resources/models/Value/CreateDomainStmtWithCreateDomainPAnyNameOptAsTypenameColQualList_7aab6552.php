@@ -17,13 +17,14 @@ final class CreateDomainStmtWithCreateDomainPAnyNameOptAsTypenameColQualList_7aa
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptAsForm $optAs,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColQualListForm $colQualList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optAs), 'The optAs must be a generated immutable SQL value.');
@@ -36,11 +37,17 @@ final class CreateDomainStmtWithCreateDomainPAnyNameOptAsTypenameColQualList_7aa
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $writer->append('DOMAIN');
+        $writer->comments($this->comments, 2);
         $this->anyName->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optAs->write($writer);
+        $writer->comments($this->comments, 4);
         $this->typename->write($writer);
+        $writer->comments($this->comments, 5);
         $this->colQualList->write($writer);
     }
 
@@ -49,7 +56,7 @@ final class CreateDomainStmtWithCreateDomainPAnyNameOptAsTypenameColQualList_7aa
      */
     public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
     {
-        return new self($anyName, $this->optAs, $this->typename, $this->colQualList);
+        return new self($anyName, $this->optAs, $this->typename, $this->colQualList, $this->comments);
     }
 
     /**
@@ -57,7 +64,7 @@ final class CreateDomainStmtWithCreateDomainPAnyNameOptAsTypenameColQualList_7aa
      */
     public function withOptAs(\SqlSemantics\Statement\Model\PostgreSql\Role\OptAsForm $optAs): self
     {
-        return new self($this->anyName, $optAs, $this->typename, $this->colQualList);
+        return new self($this->anyName, $optAs, $this->typename, $this->colQualList, $this->comments);
     }
 
     /**
@@ -65,7 +72,7 @@ final class CreateDomainStmtWithCreateDomainPAnyNameOptAsTypenameColQualList_7aa
      */
     public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
     {
-        return new self($this->anyName, $this->optAs, $typename, $this->colQualList);
+        return new self($this->anyName, $this->optAs, $typename, $this->colQualList, $this->comments);
     }
 
     /**
@@ -73,6 +80,14 @@ final class CreateDomainStmtWithCreateDomainPAnyNameOptAsTypenameColQualList_7aa
      */
     public function withColQualList(\SqlSemantics\Statement\Model\PostgreSql\Role\ColQualListForm $colQualList): self
     {
-        return new self($this->anyName, $this->optAs, $this->typename, $colQualList);
+        return new self($this->anyName, $this->optAs, $this->typename, $colQualList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->anyName, $this->optAs, $this->typename, $this->colQualList, $comments);
     }
 }

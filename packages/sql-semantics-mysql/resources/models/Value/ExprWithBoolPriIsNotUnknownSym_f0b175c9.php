@@ -17,11 +17,12 @@ final class ExprWithBoolPriIsNotUnknownSym_f0b175c9 implements \SqlSemantics\Sta
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BoolPriForm $boolPri,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NotForm $not,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($boolPri), 'The boolPri must be a generated immutable SQL value.');
         $this->assertOperandBindingStrength($boolPri, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 8,  'mysql-5.7.44' => 9,  'mysql-8.0.44' => 14,  'mysql-8.1.0' => 14,  'mysql-8.2.0' => 14,  'mysql-8.3.0' => 14,  'mysql-8.4.7' => 14,  'mysql-9.0.1' => 14,  'mysql-9.1.0' => 14,));
@@ -33,9 +34,13 @@ final class ExprWithBoolPriIsNotUnknownSym_f0b175c9 implements \SqlSemantics\Sta
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->boolPri->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('IS');
+        $writer->comments($this->comments, 2);
         $this->not->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('UNKNOWN');
     }
 
@@ -44,7 +49,7 @@ final class ExprWithBoolPriIsNotUnknownSym_f0b175c9 implements \SqlSemantics\Sta
      */
     public function withBoolPri(\SqlSemantics\Statement\Model\MySql\Role\BoolPriForm $boolPri): self
     {
-        return new self($boolPri, $this->not);
+        return new self($boolPri, $this->not, $this->comments);
     }
 
     /**
@@ -52,6 +57,14 @@ final class ExprWithBoolPriIsNotUnknownSym_f0b175c9 implements \SqlSemantics\Sta
      */
     public function withNot(\SqlSemantics\Statement\Model\MySql\Role\NotForm $not): self
     {
-        return new self($this->boolPri, $not);
+        return new self($this->boolPri, $not, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->boolPri, $this->not, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class FilterOverWithFilterClauseOverClause_2bea3cc5 implements \SqlSemanti
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\FilterClauseForm $filterClause,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\OverClauseForm $overClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($filterClause), 'The filterClause must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($overClause), 'The overClause must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class FilterOverWithFilterClauseOverClause_2bea3cc5 implements \SqlSemanti
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->filterClause->write($writer);
+        $writer->comments($this->comments, 1);
         $this->overClause->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class FilterOverWithFilterClauseOverClause_2bea3cc5 implements \SqlSemanti
      */
     public function withFilterClause(\SqlSemantics\Statement\Model\Sqlite\Role\FilterClauseForm $filterClause): self
     {
-        return new self($filterClause, $this->overClause);
+        return new self($filterClause, $this->overClause, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class FilterOverWithFilterClauseOverClause_2bea3cc5 implements \SqlSemanti
      */
     public function withOverClause(\SqlSemantics\Statement\Model\Sqlite\Role\OverClauseForm $overClause): self
     {
-        return new self($this->filterClause, $overClause);
+        return new self($this->filterClause, $overClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->filterClause, $this->overClause, $comments);
     }
 }

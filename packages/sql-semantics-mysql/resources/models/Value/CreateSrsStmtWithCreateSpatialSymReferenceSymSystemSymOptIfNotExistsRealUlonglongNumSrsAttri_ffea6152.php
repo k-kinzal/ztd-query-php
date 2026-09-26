@@ -17,12 +17,13 @@ final class CreateSrsStmtWithCreateSpatialSymReferenceSymSystemSymOptIfNotExists
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RealUlonglongNumForm $realUlonglongNum,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SrsAttributesForm $srsAttributes,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIfNotExists), 'The optIfNotExists must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($realUlonglongNum), 'The realUlonglongNum must be a generated immutable SQL value.');
@@ -34,12 +35,19 @@ final class CreateSrsStmtWithCreateSpatialSymReferenceSymSystemSymOptIfNotExists
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $writer->append('SPATIAL');
+        $writer->comments($this->comments, 2);
         $writer->append('REFERENCE');
+        $writer->comments($this->comments, 3);
         $writer->append('SYSTEM');
+        $writer->comments($this->comments, 4);
         $this->optIfNotExists->write($writer);
+        $writer->comments($this->comments, 5);
         $this->realUlonglongNum->write($writer);
+        $writer->comments($this->comments, 6);
         $this->srsAttributes->write($writer);
     }
 
@@ -48,7 +56,7 @@ final class CreateSrsStmtWithCreateSpatialSymReferenceSymSystemSymOptIfNotExists
      */
     public function withOptIfNotExists(\SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists): self
     {
-        return new self($optIfNotExists, $this->realUlonglongNum, $this->srsAttributes);
+        return new self($optIfNotExists, $this->realUlonglongNum, $this->srsAttributes, $this->comments);
     }
 
     /**
@@ -56,7 +64,7 @@ final class CreateSrsStmtWithCreateSpatialSymReferenceSymSystemSymOptIfNotExists
      */
     public function withRealUlonglongNum(\SqlSemantics\Statement\Model\MySql\Role\RealUlonglongNumForm $realUlonglongNum): self
     {
-        return new self($this->optIfNotExists, $realUlonglongNum, $this->srsAttributes);
+        return new self($this->optIfNotExists, $realUlonglongNum, $this->srsAttributes, $this->comments);
     }
 
     /**
@@ -64,6 +72,14 @@ final class CreateSrsStmtWithCreateSpatialSymReferenceSymSystemSymOptIfNotExists
      */
     public function withSrsAttributes(\SqlSemantics\Statement\Model\MySql\Role\SrsAttributesForm $srsAttributes): self
     {
-        return new self($this->optIfNotExists, $this->realUlonglongNum, $srsAttributes);
+        return new self($this->optIfNotExists, $this->realUlonglongNum, $srsAttributes, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optIfNotExists, $this->realUlonglongNum, $this->srsAttributes, $comments);
     }
 }

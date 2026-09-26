@@ -17,10 +17,11 @@ final class QualOpWithOp_12306ab1 implements \SqlSemantics\Statement\Model\Postg
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $op,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($op, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['Op'], 'The op must be a complete Op lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class QualOpWithOp_12306ab1 implements \SqlSemantics\Statement\Model\Postg
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->op);
     }
 
@@ -38,6 +40,14 @@ final class QualOpWithOp_12306ab1 implements \SqlSemantics\Statement\Model\Postg
      */
     public function withOp(string $op): self
     {
-        return new self($op);
+        return new self($op, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->op, $comments);
     }
 }

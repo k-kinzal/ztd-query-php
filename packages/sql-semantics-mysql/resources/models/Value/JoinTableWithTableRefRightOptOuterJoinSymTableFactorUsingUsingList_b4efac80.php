@@ -17,13 +17,14 @@ final class JoinTableWithTableRefRightOptOuterJoinSymTableFactorUsingUsingList_b
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableRefForm $tableRef,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptOuterForm $optOuter,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableFactorForm $tableFactor,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UsingListForm $usingList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableRef), 'The tableRef must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optOuter), 'The optOuter must be a generated immutable SQL value.');
@@ -36,14 +37,23 @@ final class JoinTableWithTableRefRightOptOuterJoinSymTableFactorUsingUsingList_b
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableRef->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('RIGHT');
+        $writer->comments($this->comments, 2);
         $this->optOuter->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('JOIN');
+        $writer->comments($this->comments, 4);
         $this->tableFactor->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('USING');
+        $writer->comments($this->comments, 6);
         $writer->append('(');
+        $writer->comments($this->comments, 7);
         $this->usingList->write($writer);
+        $writer->comments($this->comments, 8);
         $writer->append(')');
     }
 
@@ -52,7 +62,7 @@ final class JoinTableWithTableRefRightOptOuterJoinSymTableFactorUsingUsingList_b
      */
     public function withTableRef(\SqlSemantics\Statement\Model\MySql\Role\TableRefForm $tableRef): self
     {
-        return new self($tableRef, $this->optOuter, $this->tableFactor, $this->usingList);
+        return new self($tableRef, $this->optOuter, $this->tableFactor, $this->usingList, $this->comments);
     }
 
     /**
@@ -60,7 +70,7 @@ final class JoinTableWithTableRefRightOptOuterJoinSymTableFactorUsingUsingList_b
      */
     public function withOptOuter(\SqlSemantics\Statement\Model\MySql\Role\OptOuterForm $optOuter): self
     {
-        return new self($this->tableRef, $optOuter, $this->tableFactor, $this->usingList);
+        return new self($this->tableRef, $optOuter, $this->tableFactor, $this->usingList, $this->comments);
     }
 
     /**
@@ -68,7 +78,7 @@ final class JoinTableWithTableRefRightOptOuterJoinSymTableFactorUsingUsingList_b
      */
     public function withTableFactor(\SqlSemantics\Statement\Model\MySql\Role\TableFactorForm $tableFactor): self
     {
-        return new self($this->tableRef, $this->optOuter, $tableFactor, $this->usingList);
+        return new self($this->tableRef, $this->optOuter, $tableFactor, $this->usingList, $this->comments);
     }
 
     /**
@@ -76,6 +86,14 @@ final class JoinTableWithTableRefRightOptOuterJoinSymTableFactorUsingUsingList_b
      */
     public function withUsingList(\SqlSemantics\Statement\Model\MySql\Role\UsingListForm $usingList): self
     {
-        return new self($this->tableRef, $this->optOuter, $this->tableFactor, $usingList);
+        return new self($this->tableRef, $this->optOuter, $this->tableFactor, $usingList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableRef, $this->optOuter, $this->tableFactor, $this->usingList, $comments);
     }
 }

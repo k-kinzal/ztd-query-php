@@ -17,10 +17,11 @@ final class ShowParamWithErrorsOptLimitClause_96cc7e0c implements \SqlSemantics\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLimitClause), 'The optLimitClause must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class ShowParamWithErrorsOptLimitClause_96cc7e0c implements \SqlSemantics\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ERRORS');
+        $writer->comments($this->comments, 1);
         $this->optLimitClause->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class ShowParamWithErrorsOptLimitClause_96cc7e0c implements \SqlSemantics\
      */
     public function withOptLimitClause(\SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause): self
     {
-        return new self($optLimitClause);
+        return new self($optLimitClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optLimitClause, $comments);
     }
 }

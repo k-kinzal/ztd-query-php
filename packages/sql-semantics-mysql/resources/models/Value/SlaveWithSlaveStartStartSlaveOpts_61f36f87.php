@@ -17,11 +17,12 @@ final class SlaveWithSlaveStartStartSlaveOpts_61f36f87 implements \SqlSemantics\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SlaveStartForm $slaveStart,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\StartSlaveOptsForm $startSlaveOpts,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($slaveStart), 'The slaveStart must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($startSlaveOpts), 'The startSlaveOpts must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class SlaveWithSlaveStartStartSlaveOpts_61f36f87 implements \SqlSemantics\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->slaveStart->write($writer);
+        $writer->comments($this->comments, 1);
         $this->startSlaveOpts->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class SlaveWithSlaveStartStartSlaveOpts_61f36f87 implements \SqlSemantics\
      */
     public function withSlaveStart(\SqlSemantics\Statement\Model\MySql\Role\SlaveStartForm $slaveStart): self
     {
-        return new self($slaveStart, $this->startSlaveOpts);
+        return new self($slaveStart, $this->startSlaveOpts, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class SlaveWithSlaveStartStartSlaveOpts_61f36f87 implements \SqlSemantics\
      */
     public function withStartSlaveOpts(\SqlSemantics\Statement\Model\MySql\Role\StartSlaveOptsForm $startSlaveOpts): self
     {
-        return new self($this->slaveStart, $startSlaveOpts);
+        return new self($this->slaveStart, $startSlaveOpts, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->slaveStart, $this->startSlaveOpts, $comments);
     }
 }

@@ -18,9 +18,19 @@ use SqlSemantics\Core\Schema\TableDefinition;
 interface SchemaRules
 {
     /**
-     * Rejects table options that change the declared schema semantics.
+     * Rejects declarations whose column state requires evaluating another relation.
      */
     public function validate(Node $source, Node $header): void;
+
+    /**
+     * @return list<Node> Table options whose structure remains available to consumers
+     */
+    public function options(Node $source): array;
+
+    /**
+     * Reports whether table options make every primary key column nonnullable.
+     */
+    public function primaryOptionsNotNull(Node $source): bool;
 
     /**
      * @return list<array{Node, list<Node>}>

@@ -17,10 +17,11 @@ final class ShowParseTreeStmtWithShowParseTreeSymSimpleStatement_c9ca69eb implem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm $simpleStatement,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleStatement), 'The simpleStatement must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class ShowParseTreeStmtWithShowParseTreeSymSimpleStatement_c9ca69eb implem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SHOW');
+        $writer->comments($this->comments, 1);
         $writer->append('PARSE_TREE');
+        $writer->comments($this->comments, 2);
         $this->simpleStatement->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class ShowParseTreeStmtWithShowParseTreeSymSimpleStatement_c9ca69eb implem
      */
     public function withSimpleStatement(\SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm $simpleStatement): self
     {
-        return new self($simpleStatement);
+        return new self($simpleStatement, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->simpleStatement, $comments);
     }
 }

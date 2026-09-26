@@ -17,11 +17,12 @@ final class KeyDefWithOptConstraintCheckConstraint_cc3cfb49 implements \SqlSeman
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptConstraintForm $optConstraint,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CheckConstraintForm $checkConstraint,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optConstraint), 'The optConstraint must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($checkConstraint), 'The checkConstraint must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class KeyDefWithOptConstraintCheckConstraint_cc3cfb49 implements \SqlSeman
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optConstraint->write($writer);
+        $writer->comments($this->comments, 1);
         $this->checkConstraint->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class KeyDefWithOptConstraintCheckConstraint_cc3cfb49 implements \SqlSeman
      */
     public function withOptConstraint(\SqlSemantics\Statement\Model\MySql\Role\OptConstraintForm $optConstraint): self
     {
-        return new self($optConstraint, $this->checkConstraint);
+        return new self($optConstraint, $this->checkConstraint, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class KeyDefWithOptConstraintCheckConstraint_cc3cfb49 implements \SqlSeman
      */
     public function withCheckConstraint(\SqlSemantics\Statement\Model\MySql\Role\CheckConstraintForm $checkConstraint): self
     {
-        return new self($this->optConstraint, $checkConstraint);
+        return new self($this->optConstraint, $checkConstraint, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optConstraint, $this->checkConstraint, $comments);
     }
 }

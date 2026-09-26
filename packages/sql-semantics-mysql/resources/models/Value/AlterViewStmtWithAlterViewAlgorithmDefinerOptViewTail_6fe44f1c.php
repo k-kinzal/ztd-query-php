@@ -17,12 +17,13 @@ final class AlterViewStmtWithAlterViewAlgorithmDefinerOptViewTail_6fe44f1c imple
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ViewAlgorithmForm $viewAlgorithm,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DefinerOptForm $definerOpt,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ViewTailForm $viewTail,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($viewAlgorithm), 'The viewAlgorithm must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($definerOpt), 'The definerOpt must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class AlterViewStmtWithAlterViewAlgorithmDefinerOptViewTail_6fe44f1c imple
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $this->viewAlgorithm->write($writer);
+        $writer->comments($this->comments, 2);
         $this->definerOpt->write($writer);
+        $writer->comments($this->comments, 3);
         $this->viewTail->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class AlterViewStmtWithAlterViewAlgorithmDefinerOptViewTail_6fe44f1c imple
      */
     public function withViewAlgorithm(\SqlSemantics\Statement\Model\MySql\Role\ViewAlgorithmForm $viewAlgorithm): self
     {
-        return new self($viewAlgorithm, $this->definerOpt, $this->viewTail);
+        return new self($viewAlgorithm, $this->definerOpt, $this->viewTail, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class AlterViewStmtWithAlterViewAlgorithmDefinerOptViewTail_6fe44f1c imple
      */
     public function withDefinerOpt(\SqlSemantics\Statement\Model\MySql\Role\DefinerOptForm $definerOpt): self
     {
-        return new self($this->viewAlgorithm, $definerOpt, $this->viewTail);
+        return new self($this->viewAlgorithm, $definerOpt, $this->viewTail, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class AlterViewStmtWithAlterViewAlgorithmDefinerOptViewTail_6fe44f1c imple
      */
     public function withViewTail(\SqlSemantics\Statement\Model\MySql\Role\ViewTailForm $viewTail): self
     {
-        return new self($this->viewAlgorithm, $this->definerOpt, $viewTail);
+        return new self($this->viewAlgorithm, $this->definerOpt, $viewTail, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->viewAlgorithm, $this->definerOpt, $this->viewTail, $comments);
     }
 }

@@ -17,13 +17,14 @@ final class UdfTailWithAggregateSymFunctionSymOptIfNotExistsIdentReturnsSymUdfTy
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UdfTypeForm $udfType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIfNotExists), 'The optIfNotExists must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
@@ -36,13 +37,21 @@ final class UdfTailWithAggregateSymFunctionSymOptIfNotExistsIdentReturnsSymUdfTy
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('AGGREGATE');
+        $writer->comments($this->comments, 1);
         $writer->append('FUNCTION');
+        $writer->comments($this->comments, 2);
         $this->optIfNotExists->write($writer);
+        $writer->comments($this->comments, 3);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('RETURNS');
+        $writer->comments($this->comments, 5);
         $this->udfType->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append('SONAME');
+        $writer->comments($this->comments, 7);
         $this->textStringSys->write($writer);
     }
 
@@ -51,7 +60,7 @@ final class UdfTailWithAggregateSymFunctionSymOptIfNotExistsIdentReturnsSymUdfTy
      */
     public function withOptIfNotExists(\SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists): self
     {
-        return new self($optIfNotExists, $this->ident, $this->udfType, $this->textStringSys);
+        return new self($optIfNotExists, $this->ident, $this->udfType, $this->textStringSys, $this->comments);
     }
 
     /**
@@ -59,7 +68,7 @@ final class UdfTailWithAggregateSymFunctionSymOptIfNotExistsIdentReturnsSymUdfTy
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($this->optIfNotExists, $ident, $this->udfType, $this->textStringSys);
+        return new self($this->optIfNotExists, $ident, $this->udfType, $this->textStringSys, $this->comments);
     }
 
     /**
@@ -67,7 +76,7 @@ final class UdfTailWithAggregateSymFunctionSymOptIfNotExistsIdentReturnsSymUdfTy
      */
     public function withUdfType(\SqlSemantics\Statement\Model\MySql\Role\UdfTypeForm $udfType): self
     {
-        return new self($this->optIfNotExists, $this->ident, $udfType, $this->textStringSys);
+        return new self($this->optIfNotExists, $this->ident, $udfType, $this->textStringSys, $this->comments);
     }
 
     /**
@@ -75,6 +84,14 @@ final class UdfTailWithAggregateSymFunctionSymOptIfNotExistsIdentReturnsSymUdfTy
      */
     public function withTextStringSys(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys): self
     {
-        return new self($this->optIfNotExists, $this->ident, $this->udfType, $textStringSys);
+        return new self($this->optIfNotExists, $this->ident, $this->udfType, $textStringSys, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optIfNotExists, $this->ident, $this->udfType, $this->textStringSys, $comments);
     }
 }

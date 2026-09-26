@@ -17,10 +17,11 @@ final class JsonTableColumnPathClauseOptWithPathSconst_67d97d86 implements \SqlS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($sconst), 'The sconst must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class JsonTableColumnPathClauseOptWithPathSconst_67d97d86 implements \SqlS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('PATH');
+        $writer->comments($this->comments, 1);
         $this->sconst->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class JsonTableColumnPathClauseOptWithPathSconst_67d97d86 implements \SqlS
      */
     public function withSconst(\SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst): self
     {
-        return new self($sconst);
+        return new self($sconst, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->sconst, $comments);
     }
 }

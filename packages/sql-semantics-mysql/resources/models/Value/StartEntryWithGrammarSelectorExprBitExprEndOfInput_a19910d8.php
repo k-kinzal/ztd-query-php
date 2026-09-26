@@ -17,11 +17,12 @@ final class StartEntryWithGrammarSelectorExprBitExprEndOfInput_a19910d8 implemen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $grammarSelectorExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($grammarSelectorExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['GRAMMAR_SELECTOR_EXPR'], 'The grammarSelectorExpr must be a complete GRAMMAR_SELECTOR_EXPR lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($bitExpr), 'The bitExpr must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class StartEntryWithGrammarSelectorExprBitExprEndOfInput_a19910d8 implemen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->grammarSelectorExpr);
+        $writer->comments($this->comments, 1);
         $this->bitExpr->write($writer);
+        $writer->comments($this->comments, 2);
     }
 
     /**
@@ -41,7 +45,7 @@ final class StartEntryWithGrammarSelectorExprBitExprEndOfInput_a19910d8 implemen
      */
     public function withGrammarSelectorExpr(string $grammarSelectorExpr): self
     {
-        return new self($grammarSelectorExpr, $this->bitExpr);
+        return new self($grammarSelectorExpr, $this->bitExpr, $this->comments);
     }
 
     /**
@@ -49,6 +53,14 @@ final class StartEntryWithGrammarSelectorExprBitExprEndOfInput_a19910d8 implemen
      */
     public function withBitExpr(\SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr): self
     {
-        return new self($this->grammarSelectorExpr, $bitExpr);
+        return new self($this->grammarSelectorExpr, $bitExpr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->grammarSelectorExpr, $this->bitExpr, $comments);
     }
 }

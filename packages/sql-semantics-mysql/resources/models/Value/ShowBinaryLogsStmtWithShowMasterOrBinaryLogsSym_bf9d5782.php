@@ -17,10 +17,11 @@ final class ShowBinaryLogsStmtWithShowMasterOrBinaryLogsSym_bf9d5782 implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\MasterOrBinaryForm $masterOrBinary,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($masterOrBinary), 'The masterOrBinary must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class ShowBinaryLogsStmtWithShowMasterOrBinaryLogsSym_bf9d5782 implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SHOW');
+        $writer->comments($this->comments, 1);
         $this->masterOrBinary->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('LOGS');
     }
 
@@ -40,6 +44,14 @@ final class ShowBinaryLogsStmtWithShowMasterOrBinaryLogsSym_bf9d5782 implements 
      */
     public function withMasterOrBinary(\SqlSemantics\Statement\Model\MySql\Role\MasterOrBinaryForm $masterOrBinary): self
     {
-        return new self($masterOrBinary);
+        return new self($masterOrBinary, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->masterOrBinary, $comments);
     }
 }

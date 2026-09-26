@@ -17,10 +17,11 @@ final class InsertCmdWithInsertOrconf_17d8eea1 implements \SqlSemantics\Statemen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\OrconfForm $orconf,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($orconf), 'The orconf must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class InsertCmdWithInsertOrconf_17d8eea1 implements \SqlSemantics\Statemen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('INSERT');
+        $writer->comments($this->comments, 1);
         $this->orconf->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class InsertCmdWithInsertOrconf_17d8eea1 implements \SqlSemantics\Statemen
      */
     public function withOrconf(\SqlSemantics\Statement\Model\Sqlite\Role\OrconfForm $orconf): self
     {
-        return new self($orconf);
+        return new self($orconf, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->orconf, $comments);
     }
 }

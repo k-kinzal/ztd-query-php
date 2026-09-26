@@ -17,11 +17,12 @@ final class AlterUserCommandWithAlterUserIfExists_3276589d implements \SqlSemant
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $user,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($user, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['USER'], 'The user must be a complete USER lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ifExists), 'The ifExists must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class AlterUserCommandWithAlterUserIfExists_3276589d implements \SqlSemant
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append($this->user);
+        $writer->comments($this->comments, 2);
         $this->ifExists->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class AlterUserCommandWithAlterUserIfExists_3276589d implements \SqlSemant
      */
     public function withUser(string $user): self
     {
-        return new self($user, $this->ifExists);
+        return new self($user, $this->ifExists, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class AlterUserCommandWithAlterUserIfExists_3276589d implements \SqlSemant
      */
     public function withIfExists(\SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists): self
     {
-        return new self($this->user, $ifExists);
+        return new self($this->user, $ifExists, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->user, $this->ifExists, $comments);
     }
 }

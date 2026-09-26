@@ -17,13 +17,14 @@ final class RepairWithRepairOptNoWriteToBinlogTableOrTablesTableListOptMiRepairT
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableOrTablesForm $tableOrTables,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableListForm $tableList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptMiRepairTypeForm $optMiRepairType,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optNoWriteToBinlog), 'The optNoWriteToBinlog must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableOrTables), 'The tableOrTables must be a generated immutable SQL value.');
@@ -36,10 +37,15 @@ final class RepairWithRepairOptNoWriteToBinlogTableOrTablesTableListOptMiRepairT
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('REPAIR');
+        $writer->comments($this->comments, 1);
         $this->optNoWriteToBinlog->write($writer);
+        $writer->comments($this->comments, 2);
         $this->tableOrTables->write($writer);
+        $writer->comments($this->comments, 3);
         $this->tableList->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optMiRepairType->write($writer);
     }
 
@@ -48,7 +54,7 @@ final class RepairWithRepairOptNoWriteToBinlogTableOrTablesTableListOptMiRepairT
      */
     public function withOptNoWriteToBinlog(\SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog): self
     {
-        return new self($optNoWriteToBinlog, $this->tableOrTables, $this->tableList, $this->optMiRepairType);
+        return new self($optNoWriteToBinlog, $this->tableOrTables, $this->tableList, $this->optMiRepairType, $this->comments);
     }
 
     /**
@@ -56,7 +62,7 @@ final class RepairWithRepairOptNoWriteToBinlogTableOrTablesTableListOptMiRepairT
      */
     public function withTableOrTables(\SqlSemantics\Statement\Model\MySql\Role\TableOrTablesForm $tableOrTables): self
     {
-        return new self($this->optNoWriteToBinlog, $tableOrTables, $this->tableList, $this->optMiRepairType);
+        return new self($this->optNoWriteToBinlog, $tableOrTables, $this->tableList, $this->optMiRepairType, $this->comments);
     }
 
     /**
@@ -64,7 +70,7 @@ final class RepairWithRepairOptNoWriteToBinlogTableOrTablesTableListOptMiRepairT
      */
     public function withTableList(\SqlSemantics\Statement\Model\MySql\Role\TableListForm $tableList): self
     {
-        return new self($this->optNoWriteToBinlog, $this->tableOrTables, $tableList, $this->optMiRepairType);
+        return new self($this->optNoWriteToBinlog, $this->tableOrTables, $tableList, $this->optMiRepairType, $this->comments);
     }
 
     /**
@@ -72,6 +78,14 @@ final class RepairWithRepairOptNoWriteToBinlogTableOrTablesTableListOptMiRepairT
      */
     public function withOptMiRepairType(\SqlSemantics\Statement\Model\MySql\Role\OptMiRepairTypeForm $optMiRepairType): self
     {
-        return new self($this->optNoWriteToBinlog, $this->tableOrTables, $this->tableList, $optMiRepairType);
+        return new self($this->optNoWriteToBinlog, $this->tableOrTables, $this->tableList, $optMiRepairType, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optNoWriteToBinlog, $this->tableOrTables, $this->tableList, $this->optMiRepairType, $comments);
     }
 }

@@ -17,12 +17,13 @@ final class SpLabeledControlWithLabelIdentSpUnlabeledControlSpOptLabel_fd2eb6ec 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LabelIdentForm $labelIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpUnlabeledControlForm $spUnlabeledControl,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpOptLabelForm $spOptLabel,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($labelIdent), 'The labelIdent must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spUnlabeledControl), 'The spUnlabeledControl must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class SpLabeledControlWithLabelIdentSpUnlabeledControlSpOptLabel_fd2eb6ec 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->labelIdent->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(':');
+        $writer->comments($this->comments, 2);
         $this->spUnlabeledControl->write($writer);
+        $writer->comments($this->comments, 3);
         $this->spOptLabel->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class SpLabeledControlWithLabelIdentSpUnlabeledControlSpOptLabel_fd2eb6ec 
      */
     public function withLabelIdent(\SqlSemantics\Statement\Model\MySql\Role\LabelIdentForm $labelIdent): self
     {
-        return new self($labelIdent, $this->spUnlabeledControl, $this->spOptLabel);
+        return new self($labelIdent, $this->spUnlabeledControl, $this->spOptLabel, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class SpLabeledControlWithLabelIdentSpUnlabeledControlSpOptLabel_fd2eb6ec 
      */
     public function withSpUnlabeledControl(\SqlSemantics\Statement\Model\MySql\Role\SpUnlabeledControlForm $spUnlabeledControl): self
     {
-        return new self($this->labelIdent, $spUnlabeledControl, $this->spOptLabel);
+        return new self($this->labelIdent, $spUnlabeledControl, $this->spOptLabel, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class SpLabeledControlWithLabelIdentSpUnlabeledControlSpOptLabel_fd2eb6ec 
      */
     public function withSpOptLabel(\SqlSemantics\Statement\Model\MySql\Role\SpOptLabelForm $spOptLabel): self
     {
-        return new self($this->labelIdent, $this->spUnlabeledControl, $spOptLabel);
+        return new self($this->labelIdent, $this->spUnlabeledControl, $spOptLabel, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->labelIdent, $this->spUnlabeledControl, $this->spOptLabel, $comments);
     }
 }

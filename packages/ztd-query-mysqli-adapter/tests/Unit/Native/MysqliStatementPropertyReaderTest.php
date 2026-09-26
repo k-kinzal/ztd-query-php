@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Native;
 
+use Container\Endpoint;
 use Container\MySql80Container;
 use Container\MySql84Container;
 use mysqli;
@@ -21,8 +22,9 @@ final class MysqliStatementPropertyReaderTest extends TestCase
     public function testReadPreservesPreparedMetadataAndBufferedRowCounts(): void
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $statement = $connection->prepare('SELECT ? AS value UNION ALL SELECT ?');
             self::assertInstanceOf(mysqli_stmt::class, $statement);
@@ -49,8 +51,9 @@ final class MysqliStatementPropertyReaderTest extends TestCase
     public function testReadPreservesGeneratedIdsAndWriteCounts(): void
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $connection->query('CREATE TABLE generated_rows (id INT AUTO_INCREMENT PRIMARY KEY, value INT)');
             $statement = $connection->prepare('INSERT INTO generated_rows (value) VALUES (?), (?)');
@@ -71,8 +74,9 @@ final class MysqliStatementPropertyReaderTest extends TestCase
     public function testReadPreservesNativeFailureDetails(): void
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $connection->query('CREATE TABLE unique_rows (id INT PRIMARY KEY)');
             $statement = $connection->prepare('INSERT INTO unique_rows VALUES (?)');

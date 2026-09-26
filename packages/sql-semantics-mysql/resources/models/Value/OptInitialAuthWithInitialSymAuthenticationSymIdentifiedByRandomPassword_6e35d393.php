@@ -17,10 +17,11 @@ final class OptInitialAuthWithInitialSymAuthenticationSymIdentifiedByRandomPassw
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentifiedByRandomPasswordForm $identifiedByRandomPassword,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identifiedByRandomPassword), 'The identifiedByRandomPassword must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class OptInitialAuthWithInitialSymAuthenticationSymIdentifiedByRandomPassw
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('INITIAL');
+        $writer->comments($this->comments, 1);
         $writer->append('AUTHENTICATION');
+        $writer->comments($this->comments, 2);
         $this->identifiedByRandomPassword->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class OptInitialAuthWithInitialSymAuthenticationSymIdentifiedByRandomPassw
      */
     public function withIdentifiedByRandomPassword(\SqlSemantics\Statement\Model\MySql\Role\IdentifiedByRandomPasswordForm $identifiedByRandomPassword): self
     {
-        return new self($identifiedByRandomPassword);
+        return new self($identifiedByRandomPassword, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->identifiedByRandomPassword, $comments);
     }
 }

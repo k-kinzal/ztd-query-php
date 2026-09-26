@@ -17,11 +17,12 @@ final class ResignalStmtWithResignalSymOptSignalValueOptSetSignalInformation_e7b
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSignalValueForm $optSignalValue,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSetSignalInformationForm $optSetSignalInformation,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optSignalValue), 'The optSignalValue must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optSetSignalInformation), 'The optSetSignalInformation must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class ResignalStmtWithResignalSymOptSignalValueOptSetSignalInformation_e7b
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('RESIGNAL');
+        $writer->comments($this->comments, 1);
         $this->optSignalValue->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optSetSignalInformation->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class ResignalStmtWithResignalSymOptSignalValueOptSetSignalInformation_e7b
      */
     public function withOptSignalValue(\SqlSemantics\Statement\Model\MySql\Role\OptSignalValueForm $optSignalValue): self
     {
-        return new self($optSignalValue, $this->optSetSignalInformation);
+        return new self($optSignalValue, $this->optSetSignalInformation, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class ResignalStmtWithResignalSymOptSignalValueOptSetSignalInformation_e7b
      */
     public function withOptSetSignalInformation(\SqlSemantics\Statement\Model\MySql\Role\OptSetSignalInformationForm $optSetSignalInformation): self
     {
-        return new self($this->optSignalValue, $optSetSignalInformation);
+        return new self($this->optSignalValue, $optSetSignalInformation, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optSignalValue, $this->optSetSignalInformation, $comments);
     }
 }

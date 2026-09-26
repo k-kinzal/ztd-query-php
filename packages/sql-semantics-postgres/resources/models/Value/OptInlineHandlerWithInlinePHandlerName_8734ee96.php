@@ -17,10 +17,11 @@ final class OptInlineHandlerWithInlinePHandlerName_8734ee96 implements \SqlSeman
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\HandlerNameForm $handlerName,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($handlerName), 'The handlerName must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class OptInlineHandlerWithInlinePHandlerName_8734ee96 implements \SqlSeman
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('INLINE');
+        $writer->comments($this->comments, 1);
         $this->handlerName->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class OptInlineHandlerWithInlinePHandlerName_8734ee96 implements \SqlSeman
      */
     public function withHandlerName(\SqlSemantics\Statement\Model\PostgreSql\Role\HandlerNameForm $handlerName): self
     {
-        return new self($handlerName);
+        return new self($handlerName, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->handlerName, $comments);
     }
 }

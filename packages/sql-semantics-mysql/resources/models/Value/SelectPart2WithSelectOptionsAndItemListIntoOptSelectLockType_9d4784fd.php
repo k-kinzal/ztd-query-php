@@ -17,12 +17,13 @@ final class SelectPart2WithSelectOptionsAndItemListIntoOptSelectLockType_9d4784f
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectOptionsAndItemListForm $selectOptionsAndItemList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IntoForm $into,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSelectLockTypeForm $optSelectLockType,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectOptionsAndItemList), 'The selectOptionsAndItemList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($into), 'The into must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class SelectPart2WithSelectOptionsAndItemListIntoOptSelectLockType_9d4784f
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->selectOptionsAndItemList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->into->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optSelectLockType->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class SelectPart2WithSelectOptionsAndItemListIntoOptSelectLockType_9d4784f
      */
     public function withSelectOptionsAndItemList(\SqlSemantics\Statement\Model\MySql\Role\SelectOptionsAndItemListForm $selectOptionsAndItemList): self
     {
-        return new self($selectOptionsAndItemList, $this->into, $this->optSelectLockType);
+        return new self($selectOptionsAndItemList, $this->into, $this->optSelectLockType, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class SelectPart2WithSelectOptionsAndItemListIntoOptSelectLockType_9d4784f
      */
     public function withInto(\SqlSemantics\Statement\Model\MySql\Role\IntoForm $into): self
     {
-        return new self($this->selectOptionsAndItemList, $into, $this->optSelectLockType);
+        return new self($this->selectOptionsAndItemList, $into, $this->optSelectLockType, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class SelectPart2WithSelectOptionsAndItemListIntoOptSelectLockType_9d4784f
      */
     public function withOptSelectLockType(\SqlSemantics\Statement\Model\MySql\Role\OptSelectLockTypeForm $optSelectLockType): self
     {
-        return new self($this->selectOptionsAndItemList, $this->into, $optSelectLockType);
+        return new self($this->selectOptionsAndItemList, $this->into, $optSelectLockType, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->selectOptionsAndItemList, $this->into, $this->optSelectLockType, $comments);
     }
 }

@@ -17,10 +17,11 @@ final class SourceDefWithSourceCompressionAlgorithmSymEqTextStringSys_e971fbd2 i
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSys), 'The textStringSys must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class SourceDefWithSourceCompressionAlgorithmSymEqTextStringSys_e971fbd2 i
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SOURCE_COMPRESSION_ALGORITHMS');
+        $writer->comments($this->comments, 1);
         $writer->append('=');
+        $writer->comments($this->comments, 2);
         $this->textStringSys->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class SourceDefWithSourceCompressionAlgorithmSymEqTextStringSys_e971fbd2 i
      */
     public function withTextStringSys(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys): self
     {
-        return new self($textStringSys);
+        return new self($textStringSys, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->textStringSys, $comments);
     }
 }

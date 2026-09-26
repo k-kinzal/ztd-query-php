@@ -17,12 +17,13 @@ final class CmdWithPragmaNmDbnmLpMinusNumRp_74bb878f implements \SqlSemantics\St
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\MinusNumForm $minusNum,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($dbnm), 'The dbnm must be a generated immutable SQL value.');
@@ -34,11 +35,17 @@ final class CmdWithPragmaNmDbnmLpMinusNumRp_74bb878f implements \SqlSemantics\St
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('PRAGMA');
+        $writer->comments($this->comments, 1);
         $this->nm->write($writer);
+        $writer->comments($this->comments, 2);
         $this->dbnm->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('(');
+        $writer->comments($this->comments, 4);
         $this->minusNum->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
     }
 
@@ -47,7 +54,7 @@ final class CmdWithPragmaNmDbnmLpMinusNumRp_74bb878f implements \SqlSemantics\St
      */
     public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
     {
-        return new self($nm, $this->dbnm, $this->minusNum);
+        return new self($nm, $this->dbnm, $this->minusNum, $this->comments);
     }
 
     /**
@@ -55,7 +62,7 @@ final class CmdWithPragmaNmDbnmLpMinusNumRp_74bb878f implements \SqlSemantics\St
      */
     public function withDbnm(\SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm): self
     {
-        return new self($this->nm, $dbnm, $this->minusNum);
+        return new self($this->nm, $dbnm, $this->minusNum, $this->comments);
     }
 
     /**
@@ -63,6 +70,14 @@ final class CmdWithPragmaNmDbnmLpMinusNumRp_74bb878f implements \SqlSemantics\St
      */
     public function withMinusNum(\SqlSemantics\Statement\Model\Sqlite\Role\MinusNumForm $minusNum): self
     {
-        return new self($this->nm, $this->dbnm, $minusNum);
+        return new self($this->nm, $this->dbnm, $minusNum, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->nm, $this->dbnm, $this->minusNum, $comments);
     }
 }

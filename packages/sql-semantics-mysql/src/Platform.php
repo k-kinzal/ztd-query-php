@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql;
 
 use SqlParser\MySql\MySqlParser;
+use SqlParser\MySql\MySqlVersion;
 use SqlParser\Parser\SqlParser;
+use SqlSemantics\Core\Analysis\TriviaReader;
 use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\Platform as Contract;
 use SqlSemantics\Core\Policy;
@@ -37,7 +39,7 @@ final class Platform implements Contract
      */
     public function values(string $version): \SqlSemantics\Core\Analysis\ValueReader
     {
-        return \SqlSemantics\Core\Analysis\ValueReader::fromFile(dirname(__DIR__) . '/resources/mapping/' . basename($version) . '.php');
+        return \SqlSemantics\Core\Analysis\ValueReader::fromFile(dirname(__DIR__) . '/resources/mapping/' . basename($version) . '.php', new TriviaReader(executableVersion: MySqlVersion::resolve($version)->id()));
     }
 
     /**
@@ -62,10 +64,17 @@ final class Platform implements Contract
     public function syntax(): Policy\SyntaxRules
     {
         return new Policy\SyntaxRules([
-            'columnName' => ['ident'],
+            'autoIncrement' => [],
+            'dropTableName' => ['table_ident'],
+            'generationStorage' => ['opt_stored_attribute'],
+            'generationClause' => ['field_def'],
+            'statementRoot' => ['query'],
+            'statement' => ['statement'],
+            'columnName' => ['field_ident', 'ident'],
             'declaredType' => ['type'],
             'expression' => ['expr'],
-            'createTable' => ['create_table_stmt'],
+            'tableElements' => ['table_element_list', 'create_field_list'],
+            'createTable' => ['create_table_stmt', 'create'],
             'createHeader' => [],
             'tableName' => ['table_ident'],
             'tableConstraint' => ['table_constraint_def'],

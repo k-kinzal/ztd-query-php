@@ -17,12 +17,13 @@ final class InExpressionUserVariableAssignmentWithIdentOrTextSetVarExpr_35c1d0bd
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText,
         public readonly string $setVar,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText), 'The identOrText must be a generated immutable SQL value.');
         $this->assertMatchesPattern($setVar, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['SET_VAR'], 'The setVar must be a complete SET_VAR lexical spelling.');
@@ -34,9 +35,13 @@ final class InExpressionUserVariableAssignmentWithIdentOrTextSetVarExpr_35c1d0bd
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
-        $writer->append('@');
+        $writer->comments($this->comments, 0);
+        $writer->append('@', prefix: true);
+        $writer->comments($this->comments, 1);
         $this->identOrText->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append($this->setVar);
+        $writer->comments($this->comments, 3);
         $this->expr->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class InExpressionUserVariableAssignmentWithIdentOrTextSetVarExpr_35c1d0bd
      */
     public function withIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText): self
     {
-        return new self($identOrText, $this->setVar, $this->expr);
+        return new self($identOrText, $this->setVar, $this->expr, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class InExpressionUserVariableAssignmentWithIdentOrTextSetVarExpr_35c1d0bd
      */
     public function withSetVar(string $setVar): self
     {
-        return new self($this->identOrText, $setVar, $this->expr);
+        return new self($this->identOrText, $setVar, $this->expr, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class InExpressionUserVariableAssignmentWithIdentOrTextSetVarExpr_35c1d0bd
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($this->identOrText, $this->setVar, $expr);
+        return new self($this->identOrText, $this->setVar, $expr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->identOrText, $this->setVar, $this->expr, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class FieldSpecWithFieldIdentFieldDef_0d136d86 implements \SqlSemantics\St
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldIdentForm $fieldIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldDefForm $fieldDef,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldIdent), 'The fieldIdent must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldDef), 'The fieldDef must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class FieldSpecWithFieldIdentFieldDef_0d136d86 implements \SqlSemantics\St
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->fieldIdent->write($writer);
+        $writer->comments($this->comments, 1);
         $this->fieldDef->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class FieldSpecWithFieldIdentFieldDef_0d136d86 implements \SqlSemantics\St
      */
     public function withFieldIdent(\SqlSemantics\Statement\Model\MySql\Role\FieldIdentForm $fieldIdent): self
     {
-        return new self($fieldIdent, $this->fieldDef);
+        return new self($fieldIdent, $this->fieldDef, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class FieldSpecWithFieldIdentFieldDef_0d136d86 implements \SqlSemantics\St
      */
     public function withFieldDef(\SqlSemantics\Statement\Model\MySql\Role\FieldDefForm $fieldDef): self
     {
-        return new self($this->fieldIdent, $fieldDef);
+        return new self($this->fieldIdent, $fieldDef, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->fieldIdent, $this->fieldDef, $comments);
     }
 }

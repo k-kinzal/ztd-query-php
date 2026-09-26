@@ -17,11 +17,12 @@ final class PrivilegeWithColIdOptColumnList_a43359d8 implements \SqlSemantics\St
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnListForm $optColumnList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optColumnList), 'The optColumnList must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class PrivilegeWithColIdOptColumnList_a43359d8 implements \SqlSemantics\St
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->colId->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optColumnList->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class PrivilegeWithColIdOptColumnList_a43359d8 implements \SqlSemantics\St
      */
     public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
     {
-        return new self($colId, $this->optColumnList);
+        return new self($colId, $this->optColumnList, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class PrivilegeWithColIdOptColumnList_a43359d8 implements \SqlSemantics\St
      */
     public function withOptColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnListForm $optColumnList): self
     {
-        return new self($this->colId, $optColumnList);
+        return new self($this->colId, $optColumnList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->colId, $this->optColumnList, $comments);
     }
 }

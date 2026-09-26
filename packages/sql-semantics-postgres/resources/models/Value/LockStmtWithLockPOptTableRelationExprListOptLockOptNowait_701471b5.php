@@ -17,13 +17,14 @@ final class LockStmtWithLockPOptTableRelationExprListOptLockOptNowait_701471b5 i
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTableForm $optTable,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprListForm $relationExprList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptLockForm $optLock,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptNowaitForm $optNowait,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTable), 'The optTable must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($relationExprList), 'The relationExprList must be a generated immutable SQL value.');
@@ -36,10 +37,15 @@ final class LockStmtWithLockPOptTableRelationExprListOptLockOptNowait_701471b5 i
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('LOCK');
+        $writer->comments($this->comments, 1);
         $this->optTable->write($writer);
+        $writer->comments($this->comments, 2);
         $this->relationExprList->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optLock->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optNowait->write($writer);
     }
 
@@ -48,7 +54,7 @@ final class LockStmtWithLockPOptTableRelationExprListOptLockOptNowait_701471b5 i
      */
     public function withOptTable(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTableForm $optTable): self
     {
-        return new self($optTable, $this->relationExprList, $this->optLock, $this->optNowait);
+        return new self($optTable, $this->relationExprList, $this->optLock, $this->optNowait, $this->comments);
     }
 
     /**
@@ -56,7 +62,7 @@ final class LockStmtWithLockPOptTableRelationExprListOptLockOptNowait_701471b5 i
      */
     public function withRelationExprList(\SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprListForm $relationExprList): self
     {
-        return new self($this->optTable, $relationExprList, $this->optLock, $this->optNowait);
+        return new self($this->optTable, $relationExprList, $this->optLock, $this->optNowait, $this->comments);
     }
 
     /**
@@ -64,7 +70,7 @@ final class LockStmtWithLockPOptTableRelationExprListOptLockOptNowait_701471b5 i
      */
     public function withOptLock(\SqlSemantics\Statement\Model\PostgreSql\Role\OptLockForm $optLock): self
     {
-        return new self($this->optTable, $this->relationExprList, $optLock, $this->optNowait);
+        return new self($this->optTable, $this->relationExprList, $optLock, $this->optNowait, $this->comments);
     }
 
     /**
@@ -72,6 +78,14 @@ final class LockStmtWithLockPOptTableRelationExprListOptLockOptNowait_701471b5 i
      */
     public function withOptNowait(\SqlSemantics\Statement\Model\PostgreSql\Role\OptNowaitForm $optNowait): self
     {
-        return new self($this->optTable, $this->relationExprList, $this->optLock, $optNowait);
+        return new self($this->optTable, $this->relationExprList, $this->optLock, $optNowait, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optTable, $this->relationExprList, $this->optLock, $this->optNowait, $comments);
     }
 }

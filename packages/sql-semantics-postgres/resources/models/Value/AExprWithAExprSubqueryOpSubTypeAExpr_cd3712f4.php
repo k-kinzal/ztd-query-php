@@ -17,13 +17,14 @@ final class AExprWithAExprSubqueryOpSubTypeAExpr_cd3712f4 implements \SqlSemanti
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SubqueryOpForm $subqueryOp,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SubTypeForm $subType,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
         $this->assertOperandBindingStrength($aExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 12,));
@@ -37,11 +38,17 @@ final class AExprWithAExprSubqueryOpSubTypeAExpr_cd3712f4 implements \SqlSemanti
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->aExpr->write($writer);
+        $writer->comments($this->comments, 1);
         $this->subqueryOp->write($writer);
+        $writer->comments($this->comments, 2);
         $this->subType->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('(');
+        $writer->comments($this->comments, 4);
         $this->aExpr2->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
     }
 
@@ -50,7 +57,7 @@ final class AExprWithAExprSubqueryOpSubTypeAExpr_cd3712f4 implements \SqlSemanti
      */
     public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
     {
-        return new self($aExpr, $this->subqueryOp, $this->subType, $this->aExpr2);
+        return new self($aExpr, $this->subqueryOp, $this->subType, $this->aExpr2, $this->comments);
     }
 
     /**
@@ -58,7 +65,7 @@ final class AExprWithAExprSubqueryOpSubTypeAExpr_cd3712f4 implements \SqlSemanti
      */
     public function withSubqueryOp(\SqlSemantics\Statement\Model\PostgreSql\Role\SubqueryOpForm $subqueryOp): self
     {
-        return new self($this->aExpr, $subqueryOp, $this->subType, $this->aExpr2);
+        return new self($this->aExpr, $subqueryOp, $this->subType, $this->aExpr2, $this->comments);
     }
 
     /**
@@ -66,7 +73,7 @@ final class AExprWithAExprSubqueryOpSubTypeAExpr_cd3712f4 implements \SqlSemanti
      */
     public function withSubType(\SqlSemantics\Statement\Model\PostgreSql\Role\SubTypeForm $subType): self
     {
-        return new self($this->aExpr, $this->subqueryOp, $subType, $this->aExpr2);
+        return new self($this->aExpr, $this->subqueryOp, $subType, $this->aExpr2, $this->comments);
     }
 
     /**
@@ -74,6 +81,14 @@ final class AExprWithAExprSubqueryOpSubTypeAExpr_cd3712f4 implements \SqlSemanti
      */
     public function withAExpr2(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr2): self
     {
-        return new self($this->aExpr, $this->subqueryOp, $this->subType, $aExpr2);
+        return new self($this->aExpr, $this->subqueryOp, $this->subType, $aExpr2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->aExpr, $this->subqueryOp, $this->subType, $this->aExpr2, $comments);
     }
 }

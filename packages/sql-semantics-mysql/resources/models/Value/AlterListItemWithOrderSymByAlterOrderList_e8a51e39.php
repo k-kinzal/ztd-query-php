@@ -17,10 +17,11 @@ final class AlterListItemWithOrderSymByAlterOrderList_e8a51e39 implements \SqlSe
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterOrderListForm $alterOrderList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterOrderList), 'The alterOrderList must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class AlterListItemWithOrderSymByAlterOrderList_e8a51e39 implements \SqlSe
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ORDER');
+        $writer->comments($this->comments, 1);
         $writer->append('BY');
+        $writer->comments($this->comments, 2);
         $this->alterOrderList->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class AlterListItemWithOrderSymByAlterOrderList_e8a51e39 implements \SqlSe
      */
     public function withAlterOrderList(\SqlSemantics\Statement\Model\MySql\Role\AlterOrderListForm $alterOrderList): self
     {
-        return new self($alterOrderList);
+        return new self($alterOrderList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->alterOrderList, $comments);
     }
 }

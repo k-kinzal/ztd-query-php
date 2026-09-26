@@ -17,13 +17,14 @@ final class JoinedTableWithTableReferenceInnerJoinTypeTableReferenceUsingUsingLi
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InnerJoinTypeForm $innerJoinType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UsingListForm $usingList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableReference), 'The tableReference must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($innerJoinType), 'The innerJoinType must be a generated immutable SQL value.');
@@ -36,12 +37,19 @@ final class JoinedTableWithTableReferenceInnerJoinTypeTableReferenceUsingUsingLi
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableReference->write($writer);
+        $writer->comments($this->comments, 1);
         $this->innerJoinType->write($writer);
+        $writer->comments($this->comments, 2);
         $this->tableReference2->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('USING');
+        $writer->comments($this->comments, 4);
         $writer->append('(');
+        $writer->comments($this->comments, 5);
         $this->usingList->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append(')');
     }
 
@@ -50,7 +58,7 @@ final class JoinedTableWithTableReferenceInnerJoinTypeTableReferenceUsingUsingLi
      */
     public function withTableReference(\SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference): self
     {
-        return new self($tableReference, $this->innerJoinType, $this->tableReference2, $this->usingList);
+        return new self($tableReference, $this->innerJoinType, $this->tableReference2, $this->usingList, $this->comments);
     }
 
     /**
@@ -58,7 +66,7 @@ final class JoinedTableWithTableReferenceInnerJoinTypeTableReferenceUsingUsingLi
      */
     public function withInnerJoinType(\SqlSemantics\Statement\Model\MySql\Role\InnerJoinTypeForm $innerJoinType): self
     {
-        return new self($this->tableReference, $innerJoinType, $this->tableReference2, $this->usingList);
+        return new self($this->tableReference, $innerJoinType, $this->tableReference2, $this->usingList, $this->comments);
     }
 
     /**
@@ -66,7 +74,7 @@ final class JoinedTableWithTableReferenceInnerJoinTypeTableReferenceUsingUsingLi
      */
     public function withTableReference2(\SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference2): self
     {
-        return new self($this->tableReference, $this->innerJoinType, $tableReference2, $this->usingList);
+        return new self($this->tableReference, $this->innerJoinType, $tableReference2, $this->usingList, $this->comments);
     }
 
     /**
@@ -74,6 +82,14 @@ final class JoinedTableWithTableReferenceInnerJoinTypeTableReferenceUsingUsingLi
      */
     public function withUsingList(\SqlSemantics\Statement\Model\MySql\Role\UsingListForm $usingList): self
     {
-        return new self($this->tableReference, $this->innerJoinType, $this->tableReference2, $usingList);
+        return new self($this->tableReference, $this->innerJoinType, $this->tableReference2, $usingList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableReference, $this->innerJoinType, $this->tableReference2, $this->usingList, $comments);
     }
 }

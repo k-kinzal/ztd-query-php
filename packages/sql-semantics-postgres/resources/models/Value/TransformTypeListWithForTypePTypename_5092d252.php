@@ -17,10 +17,11 @@ final class TransformTypeListWithForTypePTypename_5092d252 implements \SqlSemant
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class TransformTypeListWithForTypePTypename_5092d252 implements \SqlSemant
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('FOR');
+        $writer->comments($this->comments, 1);
         $writer->append('TYPE');
+        $writer->comments($this->comments, 2);
         $this->typename->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class TransformTypeListWithForTypePTypename_5092d252 implements \SqlSemant
      */
     public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
     {
-        return new self($typename);
+        return new self($typename, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->typename, $comments);
     }
 }

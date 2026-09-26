@@ -15,11 +15,29 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
 final class FlushOptionWithQuerySymCacheSym_f42140e3 implements \SqlSemantics\Statement\Model\MySql\Role\FlushOptionForm, \SqlSemantics\Statement\Model\MySql\Role\FlushOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\FlushOptionsListForm
 {
     /**
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
+     */
+    public function __construct(
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
+    ) {
+    }
+
+    /**
      * Writes SQL entirely from this value's fields.
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('QUERY');
+        $writer->comments($this->comments, 1);
         $writer->append('CACHE');
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($comments);
     }
 }

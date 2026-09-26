@@ -17,11 +17,12 @@ final class TypeWithSetSymStringListOptCharsetWithOptBinary_5bf5c78d implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\StringListForm $stringList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCharsetWithOptBinaryForm $optCharsetWithOptBinary,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($stringList), 'The stringList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCharsetWithOptBinary), 'The optCharsetWithOptBinary must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class TypeWithSetSymStringListOptCharsetWithOptBinary_5bf5c78d implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SET');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->stringList->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
+        $writer->comments($this->comments, 4);
         $this->optCharsetWithOptBinary->write($writer);
     }
 
@@ -44,7 +50,7 @@ final class TypeWithSetSymStringListOptCharsetWithOptBinary_5bf5c78d implements 
      */
     public function withStringList(\SqlSemantics\Statement\Model\MySql\Role\StringListForm $stringList): self
     {
-        return new self($stringList, $this->optCharsetWithOptBinary);
+        return new self($stringList, $this->optCharsetWithOptBinary, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class TypeWithSetSymStringListOptCharsetWithOptBinary_5bf5c78d implements 
      */
     public function withOptCharsetWithOptBinary(\SqlSemantics\Statement\Model\MySql\Role\OptCharsetWithOptBinaryForm $optCharsetWithOptBinary): self
     {
-        return new self($this->stringList, $optCharsetWithOptBinary);
+        return new self($this->stringList, $optCharsetWithOptBinary, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->stringList, $this->optCharsetWithOptBinary, $comments);
     }
 }

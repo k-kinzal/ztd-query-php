@@ -17,11 +17,12 @@ final class RelationExprOptAliasWithRelationExprColId_aabae6f8 implements \SqlSe
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm $relationExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($relationExpr), 'The relationExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class RelationExprOptAliasWithRelationExprColId_aabae6f8 implements \SqlSe
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->relationExpr->write($writer);
+        $writer->comments($this->comments, 1);
         $this->colId->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class RelationExprOptAliasWithRelationExprColId_aabae6f8 implements \SqlSe
      */
     public function withRelationExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm $relationExpr): self
     {
-        return new self($relationExpr, $this->colId);
+        return new self($relationExpr, $this->colId, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class RelationExprOptAliasWithRelationExprColId_aabae6f8 implements \SqlSe
      */
     public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
     {
-        return new self($this->relationExpr, $colId);
+        return new self($this->relationExpr, $colId, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->relationExpr, $this->colId, $comments);
     }
 }

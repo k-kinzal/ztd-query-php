@@ -17,11 +17,12 @@ final class CteListWithCteListCommonTableExpr_1cee770c implements \SqlSemantics\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CteListForm $cteList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CommonTableExprForm $commonTableExpr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($cteList), 'The cteList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($commonTableExpr), 'The commonTableExpr must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class CteListWithCteListCommonTableExpr_1cee770c implements \SqlSemantics\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->cteList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->commonTableExpr->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class CteListWithCteListCommonTableExpr_1cee770c implements \SqlSemantics\
      */
     public function withCteList(\SqlSemantics\Statement\Model\PostgreSql\Role\CteListForm $cteList): self
     {
-        return new self($cteList, $this->commonTableExpr);
+        return new self($cteList, $this->commonTableExpr, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class CteListWithCteListCommonTableExpr_1cee770c implements \SqlSemantics\
      */
     public function withCommonTableExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\CommonTableExprForm $commonTableExpr): self
     {
-        return new self($this->cteList, $commonTableExpr);
+        return new self($this->cteList, $commonTableExpr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->cteList, $this->commonTableExpr, $comments);
     }
 }

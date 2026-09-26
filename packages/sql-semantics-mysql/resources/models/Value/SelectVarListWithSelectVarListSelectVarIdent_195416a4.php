@@ -17,11 +17,12 @@ final class SelectVarListWithSelectVarListSelectVarIdent_195416a4 implements \Sq
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectVarListForm $selectVarList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectVarIdentForm $selectVarIdent,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectVarList), 'The selectVarList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectVarIdent), 'The selectVarIdent must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class SelectVarListWithSelectVarListSelectVarIdent_195416a4 implements \Sq
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->selectVarList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->selectVarIdent->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class SelectVarListWithSelectVarListSelectVarIdent_195416a4 implements \Sq
      */
     public function withSelectVarList(\SqlSemantics\Statement\Model\MySql\Role\SelectVarListForm $selectVarList): self
     {
-        return new self($selectVarList, $this->selectVarIdent);
+        return new self($selectVarList, $this->selectVarIdent, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class SelectVarListWithSelectVarListSelectVarIdent_195416a4 implements \Sq
      */
     public function withSelectVarIdent(\SqlSemantics\Statement\Model\MySql\Role\SelectVarIdentForm $selectVarIdent): self
     {
-        return new self($this->selectVarList, $selectVarIdent);
+        return new self($this->selectVarList, $selectVarIdent, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->selectVarList, $this->selectVarIdent, $comments);
     }
 }

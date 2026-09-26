@@ -17,10 +17,11 @@ final class IntervalTimeStampWithMonthSym_8ff04241 implements \SqlSemantics\Stat
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $monthSym,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($monthSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['MONTH_SYM'], 'The monthSym must be a complete MONTH_SYM lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class IntervalTimeStampWithMonthSym_8ff04241 implements \SqlSemantics\Stat
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->monthSym);
     }
 
@@ -38,6 +40,14 @@ final class IntervalTimeStampWithMonthSym_8ff04241 implements \SqlSemantics\Stat
      */
     public function withMonthSym(string $monthSym): self
     {
-        return new self($monthSym);
+        return new self($monthSym, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->monthSym, $comments);
     }
 }

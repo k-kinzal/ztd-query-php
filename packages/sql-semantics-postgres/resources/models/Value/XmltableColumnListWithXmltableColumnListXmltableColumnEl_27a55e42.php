@@ -17,11 +17,12 @@ final class XmltableColumnListWithXmltableColumnListXmltableColumnEl_27a55e42 im
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\XmltableColumnListForm $xmltableColumnList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\XmltableColumnElForm $xmltableColumnEl,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($xmltableColumnList), 'The xmltableColumnList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($xmltableColumnEl), 'The xmltableColumnEl must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class XmltableColumnListWithXmltableColumnListXmltableColumnEl_27a55e42 im
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->xmltableColumnList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->xmltableColumnEl->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class XmltableColumnListWithXmltableColumnListXmltableColumnEl_27a55e42 im
      */
     public function withXmltableColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\XmltableColumnListForm $xmltableColumnList): self
     {
-        return new self($xmltableColumnList, $this->xmltableColumnEl);
+        return new self($xmltableColumnList, $this->xmltableColumnEl, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class XmltableColumnListWithXmltableColumnListXmltableColumnEl_27a55e42 im
      */
     public function withXmltableColumnEl(\SqlSemantics\Statement\Model\PostgreSql\Role\XmltableColumnElForm $xmltableColumnEl): self
     {
-        return new self($this->xmltableColumnList, $xmltableColumnEl);
+        return new self($this->xmltableColumnList, $xmltableColumnEl, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->xmltableColumnList, $this->xmltableColumnEl, $comments);
     }
 }

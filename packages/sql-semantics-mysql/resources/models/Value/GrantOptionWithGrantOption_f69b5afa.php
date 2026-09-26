@@ -15,11 +15,29 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
 final class GrantOptionWithGrantOption_f69b5afa implements \SqlSemantics\Statement\Model\MySql\Role\GrantOptionForm, \SqlSemantics\Statement\Model\MySql\Role\GrantOptionListForm
 {
     /**
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
+     */
+    public function __construct(
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
+    ) {
+    }
+
+    /**
      * Writes SQL entirely from this value's fields.
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('GRANT');
+        $writer->comments($this->comments, 1);
         $writer->append('OPTION');
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($comments);
     }
 }

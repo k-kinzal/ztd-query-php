@@ -17,10 +17,11 @@ final class IntervalTimeStampWithMinuteSym_387ad70b implements \SqlSemantics\Sta
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $minuteSym,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($minuteSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['MINUTE_SYM'], 'The minuteSym must be a complete MINUTE_SYM lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class IntervalTimeStampWithMinuteSym_387ad70b implements \SqlSemantics\Sta
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->minuteSym);
     }
 
@@ -38,6 +40,14 @@ final class IntervalTimeStampWithMinuteSym_387ad70b implements \SqlSemantics\Sta
      */
     public function withMinuteSym(string $minuteSym): self
     {
-        return new self($minuteSym);
+        return new self($minuteSym, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->minuteSym, $comments);
     }
 }

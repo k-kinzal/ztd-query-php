@@ -17,12 +17,13 @@ final class DefaultEncryptionWithOptDefaultEncryptionSymOptEqualTextStringSys_09
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptDefaultForm $optDefault,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDefault), 'The optDefault must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class DefaultEncryptionWithOptDefaultEncryptionSymOptEqualTextStringSys_09
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optDefault->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('ENCRYPTION');
+        $writer->comments($this->comments, 2);
         $this->optEqual->write($writer);
+        $writer->comments($this->comments, 3);
         $this->textStringSys->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class DefaultEncryptionWithOptDefaultEncryptionSymOptEqualTextStringSys_09
      */
     public function withOptDefault(\SqlSemantics\Statement\Model\MySql\Role\OptDefaultForm $optDefault): self
     {
-        return new self($optDefault, $this->optEqual, $this->textStringSys);
+        return new self($optDefault, $this->optEqual, $this->textStringSys, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class DefaultEncryptionWithOptDefaultEncryptionSymOptEqualTextStringSys_09
      */
     public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
     {
-        return new self($this->optDefault, $optEqual, $this->textStringSys);
+        return new self($this->optDefault, $optEqual, $this->textStringSys, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class DefaultEncryptionWithOptDefaultEncryptionSymOptEqualTextStringSys_09
      */
     public function withTextStringSys(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys): self
     {
-        return new self($this->optDefault, $this->optEqual, $textStringSys);
+        return new self($this->optDefault, $this->optEqual, $textStringSys, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optDefault, $this->optEqual, $this->textStringSys, $comments);
     }
 }

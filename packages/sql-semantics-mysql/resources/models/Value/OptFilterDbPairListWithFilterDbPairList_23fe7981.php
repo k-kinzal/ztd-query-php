@@ -17,10 +17,11 @@ final class OptFilterDbPairListWithFilterDbPairList_23fe7981 implements \SqlSema
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FilterDbPairListForm $filterDbPairList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($filterDbPairList), 'The filterDbPairList must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class OptFilterDbPairListWithFilterDbPairList_23fe7981 implements \SqlSema
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->filterDbPairList->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(')');
     }
 
@@ -40,6 +44,14 @@ final class OptFilterDbPairListWithFilterDbPairList_23fe7981 implements \SqlSema
      */
     public function withFilterDbPairList(\SqlSemantics\Statement\Model\MySql\Role\FilterDbPairListForm $filterDbPairList): self
     {
-        return new self($filterDbPairList);
+        return new self($filterDbPairList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->filterDbPairList, $comments);
     }
 }

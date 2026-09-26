@@ -17,12 +17,13 @@ final class TypeWithVarcharFieldLengthOptBinary_84aec1f0 implements \SqlSemantic
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\VarcharForm $varchar,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldLengthForm $fieldLength,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm $optBinary,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($varchar), 'The varchar must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldLength), 'The fieldLength must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class TypeWithVarcharFieldLengthOptBinary_84aec1f0 implements \SqlSemantic
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->varchar->write($writer);
+        $writer->comments($this->comments, 1);
         $this->fieldLength->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optBinary->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class TypeWithVarcharFieldLengthOptBinary_84aec1f0 implements \SqlSemantic
      */
     public function withVarchar(\SqlSemantics\Statement\Model\MySql\Role\VarcharForm $varchar): self
     {
-        return new self($varchar, $this->fieldLength, $this->optBinary);
+        return new self($varchar, $this->fieldLength, $this->optBinary, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class TypeWithVarcharFieldLengthOptBinary_84aec1f0 implements \SqlSemantic
      */
     public function withFieldLength(\SqlSemantics\Statement\Model\MySql\Role\FieldLengthForm $fieldLength): self
     {
-        return new self($this->varchar, $fieldLength, $this->optBinary);
+        return new self($this->varchar, $fieldLength, $this->optBinary, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class TypeWithVarcharFieldLengthOptBinary_84aec1f0 implements \SqlSemantic
      */
     public function withOptBinary(\SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm $optBinary): self
     {
-        return new self($this->varchar, $this->fieldLength, $optBinary);
+        return new self($this->varchar, $this->fieldLength, $optBinary, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->varchar, $this->fieldLength, $this->optBinary, $comments);
     }
 }

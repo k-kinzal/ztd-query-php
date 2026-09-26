@@ -17,11 +17,12 @@ final class ValuesListWithValuesListNoBraces_38a2ab42 implements \SqlSemantics\S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ValuesListForm $valuesList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NoBracesForm $noBraces,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($valuesList), 'The valuesList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($noBraces), 'The noBraces must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class ValuesListWithValuesListNoBraces_38a2ab42 implements \SqlSemantics\S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->valuesList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->noBraces->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class ValuesListWithValuesListNoBraces_38a2ab42 implements \SqlSemantics\S
      */
     public function withValuesList(\SqlSemantics\Statement\Model\MySql\Role\ValuesListForm $valuesList): self
     {
-        return new self($valuesList, $this->noBraces);
+        return new self($valuesList, $this->noBraces, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class ValuesListWithValuesListNoBraces_38a2ab42 implements \SqlSemantics\S
      */
     public function withNoBraces(\SqlSemantics\Statement\Model\MySql\Role\NoBracesForm $noBraces): self
     {
-        return new self($this->valuesList, $noBraces);
+        return new self($this->valuesList, $noBraces, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->valuesList, $this->noBraces, $comments);
     }
 }

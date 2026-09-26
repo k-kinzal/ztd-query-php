@@ -17,10 +17,11 @@ final class ExprWithVariable_0aa27fc0 implements \SqlSemantics\Statement\Model\S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $variable,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($variable, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['VARIABLE'], 'The variable must be a complete VARIABLE lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class ExprWithVariable_0aa27fc0 implements \SqlSemantics\Statement\Model\S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->variable);
     }
 
@@ -38,6 +40,14 @@ final class ExprWithVariable_0aa27fc0 implements \SqlSemantics\Statement\Model\S
      */
     public function withVariable(string $variable): self
     {
-        return new self($variable);
+        return new self($variable, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->variable, $comments);
     }
 }

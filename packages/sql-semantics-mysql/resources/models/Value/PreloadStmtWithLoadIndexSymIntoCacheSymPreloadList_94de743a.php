@@ -17,10 +17,11 @@ final class PreloadStmtWithLoadIndexSymIntoCacheSymPreloadList_94de743a implemen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PreloadListForm $preloadList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($preloadList), 'The preloadList must be a generated immutable SQL value.');
     }
@@ -30,10 +31,15 @@ final class PreloadStmtWithLoadIndexSymIntoCacheSymPreloadList_94de743a implemen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('LOAD');
+        $writer->comments($this->comments, 1);
         $writer->append('INDEX');
+        $writer->comments($this->comments, 2);
         $writer->append('INTO');
+        $writer->comments($this->comments, 3);
         $writer->append('CACHE');
+        $writer->comments($this->comments, 4);
         $this->preloadList->write($writer);
     }
 
@@ -42,6 +48,14 @@ final class PreloadStmtWithLoadIndexSymIntoCacheSymPreloadList_94de743a implemen
      */
     public function withPreloadList(\SqlSemantics\Statement\Model\MySql\Role\PreloadListForm $preloadList): self
     {
-        return new self($preloadList);
+        return new self($preloadList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->preloadList, $comments);
     }
 }

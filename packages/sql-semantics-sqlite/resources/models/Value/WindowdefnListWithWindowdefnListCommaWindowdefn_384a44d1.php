@@ -17,11 +17,12 @@ final class WindowdefnListWithWindowdefnListCommaWindowdefn_384a44d1 implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WindowdefnListForm $windowdefnList,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WindowdefnForm $windowdefn,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($windowdefnList), 'The windowdefnList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($windowdefn), 'The windowdefn must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class WindowdefnListWithWindowdefnListCommaWindowdefn_384a44d1 implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->windowdefnList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->windowdefn->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class WindowdefnListWithWindowdefnListCommaWindowdefn_384a44d1 implements 
      */
     public function withWindowdefnList(\SqlSemantics\Statement\Model\Sqlite\Role\WindowdefnListForm $windowdefnList): self
     {
-        return new self($windowdefnList, $this->windowdefn);
+        return new self($windowdefnList, $this->windowdefn, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class WindowdefnListWithWindowdefnListCommaWindowdefn_384a44d1 implements 
      */
     public function withWindowdefn(\SqlSemantics\Statement\Model\Sqlite\Role\WindowdefnForm $windowdefn): self
     {
-        return new self($this->windowdefnList, $windowdefn);
+        return new self($this->windowdefnList, $windowdefn, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->windowdefnList, $this->windowdefn, $comments);
     }
 }

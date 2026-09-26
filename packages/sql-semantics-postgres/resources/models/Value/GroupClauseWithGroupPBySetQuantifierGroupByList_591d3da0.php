@@ -17,11 +17,12 @@ final class GroupClauseWithGroupPBySetQuantifierGroupByList_591d3da0 implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetQuantifierForm $setQuantifier,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByListForm $groupByList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setQuantifier), 'The setQuantifier must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($groupByList), 'The groupByList must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class GroupClauseWithGroupPBySetQuantifierGroupByList_591d3da0 implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('GROUP');
+        $writer->comments($this->comments, 1);
         $writer->append('BY');
+        $writer->comments($this->comments, 2);
         $this->setQuantifier->write($writer);
+        $writer->comments($this->comments, 3);
         $this->groupByList->write($writer);
     }
 
@@ -43,7 +48,7 @@ final class GroupClauseWithGroupPBySetQuantifierGroupByList_591d3da0 implements 
      */
     public function withSetQuantifier(\SqlSemantics\Statement\Model\PostgreSql\Role\SetQuantifierForm $setQuantifier): self
     {
-        return new self($setQuantifier, $this->groupByList);
+        return new self($setQuantifier, $this->groupByList, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class GroupClauseWithGroupPBySetQuantifierGroupByList_591d3da0 implements 
      */
     public function withGroupByList(\SqlSemantics\Statement\Model\PostgreSql\Role\GroupByListForm $groupByList): self
     {
-        return new self($this->setQuantifier, $groupByList);
+        return new self($this->setQuantifier, $groupByList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->setQuantifier, $this->groupByList, $comments);
     }
 }

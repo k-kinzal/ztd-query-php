@@ -17,13 +17,14 @@ final class JoinedTableWithTableRefJoinTypeJoinTableRefJoinQual_b11a13a0 impleme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm $tableRef,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JoinTypeForm $joinType,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm $tableRef2,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JoinQualForm $joinQual,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($tableRef), 'The tableRef must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($joinType), 'The joinType must be a generated immutable SQL value.');
@@ -36,10 +37,15 @@ final class JoinedTableWithTableRefJoinTypeJoinTableRefJoinQual_b11a13a0 impleme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableRef->write($writer);
+        $writer->comments($this->comments, 1);
         $this->joinType->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('JOIN');
+        $writer->comments($this->comments, 3);
         $this->tableRef2->write($writer);
+        $writer->comments($this->comments, 4);
         $this->joinQual->write($writer);
     }
 
@@ -48,7 +54,7 @@ final class JoinedTableWithTableRefJoinTypeJoinTableRefJoinQual_b11a13a0 impleme
      */
     public function withTableRef(\SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm $tableRef): self
     {
-        return new self($tableRef, $this->joinType, $this->tableRef2, $this->joinQual);
+        return new self($tableRef, $this->joinType, $this->tableRef2, $this->joinQual, $this->comments);
     }
 
     /**
@@ -56,7 +62,7 @@ final class JoinedTableWithTableRefJoinTypeJoinTableRefJoinQual_b11a13a0 impleme
      */
     public function withJoinType(\SqlSemantics\Statement\Model\PostgreSql\Role\JoinTypeForm $joinType): self
     {
-        return new self($this->tableRef, $joinType, $this->tableRef2, $this->joinQual);
+        return new self($this->tableRef, $joinType, $this->tableRef2, $this->joinQual, $this->comments);
     }
 
     /**
@@ -64,7 +70,7 @@ final class JoinedTableWithTableRefJoinTypeJoinTableRefJoinQual_b11a13a0 impleme
      */
     public function withTableRef2(\SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm $tableRef2): self
     {
-        return new self($this->tableRef, $this->joinType, $tableRef2, $this->joinQual);
+        return new self($this->tableRef, $this->joinType, $tableRef2, $this->joinQual, $this->comments);
     }
 
     /**
@@ -72,6 +78,14 @@ final class JoinedTableWithTableRefJoinTypeJoinTableRefJoinQual_b11a13a0 impleme
      */
     public function withJoinQual(\SqlSemantics\Statement\Model\PostgreSql\Role\JoinQualForm $joinQual): self
     {
-        return new self($this->tableRef, $this->joinType, $this->tableRef2, $joinQual);
+        return new self($this->tableRef, $this->joinType, $this->tableRef2, $joinQual, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableRef, $this->joinType, $this->tableRef2, $this->joinQual, $comments);
     }
 }

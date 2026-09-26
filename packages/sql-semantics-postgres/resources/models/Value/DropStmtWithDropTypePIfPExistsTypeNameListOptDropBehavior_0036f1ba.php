@@ -17,11 +17,12 @@ final class DropStmtWithDropTypePIfPExistsTypeNameListOptDropBehavior_0036f1ba i
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypeNameListForm $typeNameList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typeNameList), 'The typeNameList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optDropBehavior), 'The optDropBehavior must be a generated immutable SQL value.');
@@ -32,11 +33,17 @@ final class DropStmtWithDropTypePIfPExistsTypeNameListOptDropBehavior_0036f1ba i
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('DROP');
+        $writer->comments($this->comments, 1);
         $writer->append('TYPE');
+        $writer->comments($this->comments, 2);
         $writer->append('IF');
+        $writer->comments($this->comments, 3);
         $writer->append('EXISTS');
+        $writer->comments($this->comments, 4);
         $this->typeNameList->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optDropBehavior->write($writer);
     }
 
@@ -45,7 +52,7 @@ final class DropStmtWithDropTypePIfPExistsTypeNameListOptDropBehavior_0036f1ba i
      */
     public function withTypeNameList(\SqlSemantics\Statement\Model\PostgreSql\Role\TypeNameListForm $typeNameList): self
     {
-        return new self($typeNameList, $this->optDropBehavior);
+        return new self($typeNameList, $this->optDropBehavior, $this->comments);
     }
 
     /**
@@ -53,6 +60,14 @@ final class DropStmtWithDropTypePIfPExistsTypeNameListOptDropBehavior_0036f1ba i
      */
     public function withOptDropBehavior(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior): self
     {
-        return new self($this->typeNameList, $optDropBehavior);
+        return new self($this->typeNameList, $optDropBehavior, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->typeNameList, $this->optDropBehavior, $comments);
     }
 }

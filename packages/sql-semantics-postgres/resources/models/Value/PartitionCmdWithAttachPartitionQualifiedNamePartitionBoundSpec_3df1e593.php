@@ -17,11 +17,12 @@ final class PartitionCmdWithAttachPartitionQualifiedNamePartitionBoundSpec_3df1e
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PartitionBoundSpecForm $partitionBoundSpec,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($partitionBoundSpec), 'The partitionBoundSpec must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class PartitionCmdWithAttachPartitionQualifiedNamePartitionBoundSpec_3df1e
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ATTACH');
+        $writer->comments($this->comments, 1);
         $writer->append('PARTITION');
+        $writer->comments($this->comments, 2);
         $this->qualifiedName->write($writer);
+        $writer->comments($this->comments, 3);
         $this->partitionBoundSpec->write($writer);
     }
 
@@ -43,7 +48,7 @@ final class PartitionCmdWithAttachPartitionQualifiedNamePartitionBoundSpec_3df1e
      */
     public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
     {
-        return new self($qualifiedName, $this->partitionBoundSpec);
+        return new self($qualifiedName, $this->partitionBoundSpec, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class PartitionCmdWithAttachPartitionQualifiedNamePartitionBoundSpec_3df1e
      */
     public function withPartitionBoundSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\PartitionBoundSpecForm $partitionBoundSpec): self
     {
-        return new self($this->qualifiedName, $partitionBoundSpec);
+        return new self($this->qualifiedName, $partitionBoundSpec, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->qualifiedName, $this->partitionBoundSpec, $comments);
     }
 }

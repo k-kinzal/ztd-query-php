@@ -17,11 +17,12 @@ final class TypeWithCharOptBinary_6079e418 implements \SqlSemantics\Statement\Mo
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharForm $char,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm $optBinary,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($char), 'The char must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optBinary), 'The optBinary must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class TypeWithCharOptBinary_6079e418 implements \SqlSemantics\Statement\Mo
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->char->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optBinary->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class TypeWithCharOptBinary_6079e418 implements \SqlSemantics\Statement\Mo
      */
     public function withChar(\SqlSemantics\Statement\Model\MySql\Role\CharForm $char): self
     {
-        return new self($char, $this->optBinary);
+        return new self($char, $this->optBinary, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class TypeWithCharOptBinary_6079e418 implements \SqlSemantics\Statement\Mo
      */
     public function withOptBinary(\SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm $optBinary): self
     {
-        return new self($this->char, $optBinary);
+        return new self($this->char, $optBinary, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->char, $this->optBinary, $comments);
     }
 }

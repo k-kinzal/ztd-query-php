@@ -17,10 +17,11 @@ final class Create2WithCreate2a_3cd166e4 implements \SqlSemantics\Statement\Mode
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\Create2aForm $create2a,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($create2a), 'The create2a must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class Create2WithCreate2a_3cd166e4 implements \SqlSemantics\Statement\Mode
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->create2a->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class Create2WithCreate2a_3cd166e4 implements \SqlSemantics\Statement\Mode
      */
     public function withCreate2a(\SqlSemantics\Statement\Model\MySql\Role\Create2aForm $create2a): self
     {
-        return new self($create2a);
+        return new self($create2a, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->create2a, $comments);
     }
 }

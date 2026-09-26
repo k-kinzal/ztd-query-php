@@ -17,7 +17,7 @@ final class ReplaceStmtWithReplaceSymReplaceLockOptionOptIntoTableIdentOptUsePar
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ReplaceLockOptionForm $replaceLockOption,
@@ -25,6 +25,7 @@ final class ReplaceStmtWithReplaceSymReplaceLockOptionOptIntoTableIdentOptUsePar
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUsePartitionForm $optUsePartition,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertFromConstructorForm $insertFromConstructor,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($replaceLockOption), 'The replaceLockOption must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optInto), 'The optInto must be a generated immutable SQL value.');
@@ -38,11 +39,17 @@ final class ReplaceStmtWithReplaceSymReplaceLockOptionOptIntoTableIdentOptUsePar
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('REPLACE');
+        $writer->comments($this->comments, 1);
         $this->replaceLockOption->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optInto->write($writer);
+        $writer->comments($this->comments, 3);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optUsePartition->write($writer);
+        $writer->comments($this->comments, 5);
         $this->insertFromConstructor->write($writer);
     }
 
@@ -51,7 +58,7 @@ final class ReplaceStmtWithReplaceSymReplaceLockOptionOptIntoTableIdentOptUsePar
      */
     public function withReplaceLockOption(\SqlSemantics\Statement\Model\MySql\Role\ReplaceLockOptionForm $replaceLockOption): self
     {
-        return new self($replaceLockOption, $this->optInto, $this->tableIdent, $this->optUsePartition, $this->insertFromConstructor);
+        return new self($replaceLockOption, $this->optInto, $this->tableIdent, $this->optUsePartition, $this->insertFromConstructor, $this->comments);
     }
 
     /**
@@ -59,7 +66,7 @@ final class ReplaceStmtWithReplaceSymReplaceLockOptionOptIntoTableIdentOptUsePar
      */
     public function withOptInto(\SqlSemantics\Statement\Model\MySql\Role\OptIntoForm $optInto): self
     {
-        return new self($this->replaceLockOption, $optInto, $this->tableIdent, $this->optUsePartition, $this->insertFromConstructor);
+        return new self($this->replaceLockOption, $optInto, $this->tableIdent, $this->optUsePartition, $this->insertFromConstructor, $this->comments);
     }
 
     /**
@@ -67,7 +74,7 @@ final class ReplaceStmtWithReplaceSymReplaceLockOptionOptIntoTableIdentOptUsePar
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($this->replaceLockOption, $this->optInto, $tableIdent, $this->optUsePartition, $this->insertFromConstructor);
+        return new self($this->replaceLockOption, $this->optInto, $tableIdent, $this->optUsePartition, $this->insertFromConstructor, $this->comments);
     }
 
     /**
@@ -75,7 +82,7 @@ final class ReplaceStmtWithReplaceSymReplaceLockOptionOptIntoTableIdentOptUsePar
      */
     public function withOptUsePartition(\SqlSemantics\Statement\Model\MySql\Role\OptUsePartitionForm $optUsePartition): self
     {
-        return new self($this->replaceLockOption, $this->optInto, $this->tableIdent, $optUsePartition, $this->insertFromConstructor);
+        return new self($this->replaceLockOption, $this->optInto, $this->tableIdent, $optUsePartition, $this->insertFromConstructor, $this->comments);
     }
 
     /**
@@ -83,6 +90,14 @@ final class ReplaceStmtWithReplaceSymReplaceLockOptionOptIntoTableIdentOptUsePar
      */
     public function withInsertFromConstructor(\SqlSemantics\Statement\Model\MySql\Role\InsertFromConstructorForm $insertFromConstructor): self
     {
-        return new self($this->replaceLockOption, $this->optInto, $this->tableIdent, $this->optUsePartition, $insertFromConstructor);
+        return new self($this->replaceLockOption, $this->optInto, $this->tableIdent, $this->optUsePartition, $insertFromConstructor, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->replaceLockOption, $this->optInto, $this->tableIdent, $this->optUsePartition, $this->insertFromConstructor, $comments);
     }
 }

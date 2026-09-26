@@ -17,11 +17,12 @@ final class SpCChisticsWithSpCChisticsSpCChistic_c3cfb408 implements \SqlSemanti
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpCChisticsForm $spCChistics,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpCChisticForm $spCChistic,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spCChistics), 'The spCChistics must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spCChistic), 'The spCChistic must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class SpCChisticsWithSpCChisticsSpCChistic_c3cfb408 implements \SqlSemanti
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->spCChistics->write($writer);
+        $writer->comments($this->comments, 1);
         $this->spCChistic->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class SpCChisticsWithSpCChisticsSpCChistic_c3cfb408 implements \SqlSemanti
      */
     public function withSpCChistics(\SqlSemantics\Statement\Model\MySql\Role\SpCChisticsForm $spCChistics): self
     {
-        return new self($spCChistics, $this->spCChistic);
+        return new self($spCChistics, $this->spCChistic, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class SpCChisticsWithSpCChisticsSpCChistic_c3cfb408 implements \SqlSemanti
      */
     public function withSpCChistic(\SqlSemantics\Statement\Model\MySql\Role\SpCChisticForm $spCChistic): self
     {
-        return new self($this->spCChistics, $spCChistic);
+        return new self($this->spCChistics, $spCChistic, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->spCChistics, $this->spCChistic, $comments);
     }
 }

@@ -17,10 +17,11 @@ final class InsertValuesWithValueSymValuesList_91a90ece implements \SqlSemantics
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ValuesListForm $valuesList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($valuesList), 'The valuesList must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class InsertValuesWithValueSymValuesList_91a90ece implements \SqlSemantics
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('VALUE');
+        $writer->comments($this->comments, 1);
         $this->valuesList->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class InsertValuesWithValueSymValuesList_91a90ece implements \SqlSemantics
      */
     public function withValuesList(\SqlSemantics\Statement\Model\MySql\Role\ValuesListForm $valuesList): self
     {
-        return new self($valuesList);
+        return new self($valuesList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->valuesList, $comments);
     }
 }

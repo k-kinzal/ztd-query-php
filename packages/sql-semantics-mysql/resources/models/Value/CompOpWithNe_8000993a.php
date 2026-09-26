@@ -17,10 +17,11 @@ final class CompOpWithNe_8000993a implements \SqlSemantics\Statement\Model\MySql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $ne,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($ne, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['NE'], 'The ne must be a complete NE lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class CompOpWithNe_8000993a implements \SqlSemantics\Statement\Model\MySql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->ne);
     }
 
@@ -38,6 +40,14 @@ final class CompOpWithNe_8000993a implements \SqlSemantics\Statement\Model\MySql
      */
     public function withNe(string $ne): self
     {
-        return new self($ne);
+        return new self($ne, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ne, $comments);
     }
 }

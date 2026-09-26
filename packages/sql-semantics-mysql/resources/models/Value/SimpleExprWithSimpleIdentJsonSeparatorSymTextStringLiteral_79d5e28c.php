@@ -17,12 +17,13 @@ final class SimpleExprWithSimpleIdentJsonSeparatorSymTextStringLiteral_79d5e28c 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleIdentForm $simpleIdent,
         public readonly string $jsonSeparatorSym,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringLiteralForm $textStringLiteral,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleIdent), 'The simpleIdent must be a generated immutable SQL value.');
         $this->assertMatchesPattern($jsonSeparatorSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['JSON_SEPARATOR_SYM'], 'The jsonSeparatorSym must be a complete JSON_SEPARATOR_SYM lexical spelling.');
@@ -34,8 +35,11 @@ final class SimpleExprWithSimpleIdentJsonSeparatorSymTextStringLiteral_79d5e28c 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->simpleIdent->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append($this->jsonSeparatorSym);
+        $writer->comments($this->comments, 2);
         $this->textStringLiteral->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class SimpleExprWithSimpleIdentJsonSeparatorSymTextStringLiteral_79d5e28c 
      */
     public function withSimpleIdent(\SqlSemantics\Statement\Model\MySql\Role\SimpleIdentForm $simpleIdent): self
     {
-        return new self($simpleIdent, $this->jsonSeparatorSym, $this->textStringLiteral);
+        return new self($simpleIdent, $this->jsonSeparatorSym, $this->textStringLiteral, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class SimpleExprWithSimpleIdentJsonSeparatorSymTextStringLiteral_79d5e28c 
      */
     public function withJsonSeparatorSym(string $jsonSeparatorSym): self
     {
-        return new self($this->simpleIdent, $jsonSeparatorSym, $this->textStringLiteral);
+        return new self($this->simpleIdent, $jsonSeparatorSym, $this->textStringLiteral, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class SimpleExprWithSimpleIdentJsonSeparatorSymTextStringLiteral_79d5e28c 
      */
     public function withTextStringLiteral(\SqlSemantics\Statement\Model\MySql\Role\TextStringLiteralForm $textStringLiteral): self
     {
-        return new self($this->simpleIdent, $this->jsonSeparatorSym, $textStringLiteral);
+        return new self($this->simpleIdent, $this->jsonSeparatorSym, $textStringLiteral, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->simpleIdent, $this->jsonSeparatorSym, $this->textStringLiteral, $comments);
     }
 }

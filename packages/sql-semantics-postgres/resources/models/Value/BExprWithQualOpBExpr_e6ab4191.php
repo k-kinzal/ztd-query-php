@@ -17,11 +17,12 @@ final class BExprWithQualOpBExpr_e6ab4191 implements \SqlSemantics\Statement\Mod
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualOpForm $qualOp,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualOp), 'The qualOp must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($bExpr), 'The bExpr must be a generated immutable SQL value.');
@@ -33,7 +34,9 @@ final class BExprWithQualOpBExpr_e6ab4191 implements \SqlSemantics\Statement\Mod
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->qualOp->write($writer);
+        $writer->comments($this->comments, 1);
         $this->bExpr->write($writer);
     }
 
@@ -42,7 +45,7 @@ final class BExprWithQualOpBExpr_e6ab4191 implements \SqlSemantics\Statement\Mod
      */
     public function withQualOp(\SqlSemantics\Statement\Model\PostgreSql\Role\QualOpForm $qualOp): self
     {
-        return new self($qualOp, $this->bExpr);
+        return new self($qualOp, $this->bExpr, $this->comments);
     }
 
     /**
@@ -50,6 +53,14 @@ final class BExprWithQualOpBExpr_e6ab4191 implements \SqlSemantics\Statement\Mod
      */
     public function withBExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr): self
     {
-        return new self($this->qualOp, $bExpr);
+        return new self($this->qualOp, $bExpr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->qualOp, $this->bExpr, $comments);
     }
 }

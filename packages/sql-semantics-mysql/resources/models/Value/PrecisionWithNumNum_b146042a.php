@@ -17,11 +17,12 @@ final class PrecisionWithNumNum_b146042a implements \SqlSemantics\Statement\Mode
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $value,
         public readonly string $value2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($value, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['NUM'], 'The value must be a complete NUM lexical spelling.');
         $this->assertMatchesPattern($value2, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['NUM'], 'The value2 must be a complete NUM lexical spelling.');
@@ -32,10 +33,15 @@ final class PrecisionWithNumNum_b146042a implements \SqlSemantics\Statement\Mode
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $writer->append($this->value);
+        $writer->comments($this->comments, 2);
         $writer->append(',');
+        $writer->comments($this->comments, 3);
         $writer->append($this->value2);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
     }
 
@@ -44,7 +50,7 @@ final class PrecisionWithNumNum_b146042a implements \SqlSemantics\Statement\Mode
      */
     public function withValue(string $value): self
     {
-        return new self($value, $this->value2);
+        return new self($value, $this->value2, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class PrecisionWithNumNum_b146042a implements \SqlSemantics\Statement\Mode
      */
     public function withValue2(string $value2): self
     {
-        return new self($this->value, $value2);
+        return new self($this->value, $value2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->value, $this->value2, $comments);
     }
 }

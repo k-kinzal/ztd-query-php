@@ -17,7 +17,7 @@ final class CreateVtabWithCreatekwVirtualTableIfnotexistsNmDbnmUsingNm_51382012 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CreatekwForm $createkw,
@@ -25,6 +25,7 @@ final class CreateVtabWithCreatekwVirtualTableIfnotexistsNmDbnmUsingNm_51382012 
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($createkw), 'The createkw must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($ifnotexists), 'The ifnotexists must be a generated immutable SQL value.');
@@ -38,13 +39,21 @@ final class CreateVtabWithCreatekwVirtualTableIfnotexistsNmDbnmUsingNm_51382012 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->createkw->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('VIRTUAL');
+        $writer->comments($this->comments, 2);
         $writer->append('TABLE');
+        $writer->comments($this->comments, 3);
         $this->ifnotexists->write($writer);
+        $writer->comments($this->comments, 4);
         $this->nm->write($writer);
+        $writer->comments($this->comments, 5);
         $this->dbnm->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append('USING');
+        $writer->comments($this->comments, 7);
         $this->nm2->write($writer);
     }
 
@@ -53,7 +62,7 @@ final class CreateVtabWithCreatekwVirtualTableIfnotexistsNmDbnmUsingNm_51382012 
      */
     public function withCreatekw(\SqlSemantics\Statement\Model\Sqlite\Role\CreatekwForm $createkw): self
     {
-        return new self($createkw, $this->ifnotexists, $this->nm, $this->dbnm, $this->nm2);
+        return new self($createkw, $this->ifnotexists, $this->nm, $this->dbnm, $this->nm2, $this->comments);
     }
 
     /**
@@ -61,7 +70,7 @@ final class CreateVtabWithCreatekwVirtualTableIfnotexistsNmDbnmUsingNm_51382012 
      */
     public function withIfnotexists(\SqlSemantics\Statement\Model\Sqlite\Role\IfnotexistsForm $ifnotexists): self
     {
-        return new self($this->createkw, $ifnotexists, $this->nm, $this->dbnm, $this->nm2);
+        return new self($this->createkw, $ifnotexists, $this->nm, $this->dbnm, $this->nm2, $this->comments);
     }
 
     /**
@@ -69,7 +78,7 @@ final class CreateVtabWithCreatekwVirtualTableIfnotexistsNmDbnmUsingNm_51382012 
      */
     public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
     {
-        return new self($this->createkw, $this->ifnotexists, $nm, $this->dbnm, $this->nm2);
+        return new self($this->createkw, $this->ifnotexists, $nm, $this->dbnm, $this->nm2, $this->comments);
     }
 
     /**
@@ -77,7 +86,7 @@ final class CreateVtabWithCreatekwVirtualTableIfnotexistsNmDbnmUsingNm_51382012 
      */
     public function withDbnm(\SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm): self
     {
-        return new self($this->createkw, $this->ifnotexists, $this->nm, $dbnm, $this->nm2);
+        return new self($this->createkw, $this->ifnotexists, $this->nm, $dbnm, $this->nm2, $this->comments);
     }
 
     /**
@@ -85,6 +94,14 @@ final class CreateVtabWithCreatekwVirtualTableIfnotexistsNmDbnmUsingNm_51382012 
      */
     public function withNm2(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm2): self
     {
-        return new self($this->createkw, $this->ifnotexists, $this->nm, $this->dbnm, $nm2);
+        return new self($this->createkw, $this->ifnotexists, $this->nm, $this->dbnm, $nm2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->createkw, $this->ifnotexists, $this->nm, $this->dbnm, $this->nm2, $comments);
     }
 }

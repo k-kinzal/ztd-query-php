@@ -17,10 +17,11 @@ final class AlterOptRoleElemWithConnectionLimitSignedIconst_c2e41e88 implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SignedIconstForm $signedIconst,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($signedIconst), 'The signedIconst must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class AlterOptRoleElemWithConnectionLimitSignedIconst_c2e41e88 implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CONNECTION');
+        $writer->comments($this->comments, 1);
         $writer->append('LIMIT');
+        $writer->comments($this->comments, 2);
         $this->signedIconst->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class AlterOptRoleElemWithConnectionLimitSignedIconst_c2e41e88 implements 
      */
     public function withSignedIconst(\SqlSemantics\Statement\Model\PostgreSql\Role\SignedIconstForm $signedIconst): self
     {
-        return new self($signedIconst);
+        return new self($signedIconst, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->signedIconst, $comments);
     }
 }

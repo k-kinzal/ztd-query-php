@@ -17,11 +17,12 @@ final class FuncExprCommonSubexprWithXmlpiNamePColLabelAExpr_4f21cedb implements
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm $colLabel,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colLabel), 'The colLabel must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
@@ -32,12 +33,19 @@ final class FuncExprCommonSubexprWithXmlpiNamePColLabelAExpr_4f21cedb implements
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('XMLPI');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $writer->append('NAME');
+        $writer->comments($this->comments, 3);
         $this->colLabel->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(',');
+        $writer->comments($this->comments, 5);
         $this->aExpr->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append(')');
     }
 
@@ -46,7 +54,7 @@ final class FuncExprCommonSubexprWithXmlpiNamePColLabelAExpr_4f21cedb implements
      */
     public function withColLabel(\SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm $colLabel): self
     {
-        return new self($colLabel, $this->aExpr);
+        return new self($colLabel, $this->aExpr, $this->comments);
     }
 
     /**
@@ -54,6 +62,14 @@ final class FuncExprCommonSubexprWithXmlpiNamePColLabelAExpr_4f21cedb implements
      */
     public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
     {
-        return new self($this->colLabel, $aExpr);
+        return new self($this->colLabel, $aExpr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->colLabel, $this->aExpr, $comments);
     }
 }

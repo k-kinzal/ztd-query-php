@@ -17,11 +17,12 @@ final class OptLoadDataCharsetWithCharacterSetCharsetName_29ece866 implements \S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharacterSetForm $characterSet,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharsetNameForm $charsetName,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($characterSet), 'The characterSet must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($charsetName), 'The charsetName must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class OptLoadDataCharsetWithCharacterSetCharsetName_29ece866 implements \S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->characterSet->write($writer);
+        $writer->comments($this->comments, 1);
         $this->charsetName->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class OptLoadDataCharsetWithCharacterSetCharsetName_29ece866 implements \S
      */
     public function withCharacterSet(\SqlSemantics\Statement\Model\MySql\Role\CharacterSetForm $characterSet): self
     {
-        return new self($characterSet, $this->charsetName);
+        return new self($characterSet, $this->charsetName, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class OptLoadDataCharsetWithCharacterSetCharsetName_29ece866 implements \S
      */
     public function withCharsetName(\SqlSemantics\Statement\Model\MySql\Role\CharsetNameForm $charsetName): self
     {
-        return new self($this->characterSet, $charsetName);
+        return new self($this->characterSet, $charsetName, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->characterSet, $this->charsetName, $comments);
     }
 }

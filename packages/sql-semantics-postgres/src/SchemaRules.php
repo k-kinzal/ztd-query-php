@@ -20,14 +20,31 @@ use SqlSemantics\Core\Schema\TableDefinition;
 final class SchemaRules implements Contract
 {
     /**
-     * Rejects table options that change the declared schema semantics.
+     * Rejects declarations whose column state requires evaluating another relation.
      */
     public function validate(Node $source, Node $header): void
     {
-        Tree::assertChildren($source, ['qualified_name', 'OptTableElementList', 'table_ident', 'table_element_list'], ['CREATE', 'TABLE', '(', ')']);
-        foreach ($source->find('field_def') as $field) {
-            Tree::assertChildren($field, ['type', 'opt_column_attribute_list'], []);
+        foreach (Tree::outer($source, ['OptInherit', 'TableLikeClause', 'PartitionBoundSpec', 'TypedTableElementList']) as $inherited) {
+            if ($inherited->tokens() !== []) {
+                Tree::unsupported($inherited, 'catalog columns requiring another relation');
+            }
         }
+    }
+
+    /**
+     * @return list<Node>
+     */
+    public function options(Node $source): array
+    {
+        return array_values(array_filter(Tree::outer($source, ['OptWith', 'OptTableSpace', 'OnCommitOption', 'OptAccessMethod', 'PartitionSpec']), static fn (Node $node): bool => $node->tokens() !== []));
+    }
+
+    /**
+     * Reports table-level primary key nullability.
+     */
+    public function primaryOptionsNotNull(Node $source): bool
+    {
+        return false;
     }
 
     /**

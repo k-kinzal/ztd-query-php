@@ -17,10 +17,11 @@ final class TriggerTimeWithBeforeAfter_fa3bc32b implements \SqlSemantics\Stateme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $beforeAfter,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($beforeAfter, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['BEFORE|AFTER'], 'The beforeAfter must be a complete BEFORE|AFTER lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class TriggerTimeWithBeforeAfter_fa3bc32b implements \SqlSemantics\Stateme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->beforeAfter);
     }
 
@@ -38,6 +40,14 @@ final class TriggerTimeWithBeforeAfter_fa3bc32b implements \SqlSemantics\Stateme
      */
     public function withBeforeAfter(string $beforeAfter): self
     {
-        return new self($beforeAfter);
+        return new self($beforeAfter, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->beforeAfter, $comments);
     }
 }

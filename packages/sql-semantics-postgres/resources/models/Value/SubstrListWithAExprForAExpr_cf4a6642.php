@@ -17,11 +17,12 @@ final class SubstrListWithAExprForAExpr_cf4a6642 implements \SqlSemantics\Statem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr2), 'The aExpr2 must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class SubstrListWithAExprForAExpr_cf4a6642 implements \SqlSemantics\Statem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->aExpr->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('FOR');
+        $writer->comments($this->comments, 2);
         $this->aExpr2->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class SubstrListWithAExprForAExpr_cf4a6642 implements \SqlSemantics\Statem
      */
     public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
     {
-        return new self($aExpr, $this->aExpr2);
+        return new self($aExpr, $this->aExpr2, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class SubstrListWithAExprForAExpr_cf4a6642 implements \SqlSemantics\Statem
      */
     public function withAExpr2(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr2): self
     {
-        return new self($this->aExpr, $aExpr2);
+        return new self($this->aExpr, $aExpr2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->aExpr, $this->aExpr2, $comments);
     }
 }

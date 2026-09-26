@@ -17,11 +17,12 @@ final class AggrArgsWithAggrArgsListOrderByAggrArgsList_7b5e902c implements \Sql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgsListForm $aggrArgsList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgsListForm $aggrArgsList2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aggrArgsList), 'The aggrArgsList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aggrArgsList2), 'The aggrArgsList2 must be a generated immutable SQL value.');
@@ -32,11 +33,17 @@ final class AggrArgsWithAggrArgsListOrderByAggrArgsList_7b5e902c implements \Sql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->aggrArgsList->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('ORDER');
+        $writer->comments($this->comments, 3);
         $writer->append('BY');
+        $writer->comments($this->comments, 4);
         $this->aggrArgsList2->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
     }
 
@@ -45,7 +52,7 @@ final class AggrArgsWithAggrArgsListOrderByAggrArgsList_7b5e902c implements \Sql
      */
     public function withAggrArgsList(\SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgsListForm $aggrArgsList): self
     {
-        return new self($aggrArgsList, $this->aggrArgsList2);
+        return new self($aggrArgsList, $this->aggrArgsList2, $this->comments);
     }
 
     /**
@@ -53,6 +60,14 @@ final class AggrArgsWithAggrArgsListOrderByAggrArgsList_7b5e902c implements \Sql
      */
     public function withAggrArgsList2(\SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgsListForm $aggrArgsList2): self
     {
-        return new self($this->aggrArgsList, $aggrArgsList2);
+        return new self($this->aggrArgsList, $aggrArgsList2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->aggrArgsList, $this->aggrArgsList2, $comments);
     }
 }

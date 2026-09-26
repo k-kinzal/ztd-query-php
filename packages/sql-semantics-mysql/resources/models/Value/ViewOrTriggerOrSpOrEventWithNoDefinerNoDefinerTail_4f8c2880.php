@@ -17,11 +17,12 @@ final class ViewOrTriggerOrSpOrEventWithNoDefinerNoDefinerTail_4f8c2880 implemen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NoDefinerForm $noDefiner,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NoDefinerTailForm $noDefinerTail,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($noDefiner), 'The noDefiner must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($noDefinerTail), 'The noDefinerTail must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class ViewOrTriggerOrSpOrEventWithNoDefinerNoDefinerTail_4f8c2880 implemen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->noDefiner->write($writer);
+        $writer->comments($this->comments, 1);
         $this->noDefinerTail->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class ViewOrTriggerOrSpOrEventWithNoDefinerNoDefinerTail_4f8c2880 implemen
      */
     public function withNoDefiner(\SqlSemantics\Statement\Model\MySql\Role\NoDefinerForm $noDefiner): self
     {
-        return new self($noDefiner, $this->noDefinerTail);
+        return new self($noDefiner, $this->noDefinerTail, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class ViewOrTriggerOrSpOrEventWithNoDefinerNoDefinerTail_4f8c2880 implemen
      */
     public function withNoDefinerTail(\SqlSemantics\Statement\Model\MySql\Role\NoDefinerTailForm $noDefinerTail): self
     {
-        return new self($this->noDefiner, $noDefinerTail);
+        return new self($this->noDefiner, $noDefinerTail, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->noDefiner, $this->noDefinerTail, $comments);
     }
 }

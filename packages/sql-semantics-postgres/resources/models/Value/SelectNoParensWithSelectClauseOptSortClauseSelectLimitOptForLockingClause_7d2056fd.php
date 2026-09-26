@@ -17,13 +17,14 @@ final class SelectNoParensWithSelectClauseOptSortClauseSelectLimitOptForLockingC
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectClauseForm $selectClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptSortClauseForm $optSortClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitForm $selectLimit,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptForLockingClauseForm $optForLockingClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($selectClause), 'The selectClause must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optSortClause), 'The optSortClause must be a generated immutable SQL value.');
@@ -36,9 +37,13 @@ final class SelectNoParensWithSelectClauseOptSortClauseSelectLimitOptForLockingC
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->selectClause->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optSortClause->write($writer);
+        $writer->comments($this->comments, 2);
         $this->selectLimit->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optForLockingClause->write($writer);
     }
 
@@ -47,7 +52,7 @@ final class SelectNoParensWithSelectClauseOptSortClauseSelectLimitOptForLockingC
      */
     public function withSelectClause(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectClauseForm $selectClause): self
     {
-        return new self($selectClause, $this->optSortClause, $this->selectLimit, $this->optForLockingClause);
+        return new self($selectClause, $this->optSortClause, $this->selectLimit, $this->optForLockingClause, $this->comments);
     }
 
     /**
@@ -55,7 +60,7 @@ final class SelectNoParensWithSelectClauseOptSortClauseSelectLimitOptForLockingC
      */
     public function withOptSortClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSortClauseForm $optSortClause): self
     {
-        return new self($this->selectClause, $optSortClause, $this->selectLimit, $this->optForLockingClause);
+        return new self($this->selectClause, $optSortClause, $this->selectLimit, $this->optForLockingClause, $this->comments);
     }
 
     /**
@@ -63,7 +68,7 @@ final class SelectNoParensWithSelectClauseOptSortClauseSelectLimitOptForLockingC
      */
     public function withSelectLimit(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitForm $selectLimit): self
     {
-        return new self($this->selectClause, $this->optSortClause, $selectLimit, $this->optForLockingClause);
+        return new self($this->selectClause, $this->optSortClause, $selectLimit, $this->optForLockingClause, $this->comments);
     }
 
     /**
@@ -71,6 +76,14 @@ final class SelectNoParensWithSelectClauseOptSortClauseSelectLimitOptForLockingC
      */
     public function withOptForLockingClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptForLockingClauseForm $optForLockingClause): self
     {
-        return new self($this->selectClause, $this->optSortClause, $this->selectLimit, $optForLockingClause);
+        return new self($this->selectClause, $this->optSortClause, $this->selectLimit, $optForLockingClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->selectClause, $this->optSortClause, $this->selectLimit, $this->optForLockingClause, $comments);
     }
 }

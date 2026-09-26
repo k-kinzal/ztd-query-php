@@ -17,10 +17,11 @@ final class OptSuspendWithSuspendSymOptMigrate_81673c91 implements \SqlSemantics
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptMigrateForm $optMigrate,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optMigrate), 'The optMigrate must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class OptSuspendWithSuspendSymOptMigrate_81673c91 implements \SqlSemantics
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SUSPEND');
+        $writer->comments($this->comments, 1);
         $this->optMigrate->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class OptSuspendWithSuspendSymOptMigrate_81673c91 implements \SqlSemantics
      */
     public function withOptMigrate(\SqlSemantics\Statement\Model\MySql\Role\OptMigrateForm $optMigrate): self
     {
-        return new self($optMigrate);
+        return new self($optMigrate, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optMigrate, $comments);
     }
 }

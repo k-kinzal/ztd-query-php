@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
+use Container\Endpoint;
 use Container\PostgreSql16Container;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -23,12 +24,12 @@ final class PostgreSqlCteShadowingTest extends TestCase
 {
     public function testSelectOnCleanShadowReturnsEmpty(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 
@@ -63,12 +64,12 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testInsertDoesNotModifyPhysicalDatabase(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 
@@ -108,12 +109,12 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testInsertIsVisibleViaZtdSelect(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 
@@ -154,12 +155,12 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testMultipleInsertsAccumulate(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 
@@ -206,12 +207,12 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testPhysicalDatabaseRemainsUnchangedAfterMutations(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 
@@ -257,12 +258,12 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testDisableZtdBypassesRewriting(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 
@@ -306,12 +307,12 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testEnableDisableToggle(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 
@@ -347,12 +348,12 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testSelectWithWhereOnShadowData(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 
@@ -397,12 +398,12 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testUpdateDoesNotModifyPhysicalDatabase(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 
@@ -444,12 +445,12 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testDeleteDoesNotModifyPhysicalDatabase(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 
@@ -490,12 +491,12 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testCommentsRemainLexicalWhitespaceAcrossPostgreSqlMutations(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 
@@ -528,12 +529,12 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testPostgreSqlQuotedStringFormsPreserveWhereOffsets(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 
@@ -569,12 +570,12 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testInsertWithoutColumnListSupportsConstraintKeywordPrefixes(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 
@@ -610,12 +611,12 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testQuotedInsertSourceKeywordsRemainIdentifiers(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 
@@ -658,12 +659,12 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testJsonExistenceOperatorsRemainDistinctFromPlaceholders(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 
@@ -707,12 +708,12 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testPreparedBooleanAndBigIntValuesRetainTheirTypes(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 
@@ -740,12 +741,12 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testArrayAndBinaryValuesRetainNativeTypes(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 

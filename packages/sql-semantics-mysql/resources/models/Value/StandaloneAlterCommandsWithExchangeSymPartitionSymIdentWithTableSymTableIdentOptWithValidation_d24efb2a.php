@@ -17,12 +17,13 @@ final class StandaloneAlterCommandsWithExchangeSymPartitionSymIdentWithTableSymT
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWithValidationForm $optWithValidation,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
@@ -34,12 +35,19 @@ final class StandaloneAlterCommandsWithExchangeSymPartitionSymIdentWithTableSymT
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('EXCHANGE');
+        $writer->comments($this->comments, 1);
         $writer->append('PARTITION');
+        $writer->comments($this->comments, 2);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('WITH');
+        $writer->comments($this->comments, 4);
         $writer->append('TABLE');
+        $writer->comments($this->comments, 5);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 6);
         $this->optWithValidation->write($writer);
     }
 
@@ -48,7 +56,7 @@ final class StandaloneAlterCommandsWithExchangeSymPartitionSymIdentWithTableSymT
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($ident, $this->tableIdent, $this->optWithValidation);
+        return new self($ident, $this->tableIdent, $this->optWithValidation, $this->comments);
     }
 
     /**
@@ -56,7 +64,7 @@ final class StandaloneAlterCommandsWithExchangeSymPartitionSymIdentWithTableSymT
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($this->ident, $tableIdent, $this->optWithValidation);
+        return new self($this->ident, $tableIdent, $this->optWithValidation, $this->comments);
     }
 
     /**
@@ -64,6 +72,14 @@ final class StandaloneAlterCommandsWithExchangeSymPartitionSymIdentWithTableSymT
      */
     public function withOptWithValidation(\SqlSemantics\Statement\Model\MySql\Role\OptWithValidationForm $optWithValidation): self
     {
-        return new self($this->ident, $this->tableIdent, $optWithValidation);
+        return new self($this->ident, $this->tableIdent, $optWithValidation, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ident, $this->tableIdent, $this->optWithValidation, $comments);
     }
 }

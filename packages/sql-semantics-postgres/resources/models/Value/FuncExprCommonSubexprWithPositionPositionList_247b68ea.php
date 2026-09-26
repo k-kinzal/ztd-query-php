@@ -17,10 +17,11 @@ final class FuncExprCommonSubexprWithPositionPositionList_247b68ea implements \S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PositionListForm $positionList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($positionList), 'The positionList must be a generated immutable SQL value.');
     }
@@ -30,9 +31,13 @@ final class FuncExprCommonSubexprWithPositionPositionList_247b68ea implements \S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('POSITION');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->positionList->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
     }
 
@@ -41,6 +46,14 @@ final class FuncExprCommonSubexprWithPositionPositionList_247b68ea implements \S
      */
     public function withPositionList(\SqlSemantics\Statement\Model\PostgreSql\Role\PositionListForm $positionList): self
     {
-        return new self($positionList);
+        return new self($positionList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->positionList, $comments);
     }
 }

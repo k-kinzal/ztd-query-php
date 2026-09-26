@@ -17,7 +17,7 @@ final class SelectFromWithFromJoinTableListWhereClauseGroupClauseHavingClauseOpt
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm $joinTableList,
@@ -27,6 +27,7 @@ final class SelectFromWithFromJoinTableListWhereClauseGroupClauseHavingClauseOpt
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm $orderBy,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ProcedureAnalyseClauseForm $procedureAnalyseClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($joinTableList), 'The joinTableList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($where), 'The where must be a generated immutable SQL value.');
@@ -42,13 +43,21 @@ final class SelectFromWithFromJoinTableListWhereClauseGroupClauseHavingClauseOpt
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('FROM');
+        $writer->comments($this->comments, 1);
         $this->joinTableList->write($writer);
+        $writer->comments($this->comments, 2);
         $this->where->write($writer);
+        $writer->comments($this->comments, 3);
         $this->groupBy->write($writer);
+        $writer->comments($this->comments, 4);
         $this->having->write($writer);
+        $writer->comments($this->comments, 5);
         $this->orderBy->write($writer);
+        $writer->comments($this->comments, 6);
         $this->optLimitClause->write($writer);
+        $writer->comments($this->comments, 7);
         $this->procedureAnalyseClause->write($writer);
     }
 
@@ -57,7 +66,7 @@ final class SelectFromWithFromJoinTableListWhereClauseGroupClauseHavingClauseOpt
      */
     public function withJoinTableList(\SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm $joinTableList): self
     {
-        return new self($joinTableList, $this->where, $this->groupBy, $this->having, $this->orderBy, $this->optLimitClause, $this->procedureAnalyseClause);
+        return new self($joinTableList, $this->where, $this->groupBy, $this->having, $this->orderBy, $this->optLimitClause, $this->procedureAnalyseClause, $this->comments);
     }
 
     /**
@@ -65,7 +74,7 @@ final class SelectFromWithFromJoinTableListWhereClauseGroupClauseHavingClauseOpt
      */
     public function withWhere(\SqlSemantics\Statement\Model\MySql\Role\WhereClauseForm $where): self
     {
-        return new self($this->joinTableList, $where, $this->groupBy, $this->having, $this->orderBy, $this->optLimitClause, $this->procedureAnalyseClause);
+        return new self($this->joinTableList, $where, $this->groupBy, $this->having, $this->orderBy, $this->optLimitClause, $this->procedureAnalyseClause, $this->comments);
     }
 
     /**
@@ -73,7 +82,7 @@ final class SelectFromWithFromJoinTableListWhereClauseGroupClauseHavingClauseOpt
      */
     public function withGroupBy(\SqlSemantics\Statement\Model\MySql\Role\GroupClauseForm $groupBy): self
     {
-        return new self($this->joinTableList, $this->where, $groupBy, $this->having, $this->orderBy, $this->optLimitClause, $this->procedureAnalyseClause);
+        return new self($this->joinTableList, $this->where, $groupBy, $this->having, $this->orderBy, $this->optLimitClause, $this->procedureAnalyseClause, $this->comments);
     }
 
     /**
@@ -81,7 +90,7 @@ final class SelectFromWithFromJoinTableListWhereClauseGroupClauseHavingClauseOpt
      */
     public function withHaving(\SqlSemantics\Statement\Model\MySql\Role\HavingClauseForm $having): self
     {
-        return new self($this->joinTableList, $this->where, $this->groupBy, $having, $this->orderBy, $this->optLimitClause, $this->procedureAnalyseClause);
+        return new self($this->joinTableList, $this->where, $this->groupBy, $having, $this->orderBy, $this->optLimitClause, $this->procedureAnalyseClause, $this->comments);
     }
 
     /**
@@ -89,7 +98,7 @@ final class SelectFromWithFromJoinTableListWhereClauseGroupClauseHavingClauseOpt
      */
     public function withOrderBy(\SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm $orderBy): self
     {
-        return new self($this->joinTableList, $this->where, $this->groupBy, $this->having, $orderBy, $this->optLimitClause, $this->procedureAnalyseClause);
+        return new self($this->joinTableList, $this->where, $this->groupBy, $this->having, $orderBy, $this->optLimitClause, $this->procedureAnalyseClause, $this->comments);
     }
 
     /**
@@ -97,7 +106,7 @@ final class SelectFromWithFromJoinTableListWhereClauseGroupClauseHavingClauseOpt
      */
     public function withOptLimitClause(\SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause): self
     {
-        return new self($this->joinTableList, $this->where, $this->groupBy, $this->having, $this->orderBy, $optLimitClause, $this->procedureAnalyseClause);
+        return new self($this->joinTableList, $this->where, $this->groupBy, $this->having, $this->orderBy, $optLimitClause, $this->procedureAnalyseClause, $this->comments);
     }
 
     /**
@@ -105,6 +114,14 @@ final class SelectFromWithFromJoinTableListWhereClauseGroupClauseHavingClauseOpt
      */
     public function withProcedureAnalyseClause(\SqlSemantics\Statement\Model\MySql\Role\ProcedureAnalyseClauseForm $procedureAnalyseClause): self
     {
-        return new self($this->joinTableList, $this->where, $this->groupBy, $this->having, $this->orderBy, $this->optLimitClause, $procedureAnalyseClause);
+        return new self($this->joinTableList, $this->where, $this->groupBy, $this->having, $this->orderBy, $this->optLimitClause, $procedureAnalyseClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->joinTableList, $this->where, $this->groupBy, $this->having, $this->orderBy, $this->optLimitClause, $this->procedureAnalyseClause, $comments);
     }
 }

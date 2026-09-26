@@ -17,10 +17,11 @@ final class PasswordExpireWithPasswordExpireSymClearPasswordExpireOptions_5b84c3
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ClearPasswordExpireOptionsForm $clearPasswordExpireOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($clearPasswordExpireOptions), 'The clearPasswordExpireOptions must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class PasswordExpireWithPasswordExpireSymClearPasswordExpireOptions_5b84c3
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('PASSWORD');
+        $writer->comments($this->comments, 1);
         $writer->append('EXPIRE');
+        $writer->comments($this->comments, 2);
         $this->clearPasswordExpireOptions->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class PasswordExpireWithPasswordExpireSymClearPasswordExpireOptions_5b84c3
      */
     public function withClearPasswordExpireOptions(\SqlSemantics\Statement\Model\MySql\Role\ClearPasswordExpireOptionsForm $clearPasswordExpireOptions): self
     {
-        return new self($clearPasswordExpireOptions);
+        return new self($clearPasswordExpireOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->clearPasswordExpireOptions, $comments);
     }
 }

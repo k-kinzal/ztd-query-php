@@ -17,12 +17,13 @@ final class AExprWithAExprLessEqualsAExpr_84fef888 implements \SqlSemantics\Stat
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
         public readonly string $lessEquals,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
         $this->assertOperandBindingStrength($aExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 8,));
@@ -36,8 +37,11 @@ final class AExprWithAExprLessEqualsAExpr_84fef888 implements \SqlSemantics\Stat
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->aExpr->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append($this->lessEquals);
+        $writer->comments($this->comments, 2);
         $this->aExpr2->write($writer);
     }
 
@@ -46,7 +50,7 @@ final class AExprWithAExprLessEqualsAExpr_84fef888 implements \SqlSemantics\Stat
      */
     public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
     {
-        return new self($aExpr, $this->lessEquals, $this->aExpr2);
+        return new self($aExpr, $this->lessEquals, $this->aExpr2, $this->comments);
     }
 
     /**
@@ -54,7 +58,7 @@ final class AExprWithAExprLessEqualsAExpr_84fef888 implements \SqlSemantics\Stat
      */
     public function withLessEquals(string $lessEquals): self
     {
-        return new self($this->aExpr, $lessEquals, $this->aExpr2);
+        return new self($this->aExpr, $lessEquals, $this->aExpr2, $this->comments);
     }
 
     /**
@@ -62,6 +66,14 @@ final class AExprWithAExprLessEqualsAExpr_84fef888 implements \SqlSemantics\Stat
      */
     public function withAExpr2(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr2): self
     {
-        return new self($this->aExpr, $this->lessEquals, $aExpr2);
+        return new self($this->aExpr, $this->lessEquals, $aExpr2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->aExpr, $this->lessEquals, $this->aExpr2, $comments);
     }
 }

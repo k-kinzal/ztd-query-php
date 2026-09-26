@@ -17,11 +17,12 @@ final class FunctionCallKeywordWithDaySymExpr_ae0f8900 implements \SqlSemantics\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $daySym,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($daySym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DAY_SYM'], 'The daySym must be a complete DAY_SYM lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class FunctionCallKeywordWithDaySymExpr_ae0f8900 implements \SqlSemantics\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->daySym);
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
     }
 
@@ -43,7 +48,7 @@ final class FunctionCallKeywordWithDaySymExpr_ae0f8900 implements \SqlSemantics\
      */
     public function withDaySym(string $daySym): self
     {
-        return new self($daySym, $this->expr);
+        return new self($daySym, $this->expr, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class FunctionCallKeywordWithDaySymExpr_ae0f8900 implements \SqlSemantics\
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($this->daySym, $expr);
+        return new self($this->daySym, $expr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->daySym, $this->expr, $comments);
     }
 }

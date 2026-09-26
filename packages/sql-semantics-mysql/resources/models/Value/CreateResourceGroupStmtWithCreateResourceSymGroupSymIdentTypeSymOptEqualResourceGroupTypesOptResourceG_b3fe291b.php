@@ -17,7 +17,7 @@ final class CreateResourceGroupStmtWithCreateResourceSymGroupSymIdentTypeSymOptE
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
@@ -26,6 +26,7 @@ final class CreateResourceGroupStmtWithCreateResourceSymGroupSymIdentTypeSymOptE
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptResourceGroupVcpuListForm $optResourceGroupVcpuList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptResourceGroupPriorityForm $optResourceGroupPriority,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptResourceGroupEnableDisableForm $optResourceGroupEnableDisable,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
@@ -40,15 +41,25 @@ final class CreateResourceGroupStmtWithCreateResourceSymGroupSymIdentTypeSymOptE
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $writer->append('RESOURCE');
+        $writer->comments($this->comments, 2);
         $writer->append('GROUP');
+        $writer->comments($this->comments, 3);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('TYPE');
+        $writer->comments($this->comments, 5);
         $this->optEqual->write($writer);
+        $writer->comments($this->comments, 6);
         $this->resourceGroupTypes->write($writer);
+        $writer->comments($this->comments, 7);
         $this->optResourceGroupVcpuList->write($writer);
+        $writer->comments($this->comments, 8);
         $this->optResourceGroupPriority->write($writer);
+        $writer->comments($this->comments, 9);
         $this->optResourceGroupEnableDisable->write($writer);
     }
 
@@ -57,7 +68,7 @@ final class CreateResourceGroupStmtWithCreateResourceSymGroupSymIdentTypeSymOptE
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($ident, $this->optEqual, $this->resourceGroupTypes, $this->optResourceGroupVcpuList, $this->optResourceGroupPriority, $this->optResourceGroupEnableDisable);
+        return new self($ident, $this->optEqual, $this->resourceGroupTypes, $this->optResourceGroupVcpuList, $this->optResourceGroupPriority, $this->optResourceGroupEnableDisable, $this->comments);
     }
 
     /**
@@ -65,7 +76,7 @@ final class CreateResourceGroupStmtWithCreateResourceSymGroupSymIdentTypeSymOptE
      */
     public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
     {
-        return new self($this->ident, $optEqual, $this->resourceGroupTypes, $this->optResourceGroupVcpuList, $this->optResourceGroupPriority, $this->optResourceGroupEnableDisable);
+        return new self($this->ident, $optEqual, $this->resourceGroupTypes, $this->optResourceGroupVcpuList, $this->optResourceGroupPriority, $this->optResourceGroupEnableDisable, $this->comments);
     }
 
     /**
@@ -73,7 +84,7 @@ final class CreateResourceGroupStmtWithCreateResourceSymGroupSymIdentTypeSymOptE
      */
     public function withResourceGroupTypes(\SqlSemantics\Statement\Model\MySql\Role\ResourceGroupTypesForm $resourceGroupTypes): self
     {
-        return new self($this->ident, $this->optEqual, $resourceGroupTypes, $this->optResourceGroupVcpuList, $this->optResourceGroupPriority, $this->optResourceGroupEnableDisable);
+        return new self($this->ident, $this->optEqual, $resourceGroupTypes, $this->optResourceGroupVcpuList, $this->optResourceGroupPriority, $this->optResourceGroupEnableDisable, $this->comments);
     }
 
     /**
@@ -81,7 +92,7 @@ final class CreateResourceGroupStmtWithCreateResourceSymGroupSymIdentTypeSymOptE
      */
     public function withOptResourceGroupVcpuList(\SqlSemantics\Statement\Model\MySql\Role\OptResourceGroupVcpuListForm $optResourceGroupVcpuList): self
     {
-        return new self($this->ident, $this->optEqual, $this->resourceGroupTypes, $optResourceGroupVcpuList, $this->optResourceGroupPriority, $this->optResourceGroupEnableDisable);
+        return new self($this->ident, $this->optEqual, $this->resourceGroupTypes, $optResourceGroupVcpuList, $this->optResourceGroupPriority, $this->optResourceGroupEnableDisable, $this->comments);
     }
 
     /**
@@ -89,7 +100,7 @@ final class CreateResourceGroupStmtWithCreateResourceSymGroupSymIdentTypeSymOptE
      */
     public function withOptResourceGroupPriority(\SqlSemantics\Statement\Model\MySql\Role\OptResourceGroupPriorityForm $optResourceGroupPriority): self
     {
-        return new self($this->ident, $this->optEqual, $this->resourceGroupTypes, $this->optResourceGroupVcpuList, $optResourceGroupPriority, $this->optResourceGroupEnableDisable);
+        return new self($this->ident, $this->optEqual, $this->resourceGroupTypes, $this->optResourceGroupVcpuList, $optResourceGroupPriority, $this->optResourceGroupEnableDisable, $this->comments);
     }
 
     /**
@@ -97,6 +108,14 @@ final class CreateResourceGroupStmtWithCreateResourceSymGroupSymIdentTypeSymOptE
      */
     public function withOptResourceGroupEnableDisable(\SqlSemantics\Statement\Model\MySql\Role\OptResourceGroupEnableDisableForm $optResourceGroupEnableDisable): self
     {
-        return new self($this->ident, $this->optEqual, $this->resourceGroupTypes, $this->optResourceGroupVcpuList, $this->optResourceGroupPriority, $optResourceGroupEnableDisable);
+        return new self($this->ident, $this->optEqual, $this->resourceGroupTypes, $this->optResourceGroupVcpuList, $this->optResourceGroupPriority, $optResourceGroupEnableDisable, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ident, $this->optEqual, $this->resourceGroupTypes, $this->optResourceGroupVcpuList, $this->optResourceGroupPriority, $this->optResourceGroupEnableDisable, $comments);
     }
 }

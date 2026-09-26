@@ -17,11 +17,12 @@ final class ImportQualificationWithImportQualificationTypeRelationExprList_decb6
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ImportQualificationTypeForm $importQualificationType,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprListForm $relationExprList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($importQualificationType), 'The importQualificationType must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($relationExprList), 'The relationExprList must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class ImportQualificationWithImportQualificationTypeRelationExprList_decb6
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->importQualificationType->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->relationExprList->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
     }
 
@@ -43,7 +48,7 @@ final class ImportQualificationWithImportQualificationTypeRelationExprList_decb6
      */
     public function withImportQualificationType(\SqlSemantics\Statement\Model\PostgreSql\Role\ImportQualificationTypeForm $importQualificationType): self
     {
-        return new self($importQualificationType, $this->relationExprList);
+        return new self($importQualificationType, $this->relationExprList, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class ImportQualificationWithImportQualificationTypeRelationExprList_decb6
      */
     public function withRelationExprList(\SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprListForm $relationExprList): self
     {
-        return new self($this->importQualificationType, $relationExprList);
+        return new self($this->importQualificationType, $relationExprList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->importQualificationType, $this->relationExprList, $comments);
     }
 }

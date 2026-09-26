@@ -17,11 +17,12 @@ final class StartEntryWithGrammarSelectorDerivedExprExprEndOfInput_52e234ff impl
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $grammarSelectorDerivedExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($grammarSelectorDerivedExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['GRAMMAR_SELECTOR_DERIVED_EXPR'], 'The grammarSelectorDerivedExpr must be a complete GRAMMAR_SELECTOR_DERIVED_EXPR lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class StartEntryWithGrammarSelectorDerivedExprExprEndOfInput_52e234ff impl
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->grammarSelectorDerivedExpr);
+        $writer->comments($this->comments, 1);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 2);
     }
 
     /**
@@ -41,7 +45,7 @@ final class StartEntryWithGrammarSelectorDerivedExprExprEndOfInput_52e234ff impl
      */
     public function withGrammarSelectorDerivedExpr(string $grammarSelectorDerivedExpr): self
     {
-        return new self($grammarSelectorDerivedExpr, $this->expr);
+        return new self($grammarSelectorDerivedExpr, $this->expr, $this->comments);
     }
 
     /**
@@ -49,6 +53,14 @@ final class StartEntryWithGrammarSelectorDerivedExprExprEndOfInput_52e234ff impl
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($this->grammarSelectorDerivedExpr, $expr);
+        return new self($this->grammarSelectorDerivedExpr, $expr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->grammarSelectorDerivedExpr, $this->expr, $comments);
     }
 }

@@ -17,10 +17,11 @@ final class NumericWithFloatPOptFloat_ab0f4805 implements \SqlSemantics\Statemen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptFloatForm $optFloat,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optFloat), 'The optFloat must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class NumericWithFloatPOptFloat_ab0f4805 implements \SqlSemantics\Statemen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('FLOAT');
+        $writer->comments($this->comments, 1);
         $this->optFloat->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class NumericWithFloatPOptFloat_ab0f4805 implements \SqlSemantics\Statemen
      */
     public function withOptFloat(\SqlSemantics\Statement\Model\PostgreSql\Role\OptFloatForm $optFloat): self
     {
-        return new self($optFloat);
+        return new self($optFloat, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optFloat, $comments);
     }
 }

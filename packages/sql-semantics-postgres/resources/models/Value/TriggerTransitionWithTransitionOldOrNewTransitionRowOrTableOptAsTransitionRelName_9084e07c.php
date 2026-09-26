@@ -17,13 +17,14 @@ final class TriggerTransitionWithTransitionOldOrNewTransitionRowOrTableOptAsTran
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TransitionOldOrNewForm $transitionOldOrNew,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TransitionRowOrTableForm $transitionRowOrTable,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptAsForm $optAs,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TransitionRelNameForm $transitionRelName,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($transitionOldOrNew), 'The transitionOldOrNew must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($transitionRowOrTable), 'The transitionRowOrTable must be a generated immutable SQL value.');
@@ -36,9 +37,13 @@ final class TriggerTransitionWithTransitionOldOrNewTransitionRowOrTableOptAsTran
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->transitionOldOrNew->write($writer);
+        $writer->comments($this->comments, 1);
         $this->transitionRowOrTable->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optAs->write($writer);
+        $writer->comments($this->comments, 3);
         $this->transitionRelName->write($writer);
     }
 
@@ -47,7 +52,7 @@ final class TriggerTransitionWithTransitionOldOrNewTransitionRowOrTableOptAsTran
      */
     public function withTransitionOldOrNew(\SqlSemantics\Statement\Model\PostgreSql\Role\TransitionOldOrNewForm $transitionOldOrNew): self
     {
-        return new self($transitionOldOrNew, $this->transitionRowOrTable, $this->optAs, $this->transitionRelName);
+        return new self($transitionOldOrNew, $this->transitionRowOrTable, $this->optAs, $this->transitionRelName, $this->comments);
     }
 
     /**
@@ -55,7 +60,7 @@ final class TriggerTransitionWithTransitionOldOrNewTransitionRowOrTableOptAsTran
      */
     public function withTransitionRowOrTable(\SqlSemantics\Statement\Model\PostgreSql\Role\TransitionRowOrTableForm $transitionRowOrTable): self
     {
-        return new self($this->transitionOldOrNew, $transitionRowOrTable, $this->optAs, $this->transitionRelName);
+        return new self($this->transitionOldOrNew, $transitionRowOrTable, $this->optAs, $this->transitionRelName, $this->comments);
     }
 
     /**
@@ -63,7 +68,7 @@ final class TriggerTransitionWithTransitionOldOrNewTransitionRowOrTableOptAsTran
      */
     public function withOptAs(\SqlSemantics\Statement\Model\PostgreSql\Role\OptAsForm $optAs): self
     {
-        return new self($this->transitionOldOrNew, $this->transitionRowOrTable, $optAs, $this->transitionRelName);
+        return new self($this->transitionOldOrNew, $this->transitionRowOrTable, $optAs, $this->transitionRelName, $this->comments);
     }
 
     /**
@@ -71,6 +76,14 @@ final class TriggerTransitionWithTransitionOldOrNewTransitionRowOrTableOptAsTran
      */
     public function withTransitionRelName(\SqlSemantics\Statement\Model\PostgreSql\Role\TransitionRelNameForm $transitionRelName): self
     {
-        return new self($this->transitionOldOrNew, $this->transitionRowOrTable, $this->optAs, $transitionRelName);
+        return new self($this->transitionOldOrNew, $this->transitionRowOrTable, $this->optAs, $transitionRelName, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->transitionOldOrNew, $this->transitionRowOrTable, $this->optAs, $this->transitionRelName, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class OptValuesReferenceWithAsIdentOptDerivedColumnList_89d5bd1c implement
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptDerivedColumnListForm $optDerivedColumnList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDerivedColumnList), 'The optDerivedColumnList must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class OptValuesReferenceWithAsIdentOptDerivedColumnList_89d5bd1c implement
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('AS');
+        $writer->comments($this->comments, 1);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optDerivedColumnList->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class OptValuesReferenceWithAsIdentOptDerivedColumnList_89d5bd1c implement
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($ident, $this->optDerivedColumnList);
+        return new self($ident, $this->optDerivedColumnList, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class OptValuesReferenceWithAsIdentOptDerivedColumnList_89d5bd1c implement
      */
     public function withOptDerivedColumnList(\SqlSemantics\Statement\Model\MySql\Role\OptDerivedColumnListForm $optDerivedColumnList): self
     {
-        return new self($this->ident, $optDerivedColumnList);
+        return new self($this->ident, $optDerivedColumnList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ident, $this->optDerivedColumnList, $comments);
     }
 }

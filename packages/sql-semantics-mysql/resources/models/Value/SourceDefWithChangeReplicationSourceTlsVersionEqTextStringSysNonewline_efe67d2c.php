@@ -17,11 +17,12 @@ final class SourceDefWithChangeReplicationSourceTlsVersionEqTextStringSysNonewli
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceTlsVersionForm $changeReplicationSourceTlsVersion,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($changeReplicationSourceTlsVersion), 'The changeReplicationSourceTlsVersion must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSysNonewline), 'The textStringSysNonewline must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class SourceDefWithChangeReplicationSourceTlsVersionEqTextStringSysNonewli
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->changeReplicationSourceTlsVersion->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('=');
+        $writer->comments($this->comments, 2);
         $this->textStringSysNonewline->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class SourceDefWithChangeReplicationSourceTlsVersionEqTextStringSysNonewli
      */
     public function withChangeReplicationSourceTlsVersion(\SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceTlsVersionForm $changeReplicationSourceTlsVersion): self
     {
-        return new self($changeReplicationSourceTlsVersion, $this->textStringSysNonewline);
+        return new self($changeReplicationSourceTlsVersion, $this->textStringSysNonewline, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class SourceDefWithChangeReplicationSourceTlsVersionEqTextStringSysNonewli
      */
     public function withTextStringSysNonewline(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline): self
     {
-        return new self($this->changeReplicationSourceTlsVersion, $textStringSysNonewline);
+        return new self($this->changeReplicationSourceTlsVersion, $textStringSysNonewline, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->changeReplicationSourceTlsVersion, $this->textStringSysNonewline, $comments);
     }
 }

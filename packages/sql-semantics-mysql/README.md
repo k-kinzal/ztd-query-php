@@ -5,7 +5,7 @@
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
-SQL Semantics for MySQL adds MySQL to [SQL Semantics](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics): the typed statement models of the official MySQL grammars and the MySQL rules for schema binding. Installing it also installs the shared SQL Semantics runtime, and `Dialect::MySql` selects MySQL in the runtime's `Semantics`, `SchemaBuilder`, and `Binder`. No database connection is needed.
+SQL Semantics for MySQL adds MySQL to [SQL Semantics](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics): the typed statement models of the official MySQL grammars and the MySQL rules for schema binding. Installing it also installs the shared SQL Semantics runtime, and `Dialect::MySql` selects MySQL in the runtime's `Semantics`, `Schema`, and `Binder`. No database connection is needed.
 
 ## Requirements
 
@@ -13,7 +13,7 @@ SQL Semantics for MySQL adds MySQL to [SQL Semantics](https://github.com/k-kinza
 
 ## Support Syntax
 
-The following grammar versions are supported. Pass the version tag as the second argument of `Semantics` or the third argument of `SchemaBuilder`; omitting it uses the default. Schema binding requires MySQL 8.0 or later.
+The following grammar versions are supported. Pass the version tag as the second argument of `Semantics` or the third argument of `Schema`; omitting it uses the default. State declarations support all listed versions; SELECT binding with `Binder` requires MySQL 8.0 or later.
 
 | Version | Version tag | Default |
 |---------|-------------|---------|

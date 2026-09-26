@@ -17,11 +17,12 @@ final class ViewQueryBlockWithQueryExpressionWithOptLockingClausesViewCheckOptio
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionWithOptLockingClausesForm $queryExpressionWithOptLockingClauses,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ViewCheckOptionForm $viewCheckOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($queryExpressionWithOptLockingClauses), 'The queryExpressionWithOptLockingClauses must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($viewCheckOption), 'The viewCheckOption must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class ViewQueryBlockWithQueryExpressionWithOptLockingClausesViewCheckOptio
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->queryExpressionWithOptLockingClauses->write($writer);
+        $writer->comments($this->comments, 1);
         $this->viewCheckOption->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class ViewQueryBlockWithQueryExpressionWithOptLockingClausesViewCheckOptio
      */
     public function withQueryExpressionWithOptLockingClauses(\SqlSemantics\Statement\Model\MySql\Role\QueryExpressionWithOptLockingClausesForm $queryExpressionWithOptLockingClauses): self
     {
-        return new self($queryExpressionWithOptLockingClauses, $this->viewCheckOption);
+        return new self($queryExpressionWithOptLockingClauses, $this->viewCheckOption, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class ViewQueryBlockWithQueryExpressionWithOptLockingClausesViewCheckOptio
      */
     public function withViewCheckOption(\SqlSemantics\Statement\Model\MySql\Role\ViewCheckOptionForm $viewCheckOption): self
     {
-        return new self($this->queryExpressionWithOptLockingClauses, $viewCheckOption);
+        return new self($this->queryExpressionWithOptLockingClauses, $viewCheckOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->queryExpressionWithOptLockingClauses, $this->viewCheckOption, $comments);
     }
 }

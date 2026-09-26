@@ -29,11 +29,11 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Check out the repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.sha }}
       - name: Set up PHP
-        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
           php-version: '8.5'
           extensions: ctype, date, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter, zlib
@@ -43,7 +43,7 @@ jobs:
       - name: Validate the Composer manifest and lock file
         run: composer validate --strict --no-check-publish
       - name: Install package dependencies
-        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda # 4.0.0
         with:
           working-directory: packages/lemon-parser
           dependency-versions: locked
@@ -73,7 +73,7 @@ jobs:
       - name: Create or update the package MSI issue
         if: success()
         continue-on-error: true
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         env:
           # Keep these alert thresholds aligned with this package's infection.json5.
           MIN_MSI: '80'
@@ -127,7 +127,7 @@ jobs:
       - name: Upload mutation reports
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: lemon-parser-infection
           path: packages/lemon-parser/build/infection/

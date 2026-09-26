@@ -17,7 +17,7 @@ final class KeyDefWithOptConstraintConstraintKeyTypeOptIdentKeyAlgKeyListNormalK
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptConstraintForm $optConstraint,
@@ -26,6 +26,7 @@ final class KeyDefWithOptConstraintConstraintKeyTypeOptIdentKeyAlgKeyListNormalK
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyAlgForm $keyAlg,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyListForm $keyList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptionsForm $normalKeyOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optConstraint), 'The optConstraint must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($constraintKeyType), 'The constraintKeyType must be a generated immutable SQL value.');
@@ -40,13 +41,21 @@ final class KeyDefWithOptConstraintConstraintKeyTypeOptIdentKeyAlgKeyListNormalK
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optConstraint->write($writer);
+        $writer->comments($this->comments, 1);
         $this->constraintKeyType->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optIdent->write($writer);
+        $writer->comments($this->comments, 3);
         $this->keyAlg->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('(');
+        $writer->comments($this->comments, 5);
         $this->keyList->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append(')');
+        $writer->comments($this->comments, 7);
         $this->normalKeyOptions->write($writer);
     }
 
@@ -55,7 +64,7 @@ final class KeyDefWithOptConstraintConstraintKeyTypeOptIdentKeyAlgKeyListNormalK
      */
     public function withOptConstraint(\SqlSemantics\Statement\Model\MySql\Role\OptConstraintForm $optConstraint): self
     {
-        return new self($optConstraint, $this->constraintKeyType, $this->optIdent, $this->keyAlg, $this->keyList, $this->normalKeyOptions);
+        return new self($optConstraint, $this->constraintKeyType, $this->optIdent, $this->keyAlg, $this->keyList, $this->normalKeyOptions, $this->comments);
     }
 
     /**
@@ -63,7 +72,7 @@ final class KeyDefWithOptConstraintConstraintKeyTypeOptIdentKeyAlgKeyListNormalK
      */
     public function withConstraintKeyType(\SqlSemantics\Statement\Model\MySql\Role\ConstraintKeyTypeForm $constraintKeyType): self
     {
-        return new self($this->optConstraint, $constraintKeyType, $this->optIdent, $this->keyAlg, $this->keyList, $this->normalKeyOptions);
+        return new self($this->optConstraint, $constraintKeyType, $this->optIdent, $this->keyAlg, $this->keyList, $this->normalKeyOptions, $this->comments);
     }
 
     /**
@@ -71,7 +80,7 @@ final class KeyDefWithOptConstraintConstraintKeyTypeOptIdentKeyAlgKeyListNormalK
      */
     public function withOptIdent(\SqlSemantics\Statement\Model\MySql\Role\OptIdentForm $optIdent): self
     {
-        return new self($this->optConstraint, $this->constraintKeyType, $optIdent, $this->keyAlg, $this->keyList, $this->normalKeyOptions);
+        return new self($this->optConstraint, $this->constraintKeyType, $optIdent, $this->keyAlg, $this->keyList, $this->normalKeyOptions, $this->comments);
     }
 
     /**
@@ -79,7 +88,7 @@ final class KeyDefWithOptConstraintConstraintKeyTypeOptIdentKeyAlgKeyListNormalK
      */
     public function withKeyAlg(\SqlSemantics\Statement\Model\MySql\Role\KeyAlgForm $keyAlg): self
     {
-        return new self($this->optConstraint, $this->constraintKeyType, $this->optIdent, $keyAlg, $this->keyList, $this->normalKeyOptions);
+        return new self($this->optConstraint, $this->constraintKeyType, $this->optIdent, $keyAlg, $this->keyList, $this->normalKeyOptions, $this->comments);
     }
 
     /**
@@ -87,7 +96,7 @@ final class KeyDefWithOptConstraintConstraintKeyTypeOptIdentKeyAlgKeyListNormalK
      */
     public function withKeyList(\SqlSemantics\Statement\Model\MySql\Role\KeyListForm $keyList): self
     {
-        return new self($this->optConstraint, $this->constraintKeyType, $this->optIdent, $this->keyAlg, $keyList, $this->normalKeyOptions);
+        return new self($this->optConstraint, $this->constraintKeyType, $this->optIdent, $this->keyAlg, $keyList, $this->normalKeyOptions, $this->comments);
     }
 
     /**
@@ -95,6 +104,14 @@ final class KeyDefWithOptConstraintConstraintKeyTypeOptIdentKeyAlgKeyListNormalK
      */
     public function withNormalKeyOptions(\SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptionsForm $normalKeyOptions): self
     {
-        return new self($this->optConstraint, $this->constraintKeyType, $this->optIdent, $this->keyAlg, $this->keyList, $normalKeyOptions);
+        return new self($this->optConstraint, $this->constraintKeyType, $this->optIdent, $this->keyAlg, $this->keyList, $normalKeyOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optConstraint, $this->constraintKeyType, $this->optIdent, $this->keyAlg, $this->keyList, $this->normalKeyOptions, $comments);
     }
 }

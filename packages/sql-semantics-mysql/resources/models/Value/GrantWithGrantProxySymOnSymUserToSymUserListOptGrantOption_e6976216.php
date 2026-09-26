@@ -17,12 +17,13 @@ final class GrantWithGrantProxySymOnSymUserToSymUserListOptGrantOption_e6976216 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserForm $user,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptGrantOptionForm $optGrantOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($userList), 'The userList must be a generated immutable SQL value.');
@@ -34,12 +35,19 @@ final class GrantWithGrantProxySymOnSymUserToSymUserListOptGrantOption_e6976216 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('GRANT');
+        $writer->comments($this->comments, 1);
         $writer->append('PROXY');
+        $writer->comments($this->comments, 2);
         $writer->append('ON');
+        $writer->comments($this->comments, 3);
         $this->user->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('TO');
+        $writer->comments($this->comments, 5);
         $this->userList->write($writer);
+        $writer->comments($this->comments, 6);
         $this->optGrantOption->write($writer);
     }
 
@@ -48,7 +56,7 @@ final class GrantWithGrantProxySymOnSymUserToSymUserListOptGrantOption_e6976216 
      */
     public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
     {
-        return new self($user, $this->userList, $this->optGrantOption);
+        return new self($user, $this->userList, $this->optGrantOption, $this->comments);
     }
 
     /**
@@ -56,7 +64,7 @@ final class GrantWithGrantProxySymOnSymUserToSymUserListOptGrantOption_e6976216 
      */
     public function withUserList(\SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList): self
     {
-        return new self($this->user, $userList, $this->optGrantOption);
+        return new self($this->user, $userList, $this->optGrantOption, $this->comments);
     }
 
     /**
@@ -64,6 +72,14 @@ final class GrantWithGrantProxySymOnSymUserToSymUserListOptGrantOption_e6976216 
      */
     public function withOptGrantOption(\SqlSemantics\Statement\Model\MySql\Role\OptGrantOptionForm $optGrantOption): self
     {
-        return new self($this->user, $this->userList, $optGrantOption);
+        return new self($this->user, $this->userList, $optGrantOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->user, $this->userList, $this->optGrantOption, $comments);
     }
 }

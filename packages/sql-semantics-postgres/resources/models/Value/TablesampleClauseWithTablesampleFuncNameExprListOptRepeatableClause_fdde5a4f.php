@@ -17,12 +17,13 @@ final class TablesampleClauseWithTablesampleFuncNameExprListOptRepeatableClause_
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm $funcName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm $exprList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptRepeatableClauseForm $optRepeatableClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcName), 'The funcName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($exprList), 'The exprList must be a generated immutable SQL value.');
@@ -34,11 +35,17 @@ final class TablesampleClauseWithTablesampleFuncNameExprListOptRepeatableClause_
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('TABLESAMPLE');
+        $writer->comments($this->comments, 1);
         $this->funcName->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('(');
+        $writer->comments($this->comments, 3);
         $this->exprList->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
+        $writer->comments($this->comments, 5);
         $this->optRepeatableClause->write($writer);
     }
 
@@ -47,7 +54,7 @@ final class TablesampleClauseWithTablesampleFuncNameExprListOptRepeatableClause_
      */
     public function withFuncName(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm $funcName): self
     {
-        return new self($funcName, $this->exprList, $this->optRepeatableClause);
+        return new self($funcName, $this->exprList, $this->optRepeatableClause, $this->comments);
     }
 
     /**
@@ -55,7 +62,7 @@ final class TablesampleClauseWithTablesampleFuncNameExprListOptRepeatableClause_
      */
     public function withExprList(\SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm $exprList): self
     {
-        return new self($this->funcName, $exprList, $this->optRepeatableClause);
+        return new self($this->funcName, $exprList, $this->optRepeatableClause, $this->comments);
     }
 
     /**
@@ -63,6 +70,14 @@ final class TablesampleClauseWithTablesampleFuncNameExprListOptRepeatableClause_
      */
     public function withOptRepeatableClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptRepeatableClauseForm $optRepeatableClause): self
     {
-        return new self($this->funcName, $this->exprList, $optRepeatableClause);
+        return new self($this->funcName, $this->exprList, $optRepeatableClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->funcName, $this->exprList, $this->optRepeatableClause, $comments);
     }
 }

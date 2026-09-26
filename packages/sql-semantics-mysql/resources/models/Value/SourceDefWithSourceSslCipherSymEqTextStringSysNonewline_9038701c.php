@@ -17,10 +17,11 @@ final class SourceDefWithSourceSslCipherSymEqTextStringSysNonewline_9038701c imp
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSysNonewline), 'The textStringSysNonewline must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class SourceDefWithSourceSslCipherSymEqTextStringSysNonewline_9038701c imp
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SOURCE_SSL_CIPHER');
+        $writer->comments($this->comments, 1);
         $writer->append('=');
+        $writer->comments($this->comments, 2);
         $this->textStringSysNonewline->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class SourceDefWithSourceSslCipherSymEqTextStringSysNonewline_9038701c imp
      */
     public function withTextStringSysNonewline(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline): self
     {
-        return new self($textStringSysNonewline);
+        return new self($textStringSysNonewline, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->textStringSysNonewline, $comments);
     }
 }

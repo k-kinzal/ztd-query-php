@@ -17,11 +17,12 @@ final class ParseToplevelWithModePlpgsqlExprPLpgSqlExpr_030b16f7 implements \Sql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $modePlpgsqlExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PLpgSqlExprForm $pLpgSqlExpr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($modePlpgsqlExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['MODE_PLPGSQL_EXPR'], 'The modePlpgsqlExpr must be a complete MODE_PLPGSQL_EXPR lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($pLpgSqlExpr), 'The pLpgSqlExpr must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class ParseToplevelWithModePlpgsqlExprPLpgSqlExpr_030b16f7 implements \Sql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->modePlpgsqlExpr);
+        $writer->comments($this->comments, 1);
         $this->pLpgSqlExpr->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class ParseToplevelWithModePlpgsqlExprPLpgSqlExpr_030b16f7 implements \Sql
      */
     public function withModePlpgsqlExpr(string $modePlpgsqlExpr): self
     {
-        return new self($modePlpgsqlExpr, $this->pLpgSqlExpr);
+        return new self($modePlpgsqlExpr, $this->pLpgSqlExpr, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class ParseToplevelWithModePlpgsqlExprPLpgSqlExpr_030b16f7 implements \Sql
      */
     public function withPLpgSqlExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\PLpgSqlExprForm $pLpgSqlExpr): self
     {
-        return new self($this->modePlpgsqlExpr, $pLpgSqlExpr);
+        return new self($this->modePlpgsqlExpr, $pLpgSqlExpr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->modePlpgsqlExpr, $this->pLpgSqlExpr, $comments);
     }
 }

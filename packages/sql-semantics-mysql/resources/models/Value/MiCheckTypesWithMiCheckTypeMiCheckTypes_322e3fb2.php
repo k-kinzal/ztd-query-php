@@ -17,11 +17,12 @@ final class MiCheckTypesWithMiCheckTypeMiCheckTypes_322e3fb2 implements \SqlSema
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\MiCheckTypeForm $miCheckType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\MiCheckTypesForm $miCheckTypes,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($miCheckType), 'The miCheckType must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($miCheckTypes), 'The miCheckTypes must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class MiCheckTypesWithMiCheckTypeMiCheckTypes_322e3fb2 implements \SqlSema
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->miCheckType->write($writer);
+        $writer->comments($this->comments, 1);
         $this->miCheckTypes->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class MiCheckTypesWithMiCheckTypeMiCheckTypes_322e3fb2 implements \SqlSema
      */
     public function withMiCheckType(\SqlSemantics\Statement\Model\MySql\Role\MiCheckTypeForm $miCheckType): self
     {
-        return new self($miCheckType, $this->miCheckTypes);
+        return new self($miCheckType, $this->miCheckTypes, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class MiCheckTypesWithMiCheckTypeMiCheckTypes_322e3fb2 implements \SqlSema
      */
     public function withMiCheckTypes(\SqlSemantics\Statement\Model\MySql\Role\MiCheckTypesForm $miCheckTypes): self
     {
-        return new self($this->miCheckType, $miCheckTypes);
+        return new self($this->miCheckType, $miCheckTypes, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->miCheckType, $this->miCheckTypes, $comments);
     }
 }

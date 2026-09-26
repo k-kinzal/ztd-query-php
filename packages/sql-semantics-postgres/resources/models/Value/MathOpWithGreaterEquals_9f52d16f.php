@@ -17,10 +17,11 @@ final class MathOpWithGreaterEquals_9f52d16f implements \SqlSemantics\Statement\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $greaterEquals,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($greaterEquals, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['GREATER_EQUALS'], 'The greaterEquals must be a complete GREATER_EQUALS lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class MathOpWithGreaterEquals_9f52d16f implements \SqlSemantics\Statement\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->greaterEquals);
     }
 
@@ -38,6 +40,14 @@ final class MathOpWithGreaterEquals_9f52d16f implements \SqlSemantics\Statement\
      */
     public function withGreaterEquals(string $greaterEquals): self
     {
-        return new self($greaterEquals);
+        return new self($greaterEquals, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->greaterEquals, $comments);
     }
 }

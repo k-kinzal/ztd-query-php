@@ -15,12 +15,31 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
 final class OptAccountLockPasswordExpireOptionWithPasswordRequireSymCurrentSym_a0a2690f implements \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionForm, \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionsForm
 {
     /**
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
+     */
+    public function __construct(
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
+    ) {
+    }
+
+    /**
      * Writes SQL entirely from this value's fields.
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('PASSWORD');
+        $writer->comments($this->comments, 1);
         $writer->append('REQUIRE');
+        $writer->comments($this->comments, 2);
         $writer->append('CURRENT');
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($comments);
     }
 }

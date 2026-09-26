@@ -15,10 +15,26 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
 final class UnionClauseWith_96d61279 implements \SqlSemantics\Statement\Model\MySql\Role\UnionClauseForm
 {
     /**
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
+     */
+    public function __construct(
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
+    ) {
+    }
+
+    /**
      * Writes SQL entirely from this value's fields.
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
 
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($comments);
     }
 }

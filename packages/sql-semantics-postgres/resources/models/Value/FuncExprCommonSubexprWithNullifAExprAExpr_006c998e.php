@@ -17,11 +17,12 @@ final class FuncExprCommonSubexprWithNullifAExprAExpr_006c998e implements \SqlSe
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr2), 'The aExpr2 must be a generated immutable SQL value.');
@@ -32,11 +33,17 @@ final class FuncExprCommonSubexprWithNullifAExprAExpr_006c998e implements \SqlSe
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('NULLIF');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->aExpr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(',');
+        $writer->comments($this->comments, 4);
         $this->aExpr2->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
     }
 
@@ -45,7 +52,7 @@ final class FuncExprCommonSubexprWithNullifAExprAExpr_006c998e implements \SqlSe
      */
     public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
     {
-        return new self($aExpr, $this->aExpr2);
+        return new self($aExpr, $this->aExpr2, $this->comments);
     }
 
     /**
@@ -53,6 +60,14 @@ final class FuncExprCommonSubexprWithNullifAExprAExpr_006c998e implements \SqlSe
      */
     public function withAExpr2(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr2): self
     {
-        return new self($this->aExpr, $aExpr2);
+        return new self($this->aExpr, $aExpr2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->aExpr, $this->aExpr2, $comments);
     }
 }

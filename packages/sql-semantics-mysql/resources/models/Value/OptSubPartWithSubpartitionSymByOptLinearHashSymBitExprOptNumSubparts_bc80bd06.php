@@ -17,12 +17,13 @@ final class OptSubPartWithSubpartitionSymByOptLinearHashSymBitExprOptNumSubparts
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLinearForm $optLinear,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptNumSubpartsForm $optNumSubparts,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLinear), 'The optLinear must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($bitExpr), 'The bitExpr must be a generated immutable SQL value.');
@@ -34,13 +35,21 @@ final class OptSubPartWithSubpartitionSymByOptLinearHashSymBitExprOptNumSubparts
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SUBPARTITION');
+        $writer->comments($this->comments, 1);
         $writer->append('BY');
+        $writer->comments($this->comments, 2);
         $this->optLinear->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('HASH');
+        $writer->comments($this->comments, 4);
         $writer->append('(');
+        $writer->comments($this->comments, 5);
         $this->bitExpr->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append(')');
+        $writer->comments($this->comments, 7);
         $this->optNumSubparts->write($writer);
     }
 
@@ -49,7 +58,7 @@ final class OptSubPartWithSubpartitionSymByOptLinearHashSymBitExprOptNumSubparts
      */
     public function withOptLinear(\SqlSemantics\Statement\Model\MySql\Role\OptLinearForm $optLinear): self
     {
-        return new self($optLinear, $this->bitExpr, $this->optNumSubparts);
+        return new self($optLinear, $this->bitExpr, $this->optNumSubparts, $this->comments);
     }
 
     /**
@@ -57,7 +66,7 @@ final class OptSubPartWithSubpartitionSymByOptLinearHashSymBitExprOptNumSubparts
      */
     public function withBitExpr(\SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr): self
     {
-        return new self($this->optLinear, $bitExpr, $this->optNumSubparts);
+        return new self($this->optLinear, $bitExpr, $this->optNumSubparts, $this->comments);
     }
 
     /**
@@ -65,6 +74,14 @@ final class OptSubPartWithSubpartitionSymByOptLinearHashSymBitExprOptNumSubparts
      */
     public function withOptNumSubparts(\SqlSemantics\Statement\Model\MySql\Role\OptNumSubpartsForm $optNumSubparts): self
     {
-        return new self($this->optLinear, $this->bitExpr, $optNumSubparts);
+        return new self($this->optLinear, $this->bitExpr, $optNumSubparts, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optLinear, $this->bitExpr, $this->optNumSubparts, $comments);
     }
 }

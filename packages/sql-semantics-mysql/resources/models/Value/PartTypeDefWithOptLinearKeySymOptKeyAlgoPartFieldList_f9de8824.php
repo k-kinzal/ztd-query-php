@@ -17,12 +17,13 @@ final class PartTypeDefWithOptLinearKeySymOptKeyAlgoPartFieldList_f9de8824 imple
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLinearForm $optLinear,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptKeyAlgoForm $optKeyAlgo,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartFieldListForm $partFieldList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLinear), 'The optLinear must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optKeyAlgo), 'The optKeyAlgo must be a generated immutable SQL value.');
@@ -34,11 +35,17 @@ final class PartTypeDefWithOptLinearKeySymOptKeyAlgoPartFieldList_f9de8824 imple
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optLinear->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('KEY');
+        $writer->comments($this->comments, 2);
         $this->optKeyAlgo->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('(');
+        $writer->comments($this->comments, 4);
         $this->partFieldList->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
     }
 
@@ -47,7 +54,7 @@ final class PartTypeDefWithOptLinearKeySymOptKeyAlgoPartFieldList_f9de8824 imple
      */
     public function withOptLinear(\SqlSemantics\Statement\Model\MySql\Role\OptLinearForm $optLinear): self
     {
-        return new self($optLinear, $this->optKeyAlgo, $this->partFieldList);
+        return new self($optLinear, $this->optKeyAlgo, $this->partFieldList, $this->comments);
     }
 
     /**
@@ -55,7 +62,7 @@ final class PartTypeDefWithOptLinearKeySymOptKeyAlgoPartFieldList_f9de8824 imple
      */
     public function withOptKeyAlgo(\SqlSemantics\Statement\Model\MySql\Role\OptKeyAlgoForm $optKeyAlgo): self
     {
-        return new self($this->optLinear, $optKeyAlgo, $this->partFieldList);
+        return new self($this->optLinear, $optKeyAlgo, $this->partFieldList, $this->comments);
     }
 
     /**
@@ -63,6 +70,14 @@ final class PartTypeDefWithOptLinearKeySymOptKeyAlgoPartFieldList_f9de8824 imple
      */
     public function withPartFieldList(\SqlSemantics\Statement\Model\MySql\Role\PartFieldListForm $partFieldList): self
     {
-        return new self($this->optLinear, $this->optKeyAlgo, $partFieldList);
+        return new self($this->optLinear, $this->optKeyAlgo, $partFieldList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optLinear, $this->optKeyAlgo, $this->partFieldList, $comments);
     }
 }

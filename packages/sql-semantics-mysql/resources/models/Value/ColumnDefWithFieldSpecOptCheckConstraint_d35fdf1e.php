@@ -17,11 +17,12 @@ final class ColumnDefWithFieldSpecOptCheckConstraint_d35fdf1e implements \SqlSem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldSpecForm $fieldSpec,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCheckConstraintForm $optCheckConstraint,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldSpec), 'The fieldSpec must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCheckConstraint), 'The optCheckConstraint must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class ColumnDefWithFieldSpecOptCheckConstraint_d35fdf1e implements \SqlSem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->fieldSpec->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optCheckConstraint->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class ColumnDefWithFieldSpecOptCheckConstraint_d35fdf1e implements \SqlSem
      */
     public function withFieldSpec(\SqlSemantics\Statement\Model\MySql\Role\FieldSpecForm $fieldSpec): self
     {
-        return new self($fieldSpec, $this->optCheckConstraint);
+        return new self($fieldSpec, $this->optCheckConstraint, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class ColumnDefWithFieldSpecOptCheckConstraint_d35fdf1e implements \SqlSem
      */
     public function withOptCheckConstraint(\SqlSemantics\Statement\Model\MySql\Role\OptCheckConstraintForm $optCheckConstraint): self
     {
-        return new self($this->fieldSpec, $optCheckConstraint);
+        return new self($this->fieldSpec, $optCheckConstraint, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->fieldSpec, $this->optCheckConstraint, $comments);
     }
 }

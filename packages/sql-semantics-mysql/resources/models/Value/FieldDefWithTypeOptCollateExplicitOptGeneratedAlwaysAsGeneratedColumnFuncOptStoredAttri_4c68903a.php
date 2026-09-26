@@ -17,7 +17,7 @@ final class FieldDefWithTypeOptCollateExplicitOptGeneratedAlwaysAsGeneratedColum
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TypeForm $type,
@@ -26,6 +26,7 @@ final class FieldDefWithTypeOptCollateExplicitOptGeneratedAlwaysAsGeneratedColum
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GeneratedColumnFuncForm $generatedColumnFunc,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptStoredAttributeForm $optStoredAttribute,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptGcolAttributeListForm $optGcolAttributeList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($type), 'The type must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCollateExplicit), 'The optCollateExplicit must be a generated immutable SQL value.');
@@ -40,14 +41,23 @@ final class FieldDefWithTypeOptCollateExplicitOptGeneratedAlwaysAsGeneratedColum
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->type->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optCollateExplicit->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optGeneratedAlways->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('AS');
+        $writer->comments($this->comments, 4);
         $writer->append('(');
+        $writer->comments($this->comments, 5);
         $this->generatedColumnFunc->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append(')');
+        $writer->comments($this->comments, 7);
         $this->optStoredAttribute->write($writer);
+        $writer->comments($this->comments, 8);
         $this->optGcolAttributeList->write($writer);
     }
 
@@ -56,7 +66,7 @@ final class FieldDefWithTypeOptCollateExplicitOptGeneratedAlwaysAsGeneratedColum
      */
     public function withType(\SqlSemantics\Statement\Model\MySql\Role\TypeForm $type): self
     {
-        return new self($type, $this->optCollateExplicit, $this->optGeneratedAlways, $this->generatedColumnFunc, $this->optStoredAttribute, $this->optGcolAttributeList);
+        return new self($type, $this->optCollateExplicit, $this->optGeneratedAlways, $this->generatedColumnFunc, $this->optStoredAttribute, $this->optGcolAttributeList, $this->comments);
     }
 
     /**
@@ -64,7 +74,7 @@ final class FieldDefWithTypeOptCollateExplicitOptGeneratedAlwaysAsGeneratedColum
      */
     public function withOptCollateExplicit(\SqlSemantics\Statement\Model\MySql\Role\OptCollateExplicitForm $optCollateExplicit): self
     {
-        return new self($this->type, $optCollateExplicit, $this->optGeneratedAlways, $this->generatedColumnFunc, $this->optStoredAttribute, $this->optGcolAttributeList);
+        return new self($this->type, $optCollateExplicit, $this->optGeneratedAlways, $this->generatedColumnFunc, $this->optStoredAttribute, $this->optGcolAttributeList, $this->comments);
     }
 
     /**
@@ -72,7 +82,7 @@ final class FieldDefWithTypeOptCollateExplicitOptGeneratedAlwaysAsGeneratedColum
      */
     public function withOptGeneratedAlways(\SqlSemantics\Statement\Model\MySql\Role\OptGeneratedAlwaysForm $optGeneratedAlways): self
     {
-        return new self($this->type, $this->optCollateExplicit, $optGeneratedAlways, $this->generatedColumnFunc, $this->optStoredAttribute, $this->optGcolAttributeList);
+        return new self($this->type, $this->optCollateExplicit, $optGeneratedAlways, $this->generatedColumnFunc, $this->optStoredAttribute, $this->optGcolAttributeList, $this->comments);
     }
 
     /**
@@ -80,7 +90,7 @@ final class FieldDefWithTypeOptCollateExplicitOptGeneratedAlwaysAsGeneratedColum
      */
     public function withGeneratedColumnFunc(\SqlSemantics\Statement\Model\MySql\Role\GeneratedColumnFuncForm $generatedColumnFunc): self
     {
-        return new self($this->type, $this->optCollateExplicit, $this->optGeneratedAlways, $generatedColumnFunc, $this->optStoredAttribute, $this->optGcolAttributeList);
+        return new self($this->type, $this->optCollateExplicit, $this->optGeneratedAlways, $generatedColumnFunc, $this->optStoredAttribute, $this->optGcolAttributeList, $this->comments);
     }
 
     /**
@@ -88,7 +98,7 @@ final class FieldDefWithTypeOptCollateExplicitOptGeneratedAlwaysAsGeneratedColum
      */
     public function withOptStoredAttribute(\SqlSemantics\Statement\Model\MySql\Role\OptStoredAttributeForm $optStoredAttribute): self
     {
-        return new self($this->type, $this->optCollateExplicit, $this->optGeneratedAlways, $this->generatedColumnFunc, $optStoredAttribute, $this->optGcolAttributeList);
+        return new self($this->type, $this->optCollateExplicit, $this->optGeneratedAlways, $this->generatedColumnFunc, $optStoredAttribute, $this->optGcolAttributeList, $this->comments);
     }
 
     /**
@@ -96,6 +106,14 @@ final class FieldDefWithTypeOptCollateExplicitOptGeneratedAlwaysAsGeneratedColum
      */
     public function withOptGcolAttributeList(\SqlSemantics\Statement\Model\MySql\Role\OptGcolAttributeListForm $optGcolAttributeList): self
     {
-        return new self($this->type, $this->optCollateExplicit, $this->optGeneratedAlways, $this->generatedColumnFunc, $this->optStoredAttribute, $optGcolAttributeList);
+        return new self($this->type, $this->optCollateExplicit, $this->optGeneratedAlways, $this->generatedColumnFunc, $this->optStoredAttribute, $optGcolAttributeList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->type, $this->optCollateExplicit, $this->optGeneratedAlways, $this->generatedColumnFunc, $this->optStoredAttribute, $this->optGcolAttributeList, $comments);
     }
 }

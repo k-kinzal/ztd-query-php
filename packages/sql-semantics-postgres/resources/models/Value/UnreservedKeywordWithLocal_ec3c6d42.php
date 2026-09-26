@@ -17,10 +17,11 @@ final class UnreservedKeywordWithLocal_ec3c6d42 implements \SqlSemantics\Stateme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $name,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($name, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['LOCAL'], 'The name must be a complete LOCAL lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class UnreservedKeywordWithLocal_ec3c6d42 implements \SqlSemantics\Stateme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->name);
     }
 
@@ -38,6 +40,14 @@ final class UnreservedKeywordWithLocal_ec3c6d42 implements \SqlSemantics\Stateme
      */
     public function withName(string $name): self
     {
-        return new self($name);
+        return new self($name, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->name, $comments);
     }
 }

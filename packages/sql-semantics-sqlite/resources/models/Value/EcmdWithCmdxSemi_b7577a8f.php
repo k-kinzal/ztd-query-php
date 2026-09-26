@@ -17,11 +17,12 @@ final class EcmdWithCmdxSemi_b7577a8f implements \SqlSemantics\Statement\Model\S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm $cmdx,
         public readonly string $semi,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($cmdx), 'The cmdx must be a generated immutable SQL value.');
         $this->assertMatchesPattern($semi, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['SEMI'], 'The semi must be a complete SEMI lexical spelling.');
@@ -32,7 +33,9 @@ final class EcmdWithCmdxSemi_b7577a8f implements \SqlSemantics\Statement\Model\S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->cmdx->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append($this->semi);
     }
 
@@ -41,7 +44,7 @@ final class EcmdWithCmdxSemi_b7577a8f implements \SqlSemantics\Statement\Model\S
      */
     public function withCmdx(\SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm $cmdx): self
     {
-        return new self($cmdx, $this->semi);
+        return new self($cmdx, $this->semi, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class EcmdWithCmdxSemi_b7577a8f implements \SqlSemantics\Statement\Model\S
      */
     public function withSemi(string $semi): self
     {
-        return new self($this->cmdx, $semi);
+        return new self($this->cmdx, $semi, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->cmdx, $this->semi, $comments);
     }
 }

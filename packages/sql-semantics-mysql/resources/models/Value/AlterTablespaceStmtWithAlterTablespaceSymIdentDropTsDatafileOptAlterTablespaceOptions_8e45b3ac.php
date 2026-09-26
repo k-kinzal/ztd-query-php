@@ -17,12 +17,13 @@ final class AlterTablespaceStmtWithAlterTablespaceSymIdentDropTsDatafileOptAlter
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TsDatafileForm $tsDatafile,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptAlterTablespaceOptionsForm $optAlterTablespaceOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tsDatafile), 'The tsDatafile must be a generated immutable SQL value.');
@@ -34,11 +35,17 @@ final class AlterTablespaceStmtWithAlterTablespaceSymIdentDropTsDatafileOptAlter
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('TABLESPACE');
+        $writer->comments($this->comments, 2);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('DROP');
+        $writer->comments($this->comments, 4);
         $this->tsDatafile->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optAlterTablespaceOptions->write($writer);
     }
 
@@ -47,7 +54,7 @@ final class AlterTablespaceStmtWithAlterTablespaceSymIdentDropTsDatafileOptAlter
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($ident, $this->tsDatafile, $this->optAlterTablespaceOptions);
+        return new self($ident, $this->tsDatafile, $this->optAlterTablespaceOptions, $this->comments);
     }
 
     /**
@@ -55,7 +62,7 @@ final class AlterTablespaceStmtWithAlterTablespaceSymIdentDropTsDatafileOptAlter
      */
     public function withTsDatafile(\SqlSemantics\Statement\Model\MySql\Role\TsDatafileForm $tsDatafile): self
     {
-        return new self($this->ident, $tsDatafile, $this->optAlterTablespaceOptions);
+        return new self($this->ident, $tsDatafile, $this->optAlterTablespaceOptions, $this->comments);
     }
 
     /**
@@ -63,6 +70,14 @@ final class AlterTablespaceStmtWithAlterTablespaceSymIdentDropTsDatafileOptAlter
      */
     public function withOptAlterTablespaceOptions(\SqlSemantics\Statement\Model\MySql\Role\OptAlterTablespaceOptionsForm $optAlterTablespaceOptions): self
     {
-        return new self($this->ident, $this->tsDatafile, $optAlterTablespaceOptions);
+        return new self($this->ident, $this->tsDatafile, $optAlterTablespaceOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ident, $this->tsDatafile, $this->optAlterTablespaceOptions, $comments);
     }
 }

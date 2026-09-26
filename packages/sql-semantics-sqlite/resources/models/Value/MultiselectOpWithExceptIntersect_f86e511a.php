@@ -17,10 +17,11 @@ final class MultiselectOpWithExceptIntersect_f86e511a implements \SqlSemantics\S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $exceptIntersect,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($exceptIntersect, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['EXCEPT|INTERSECT'], 'The exceptIntersect must be a complete EXCEPT|INTERSECT lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class MultiselectOpWithExceptIntersect_f86e511a implements \SqlSemantics\S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->exceptIntersect);
     }
 
@@ -38,6 +40,14 @@ final class MultiselectOpWithExceptIntersect_f86e511a implements \SqlSemantics\S
      */
     public function withExceptIntersect(string $exceptIntersect): self
     {
-        return new self($exceptIntersect);
+        return new self($exceptIntersect, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->exceptIntersect, $comments);
     }
 }

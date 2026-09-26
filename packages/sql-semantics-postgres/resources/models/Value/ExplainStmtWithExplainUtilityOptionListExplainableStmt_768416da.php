@@ -17,11 +17,12 @@ final class ExplainStmtWithExplainUtilityOptionListExplainableStmt_768416da impl
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionListForm $utilityOptionList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm $explainableStmt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($utilityOptionList), 'The utilityOptionList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($explainableStmt), 'The explainableStmt must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class ExplainStmtWithExplainUtilityOptionListExplainableStmt_768416da impl
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('EXPLAIN');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->utilityOptionList->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
+        $writer->comments($this->comments, 4);
         $this->explainableStmt->write($writer);
     }
 
@@ -44,7 +50,7 @@ final class ExplainStmtWithExplainUtilityOptionListExplainableStmt_768416da impl
      */
     public function withUtilityOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionListForm $utilityOptionList): self
     {
-        return new self($utilityOptionList, $this->explainableStmt);
+        return new self($utilityOptionList, $this->explainableStmt, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class ExplainStmtWithExplainUtilityOptionListExplainableStmt_768416da impl
      */
     public function withExplainableStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm $explainableStmt): self
     {
-        return new self($this->utilityOptionList, $explainableStmt);
+        return new self($this->utilityOptionList, $explainableStmt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->utilityOptionList, $this->explainableStmt, $comments);
     }
 }

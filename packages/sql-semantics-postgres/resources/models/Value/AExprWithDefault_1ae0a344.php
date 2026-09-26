@@ -15,10 +15,27 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
 final class AExprWithDefault_1ae0a344 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CaseArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListOptForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTargetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectOffsetValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TrimListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeListForm
 {
     /**
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
+     */
+    public function __construct(
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
+    ) {
+    }
+
+    /**
      * Writes SQL entirely from this value's fields.
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('DEFAULT');
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($comments);
     }
 }

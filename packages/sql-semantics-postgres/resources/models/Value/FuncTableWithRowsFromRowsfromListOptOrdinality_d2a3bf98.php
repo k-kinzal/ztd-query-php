@@ -17,11 +17,12 @@ final class FuncTableWithRowsFromRowsfromListOptOrdinality_d2a3bf98 implements \
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RowsfromListForm $rowsfromList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptOrdinalityForm $optOrdinality,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($rowsfromList), 'The rowsfromList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optOrdinality), 'The optOrdinality must be a generated immutable SQL value.');
@@ -32,11 +33,17 @@ final class FuncTableWithRowsFromRowsfromListOptOrdinality_d2a3bf98 implements \
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ROWS');
+        $writer->comments($this->comments, 1);
         $writer->append('FROM');
+        $writer->comments($this->comments, 2);
         $writer->append('(');
+        $writer->comments($this->comments, 3);
         $this->rowsfromList->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
+        $writer->comments($this->comments, 5);
         $this->optOrdinality->write($writer);
     }
 
@@ -45,7 +52,7 @@ final class FuncTableWithRowsFromRowsfromListOptOrdinality_d2a3bf98 implements \
      */
     public function withRowsfromList(\SqlSemantics\Statement\Model\PostgreSql\Role\RowsfromListForm $rowsfromList): self
     {
-        return new self($rowsfromList, $this->optOrdinality);
+        return new self($rowsfromList, $this->optOrdinality, $this->comments);
     }
 
     /**
@@ -53,6 +60,14 @@ final class FuncTableWithRowsFromRowsfromListOptOrdinality_d2a3bf98 implements \
      */
     public function withOptOrdinality(\SqlSemantics\Statement\Model\PostgreSql\Role\OptOrdinalityForm $optOrdinality): self
     {
-        return new self($this->rowsfromList, $optOrdinality);
+        return new self($this->rowsfromList, $optOrdinality, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->rowsfromList, $this->optOrdinality, $comments);
     }
 }

@@ -17,13 +17,14 @@ final class OptSubPartWithSubpartitionSymByOptLinearKeySymOptKeyAlgoSubPartField
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLinearForm $optLinear,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptKeyAlgoForm $optKeyAlgo,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SubPartFieldListForm $subPartFieldList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptNumSubpartsForm $optNumSubparts,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLinear), 'The optLinear must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optKeyAlgo), 'The optKeyAlgo must be a generated immutable SQL value.');
@@ -36,14 +37,23 @@ final class OptSubPartWithSubpartitionSymByOptLinearKeySymOptKeyAlgoSubPartField
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SUBPARTITION');
+        $writer->comments($this->comments, 1);
         $writer->append('BY');
+        $writer->comments($this->comments, 2);
         $this->optLinear->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('KEY');
+        $writer->comments($this->comments, 4);
         $this->optKeyAlgo->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('(');
+        $writer->comments($this->comments, 6);
         $this->subPartFieldList->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append(')');
+        $writer->comments($this->comments, 8);
         $this->optNumSubparts->write($writer);
     }
 
@@ -52,7 +62,7 @@ final class OptSubPartWithSubpartitionSymByOptLinearKeySymOptKeyAlgoSubPartField
      */
     public function withOptLinear(\SqlSemantics\Statement\Model\MySql\Role\OptLinearForm $optLinear): self
     {
-        return new self($optLinear, $this->optKeyAlgo, $this->subPartFieldList, $this->optNumSubparts);
+        return new self($optLinear, $this->optKeyAlgo, $this->subPartFieldList, $this->optNumSubparts, $this->comments);
     }
 
     /**
@@ -60,7 +70,7 @@ final class OptSubPartWithSubpartitionSymByOptLinearKeySymOptKeyAlgoSubPartField
      */
     public function withOptKeyAlgo(\SqlSemantics\Statement\Model\MySql\Role\OptKeyAlgoForm $optKeyAlgo): self
     {
-        return new self($this->optLinear, $optKeyAlgo, $this->subPartFieldList, $this->optNumSubparts);
+        return new self($this->optLinear, $optKeyAlgo, $this->subPartFieldList, $this->optNumSubparts, $this->comments);
     }
 
     /**
@@ -68,7 +78,7 @@ final class OptSubPartWithSubpartitionSymByOptLinearKeySymOptKeyAlgoSubPartField
      */
     public function withSubPartFieldList(\SqlSemantics\Statement\Model\MySql\Role\SubPartFieldListForm $subPartFieldList): self
     {
-        return new self($this->optLinear, $this->optKeyAlgo, $subPartFieldList, $this->optNumSubparts);
+        return new self($this->optLinear, $this->optKeyAlgo, $subPartFieldList, $this->optNumSubparts, $this->comments);
     }
 
     /**
@@ -76,6 +86,14 @@ final class OptSubPartWithSubpartitionSymByOptLinearKeySymOptKeyAlgoSubPartField
      */
     public function withOptNumSubparts(\SqlSemantics\Statement\Model\MySql\Role\OptNumSubpartsForm $optNumSubparts): self
     {
-        return new self($this->optLinear, $this->optKeyAlgo, $this->subPartFieldList, $optNumSubparts);
+        return new self($this->optLinear, $this->optKeyAlgo, $this->subPartFieldList, $optNumSubparts, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optLinear, $this->optKeyAlgo, $this->subPartFieldList, $this->optNumSubparts, $comments);
     }
 }

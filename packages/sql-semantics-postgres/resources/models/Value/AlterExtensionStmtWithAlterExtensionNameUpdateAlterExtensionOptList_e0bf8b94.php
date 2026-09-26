@@ -17,11 +17,12 @@ final class AlterExtensionStmtWithAlterExtensionNameUpdateAlterExtensionOptList_
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AlterExtensionOptListForm $alterExtensionOptList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($alterExtensionOptList), 'The alterExtensionOptList must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class AlterExtensionStmtWithAlterExtensionNameUpdateAlterExtensionOptList_
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('EXTENSION');
+        $writer->comments($this->comments, 2);
         $this->name->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('UPDATE');
+        $writer->comments($this->comments, 4);
         $this->alterExtensionOptList->write($writer);
     }
 
@@ -44,7 +50,7 @@ final class AlterExtensionStmtWithAlterExtensionNameUpdateAlterExtensionOptList_
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($name, $this->alterExtensionOptList);
+        return new self($name, $this->alterExtensionOptList, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class AlterExtensionStmtWithAlterExtensionNameUpdateAlterExtensionOptList_
      */
     public function withAlterExtensionOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\AlterExtensionOptListForm $alterExtensionOptList): self
     {
-        return new self($this->name, $alterExtensionOptList);
+        return new self($this->name, $alterExtensionOptList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->name, $this->alterExtensionOptList, $comments);
     }
 }

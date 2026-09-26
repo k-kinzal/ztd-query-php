@@ -17,11 +17,12 @@ final class SelectLimitWithLimitClauseOffsetClause_48e31c1e implements \SqlSeman
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\LimitClauseForm $limitClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OffsetClauseForm $offsetClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($limitClause), 'The limitClause must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($offsetClause), 'The offsetClause must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class SelectLimitWithLimitClauseOffsetClause_48e31c1e implements \SqlSeman
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->limitClause->write($writer);
+        $writer->comments($this->comments, 1);
         $this->offsetClause->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class SelectLimitWithLimitClauseOffsetClause_48e31c1e implements \SqlSeman
      */
     public function withLimitClause(\SqlSemantics\Statement\Model\PostgreSql\Role\LimitClauseForm $limitClause): self
     {
-        return new self($limitClause, $this->offsetClause);
+        return new self($limitClause, $this->offsetClause, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class SelectLimitWithLimitClauseOffsetClause_48e31c1e implements \SqlSeman
      */
     public function withOffsetClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OffsetClauseForm $offsetClause): self
     {
-        return new self($this->limitClause, $offsetClause);
+        return new self($this->limitClause, $offsetClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->limitClause, $this->offsetClause, $comments);
     }
 }

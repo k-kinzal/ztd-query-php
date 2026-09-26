@@ -17,10 +17,11 @@ final class IntTypeWithSmallintSym_d0ca68a6 implements \SqlSemantics\Statement\M
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $smallintSym,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($smallintSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['SMALLINT_SYM'], 'The smallintSym must be a complete SMALLINT_SYM lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class IntTypeWithSmallintSym_d0ca68a6 implements \SqlSemantics\Statement\M
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->smallintSym);
     }
 
@@ -38,6 +40,14 @@ final class IntTypeWithSmallintSym_d0ca68a6 implements \SqlSemantics\Statement\M
      */
     public function withSmallintSym(string $smallintSym): self
     {
-        return new self($smallintSym);
+        return new self($smallintSym, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->smallintSym, $comments);
     }
 }

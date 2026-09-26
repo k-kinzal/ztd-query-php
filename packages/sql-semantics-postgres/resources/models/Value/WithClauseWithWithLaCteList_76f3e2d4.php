@@ -17,11 +17,12 @@ final class WithClauseWithWithLaCteList_76f3e2d4 implements \SqlSemantics\Statem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $withLa,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CteListForm $cteList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($withLa, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['WITH_LA'], 'The withLa must be a complete WITH_LA lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($cteList), 'The cteList must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class WithClauseWithWithLaCteList_76f3e2d4 implements \SqlSemantics\Statem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->withLa);
+        $writer->comments($this->comments, 1);
         $this->cteList->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class WithClauseWithWithLaCteList_76f3e2d4 implements \SqlSemantics\Statem
      */
     public function withWithLa(string $withLa): self
     {
-        return new self($withLa, $this->cteList);
+        return new self($withLa, $this->cteList, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class WithClauseWithWithLaCteList_76f3e2d4 implements \SqlSemantics\Statem
      */
     public function withCteList(\SqlSemantics\Statement\Model\PostgreSql\Role\CteListForm $cteList): self
     {
-        return new self($this->withLa, $cteList);
+        return new self($this->withLa, $cteList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->withLa, $this->cteList, $comments);
     }
 }

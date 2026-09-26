@@ -21,18 +21,39 @@ use SqlSemantics\Core\Schema\TableDefinition;
 final class SchemaRules implements Contract
 {
     /**
-     * Rejects table options that change the declared schema semantics.
+     * Rejects declarations whose column state requires evaluating another relation.
      */
     public function validate(Node $source, Node $header): void
     {
         Tree::assertChildren($source, ['create_table', 'create_table_args'], []);
-        Tree::assertChildren($header, ['createkw', 'nm', 'dbnm'], ['TABLE']);
+        Tree::assertChildren($header, ['createkw', 'nm', 'dbnm', 'ifnotexists'], ['TABLE']);
         $arguments = Tree::child($source, ['create_table_args']);
         if ($arguments === null) {
             Tree::unsupported($source, 'table arguments');
         }
-        Tree::assertChildren($arguments, ['columnlist', 'conslist_opt'], ['(', ')']);
+        Tree::assertChildren($arguments, ['columnlist', 'conslist_opt', 'table_option_set'], ['(', ')']);
         return;
+    }
+
+    /**
+     * @return list<Node>
+     */
+    public function options(Node $source): array
+    {
+        return array_values(array_filter(Tree::outer($source, ['table_option']), static fn (Node $node): bool => $node->tokens() !== []));
+    }
+
+    /**
+     * Reports table-level primary key nullability.
+     */
+    public function primaryOptionsNotNull(Node $source): bool
+    {
+        foreach ($this->options($source) as $option) {
+            if (in_array(strtoupper(Tree::text($option)), ['STRICT', 'WITHOUT ROWID'], true)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -61,7 +82,7 @@ final class SchemaRules implements Contract
             return false;
         }
         foreach ($constraints as $constraint) {
-            if ($constraint->kind === ConstraintKind::PrimaryKey && str_contains(strtoupper(Tree::text($constraint->source)), 'DESC')) {
+            if ($constraint->kind === ConstraintKind::PrimaryKey && $constraint->inline && $constraint->descending) {
                 return false;
             }
         }

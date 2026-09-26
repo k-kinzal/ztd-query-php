@@ -31,9 +31,9 @@ final class TypeRules implements Contract
     }
 
     /**
-     * Reads the declared built-in type and preserves its modifiers.
+     * Reads a declared type, including table-dependent storage rules and modifiers.
      */
-    public function read(Node $node): TypeDescriptor
+    public function read(Node $node, ?Node $table = null): TypeDescriptor
     {
         $tokens = $node->tokens();
         $words = [];
@@ -48,15 +48,12 @@ final class TypeRules implements Contract
                 if ($inModifiers) {
                     $modifiers[] = $token->text;
                 } else {
-                    $words[] = strtoupper($token->text);
+                    $words[] = $token->text;
                 }
             }
         }
         $name = implode(' ', $words);
-        $canonical = $this->canonical($name);
-        if ($canonical === null) {
-            Tree::unsupported($node, 'type declaration');
-        }
+        $canonical = $this->canonical(strtoupper($name)) ?? $name;
         return new TypeDescriptor($this->dialect, $canonical, $modifiers);
     }
 

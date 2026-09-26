@@ -17,10 +17,11 @@ final class JoinopWithCommaJoin_2b032ba0 implements \SqlSemantics\Statement\Mode
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $commaJoin,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($commaJoin, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['COMMA|JOIN'], 'The commaJoin must be a complete COMMA|JOIN lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class JoinopWithCommaJoin_2b032ba0 implements \SqlSemantics\Statement\Mode
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->commaJoin);
     }
 
@@ -38,6 +40,14 @@ final class JoinopWithCommaJoin_2b032ba0 implements \SqlSemantics\Statement\Mode
      */
     public function withCommaJoin(string $commaJoin): self
     {
-        return new self($commaJoin);
+        return new self($commaJoin, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->commaJoin, $comments);
     }
 }

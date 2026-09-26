@@ -17,11 +17,12 @@ final class AlterCommandsWithAlterCommandListRemovePartitioning_95c5f2e4 impleme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm $alterCommandList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RemovePartitioningForm $removePartitioning,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterCommandList), 'The alterCommandList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($removePartitioning), 'The removePartitioning must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class AlterCommandsWithAlterCommandListRemovePartitioning_95c5f2e4 impleme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->alterCommandList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->removePartitioning->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class AlterCommandsWithAlterCommandListRemovePartitioning_95c5f2e4 impleme
      */
     public function withAlterCommandList(\SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm $alterCommandList): self
     {
-        return new self($alterCommandList, $this->removePartitioning);
+        return new self($alterCommandList, $this->removePartitioning, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class AlterCommandsWithAlterCommandListRemovePartitioning_95c5f2e4 impleme
      */
     public function withRemovePartitioning(\SqlSemantics\Statement\Model\MySql\Role\RemovePartitioningForm $removePartitioning): self
     {
-        return new self($this->alterCommandList, $removePartitioning);
+        return new self($this->alterCommandList, $removePartitioning, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->alterCommandList, $this->removePartitioning, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class GroupReplicationWithGroupReplicationStartOptGroupReplicationStartOpt
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GroupReplicationStartForm $groupReplicationStart,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptGroupReplicationStartOptionsForm $optGroupReplicationStartOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($groupReplicationStart), 'The groupReplicationStart must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optGroupReplicationStartOptions), 'The optGroupReplicationStartOptions must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class GroupReplicationWithGroupReplicationStartOptGroupReplicationStartOpt
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->groupReplicationStart->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optGroupReplicationStartOptions->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class GroupReplicationWithGroupReplicationStartOptGroupReplicationStartOpt
      */
     public function withGroupReplicationStart(\SqlSemantics\Statement\Model\MySql\Role\GroupReplicationStartForm $groupReplicationStart): self
     {
-        return new self($groupReplicationStart, $this->optGroupReplicationStartOptions);
+        return new self($groupReplicationStart, $this->optGroupReplicationStartOptions, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class GroupReplicationWithGroupReplicationStartOptGroupReplicationStartOpt
      */
     public function withOptGroupReplicationStartOptions(\SqlSemantics\Statement\Model\MySql\Role\OptGroupReplicationStartOptionsForm $optGroupReplicationStartOptions): self
     {
-        return new self($this->groupReplicationStart, $optGroupReplicationStartOptions);
+        return new self($this->groupReplicationStart, $optGroupReplicationStartOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->groupReplicationStart, $this->optGroupReplicationStartOptions, $comments);
     }
 }

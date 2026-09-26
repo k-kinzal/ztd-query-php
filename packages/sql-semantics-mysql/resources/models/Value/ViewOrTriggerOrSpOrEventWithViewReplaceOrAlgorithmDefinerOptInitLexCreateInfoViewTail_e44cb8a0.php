@@ -17,13 +17,14 @@ final class ViewOrTriggerOrSpOrEventWithViewReplaceOrAlgorithmDefinerOptInitLexC
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ViewReplaceOrAlgorithmForm $viewReplaceOrAlgorithm,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DefinerOptForm $definerOpt,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InitLexCreateInfoForm $initLexCreateInfo,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ViewTailForm $viewTail,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($viewReplaceOrAlgorithm), 'The viewReplaceOrAlgorithm must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($definerOpt), 'The definerOpt must be a generated immutable SQL value.');
@@ -36,9 +37,13 @@ final class ViewOrTriggerOrSpOrEventWithViewReplaceOrAlgorithmDefinerOptInitLexC
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->viewReplaceOrAlgorithm->write($writer);
+        $writer->comments($this->comments, 1);
         $this->definerOpt->write($writer);
+        $writer->comments($this->comments, 2);
         $this->initLexCreateInfo->write($writer);
+        $writer->comments($this->comments, 3);
         $this->viewTail->write($writer);
     }
 
@@ -47,7 +52,7 @@ final class ViewOrTriggerOrSpOrEventWithViewReplaceOrAlgorithmDefinerOptInitLexC
      */
     public function withViewReplaceOrAlgorithm(\SqlSemantics\Statement\Model\MySql\Role\ViewReplaceOrAlgorithmForm $viewReplaceOrAlgorithm): self
     {
-        return new self($viewReplaceOrAlgorithm, $this->definerOpt, $this->initLexCreateInfo, $this->viewTail);
+        return new self($viewReplaceOrAlgorithm, $this->definerOpt, $this->initLexCreateInfo, $this->viewTail, $this->comments);
     }
 
     /**
@@ -55,7 +60,7 @@ final class ViewOrTriggerOrSpOrEventWithViewReplaceOrAlgorithmDefinerOptInitLexC
      */
     public function withDefinerOpt(\SqlSemantics\Statement\Model\MySql\Role\DefinerOptForm $definerOpt): self
     {
-        return new self($this->viewReplaceOrAlgorithm, $definerOpt, $this->initLexCreateInfo, $this->viewTail);
+        return new self($this->viewReplaceOrAlgorithm, $definerOpt, $this->initLexCreateInfo, $this->viewTail, $this->comments);
     }
 
     /**
@@ -63,7 +68,7 @@ final class ViewOrTriggerOrSpOrEventWithViewReplaceOrAlgorithmDefinerOptInitLexC
      */
     public function withInitLexCreateInfo(\SqlSemantics\Statement\Model\MySql\Role\InitLexCreateInfoForm $initLexCreateInfo): self
     {
-        return new self($this->viewReplaceOrAlgorithm, $this->definerOpt, $initLexCreateInfo, $this->viewTail);
+        return new self($this->viewReplaceOrAlgorithm, $this->definerOpt, $initLexCreateInfo, $this->viewTail, $this->comments);
     }
 
     /**
@@ -71,6 +76,14 @@ final class ViewOrTriggerOrSpOrEventWithViewReplaceOrAlgorithmDefinerOptInitLexC
      */
     public function withViewTail(\SqlSemantics\Statement\Model\MySql\Role\ViewTailForm $viewTail): self
     {
-        return new self($this->viewReplaceOrAlgorithm, $this->definerOpt, $this->initLexCreateInfo, $viewTail);
+        return new self($this->viewReplaceOrAlgorithm, $this->definerOpt, $this->initLexCreateInfo, $viewTail, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->viewReplaceOrAlgorithm, $this->definerOpt, $this->initLexCreateInfo, $this->viewTail, $comments);
     }
 }

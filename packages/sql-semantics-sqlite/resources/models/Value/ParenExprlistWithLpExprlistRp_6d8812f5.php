@@ -17,10 +17,11 @@ final class ParenExprlistWithLpExprlistRp_6d8812f5 implements \SqlSemantics\Stat
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm $exprlist,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($exprlist), 'The exprlist must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class ParenExprlistWithLpExprlistRp_6d8812f5 implements \SqlSemantics\Stat
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->exprlist->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(')');
     }
 
@@ -40,6 +44,14 @@ final class ParenExprlistWithLpExprlistRp_6d8812f5 implements \SqlSemantics\Stat
      */
     public function withExprlist(\SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm $exprlist): self
     {
-        return new self($exprlist);
+        return new self($exprlist, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->exprlist, $comments);
     }
 }

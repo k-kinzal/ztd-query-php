@@ -17,11 +17,12 @@ final class ExecuteVarListWithExecuteVarListExecuteVarIdent_52936c33 implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExecuteVarListForm $executeVarList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExecuteVarIdentForm $executeVarIdent,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($executeVarList), 'The executeVarList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($executeVarIdent), 'The executeVarIdent must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class ExecuteVarListWithExecuteVarListExecuteVarIdent_52936c33 implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->executeVarList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->executeVarIdent->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class ExecuteVarListWithExecuteVarListExecuteVarIdent_52936c33 implements 
      */
     public function withExecuteVarList(\SqlSemantics\Statement\Model\MySql\Role\ExecuteVarListForm $executeVarList): self
     {
-        return new self($executeVarList, $this->executeVarIdent);
+        return new self($executeVarList, $this->executeVarIdent, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class ExecuteVarListWithExecuteVarListExecuteVarIdent_52936c33 implements 
      */
     public function withExecuteVarIdent(\SqlSemantics\Statement\Model\MySql\Role\ExecuteVarIdentForm $executeVarIdent): self
     {
-        return new self($this->executeVarList, $executeVarIdent);
+        return new self($this->executeVarList, $executeVarIdent, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->executeVarList, $this->executeVarIdent, $comments);
     }
 }

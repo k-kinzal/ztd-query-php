@@ -17,13 +17,14 @@ final class QueryExpressionBodyWithQueryExpressionBodyUnionSymUnionOptionQuerySp
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm $queryExpressionBody,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UnionOptionForm $unionOption,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\QuerySpecificationForm $query,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUnionOrderOrLimitForm $optUnionOrderOrLimit,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($queryExpressionBody), 'The queryExpressionBody must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($unionOption), 'The unionOption must be a generated immutable SQL value.');
@@ -36,10 +37,15 @@ final class QueryExpressionBodyWithQueryExpressionBodyUnionSymUnionOptionQuerySp
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->queryExpressionBody->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('UNION');
+        $writer->comments($this->comments, 2);
         $this->unionOption->write($writer);
+        $writer->comments($this->comments, 3);
         $this->query->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optUnionOrderOrLimit->write($writer);
     }
 
@@ -48,7 +54,7 @@ final class QueryExpressionBodyWithQueryExpressionBodyUnionSymUnionOptionQuerySp
      */
     public function withQueryExpressionBody(\SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm $queryExpressionBody): self
     {
-        return new self($queryExpressionBody, $this->unionOption, $this->query, $this->optUnionOrderOrLimit);
+        return new self($queryExpressionBody, $this->unionOption, $this->query, $this->optUnionOrderOrLimit, $this->comments);
     }
 
     /**
@@ -56,7 +62,7 @@ final class QueryExpressionBodyWithQueryExpressionBodyUnionSymUnionOptionQuerySp
      */
     public function withUnionOption(\SqlSemantics\Statement\Model\MySql\Role\UnionOptionForm $unionOption): self
     {
-        return new self($this->queryExpressionBody, $unionOption, $this->query, $this->optUnionOrderOrLimit);
+        return new self($this->queryExpressionBody, $unionOption, $this->query, $this->optUnionOrderOrLimit, $this->comments);
     }
 
     /**
@@ -64,7 +70,7 @@ final class QueryExpressionBodyWithQueryExpressionBodyUnionSymUnionOptionQuerySp
      */
     public function withQuery(\SqlSemantics\Statement\Model\MySql\Role\QuerySpecificationForm $query): self
     {
-        return new self($this->queryExpressionBody, $this->unionOption, $query, $this->optUnionOrderOrLimit);
+        return new self($this->queryExpressionBody, $this->unionOption, $query, $this->optUnionOrderOrLimit, $this->comments);
     }
 
     /**
@@ -72,6 +78,14 @@ final class QueryExpressionBodyWithQueryExpressionBodyUnionSymUnionOptionQuerySp
      */
     public function withOptUnionOrderOrLimit(\SqlSemantics\Statement\Model\MySql\Role\OptUnionOrderOrLimitForm $optUnionOrderOrLimit): self
     {
-        return new self($this->queryExpressionBody, $this->unionOption, $this->query, $optUnionOrderOrLimit);
+        return new self($this->queryExpressionBody, $this->unionOption, $this->query, $optUnionOrderOrLimit, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->queryExpressionBody, $this->unionOption, $this->query, $this->optUnionOrderOrLimit, $comments);
     }
 }

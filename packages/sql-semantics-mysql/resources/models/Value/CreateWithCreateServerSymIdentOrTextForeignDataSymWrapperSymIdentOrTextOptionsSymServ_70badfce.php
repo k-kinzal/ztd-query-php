@@ -17,12 +17,13 @@ final class CreateWithCreateServerSymIdentOrTextForeignDataSymWrapperSymIdentOrT
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ServerOptionsListForm $serverOptionsList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText), 'The identOrText must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText2), 'The identOrText2 must be a generated immutable SQL value.');
@@ -34,16 +35,27 @@ final class CreateWithCreateServerSymIdentOrTextForeignDataSymWrapperSymIdentOrT
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $writer->append('SERVER');
+        $writer->comments($this->comments, 2);
         $this->identOrText->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('FOREIGN');
+        $writer->comments($this->comments, 4);
         $writer->append('DATA');
+        $writer->comments($this->comments, 5);
         $writer->append('WRAPPER');
+        $writer->comments($this->comments, 6);
         $this->identOrText2->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append('OPTIONS');
+        $writer->comments($this->comments, 8);
         $writer->append('(');
+        $writer->comments($this->comments, 9);
         $this->serverOptionsList->write($writer);
+        $writer->comments($this->comments, 10);
         $writer->append(')');
     }
 
@@ -52,7 +64,7 @@ final class CreateWithCreateServerSymIdentOrTextForeignDataSymWrapperSymIdentOrT
      */
     public function withIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText): self
     {
-        return new self($identOrText, $this->identOrText2, $this->serverOptionsList);
+        return new self($identOrText, $this->identOrText2, $this->serverOptionsList, $this->comments);
     }
 
     /**
@@ -60,7 +72,7 @@ final class CreateWithCreateServerSymIdentOrTextForeignDataSymWrapperSymIdentOrT
      */
     public function withIdentOrText2(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText2): self
     {
-        return new self($this->identOrText, $identOrText2, $this->serverOptionsList);
+        return new self($this->identOrText, $identOrText2, $this->serverOptionsList, $this->comments);
     }
 
     /**
@@ -68,6 +80,14 @@ final class CreateWithCreateServerSymIdentOrTextForeignDataSymWrapperSymIdentOrT
      */
     public function withServerOptionsList(\SqlSemantics\Statement\Model\MySql\Role\ServerOptionsListForm $serverOptionsList): self
     {
-        return new self($this->identOrText, $this->identOrText2, $serverOptionsList);
+        return new self($this->identOrText, $this->identOrText2, $serverOptionsList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->identOrText, $this->identOrText2, $this->serverOptionsList, $comments);
     }
 }

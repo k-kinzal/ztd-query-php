@@ -17,10 +17,11 @@ final class ColumnAttributeWithSridSymRealUlonglongNum_d36f7f92 implements \SqlS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RealUlonglongNumForm $realUlonglongNum,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($realUlonglongNum), 'The realUlonglongNum must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class ColumnAttributeWithSridSymRealUlonglongNum_d36f7f92 implements \SqlS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SRID');
+        $writer->comments($this->comments, 1);
         $this->realUlonglongNum->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class ColumnAttributeWithSridSymRealUlonglongNum_d36f7f92 implements \SqlS
      */
     public function withRealUlonglongNum(\SqlSemantics\Statement\Model\MySql\Role\RealUlonglongNumForm $realUlonglongNum): self
     {
-        return new self($realUlonglongNum);
+        return new self($realUlonglongNum, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->realUlonglongNum, $comments);
     }
 }

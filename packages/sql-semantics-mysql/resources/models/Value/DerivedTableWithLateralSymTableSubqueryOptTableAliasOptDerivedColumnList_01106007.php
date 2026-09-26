@@ -17,12 +17,13 @@ final class DerivedTableWithLateralSymTableSubqueryOptTableAliasOptDerivedColumn
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableSubqueryForm $tableSubquery,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptTableAliasForm $optTableAlias,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptDerivedColumnListForm $optDerivedColumnList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableSubquery), 'The tableSubquery must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optTableAlias), 'The optTableAlias must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class DerivedTableWithLateralSymTableSubqueryOptTableAliasOptDerivedColumn
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('LATERAL');
+        $writer->comments($this->comments, 1);
         $this->tableSubquery->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optTableAlias->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optDerivedColumnList->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class DerivedTableWithLateralSymTableSubqueryOptTableAliasOptDerivedColumn
      */
     public function withTableSubquery(\SqlSemantics\Statement\Model\MySql\Role\TableSubqueryForm $tableSubquery): self
     {
-        return new self($tableSubquery, $this->optTableAlias, $this->optDerivedColumnList);
+        return new self($tableSubquery, $this->optTableAlias, $this->optDerivedColumnList, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class DerivedTableWithLateralSymTableSubqueryOptTableAliasOptDerivedColumn
      */
     public function withOptTableAlias(\SqlSemantics\Statement\Model\MySql\Role\OptTableAliasForm $optTableAlias): self
     {
-        return new self($this->tableSubquery, $optTableAlias, $this->optDerivedColumnList);
+        return new self($this->tableSubquery, $optTableAlias, $this->optDerivedColumnList, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class DerivedTableWithLateralSymTableSubqueryOptTableAliasOptDerivedColumn
      */
     public function withOptDerivedColumnList(\SqlSemantics\Statement\Model\MySql\Role\OptDerivedColumnListForm $optDerivedColumnList): self
     {
-        return new self($this->tableSubquery, $this->optTableAlias, $optDerivedColumnList);
+        return new self($this->tableSubquery, $this->optTableAlias, $optDerivedColumnList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableSubquery, $this->optTableAlias, $this->optDerivedColumnList, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class FunctionCallConflictWithWeightStringSymExprOptWsLevels_2c9907fe impl
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWsLevelsForm $optWsLevels,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWsLevels), 'The optWsLevels must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class FunctionCallConflictWithWeightStringSymExprOptWsLevels_2c9907fe impl
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('WEIGHT_STRING');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optWsLevels->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
     }
 
@@ -44,7 +50,7 @@ final class FunctionCallConflictWithWeightStringSymExprOptWsLevels_2c9907fe impl
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($expr, $this->optWsLevels);
+        return new self($expr, $this->optWsLevels, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class FunctionCallConflictWithWeightStringSymExprOptWsLevels_2c9907fe impl
      */
     public function withOptWsLevels(\SqlSemantics\Statement\Model\MySql\Role\OptWsLevelsForm $optWsLevels): self
     {
-        return new self($this->expr, $optWsLevels);
+        return new self($this->expr, $optWsLevels, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->expr, $this->optWsLevels, $comments);
     }
 }

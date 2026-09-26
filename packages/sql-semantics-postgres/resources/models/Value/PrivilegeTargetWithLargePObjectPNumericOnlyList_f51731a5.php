@@ -17,10 +17,11 @@ final class PrivilegeTargetWithLargePObjectPNumericOnlyList_f51731a5 implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyListForm $numericOnlyList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($numericOnlyList), 'The numericOnlyList must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class PrivilegeTargetWithLargePObjectPNumericOnlyList_f51731a5 implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('LARGE');
+        $writer->comments($this->comments, 1);
         $writer->append('OBJECT');
+        $writer->comments($this->comments, 2);
         $this->numericOnlyList->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class PrivilegeTargetWithLargePObjectPNumericOnlyList_f51731a5 implements 
      */
     public function withNumericOnlyList(\SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyListForm $numericOnlyList): self
     {
-        return new self($numericOnlyList);
+        return new self($numericOnlyList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->numericOnlyList, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class WsLevelFlagsWithWsLevelFlagDescWsLevelFlagReverse_c49be2d5 implement
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WsLevelFlagDescForm $wsLevelFlagDesc,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WsLevelFlagReverseForm $wsLevelFlagReverse,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($wsLevelFlagDesc), 'The wsLevelFlagDesc must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($wsLevelFlagReverse), 'The wsLevelFlagReverse must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class WsLevelFlagsWithWsLevelFlagDescWsLevelFlagReverse_c49be2d5 implement
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->wsLevelFlagDesc->write($writer);
+        $writer->comments($this->comments, 1);
         $this->wsLevelFlagReverse->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class WsLevelFlagsWithWsLevelFlagDescWsLevelFlagReverse_c49be2d5 implement
      */
     public function withWsLevelFlagDesc(\SqlSemantics\Statement\Model\MySql\Role\WsLevelFlagDescForm $wsLevelFlagDesc): self
     {
-        return new self($wsLevelFlagDesc, $this->wsLevelFlagReverse);
+        return new self($wsLevelFlagDesc, $this->wsLevelFlagReverse, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class WsLevelFlagsWithWsLevelFlagDescWsLevelFlagReverse_c49be2d5 implement
      */
     public function withWsLevelFlagReverse(\SqlSemantics\Statement\Model\MySql\Role\WsLevelFlagReverseForm $wsLevelFlagReverse): self
     {
-        return new self($this->wsLevelFlagDesc, $wsLevelFlagReverse);
+        return new self($this->wsLevelFlagDesc, $wsLevelFlagReverse, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->wsLevelFlagDesc, $this->wsLevelFlagReverse, $comments);
     }
 }

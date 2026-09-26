@@ -17,11 +17,12 @@ final class FunctionCallNonkeywordWithCurtimeFuncDatetimePrecision_98072d05 impl
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $curtime,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FuncDatetimePrecisionForm $funcDatetimePrecision,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($curtime, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['CURTIME'], 'The curtime must be a complete CURTIME lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($funcDatetimePrecision), 'The funcDatetimePrecision must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class FunctionCallNonkeywordWithCurtimeFuncDatetimePrecision_98072d05 impl
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->curtime);
+        $writer->comments($this->comments, 1);
         $this->funcDatetimePrecision->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class FunctionCallNonkeywordWithCurtimeFuncDatetimePrecision_98072d05 impl
      */
     public function withCurtime(string $curtime): self
     {
-        return new self($curtime, $this->funcDatetimePrecision);
+        return new self($curtime, $this->funcDatetimePrecision, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class FunctionCallNonkeywordWithCurtimeFuncDatetimePrecision_98072d05 impl
      */
     public function withFuncDatetimePrecision(\SqlSemantics\Statement\Model\MySql\Role\FuncDatetimePrecisionForm $funcDatetimePrecision): self
     {
-        return new self($this->curtime, $funcDatetimePrecision);
+        return new self($this->curtime, $funcDatetimePrecision, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->curtime, $this->funcDatetimePrecision, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class SelectNoParensWithSelectClauseSortClause_dffb29ae implements \SqlSem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectClauseForm $selectClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SortClauseForm $orderBy,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($selectClause), 'The selectClause must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($orderBy), 'The orderBy must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class SelectNoParensWithSelectClauseSortClause_dffb29ae implements \SqlSem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->selectClause->write($writer);
+        $writer->comments($this->comments, 1);
         $this->orderBy->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class SelectNoParensWithSelectClauseSortClause_dffb29ae implements \SqlSem
      */
     public function withSelectClause(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectClauseForm $selectClause): self
     {
-        return new self($selectClause, $this->orderBy);
+        return new self($selectClause, $this->orderBy, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class SelectNoParensWithSelectClauseSortClause_dffb29ae implements \SqlSem
      */
     public function withOrderBy(\SqlSemantics\Statement\Model\PostgreSql\Role\SortClauseForm $orderBy): self
     {
-        return new self($this->selectClause, $orderBy);
+        return new self($this->selectClause, $orderBy, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->selectClause, $this->orderBy, $comments);
     }
 }

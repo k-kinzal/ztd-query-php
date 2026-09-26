@@ -17,10 +17,11 @@ final class RealUlongNumWithUlonglongNum_2da8b3ef implements \SqlSemantics\State
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $ulonglongNum,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($ulonglongNum, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['ULONGLONG_NUM'], 'The ulonglongNum must be a complete ULONGLONG_NUM lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class RealUlongNumWithUlonglongNum_2da8b3ef implements \SqlSemantics\State
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->ulonglongNum);
     }
 
@@ -38,6 +40,14 @@ final class RealUlongNumWithUlonglongNum_2da8b3ef implements \SqlSemantics\State
      */
     public function withUlonglongNum(string $ulonglongNum): self
     {
-        return new self($ulonglongNum);
+        return new self($ulonglongNum, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ulonglongNum, $comments);
     }
 }

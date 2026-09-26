@@ -17,11 +17,12 @@ final class DoStmtWithDoSymEmptySelectOptionsSelectItemList_f16b1313 implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EmptySelectOptionsForm $emptySelectOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm $projections,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($emptySelectOptions), 'The emptySelectOptions must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($projections), 'The projections must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class DoStmtWithDoSymEmptySelectOptionsSelectItemList_f16b1313 implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('DO');
+        $writer->comments($this->comments, 1);
         $this->emptySelectOptions->write($writer);
+        $writer->comments($this->comments, 2);
         $this->projections->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class DoStmtWithDoSymEmptySelectOptionsSelectItemList_f16b1313 implements 
      */
     public function withEmptySelectOptions(\SqlSemantics\Statement\Model\MySql\Role\EmptySelectOptionsForm $emptySelectOptions): self
     {
-        return new self($emptySelectOptions, $this->projections);
+        return new self($emptySelectOptions, $this->projections, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class DoStmtWithDoSymEmptySelectOptionsSelectItemList_f16b1313 implements 
      */
     public function withProjections(\SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm $projections): self
     {
-        return new self($this->emptySelectOptions, $projections);
+        return new self($this->emptySelectOptions, $projections, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->emptySelectOptions, $this->projections, $comments);
     }
 }

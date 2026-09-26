@@ -22,16 +22,21 @@ abstract class SqlSchemaProvider extends Base
 
     /**
      * Get or parse schema from SQL.
+     *
+     * @param string|null $dialect Dialect for this statement, or null for the provider's own
+     * @param string|null $version Version tag for this statement, or null for the provider's own when the dialect is its own and the default of the dialect otherwise
      */
-    protected function getSchema(string $createTableSql, ?string $dialect = null): TableSchema
+    protected function getSchema(string $createTableSql, ?string $dialect = null, ?string $version = null): TableSchema
     {
         $effectiveDialect = $dialect ?? $this->getDialect();
-        $cacheKey = md5($createTableSql . ':' . $effectiveDialect);
+        $ownDialect = $effectiveDialect === $this->getDialect();
+        $effectiveVersion = PlatformFactory::resolveVersion($effectiveDialect, $version ?? ($ownDialect ? $this->getVersion() : null))->tag;
+        $cacheKey = md5($createTableSql . ':' . $effectiveDialect . ':' . $effectiveVersion);
 
         if (!isset($this->schemaCache[$cacheKey])) {
-            $parser = ($effectiveDialect !== $this->getDialect())
-                ? PlatformFactory::createSchemaParser($effectiveDialect)
-                : $this->getFixtureGenerator()->getSchemaParser();
+            $parser = ($ownDialect && $effectiveVersion === $this->getVersion())
+                ? $this->getFixtureGenerator()->getSchemaParser()
+                : PlatformFactory::createSchemaParser($effectiveDialect, $effectiveVersion);
 
             $schema = $parser->parse($createTableSql);
             $this->schemaCache[$cacheKey] = $schema;
@@ -49,6 +54,11 @@ abstract class SqlSchemaProvider extends Base
      * Supplies the default dialect selected by the concrete provider.
      */
     abstract public function getDialect(): string;
+
+    /**
+     * Supplies the version tag of the release selected by the concrete provider.
+     */
+    abstract public function getVersion(): string;
 
     /**
      * Supplies the registry used by fixture plans.

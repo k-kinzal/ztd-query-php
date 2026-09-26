@@ -17,12 +17,13 @@ final class PartElemWithFuncExprWindowlessOptCollateOptQualifiedName_8559096d im
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprWindowlessForm $funcExprWindowless,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptCollateForm $optCollate,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptQualifiedNameForm $optQualifiedName,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcExprWindowless), 'The funcExprWindowless must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optCollate), 'The optCollate must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class PartElemWithFuncExprWindowlessOptCollateOptQualifiedName_8559096d im
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->funcExprWindowless->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optCollate->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optQualifiedName->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class PartElemWithFuncExprWindowlessOptCollateOptQualifiedName_8559096d im
      */
     public function withFuncExprWindowless(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprWindowlessForm $funcExprWindowless): self
     {
-        return new self($funcExprWindowless, $this->optCollate, $this->optQualifiedName);
+        return new self($funcExprWindowless, $this->optCollate, $this->optQualifiedName, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class PartElemWithFuncExprWindowlessOptCollateOptQualifiedName_8559096d im
      */
     public function withOptCollate(\SqlSemantics\Statement\Model\PostgreSql\Role\OptCollateForm $optCollate): self
     {
-        return new self($this->funcExprWindowless, $optCollate, $this->optQualifiedName);
+        return new self($this->funcExprWindowless, $optCollate, $this->optQualifiedName, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class PartElemWithFuncExprWindowlessOptCollateOptQualifiedName_8559096d im
      */
     public function withOptQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\OptQualifiedNameForm $optQualifiedName): self
     {
-        return new self($this->funcExprWindowless, $this->optCollate, $optQualifiedName);
+        return new self($this->funcExprWindowless, $this->optCollate, $optQualifiedName, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->funcExprWindowless, $this->optCollate, $this->optQualifiedName, $comments);
     }
 }
