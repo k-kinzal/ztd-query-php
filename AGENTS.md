@@ -67,7 +67,7 @@ The repository is also an experiment in how AI agents can build something this c
 - [packages/sql-parser/README.md](packages/sql-parser/README.md) - Lossless LALR(1) SQL parsers built from the official grammars
 - [packages/sql-semantics/README.md](packages/sql-semantics/README.md) - Binding SQL to a schema: installation and usage
 - [packages/ztd-query-core/README.md](packages/ztd-query-core/README.md) - ZTD Query overview, installation, and usage
-- [packages/ztd-query-core/docs/mechanism.md](packages/ztd-query-core/docs/mechanism.md) - Overview and design of the ZTD mechanism
+- [packages/ztd-query-core/docs/mechanism.md](packages/ztd-query-core/docs/mechanism.md) - The Zero Table Dependency model: what it is, how it works, and its scope
 - [packages/ztd-query-mysql/README.md](packages/ztd-query-mysql/README.md) - MySQL platform support: installation and usage
 - [packages/ztd-query-mysql/docs/spec.md](packages/ztd-query-mysql/docs/spec.md) - How ZTD handles MySQL SQL statements
 - [packages/ztd-query-mysql/docs/support-matrix.md](packages/ztd-query-mysql/docs/support-matrix.md) - Supported MySQL statements and their status

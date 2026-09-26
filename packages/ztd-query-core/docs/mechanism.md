@@ -1,381 +1,100 @@
-# Zero Table Dependency (ZTD) Mechanism
+# Zero Table Dependency
 
-## Overview
-
-**Zero Table Dependency (ZTD)** is a SQL testing methodology that eliminates table dependencies. It uses a real database engine while replacing all physical table reads and writes with shadow tables implemented as CTEs (Common Table Expressions).
-
-ZTD enables SQL unit testing without migrations, seeding, or cleanup operations.
+Zero Table Dependency (ZTD) is a model for unit testing SQL. It evaluates SQL on a real database engine without reading from or writing to any physical table, so that SQL can be tested like a pure function: the input is the data the test provides, and the output is the result of the query.
 
 ## References
 
-- [Ultra-fast SQL Unit Testing with rawsql-ts/pg-testkit](https://zenn.dev/mkmonaka/articles/c2413d99ae67bb)
-- [rawsql-ts GitHub Repository](https://github.com/mk3008/rawsql-ts)
-- [pg-testkit Package](https://github.com/mk3008/rawsql-ts/tree/main/packages/drivers/pg-testkit)
+- [Zero Table Dependency (ZTD) - Theoretical Overview](https://github.com/mk3008/rawsql-ts/blob/main/docs/guide/ztd-theory.md)
+- [Ultra-fast SQL Unit Testing with rawsql-ts/pg-testkit](https://zenn.dev/mkmonaka/articles/c2413d99ae67bb) (Japanese)
+- [rawsql-ts](https://github.com/mk3008/rawsql-ts), the reference implementation for PostgreSQL
 
----
+## The problem
 
-## Core Philosophy: SQL as Pure Functions
+A conventional SQL test depends on physical tables as external state. The tables have to be created by migrations, filled by seeding, and cleaned up afterwards, and tests that share them conflict when they run in parallel. These costs come from the tables, not from the SQL: what SQL operates on is data, and a physical table is only one place to keep it. If SQL is evaluated without physical tables, the costs disappear.
 
-ZTD treats SQL queries as pure functions:
+## What ZTD is
 
-- **Input**: Fixture data (the state of tables before query execution)
-- **Output**: Query result set
-- **No Side Effects**: Physical tables are never modified
+ZTD evaluates SQL with two properties:
 
-This functional approach enables deterministic, isolated, and parallelizable tests.
+- **It uses a real database engine.** Parsing, type resolution, functions, and parameter handling behave exactly as in production, unlike a mock.
+- **It never reads from or writes to a physical table.** Evaluation has no side effects and does not depend on external state.
 
----
+As a result, tests need no migrations, seeding, or cleanup, do not conflict with each other, run in parallel, and give deterministic results.
 
-## Core Mechanisms
+## How ZTD works
 
-ZTD operates through two primary mechanisms:
+ZTD combines four mechanisms.
 
-### 1. CTE Shadowing
+### CTE Shadowing
 
-CTE Shadowing replaces physical tables with CTEs of the same name. Since **CTEs take precedence over physical tables** in query resolution, actual table references are intercepted and replaced with test data.
+Every table a query references is overridden by a common table expression (CTE) of the same name that holds the test data. A CTE takes precedence over a physical table of the same name, so the query sees only the CTE, and the physical table is hidden even if it exists.
 
-The real database engine still handles:
-- SQL parsing
-- Type inference
-- Query planning
-- Parameter binding
-
-But physical table access is blocked by the CTE.
-
-#### Transformation Example
-
-**Before (original query):**
 ```sql
-SELECT email FROM users WHERE id = $1
-```
+-- Original
+SELECT * FROM users WHERE id = 1;
 
-**After (with CTE Shadowing):**
-```sql
+-- ZTD
 WITH users AS (
-  SELECT 1 AS id, 'alice@example.com' AS email
-  UNION ALL
-  SELECT 2 AS id, 'bob@example.com' AS email
+    SELECT 1 AS id, 'alice' AS name
+    UNION ALL
+    SELECT 2 AS id, 'bob' AS name
 )
-SELECT email FROM users WHERE id = $1
+SELECT * FROM users WHERE id = 1;
 ```
 
-### 2. Result Select Query (RSQ)
+Reads from physical tables are thereby replaced by reads from virtual tables.
 
-Result Select Query transforms INSERT, UPDATE, DELETE, and MERGE operations into equivalent SELECT statements that simulate their outcomes.
+### Result-SELECT Query
 
----
+A statement with side effects, such as INSERT, UPDATE, DELETE, or MERGE, is not executed. Instead, the result it would produce is reproduced by a SELECT over the shadowed tables. For unit testing the result is what matters, so this is sufficient.
 
-## Query Transformation Details
+A statement with a RETURNING clause becomes a SELECT that returns the same rows:
 
-The rawsql-ts library implements query transformation through dedicated converter classes in `packages/core/src/transformers/`.
-
-### INSERT Conversion (InsertResultSelectConverter)
-
-**Transformation Process:**
-
-1. **Query Preparation**: VALUES-based inserts are rewritten into `INSERT ... SELECT` format via `InsertQuerySelectValuesConverter.toSelectUnion()` before further processing.
-
-2. **Column Resolution**: Resolves columns through:
-   - Explicit column lists from the INSERT statement
-   - Table definition metadata when columns are omitted
-   - Validates column counts match SELECT output
-
-3. **CTE Construction**: Generates CTEs to wrap the source SELECT query and include fixture tables.
-
-4. **Sequence Defaults**: Defaults invoking `nextval` are rewritten into deterministic expressions (e.g., `row_number() over ()`).
-
-5. **Output Generation**: Produces a result-select query (SELECT that returns the rows that would be inserted). RETURNING clauses MUST NOT be used (DR-10) -- they execute actual DML, violating ZTD's zero-write principle.
-
-**Example:**
 ```sql
--- Before
-INSERT INTO users (name, email) VALUES ('Alice', 'alice@example.com')
+-- Original
+UPDATE users SET name = 'Alice' WHERE id = $1 RETURNING id, name;
 
--- After (result-select)
-WITH users AS (... existing fixture data ...)
-SELECT
-  row_number() OVER () AS id,
-  'Alice' AS name,
-  'alice@example.com' AS email
+-- ZTD
+WITH users AS (
+    SELECT 1 AS id, 'alice' AS name
+    UNION ALL
+    SELECT 2 AS id, 'bob' AS name
+)
+SELECT id, 'Alice' AS name FROM users WHERE id = $1;
 ```
 
-### UPDATE Conversion (UpdateResultSelectConverter)
+A statement without RETURNING becomes a SELECT that counts the rows it would affect:
 
-**Transformation Process:**
-
-1. **Target Table Extraction**: Extracts target table from UPDATE clause (must be a `TableSource`, not derived expression).
-
-2. **FROM Clause Handling**: When explicit FROM clause exists, cross-joins with target table to maintain column accessibility. Joins within FROM are preserved.
-
-3. **Column Expression Building**: For each column in the target table:
-   - Checks SET expressions for column overrides
-   - Preserves original column references if not updated
-
-4. **Output Generation**: Produces a result-select query (SELECT reflecting updated columns with WHERE filter). RETURNING clauses MUST NOT be used (DR-10).
-
-**Example:**
 ```sql
--- Before
-UPDATE users SET email = 'new@example.com' WHERE id = 1
-
--- After (result-select)
-WITH users AS (... existing fixture data ...)
-SELECT
-  id,
-  CASE WHEN id = 1 THEN 'new@example.com' ELSE email END AS email,
-  name
-FROM users
-WHERE id = 1
+-- ZTD
+WITH users AS (...)
+SELECT count(*) FROM users WHERE id = $1;
 ```
 
-### DELETE Conversion (DeleteResultSelectConverter)
+The same applies to each kind of statement:
 
-**Transformation Process:**
+| Statement | Result-SELECT Query |
+|-----------|---------------------|
+| INSERT | Selects the rows of its VALUES or SELECT source, with the RETURNING columns, or counts them |
+| UPDATE | Selects the rows its WHERE condition matches, with the SET values in place of the old ones, or counts them |
+| DELETE | Selects the rows its WHERE condition matches, or counts them |
+| MERGE | Counts the rows each WHEN clause would act on |
 
-1. **FROM/JOIN Construction**: Preserves DELETE target table. USING clause sources become CROSS JOINs.
+### Query Conversion
 
-2. **Column Reference Resolution**: Parses namespaces, builds context maps for aliases, validates column existence.
+CTE Shadowing and Result-SELECT Query require transforming SQL. The SQL is parsed into a syntax tree, and the conversion finds the kind of statement and the tables and columns it uses, adds the shadowing CTEs, and rewrites write statements into SELECT statements. The conversion preserves the meaning of the query, its placeholders, and its syntactic structure.
 
-3. **Output Generation**: Produces a result-select query (SELECT returning the rows that would be deleted). RETURNING clauses MUST NOT be used (DR-10).
+### SQL Interceptor
 
-**Example:**
-```sql
--- Before
-DELETE FROM users WHERE id = 1
+The conversion is applied at run time, by intercepting the SQL a database driver sends. Existing SQL, handwritten or generated by an ORM, runs unchanged, and the application needs no special API or DSL.
 
--- After (result-select)
-WITH users AS (... existing fixture data ...)
-SELECT * FROM users WHERE id = 1
-```
+## Scope
 
-### MERGE Conversion (MergeResultSelectConverter)
+ZTD is specialized for unit testing the logic of SQL. The following are outside its scope:
 
-Converts MERGE queries into SELECT statements that count affected rows by modeling each WHEN clause as a separate action.
-
-**Action-Specific Conversions:**
-
-- **MATCHED (UPDATE/DELETE)**: Creates INNER JOIN between target and source using ON condition
-- **NOT MATCHED (INSERT)**: Uses NOT EXISTS subquery to detect missing matches
-- **NOT MATCHED BY SOURCE (DELETE)**: Inverted NOT EXISTS against source
-
-**Process:**
-1. Build individual SELECT for each WHEN clause
-2. Combine via UNION ALL
-3. Wrap in `COUNT(*)` query
-
----
-
-## CTE Injection Mechanism
-
-### CTEInjector
-
-The `CTEInjector` class handles inserting CTEs into queries:
-
-1. **Validation**: Returns original query unchanged if CTE array is empty
-2. **Collection**: Gathers existing CTEs via `CTECollector`, merges with provided CommonTables
-3. **Resolution**: `CTEBuilder` eliminates duplicates and arranges in dependency order
-4. **Injection**: Assigns resolved WithClause to query
-
-### CTEBuilder
-
-Manages CTE construction through:
-
-1. **Duplicate Resolution**: Validates CTEs with same names have identical definitions
-2. **Dependency Graph Construction**: Maps table references and identifies recursive CTEs (self-referencing)
-3. **Topological Sorting**: Orders CTEs so recursive CTEs come first, then remaining tables sorted by dependency depth
-4. **Circular Reference Detection**: Throws error if circular reference detected
-
----
-
-## ResultSelectRewriter
-
-The main orchestrator (`packages/testkit-core/src/rewriter/ResultSelectRewriter.ts`) transforms queries through a pipeline:
-
-**Statement Type Routing:**
-
-| Statement Type | Handler |
-|---------------|---------|
-| INSERT | `InsertResultSelectConverter.toSelectQuery()` |
-| UPDATE | `UpdateResultSelectConverter.toSelectQuery()` |
-| DELETE | `DeleteResultSelectConverter.toSelectQuery()` |
-| MERGE | `MergeResultSelectConverter.toSelectQuery()` |
-| SELECT | Direct fixture injection |
-| Complex SELECT | Normalized via `QueryBuilder.buildSimpleQuery()` |
-| CREATE TEMP...AS SELECT | Inner query receives fixture injection |
-| Other DDL | Returns null (ignored) |
-
-**Post-Processing:**
-
-1. **Schema Qualifier Rewriting**: Traverses table references, updates to use fixture aliases
-2. **Column Reference Updates**: Recursively processes subqueries, CTEs, window functions
-3. **Alias Sanitization**: Normalizes table names, replaces dots with underscores
-
----
-
-## Fixture System
-
-### Fixture Architecture
-
-Located in `packages/testkit-core/src/fixtures/`:
-
-| File | Purpose |
-|------|---------|
-| DdlFixtureLoader.ts | Loads DDL files from directories |
-| FixtureProvider.ts | Provides and merges fixtures |
-| FixtureStore.ts | Stores fixture data |
-| TableDefinitionSchemaRegistry.ts | Manages table schemas |
-| TableNameResolver.ts | Resolves table names |
-
-### DdlFixtureLoader
-
-**File Discovery:**
-- Recursively scans configured directories for SQL files
-- Default extension: `.sql`
-- Validates directories exist before scanning
-
-**Conversion Process:**
-- Uses `DDLToFixtureConverter.convert()` to process CREATE TABLE and INSERT statements
-- Extracts column metadata (name, type, default values)
-- Extracts fixture rows from INSERT data
-
-**Caching Strategy:**
-- Static cache avoids reprocessing identical configurations
-- Cache key: normalized paths + extensions + resolver settings
-
-**Deduplication:**
-- Compares canonical table keys to prevent duplicate fixtures
-
-### FixtureProvider (DefaultFixtureProvider)
-
-**Core Functions:**
-
-1. **Fixture Resolution**: Merges table definitions with baseline and runtime override fixtures
-2. **Row Validation**: Ensures required columns without defaults are provided
-3. **Type Coercion**: Converts values to database-compatible types:
-   - strings, numbers, bigints, buffers
-   - JSON-serialized objects
-   - Booleans as 0/1
-4. **Name Normalization**: Handles schema-qualified identifiers via `TableNameResolver`
-
-### Fixture Layering (Priority Order)
-
-1. **DDL files** - Parsed at client construction
-2. **Manual tableDefinitions/tableRows** - Merged after DDL
-3. **withFixtures()** - Overlays scenario-specific data (highest priority)
-
-Later layers override earlier ones.
-
----
-
-## API Usage (pg-testkit)
-
-### Three Primary APIs
-
-```typescript
-// 1. Create isolated client with lazy connection
-const client = createPgTestkitClient({
-  connectionFactory: () => new Client({ connectionString: process.env.PG_URL! }),
-  tableDefinitions: [...],
-  tableRows: [...]
-});
-
-// 2. Wrap pg.Pool (transactions/savepoints execute on raw client)
-const pool = createPgTestkitPool(process.env.PG_URL!, {
-  tableDefinitions: [...],
-  tableRows: [...]
-});
-
-// 3. Wrap existing connection
-const raw = new Client({ connectionString: process.env.PG_URL! });
-await raw.connect();
-const wrapped = wrapPgClient(raw, { tableDefinitions, tableRows });
-```
-
-### Scoped Fixtures
-
-```typescript
-const scoped = client.withFixtures([{
-  tableName: 'users',
-  rows: [{ id: 2, email: 'bob@example.com' }]
-}]);
-```
-
-### DDL-Based Configuration
-
-```typescript
-ddl: {
-  directories: [path.join(__dirname, '..', 'ztd', 'ddl')],
-  extensions: ['.sql']
-}
-```
-
----
-
-## Implementation Characteristics
-
-| Feature | Description |
-|---------|-------------|
-| Lazy Connection | Opens database connection only on first query execution |
-| Parallel Test Safety | No shared schema state; each client has independent fixtures |
-| Transaction Support | Raw transaction/savepoint commands preserved |
-| Temporary Table Support | `CREATE TEMPORARY ... AS SELECT` survives rewrite pipeline |
-| Parameter Handling | `$1`-style placeholders normalized before rewriting, restored before execution |
-
----
-
-## Benefits
-
-1. **No Migration Required**
-   - Rapidly iterate on table definitions during development
-   - SQL logic correctness guaranteed through unit tests
-
-2. **No Cleanup Required**
-   - Each test execution is independent
-   - No residual data left in the database
-
-3. **Parallel Test Execution**
-   - No persistent tables or shared schema state
-   - Each query works against isolated dataset
-
-4. **Low Adoption Cost**
-   - Self-contained test kit
-   - Dynamically modifies existing SQL resources
-   - Production code remains unaware of testing infrastructure
-
-5. **Real Database Engine**
-   - Unlike mocks, uses actual database for SQL parsing and type inference
-
----
-
-## Limitations
-
-ZTD is **not suitable** for testing:
-
-| Category | Reason |
-|----------|--------|
-| Stored Procedures | Executed inside database, not subject to CTE shadowing |
-| Triggers | INSERT/UPDATE/DELETE triggers do not fire |
-| Views | Existing views may not be replaceable with CTEs |
-| Performance/Tuning | No actual table access, I/O and index effects cannot be measured |
-
----
-
-## Execution Modes
-
-### Default Mode (Fixture-based)
-Rewrites operations as SELECT queries without touching real tables.
-
-### Traditional Mode
-Set `ZTD_EXECUTION_MODE=traditional` to execute actual PostgreSQL behavior including locks and isolation levels, with schema isolation and automatic cleanup.
-
----
-
-## Summary
-
-Zero Table Dependency (ZTD) is a SQL testing methodology with the following characteristics:
-
-1. **No physical table dependency** - Tables are shadowed with CTEs
-2. **Uses real database engine** - Not mocks, but actual SQL processing
-3. **Tests SQL as pure functions** - Focus only on input (fixtures) and output (query results)
-4. **Fast and parallelizable** - No migration or cleanup required
-5. **Low adoption cost** - Can be introduced without modifying existing code
+| Area | Reason |
+|------|--------|
+| Transaction consistency across several operations | Each statement is evaluated as a function of the data it is given |
+| Stateful processing such as ETL flows | The model has no physical state to carry between steps |
+| Physical optimization: locks, indexes, and execution plans | No physical table is accessed, so I/O and index effects cannot be observed |
+| Database-dependent features: stored procedures, triggers, and views | They run inside the database and are not reached by rewriting the SQL the application sends |
