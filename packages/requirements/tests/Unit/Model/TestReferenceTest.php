@@ -22,6 +22,7 @@ final class TestReferenceTest extends TestCase
     {
         $reference = TestReference::from(['runner' => 'unit', 'target' => 'Sample\PassingTest::testPass']);
         self::assertSame('unit', $reference->runner);
+        self::assertSame('auto', $reference->run);
         self::assertSame('Sample\PassingTest::testPass', $reference->target);
     }
 
@@ -41,8 +42,14 @@ final class TestReferenceTest extends TestCase
         return [
             'not a mapping' => ['unit', 'test must be a mapping.'],
             'unknown field' => [['runner' => 'unit', 'target' => 't', 'name' => 'n'], "test: unknown field 'name'."],
+            'unknown policy' => [['runner' => 'unit', 'target' => 't', 'run' => 'never'], 'Test run must be auto or manual.'],
+            'boolean policy' => [['runner' => 'unit', 'target' => 't', 'run' => false], 'run must be a nonempty string.'],
             'missing runner' => [['target' => 't'], 'runner must be a nonempty string.'],
             'missing target' => [['runner' => 'unit'], 'target must be a nonempty string.'],
         ];
+    }
+    public function testFromRetainsManualExecutionPolicy(): void
+    {
+        self::assertSame('manual', TestReference::from(['runner' => 'unit', 'target' => 'slow', 'run' => 'manual'])->run);
     }
 }

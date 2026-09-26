@@ -239,4 +239,26 @@ final class SchemaValidatorTest extends TestCase
     {
         self::assertSame('https://raw.githubusercontent.com/k-kinzal/ztd-query-php/main/packages/requirements/schemas/', SchemaValidator::BASE);
     }
+    /**
+     * @throws JsonException
+     */
+    #[DataProvider('providerInvalidRunPolicies')]
+    public function testRejectsInvalidTestRunPolicies(mixed $run): void
+    {
+        $workspace = new ProjectDirectory();
+        $data = (new Loader())->document($workspace->directory . '/definition.yaml');
+        $data['items'] = [[...ProjectDirectory::item(), 'tests' => [['runner' => 'unit', 'target' => 'Example::testOne', 'run' => $run]]]];
+        $workspace->write('definition.yaml', $data);
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessage('/items/0/tests/0/run');
+        (new Loader())->load($workspace->directory . '/requirements.yaml');
+    }
+
+    /**
+     * @return list<array{mixed}>
+     */
+    public static function providerInvalidRunPolicies(): array
+    {
+        return [['never'], [''], [false], [null], [1]];
+    }
 }

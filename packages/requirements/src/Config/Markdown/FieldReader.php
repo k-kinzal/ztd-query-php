@@ -134,8 +134,26 @@ final class FieldReader
     {
         $result = [];
         foreach (Nodes::items($node) as $item) {
-            [$runner, $target] = Nodes::pair(Nodes::paragraph($item));
-            $result[] = (object) ['runner' => $runner, 'target' => $target];
+            $paragraph = $item->firstChild();
+            if (!$paragraph instanceof Paragraph) {
+                throw new InvalidInputException('A test needs a runner and target paragraph.');
+            }
+            [$runner, $target] = Nodes::pair($paragraph);
+            $test = (object) ['runner' => $runner, 'target' => $target];
+            $options = $paragraph->next();
+            if ($options !== null) {
+                if ($options->next() !== null) {
+                    throw new InvalidInputException('A test accepts only one nested options list.');
+                }
+                foreach (Nodes::items($options) as $option) {
+                    [$key, $value] = Nodes::pair(Nodes::paragraph($option));
+                    if ($key !== 'run' || property_exists($test, $key)) {
+                        throw new InvalidInputException('A test accepts only one run option.');
+                    }
+                    $test->{$key} = $value;
+                }
+            }
+            $result[] = $test;
         }
         return $result;
     }

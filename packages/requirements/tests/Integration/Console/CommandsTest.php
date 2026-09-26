@@ -16,6 +16,7 @@ use Requirements\Console\CommandLine;
 use Requirements\Console\Executor;
 use Requirements\Console\Overview;
 use Requirements\Console\Reporter;
+use Requirements\Console\SpecificationReport;
 use Tests\Fake\CommandLine as Cli;
 use Tests\Fake\ProjectDirectory;
 
@@ -24,6 +25,7 @@ use Tests\Fake\ProjectDirectory;
 #[UsesClass(Overview::class)]
 #[UsesClass(CommandHandler::class)]
 #[UsesClass(Executor::class)]
+#[UsesClass(SpecificationReport::class)]
 #[UsesClass(Reporter::class)]
 #[Large]
 final class CommandsTest extends TestCase
@@ -57,14 +59,14 @@ final class CommandsTest extends TestCase
         $gate = Cli::run(['coverage', '--min-coverage=100'], $project->directory);
         self::assertSame(1, $gate->getExitCode());
         $spec = Cli::run(['spec'], $project->directory);
-        self::assertSame(1, $spec->getExitCode());
+        self::assertSame(0, $spec->getExitCode());
         self::assertStringContainsString('unverified', $spec->getOutput());
         $project->write('definition.yaml', ['version' => 1, 'source' => null, 'items' => [['id' => 'ORIGINAL-001', 'statement' => 'The parser shall reject truncated input.', 'origin' => 'original', 'reason' => 'Avoid silent data loss.', 'labels' => ['strictness']]]]);
         $list = Cli::run(['spec', '--no-test', '--without-source', '--label=strictness', '--json'], $project->directory);
         self::assertSame(0, $list->getExitCode());
         self::assertStringContainsString('ORIGINAL-001', $list->getOutput());
         $empty = Cli::run(['spec', '--id=MISSING'], $project->directory);
-        self::assertSame(1, $empty->getExitCode());
+        self::assertSame(0, $empty->getExitCode());
     }
 
     public function testRunExitsTwoForAnInvalidPercentageAndAnUnknownOption(): void
@@ -127,6 +129,8 @@ final class CommandsTest extends TestCase
         $help = Cli::run(['spec', '--help'], $project->directory);
         self::assertSame(0, $help->getExitCode());
         self::assertStringContainsString('--no-test', $help->getOutput());
+        self::assertStringContainsString('--strict', $help->getOutput());
+        self::assertStringContainsString('--all', $help->getOutput());
         self::assertStringContainsString('--without-source', $help->getOutput());
     }
 

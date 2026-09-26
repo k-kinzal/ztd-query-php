@@ -228,8 +228,12 @@ final class FieldReaderTest extends TestCase
     public static function providerMalformedTests(): array
     {
         return [
+            'unknown option' => ["- **unit:** a\n  - **skip:** true\n", 'A test accepts only one run option.'],
+            'duplicate option' => ["- **unit:** a\n  - **run:** auto\n  - **run:** manual\n", 'A test accepts only one run option.'],
+            'missing target paragraph' => ["- > a\n", 'A test needs a runner and target paragraph.'],
+            'extra paragraph after options' => ["- **unit:** a\n  - **run:** manual\n\n  Extra text.\n", 'A test accepts only one nested options list.'],
             'plain entry' => ['- unit: Sample\\PassingTest::testPass', 'Expected a bold field name followed by a colon.'],
-            'two paragraphs' => ["- **unit:** a\n\n  b\n", 'Expected a single paragraph in this list item.'],
+            'two paragraphs' => ["- **unit:** a\n\n  b\n", 'Expected a bullet list.'],
             'ordered list' => ['1. **unit:** a', 'Expected a bullet list.'],
         ];
     }
@@ -356,5 +360,15 @@ final class FieldReaderTest extends TestCase
             'two paragraphs' => ["- a\n\n  b\n", 'Expected a single paragraph in this list item.'],
             'paragraph' => ['Preserve spelling.', 'Expected a bullet list.'],
         ];
+    }
+    /**
+     * @throws CommonMarkException
+     */
+    public function testTestsReadsManualAndAutomaticExecutionPolicies(): void
+    {
+        self::assertEquals([
+            (object) ['runner' => 'unit', 'target' => 'fast', 'run' => 'auto'],
+            (object) ['runner' => 'fuzz', 'target' => 'slow', 'run' => 'manual'],
+        ], (new FieldReader())->tests(MarkdownNodes::first("- **unit:** fast\n  - **run:** auto\n- **fuzz:** slow\n  - **run:** manual\n")));
     }
 }
