@@ -136,4 +136,48 @@ final class RowMutationResolverTest extends TestCase
         self::assertSame(['id'], $targets[0]->primaryKeys());
     }
 
+    public function testPlainInsertRejectsDuplicateKeysAtomically(): void
+    {
+        $registry = new \ZtdQuery\Schema\TableDefinitionRegistry();
+        $registry->register('users', new \ZtdQuery\Schema\TableDefinition(['id', 'name'], ['id' => 'INTEGER', 'name' => 'TEXT'], ['id'], ['id', 'name'], []));
+        $store = new \ZtdQuery\Shadow\ShadowStore();
+        $before = [['id' => 1, 'name' => 'existing']];
+        $store->set('users', $before);
+        $sql = "INSERT INTO users (id, name) VALUES (2, 'new'), (1, 'duplicate')";
+        $parser = new \ZtdQuery\Platform\MySql\Sql\MySqlParser();
+        $select = new \ZtdQuery\Platform\MySql\Rewrite\Transformer\SelectTransformer();
+        $resolver = new RowMutationResolver(new \ZtdQuery\Platform\MySql\Rewrite\Transformer\DeleteTransformer($parser, $select), $registry, $store, new \ZtdQuery\Platform\MySql\Rewrite\Transformer\UpdateTransformer($parser, $select));
+        $statement = (new \PhpMyAdmin\SqlParser\Parser($sql))->statements[0];
+        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\InsertStatement::class, $statement);
+        $mutation = $resolver->resolveInsert($statement, $sql);
+        $this->expectException(\ZtdQuery\Exception\DuplicateKeyException::class);
+        try {
+            $mutation->apply($store, [['id' => 2, 'name' => 'new'], ['id' => 1, 'name' => 'duplicate']]);
+        } finally {
+            self::assertSame($before, $store->get('users'));
+        }
+    }
+
+    public function testPlainInsertRejectsNullViolationsAtomically(): void
+    {
+        $registry = new \ZtdQuery\Schema\TableDefinitionRegistry();
+        $registry->register('users', new \ZtdQuery\Schema\TableDefinition(['id', 'name'], ['id' => 'INTEGER', 'name' => 'TEXT'], ['id'], ['id', 'name'], []));
+        $store = new \ZtdQuery\Shadow\ShadowStore();
+        $before = [['id' => 1, 'name' => 'existing']];
+        $store->set('users', $before);
+        $sql = "INSERT INTO users (id, name) VALUES (2, 'new'), (1, 'duplicate')";
+        $parser = new \ZtdQuery\Platform\MySql\Sql\MySqlParser();
+        $select = new \ZtdQuery\Platform\MySql\Rewrite\Transformer\SelectTransformer();
+        $resolver = new RowMutationResolver(new \ZtdQuery\Platform\MySql\Rewrite\Transformer\DeleteTransformer($parser, $select), $registry, $store, new \ZtdQuery\Platform\MySql\Rewrite\Transformer\UpdateTransformer($parser, $select));
+        $statement = (new \PhpMyAdmin\SqlParser\Parser($sql))->statements[0];
+        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\InsertStatement::class, $statement);
+        $mutation = $resolver->resolveInsert($statement, $sql);
+        $this->expectException(\ZtdQuery\Exception\NotNullViolationException::class);
+        try {
+            $mutation->apply($store, [['id' => 2, 'name' => 'new'], ['id' => 3, 'name' => null]]);
+        } finally {
+            self::assertSame($before, $store->get('users'));
+        }
+    }
+
 }

@@ -119,10 +119,9 @@
         "fuzz": "@fuzz:smoke",
         "fuzz:roundtrip": [
             "Composer\\Config::disableProcessTimeout",
-            "@fuzz:seeds --",
-            "@php fuzz/run.php sqlite"
+            "@php -r \"is_dir('fuzz/corpus/sqlite') || mkdir('fuzz/corpus/sqlite', 0777, true);\" --",
+            "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_sqlite_roundtrip.php fuzz/corpus/sqlite/ --timeout=60"
         ],
-        "fuzz:seeds": "@php fuzz/seed.php sqlite",
         "fuzz:smoke": "@fuzz:roundtrip --max-runs=100",
         "lint": [
             "@autoload:check",
@@ -157,7 +156,6 @@
         "format": "Fix the code style with PHP-CS-Fixer.",
         "format:check": "Check the code style with PHP-CS-Fixer without changing files.",
         "fuzz": "Run this database round-trip property with a bounded smoke budget.",
-        "fuzz:seeds": "Copy the sql-faker seed plans into the corpus.",
         "fuzz:smoke": "Replay the corpus and run 100 mutations.",
         "lint": "Run every static check: autoload, formatting, PHPStan, PHP compatibility, size and tree guards, and layer dependencies.",
         "loc-guard": "Check file size limits.",

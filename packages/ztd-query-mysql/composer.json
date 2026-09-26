@@ -16,6 +16,7 @@
         "brianium/paratest": "^7.3",
         "deptrac/deptrac": "^3.0",
         "friendsofphp/php-cs-fixer": "^3.95.25",
+        "k-kinzal/container": "dev-main",
         "k-kinzal/php-ai-toolkit": "dev-main",
         "k-kinzal/sql-faker": "dev-main",
         "nikic/php-fuzzer": "^0.0.11",
@@ -47,6 +48,15 @@
             "options": {
                 "versions": {
                     "k-kinzal/ztd-query-core": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../container",
+            "options": {
+                "versions": {
+                    "k-kinzal/container": "dev-main"
                 }
             }
         }
@@ -87,26 +97,21 @@
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
         "fuzz": "@fuzz:smoke",
-        "fuzz:robustness": [
+        "fuzz:behavior": [
             "Composer\\Config::disableProcessTimeout",
-            "@php -r \"is_dir('fuzz/corpus/robustness') || mkdir('fuzz/corpus/robustness', 0777, true);\" --",
-            "php-fuzzer fuzz fuzz/fuzz_robustness.php fuzz/corpus/robustness/"
+            "@php -r \"is_dir('fuzz/corpus/behavior') || mkdir('fuzz/corpus/behavior', 0777, true);\" --",
+            "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_behavior.php fuzz/corpus/behavior/ --timeout=60"
         ],
-        "fuzz:robustness:classify": [
+        "fuzz:fixtures": [
             "Composer\\Config::disableProcessTimeout",
-            "@php -r \"is_dir('fuzz/corpus/robustness-classify') || mkdir('fuzz/corpus/robustness-classify', 0777, true);\" --",
-            "php-fuzzer fuzz fuzz/fuzz_robustness_classify.php fuzz/corpus/robustness-classify/"
-        ],
-        "fuzz:robustness:rewrite": [
-            "Composer\\Config::disableProcessTimeout",
-            "@php -r \"is_dir('fuzz/corpus/robustness-rewrite') || mkdir('fuzz/corpus/robustness-rewrite', 0777, true);\" --",
-            "php-fuzzer fuzz fuzz/fuzz_robustness_rewrite.php fuzz/corpus/robustness-rewrite/"
+            "@putenv ZTD_FUZZ_FIXTURES=1",
+            "@php -r \"is_dir('fuzz/corpus/fixtures') || mkdir('fuzz/corpus/fixtures', 0777, true);\" --",
+            "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_behavior.php fuzz/corpus/fixtures/ --timeout=60"
         ],
         "fuzz:smoke": [
             "Composer\\Config::disableProcessTimeout",
-            "@fuzz:robustness --max-runs=100",
-            "@fuzz:robustness:classify --max-runs=100",
-            "@fuzz:robustness:rewrite --max-runs=100"
+            "@fuzz:behavior --max-runs=100",
+            "@fuzz:fixtures --max-runs=100"
         ],
         "lint": [
             "@autoload:check",
@@ -118,7 +123,7 @@
             "@deptrac"
         ],
         "loc-guard": "loc-guard --config=loc.yaml",
-        "phpstan": "phpstan analyse --memory-limit=512M",
+        "phpstan": "phpstan analyse --memory-limit=1G",
         "test": "paratest --processes=auto",
         "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
         "test:unit": "phpunit --testsuite unit",

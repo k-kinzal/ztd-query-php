@@ -66,14 +66,13 @@
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
         "fuzz": "@fuzz:smoke",
+        "fuzz:session-state": [
+            "Composer\\Config::disableProcessTimeout",
+            "php-fuzzer fuzz fuzz/fuzz_session_state.php --timeout=15"
+        ],
         "fuzz:smoke": [
             "Composer\\Config::disableProcessTimeout",
-            "@fuzz:token-stream --max-runs=100"
-        ],
-        "fuzz:token-stream": [
-            "Composer\\Config::disableProcessTimeout",
-            "@php -r \"is_dir('fuzz/corpus/token-stream') || mkdir('fuzz/corpus/token-stream', 0777, true);\" --",
-            "php-fuzzer fuzz fuzz/fuzz_token_stream.php fuzz/corpus/token-stream/"
+            "@fuzz:session-state --max-runs=100"
         ],
         "lint": [
             "@autoload:check",
@@ -85,7 +84,7 @@
             "@deptrac"
         ],
         "loc-guard": "loc-guard --config=loc.yaml",
-        "phpstan": "phpstan analyse --memory-limit=512M",
+        "phpstan": "phpstan analyse --memory-limit=1G",
         "test": "paratest --processes=auto",
         "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
         "test:unit": "phpunit --testsuite unit",
