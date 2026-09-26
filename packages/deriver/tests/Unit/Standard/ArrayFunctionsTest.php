@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 
 #[CoversClass(ArrayFunctions::class)]
 #[UsesClass(\Deriver\Analyzer::class)]
+#[UsesClass(\Deriver\Api\AnalysisSession::class)]
 #[UsesClass(\Deriver\Api\Execution\ResourceLimits::class)]
 #[UsesClass(\Deriver\Api\Execution\SourceLimits::class)]
 #[UsesClass(\Deriver\Api\Project\Configuration::class)]
@@ -63,6 +64,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\IR\CallableIR::class)]
 #[UsesClass(\Deriver\Internal\IR\Instruction::class)]
 #[UsesClass(\Deriver\Internal\IR\Parameter::class)]
+#[UsesClass(\Deriver\Internal\IR\Program::class)]
 #[UsesClass(\Deriver\Internal\IR\Terminator::class)]
 #[UsesClass(\Deriver\Internal\Memory\Location::class)]
 #[UsesClass(\Deriver\Internal\Memory\Materialization::class)]
@@ -101,6 +103,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Control\StateJoin::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\Unwinding::class)]
 #[UsesClass(\Deriver\Internal\Solver\Demand\Discovery::class)]
+#[UsesClass(\Deriver\Internal\Solver\Demand\Table::class)]
 #[UsesClass(\Deriver\Internal\Solver\Dependencies::class)]
 #[UsesClass(\Deriver\Internal\Solver\InstructionTransfer::class)]
 #[UsesClass(\Deriver\Internal\Solver\Machine::class)]

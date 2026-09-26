@@ -62,11 +62,26 @@ final class CollectionCalls
             }
             $paths = (new StateJoin($this->machine->context))->limit($next, $caller);
         }
+        return $this->complete($instruction, $paths, $values, $resultKey);
+    }
+
+    /**
+     * Publishes completed collections without overwriting exceptional callback exits.
+     * @param Instruction $instruction Collection result destination
+     * @param list<State> $paths Completed callback paths
+     * @param list<Term> $values Bound inputs whose confidentiality the result inherits
+     * @param string $resultKey Private accumulator register
+     * @return list<State> Published normal results and unchanged exceptional completions
+     */
+    public function complete(Instruction $instruction, array $paths, array $values, string $resultKey): array
+    {
+        $secret = array_filter($values, static fn (Term $value): bool => $value->isSecret()) !== [];
         foreach ($paths as $path) {
             if ($path->completion->kind !== 'normal') {
                 continue;
             }
-            $path->registers[$instruction->result] = $path->registers[$resultKey];
+            $result = $path->registers[$resultKey];
+            $path->registers[$instruction->result] = $secret ? new Term($result->kind, $result->literal, $result->operands, $result->attributes, true) : $result;
             unset($path->registers[$resultKey]);
         }
         return $paths;
@@ -87,6 +102,8 @@ final class CollectionCalls
     public function element(CallableIR $caller, Instruction $instruction, State $state, Term $callback, Term $element, int|string $key, string $resultKey, array $values): array
     {
         $name = $instruction->name;
+        $secret = $values[$name === 'array_map' ? 1 : 0]->secret ?? false;
+        $element = $secret ? new Term($element->kind, $element->literal, $element->operands, $element->attributes, true) : $element;
         if ($callback->kind === 'constant' && $callback->literal === null) {
             $state->registers[$instruction->result] = $element;
             $paths = [$state];
@@ -95,15 +112,15 @@ final class CollectionCalls
             if ($name === 'array_reduce') {
                 array_unshift($arguments, new PassedArgument($state->registers[$resultKey]));
             } elseif ($name === 'array_filter' && ($values[2]->literal ?? 0) === 2) {
-                $arguments = [new PassedArgument(Term::constant($key))];
+                $arguments = [new PassedArgument(Term::constant($key, $secret))];
             } elseif ($name === 'array_filter' && ($values[2]->literal ?? 0) === 1) {
-                $arguments[] = new PassedArgument(Term::constant($key));
+                $arguments[] = new PassedArgument(Term::constant($key, $secret));
             }
             $paths = (new CallExecutor($this->machine))->invoke($callback, $arguments, $state, $instruction, $caller);
         }
         $result = [];
         foreach ($paths as $path) {
-            $value = $path->value($instruction->result);
+            $value = $name === 'array_map' && $callback->kind === 'constant' && $callback->literal === null ? $element : $path->value($instruction->result);
             if ($path->completion->kind === 'throw') {
                 $result[] = $path;
             } elseif ($name === 'array_reduce') {
@@ -138,11 +155,11 @@ final class CollectionCalls
             if (!(new \Deriver\Internal\Constraint\Constraints($this->machine->context))->assume($path, $predicate, $truth)) {
                 continue;
             }
+            $entries = $path->registers[$resultKey]->operands;
             if ($truth) {
-                $entries = $path->registers[$resultKey]->operands;
                 $entries[$key] = $element;
-                $path->registers[$resultKey] = Term::array($entries);
             }
+            $path->registers[$resultKey] = new Term('array', operands: $entries, attributes: ['open' => false], secret: $path->registers[$resultKey]->secret || $predicate->isSecret());
             $result[] = $path;
         }
         return $result;

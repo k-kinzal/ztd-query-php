@@ -131,6 +131,7 @@ final class SerializationContractTest extends TestCase
      */
     public static function providerDerivedSecretSelection(): iterable
     {
+        yield 'filter predicate selection' => ['return array_values(array_filter(["selected"],fn($value)=>$input==="xx"))[0];','selected'];
         yield 'replacement result' => ['return str_replace("x","y",$input);','yy'];
         yield 'array keys' => ['return array_keys([$input=>1])[0];','xx'];
         yield 'stored array keys' => ['$a=array_keys([$input=>1]);return $a[0];','xx'];
@@ -166,6 +167,14 @@ final class SerializationContractTest extends TestCase
     public static function providerCustomAggregateSelection(): iterable
     {
         yield 'offset' => ['return $a["keep"];'];
+        yield 'map identity' => ['return array_map(null,$a);'];
+        yield 'map callback' => ['return array_map(fn($value)=>$value,$a);'];
+        yield 'map element selection' => ['return array_map(null,$a)["keep"];'];
+        yield 'filter default' => ['return array_filter($a);'];
+        yield 'filter callback' => ['return array_filter($a,fn($value)=>true);'];
+        yield 'filter element selection' => ['return array_filter($a)["keep"];'];
+        yield 'reduce callback' => ['return array_reduce($a,fn($carry,$value)=>$carry??$value,null);'];
+
         yield 'unset' => ['unset($a["drop"]);return $a;'];
         yield 'reference' => ['$value=&$a["keep"];return $value;'];
         yield 'foreach value' => ['foreach($a as $value){return $value;}return null;'];

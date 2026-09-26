@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Standard;
 
+use Deriver\Standard\ScalarFunctions;
+use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
-#[CoversClass(\Deriver\Standard\ScalarFunctions::class)]
+#[CoversClass(ScalarFunctions::class)]
 #[UsesClass(\Deriver\Analyzer::class)]
 #[UsesClass(\Deriver\Api\Execution\ResourceLimits::class)]
 #[UsesClass(\Deriver\Api\Execution\SourceLimits::class)]
@@ -123,6 +126,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Transfer\ReferenceAssignment::class)]
 #[UsesClass(\Deriver\Internal\Value\Arithmetic::class)]
 #[UsesClass(\Deriver\Internal\Value\Arrays::class)]
+#[UsesClass(\Deriver\Internal\Value\Comparison::class)]
 #[UsesClass(\Deriver\Internal\Value\Identity::class)]
 #[UsesClass(\Deriver\Internal\Value\PhpSemantics::class)]
 #[UsesClass(\Deriver\Model\Binding\ArgumentBindings::class)]
@@ -139,9 +143,16 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Report\JsonText::class)]
 #[UsesClass(\Deriver\Report\QueryEncoding::class)]
 #[UsesClass(\Deriver\Report\ValueGraph::class)]
+#[UsesClass(\Deriver\Standard\ArrayFunctions::class)]
+#[UsesClass(\Deriver\Standard\Formatting::class)]
 #[UsesClass(\Deriver\Standard\FunctionModel::class)]
 #[UsesClass(\Deriver\Standard\Library::class)]
-#[UsesClass(\Deriver\Value\Term::class)]
+#[UsesClass(\Deriver\Standard\Replacement::class)]
+#[UsesClass(ScalarFunctions::class)]
+#[UsesClass(\Deriver\Standard\Sorting::class)]
+#[UsesClass(\Deriver\Standard\StringFunctions::class)]
+#[UsesClass(\Deriver\Standard\TypePredicates::class)]
+#[UsesClass(Term::class)]
 #[Small]
 final class ScalarFunctionsTest extends TestCase
 {
@@ -157,10 +168,91 @@ final class ScalarFunctionsTest extends TestCase
     }
     public function testClassNamePreservesRuntimeIdentityAndUnknownSubclasses(): void
     {
-        $functions = new \Deriver\Standard\ScalarFunctions();
-        self::assertSame('Box', $functions->className(new \Deriver\Value\Term('object', 'a', attributes: ['class' => 'Box']))->native());
-        self::assertSame('Closure', $functions->className(new \Deriver\Value\Term('closure', 'b'))->native());
-        self::assertSame('intrinsic', $functions->className(new \Deriver\Value\Term('parameter', 'value', attributes: ['type' => 'Box']))->kind);
-        self::assertSame('opaque', $functions->className(new \Deriver\Value\Term('omitted'))->kind);
+        $functions = new ScalarFunctions();
+        self::assertSame('Box', $functions->className(new Term('object', 'a', attributes: ['class' => 'Box']))->native());
+        self::assertSame('Closure', $functions->className(new Term('closure', 'b'))->native());
+        self::assertSame('intrinsic', $functions->className(new Term('parameter', 'value', attributes: ['type' => 'Box']))->kind);
+        self::assertSame('opaque', $functions->className(new Term('omitted'))->kind);
+    }
+
+    /**
+     * @param string $name Registered intrinsic
+     * @param list<Term> $arguments Bound arguments
+     * @param mixed $expected Concrete result
+     */
+    #[DataProvider('providerIntrinsics')]
+    public function testApplyRoutesRegisteredIntrinsicsWithTheirBoundArguments(string $name, array $arguments, mixed $expected): void
+    {
+        self::assertSame($expected, (new ScalarFunctions())->apply($name, $arguments)->native());
+    }
+
+    /**
+     * @return iterable<string,array{string,list<Term>,mixed}>
+     */
+    public static function providerIntrinsics(): iterable
+    {
+        yield 'sort reindexes' => ['sort-values',[Term::fromNative(['b' => 3,'a' => 1])],[1,3]];
+        yield 'replacement pair' => ['replace-pair',[Term::constant('a'),Term::constant('x'),Term::constant('banana')],['result' => 'bxnxnx','count' => 3]];
+        yield 'formatting variadic' => ['sprintf',[Term::constant('%s:%d%%'),Term::fromNative(['id',7])],'id:7%'];
+        yield 'runtime class' => ['get_class',[new Term('object', 'one', attributes:['class' => 'App\Box'])],'App\Box'];
+        yield 'predicate' => ['is_int',[Term::constant(7)],true];
+        yield 'default predicate operand' => ['is_null',[],true];
+        yield 'count' => ['count',[Term::fromNative(['a' => 1,'b' => 2])],2];
+        yield 'keys' => ['array_keys',[Term::fromNative(['a' => 1,7 => 2])],['a',7]];
+        yield 'values' => ['array_values',[Term::fromNative(['a' => 1,7 => 2])],[1,2]];
+        yield 'merge variadic' => ['array_merge',[Term::fromNative([[7 => 1,'x' => 2],[3,'x' => 4]])],[1,'x' => 4,3]];
+        yield 'key existence' => ['array_key_exists',[Term::constant('x'),Term::fromNative(['x' => null])],true];
+        yield 'membership' => ['in_array',[Term::constant(3),Term::fromNative([2,3]),Term::constant(true)],true];
+        yield 'length' => ['strlen',[Term::constant('bytes')],5];
+        yield 'lowercase' => ['strtolower',[Term::constant('AbC')],'abc'];
+        yield 'uppercase' => ['strtoupper',[Term::constant('AbC')],'ABC'];
+        yield 'trim' => ['trim',[Term::constant(' x '),Term::constant(' ')],'x'];
+        yield 'substring' => ['substr',[Term::constant('abcde'),Term::constant(1),Term::constant(3)],'bcd'];
+        yield 'implode' => ['implode',[Term::constant(':'),Term::fromNative(['a','b'])],'a:b'];
+        yield 'join alias' => ['join',[Term::constant('/'),Term::fromNative(['a','b'])],'a/b'];
+        yield 'explode' => ['explode',[Term::constant(':'),Term::constant('a:b:c')],['a','b','c']];
+    }
+
+    public function testApplyUnknownIntrinsicsRetainEveryInputDependency(): void
+    {
+        $arguments = [Term::constant('confidential', true),Term::parameter('unknown')];
+        $result = (new ScalarFunctions())->apply('unregistered', $arguments);
+        self::assertSame('opaque', $result->kind);
+        self::assertSame('UNSUPPORTED_MODEL_CASE', $result->literal);
+        self::assertSame($arguments, $result->operands);
+        self::assertTrue($result->isSecret());
+    }
+
+    /**
+     * @param Term $value Object identity
+     * @param string $expected Runtime class spelling
+     */
+    #[DataProvider('providerKnownClasses')]
+    public function testClassNamePreservesExactSpellingAndConfidentiality(Term $value, string $expected): void
+    {
+        $result = (new ScalarFunctions())->className($value);
+        self::assertSame($expected, $result->native());
+        self::assertTrue($result->isSecret());
+    }
+
+    /**
+     * @return iterable<string,array{Term,string}>
+     */
+    public static function providerKnownClasses(): iterable
+    {
+        yield 'object' => [new Term('object', 'one', attributes:['class' => 'App\MiXeD'], secret:true),'App\MiXeD'];
+        yield 'enum' => [new Term('enum', 'App\Mode::Ready', attributes:['class' => 'App\Mode'], secret:true),'App\Mode'];
+        yield 'closure' => [new Term('closure', 'body', secret:true),'Closure'];
+    }
+
+    public function testClassNameRetainsUnknownRuntimeClassesAsDependentStringExpressions(): void
+    {
+        $input = new Term('parameter', 'object', attributes:['type' => 'Base'], secret:true);
+        $result = (new ScalarFunctions())->className($input);
+        self::assertSame('intrinsic', $result->kind);
+        self::assertSame('get_class', $result->literal);
+        self::assertSame([$input], $result->operands);
+        self::assertSame('string', $result->attributes['type']);
+        self::assertTrue($result->isSecret());
     }
 }

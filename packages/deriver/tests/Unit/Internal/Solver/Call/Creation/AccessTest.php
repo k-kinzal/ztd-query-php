@@ -95,6 +95,7 @@ use Tests\Fake\SummaryFixture;
 #[UsesClass(\Deriver\Internal\Solver\Call\ArgumentBinding::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\ArgumentOrder::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\CallExecutor::class)]
+#[UsesClass(Access::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Creation\Builtins::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Dispatch::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Member\Access::class)]
