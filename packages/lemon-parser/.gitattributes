@@ -1,5 +1,6 @@
 /bench/                  export-ignore
 /build/                  export-ignore
+/requirements/           export-ignore
 /spec/                   export-ignore
 /tests/                  export-ignore
 .gitattributes           export-ignore
@@ -14,4 +15,6 @@ phpbench.json.dist       export-ignore
 phpcs.xml.dist           export-ignore
 phpstan.neon             export-ignore
 phpunit.xml.dist         export-ignore
+requirements-snapshot.json export-ignore
+requirements.yaml        export-ignore
 tree.yaml                export-ignore
