@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zero Table Dependency — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/k-kinzal/ztd-query-core/doc/docs/mechanism.md.html">
+<meta name="description" content="Zero Table Dependency, a document of the k-kinzal/ztd-query-core package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="Zero Table Dependency — ZTD Query PHP">
+<meta property="og:description" content="Zero Table Dependency, a document of the k-kinzal/ztd-query-core package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/k-kinzal/ztd-query-core/doc/docs/mechanism.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../k-kinzal/ztd-query-core/index.html">k-kinzal/ztd-query-core</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li><a href="../../../../k-kinzal/ztd-query-core/all-items.html">All items</a></li><li><a href="../../../../k-kinzal/ztd-query-core/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Namespaces</div><ul class="sidebar-list"><li><a href="../../../../k-kinzal/ztd-query-core/ZtdQuery/index.html" title="ZtdQuery">ZtdQuery</a></li><li><a href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Config/index.html" title="ZtdQuery\Config">ZtdQuery\Config</a></li><li><a href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Connection/index.html" title="ZtdQuery\Connection">ZtdQuery\Connection</a></li><li><a href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Connection/Exception/index.html" title="ZtdQuery\Connection\Exception">ZtdQuery\Connection\Exception</a></li><li><a href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Exception/index.html" title="ZtdQuery\Exception">ZtdQuery\Exception</a></li><li><a href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Platform/index.html" title="ZtdQuery\Platform">ZtdQuery\Platform</a></li><li><a href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Rewrite/index.html" title="ZtdQuery\Rewrite">ZtdQuery\Rewrite</a></li><li><a href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Schema/index.html" title="ZtdQuery\Schema">ZtdQuery\Schema</a></li><li><a href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Schema/Key/index.html" title="ZtdQuery\Schema\Key">ZtdQuery\Schema\Key</a></li><li><a href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Schema/Partition/index.html" title="ZtdQuery\Schema\Partition">ZtdQuery\Schema\Partition</a></li><li><a href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Shadow/index.html" title="ZtdQuery\Shadow">ZtdQuery\Shadow</a></li><li><a href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Shadow/Mutation/index.html" title="ZtdQuery\Shadow\Mutation">ZtdQuery\Shadow\Mutation</a></li><li><a href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Shadow/Mutation/Row/index.html" title="ZtdQuery\Shadow\Mutation\Row">ZtdQuery\Shadow\Mutation\Row</a></li><li><a href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Shadow/Mutation/Table/index.html" title="ZtdQuery\Shadow\Mutation\Table">ZtdQuery\Shadow\Mutation\Table</a></li><li><a href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Shadow/Mutation/Upsert/index.html" title="ZtdQuery\Shadow\Mutation\Upsert">ZtdQuery\Shadow\Mutation\Upsert</a></li><li><a href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Shadow/Row/index.html" title="ZtdQuery\Shadow\Row">ZtdQuery\Shadow\Row</a></li><li><a href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Simulator/index.html" title="ZtdQuery\Simulator">ZtdQuery\Simulator</a></li><li><a href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Sql/index.html" title="ZtdQuery\Sql">ZtdQuery\Sql</a></li><li><a href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Sql/Profile/index.html" title="ZtdQuery\Sql\Profile">ZtdQuery\Sql\Profile</a></li><li><a href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Sql/Reader/index.html" title="ZtdQuery\Sql\Reader">ZtdQuery\Sql\Reader</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../k-kinzal/ztd-query-core/index.html">k-kinzal/ztd-query-core</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">docs/mechanism.md</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Zero Table Dependency</h1><div class="symbol-meta"><span class="source-link">docs/mechanism.md</span></div></div>
+<section class="readme prose"><h2>Zero Table Dependency</h2>
+<p>Zero Table Dependency (ZTD) is a model for unit testing SQL. It evaluates SQL on a real database engine without reading from or writing to any physical table, so that SQL can be tested like a pure function: the input is the data the test provides, and the output is the result of the query.</p>
+<h3>References</h3>
+<ul><li><a href="https://github.com/mk3008/rawsql-ts/blob/main/docs/guide/ztd-theory.md">Zero Table Dependency (ZTD) - Theoretical Overview</a></li><li><a href="https://zenn.dev/mkmonaka/articles/c2413d99ae67bb">Ultra-fast SQL Unit Testing with rawsql-ts/pg-testkit</a> (Japanese)</li><li><a href="https://github.com/mk3008/rawsql-ts">rawsql-ts</a>, the reference implementation for PostgreSQL</li></ul>
+<h3>The problem</h3>
+<p>A conventional SQL test depends on physical tables as external state. The tables have to be created by migrations, filled by seeding, and cleaned up afterwards, and tests that share them conflict when they run in parallel. These costs come from the tables, not from the SQL: what SQL operates on is data, and a physical table is only one place to keep it. If SQL is evaluated without physical tables, the costs disappear.</p>
+<h3>What ZTD is</h3>
+<p>ZTD evaluates SQL with two properties:</p>
+<ul><li><strong>It uses a real database engine.</strong> Parsing, type resolution, functions, and parameter handling behave exactly as in production, unlike a mock.</li><li><strong>It never reads from or writes to a physical table.</strong> Evaluation has no side effects and does not depend on external state.</li></ul>
+<p>As a result, tests need no migrations, seeding, or cleanup, do not conflict with each other, run in parallel, and give deterministic results.</p>
+<h3>How ZTD works</h3>
+<p>ZTD combines four mechanisms.</p>
+<h4>CTE Shadowing</h4>
+<p>Every table a query references is overridden by a common table expression (CTE) of the same name that holds the test data. A CTE takes precedence over a physical table of the same name, so the query sees only the CTE, and the physical table is hidden even if it exists.</p>
+<pre class="code"><code>-- Original
+SELECT * FROM users WHERE id = 1;
+
+-- ZTD
+WITH users AS (
+    SELECT 1 AS id, &#039;alice&#039; AS name
+    UNION ALL
+    SELECT 2 AS id, &#039;bob&#039; AS name
+)
+SELECT * FROM users WHERE id = 1;</code></pre>
+<p>Reads from physical tables are thereby replaced by reads from virtual tables.</p>
+<h4>Result-SELECT Query</h4>
+<p>A statement with side effects, such as INSERT, UPDATE, DELETE, or MERGE, is not executed. Instead, the result it would produce is reproduced by a SELECT over the shadowed tables. For unit testing the result is what matters, so this is sufficient.</p>
+<p>A statement with a RETURNING clause becomes a SELECT that returns the same rows:</p>
+<pre class="code"><code>-- Original
+UPDATE users SET name = &#039;Alice&#039; WHERE id = $1 RETURNING id, name;
+
+-- ZTD
+WITH users AS (
+    SELECT 1 AS id, &#039;alice&#039; AS name
+    UNION ALL
+    SELECT 2 AS id, &#039;bob&#039; AS name
+)
+SELECT id, &#039;Alice&#039; AS name FROM users WHERE id = $1;</code></pre>
+<p>A statement without RETURNING becomes a SELECT that counts the rows it would affect:</p>
+<pre class="code"><code>-- ZTD
+WITH users AS (...)
+SELECT count(*) FROM users WHERE id = $1;</code></pre>
+<p>The same applies to each kind of statement:</p>
+<div class="table-wrap"><table><thead><tr><th>Statement</th><th>Result-SELECT Query</th></tr></thead><tbody><tr><td>INSERT</td><td>Selects the rows of its VALUES or SELECT source, with the RETURNING columns, or counts them</td></tr><tr><td>UPDATE</td><td>Selects the rows its WHERE condition matches, with the SET values in place of the old ones, or counts them</td></tr><tr><td>DELETE</td><td>Selects the rows its WHERE condition matches, or counts them</td></tr><tr><td>MERGE</td><td>Counts the rows each WHEN clause would act on</td></tr></tbody></table></div>
+<h4>Query Conversion</h4>
+<p>CTE Shadowing and Result-SELECT Query require transforming SQL. The SQL is parsed into a syntax tree, and the conversion finds the kind of statement and the tables and columns it uses, adds the shadowing CTEs, and rewrites write statements into SELECT statements. The conversion preserves the meaning of the query, its placeholders, and its syntactic structure.</p>
+<h4>SQL Interceptor</h4>
+<p>The conversion is applied at run time, by intercepting the SQL a database driver sends. Existing SQL, handwritten or generated by an ORM, runs unchanged, and the application needs no special API or DSL.</p>
+<h3>Scope</h3>
+<p>ZTD is specialized for unit testing the logic of SQL. The following are outside its scope:</p>
+<div class="table-wrap"><table><thead><tr><th>Area</th><th>Reason</th></tr></thead><tbody><tr><td>Transaction consistency across several operations</td><td>Each statement is evaluated as a function of the data it is given</td></tr><tr><td>Stateful processing such as ETL flows</td><td>The model has no physical state to carry between steps</td></tr><tr><td>Physical optimization: locks, indexes, and execution plans</td><td>No physical table is accessed, so I/O and index effects cannot be observed</td></tr><tr><td>Database-dependent features: stored procedures, triggers, and views</td><td>They run inside the database and are not reached by rewriting the SQL the application sends</td></tr></tbody></table></div>
+</section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>

@@ -37,114 +37,57 @@
 <main class="content" id="content">
 <div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>ZTD Query MySQLi Adapter</h1><div class="symbol-meta"><span class="source-link">README.md</span></div></div>
 <section class="readme prose"><h2>ZTD Query MySQLi Adapter</h2>
-<p><a href="https://opensource.org/licenses/MIT"><span class="md-target" title="https://img.shields.io/badge/License-MIT-yellow.svg">License: MIT</span></a> <a href="https://www.php.net/"><span class="md-target" title="https://img.shields.io/badge/PHP-8.1%2B-blue.svg">PHP Version</span></a></p>
-<p>MySQLi adapter for <a href="https://github.com/k-kinzal/ztd-query-core">ZTD Query PHP</a>. Drop-in replacement for mysqli that transparently applies Zero Table Dependency query transformation.</p>
-<h3>Overview</h3>
-<p>This package provides <code>ZtdMysqli</code> and <code>ZtdMysqliStatement</code>, which extend <code>mysqli</code> and <code>mysqli_stmt</code> respectively. They intercept SQL queries and transform them using CTE (Common Table Expression) shadowing, enabling SQL unit testing without modifying physical databases.</p>
-<ul><li><strong>Drop-in replacement</strong> - <code>ZtdMysqli</code> extends <code>mysqli</code> and is type-compatible everywhere <code>mysqli</code> is expected</li><li><strong>Transparent rewriting</strong> - All queries are automatically rewritten at <code>prepare()</code>/<code>query()</code>/<code>execute_query()</code> time</li><li><strong>Toggle on/off</strong> - Enable or disable ZTD mode at runtime with <code>enableZtd()</code>/<code>disableZtd()</code></li><li><strong>Wrap existing connections</strong> - Use <code>ZtdMysqli::fromMysqli()</code> to wrap an existing mysqli instance without creating a new connection</li></ul>
+<p><a href="https://opensource.org/licenses/MIT"><span class="md-target" title="https://img.shields.io/badge/License-MIT-yellow.svg">License: MIT</span></a> <a href="https://k-kinzal.github.io/ztd-query-php/k-kinzal/ztd-query-mysqli-adapter/"><span class="md-target" title="https://img.shields.io/badge/docs-ztd--query--mysqli--adapter-0969da?logo=php&amp;logoColor=white">Docs</span></a> <a href="https://www.php.net/"><span class="md-target" title="https://img.shields.io/badge/PHP-8.1%2B-blue.svg">PHP Version</span></a> <a href="https://deepwiki.com/k-kinzal/ztd-query-php"><span class="md-target" title="https://deepwiki.com/badge.svg">Ask DeepWiki</span></a></p>
+<p>ZTD Query is a Zero Table Dependency testing library for PHP: it runs the SQL of an application on a real database engine without reading or writing any physical table. Before a query reaches the database, every table it references is replaced by a CTE holding the rows the test has written, and every INSERT, UPDATE, and DELETE is turned into a SELECT whose result is kept in the session, so later queries see the change. Tests therefore need no migrations, seeding, or cleanup, and they can run in parallel against one empty database. This package is the mysqli adapter: <code>ZtdMysqli</code> extends <code>mysqli</code> and applies ZTD to every query it runs on MySQL.</p>
 <h3>Requirements</h3>
-<ul><li>PHP 8.1 or higher</li><li>MySQLi extension</li><li>MySQL 8.0.11 - 9.1</li><li><a href="https://github.com/k-kinzal/ztd-query-core">k-kinzal/ztd-query-php</a> (core)</li><li><a href="https://github.com/k-kinzal/ztd-query-mysql">k-kinzal/ztd-query-mysql</a> (MySQL platform)</li></ul>
+<ul><li>PHP 8.1+ with the mysqli extension</li><li>MySQL 8.0.11–9.1</li></ul>
 <h3>Installation</h3>
-<pre class="code"><code>composer require --dev k-kinzal/ztd-query-mysqli-adapter</code></pre>
+<p>MySQL:</p>
+<pre class="code"><code>composer require --dev k-kinzal/ztd-query-mysqli-adapter k-kinzal/ztd-query-mysql</code></pre>
 <h3>Usage</h3>
-<h4>Creating a New Connection</h4>
+<p><code>ZtdMysqli</code> extends <code>mysqli</code>, so it can be passed wherever the application expects a mysqli connection. Tables are created and filled through the same connection; they exist only in the session.</p>
+<pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\TestCase</span>;
+<span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Adapter\Mysqli\ZtdMysqli</span>;
+
+<span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">UserQueryTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span>
+{
+    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testSelectsActiveUsers</span>(): <span class="tok-id">void</span>
+    {
+        <span class="tok-var">$mysqli</span> = <span class="tok-kw">new</span> <span class="tok-id">ZtdMysqli</span>(<span class="tok-str">&#039;127.0.0.1&#039;</span>, <span class="tok-str">&#039;root&#039;</span>, <span class="tok-str">&#039;root&#039;</span>, <span class="tok-str">&#039;test&#039;</span>);
+        <span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255) NOT NULL, active BOOLEAN NOT NULL)&#039;</span>);
+        <span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&quot;INSERT INTO users (id, name, active) VALUES (1, &#039;Alice&#039;, TRUE), (2, &#039;Bob&#039;, FALSE)&quot;</span>);
+
+        <span class="tok-var">$result</span> = <span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">execute_query</span>(<span class="tok-str">&#039;SELECT name FROM users WHERE active = ? ORDER BY id&#039;</span>, [<span class="tok-num">1</span>]);
+
+        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([[<span class="tok-str">&#039;name&#039;</span> =&gt; <span class="tok-str">&#039;Alice&#039;</span>]], <span class="tok-var">$result</span>-&gt;<span class="tok-id">fetch_all</span>(<span class="tok-id">MYSQLI_ASSOC</span>));
+    }
+}</code></pre>
+<p><code>ZtdMysqli::fromMysqli($mysqli)</code> wraps an existing connection instead of opening a new one, and <code>disableZtd()</code> and <code>enableZtd()</code> switch between the physical database and the session. Read the number of affected rows with <code>lastAffectedRows()</code>; the <code>affected_rows</code> property is not available on a <code>ZtdMysqli</code>.</p>
+<h3>Configuration</h3>
 <pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Adapter\Mysqli\ZtdMysqli</span>;
-
-<span class="tok-var">$mysqli</span> = <span class="tok-kw">new</span> <span class="tok-id">ZtdMysqli</span>(<span class="tok-str">&#039;localhost&#039;</span>, <span class="tok-str">&#039;user&#039;</span>, <span class="tok-str">&#039;password&#039;</span>, <span class="tok-str">&#039;test&#039;</span>);
-
-<span class="tok-com">// Define schema and insert fixture data</span>
-<span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255), email VARCHAR(255))&#039;</span>);
-<span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&quot;INSERT INTO users (id, name, email) VALUES (1, &#039;Alice&#039;, &#039;alice@example.com&#039;)&quot;</span>);
-<span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&quot;INSERT INTO users (id, name, email) VALUES (2, &#039;Bob&#039;, &#039;bob@example.com&#039;)&quot;</span>);
-
-<span class="tok-com">// Query against fixture data (no physical table access)</span>
-<span class="tok-var">$stmt</span> = <span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">prepare</span>(<span class="tok-str">&#039;SELECT * FROM users WHERE id = ?&#039;</span>);
-<span class="tok-var">$stmt</span>-&gt;<span class="tok-id">bind_param</span>(<span class="tok-str">&#039;i&#039;</span>, <span class="tok-var">$id</span>);
-<span class="tok-var">$id</span> = <span class="tok-num">1</span>;
-<span class="tok-var">$stmt</span>-&gt;<span class="tok-id">execute</span>();
-<span class="tok-var">$result</span> = <span class="tok-var">$stmt</span>-&gt;<span class="tok-id">get_result</span>();
-<span class="tok-var">$row</span> = <span class="tok-var">$result</span>-&gt;<span class="tok-id">fetch_assoc</span>();
-<span class="tok-com">// [&#039;id&#039; =&gt; 1, &#039;name&#039; =&gt; &#039;Alice&#039;, &#039;email&#039; =&gt; &#039;alice@example.com&#039;]</span></code></pre>
-<h4>Wrapping an Existing mysqli Instance</h4>
-<pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Adapter\Mysqli\ZtdMysqli</span>;
-
-<span class="tok-var">$existingMysqli</span> = <span class="tok-kw">new</span> <span class="tok-id">mysqli</span>(<span class="tok-str">&#039;localhost&#039;</span>, <span class="tok-str">&#039;user&#039;</span>, <span class="tok-str">&#039;password&#039;</span>, <span class="tok-str">&#039;test&#039;</span>);
-<span class="tok-var">$ztdMysqli</span> = <span class="tok-id">ZtdMysqli</span>::<span class="tok-id">fromMysqli</span>(<span class="tok-var">$existingMysqli</span>);</code></pre>
-<h4>Testing Write Operations</h4>
-<p>INSERT/UPDATE/DELETE statements are converted to SELECT queries that return the affected rows:</p>
-<pre class="code"><code><span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255))&#039;</span>);
-<span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&quot;INSERT INTO users (id, name) VALUES (1, &#039;Alice&#039;)&quot;</span>);
-
-<span class="tok-com">// INSERT returns the inserted row data</span>
-<span class="tok-var">$result</span> = <span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&quot;INSERT INTO users (id, name) VALUES (2, &#039;Bob&#039;)&quot;</span>);
-<span class="tok-var">$row</span> = <span class="tok-var">$result</span>-&gt;<span class="tok-id">fetch_assoc</span>();
-<span class="tok-com">// [&#039;id&#039; =&gt; 2, &#039;name&#039; =&gt; &#039;Bob&#039;]</span>
-
-<span class="tok-com">// UPDATE returns the updated row data</span>
-<span class="tok-var">$result</span> = <span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&quot;UPDATE users SET name = &#039;Alice Updated&#039; WHERE id = 1&quot;</span>);
-<span class="tok-var">$row</span> = <span class="tok-var">$result</span>-&gt;<span class="tok-id">fetch_assoc</span>();
-<span class="tok-com">// [&#039;id&#039; =&gt; 1, &#039;name&#039; =&gt; &#039;Alice Updated&#039;]</span>
-
-<span class="tok-com">// DELETE returns the deleted row data</span>
-<span class="tok-var">$result</span> = <span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&quot;DELETE FROM users WHERE id = 1&quot;</span>);
-<span class="tok-var">$row</span> = <span class="tok-var">$result</span>-&gt;<span class="tok-id">fetch_assoc</span>();
-<span class="tok-com">// [&#039;id&#039; =&gt; 1, &#039;name&#039; =&gt; &#039;Alice&#039;]</span></code></pre>
-<h4>Enabling/Disabling ZTD Mode</h4>
-<pre class="code"><code><span class="tok-var">$mysqli</span> = <span class="tok-kw">new</span> <span class="tok-id">ZtdMysqli</span>(<span class="tok-str">&#039;localhost&#039;</span>, <span class="tok-str">&#039;user&#039;</span>, <span class="tok-str">&#039;password&#039;</span>, <span class="tok-str">&#039;test&#039;</span>);
-
-<span class="tok-com">// Disable ZTD to execute against physical database</span>
-<span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">disableZtd</span>();
-<span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255))&#039;</span>);
-
-<span class="tok-com">// Re-enable ZTD for testing</span>
-<span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">enableZtd</span>();
-
-<span class="tok-com">// Check current status</span>
-<span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">isZtdEnabled</span>(); <span class="tok-com">// true</span></code></pre>
-<h4>Affected Row Count</h4>
-<p>Due to PHP&#039;s C extension property handler, <code>$mysqli-&gt;affected_rows</code> may not work reliably with ZTD operations. Use the dedicated method instead:</p>
-<pre class="code"><code><span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&quot;INSERT INTO users (id, name) VALUES (1, &#039;Alice&#039;)&quot;</span>);
-<span class="tok-var">$affectedRows</span> = <span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">lastAffectedRows</span>();
-<span class="tok-com">// 1</span></code></pre>
-<h4>Configuration</h4>
-<pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Adapter\Mysqli\ZtdMysqli</span>;
-<span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Config\ZtdConfig</span>;
-<span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Config\UnsupportedSqlBehavior</span>;
 <span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Config\UnknownSchemaBehavior</span>;
+<span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Config\UnsupportedSqlBehavior</span>;
+<span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Config\ZtdConfig</span>;
 
 <span class="tok-var">$config</span> = <span class="tok-kw">new</span> <span class="tok-id">ZtdConfig</span>(
+    <span class="tok-com">// Unsupported statements: Exception (default), Notice, or Ignore</span>
     <span class="tok-id">unsupportedBehavior</span>: <span class="tok-id">UnsupportedSqlBehavior</span>::<span class="tok-id">Exception</span>,
+
+    <span class="tok-com">// Tables the session does not know: Passthrough to the database (default), or Exception</span>
     <span class="tok-id">unknownSchemaBehavior</span>: <span class="tok-id">UnknownSchemaBehavior</span>::<span class="tok-id">Exception</span>,
+
+    <span class="tok-com">// Per-statement overrides of unsupportedBehavior; the first matching rule wins</span>
     <span class="tok-id">behaviorRules</span>: [
-        <span class="tok-str">&#039;BEGIN&#039;</span> =&gt; <span class="tok-id">UnsupportedSqlBehavior</span>::<span class="tok-id">Ignore</span>,
-        <span class="tok-str">&#039;COMMIT&#039;</span> =&gt; <span class="tok-id">UnsupportedSqlBehavior</span>::<span class="tok-id">Ignore</span>,
-        <span class="tok-str">&#039;ROLLBACK&#039;</span> =&gt; <span class="tok-id">UnsupportedSqlBehavior</span>::<span class="tok-id">Ignore</span>,
+        <span class="tok-str">&#039;CREATE INDEX&#039;</span> =&gt; <span class="tok-id">UnsupportedSqlBehavior</span>::<span class="tok-id">Ignore</span>,       <span class="tok-com">// case-insensitive prefix</span>
+        <span class="tok-str">&#039;/^SET\s+/i&#039;</span> =&gt; <span class="tok-id">UnsupportedSqlBehavior</span>::<span class="tok-id">Notice</span>,          <span class="tok-com">// regular expression</span>
     ],
 );
 
-<span class="tok-var">$mysqli</span> = <span class="tok-kw">new</span> <span class="tok-id">ZtdMysqli</span>(<span class="tok-str">&#039;localhost&#039;</span>, <span class="tok-str">&#039;user&#039;</span>, <span class="tok-str">&#039;password&#039;</span>, <span class="tok-str">&#039;test&#039;</span>, <span class="tok-id">config</span>: <span class="tok-var">$config</span>);</code></pre>
-<div class="table-wrap"><table><thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead><tbody><tr><td><code>unsupportedBehavior</code></td><td><code>Ignore</code>, <code>Notice</code>, <code>Exception</code></td><td>Default behavior when unsupported SQL is executed</td></tr><tr><td><code>unknownSchemaBehavior</code></td><td><code>Passthrough</code>, <code>Exception</code></td><td>Behavior when unknown table is referenced</td></tr><tr><td><code>behaviorRules</code></td><td><code>array&lt;string, UnsupportedSqlBehavior&gt;</code></td><td>Per-pattern behavior overrides (first match wins)</td></tr></tbody></table></div>
-<h3>API Reference</h3>
-<h4>ZtdMysqli</h4>
-<div class="table-wrap"><table><thead><tr><th>Method</th><th>Description</th></tr></thead><tbody><tr><td><code>__construct($hostname, $username, $password, $database, $port, $socket, $config)</code></td><td>Create a new ZTD-wrapped mysqli connection</td></tr><tr><td><code>ZtdMysqli::fromMysqli($mysqli, $config)</code></td><td>Wrap an existing mysqli instance</td></tr><tr><td><code>enableZtd()</code></td><td>Enable ZTD mode</td></tr><tr><td><code>disableZtd()</code></td><td>Disable ZTD mode</td></tr><tr><td><code>isZtdEnabled()</code></td><td>Check whether ZTD mode is enabled</td></tr><tr><td><code>lastAffectedRows()</code></td><td>Get affected row count from the last ZTD or regular operation</td></tr><tr><td><code>prepare($query)</code></td><td>Prepare a statement (rewritten if ZTD enabled)</td></tr><tr><td><code>query($query, $resultMode)</code></td><td>Execute a query with ZTD processing</td></tr><tr><td><code>real_query($query)</code></td><td>Execute a query without fetching results</td></tr><tr><td><code>execute_query($query, $params)</code></td><td>Execute a parameterized query</td></tr></tbody></table></div>
-<p>All other mysqli methods (<code>begin_transaction</code>, <code>commit</code>, <code>rollback</code>, <code>real_escape_string</code>, etc.) are delegated to the inner mysqli instance. Properties are delegated via <code>__get</code>/<code>__isset</code>.</p>
-<h4>ZtdMysqliStatement</h4>
-<p>Extends <code>mysqli_stmt</code> with ZTD-aware behavior. <code>execute()</code>, <code>get_result()</code>, and <code>bind_param()</code> work transparently. Use <code>ztdAffectedRows()</code> to get the ZTD-aware affected row count for write operations.</p>
-<h3>Development</h3>
-<pre class="code"><code># Run unit tests
-composer test:unit
-
-# Run integration tests (requires Docker)
-composer test:integration
-
-# Run all tests
-composer test
-
-# Run linter (PHP-CS-Fixer + PHPStan level max)
-composer lint
-
-# Fix code style
-composer format</code></pre>
+<span class="tok-var">$mysqli</span> = <span class="tok-kw">new</span> <span class="tok-id">ZtdMysqli</span>(<span class="tok-var">$host</span>, <span class="tok-var">$user</span>, <span class="tok-var">$password</span>, <span class="tok-var">$database</span>, <span class="tok-id">config</span>: <span class="tok-var">$config</span>);</code></pre>
+<p><code>Ignore</code> skips the statement, <code>Notice</code> skips it and raises a PHP notice, and <code>Exception</code> throws an exception.</p>
+<h3>SQL Support</h3>
+<div class="table-wrap"><table><thead><tr><th>Statement</th><th>MySQL</th></tr></thead><tbody><tr><td>SELECT, including joins, grouping, set operations, subqueries, CTEs, recursive CTEs, and window functions</td><td>Supported</td></tr><tr><td>INSERT with VALUES or SELECT</td><td>Supported</td></tr><tr><td>Upsert</td><td><code>ON DUPLICATE KEY UPDATE</code>, <code>INSERT IGNORE</code>, <code>REPLACE</code></td></tr><tr><td>UPDATE and DELETE</td><td>Supported, including multi-table forms and <code>ORDER BY ... LIMIT</code></td></tr><tr><td><code>RETURNING</code></td><td>–</td></tr><tr><td>TRUNCATE</td><td>Supported</td></tr><tr><td>CREATE TABLE, DROP TABLE</td><td>Supported</td></tr><tr><td>ALTER TABLE</td><td>Supported</td></tr><tr><td>BEGIN, COMMIT, ROLLBACK</td><td>Applied to the session: ROLLBACK discards the writes made since BEGIN</td></tr><tr><td>Views, indexes, routines, triggers, SET, and server or user administration</td><td>Unsupported</td></tr></tbody></table></div>
+<p>Unsupported statements are handled as configured by <code>unsupportedBehavior</code>. The full specification is in <a href="https://github.com/k-kinzal/ztd-query-php/blob/main/packages/ztd-query-mysql/docs/spec.md">ztd-query-mysql</a>.</p>
 <h3>License</h3>
 <p>MIT License. See <span class="md-target" title="LICENSE">LICENSE</span> for details.</p>
 </section>

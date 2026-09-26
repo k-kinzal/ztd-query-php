@@ -22,7 +22,7 @@
 </head>
 <body data-root="../../../">
 <a class="skip" href="#content">Skip to content</a><div class="doc">
-<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../k-kinzal/sql-semantics-sqlite/index.html">k-kinzal/sql-semantics-sqlite</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li><a href="../../../k-kinzal/sql-semantics-sqlite/all-items.html">All items</a></li><li><a href="../../../k-kinzal/sql-semantics-sqlite/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Namespaces</div><ul class="sidebar-list"><li><a href="../../../k-kinzal/sql-semantics-sqlite/SqlSemantics/Platform/Sqlite/index.html" title="SqlSemantics\Platform\Sqlite">SqlSemantics\Platform\Sqlite</a></li><li><a href="../../../k-kinzal/sql-semantics-sqlite/SqlSemantics/Statement/Model/Sqlite/Choice/index.html" title="SqlSemantics\Statement\Model\Sqlite\Choice">SqlSemantics\Statement\Model\Sqlite\Choice</a></li><li><a href="../../../k-kinzal/sql-semantics-sqlite/SqlSemantics/Statement/Model/Sqlite/Role/index.html" title="SqlSemantics\Statement\Model\Sqlite\Role">SqlSemantics\Statement\Model\Sqlite\Role</a></li><li><a href="../../../k-kinzal/sql-semantics-sqlite/SqlSemantics/Statement/Model/Sqlite/Value/index.html" title="SqlSemantics\Statement\Model\Sqlite\Value">SqlSemantics\Statement\Model\Sqlite\Value</a></li></ul></nav></aside>
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../k-kinzal/sql-semantics-sqlite/index.html">k-kinzal/sql-semantics-sqlite</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li><a href="../../../k-kinzal/sql-semantics-sqlite/all-items.html">All items</a></li><li><a href="../../../k-kinzal/sql-semantics-sqlite/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Namespaces</div><ul class="sidebar-list"><li><a href="../../../k-kinzal/sql-semantics-sqlite/SqlSemantics/Platform/Sqlite/index.html" title="SqlSemantics\Platform\Sqlite">SqlSemantics\Platform\Sqlite</a></li><li><a href="../../../k-kinzal/sql-semantics-sqlite/SqlSemantics/Statement/Model/Sqlite/Choice/index.html" title="SqlSemantics\Statement\Model\Sqlite\Choice">SqlSemantics\Statement\Model\Sqlite\Choice</a></li><li><a href="../../../k-kinzal/sql-semantics-sqlite/SqlSemantics/Statement/Model/Sqlite/Contract/index.html" title="SqlSemantics\Statement\Model\Sqlite\Contract">SqlSemantics\Statement\Model\Sqlite\Contract</a></li><li><a href="../../../k-kinzal/sql-semantics-sqlite/SqlSemantics/Statement/Model/Sqlite/Role/index.html" title="SqlSemantics\Statement\Model\Sqlite\Role">SqlSemantics\Statement\Model\Sqlite\Role</a></li><li><a href="../../../k-kinzal/sql-semantics-sqlite/SqlSemantics/Statement/Model/Sqlite/Value/index.html" title="SqlSemantics\Statement\Model\Sqlite\Value">SqlSemantics\Statement\Model\Sqlite\Value</a></li></ul></nav></aside>
 <div class="main">
 <header class="topbar">
 <button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
@@ -37,29 +37,25 @@
 <main class="content" id="content">
 <div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>SQL Semantics for SQLite</h1><div class="symbol-meta"><span class="source-link">README.md</span></div></div>
 <section class="readme prose"><h2>SQL Semantics for SQLite</h2>
-<p>Typed SQLite statement models, SQL reconstruction, and schema-dependent binding. Requires PHP 8.1+.</p>
+<p><a href="https://opensource.org/licenses/MIT"><span class="md-target" title="https://img.shields.io/badge/License-MIT-yellow.svg">License: MIT</span></a> <a href="https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-sqlite/"><span class="md-target" title="https://img.shields.io/badge/docs-sql--semantics--sqlite-0969da?logo=php&amp;logoColor=white">Docs</span></a> <a href="https://www.php.net/"><span class="md-target" title="https://img.shields.io/badge/PHP-8.1%2B-blue.svg">PHP Version</span></a> <a href="https://deepwiki.com/k-kinzal/ztd-query-php"><span class="md-target" title="https://deepwiki.com/badge.svg">Ask DeepWiki</span></a></p>
+<p>SQL Semantics for SQLite adds SQLite to <a href="https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics">SQL Semantics</a>: the typed statement models of the official SQLite grammars and the SQLite rules for schema binding. Installing it also installs the shared SQL Semantics runtime, and <code>Dialect::Sqlite</code> selects SQLite in the runtime&#039;s <code>Semantics</code>, <code>SchemaBuilder</code>, and <code>Binder</code>. No database connection is needed.</p>
+<h3>Requirements</h3>
+<ul><li>PHP 8.1+ with the zlib extension</li></ul>
+<h3>Support Syntax</h3>
+<p>The following grammar versions are supported. Pass the version tag as the second argument of <code>Semantics</code> or the third argument of <code>SchemaBuilder</code>; omitting it uses the default.</p>
+<div class="table-wrap"><table><thead><tr><th>Version</th><th>Version tag</th><th>Default</th></tr></thead><tbody><tr><td>3.47.2</td><td><code>sqlite-3.47.2</code></td><td>Yes</td></tr></tbody></table></div>
+<h3>Installation</h3>
 <pre class="code"><code>composer require k-kinzal/sql-semantics-sqlite</code></pre>
-<p>This installs the shared <code>k-kinzal/sql-semantics</code> runtime and <code>k-kinzal/sql-parser</code>. Other SQL Semantics database packages are optional and are not installed.</p>
+<h3>Usage</h3>
 <pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Facade\Semantics</span>;
 <span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Dialect</span>;
 
-<span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">Sqlite</span>, <span class="tok-str">&#039;sqlite-3.47.2&#039;</span>);
-<span class="tok-var">$statement</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;INSERT INTO users (id) VALUES (1)&#039;</span>);
-<span class="tok-var">$sql</span> = <span class="tok-var">$statement</span>-&gt;<span class="tok-id">toString</span>();</code></pre>
-<p>Omit the grammar version to select the parser&#039;s default. The same dialect enum can be passed to <code>SqlSemantics\Core\SchemaBuilder</code> for schema-dependent binding. See the <a href="https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics">shared runtime documentation</a> for model construction, binding, and the distinction between those APIs.</p>
-<p><code>src/</code> contains this database&#039;s platform and dialect entry point. <code>resources/models/</code> contains generated PHP types, and <code>resources/mapping/</code> contains a construction map for every supported grammar release. Statement models reconstruct SQL from their fields and do not retain parser trees or original statements. Deptrac checks this boundary, including all generated types.</p>
-<h3>Development</h3>
-<p>Run these commands from this directory or from its split repository:</p>
-<pre class="code"><code>composer install
-composer build:models:check
-composer lint
-composer test
-composer fuzz:smoke
-composer bench:quick</code></pre>
-<p><code>composer build:models</code> regenerates this database&#039;s models using the common runtime&#039;s <code>vendor/bin/build-models.php</code>. It compiles all supported releases of this database together. Output is written to <code>resources/</code>; caches and staging stay under this package&#039;s <code>build/</code>. Generated files are committed and are not built during installation.</p>
-<p>See <a href="../../../k-kinzal/sql-semantics-sqlite/doc/fuzz/README.md.html">fuzz testing</a> for seed replay and longer runs.</p>
+<span class="tok-var">$statement</span> = (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">Sqlite</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&quot;INSERT OR REPLACE INTO users (id, name) VALUES (1, &#039;Alice&#039;)&quot;</span>);
+
+<span class="tok-var">$statement</span>-&gt;<span class="tok-id">toString</span>(); <span class="tok-com">// &quot;INSERT OR REPLACE INTO users( id , name ) VALUES( 1 , &#039;Alice&#039; )&quot;</span></code></pre>
+<p>See the <a href="https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics">SQL Semantics documentation</a> for statement models and schema binding.</p>
 <h3>License</h3>
-<p>MIT. See <span class="md-target" title="LICENSE">LICENSE</span>.</p>
+<p>MIT License. See <span class="md-target" title="LICENSE">LICENSE</span> for details.</p>
 </section>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

@@ -47,7 +47,7 @@
 <span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-com"> * @example Accept a structured SQL value</span></span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-com"> *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Role\ShowRelaylogEventsStmtForm $value): string =&gt; (new \SqlSemantics\Statement\Statement($value))-&gt;toString();</span></span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-com"> *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Role\ShowRelaylogEventsStmtForm $value): string =&gt; \SqlSemantics\Statement\Writer::render($value);</span></span>
 <span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-com"> *     $write instanceof \Closure // =&gt; true</span></span>
 <span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">interface</span> <span class="tok-id">ShowRelaylogEventsStmtForm</span> <span class="tok-kw">extends</span> <span class="tok-id">\SqlSemantics\Statement\Element</span></span>

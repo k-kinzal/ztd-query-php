@@ -55,22 +55,24 @@
 <span class="src-line" id="L17"><a class="ln" href="#L17">17</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlSemantics\Statement\Element</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L18"><a class="ln" href="#L18">18</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlSemantics\Statement\Statement</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L19"><a class="ln" href="#L19">19</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlSemantics\Statement\Writer</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L20"><a class="ln" href="#L20">20</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlSemantics\Core\Ast\DialectParser</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L21"><a class="ln" href="#L21">21</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlSemantics\Platform\MySql\Platform</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L22"><a class="ln" href="#L22">22</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlSemantics\Platform\PostgreSql\Platform</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L23"><a class="ln" href="#L23">23</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlSemantics\Platform\Sqlite\Platform</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L24"><a class="ln" href="#L24">24</a>#[<span class="tok-id">Medium</span>]</span>
-<span class="src-line" id="L25"><a class="ln" href="#L25">25</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">AnalysisExceptionTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
-<span class="src-line" id="L26"><a class="ln" href="#L26">26</a>{</span>
-<span class="src-line" id="L27"><a class="ln" href="#L27">27</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testTheOriginalFailureRemainsAvailable</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L28"><a class="ln" href="#L28">28</a>    {</span>
-<span class="src-line" id="L29"><a class="ln" href="#L29">29</a>        <span class="tok-var">$cause</span> = <span class="tok-kw">new</span> <span class="tok-id">RuntimeException</span>(<span class="tok-str">&#039;Expected a statement&#039;</span>);</span>
-<span class="src-line" id="L30"><a class="ln" href="#L30">30</a>        <span class="tok-var">$failure</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Core\AnalysisException</span>(<span class="tok-str">&#039;Invalid SQL&#039;</span>, <span class="tok-num">0</span>, <span class="tok-var">$cause</span>);</span>
-<span class="src-line" id="L31"><a class="ln" href="#L31">31</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;Invalid SQL&#039;</span>, <span class="tok-var">$failure</span>-&gt;<span class="tok-id">getMessage</span>());</span>
-<span class="src-line" id="L32"><a class="ln" href="#L32">32</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$cause</span>, <span class="tok-var">$failure</span>-&gt;<span class="tok-id">getPrevious</span>());</span>
-<span class="src-line" id="L33"><a class="ln" href="#L33">33</a>    }</span>
-<span class="src-line" id="L34"><a class="ln" href="#L34">34</a>}</span>
-<span class="src-line" id="L35"><a class="ln" href="#L35">35</a></span>
+<span class="src-line" id="L20"><a class="ln" href="#L20">20</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlSemantics\Statement\Assertion</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L21"><a class="ln" href="#L21">21</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlSemantics\Statement\ImmutableGraph</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L22"><a class="ln" href="#L22">22</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlSemantics\Core\Ast\DialectParser</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L23"><a class="ln" href="#L23">23</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlSemantics\Platform\MySql\Platform</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L24"><a class="ln" href="#L24">24</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlSemantics\Platform\PostgreSql\Platform</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L25"><a class="ln" href="#L25">25</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlSemantics\Platform\Sqlite\Platform</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L26"><a class="ln" href="#L26">26</a>#[<span class="tok-id">Medium</span>]</span>
+<span class="src-line" id="L27"><a class="ln" href="#L27">27</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">AnalysisExceptionTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
+<span class="src-line" id="L28"><a class="ln" href="#L28">28</a>{</span>
+<span class="src-line" id="L29"><a class="ln" href="#L29">29</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testTheOriginalFailureRemainsAvailable</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L30"><a class="ln" href="#L30">30</a>    {</span>
+<span class="src-line" id="L31"><a class="ln" href="#L31">31</a>        <span class="tok-var">$cause</span> = <span class="tok-kw">new</span> <span class="tok-id">RuntimeException</span>(<span class="tok-str">&#039;Expected a statement&#039;</span>);</span>
+<span class="src-line" id="L32"><a class="ln" href="#L32">32</a>        <span class="tok-var">$failure</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Core\AnalysisException</span>(<span class="tok-str">&#039;Invalid SQL&#039;</span>, <span class="tok-num">0</span>, <span class="tok-var">$cause</span>);</span>
+<span class="src-line" id="L33"><a class="ln" href="#L33">33</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;Invalid SQL&#039;</span>, <span class="tok-var">$failure</span>-&gt;<span class="tok-id">getMessage</span>());</span>
+<span class="src-line" id="L34"><a class="ln" href="#L34">34</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$cause</span>, <span class="tok-var">$failure</span>-&gt;<span class="tok-id">getPrevious</span>());</span>
+<span class="src-line" id="L35"><a class="ln" href="#L35">35</a>    }</span>
+<span class="src-line" id="L36"><a class="ln" href="#L36">36</a>}</span>
+<span class="src-line" id="L37"><a class="ln" href="#L37">37</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
