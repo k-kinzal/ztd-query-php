@@ -1,208 +1,109 @@
-# ZTD Query PHP
+# ZTD Query Core
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Docs](https://img.shields.io/badge/docs-ztd--query--core-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/ztd-query-core/)
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
-A Zero Table Dependency testing library for PHP 8.1+ that enables SQL unit testing without modifying physical databases.
-
-## Overview
-
-ZTD Query PHP wraps PDO to intercept and transform SQL queries using CTE (Common Table Expression) shadowing. This allows you to:
-
-- Test SQL queries against fixture data without migrations, data seeding, or cleanup
-- Use the real MySQL engine for query execution (not mocks)
-- Run tests in parallel with complete isolation
-- Treat SQL as pure functions: input (fixtures) -> output (results)
-
-### How It Works
-
-**CTE Shadowing** - Table references in SELECT queries are replaced with CTEs containing your fixture data:
-
-```sql
--- Original query
-SELECT email FROM users WHERE id = 1
-
--- Transformed query (with fixture data)
-WITH users AS (
-  SELECT 1 AS id, 'alice@example.com' AS email
-  UNION ALL
-  SELECT 2 AS id, 'bob@example.com' AS email
-)
-SELECT email FROM users WHERE id = 1
-```
-
-**Result Select Query** - INSERT/UPDATE/DELETE statements are converted to SELECT queries that return the affected rows:
-
-```sql
--- Original
-UPDATE users SET name = 'Alice' WHERE id = 1
-
--- Transformed (returns rows that would be affected)
-WITH users AS (...fixture data...)
-SELECT id, 'Alice' AS name FROM users WHERE id = 1
-```
+ZTD Query is a Zero Table Dependency testing library for PHP: it runs the SQL of an application on a real MySQL, PostgreSQL, or SQLite engine without reading or writing any physical table. Before a query reaches the database, every table it references is replaced by a CTE holding the rows the test has written, and every INSERT, UPDATE, and DELETE is turned into a SELECT whose result is kept in the session, so later queries see the change. Tests therefore need no migrations, seeding, or cleanup, and they can run in parallel against one empty database. This package is the database-independent core; use it through a connection adapter and a platform package.
 
 ## Requirements
 
-- PHP 8.1 or higher
-- MySQL 8.0.11 - 9.1
-- PDO extension
+- PHP 8.1+
+- MySQL 8.0.11–9.1, PostgreSQL 16–17, or SQLite 3.x
 
 ## Installation
 
+Install the core with the PDO adapter and the platform package of your database.
+
+MySQL:
+
 ```bash
-composer require --dev k-kinzal/ztd-query-php
+composer require --dev k-kinzal/ztd-query-core k-kinzal/ztd-query-pdo-adapter k-kinzal/ztd-query-mysql
+```
+
+PostgreSQL:
+
+```bash
+composer require --dev k-kinzal/ztd-query-core k-kinzal/ztd-query-pdo-adapter k-kinzal/ztd-query-postgres
+```
+
+SQLite:
+
+```bash
+composer require --dev k-kinzal/ztd-query-core k-kinzal/ztd-query-pdo-adapter k-kinzal/ztd-query-sqlite
 ```
 
 ## Usage
 
-### Basic Example
+`ZtdPdo` extends `PDO`, so it can be passed wherever the application expects a PDO connection. Tables are created and filled through the same connection; they exist only in the session.
 
 ```php
+use PDO;
+use PHPUnit\Framework\TestCase;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 
-// Create ZTD-wrapped PDO connection
-$pdo = new ZtdPdo('mysql:host=localhost;dbname=test', 'user', 'password');
+final class UserQueryTest extends TestCase
+{
+    public function testSelectsActiveUsers(): void
+    {
+        $pdo = new ZtdPdo('mysql:host=127.0.0.1;dbname=test', 'root', 'root');
+        $pdo->exec('CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255) NOT NULL, active BOOLEAN NOT NULL)');
+        $pdo->exec("INSERT INTO users (id, name, active) VALUES (1, 'Alice', TRUE), (2, 'Bob', FALSE)");
 
-// Define schema and insert fixture data
-$pdo->exec('CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255), email VARCHAR(255))');
-$pdo->exec("INSERT INTO users (id, name, email) VALUES (1, 'Alice', 'alice@example.com')");
-$pdo->exec("INSERT INTO users (id, name, email) VALUES (2, 'Bob', 'bob@example.com')");
+        $statement = $pdo->prepare('SELECT name FROM users WHERE active = ? ORDER BY id');
+        $statement->execute([1]);
 
-// Execute queries against fixture data (no physical table access)
-$stmt = $pdo->prepare('SELECT * FROM users WHERE id = ?');
-$stmt->execute([1]);
-$result = $stmt->fetchAll();
-// Returns: [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']]
+        self::assertSame(['Alice'], $statement->fetchAll(PDO::FETCH_COLUMN));
+    }
+}
 ```
 
-### Wrapping Existing PDO
-
-```php
-use ZtdQuery\Adapter\Pdo\ZtdPdo;
-
-$existingPdo = new PDO('mysql:host=localhost;dbname=test', 'user', 'password');
-
-// Wrap without creating a new connection
-$ztdPdo = ZtdPdo::fromPdo($existingPdo);
-```
-
-### Testing Write Operations
-
-```php
-$pdo->exec('CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255))');
-$pdo->exec("INSERT INTO users (id, name) VALUES (1, 'Alice')");
-
-// INSERT returns the inserted row data
-$stmt = $pdo->prepare('INSERT INTO users (id, name) VALUES (?, ?)');
-$stmt->execute([2, 'Bob']);
-$inserted = $stmt->fetchAll();
-// Returns: [['id' => 2, 'name' => 'Bob']]
-
-// UPDATE returns the updated row data
-$stmt = $pdo->prepare('UPDATE users SET name = ? WHERE id = ?');
-$stmt->execute(['Alice Updated', 1]);
-$updated = $stmt->fetchAll();
-// Returns: [['id' => 1, 'name' => 'Alice Updated']]
-
-// DELETE returns the deleted row data
-$stmt = $pdo->prepare('DELETE FROM users WHERE id = ?');
-$stmt->execute([1]);
-$deleted = $stmt->fetchAll();
-// Returns: [['id' => 1, 'name' => 'Alice']]
-```
-
-### Enabling/Disabling ZTD Mode
-
-```php
-$pdo = new ZtdPdo($dsn, $user, $password);
-
-// Disable ZTD to execute against physical database
-$pdo->disableZtd();
-$pdo->exec('CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255))');
-
-// Re-enable ZTD for testing
-$pdo->enableZtd();
-```
+`ZtdPdo::fromPdo($pdo)` wraps an existing connection instead of opening a new one, and `disableZtd()` and `enableZtd()` switch between the physical database and the session.
 
 ## Configuration
 
 ```php
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
-use ZtdQuery\Config\ZtdConfig;
-use ZtdQuery\Config\UnsupportedSqlBehavior;
 use ZtdQuery\Config\UnknownSchemaBehavior;
+use ZtdQuery\Config\UnsupportedSqlBehavior;
+use ZtdQuery\Config\ZtdConfig;
 
 $config = new ZtdConfig(
-    // How to handle unsupported SQL statements (default behavior)
-    unsupportedBehavior: UnsupportedSqlBehavior::Exception, // or Ignore, Notice
+    // Unsupported statements: Exception (default), Notice, or Ignore
+    unsupportedBehavior: UnsupportedSqlBehavior::Exception,
 
-    // How to handle references to unknown tables
-    unknownSchemaBehavior: UnknownSchemaBehavior::Exception, // or Passthrough
+    // Tables the session does not know: Passthrough to the database (default), or Exception
+    unknownSchemaBehavior: UnknownSchemaBehavior::Exception,
 
-    // Per-pattern behavior rules (first match wins)
+    // Per-statement overrides of unsupportedBehavior; the first matching rule wins
     behaviorRules: [
-        // Prefix-based rules (case-insensitive)
-        'BEGIN' => UnsupportedSqlBehavior::Ignore,
-        'COMMIT' => UnsupportedSqlBehavior::Ignore,
-        'ROLLBACK' => UnsupportedSqlBehavior::Ignore,
-
-        // Regex-based rules (patterns starting with '/')
-        '/^SET\s+SESSION/i' => UnsupportedSqlBehavior::Ignore,
-        '/^SET\s+/i' => UnsupportedSqlBehavior::Notice,
+        'CREATE INDEX' => UnsupportedSqlBehavior::Ignore,       // case-insensitive prefix
+        '/^SET\s+/i' => UnsupportedSqlBehavior::Notice,          // regular expression
     ],
 );
 
 $pdo = new ZtdPdo($dsn, $user, $password, config: $config);
 ```
 
-### Configuration Options
-
-| Option | Values | Description |
-|--------|--------|-------------|
-| `unsupportedBehavior` | `Ignore`, `Notice`, `Exception` | Default behavior when unsupported SQL is executed |
-| `unknownSchemaBehavior` | `Passthrough`, `Exception` | Behavior when unknown table is referenced |
-| `behaviorRules` | `array<string, UnsupportedSqlBehavior>` | Per-pattern behavior overrides (first match wins) |
+`Ignore` skips the statement, `Notice` skips it and raises a PHP notice, and `Exception` throws `ZtdPdoException`.
 
 ## SQL Support
 
-### Fully Supported
+| Statement | MySQL | PostgreSQL | SQLite |
+|-----------|-------|------------|--------|
+| SELECT, including joins, grouping, set operations, subqueries, CTEs, recursive CTEs, and window functions | Supported | Supported | Supported |
+| INSERT with VALUES or SELECT | Supported | Supported | Supported |
+| Upsert | `ON DUPLICATE KEY UPDATE`, `INSERT IGNORE`, `REPLACE` | `ON CONFLICT` | `ON CONFLICT`, `INSERT OR ...`, `REPLACE` |
+| UPDATE and DELETE | Supported, including multi-table forms and `ORDER BY ... LIMIT` | Supported, including `UPDATE ... FROM` and `DELETE ... USING` | Supported, including `UPDATE ... FROM` |
+| `RETURNING` | – | Supported | Supported |
+| TRUNCATE | Supported | Supported | – |
+| CREATE TABLE, DROP TABLE | Supported | Supported | Supported |
+| ALTER TABLE | Supported | Unsupported | Supported |
+| BEGIN, COMMIT, ROLLBACK | Applied to the session: ROLLBACK discards the writes made since BEGIN | Same | Same |
+| Views, indexes, routines, triggers, SET, and server or user administration | Unsupported | Unsupported | Unsupported |
 
-- **SELECT**: All clauses including JOIN, GROUP BY, HAVING, ORDER BY, LIMIT, UNION, subqueries, CTEs, window functions
-- **INSERT**: VALUES, SELECT, ON DUPLICATE KEY UPDATE, IGNORE
-- **REPLACE**
-- **UPDATE**: Single/multi-table with ORDER BY/LIMIT
-- **DELETE**: Single/multi-table with ORDER BY/LIMIT
-- **TRUNCATE**
-- **DDL**: CREATE TABLE, ALTER TABLE, DROP TABLE (virtual schema)
-- **WITH**: CTE and recursive CTE
-
-### Ignored (No-op)
-
-- Transaction control: BEGIN, COMMIT, ROLLBACK, SAVEPOINT
-
-### Unsupported
-
-- Stored procedures, triggers, functions, views
-- Database/schema operations
-- User/permission management
-- Server operations (FLUSH, RESET, etc.)
-
-## Development
-
-```bash
-# Run tests
-composer test
-
-# Run unit tests
-composer test:unit
-
-# Run linter (PHP-CS-Fixer + PHPStan level max)
-composer lint
-
-# Fix code style
-composer format
-```
+Unsupported statements are handled as configured by `unsupportedBehavior`. The full specification of each database is in [ztd-query-mysql](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/ztd-query-mysql/docs/spec.md), [ztd-query-postgres](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/ztd-query-postgres/docs/spec.md), and [ztd-query-sqlite](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/ztd-query-sqlite/docs/spec.md).
 
 ## License
 

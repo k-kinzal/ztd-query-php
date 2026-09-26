@@ -1,56 +1,51 @@
 # SQL Semantics for MySQL
 
-Typed MySQL statement models, SQL reconstruction, and schema-dependent binding.
-Requires PHP 8.1+.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Docs](https://img.shields.io/badge/docs-sql--semantics--mysql-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-mysql/)
+[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
-```sh
+SQL Semantics for MySQL adds MySQL to [SQL Semantics](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics): the typed statement models of the official MySQL grammars and the MySQL rules for schema binding. Installing it also installs the shared SQL Semantics runtime, and `Dialect::MySql` selects MySQL in the runtime's `Semantics`, `SchemaBuilder`, and `Binder`. No database connection is needed.
+
+## Requirements
+
+- PHP 8.1+ with the zlib extension
+
+## Support Syntax
+
+The following grammar versions are supported. Pass the version tag as the second argument of `Semantics` or the third argument of `SchemaBuilder`; omitting it uses the default. Schema binding requires MySQL 8.0 or later.
+
+| Version | Version tag | Default |
+|---------|-------------|---------|
+| 5.6.51 | `mysql-5.6.51` | |
+| 5.7.44 | `mysql-5.7.44` | |
+| 8.0.44 | `mysql-8.0.44` | |
+| 8.1.0 | `mysql-8.1.0` | |
+| 8.2.0 | `mysql-8.2.0` | |
+| 8.3.0 | `mysql-8.3.0` | |
+| 8.4.7 | `mysql-8.4.7` | Yes |
+| 9.0.1 | `mysql-9.0.1` | |
+| 9.1.0 | `mysql-9.1.0` | |
+
+## Installation
+
+```bash
 composer require k-kinzal/sql-semantics-mysql
 ```
 
-This installs the shared `k-kinzal/sql-semantics` runtime and `k-kinzal/sql-parser`.
-Other SQL Semantics database packages are optional and are not installed.
+## Usage
 
 ```php
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 
-$semantics = new Semantics(Dialect::MySql, 'mysql-8.4.7');
-$statement = $semantics->analyze('INSERT INTO users (id) VALUES (1)');
-$sql = $statement->toString();
+$statement = (new Semantics(Dialect::MySql))->analyze("INSERT INTO users (id, name) VALUES (1, 'Alice') ON DUPLICATE KEY UPDATE name = 'Alice'");
+
+$statement->toString(); // "INSERT INTO users ( id , name ) VALUES( 1 , 'Alice' ) ON DUPLICATE KEY UPDATE name = 'Alice'"
 ```
 
-Omit the grammar version to select the parser's default. The same dialect enum
-can be passed to `SqlSemantics\Core\SchemaBuilder` for schema-dependent binding.
-See the [shared runtime documentation](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics)
-for model construction, binding, and the distinction between those APIs.
-
-`src/` contains this database's platform and dialect entry point.
-`resources/models/` contains generated PHP types, and `resources/mapping/`
-contains a construction map for every supported grammar release. Statement
-models reconstruct SQL from their fields and do not retain parser trees or
-original statements. Deptrac checks this boundary, including all generated types.
-
-## Development
-
-Run these commands from this directory or from its split repository:
-
-```sh
-composer install
-composer build:models:check
-composer lint
-composer test
-composer fuzz:smoke
-composer bench:quick
-```
-
-`composer build:models` regenerates this database's models using the common
-runtime's `vendor/bin/build-models.php`. It compiles all supported releases of
-this database together. Output is written to `resources/`; caches and staging
-stay under this package's `build/`. Generated files are committed and are not
-built during installation.
-
-See [fuzz testing](fuzz/README.md) for seed replay and longer runs.
+See the [SQL Semantics documentation](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics) for statement models and schema binding.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT License. See [LICENSE](LICENSE) for details.

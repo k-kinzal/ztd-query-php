@@ -1218,17 +1218,17 @@
             "dist": {
                 "type": "path",
                 "url": "../bison-parser",
-                "reference": "7f8c7d60d8cfcab3e36d9069ad25a067a695213c"
+                "reference": "b36d0f9bb0edde6295d73d5ce2075c05c18547c0"
             },
             "require": {
                 "php": "^8.1"
             },
             "require-dev": {
+                "behat/behat": "^3.14",
                 "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
                 "k-kinzal/php-ai-toolkit": "dev-main",
-                "nikic/php-fuzzer": "^0.0.11",
                 "phpbench/phpbench": "^1.4",
                 "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
                 "phpstan/phpstan": "^2.1",
@@ -1236,9 +1236,6 @@
                 "phpunit/phpunit": "^10.5",
                 "squizlabs/php_codesniffer": "^4.0.4"
             },
-            "bin": [
-                "bin/bison-parser"
-            ],
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -1248,8 +1245,8 @@
             "autoload-dev": {
                 "psr-4": {
                     "Tests\\": "tests/",
-                    "Fuzz\\": "fuzz/",
-                    "Bench\\": "bench/"
+                    "Bench\\": "bench/",
+                    "Spec\\": "spec/"
                 }
             },
             "scripts": {
@@ -1294,24 +1291,6 @@
                 "format:check": [
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
                 ],
-                "fuzz": [
-                    "@fuzz:smoke"
-                ],
-                "fuzz:parse": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/parse') || mkdir('fuzz/corpus/parse', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_parse.php fuzz/corpus/parse/"
-                ],
-                "fuzz:roundtrip": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/roundtrip') || mkdir('fuzz/corpus/roundtrip', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_roundtrip.php fuzz/corpus/roundtrip/"
-                ],
-                "fuzz:smoke": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@fuzz:parse --max-runs=100",
-                    "@fuzz:roundtrip --max-runs=100"
-                ],
                 "lint": [
                     "@autoload:check",
                     "@format:check",
@@ -1326,6 +1305,9 @@
                 ],
                 "phpstan": [
                     "phpstan analyse --memory-limit=1G"
+                ],
+                "spec": [
+                    "behat --strict"
                 ],
                 "test": [
                     "paratest --processes=auto"
@@ -1358,7 +1340,7 @@
             "dist": {
                 "type": "path",
                 "url": "../container",
-                "reference": "6478c853dbf8368cfd2ff4ffaffcb57bdc0369ec"
+                "reference": "d8019b4a3973e157d21f9a4790244756c47b1d9f"
             },
             "require": {
                 "ext-pdo": "*",
@@ -1366,15 +1348,7 @@
                 "php": "^8.1"
             },
             "require-dev": {
-                "brianium/paratest": "^7.3",
-                "deptrac/deptrac": "^3.0",
-                "friendsofphp/php-cs-fixer": "^3.95.25",
-                "k-kinzal/php-ai-toolkit": "dev-main",
-                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
-                "phpstan/phpstan": "^2.1",
-                "phpstan/phpstan-strict-rules": "^2.0",
-                "phpunit/phpunit": "^10.5",
-                "squizlabs/php_codesniffer": "^4.0.4"
+                "friendsofphp/php-cs-fixer": "^3.95.25"
             },
             "suggest": {
                 "ext-pdo_mysql": "Required for MySQL containers",
@@ -1386,76 +1360,18 @@
                     "Container\\": "src/"
                 }
             },
-            "autoload-dev": {
-                "psr-4": {
-                    "Tests\\": "tests/"
-                }
-            },
             "scripts": {
-                "autoload:check": [
-                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
-                ],
-                "compat": [
-                    "phpcs"
-                ],
-                "deptrac": [
-                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
-                ],
-                "docgen": [
-                    "docgen --packages=. --title=k-kinzal/container"
-                ],
-                "docgen:diff": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@docgen --diff=origin/main --serve"
-                ],
-                "docgen:fresh": [
-                    "@docgen --no-cache"
-                ],
-                "docgen:serve": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@docgen --serve"
-                ],
-                "doctest": [
-                    "phpunit --testsuite doctest"
-                ],
                 "format": [
                     "php-cs-fixer fix --allow-risky=yes"
                 ],
                 "format:check": [
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
-                ],
-                "lint": [
-                    "@autoload:check",
-                    "@format:check",
-                    "@phpstan",
-                    "@compat",
-                    "@loc-guard",
-                    "@tree-guard",
-                    "@deptrac"
-                ],
-                "loc-guard": [
-                    "loc-guard --config=loc.yaml"
-                ],
-                "phpstan": [
-                    "phpstan analyse --memory-limit=512M"
-                ],
-                "test": [
-                    "paratest --processes=auto"
-                ],
-                "test:coverage": [
-                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
-                ],
-                "test:unit": [
-                    "phpunit --testsuite unit"
-                ],
-                "tree-guard": [
-                    "tree-guard --config=tree.yaml"
                 ]
             },
             "license": [
                 "MIT"
             ],
-            "description": "Shared database containers for integration and fuzz testing",
+            "description": "Container definitions for testcontainers-php used across k-kinzal/ztd-query-php",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/container",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/container/"
@@ -1470,17 +1386,17 @@
             "dist": {
                 "type": "path",
                 "url": "../lemon-parser",
-                "reference": "b3552490fed0f08e2e74c35192154ef7819bef73"
+                "reference": "d83dec647260c2e39cc0db456f5fdf7549476578"
             },
             "require": {
                 "php": "^8.1"
             },
             "require-dev": {
+                "behat/behat": "^3.14",
                 "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
                 "k-kinzal/php-ai-toolkit": "dev-main",
-                "nikic/php-fuzzer": "^0.0.11",
                 "phpbench/phpbench": "^1.4",
                 "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
                 "phpstan/phpstan": "^2.1",
@@ -1488,9 +1404,6 @@
                 "phpunit/phpunit": "^10.5",
                 "squizlabs/php_codesniffer": "^4.0.4"
             },
-            "bin": [
-                "bin/lemon-parser"
-            ],
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -1500,8 +1413,8 @@
             "autoload-dev": {
                 "psr-4": {
                     "Tests\\": "tests/",
-                    "Fuzz\\": "fuzz/",
-                    "Bench\\": "bench/"
+                    "Bench\\": "bench/",
+                    "Spec\\": "spec/"
                 }
             },
             "scripts": {
@@ -1546,24 +1459,6 @@
                 "format:check": [
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
                 ],
-                "fuzz": [
-                    "@fuzz:smoke"
-                ],
-                "fuzz:parse": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/parse') || mkdir('fuzz/corpus/parse', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_parse.php fuzz/corpus/parse/"
-                ],
-                "fuzz:roundtrip": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/roundtrip') || mkdir('fuzz/corpus/roundtrip', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_roundtrip.php fuzz/corpus/roundtrip/"
-                ],
-                "fuzz:smoke": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@fuzz:parse --max-runs=100",
-                    "@fuzz:roundtrip --max-runs=100"
-                ],
                 "lint": [
                     "@autoload:check",
                     "@format:check",
@@ -1578,6 +1473,9 @@
                 ],
                 "phpstan": [
                     "phpstan analyse --memory-limit=1G"
+                ],
+                "spec": [
+                    "behat --strict --no-interaction --no-snippets"
                 ],
                 "test": [
                     "paratest --processes=auto"

@@ -7,12 +7,14 @@ on:
   pull_request:
     paths:
       - 'packages/sql-semantics*/**'
-      - '.github/workflows/sql-semantics.yml'
-      - 'packages/sql-parser/**'
       - 'packages/bison-parser/**'
       - 'packages/lemon-parser/**'
       - 'packages/sql-faker/**'
       - 'packages/sql-formatter/**'
+      - 'packages/sql-parser/**'
+      - '.github/workflows/sql-semantics.yml'
+      - '!packages/**/README.md'
+      - '!packages/**/docs/**'
 
 permissions:
   contents: read

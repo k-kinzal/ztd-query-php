@@ -9,6 +9,8 @@ on:
       - 'packages/ztd-query-core/**'
       - '.github/workflows/ztd-query-core.yml'
       - '.github/workflows/ztd-query-core-fuzz.yml'
+      - '!packages/**/README.md'
+      - '!packages/**/docs/**'
 
 permissions:
   contents: read

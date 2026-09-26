@@ -1,437 +1,174 @@
-# How the analysis works
+# Analysis
 
-The analyzer answers one question: what SQL can this source send to a database?
+sql-catalog reads PHP source without running it. It finds every call that sends SQL to a database, then follows the SQL argument back through assignments, branches, loops, properties, constants and function calls until it reaches values the source fixes, runtime input, or something it cannot follow. Each value the argument can take becomes one catalog entry.
 
-It is not a PHP interpreter that happens to notice queries along the way. It
-starts at each call that receives SQL, asks what that call's argument depends
-on, and works back from there. The statement written at the call is the root;
-everything else is only read because the statement needs it.
-
-## The procedure
-
-```
-for every call written the way a database call is written
-    work out what the call is made on            → is it a database call at all?
-    walk back from the call to the start of its body,
-        keeping only the assignments the SQL argument depends on
-    bind what the walk still needs at the start of the body
-        a parameter        → what each caller passes, asked the same way at the caller
-        $this->property    → what the class can leave the property holding
-        a file-scope name  → what an extension says it holds
-    run the kept assignments forward, once per way in, and read the argument
-    one statement per value the argument can have
-```
-
-The walk goes backwards because that is the direction the question points in.
-Starting from the program's entry and running everything forward reads every
-body, most of which have nothing to do with SQL, and a forward run that stops
-halfway leaves the statement with nothing at all. Starting from the call reads
-only what the statement depends on, and a walk that stops halfway still has the
-statement it started from: what it did not get to is left as a gap, and the rest
-of the text stands.
-
-## Finding the call
-
-`SinkFinder::findAll()` collects every call whose name is one an enabled
-extension recognises — `query`, `prepare`, `get_results` and so on — in every
-file, wherever it is written. Finding a call does not depend on resolving
-anything: `$enabled && $pdo->query('SELECT 1')` issues a query whatever
-`$enabled` is.
-
-For a method call, what the call is made on is worked out first, the same way
-the SQL argument is (below). That decides whether it is a database call:
-
-- a receiver whose class the extensions name is a database call, and its SQL
-  argument is worked out next;
-- a receiver whose class is known and is not a database class is not a database
-  call, and nothing is reported — that is an answer, not a gap;
-- a receiver whose class could not be worked out might be one, and is reported
-  with a `sink` of `unmatched` and a `not-analyzed` resolution.
-
-The budget is refilled for every call, so a large file does not starve the calls
-written at its end.
-
-## Extension models and object state
-
-Enabled extensions register call transformations, statement compilers and type
-relations through `ModelProviderInterface`. A statement compiler lists the AST
-expressions it needs; the core derives them together and passes the resulting
-domains back for compilation. The output retains SQL fragments, bindings and
-uncertainty alongside the core's caller and branch evidence.
-
-For stateful APIs, such as Laravel, this includes the receiver and terminal arguments.
-`ObjectEffects` adds conservative alias and mutation dependencies to the same
-backward slice used for SQL strings. `ObjectMemory` keeps immutable snapshots by
-allocation identity within each run; copying a run isolates later mutations.
-Closures and local scopes use the shared slicer, executor and evaluation budget.
-
-The Laravel model applies supported operations to those snapshots and compiles
-SQL and ordered bindings at the execution call. Those values pass through the
-ordinary statement recorder and value binder. Unsupported effects carry a gap
-through later operations, so a subsequent recognized method cannot erase it.
-The core has no framework-specific dispatch. See [extension models](extensions.md)
-for the public contract and [Laravel support](laravel.md) for its supported subset.
-
-## Walking back
-
-`BackwardSlicer` starts from the names the SQL argument reads and goes back
-statement by statement:
+## Example
 
 ```php
-function find(PDO $pdo, string $table, bool $desc) {
-    $order = $desc ? 'DESC' : 'ASC';     // kept: $sql reads $order
-    $log = new Logger();                 // skipped: nothing the SQL reads
-    $sql = "SELECT * FROM $table ORDER BY id $order";   // kept
-    return $pdo->query($sql);
-}
-```
+<?php
 
-- An assignment to a name the path needs is kept as a step, and the names its
-  right-hand side reads are needed instead. `$sql .= '…'` and `$a[] = …` keep the
-  name needed, so the walk goes on to find what they added to.
-- A statement that assigns nothing the path needs is stepped over whole.
-- A branch that assigns something the path needs becomes one step holding each
-  arm as an alternative run. An arm that cannot fall through — it returns,
-  throws, breaks or continues — is left out, since it cannot be the one taken on
-  the way to the call.
-- A loop becomes one run per number of passes: none, one, and up to
-  `EvaluationBudget::$maxLoopPasses`. A `foreach` over an array written out in
-  full runs exactly as many times as it has elements. A loop that could still go
-  round again at the limit marks the path as cut short.
-- A closure's body is walked like any other; at its start, what it captured is
-  looked for where the closure is written, and its parameters are left open.
+namespace App;
 
-Where the walk reaches the start of the body, what is left is a set of paths,
-each with the steps that lead from there to the call and the names it still
-needs. In the example above that is `$table` and `$desc`, both parameters.
+use PDO;
 
-## Binding what is still needed
-
-`EntryBinder` gives each name a path still needs at the start of its body its
-possible values, and each combination it finds is one *way in*.
-
-**Parameters** are looked for at every call of the body (`Callers`,
-`CallerIndex`). At each call the argument passed is asked about exactly the way
-the SQL argument was asked about at the database call: walk back from the call,
-bind what is still needed at *that* body's start, run forward. So the question
-climbs from the database call to the callers that decide the statement, as far as
-`EvaluationBudget::$maxDepth` frames. A body that nothing calls leaves the
-parameter open, typed by its declaration: that is the statement's input, not a
-failure to find it.
-
-Which calls reach a method follows PHP's own dispatch:
-
-- a call on an instance is looked up from the instance's class upwards, so it
-  reaches the method when the instance can be of the method's class, of a
-  subclass that inherits it without overriding it, or of a parent class whose
-  instance may really be the subclass that declares it;
-- `parent::m()` looks from the parent of the class it is written in, and
-  `self::m()` and `Name::m()` from that class — none of them reach an override
-  in a subclass; `static::m()` does;
-- a constructor is reached by `new` of its class, by `new` of a subclass that
-  does not declare its own, and by `parent::__construct()` and the like.
-
-A call on something whose class could not be worked out is not taken as a
-caller: `$datetime->format()` is not a call of a `format()` method in the
-analyzed source just because no other class there declares one — `DateTime`
-does, and so may classes in files that were not analyzed. The ways in found are
-marked as cut short instead, so the statement says there may be a caller it
-could not account for.
-
-The climb does not leave a class an extension models. `wpdb::query()` reading
-its `$query` parameter is not traced back to every caller of `wpdb::query()`:
-those callers are themselves database calls, and their statements are read where
-they are written.
-
-**Properties of `$this`** are bound by `PropertyWrites` to what the class can
-leave them holding: what every method that assigns the property leaves at its
-returns, the promoted constructor parameter it is filled from, and its declared
-default. A property no method writes keeps its default.
-
-**Names at file scope** — `$wpdb` in a WordPress template — are bound by what
-an extension says the name stands for, or by an `@global`/`@var` tag on the
-declaration.
-
-**Anything else** is left open, with the reason it is open: a parameter nothing
-calls with a value, a callee with no body, the budget running out.
-
-## Running forward
-
-`SliceExecutor` runs each way in along its path: only the kept assignments, in
-the order they run. When an assignment leaves a variable with several possible
-values, the run splits there, one run per value, so every later read of the
-variable sees the same one:
-
-```php
-if ($admin) {
-    $table = 'admins';
-    $column = 'admin_id';
-} else {
-    $table = 'users';
-    $column = 'user_id';
+enum Status: string
+{
+    case Active = 'active';
+    case Banned = 'banned';
 }
 
-$pdo->query("SELECT $column FROM $table");
-```
+final class UserRepository
+{
+    private const TABLE = 'users';
 
-Two statements, not four. The arms are alternative runs, and `$table` and
-`$column` are read within one run, so the values one arm decided are never taken
-apart. The same holds for a value used twice:
+    private string $order = 'name';
 
-```php
-$dir = $asc ? 'ASC' : 'DESC';
-$pdo->query("SELECT * FROM t ORDER BY a $dir, b $dir");
-```
-
-gives `… a ASC, b ASC` and `… a DESC, b DESC`, never the mixed pairs.
-
-Conditions are never used to choose a branch, including `isset` and literal
-`true` or `false`. For example:
-
-```php
-function findUsers(PDO $pdo, bool $active): void {
-    if ($active) {
-        $where = ' WHERE active = 1';
+    public function __construct(private PDO $pdo)
+    {
     }
-    $pdo->prepare('SELECT * FROM users' . (isset($where) ? $where : ''));
+
+    public function findByStatus(Status $status): array
+    {
+        $statement = $this->pdo->prepare('SELECT id FROM ' . self::TABLE . ' WHERE status = :status ORDER BY ' . $this->order);
+        $statement->execute([':status' => $status->value]);
+
+        return $statement->fetchAll();
+    }
 }
 ```
 
-This gives `SELECT * FROM users WHERE active = 1` and `SELECT * FROM users`,
-both with exact text. Both ternary arms are read on every run. On the run without
-an assignment, `$where` is definitely absent: reading it produces null, which
-becomes an empty string during concatenation. Identical SQL strings then merge.
-A present null value and an absent variable remain distinct in the environment,
-even though their string representations are equal.
+```
+src/UserRepository.php:25  SELECT  93af735295ad
+  in App\UserRepository::findByStatus via pdo.prepare
+  SELECT id FROM users WHERE status = :status ORDER BY name
+  resolved
+  :status = 'active'|'banned'
+```
 
-Only locals whose definitions were fully searched can be considered absent.
-Parameters, globals, file scope inputs, unmodelled values and exhausted searches
-stay open. Includes, `eval`, symbol table imports and dynamic assignments
-invalidate affected bindings; calls may change writable reference arguments.
-Possible reference aliases are conservatively invalidated rather than simulated.
-The analyzer does not execute included files or arbitrary callees for their writes.
-A later definite assignment can establish a value again.
+The table comes from the class constant, the sort column from the property default, and the bound value from the enum the parameter is typed as.
 
-Unknown alternatives remain as gaps even when another arm yields exact SQL.
-This enumeration is structural: constant-false branches and incompatible guards
-can still contribute candidates. Neither `exact`, `searchClosed` nor `correlated`
-is evidence of runtime reachability. Expression arms run against separate states;
-joining those states records when structural pairing was lost.
+## Statements
 
-How many runs are kept apart is what the budget can pay for along the path: a
-short path keeps up to `SliceExecutor::MAX_RUNS`, a body of several hundred
-assignments under a hundred conditionals keeps a few. Beyond that the rest are
-joined value by value. A joined run still holds every value; what it gives up is
-knowing which go together, and the statements read from it say so with
-`correlated: false`.
-
-## Calls along the way
-
-A call into the analyzed source is read by `CalleeReturns` the same way: walk
-back from each `return` of the callee to its start, bind its parameters to the
-arguments at hand, run forward, and take what the `return` gives. Readings are
-remembered per callee and arguments (`CallResults`), so a helper called from
-many places with the same values is read once. A call on an interface or an
-abstract class is read across the implementations the source declares.
-Recursion and calls past `EvaluationBudget::$maxDepth` stop with a `budget` gap.
-
-A call an extension declares as composing, such as `wpdb::prepare()`, and a
-builtin such as `sprintf()` are not walked into: their model says what text they
-hand back.
-
-## What "determined" means
-
-A statement is determined when the search that produced it closed: every
-dependency that could change the SQL was followed, and each was resolved.
-
-Finding one concrete answer is not that. When a helper is reached from two
-callers and only one of them resolves, **both readings are kept**:
+A call site produces one entry per SQL text it can send. Each arm of an `if`, `switch`, `match`, ternary or `try`, and each number of loop passes up to the limit, is a separate alternative:
 
 ```php
-function run(PDO $pdo, string $sql): void { $pdo->query($sql); }
-
-function a(PDO $pdo): void { run($pdo, 'SELECT 1'); }
-function b(PDO $pdo, string $outside): void { run($pdo, $outside); }
+$order = $asc ? 'ASC' : 'DESC';
+$pdo->query("SELECT id FROM posts ORDER BY created_at $order");
 ```
 
 ```
-SELECT 1
-{$}
+SELECT id FROM posts ORDER BY created_at ASC
+SELECT id FROM posts ORDER BY created_at DESC
 ```
 
-Deleting the second because the first exists would claim the call is pinned down
-when it is not.
+Values decided together stay together. A branch that sets both a table and a column produces two statements, not the four combinations of the values. When the analyzer has to combine parts that vary independently, the entry has `correlated: false`, and some of its combinations may never occur.
 
-## Saying why something is open
+Conditions are never evaluated. Every branch is taken, including branches behind `isset()`, `false` or incompatible guards, so an entry means the SQL can be built, not that it runs.
 
-`resolution` says how far the analyzer got with a statement:
+A value the analyzer cannot determine is written as `{$}` in the SQL, and the rest of the statement stays resolved:
 
-| Resolution | Meaning |
-|------------|---------|
-| `resolved` | The text is fully determined. |
-| `external-input` | The values were followed to runtime input. The trail ended; the string simply is not fixed. |
-| `incomplete-model` | A dependency the analyzer does not model was reached. |
-| `incomplete` | A cycle or the budget stopped the search. |
-| `not-analyzed` | The call was found but nothing was read from it. |
+```
+SELECT id FROM users WHERE name = '{$}'
+```
 
-`searchClosed` is the part that matters for trusting a call site. It is true
-when the resolution is `resolved` or `external-input` **and** no bound cut the
-search short: not the number of loop passes, not the number of callers asked,
-not the number of ways in kept. When it is false the statements listed may not
-be all of them, and the `analysis-incomplete` or `call-not-analyzed` finding
-says why. Stopping early is never reported as having found nothing.
+## Resolution
 
-Injection risk is judged separately, from where the values came from, not from
-whether the text resolved. A statement can be fully determined and still splice
-in a request parameter; a statement can be open for reasons that have nothing to
-do with input.
+Every entry states how far the analysis got:
 
-## The values themselves
+| `resolution` | Meaning | `searchClosed` |
+|--------------|---------|----------------|
+| `resolved` | The text is fully determined. | yes, unless a limit cut the search short |
+| `external-input` | A value comes from runtime input, so the text is not fixed. | yes, unless a limit cut the search short |
+| `incomplete-model` | A dependency the analyzer does not model was reached, such as a function without a body. | no |
+| `incomplete` | A cycle or an analysis limit stopped the search. | no |
+| `not-analyzed` | The call was found, but nothing was read from it. | no |
 
-Every expression evaluates to a `Domain`: a bounded set of alternatives.
-Alternatives are resolved scalars, strings with gaps, arrays, objects, or values
-known only by type. Concatenation pairs the sides; union merges them. Past
-`Domain::MAX_TERMS` the alternatives are generalized into one shape that covers
-all of them.
+Three fields answer different questions:
 
-A gap carries where the value came from:
+| Field | True means |
+|-------|------------|
+| `exact` | The SQL text of this entry has no `{$}`. |
+| `searchClosed` | Every dependency at this call site was followed. When false, the call site may send statements that are not listed. |
+| `correlated` | The alternatives kept their pairing. |
+
+An exact entry is still not closed when another entry at the same call site has an unresolved dependency, or when a limit on loop passes or callers stopped the search. The `analysis-incomplete` or `call-not-analyzed` finding says which.
+
+## Where unknown values come from
+
+Each `{$}` and each unresolved bound value records its origin:
 
 | Origin | Introduced by |
 |--------|---------------|
-| `external` | A superglobal, `getenv()`, `filter_input()` and the like |
-| `parameter` | A parameter nothing in the analyzed source calls with a value |
-| `property` | A property the class never settles, such as one assigned from outside |
-| `call` | A call with no body to follow |
-| `budget` | A cycle, the depth limit, or the budget running out |
-| `loop` | What a loop iterates over, when it is not written out |
-| `branch` | Alternatives merged away to stay within the bound |
-| `unreached` | A call nothing was read from |
-| `unresolved` | Anything else |
+| `external` | A superglobal, `getenv()`, `filter_input()` and similar input functions. |
+| `parameter` | A parameter that nothing in the analyzed source calls with a value. |
+| `property` | A property the class never settles, such as one assigned from outside. |
+| `call` | A call without a body to follow, or a function modelled only by its type. |
+| `budget` | A cycle, the depth limit, or the step limit. |
+| `loop` | What a loop iterates over, when it is not written out. |
+| `branch` | Alternatives merged to stay within the limits. |
+| `unreached` | A call nothing was read from. |
+| `unresolved` | Anything else. |
 
-A cast to `int`, `float` or `bool` deliberately ends the trail: `(int) $_GET['id']`
-is `call`, not `external`, because the cast neutralises the value as a source of
-injected SQL. A cast to `string` does not.
+A cast to `int`, `float` or `bool` ends the trail: `(int) $_GET['id']` is `call`, not `external`, because the value can no longer inject SQL. A cast to `string` does not.
+
+## Findings
+
+| Rule | Severity | Reported when |
+|------|----------|---------------|
+| `external-input` | high | A value spliced into the statement text comes from external input. |
+| `dynamic-sql` | medium | A value is spliced into the statement text instead of being bound. |
+| `placeholder-count-mismatch` | medium | The statement binds a different number of values than it has placeholders. |
+| `unresolved-sql` | low | The statement text could not be reconstructed at all. |
+| `analysis-incomplete` | low | A cycle or an analysis limit stopped the search. |
+| `call-not-analyzed` | low | A call that carries a statement was found but not examined. |
+
+The severity of an entry is the highest severity of its findings, or `info` when it has none. `--severity` and `--fail-on` compare against it.
+
+## Bound values
+
+Values passed to the call that executes or binds a prepared statement, such as `PDOStatement::execute()`, `PDOStatement::bindValue()` or `mysqli_stmt::bind_param()`, are attached to the statement prepared at the same call site. Placeholders are `?`, `:name` and `$1`; a question mark inside a string literal or a comment is not a placeholder.
+
+When a statement is reached along several paths, the values of all of them are merged. A method that callers invoke with arbitrary integers is reported as `int`, not as the literal one caller passes. `exhaustive: false` means only the type is known.
 
 ## What resolves
 
-- String and number literals, interpolated strings and heredocs.
-- Global constants, class constants, `::class`, and enum cases.
-- An element of an array written out in full, whether or not the key
-  resolved. `self::TABLES[$kind]` with `$kind` coming from a request is one of
-  the values written in `TABLES`, so it gives one statement per table rather
-  than a gap. A key that resolved reads its own element; an element the array
-  does not hold, or an alternative that is not an array, stays a gap.
-- `->value` and `->name` on an enum. A value typed as a backed enum resolves to
-  the union of that enum's cases, which turns a parameter typed `Status` into the
-  handful of strings a column can hold.
-- Properties: a declared default, a promoted constructor parameter, and what
-  the class's own methods assign. A static property nothing in the class
-  assigns holds its declared default, and is read like a constant.
-- `sprintf`, `vsprintf`, `implode`, `str_repeat`, `str_replace`, the trim and
-  case functions, and the casts.
-- Parameters, through the callers the analyzed source contains, up to
-  `EvaluationBudget::$maxDepth` frames.
-- Calls into the analyzed source, including calls on an abstract class or an
-  interface.
-- Every arm of `if`, `switch`, `try`, `match` and the ternaries, kept apart.
-- Loops, as one statement per number of passes up to the limit.
+- String and number literals, interpolated strings, heredocs and nowdocs.
+- Global constants, class constants, `::class` and enum cases, including `->value` and `->name`. A parameter typed as a backed enum resolves to the values of its cases.
+- An element of an array written out in full, even when the key is not known. `self::TABLES[$kind]` with `$kind` from a request gives one statement per value in `TABLES`. An element the array does not hold, or an alternative that is not an array, stays a gap.
+- Properties of `$this`: the declared default, a promoted constructor parameter, and what the class's own methods assign. A static property that nothing in the class assigns reads as its declared default.
+- Parameters, through every caller in the analyzed source, following PHP's method dispatch.
+- Calls into the analyzed source, including calls on interfaces and abstract classes, across their implementations.
+- The functions that have a [function model](configuration.md#function-models).
 - `$params[] = $value` and `$params[':id'] = $value`.
-- A call that interpolates a statement and hands it back, such as
-  `wpdb::prepare()`, declared by an extension as a composing call.
-- A handle reached through a global. `global $wpdb;` says nothing about what the
-  name holds; an `@global` or `@var` tag documenting the declaration is read
-  first, and failing that an extension says what the name stands for.
+- A database handle held in a global, when a `@global` or `@var` tag documents it, or an [extension](extensions.md) names the global.
 
 ## What does not
 
-Each of these produces a gap with a stated reason, never a wrong answer:
+These produce a gap with an origin, never a wrong value:
 
-- SQL assembled from data the source does not contain, including unmodelled
-  builder or ORM operations and statements read from a file or a database.
-- A value a hook or a callback decides, such as WordPress's `apply_filters()`.
-- A global a called function assigns. `unset($wpdb); require_wp_db();` leaves
-  `$wpdb` unknown to the walk, because the call is not read for what it does to
-  globals.
-- Dispatch through a value whose class cannot be named.
-- Recursion and calls past the depth budget.
+- SQL read from a file, a database or configuration at runtime.
+- Values decided by hooks and callbacks, such as WordPress's `apply_filters()`.
+- Globals assigned by a called function.
+- Calls on a value whose class cannot be determined. These are reported with the sink `unmatched`.
+- Code reached through `include`, `eval` or dynamic variables.
+- Recursion and calls deeper than the depth limit.
+- Framework query builders beyond what an extension models. See [Laravel](extensions/laravel.md).
 
-## Binding values to placeholders
+## Limits
 
-A `prepare()` returns a handle identifying the call site it came from. The
-`execute()` or `bindValue()` that follows is read like any other call — what its
-receiver and arguments can be, worked out from the call backwards — and its
-values are attached to the statements filed under the handle.
+Each database call is analyzed within these limits. They can be changed with `EvaluationBudget` in the [PHP API](api.md#options).
 
-Placeholders are read with a dialect-neutral lexer that knows string bodies,
-comments, `?`, `:name`, `$1` and Postgres casts, so a question mark inside a
-quoted string is not mistaken for a parameter.
-
-When the same statement is bound more than once, the values take the **union** of
-what each binding found. A public method callable with any integer is reported as
-`int`, not as whichever literal one caller happened to pass.
-
-## Bounds
-
-`EvaluationBudget` bounds the work spent on one database call:
-
-| Bound | Default | What happens past it |
-|-------|---------|----------------------|
-| `maxSteps` | 20000 | The search goes nowhere new: no further callers, callees or property writers are asked. |
-| `maxSteps × READING_ALLOWANCE` | 80000 | The run that reads the statement stops too. Every name a step it did not get to would have written is left open as `budget`, so stopping never reports a value a later assignment would have replaced. |
+| Limit | Default | When reached |
+|-------|---------|--------------|
+| `maxSteps` | 20000 | No further callers, callees or property writers are followed. |
 | `maxDepth` | 4 | Callers and callees beyond this many frames are not followed. |
-| `maxLoopPasses` | 2 | Longer runs of a loop are not listed, and the statement is marked as cut short. |
+| `maxLoopPasses` | 2 | Loops are listed for zero, one and two passes, and the search is marked as cut short. |
 
-Alongside it, `Deriver::MAX_CALLERS` bounds the callers asked per body,
-`Deriver::MAX_SOLUTIONS` the ways in kept per point, `BackwardSlicer::MAX_PATHS`
-the paths kept apart through a body, `SliceExecutor::MAX_RUNS` the runs, and
-`Domain::MAX_TERMS` the alternatives per value. Each of them degrades the result
-into a stated gap, a `correlated: false`, or a `searchClosed: false` — never into
-silence.
+Reaching a limit leaves a `budget` gap, `correlated: false` or `searchClosed: false`. It never removes a statement silently.
 
-When one step writes several variables with alternative values, the run bound
-is applied after each variable is split. Each expansion produces at most
-`MAX_RUNS × MAX_TERMS` candidate environments instead of materializing the Cartesian
-product of every variable's alternatives. Excess runs are joined, preserving
-their candidate values and marking the lost pairing as `correlated: false`.
+## What the catalog does not prove
 
-## Measured on WordPress
-
-The 93 WordPress files that name `$wpdb` take about 20 seconds and yield 774
-statements. 27 of them are a gap from end to end, and each has a reason in the
-code rather than in the analyzer:
-
-| Count | Why the whole statement is open |
-|-------|---------------------------------|
-| 10 | The statement is a parameter of an entry point nothing in WordPress calls with a value: `wpdb`'s own `query()` family, and the `$create_ddl` and `$drop_ddl` of the `maybe_create_table()` family of install helpers. |
-| 7 | The statement is what an `apply_filters()` hook returns. |
-| 5 | The call is named like a database call but made on something else, or on `$wpdb` after `require_wp_db()` reassigns it. |
-| 4 | The budget ran out in `WP_Query::get_posts()` and `get_bookmarks()`, which assemble their statement over several hundred lines of conditionals. |
-| 1 | `dbDelta()` runs each statement of an array it builds from what its caller passes. |
-
-Most of the remaining gaps sit inside otherwise-resolved statements and are
-`$wpdb->posts`-style table names, which WordPress fixes at runtime from its
-configured prefix.
-
-## Configured function models
-
-Function evaluation uses `Analysis\FunctionModel\Registry`. The standard
-models are installed by `BuiltinCallModel::register()`, and applications can
-register additional models or conditional overrides through the same API.
-Models receive evaluated argument domains, so assignments and traced helper
-returns compose with them normally.
-
-The built-in `array_fill` model represents arrays filled with `'?'` as one
-placeholder, regardless of count. Together with `implode` this catalogs variable
-placeholder lists as `IN (?)` without enumerating lengths. A registered
-override takes precedence. Other unmodeled dependencies remain open.
-
-The CLI loads project settings from `.catalog.yaml`, including function model
-classes, paths, filters and output settings. Explicit command-line options
-override the corresponding file settings. See
-[Catalog configuration](../README.md#catalog-configuration) and
-[Function models](../README.md#function-models) for the configuration and
-registration contracts.
-
-Configured interpretations and built-in normalization define the cataloged SQL
-shape. Completion and binding findings describe that interpretation rather
-than discarded runtime variants.
+- That an entry runs. Conditions are not evaluated, and reachability is not assessed.
+- That the list is complete when `searchClosed` is false.
+- That the SQL is valid for the database. The text is what the source builds.
+- What code outside the analyzed paths does. Analyze every path that calls into the code you catalog.

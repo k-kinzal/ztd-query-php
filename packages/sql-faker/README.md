@@ -9,7 +9,7 @@ SQL Faker is a grammar-based SQL generator for MySQL, PostgreSQL, and SQLite. It
 
 ## Requirements
 
-- PHP 8.1 or higher
+- PHP 8.1+
 - [fakerphp/faker](https://github.com/FakerPHP/Faker) ^1.23
 
 ## Support Syntax
@@ -61,36 +61,6 @@ $sql = $faker->sql(maxDepth: 6);
 $select = $faker->selectStatement(maxDepth: 6);
 ```
 
-## Grammar coverage seeds
-
-[seeds/](seeds/) holds PHP-Fuzzer corpora that make each default grammar take every production reachable from its statement rule; its README explains how to replay them through a fuzz target. `bin/seeds.php` builds and checks them:
-
-```sh
-php bin/seeds.php build --tag mysql-8.4.7
-php bin/seeds.php check
-```
-
-`SqlFaker\Generation\Choice\BytePlanEncoder` is the inverse of `BytePlanCompiler`: it records the choices of one guided plan construction as the bytes the compiler decodes to the same plan, which is how the seeds are produced.
-
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
-
-## Architecture
-
-The core consists of `Grammar` (the grammar model and resources), `Generation`
-(the planning and generation engine and its lexical/rewrite contracts), and
-`Compiler` (upstream grammar readers). These concepts contain no database names
-and do not depend on database implementations.
-
-`MySql`, `PostgreSql`, and `Sqlite` each own their provider, grammar declarations,
-lexical behavior, rewrites, and generator factory. Each implementation depends
-on core contracts; implementations never depend on one another. Build utilities
-in `bin/` are development tools, not a shipped CLI layer.
-
-Providers, statement rules, and generator factories are exposed directly from
-their database namespaces.
-
-`composer deptrac` enforces dependency direction without exceptions or uncovered
-classes. `composer phpstan` also rejects database terms anywhere in core source,
-including strings and PHPDoc, and rejects other database names in each platform.
