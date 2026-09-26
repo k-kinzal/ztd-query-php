@@ -6,6 +6,7 @@ namespace Tests\Unit\Verification;
 
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -49,6 +50,8 @@ use Requirements\Test\PhpUnitRunner;
 use Requirements\Test\Registry;
 use Requirements\Test\RunnerConfig;
 use Requirements\Test\TestResult;
+use Requirements\Verification\TargetResults;
+use Requirements\Verification\TestExecution;
 use Requirements\Verification\VerificationResult;
 use Requirements\Verification\Verifier;
 use stdClass;
@@ -57,6 +60,8 @@ use Tests\Fake\MemorySource;
 use Tests\Fake\ProjectDirectory;
 
 #[CoversClass(Verifier::class)]
+#[UsesClass(TestExecution::class)]
+#[UsesClass(TargetResults::class)]
 #[UsesClass(VerificationResult::class)]
 #[UsesClass(Registry::class)]
 #[UsesClass(PhpUnitRunner::class)]
@@ -159,7 +164,7 @@ final class VerifierTest extends TestCase
         $project = new Project($directory->directory, [], [], ['example' => new RunnerConfig('custom', ['example'], $directory->directory)], [], ['custom' => CountingRunner::class], 0.0, 0.0, [], []);
         $item = new Item('REQ-1', 'requirement', 'Names start with letters', 'unsupported', null, [], [new TestReference('example', 'a'), new TestReference('example', 'a'), new TestReference('example', 'b')], [], [], [], '', 'sourced', '', 'definition.yaml', []);
         $results = (new Verifier())->verify($project, ['REQ-1' => $item]);
-        self::assertSame(['status' => 'not-applicable', 'tests' => 0, 'passed_targets' => null, 'total_targets' => 2, 'message' => ''], $results['REQ-1']->toArray());
+        self::assertSame(['status' => 'not-applicable', 'tests' => 0, 'passed_targets' => null, 'total_targets' => 2, 'message' => '', 'deferred_targets' => 0], $results['REQ-1']->toArray());
         self::assertFileDoesNotExist($directory->path('executions.txt'));
     }
 
@@ -169,7 +174,7 @@ final class VerifierTest extends TestCase
         $project = new Project($directory->directory, [], [], ['example' => new RunnerConfig('custom', ['example'], $directory->directory)], [], ['custom' => CountingRunner::class], 0.0, 0.0, [], []);
         $item = new Item('SPEC-1', 'specification', 'The reader shall read.', 'unsupported', null, [], [new TestReference('example', 'a')], [], [], [], '', 'original', 'Owned elsewhere.', 'definition.yaml', []);
         $results = (new Verifier())->verify($project, ['SPEC-1' => $item], true);
-        self::assertSame(['status' => 'unsupported', 'tests' => 0, 'passed_targets' => null, 'total_targets' => 1, 'message' => ''], $results['SPEC-1']->toArray());
+        self::assertSame(['status' => 'unsupported', 'tests' => 0, 'passed_targets' => null, 'total_targets' => 1, 'message' => '', 'deferred_targets' => 0], $results['SPEC-1']->toArray());
         self::assertFileDoesNotExist($directory->path('executions.txt'));
     }
 
@@ -180,8 +185,8 @@ final class VerifierTest extends TestCase
         $linked = new Item('SPEC-1', 'specification', 'The reader shall read.', 'supported', null, [], [new TestReference('example', 'a'), new TestReference('example', 'b')], [], [], [], '', 'original', 'Support editors.', 'definition.yaml', []);
         $unlinked = new Item('SPEC-2', 'specification', 'The reader shall read.', 'supported', null, [], [], [], [], [], '', 'original', 'Support editors.', 'definition.yaml', []);
         $results = (new Verifier())->verify($project, ['SPEC-1' => $linked, 'SPEC-2' => $unlinked], true);
-        self::assertSame(['status' => 'not-run', 'tests' => 0, 'passed_targets' => null, 'total_targets' => 2, 'message' => ''], $results['SPEC-1']->toArray());
-        self::assertSame(['status' => 'not-run', 'tests' => 0, 'passed_targets' => null, 'total_targets' => 0, 'message' => ''], $results['SPEC-2']->toArray());
+        self::assertSame(['status' => 'not-run', 'tests' => 0, 'passed_targets' => null, 'total_targets' => 2, 'message' => '', 'deferred_targets' => 0], $results['SPEC-1']->toArray());
+        self::assertSame(['status' => 'not-run', 'tests' => 0, 'passed_targets' => null, 'total_targets' => 0, 'message' => '', 'deferred_targets' => 0], $results['SPEC-2']->toArray());
         self::assertFileDoesNotExist($directory->path('executions.txt'));
     }
 
@@ -191,7 +196,7 @@ final class VerifierTest extends TestCase
         $project = new Project($directory->directory, [], [], [], [], [], 0.0, 0.0, [], []);
         $item = new Item('SPEC-1', 'specification', 'The reader shall read.', 'supported', null, [], [], [], [], [], '', 'original', 'Support editors.', 'definition.yaml', []);
         $results = (new Verifier())->verify($project, ['SPEC-1' => $item]);
-        self::assertSame(['status' => 'unverified', 'tests' => 0, 'passed_targets' => 0, 'total_targets' => 0, 'message' => 'No tests linked.'], $results['SPEC-1']->toArray());
+        self::assertSame(['status' => 'unverified', 'tests' => 0, 'passed_targets' => 0, 'total_targets' => 0, 'message' => 'No tests linked.', 'deferred_targets' => 0], $results['SPEC-1']->toArray());
     }
 
     public function testVerifyPassesWhenEveryTargetPasses(): void
@@ -200,7 +205,7 @@ final class VerifierTest extends TestCase
         $project = new Project($directory->directory, [], [], ['example' => new RunnerConfig('custom', ['example'], $directory->directory)], [], ['custom' => CountingRunner::class], 0.0, 0.0, [], []);
         $item = new Item('SPEC-1', 'specification', 'The reader shall read.', 'supported', null, [], [new TestReference('example', 'a'), new TestReference('example', 'b')], [], [], [], '', 'original', 'Support editors.', 'definition.yaml', []);
         $results = (new Verifier())->verify($project, ['SPEC-1' => $item]);
-        self::assertSame(['status' => 'passed', 'tests' => 2, 'passed_targets' => 2, 'total_targets' => 2, 'message' => ''], $results['SPEC-1']->toArray());
+        self::assertSame(['status' => 'passed', 'tests' => 2, 'passed_targets' => 2, 'total_targets' => 2, 'message' => '', 'deferred_targets' => 0], $results['SPEC-1']->toArray());
         self::assertSame("a\nb\n", $directory->read('executions.txt'));
     }
 
@@ -210,7 +215,7 @@ final class VerifierTest extends TestCase
         $project = new Project($directory->directory, [], [], ['example' => new RunnerConfig('custom', ['example'], $directory->directory), 'unit' => new RunnerConfig('phpunit', [PHP_BINARY], $directory->directory)], [], ['custom' => CountingRunner::class], 0.0, 0.0, [], []);
         $item = new Item('SPEC-1', 'specification', 'The reader shall read.', 'supported', null, [], [new TestReference('unit', 'malformed'), new TestReference('example', 'a'), new TestReference('example', 'empty')], [], [], [], '', 'original', 'Support editors.', 'definition.yaml', []);
         $results = (new Verifier())->verify($project, ['SPEC-1' => $item]);
-        self::assertSame(['status' => 'failed', 'tests' => 1, 'passed_targets' => 1, 'total_targets' => 3, 'message' => "malformed: PHPUnit targets must be fully qualified Class::method references.\nempty: "], $results['SPEC-1']->toArray());
+        self::assertSame(['status' => 'failed', 'tests' => 1, 'passed_targets' => 1, 'total_targets' => 3, 'message' => "malformed: PHPUnit targets must be fully qualified Class::method references.\nempty: ", 'deferred_targets' => 0], $results['SPEC-1']->toArray());
         self::assertSame("a\nempty\n", $directory->read('executions.txt'));
     }
 
@@ -221,8 +226,8 @@ final class VerifierTest extends TestCase
         $first = new Item('SPEC-1', 'specification', 'The reader shall read.', 'supported', null, [], [new TestReference('example', 'shared'), new TestReference('example', 'shared')], [], [], [], '', 'original', 'Support editors.', 'definition.yaml', []);
         $second = new Item('SPEC-2', 'specification', 'The reader shall read.', 'supported', null, [], [new TestReference('example', 'shared'), new TestReference('example', 'own')], [], [], [], '', 'original', 'Support editors.', 'definition.yaml', []);
         $results = (new Verifier())->verify($project, ['SPEC-1' => $first, 'SPEC-2' => $second]);
-        self::assertSame(['status' => 'passed', 'tests' => 1, 'passed_targets' => 1, 'total_targets' => 1, 'message' => ''], $results['SPEC-1']->toArray());
-        self::assertSame(['status' => 'passed', 'tests' => 2, 'passed_targets' => 2, 'total_targets' => 2, 'message' => ''], $results['SPEC-2']->toArray());
+        self::assertSame(['status' => 'passed', 'tests' => 1, 'passed_targets' => 1, 'total_targets' => 1, 'message' => '', 'deferred_targets' => 0], $results['SPEC-1']->toArray());
+        self::assertSame(['status' => 'passed', 'tests' => 2, 'passed_targets' => 2, 'total_targets' => 2, 'message' => '', 'deferred_targets' => 0], $results['SPEC-2']->toArray());
         self::assertSame("shared\nown\n", $directory->read('executions.txt'));
     }
 
@@ -232,7 +237,7 @@ final class VerifierTest extends TestCase
         $project = new Project($directory->directory, [], [], ['first' => new RunnerConfig('custom', ['first'], $directory->directory), 'second' => new RunnerConfig('custom', ['second'], $directory->directory)], [], ['custom' => CountingRunner::class], 0.0, 0.0, [], []);
         $item = new Item('SPEC-1', 'specification', 'The reader shall read.', 'supported', null, [], [new TestReference('first', 'a'), new TestReference('second', 'a')], [], [], [], '', 'original', 'Support editors.', 'definition.yaml', []);
         $results = (new Verifier())->verify($project, ['SPEC-1' => $item]);
-        self::assertSame(['status' => 'passed', 'tests' => 2, 'passed_targets' => 2, 'total_targets' => 2, 'message' => ''], $results['SPEC-1']->toArray());
+        self::assertSame(['status' => 'passed', 'tests' => 2, 'passed_targets' => 2, 'total_targets' => 2, 'message' => '', 'deferred_targets' => 0], $results['SPEC-1']->toArray());
         self::assertSame("a\na\n", $directory->read('executions.txt'));
     }
 
@@ -270,5 +275,46 @@ final class VerifierTest extends TestCase
         $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessage('stdClass must implement RunnerExtension.');
         (new Verifier())->verify($project, []);
+    }
+    #[DataProvider('providerExecutionPolicies')]
+    public function testVerifyDefersManualTargetsUnlessAllIsRequested(bool $all, bool $noTest, string $automatic, string $status, ?int $passed, int $deferred): void
+    {
+        $directory = new ProjectDirectory();
+        $project = new Project($directory->directory, [], [], ['example' => new RunnerConfig('custom', ['example'], $directory->directory)], [], ['custom' => CountingRunner::class], 0.0, 0.0, [], []);
+        $item = new Item('SPEC-1', 'specification', 'The reader shall read.', 'supported', null, [], [new TestReference('example', $automatic), new TestReference('example', 'slow', 'manual')], [], [], [], '', 'original', 'Support editors.', 'definition.yaml', []);
+        $result = (new Verifier())->verify($project, ['SPEC-1' => $item], $noTest, $all)['SPEC-1'];
+        self::assertSame($status, $result->status);
+        self::assertSame($passed, $result->passedTargets);
+        self::assertSame($deferred, $result->deferredTargets);
+        self::assertSame(2, $result->totalTargets);
+        self::assertSame($noTest ? '' : $automatic . "\n" . ($all ? "slow\n" : ''), $directory->read('executions.txt'));
+    }
+
+    /**
+     * @return list<array{bool, bool, string, string, ?int, int}>
+     */
+    public static function providerExecutionPolicies(): array
+    {
+        return [
+            [false, false, 'fast', 'deferred', 1, 1],
+            [true, false, 'fast', 'passed', 2, 0],
+            [false, false, 'empty', 'failed', 0, 1],
+            [true, false, 'empty', 'failed', 1, 0],
+            [false, true, 'fast', 'not-run', null, 0],
+            [true, true, 'fast', 'not-run', null, 0],
+        ];
+    }
+
+    public function testVerifySharesAnAutomaticResultWithAnEarlierManualReference(): void
+    {
+        $directory = new ProjectDirectory();
+        $project = new Project($directory->directory, [], [], ['example' => new RunnerConfig('custom', ['example'], $directory->directory)], [], ['custom' => CountingRunner::class], 0.0, 0.0, [], []);
+        $manual = new Item('MANUAL', 'specification', 'The reader shall read.', 'supported', null, [], [new TestReference('example', 'shared', 'manual')], [], [], [], '', 'original', 'Support editors.', 'definition.yaml', []);
+        $automatic = new Item('AUTOMATIC', 'specification', 'The reader shall read.', 'supported', null, [], [new TestReference('example', 'shared')], [], [], [], '', 'original', 'Support editors.', 'definition.yaml', []);
+        $results = (new Verifier())->verify($project, ['MANUAL' => $manual, 'AUTOMATIC' => $automatic]);
+        self::assertSame('passed', $results['MANUAL']->status);
+        self::assertSame('passed', $results['AUTOMATIC']->status);
+        self::assertSame(0, $results['MANUAL']->deferredTargets);
+        self::assertSame("shared\n", $directory->read('executions.txt'));
     }
 }

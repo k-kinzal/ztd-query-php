@@ -95,7 +95,7 @@ jobs:
           done
       - name: Verify the linked test of the extensions example
         working-directory: packages/requirements/examples/extensions
-        run: php ../../bin/requirements spec
+        run: php ../../bin/requirements spec --strict
 
   requirements:
     name: Requirements
@@ -126,7 +126,7 @@ jobs:
           php bin/requirements check
           php bin/requirements coverage
       - name: Verify the EARS specifications
-        run: php bin/requirements spec
+        run: php bin/requirements spec --strict
 
   lint:
     name: Lint

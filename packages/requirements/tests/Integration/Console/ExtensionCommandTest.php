@@ -14,6 +14,7 @@ use Requirements\Console\Application;
 use Requirements\Console\CommandHandler;
 use Requirements\Console\CommandLine;
 use Requirements\Console\Executor;
+use Requirements\Console\SpecificationReport;
 use Requirements\Source\ResourceLoader;
 use Requirements\Test\ProcessRunner;
 use Tests\Fake\CommandLine as Cli;
@@ -23,6 +24,7 @@ use Tests\Fake\ProjectDirectory;
 #[UsesClass(CommandLine::class)]
 #[UsesClass(CommandHandler::class)]
 #[UsesClass(Executor::class)]
+#[UsesClass(SpecificationReport::class)]
 #[UsesClass(Bootstrap::class)]
 #[UsesClass(ResourceLoader::class)]
 #[UsesClass(ProcessRunner::class)]
@@ -80,7 +82,9 @@ final class CatalogSource implements SourceExtension
     {
     }
 
-    /** @return list<Unit> */
+    /**
+     * @return list<Unit>
+     */
     public function select(Source $source, string $selector, string $directory, bool $live): array
     {
         $catalog = json_decode($this->loader->read($source, $directory, $live), false, 512, JSON_THROW_ON_ERROR);

@@ -47,6 +47,8 @@ final class FieldWriterTest extends TestCase
             'read requirement link' => ['requirements', ['REQ-001'], ['REQ-001' => 'reference.yaml#req-001'], '- [REQ-001](reference.yaml#req-001)'],
             'new requirement link' => ['requirements', ['REQ.A-1', 'REQ-002'], [], "- [REQ.A-1](#reqa-1)\n- [REQ-002](#req-002)"],
             'related link with a space' => ['related', ['SPEC-001'], ['SPEC-001' => 'other file.md#spec-001'], '- [SPEC-001](<other%20file.md#spec-001>)'],
+            'manual tests' => ['tests', [(object) ['runner' => 'fuzz', 'target' => 'slow', 'run' => 'manual']], [], "- **fuzz:** slow\n  - **run:** manual"],
+            'automatic tests' => ['tests', [(object) ['runner' => 'unit', 'target' => 'fast', 'run' => 'auto']], [], "- **unit:** fast\n  - **run:** auto"],
             'tests' => ['tests', [(object) ['runner' => 'unit', 'target' => 'Sample\\PassingTest::test_pass']], [], '- **unit:** Sample\\\\PassingTest::test\\_pass'],
             'design link with text' => ['design', [(object) ['url' => 'https://example.org/design', 'text' => 'Parser design']], [], '- [Parser design](https://example.org/design)'],
             'design link without text' => ['design', [(object) ['url' => 'https://example.org/design']], [], '- [https://example.org/design](https://example.org/design)'],

@@ -23,7 +23,7 @@ requirements lint
 requirements format --check
 requirements check
 requirements coverage
-requirements spec
+requirements spec --strict
 ```
 
 ## Options
@@ -45,6 +45,8 @@ Every command accepts these:
 | `coverage` | `--min-diff-coverage=N` | Override `coverage.diff_minimum`. |
 | `coverage` | `--allow-removed` | Accept units that the snapshot has and the current scope does not. |
 | `spec` | `--no-test` | List the records without running tests. |
+| `spec` | `--strict` | Fail when no records match or a selected supported specification has no linked tests. |
+| `spec` | `--all` | Include tests marked `run: manual`. |
 | `spec` | `--id`, `--label`, `--category`, `--source`, `--status`, `--kind`, `--origin` | Select records by an exact value. Several filters must all match. |
 | `spec` | `--without-source` | Select items without a source. |
 | `format` | `--check` | Report files that would change, without writing them. |
@@ -63,13 +65,14 @@ A source's `selector` defines its units. A unit is covered when a specification 
 
 ## Test results
 
-`spec` runs each linked test once, even when several specifications share it, and shows **passed / linked** tests per record. A data provider or scenario outline counts as one test.
+`spec` runs each automatic test once, even when several specifications share it, and shows **passed / linked** tests per record. A data provider or scenario outline counts as one test.
 
 | Situation | Result | Tests | Fails `spec` |
 |-----------|--------|-------|--------------|
 | All three linked tests pass | `passed` | `3/3` | no |
 | One of three fails, is skipped or runs no test | `failed` | `2/3` | yes |
-| Supported specification without tests | `unverified` | `0/0` | yes |
+| Supported specification without tests | `unverified` | `0/0` | only with `--strict` |
+| Two tests pass; one manual test is deferred | `deferred` | `2/3` | no |
 | Unsupported specification | `unsupported` | `-/3` | no |
 | Requirement | `not-applicable` | `-/0` | no |
 | Run with `--no-test` | `not-run` | `-/3` | no |

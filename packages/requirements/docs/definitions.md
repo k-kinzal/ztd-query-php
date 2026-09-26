@@ -78,7 +78,7 @@ A snapshot keeps a verified copy of a remote document so that later runs do not 
 | `kind` | `specification` (default) or `requirement`. |
 | `evidence` | Quotations of the source, each `{selector, quote}`. |
 | `requirements` | IDs of the requirements a specification implements. |
-| `tests` | Tests that verify a specification, each `{runner, target}`. |
+| `tests` | Tests that verify a specification, each `{runner, target}` with optional `run` (`auto` or `manual`). |
 | `status` | `supported` (default) or `unsupported`. |
 | `reason` | Why the item is unsupported or has no source. |
 | `origin` | `sourced` (default), `original` or `undocumented`. See [Items without a source](#items-without-a-source). |
@@ -97,7 +97,9 @@ Requirements are optional. Use them when one passage of the source becomes sever
 
 ### Tests
 
-`target` selects one test for the named runner: `Class::method` for PHPUnit, with all its data sets, and `file.feature:line` for Behat, with all its outline examples. A supported specification without tests fails `spec`. An unsupported specification needs a `reason` and its tests are not run.
+`target` selects one test for the named runner: `Class::method` for PHPUnit, with all its data sets, and `file.feature:line` for Behat, with all its outline examples. A supported specification without tests is `unverified` and fails only with `--strict`. An unsupported specification needs a `reason` and its tests are not run.
+
+Tests default to `run: auto`. Set `run: manual` to defer a test until `spec --all`.
 
 ### Items without a source
 
@@ -165,7 +167,7 @@ When a name is read, the parser shall require a leading letter.
 | Evidence | A block quotation followed by a `[Source](...)` link to the declared source |
 | `reason` | A **unsupported reason** or **rationale** paragraph |
 | `requirements`, `related` | A bold field name followed by a list of links such as `[REQ-001](other.md#req-001)` |
-| `tests` | A **tests** list of `**runner:** target` entries |
+| `tests` | A **tests** list of `**runner:** target` entries, optionally with a nested `**run:** auto` or `**run:** manual` entry |
 | `design`, `metadata` | A **design** list of links or text, and a **metadata** list of `**key:** value` entries |
 
 The evidence selector comes from the link: `#names` selects the element with that ID, and for HTML a Text Fragment such as `#:~:text=A%20name%20starts%20with%20a%20letter.` selects the one unit whose complete text it spells. Any other selector is written as the first line of the quotation, as `<!-- selector: main > p:first-child -->`.

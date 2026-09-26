@@ -7,7 +7,6 @@ namespace Requirements\Verification;
 use Requirements\Input\InvalidInputException;
 use Requirements\Model\Item;
 use Requirements\Model\Project;
-use Requirements\Test\Registry;
 
 /**
  * Runs the tests linked to specifications and decides each verdict.
@@ -24,15 +23,15 @@ final class Verifier
      * @param Project $project The loaded project with its runners
      * @param array<string, Item> $items The items to verify by ID
      * @param bool $noTest Whether to report linked targets without running them
+     * @param bool $all Whether to include manual tests
      *
      * @return array<string, VerificationResult> The verdicts by item ID
      *
      * @throws InvalidInputException When a runner uses an unknown extension
      */
-    public function verify(Project $project, array $items, bool $noTest = false): array
+    public function verify(Project $project, array $items, bool $noTest = false, bool $all = false): array
     {
-        $registry = new Registry($project->runnerExtensions);
-        $cache = [];
+        $cache = $noTest ? [] : (new TestExecution())->run($project, $items, $all);
         $results = [];
         foreach ($items as $item) {
             $targets = [];
@@ -56,22 +55,7 @@ final class Verifier
                 $results[$item->id] = new VerificationResult('unverified', 0, 0, 0, 'No tests linked.');
                 continue;
             }
-            $count = 0;
-            $passed = 0;
-            $messages = [];
-            $status = 'passed';
-            foreach ($targets as $key => $test) {
-                $config = $project->runners[$test->runner];
-                $result = $cache[$key] ??= $registry->get($config->extension)->run($config, $test->target);
-                $count += $result->tests;
-                if ($result->status !== 'passed' || $result->tests < 1) {
-                    $status = 'failed';
-                    $messages[] = "$test->target: " . $result->message;
-                } else {
-                    ++$passed;
-                }
-            }
-            $results[$item->id] = new VerificationResult($status, $count, $passed, $total, implode("\n", $messages));
+            $results[$item->id] = (new TargetResults())->summarize($targets, $cache);
         }
         return $results;
     }

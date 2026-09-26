@@ -10,7 +10,6 @@ use Requirements\Model\Project;
 use Requirements\Report\Analyzer;
 use Requirements\Report\Coverage;
 use Requirements\Report\Snapshot;
-use Requirements\Verification\Verifier;
 use RuntimeException;
 
 /**
@@ -42,15 +41,7 @@ final class Executor
             return ['passed' => !$options->flag('check') || $changed === [], 'changed' => $changed];
         }
         if ($options->command === 'spec') {
-            $items = array_filter($project->items, $options->matches(...));
-            $results = (new Verifier())->verify($project, $items, $options->flag('no-test'));
-            $passed = $results !== [];
-            $rows = [];
-            foreach ($results as $id => $result) {
-                $passed = $passed && in_array($result->status, ['passed', 'unsupported', 'not-applicable', 'not-run'], true);
-                $rows[$id] = [...ItemRecord::describe($items[$id]), ...$result->toArray()];
-            }
-            return ['passed' => $passed, 'no_test' => $options->flag('no-test'), 'specifications' => $rows, 'errors' => $results === [] ? ['No specifications or requirements selected.'] : []];
+            return (new SpecificationReport())->generate($project, $options);
         }
         if (!in_array($options->command, ['check', 'coverage'], true)) {
             throw new InvalidInputException('Unknown command: ' . $options->command);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\PostgreSql;
 
+use Container\Endpoint;
 use Container\PostgreSql16Container;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -24,12 +25,12 @@ final class DeleteBasicTest extends TestCase
 {
     public function testDeleteSingleRow(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 
@@ -68,12 +69,12 @@ final class DeleteBasicTest extends TestCase
 
     public function testDeleteAllRowsWithCondition(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 
@@ -112,12 +113,12 @@ final class DeleteBasicTest extends TestCase
 
     public function testDeleteDoesNotModifyPhysicalDatabase(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 

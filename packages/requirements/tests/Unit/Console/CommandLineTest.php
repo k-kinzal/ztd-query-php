@@ -23,6 +23,7 @@ use Requirements\Console\CommandHandler;
 use Requirements\Console\CommandLine;
 use Requirements\Console\Executor;
 use Requirements\Console\Options;
+use Requirements\Console\SpecificationReport;
 use Requirements\Ears\ConditionOrder;
 use Requirements\Ears\LiteralMask;
 use Requirements\Ears\SystemResponse;
@@ -59,6 +60,7 @@ use Tests\Fake\ProjectDirectory;
 #[UsesClass(MarkdownDocument::class)]
 #[UsesClass(SchemaValidator::class)]
 #[UsesClass(Executor::class)]
+#[UsesClass(SpecificationReport::class)]
 #[UsesClass(ConditionOrder::class)]
 #[UsesClass(LiteralMask::class)]
 #[UsesClass(SystemResponse::class)]
@@ -161,7 +163,7 @@ final class CommandLineTest extends TestCase
     public static function providerCommandOptions(): array
     {
         return [
-            'spec' => ['spec', ['no-test', 'id', 'label', 'category', 'source', 'status', 'kind', 'origin', 'without-source']],
+            'spec' => ['spec', ['no-test', 'strict', 'all', 'id', 'label', 'category', 'source', 'status', 'kind', 'origin', 'without-source']],
             'check' => ['check', ['live']],
             'coverage' => ['coverage', ['live', 'snapshot', 'write-snapshot', 'min-coverage', 'min-diff-coverage', 'allow-removed']],
             'format' => ['format', ['check']],

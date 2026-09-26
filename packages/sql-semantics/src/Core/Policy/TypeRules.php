@@ -18,9 +18,9 @@ use SqlSemantics\Core\Type\TypeDescriptor;
 interface TypeRules
 {
     /**
-     * Reads the declared built-in type and preserves its modifiers.
+     * Reads a declared type, including table-dependent storage rules and modifiers.
      */
-    public function read(Node $node): TypeDescriptor;
+    public function read(Node $node, ?Node $table = null): TypeDescriptor;
 
     /**
      * Resolves the built-in aliases modeled for this dialect.

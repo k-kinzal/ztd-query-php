@@ -24,6 +24,7 @@ use Requirements\Console\Executor;
 use Requirements\Console\ItemRecord;
 use Requirements\Console\Options;
 use Requirements\Console\Reporter;
+use Requirements\Console\SpecificationReport;
 use Requirements\Console\SpecificationTable;
 use Requirements\Console\Text;
 use Requirements\Console\Verdict;
@@ -56,6 +57,8 @@ use Requirements\Source\TextFragment;
 use Requirements\Source\TextSource;
 use Requirements\Source\Unit;
 use Requirements\Test\Registry as TestRegistry;
+use Requirements\Verification\TargetResults;
+use Requirements\Verification\TestExecution;
 use Requirements\Verification\VerificationResult;
 use Requirements\Verification\Verifier;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -76,6 +79,7 @@ use Tests\Fake\ProjectDirectory;
 #[UsesClass(MarkdownDocument::class)]
 #[UsesClass(SchemaValidator::class)]
 #[UsesClass(Executor::class)]
+#[UsesClass(SpecificationReport::class)]
 #[UsesClass(Options::class)]
 #[UsesClass(Reporter::class)]
 #[UsesClass(SpecificationTable::class)]
@@ -110,6 +114,8 @@ use Tests\Fake\ProjectDirectory;
 #[UsesClass(Unit::class)]
 #[UsesClass(TestRegistry::class)]
 #[UsesClass(Verifier::class)]
+#[UsesClass(TestExecution::class)]
+#[UsesClass(TargetResults::class)]
 #[UsesClass(ItemRecord::class)]
 #[UsesClass(VerificationResult::class)]
 #[Small]
@@ -187,7 +193,7 @@ final class CommandHandlerTest extends TestCase
             ...array_map(static fn (array $option): InputOption => new InputOption($option[0], null, $option[1] ? InputOption::VALUE_NONE : InputOption::VALUE_REQUIRED), Options::definitions('spec')),
         ]);
         $output = new BufferedOutput();
-        self::assertSame(1, (new CommandHandler('spec'))(new ArrayInput(['--config' => $project->path('requirements.yaml'), '--id' => 'MISSING'], $definition), $output));
+        self::assertSame(1, (new CommandHandler('spec'))(new ArrayInput(['--config' => $project->path('requirements.yaml'), '--id' => 'MISSING', '--strict' => true], $definition), $output));
         self::assertStringContainsString('[ERROR] No specifications or requirements selected.', $output->fetch());
     }
 

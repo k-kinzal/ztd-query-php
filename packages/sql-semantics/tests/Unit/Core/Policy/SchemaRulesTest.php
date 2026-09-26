@@ -85,7 +85,7 @@ final class SchemaRulesTest extends TestCase
         $platform->method('schema')->willReturn($rules);
         $dialect = self::createStub(Dialect::class);
         $dialect->method('platform')->willReturn($platform);
-        $reader = new \SqlSemantics\Core\Ast\SchemaReader(new \SqlSemantics\Core\Ast\Identifiers($dialect), 'application');
+        $reader = new \SqlSemantics\Core\Ast\SchemaReader(new \SqlSemantics\Core\Ast\Identifiers($dialect), 'application', new \SqlSemantics\Core\Analysis\ValueReader([]));
         self::assertSame([[$node, []]], $reader->columnNodes(new Node('application-table', 0, [])));
     }
     public function testValidateAcceptsOrdinaryDeclarations(): void
@@ -107,7 +107,7 @@ final class SchemaRulesTest extends TestCase
         $accept = static fn (\SqlSemantics\Core\Policy\SchemaRules $rules): \SqlSemantics\Core\Policy\SchemaRules => $rules;
         self::assertSame(PostgreSqlDialect::PostgreSql->platform()->schema()::class, $accept(PostgreSqlDialect::PostgreSql->platform()->schema())::class);
         $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
-        self::assertStringContainsString('CREATE TABLE', $schema->tables[0]->source->toString());
+        self::assertStringContainsString('CREATE TABLE', \SqlSemantics\Statement\Writer::render($schema->tables[0]->source));
     }
     public function testTableKeyDistinguishesNames(): void
     {
@@ -123,4 +123,18 @@ final class SchemaRulesTest extends TestCase
         $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE app.items (id INT)');
         self::assertSame('app', $schema->tables[0]->schema);
     }
+
+    public function testOptionsRetainsStructuredTableChoices(): void
+    {
+        $state = (new \SqlSemantics\Facade\Schema(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (id TEXT PRIMARY KEY) STRICT');
+        self::assertNotEmpty($state->tables[0]->options);
+    }
+
+    public function testPrimaryOptionsNotNullAccountsForTablePolicy(): void
+    {
+        $dialect = \SqlSemantics\Platform\Sqlite\Dialect::Sqlite;
+        $source = $dialect->platform()->parser()->parse('CREATE TABLE t (id TEXT PRIMARY KEY) STRICT');
+        self::assertSame(true, $dialect->platform()->schema()->primaryOptionsNotNull($source));
+    }
+
 }

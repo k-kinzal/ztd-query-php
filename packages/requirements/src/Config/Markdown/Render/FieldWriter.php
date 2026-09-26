@@ -44,7 +44,11 @@ final class FieldWriter
             } else {
                 $record = Record::fields($entry);
                 if ($name === 'tests') {
-                    $rows[] = '- **' . Nodes::escape(Fields::text($record, 'runner')) . ':** ' . Nodes::escape(Fields::text($record, 'target'));
+                    $row = '- **' . Nodes::escape(Fields::text($record, 'runner')) . ':** ' . Nodes::escape(Fields::text($record, 'target'));
+                    if (isset($record['run'])) {
+                        $row .= "\n  - **run:** " . Nodes::escape(Fields::text($record, 'run'));
+                    }
+                    $rows[] = $row;
                 } elseif ($name === 'design') {
                     $rows[] = isset($record['url']) ? '- [' . Nodes::escape(Fields::text($record, 'text', Fields::text($record, 'url'))) . '](' . Nodes::destination(Fields::text($record, 'url')) . ')' : '- ' . Nodes::escape(Fields::text($record, 'text'));
                 } else {

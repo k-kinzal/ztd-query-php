@@ -3,17 +3,6 @@ name: Fuzz (sql-semantics)
 on:
   schedule:
     - cron: '17 4 * * *'
-  pull_request:
-    paths:
-      - 'packages/sql-semantics*/**'
-      - 'packages/bison-parser/**'
-      - 'packages/lemon-parser/**'
-      - 'packages/sql-faker/**'
-      - 'packages/sql-formatter/**'
-      - 'packages/sql-parser/**'
-      - '.github/workflows/sql-semantics-fuzz.yml'
-      - '!packages/**/README.md'
-      - '!packages/**/docs/**'
   workflow_dispatch:
     inputs:
       max_runs:
@@ -40,6 +29,7 @@ env:
 
 jobs:
   roundtrip:
+    if: github.ref == 'refs/heads/main'
     name: Semantic round trip / ${{ matrix.target.database }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -53,6 +43,9 @@ jobs:
           - { database: mysql, package: sql-semantics-mysql, script: fuzz_mysql_roundtrip.php, extensions: 'mbstring, pcntl, zlib' }
           - { database: pg, package: sql-semantics-postgres, script: fuzz_pg_roundtrip.php, extensions: 'mbstring, pcntl, zlib' }
           - { database: sqlite, package: sql-semantics-sqlite, script: fuzz_sqlite_roundtrip.php, extensions: 'mbstring, pcntl, zlib' }
+          - { database: mysql-schema, package: sql-semantics-mysql, script: fuzz_mysql_schema.php, extensions: 'mbstring, pcntl, zlib' }
+          - { database: pg-schema, package: sql-semantics-postgres, script: fuzz_pg_schema.php, extensions: 'mbstring, pcntl, zlib' }
+          - { database: sqlite-schema, package: sql-semantics-sqlite, script: fuzz_sqlite_schema.php, extensions: 'mbstring, pcntl, zlib' }
     defaults:
       run:
         working-directory: packages/${{ matrix.target.package }}
@@ -76,7 +69,7 @@ jobs:
         run: composer check-platform-reqs --no-dev
       - name: Validate the manual run budget
         env:
-          FUZZ_MAX_RUNS: ${{ inputs.max_runs || (github.event_name == 'pull_request' && '100') || '10000' }}
+          FUZZ_MAX_RUNS: ${{ inputs.max_runs || '10000' }}
         run: |
           case "$FUZZ_MAX_RUNS" in
             ''|*[!0-9]*) echo 'max_runs must be a positive integer.' >&2; exit 2 ;;
@@ -98,17 +91,30 @@ jobs:
           key: sql-semantics-coverage-v1-${{ matrix.target.database }}-${{ env.MYSQL_VERSION }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: sql-semantics-coverage-v1-${{ matrix.target.database }}-${{ env.MYSQL_VERSION }}-
       - name: Copy sql-faker seed plans into the corpus
-        run: composer fuzz:seeds
+        if: ${{ !endsWith(matrix.target.database, '-schema') }}
+        env:
+          DATABASE: ${{ matrix.target.database }}
+        run: |
+          case "$DATABASE" in
+            mysql) version="mysql-$MYSQL_VERSION" ;;
+            pg) version='pg-17.2' ;;
+            sqlite) version='sqlite-3.47.2' ;;
+          esac
+          mkdir -p "fuzz/corpus/$DATABASE"
+          cp "../sql-faker/seeds/$DATABASE/$version/"* "fuzz/corpus/$DATABASE/"
       - name: Run PHP-Fuzzer
         env:
-          FUZZ_MAX_RUNS: ${{ inputs.max_runs || (github.event_name == 'pull_request' && '100') || '10000' }}
+          FUZZ_MAX_RUNS: ${{ inputs.max_runs || '10000' }}
         run: |
           set -euo pipefail
           mkdir -p build/fuzz "fuzz/corpus/${{ matrix.target.database }}"
-          php fuzz/run.php "${{ matrix.target.database }}" \
+          php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz "fuzz/${{ matrix.target.script }}" "fuzz/corpus/${{ matrix.target.database }}/" --timeout=60 \
             "--max-runs=$FUZZ_MAX_RUNS" 2>&1 | tee "build/fuzz/${{ matrix.target.database }}.log"
+          if grep -Eq '(^|CORPUS )(CRASH|TIMEOUT) in ' "build/fuzz/${{ matrix.target.database }}.log"; then
+            exit 1
+          fi
       - name: Open an issue for a finding
-        if: always() && github.event_name != 'pull_request'
+        if: always()
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         env:
           FUZZ_PACKAGE: ${{ matrix.target.package }}
@@ -153,23 +159,14 @@ jobs:
               title: `[sql-semantics fuzz] ${database}: ${hash.slice(0, 12)}`,
               body
             });
-      - name: Fail when PHP-Fuzzer reports a finding
-        if: always()
-        run: |
-          if [ ! -f "build/fuzz/${{ matrix.target.database }}.log" ]; then
-            exit 1
-          fi
-          if grep -Eq '(^|CORPUS )(CRASH|TIMEOUT) in ' "build/fuzz/${{ matrix.target.database }}.log"; then
-            exit 1
-          fi
       - name: Save the evolving corpus
-        if: always() && github.event_name != 'pull_request'
+        if: always()
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: packages/${{ matrix.target.package }}/fuzz/corpus/${{ matrix.target.database }}
           key: sql-semantics-corpus-v1-${{ matrix.target.database }}-${{ env.MYSQL_VERSION }}-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Save grammar coverage history
-        if: always() && github.event_name != 'pull_request'
+        if: always()
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: packages/${{ matrix.target.package }}/fuzz/coverage/${{ matrix.target.database }}
