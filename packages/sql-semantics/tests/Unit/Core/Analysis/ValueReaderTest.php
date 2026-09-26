@@ -68,7 +68,7 @@ final class ValueReaderTest extends TestCase
         $parser = SqliteDialect::Sqlite->platform()->parser();
         $tree = $parser->parse('SELECT foo /* a */ FROM items');
         $reader = SqliteDialect::Sqlite->platform()->values($parser->version());
-        $command = $reader->lower($tree, new \SqlSemantics\Core\Analysis\TriviaReader()->read($tree), true);
+        $command = $reader->lower($tree, (new \SqlSemantics\Core\Analysis\TriviaReader())->read($tree), true);
         self::assertInstanceOf(\SqlSemantics\Statement\Model\Sqlite\Value\EcmdWithCmdxSemi_b7577a8f::class, $command);
         $select = $command->cmdx;
         self::assertInstanceOf(\SqlSemantics\Statement\Model\Sqlite\Value\OneselectWithSelectDistinctSelcollistFromWhereOptGroupbyOptHavingOptOrderbyOptLimitOpt_218e0475::class, $select);
