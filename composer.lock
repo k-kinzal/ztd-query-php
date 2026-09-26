@@ -75,7 +75,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/bison-parser",
-                "reference": "441f0f29ebf98c6a50e3d7211789363224c56aa7"
+                "reference": "51e3142333aa6d8207e8706aaa0e8eecc010bba1"
             },
             "require": {
                 "php": "^8.1"
@@ -197,7 +197,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/lemon-parser",
-                "reference": "6878535b93ab1e5cdeec5cb66a98ac0ee9ef769a"
+                "reference": "23d7c721e5b33fad2d72ea35fd26729485ac8780"
             },
             "require": {
                 "php": "^8.1"
@@ -319,7 +319,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-catalog",
-                "reference": "537962001fc90543e60979f837af50fc6ab373e7"
+                "reference": "74a3d1454de890bc0272a013a4214fd788bd9b86"
             },
             "require": {
                 "ext-json": "*",
@@ -459,7 +459,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-faker",
-                "reference": "98adb9f3138fdbf662eff4f3a8eddbe8438fe4ad"
+                "reference": "3c6552ac262216b381a4d5aa74f085f618e11f2b"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -605,7 +605,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "Faker Provider for generating syntactically valid SQL statements",
+            "description": "Grammar-based SQL generator for MySQL, PostgreSQL, and SQLite, with a FakerPHP provider",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-faker",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-faker/"
@@ -620,12 +620,12 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-fixture",
-                "reference": "727486768564090ef9e8509b0f21ac4bab3f709a"
+                "reference": "cc5facea5a257c306792e4e1d57080dc73dc472c"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
-                "php": "^8.1",
-                "phpmyadmin/sql-parser": "^5.11"
+                "k-kinzal/sql-parser": "dev-main",
+                "php": "^8.1"
             },
             "require-dev": {
                 "brianium/paratest": "^7.3",
@@ -749,7 +749,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "Generate PHP-Faker based fixtures from SQL schemas",
+            "description": "FakerPHP provider that generates fixture rows from MySQL, PostgreSQL, and SQLite table definitions",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-fixture",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-fixture/"
@@ -764,7 +764,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-formatter",
-                "reference": "c8706d38c29c2787f2dac7ba5edc41ed63fd74c1"
+                "reference": "86f7288d635f710c2d31729da1a5b0ddcf64cc08"
             },
             "require": {
                 "k-kinzal/sql-parser": "dev-main",
@@ -988,7 +988,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-parser",
-                "reference": "4400aaab117b7ff3685fb6bab3bc0eb64c531dcd"
+                "reference": "9453d939255f858ca262ec577c168bebd748aa96"
             },
             "require": {
                 "ext-zlib": "*",
@@ -1134,7 +1134,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "LALR(1) SQL parsers for MySQL, PostgreSQL, and SQLite built from the official grammars",
+            "description": "Lossless LALR(1) SQL parsers for MySQL, PostgreSQL, and SQLite, built from the official grammars",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-parser",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-parser/"
@@ -1149,7 +1149,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-semantics",
-                "reference": "64e3a90b2e2f120bb18bf6960cfa10aa43bc0f61"
+                "reference": "d671be18d0e7c2977a35508e5e629211fb303089"
             },
             "require": {
                 "composer-runtime-api": "^2.2",
@@ -1261,7 +1261,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "Typed SQL statement analysis and reconstruction, with schema-dependent binding and value provenance",
+            "description": "Typed statement models, SQL reconstruction, and schema binding for MySQL, PostgreSQL, and SQLite",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics/"
@@ -1276,7 +1276,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-semantics-mysql",
-                "reference": "11fa5f3bddc2692c24a561feca11173209701cf8"
+                "reference": "b0a16a52289c56266bdc80ea942133f422eb283f"
             },
             "require": {
                 "k-kinzal/sql-parser": "dev-main",
@@ -1407,7 +1407,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "MySql statement models, SQL reconstruction, and semantic binding for SQL Semantics",
+            "description": "MySQL statement models, SQL reconstruction, and schema binding for SQL Semantics",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics-mysql",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-mysql/"
@@ -1422,7 +1422,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-semantics-postgres",
-                "reference": "796a89c417a4cbf0f5079929817276d5fc9da154"
+                "reference": "33ed716313a49f823b8247c25cfb2f99c6912227"
             },
             "require": {
                 "k-kinzal/sql-parser": "dev-main",
@@ -1553,7 +1553,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "PostgreSql statement models, SQL reconstruction, and semantic binding for SQL Semantics",
+            "description": "PostgreSQL statement models, SQL reconstruction, and schema binding for SQL Semantics",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics-postgres",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-postgres/"
@@ -1568,7 +1568,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-semantics-sqlite",
-                "reference": "8b03a4a3cbb727eeb0da260e0b094ee0b142108f"
+                "reference": "fbc6156dcf0ee8181ae0388c133e6c15b0cc0022"
             },
             "require": {
                 "k-kinzal/sql-parser": "dev-main",
@@ -1699,7 +1699,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "Sqlite statement models, SQL reconstruction, and semantic binding for SQL Semantics",
+            "description": "SQLite statement models, SQL reconstruction, and schema binding for SQL Semantics",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics-sqlite",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-sqlite/"
@@ -1714,7 +1714,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-core",
-                "reference": "d836177265a3d4c411fc8e9a59320e937f18a214"
+                "reference": "db04b9e65a6646c0891ec1b5bf986fb82f03cb24"
             },
             "require": {
                 "php": "^8.1"
@@ -1833,7 +1833,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "Zero Table Dependencies query layer for PHP",
+            "description": "Zero Table Dependency testing for PHP: the database-independent core of ZTD Query",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-core",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/ztd-query-core/"
@@ -1848,7 +1848,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-mysql",
-                "reference": "447090c1846bbdc9a727ad6574f14eeb1aba3f69"
+                "reference": "87f515184d8091d00216455841f538d698544a5f"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -1997,7 +1997,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-mysqli-adapter",
-                "reference": "dcc13cd7889ca5576d014353f522188b30108fac"
+                "reference": "22dbd08ae50a68d7b0c14f9b7a6d4925d78dc0ed"
             },
             "require": {
                 "ext-mysqli": "*",
@@ -2013,6 +2013,7 @@
                 "k-kinzal/php-ai-toolkit": "dev-main",
                 "k-kinzal/sql-faker": "dev-main",
                 "k-kinzal/sql-fixture": "dev-main",
+                "k-kinzal/sql-parser": "dev-main",
                 "nikic/php-fuzzer": "^0.0.11",
                 "phpbench/phpbench": "^1.4",
                 "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
@@ -2167,7 +2168,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-pdo-adapter",
-                "reference": "b50714036ca61ac57ab2b81d0d26eca274c493a7"
+                "reference": "bbc6781190cdccf9b004474906c594a87e03dc29"
             },
             "require": {
                 "ext-pdo": "*",
@@ -2182,6 +2183,7 @@
                 "k-kinzal/php-ai-toolkit": "dev-main",
                 "k-kinzal/sql-faker": "dev-main",
                 "k-kinzal/sql-fixture": "dev-main",
+                "k-kinzal/sql-parser": "dev-main",
                 "k-kinzal/ztd-query-mysql": "dev-main",
                 "k-kinzal/ztd-query-postgres": "dev-main",
                 "k-kinzal/ztd-query-sqlite": "dev-main",
@@ -2398,7 +2400,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-postgres",
-                "reference": "b4970aa3c13aca6d71d9a3fe0cede243945c74c3"
+                "reference": "a8ec8fbb8a2d2976920f1edf0b17fb545ad5a68b"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -2549,7 +2551,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-sqlite",
-                "reference": "8dca125e494c34a9c5e3ef3842627ae77eed96e6"
+                "reference": "bf5e12878aea6e9bdd0ac08a96347b0da85cb27f"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -3526,7 +3528,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/requirements",
-                "reference": "d1896e73a8baba0540ffee2a3f80b224f79709fd"
+                "reference": "3a439b87d2ffee3daa88a7ccdb0f7300dd1c40c2"
             },
             "require": {
                 "ext-dom": "*",
@@ -3544,10 +3546,15 @@
             },
             "require-dev": {
                 "behat/behat": "^3.14",
+                "brianium/paratest": "^7.3",
+                "deptrac/deptrac": "^3.0",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/php-ai-toolkit": "dev-main",
+                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
                 "phpstan/phpstan": "^2.1",
                 "phpstan/phpstan-strict-rules": "^2.0",
-                "phpunit/phpunit": "^10.5"
+                "phpunit/phpunit": "^10.5",
+                "squizlabs/php_codesniffer": "^4.0.4"
             },
             "bin": [
                 "bin/requirements"
@@ -3560,18 +3567,35 @@
             },
             "autoload-dev": {
                 "psr-4": {
-                    "Requirements\\Tests\\": "tests/"
+                    "Tests\\": "tests/"
                 }
             },
             "scripts": {
                 "autoload:check": [
                     "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
                 ],
-                "test": [
-                    "phpunit"
+                "compat": [
+                    "phpcs"
                 ],
-                "phpstan": [
-                    "phpstan analyse --memory-limit=1G"
+                "deptrac": [
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
+                ],
+                "docgen": [
+                    "docgen --packages=. --title=k-kinzal/requirements"
+                ],
+                "docgen:diff": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --diff=origin/main --serve"
+                ],
+                "docgen:fresh": [
+                    "@docgen --no-cache"
+                ],
+                "docgen:serve": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --serve"
+                ],
+                "doctest": [
+                    "phpunit --testsuite doctest"
                 ],
                 "format": [
                     "php-cs-fixer fix --allow-risky=yes"
@@ -3582,15 +3606,41 @@
                 "lint": [
                     "@autoload:check",
                     "@format:check",
-                    "@phpstan"
+                    "@phpstan",
+                    "@compat",
+                    "@loc-guard",
+                    "@tree-guard",
+                    "@deptrac"
+                ],
+                "loc-guard": [
+                    "loc-guard --config=loc.yaml"
+                ],
+                "phpstan": [
+                    "phpstan analyse --memory-limit=1G"
+                ],
+                "test": [
+                    "paratest --processes=auto"
+                ],
+                "test:coverage": [
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                ],
+                "test:integration": [
+                    "phpunit --testsuite integration"
+                ],
+                "test:unit": [
+                    "phpunit --testsuite unit"
+                ],
+                "tree-guard": [
+                    "tree-guard --config=tree.yaml"
                 ]
             },
             "license": [
                 "MIT"
             ],
-            "description": "Specification verification and source traceability for PHP projects",
+            "description": "Links source text, EARS specifications, and tests for PHP projects",
             "support": {
-                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/requirements"
+                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/requirements",
+                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/requirements/"
             },
             "transport-options": {
                 "relative": true

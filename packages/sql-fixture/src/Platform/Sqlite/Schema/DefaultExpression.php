@@ -4,46 +4,61 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform\Sqlite\Schema;
 
+use SqlFixture\Syntax\NumericLiteral;
+use SqlFixture\Syntax\QuotedText;
+use SqlFixture\Syntax\SqlText;
+use SqlParser\Parser\Node;
+
 /**
- * Interprets a SQL default expression.
+ * Interprets the DEFAULT constraint of a column, keeping expressions as SQL text.
  *
  * @visibility root
  */
 final class DefaultExpression
 {
     /**
-     * Interprets a DEFAULT clause while preserving SQL expressions.
+     * Returns the literal value a DEFAULT constraint declares, or the text of its expression.
      */
-    public function extractDefault(string $rest): int|float|bool|string|null
+    public function extractDefault(Node $constraint): int|float|bool|string|null
     {
-        if (preg_match('/\bDEFAULT\s+(.+?)(?:\s+(?:NOT\s+NULL|NULL|PRIMARY|UNIQUE|CHECK|REFERENCES|COLLATE|GENERATED|AS\s*\()|$)/is', $rest, $matches) !== 1) {
+        $tokens = array_slice($constraint->tokens(), 1);
+        $sign = '';
+        $first = $tokens[0] ?? null;
+        $signed = $tokens[1] ?? null;
+        if ($first !== null && ($first->is('PLUS') || $first->is('MINUS')) && count($tokens) === 2 && $signed !== null && ($signed->is('INTEGER') || $signed->is('FLOAT'))) {
+            $sign = $first->text;
+            array_shift($tokens);
+        }
+        $value = $tokens[0] ?? null;
+        if ($value === null) {
             return null;
         }
-
-        $value = trim($matches[1]);
-
-        if (preg_match("/^['\"](.*)['\"]\s*$/s", $value, $stringMatches) === 1) {
-            return $stringMatches[1];
+        if (count($tokens) > 1) {
+            return (new SqlText())->ofTokens($tokens);
         }
 
-        if (strtoupper($value) === 'NULL') {
-            return null;
+        return match ($value->name) {
+            'INTEGER', 'FLOAT' => (new NumericLiteral())->decode($sign . $value->text),
+            'STRING' => (new QuotedText())->unquote($value->text),
+            'NULL' => null,
+            'ID' => $this->identifierValue($value->text),
+            default => (new SqlText())->ofTokens($tokens),
+        };
+    }
+
+    /**
+     * Reads a bare word default: TRUE and FALSE become booleans, a quoted word is its text.
+     */
+    public function identifierValue(string $text): bool|string
+    {
+        if (str_starts_with($text, '"')) {
+            return (new QuotedText())->unquote($text);
         }
 
-        if (strtoupper($value) === 'TRUE' || $value === '1') {
-            return true;
-        }
-        if (strtoupper($value) === 'FALSE' || $value === '0') {
-            return false;
-        }
-
-        if (is_numeric($value)) {
-            if (str_contains($value, '.')) {
-                return (float) $value;
-            }
-            return (int) $value;
-        }
-
-        return $value;
+        return match (strtoupper($text)) {
+            'TRUE' => true,
+            'FALSE' => false,
+            default => $text,
+        };
     }
 }

@@ -11,6 +11,7 @@ SQL Fixture is a [FakerPHP](https://fakerphp.org/) provider that generates fixtu
 
 - PHP 8.1+
 - [fakerphp/faker](https://github.com/FakerPHP/Faker) ^1.23
+- [k-kinzal/sql-parser](../sql-parser/), which reads CREATE TABLE statements with the grammar of each database
 
 ## Support Syntax
 

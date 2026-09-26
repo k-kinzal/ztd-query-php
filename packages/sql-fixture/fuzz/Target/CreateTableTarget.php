@@ -23,6 +23,7 @@ final class CreateTableTarget
     private readonly Generator $faker;
     private readonly MySqlProvider $sqlProvider;
     private readonly PlanBuilder $planner;
+    private readonly MySqlSchemaParser $schemaParser;
 
     /**
      * @var GenerationPlan<bool>
@@ -37,6 +38,7 @@ final class CreateTableTarget
         $this->faker = Factory::create();
         $this->sqlProvider = new MySqlProvider($this->faker, $grammarVersion);
         $this->planner = $this->sqlProvider->planner();
+        $this->schemaParser = new MySqlSchemaParser();
         $this->constraints = GenerationPlan::constrained('create_table_stmt', [
             'create_table_stmt' => [ProductionPattern::containing('table_element_list')],
         ])->requiringNonEmpty()->withExpansionBudget($maxExpansions);
@@ -51,7 +53,7 @@ final class CreateTableTarget
     {
         $plan = (new BytePlanCompiler())->compile($input, $this->planner, $this->constraints);
         $sql = $this->sqlProvider->generate($plan);
-        $schema = (new MySqlSchemaParser())->parse($sql);
+        $schema = $this->schemaParser->parse($sql);
         $this->faker->seed(crc32(str_pad($input, 4, "\0")));
         $generator = new FixtureGenerator($this->faker);
         $row = $generator->generate($schema);

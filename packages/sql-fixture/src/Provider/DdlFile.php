@@ -27,16 +27,8 @@ final class DdlFile
             throw new RuntimeException("Failed to read file: {$filePath}");
         }
 
-        $content = preg_replace('/--.*$/m', '', $content);
-        $content = preg_replace('/\/\*.*?\*\//s', '', $content ?? '');
-
-        if ($content === null || trim($content) === '') {
-            return null;
-        }
-
         try {
-            $schema = $parser->parse($content);
-            return $schema;
+            return $parser->parse($content);
         } catch (SchemaParseException) {
             return null;
         }

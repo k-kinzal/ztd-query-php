@@ -5,53 +5,47 @@ declare(strict_types=1);
 namespace SqlFixture\Platform\Sqlite\Schema;
 
 use SqlFixture\Schema\ColumnDefinition;
+use SqlFixture\Syntax\NodeReader;
+use SqlParser\Parser\Node;
 
 /**
- * Reads a column declaration into a schema value.
+ * Reads a columnname node and its constraint list into a schema column.
  *
  * @visibility root
  */
 final class ColumnParser
 {
     /**
+     * Returns the column the nodes declare, or null when the name is missing.
+     *
      * @param list<string> $tablePrimaryKeys
      */
-    public function parseColumnDefinition(string $definition, array $tablePrimaryKeys): ?ColumnDefinition
+    public function parseColumnDefinition(Node $columnname, Node $carglist, array $tablePrimaryKeys): ?ColumnDefinition
     {
-        if (preg_match('/^["`]?(\w+)["`]?\s*(.*)/is', $definition, $matches) !== 1) {
+        $reader = new NodeReader();
+        $nameNode = $reader->child($columnname, 'nm');
+        $nameToken = $nameNode === null ? null : $reader->firstToken($nameNode);
+        $typetoken = $reader->child($columnname, 'typetoken');
+        if ($nameToken === null || $typetoken === null) {
             return null;
         }
-
-        $columnName = $matches[1];
-        $rest = trim($matches[2]);
-
-        $shape = (new TypeDeclaration())->parse($rest);
-        $type = $shape->type;
-
-        $upperRest = strtoupper($rest);
-        $nullable = !str_contains($upperRest, 'NOT NULL');
-        $autoIncrement = str_contains($upperRest, 'AUTOINCREMENT');
-
-        $isPrimaryKey = str_contains($upperRest, 'PRIMARY KEY') || in_array($columnName, $tablePrimaryKeys, true);
-        if ($isPrimaryKey) {
-            $nullable = false;
-        }
-
-        $default = (new DefaultExpression())->extractDefault($rest);
-
-        $generated = preg_match('/\bAS\s*\(/i', $rest) === 1;
+        $name = (new Identifier())->decode($nameToken);
+        $constraints = (new ColumnConstraints())->read($carglist);
+        $shape = (new TypeDeclaration())->parse($typetoken);
+        $primaryKey = $constraints->primaryKey || in_array($name, $tablePrimaryKeys, true);
+        $default = $constraints->default === null ? null : (new DefaultExpression())->extractDefault($constraints->default);
 
         return new ColumnDefinition(
-            name: $columnName,
-            type: $type,
+            name: $name,
+            type: $shape->type,
             length: $shape->length,
             precision: $shape->precision,
             scale: $shape->scale,
-            nullable: $nullable,
+            nullable: $constraints->nullable && !$primaryKey,
             unsigned: false,
             default: $default,
-            autoIncrement: $autoIncrement,
-            generated: $generated,
+            autoIncrement: $constraints->autoIncrement,
+            generated: $constraints->generated,
             enumValues: null,
         );
     }
