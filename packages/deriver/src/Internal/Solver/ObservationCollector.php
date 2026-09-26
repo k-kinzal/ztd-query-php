@@ -104,20 +104,24 @@ final class ObservationCollector
     public function project(Term $value, array $path, State $state, ?string $slot = null, ?\Deriver\Api\Reference\SourceRef $source = null): Term
     {
         if ($slot !== null) {
-            $value = (new Model\StateStorage($this->context))->observe($value, $slot, $state, $source);
+            $observed = (new Model\StateStorage($this->context))->observe($value, $slot, $state, $source);
+            $value = $value->secret ? new Term($observed->kind, $observed->literal, $observed->operands, $observed->attributes, true) : $observed;
         }
         if ($value->kind === 'domain' && is_string($value->literal) && $path !== []) {
             $domain = $this->context->models->extensions->domains[$value->literal] ?? null;
             return $domain === null ? new Term('projection', operands: [$value], attributes: ['type' => 'mixed']) : (new \Deriver\Internal\Model\ModelBoundary())->domain($domain, 'project', $value, projection: new \Deriver\Value\Projection($path));
         }
+        $secret = false;
         foreach ($path as $key) {
             $value = $state->memory->dereference($value);
+            $secret = $secret || $value->secret;
             if ($value->kind === 'object' && is_string($value->literal)) {
                 $value = $state->memory->read(new \Deriver\Internal\Memory\Location('object:' . $value->literal, [$key]));
             } else {
                 $value = $value->operands[$key] ?? new Term('array-read', operands: [$value, Term::constant($key)]);
             }
         }
-        return $state->memory->materialize($value);
+        $value = $state->memory->materialize($value);
+        return $secret && !$value->secret ? new Term($value->kind, $value->literal, $value->operands, $value->attributes, true) : $value;
     }
 }

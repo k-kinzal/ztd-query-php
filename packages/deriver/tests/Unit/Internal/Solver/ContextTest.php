@@ -65,6 +65,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Memory\Memory::class)]
 #[UsesClass(\Deriver\Internal\Memory\StorageCapture::class)]
 #[UsesClass(\Deriver\Internal\Model\Extensions::class)]
+#[UsesClass(\Deriver\Internal\Model\ModelBoundary::class)]
 #[UsesClass(\Deriver\Internal\Model\ProviderInputs::class)]
 #[UsesClass(\Deriver\Internal\Model\Registry::class)]
 #[UsesClass(\Deriver\Internal\Model\StateRegistry::class)]
@@ -139,5 +140,105 @@ final class ContextTest extends TestCase
         self::assertTrue($context->sealed);
         self::assertSame(0, $context->transfers);
         self::assertSame(['CANCELLED'], array_values(array_map(static fn (\Deriver\Api\Result\Frontier $frontier): string => $frontier->code, $context->frontiers)));
+    }
+
+    public function testAvailableRetainsScopeWorldEnvironmentAndVersionedProviderAssumptions(): void
+    {
+        $provider = self::createStub(\Deriver\Model\Provider\Provider::class);
+        $provider->method('id')->willReturn('project.contracts');
+        $provider->method('version')->willReturn('4');
+        $config = new \Deriver\Api\Project\Configuration(closedWorld:true, environmentVersion:'deployment-7', providers:[$provider]);
+        $fixture = \Tests\Fake\SolverFixture::context();
+        $query = new \Deriver\Api\Query\ReturnQuery('target', \Deriver\Api\Query\QueryScope::fromEntrypoints([new \Deriver\Api\Project\EntryPoint('target')]));
+        $context = new \Deriver\Internal\Solver\Context($fixture->program, $query, $config, new \Deriver\Internal\Model\Registry($config));
+        self::assertTrue($context->available(new \Deriver\Api\Reference\SourceRef('test', 'fixture.php', 0, 1)));
+        self::assertSame(['target:php-8.3-64bit','scope:entrypoint','world:closed','environment:deployment-7','provider:project.contracts@4'], $context->assumptions);
+        self::assertSame([], $context->frontiers);
+        self::assertSame([], $context->normal);
+        self::assertSame([], $context->exceptional);
+    }
+
+    public function testFrontierPreservesBoundDependenciesAndDeduplicatesTheSameCause(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $source = new \Deriver\Api\Reference\SourceRef('test', 'fixture.php', 0, 10);
+        $secret = \Deriver\Value\Term::constant('private', true);
+        $first = $context->frontier('INCOMPLETE_SOURCE', $source, 'missing-call', [$secret], 'string');
+        $replacement = $context->frontier('INCOMPLETE_SOURCE', $source, 'missing-call', [$secret], 'array');
+        self::assertSame('string', $first->attributes['type']);
+        self::assertTrue($replacement->isSecret());
+        self::assertSame([$secret], $replacement->operands);
+        self::assertCount(1, $context->frontiers);
+        $frontier = array_values($context->frontiers)[0];
+        self::assertSame('INCOMPLETE_SOURCE', $frontier->code);
+        self::assertSame($source, $frontier->at);
+        self::assertSame('missing-call', $frontier->operation);
+        self::assertSame('missing-call', $frontier->missingCapability);
+        self::assertSame(['value','state'], $frontier->affectedProjections);
+        self::assertSame($replacement, $frontier->residual);
+    }
+
+    public function testFrontierKeepsDifferentSitesCodesAndOperationsSeparate(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $one = new \Deriver\Api\Reference\SourceRef('test', 'fixture.php', 0, 1);
+        $two = new \Deriver\Api\Reference\SourceRef('test', 'fixture.php', 1, 2);
+        $context->frontier('INCOMPLETE_SOURCE', $one, 'first');
+        $context->frontier('INCOMPLETE_SOURCE', $two, 'first');
+        $context->frontier('INCOMPLETE_SOURCE', $one, 'second');
+        $context->frontier('OPEN_DISPATCH', $one, 'first');
+        self::assertCount(4, $context->frontiers);
+    }
+
+    public function testAdmitCountsTransfersOnlyAfterBothBudgetsPermitWork(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context(budget:new \Deriver\Api\Query\Budget(transfers:10, nodes:2));
+        $source = new \Deriver\Api\Reference\SourceRef('test', 'fixture.php', 0, 1);
+        $context->evidence['one'] = new \Deriver\Api\Result\Derivation('one', 'data', $source);
+        self::assertTrue($context->admit($source));
+        self::assertSame(1, $context->transfers);
+        $context->evidence['two'] = new \Deriver\Api\Result\Derivation('two', 'data', $source);
+        self::assertFalse($context->admit($source));
+        self::assertSame(1, $context->transfers);
+        self::assertTrue($context->sealed);
+        self::assertSame('logical-work', array_values($context->frontiers)[0]->operation);
+    }
+
+    public function testAdmitDoesNotReopenASealedQuery(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $context->sealed = true;
+        self::assertFalse($context->admit(new \Deriver\Api\Reference\SourceRef('test', 'fixture.php', 0, 1)));
+        self::assertSame(0, $context->transfers);
+        self::assertSame('BUDGET_EXCEEDED', array_values($context->frontiers)[0]->code);
+    }
+
+    public function testAdmitChecksCancellationBeforeChargingLogicalWork(): void
+    {
+        $token = new \Deriver\Api\Execution\CancellationToken();
+        $config = new \Deriver\Api\Project\Configuration(resources:new \Deriver\Api\Execution\ResourceLimits(cancellation:$token));
+        $context = \Tests\Fake\SolverFixture::context(configuration:$config);
+        $token->cancel();
+        self::assertFalse($context->admit(new \Deriver\Api\Reference\SourceRef('test', 'fixture.php', 0, 1)));
+        self::assertSame(0, $context->transfers);
+        self::assertSame(['CANCELLED'], array_column($context->frontiers, 'code'));
+    }
+
+    public function testAvailableRejectsAnticipatedMemoryAndRetainsTheFirstCause(): void
+    {
+        $token = new \Deriver\Api\Execution\CancellationToken();
+        $config = new \Deriver\Api\Project\Configuration(resources:new \Deriver\Api\Execution\ResourceLimits(memoryBytes:1048576, cancellation:$token));
+        $context = \Tests\Fake\SolverFixture::context(configuration:$config);
+        $source = new \Deriver\Api\Reference\SourceRef('test', 'fixture.php', 0, 1);
+        self::assertTrue($context->available($source));
+        self::assertFalse($context->available($source, 2097152));
+        $token->cancel();
+        self::assertFalse($context->available(new \Deriver\Api\Reference\SourceRef('test', 'fixture.php', 1, 2)));
+        self::assertSame('MEMORY_LIMIT', $context->stopReason);
+        self::assertTrue($context->sealed);
+        self::assertSame(0, $context->transfers);
+        self::assertCount(1, $context->frontiers);
+        self::assertSame($source, array_values($context->frontiers)[0]->at);
+        self::assertSame('runtime-resources', array_values($context->frontiers)[0]->operation);
     }
 }

@@ -44,22 +44,29 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\SyntaxTree::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\CallLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\CallableSource::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\Control\ExceptionLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\DeclarationScanner::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\EffectInspection::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\ExpressionLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\GraphBuilder::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Lowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\ProjectIndex::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\Source\ConstantSignatures::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Source\LineMap::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Source\MagicContext::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Source\SyntaxSize::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\StatementLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Traits\Composition::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\TargetSyntax::class)]
+#[UsesClass(\Deriver\Internal\IR\Argument::class)]
 #[UsesClass(\Deriver\Internal\IR\BasicBlock::class)]
 #[UsesClass(\Deriver\Internal\IR\CallableIR::class)]
+#[UsesClass(\Deriver\Internal\IR\CatchTarget::class)]
+#[UsesClass(\Deriver\Internal\IR\ClassDeclaration::class)]
+#[UsesClass(\Deriver\Internal\IR\ExceptionRegion::class)]
 #[UsesClass(\Deriver\Internal\IR\Instruction::class)]
 #[UsesClass(\Deriver\Internal\IR\Parameter::class)]
+#[UsesClass(\Deriver\Internal\IR\PropertyDeclaration::class)]
 #[UsesClass(\Deriver\Internal\IR\Terminator::class)]
 #[UsesClass(\Deriver\Internal\Memory\Location::class)]
 #[UsesClass(\Deriver\Internal\Memory\Materialization::class)]
@@ -70,12 +77,27 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Model\ProviderInputs::class)]
 #[UsesClass(\Deriver\Internal\Model\Registry::class)]
 #[UsesClass(\Deriver\Internal\Model\StateRegistry::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Allocation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\ArgumentBinding::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\ArgumentOrder::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\CallExecutor::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\CallResolution::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\CallableCheck::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Creation\Access::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Creation\Builtins::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Dispatch::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Member\Access::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Member\Invocation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\MethodInvocation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Native\Invocation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Native\Properties::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Native\Signatures::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\ParameterBinding::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\PassedArgument::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Arguments::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Creation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Methods::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Modes::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Resolution::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Target::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Transfer::class)]
@@ -83,6 +105,9 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeCheck::class)]
 #[UsesClass(\Deriver\Internal\Solver\Completion::class)]
 #[UsesClass(\Deriver\Internal\Solver\Context::class)]
+#[UsesClass(\Deriver\Internal\Solver\Control\ExceptionChain::class)]
+#[UsesClass(\Deriver\Internal\Solver\Control\ExceptionMatch::class)]
+#[UsesClass(\Deriver\Internal\Solver\Control\Handler::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\ObservationLimit::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\Resources::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\StateJoin::class)]
@@ -92,7 +117,12 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\InstructionTransfer::class)]
 #[UsesClass(\Deriver\Internal\Solver\Machine::class)]
 #[UsesClass(\Deriver\Internal\Solver\Model\SlotReference::class)]
+#[UsesClass(\Deriver\Internal\Solver\Model\StateStorage::class)]
 #[UsesClass(\Deriver\Internal\Solver\ObservationCollector::class)]
+#[UsesClass(\Deriver\Internal\Solver\Offset\Address::class)]
+#[UsesClass(\Deriver\Internal\Solver\Offset\Path::class)]
+#[UsesClass(\Deriver\Internal\Solver\Offset\Reader::class)]
+#[UsesClass(\Deriver\Internal\Solver\Offset\Transfer::class)]
 #[UsesClass(\Deriver\Internal\Solver\Operation\Conversions::class)]
 #[UsesClass(\Deriver\Internal\Solver\Operation\ScalarErrors::class)]
 #[UsesClass(\Deriver\Internal\Solver\State::class)]
@@ -100,11 +130,20 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Summary\Isolation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\CallableTransfer::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\MemoryStep::class)]
+#[UsesClass(\Deriver\Internal\Solver\Transfer\ObjectAccess::class)]
+#[UsesClass(\Deriver\Internal\Solver\Transfer\PropertyAccessCheck::class)]
+#[UsesClass(\Deriver\Internal\Solver\Transfer\PropertyLookup::class)]
+#[UsesClass(\Deriver\Internal\Solver\Transfer\PropertySlot::class)]
+#[UsesClass(\Deriver\Internal\Solver\Transfer\PropertyTransfer::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\PureStep::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\ReferenceAssignment::class)]
+#[UsesClass(\Deriver\Internal\Value\Arithmetic::class)]
 #[UsesClass(\Deriver\Internal\Value\Arrays::class)]
+#[UsesClass(\Deriver\Internal\Value\Comparison::class)]
 #[UsesClass(\Deriver\Internal\Value\Identity::class)]
+#[UsesClass(\Deriver\Internal\Value\NumericString::class)]
 #[UsesClass(\Deriver\Internal\Value\PhpSemantics::class)]
+#[UsesClass(\Deriver\Model\Provider\DispatchDecision::class)]
 #[UsesClass(\Deriver\Report\JsonText::class)]
 #[UsesClass(\Deriver\Report\QueryEncoding::class)]
 #[UsesClass(\Deriver\Report\ValueGraph::class)]
@@ -165,5 +204,51 @@ final class CallableCompilerTest extends TestCase
         self::assertTrue($body->external);
         self::assertTrue($body->parameters[0]->byReference);
         self::assertSame(['external-body'], array_column($body->blocks[0]->instructions, 'operation'));
+    }
+    /**
+     * @param string $source Trusted default initializer fixture
+     * @param string $expectedJson Independently observed PHP 8.3 result
+     * @throws JsonException If expected fixture data cannot be decoded
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerInitializers')]
+    public function testParametersPreservesTheDeclaringScalarModeForNewDefaults(string $source, string $expectedJson): void
+    {
+        $result = \Tests\Fake\Analysis::returns($source);
+        self::assertSame([], $result->frontiers);
+        self::assertSame([], $result->exceptionalOutcomes);
+        self::assertCount(1, $result->normalOutcomes);
+        self::assertSame(json_decode($expectedJson, true, 512, JSON_THROW_ON_ERROR), $result->normalOutcomes[0]->values['return']->native());
+    }
+
+    /**
+     * @return array<string,array{string,string}>
+     */
+    public static function providerInitializers(): array
+    {
+        return \Tests\Fake\Programs\InitializerPrograms::cases();
+    }
+    /**
+     * @param string $library Captured declaration file
+     * @param string $application Captured caller file
+     * @param string $expectedJson PHP 8.3 observation
+     * @throws JsonException If captured fixture data cannot be encoded
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerInitializerFiles')]
+    public function testParametersUsesTheDeclarationFileModeAcrossCallerFiles(string $library, string $application, string $expectedJson): void
+    {
+        $session = (new \Deriver\Analyzer())->open(new \Deriver\Api\Project\ProjectInput([new \Deriver\Api\Project\SourceFile('library.php', $library),new \Deriver\Api\Project\SourceFile('app.php', $application)]));
+        $result = $session->derive(new \Deriver\Api\Query\ReturnQuery('target'));
+        self::assertSame([], $result->frontiers);
+        self::assertSame([], $result->exceptionalOutcomes);
+        self::assertCount(1, $result->normalOutcomes);
+        self::assertSame(json_decode($expectedJson, true, 512, JSON_THROW_ON_ERROR), $result->normalOutcomes[0]->values['return']->native());
+    }
+
+    /**
+     * @return array<string,array{string,string,string}>
+     */
+    public static function providerInitializerFiles(): array
+    {
+        return \Tests\Fake\Programs\InitializerPrograms::fileCases();
     }
 }

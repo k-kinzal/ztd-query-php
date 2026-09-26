@@ -96,3 +96,7 @@ Symbolic division, remainder, and shifts retain guarded zero-divisor or negative
 Unknown calls can unset typed properties and modify static storage before its first read. The resulting state preserves possible uninitialized-property errors and does not restore a stale static default. A symbolic object parameter's declared property can likewise be uninitialized.
 
 The target syntax check rejects unparenthesized dereferencing of `new` expressions introduced in PHP 8.4 and first-class callable constants/defaults introduced in PHP 8.5. Parenthesized PHP 8.3 expressions and ordinary first-class callable expressions remain accepted.
+
+## Object defaults
+
+Objects created by parameter defaults use the scalar coercion mode of the declaring file. This also applies to method, closure, arrow function, and promoted constructor parameter defaults. Supplying an argument skips the default expression; each omitted default allocates a fresh object. The [initializer corpus](../tests/Differential/InitializerSemanticsTest.php) compares these cases with PHP 8.3. See the [PHP argument manual](https://www.php.net/manual/en/functions.arguments.php) for object default syntax.

@@ -31,7 +31,7 @@ Each record carries its own `secret` flag. Confidentiality also propagates throu
 
 ## Confidentiality
 
-Mark explicit confidential inputs with `Term::constant($value, secret: true)` or `Term::fromNative($value, secret: true)`. Derived expressions retain confidentiality through their operands. JSON output redacts confidential values by default, including values supplied in entry queries.
+Mark explicit confidential inputs with `Term::constant($value, secret: true)` or `Term::fromNative($value, secret: true)`. Derived expressions retain confidentiality through their operands. JSON output redacts confidential values by default, including values supplied in entry queries. Value and state projections preserve explicit confidentiality on the selected containers, reference handles, object handles, and abstract slots. A confidential sibling field does not make a separately selected public field confidential.
 
 `toJson(includeSecrets: true)` explicitly includes their lossless payloads. Keep this output within the intended trust boundary.
 

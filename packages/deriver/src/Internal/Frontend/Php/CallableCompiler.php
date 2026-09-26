@@ -63,7 +63,7 @@ final class CallableCompiler
             if (!$parameter->var instanceof Expr\Variable || !is_string($parameter->var->name)) {
                 continue;
             }
-            $default = $parameter->default === null ? null : $this->expression($parameter->default, $source->path, $source->symbol . ':default:' . $parameter->var->name, $source->className);
+            $default = $parameter->default === null ? null : $this->expression($parameter->default, $source->path, $source->symbol . ':default:' . $parameter->var->name, $source->className, $source->strict);
             $parameters[] = new Parameter($parameter->var->name, $this->type($parameter->type), $parameter->byRef, $parameter->variadic, $default, $parameter->flags);
         }
         return $parameters;
@@ -75,14 +75,15 @@ final class CallableCompiler
      * @param string $path Source path
      * @param string $symbol Synthetic callable identity
      * @param string $className Lexical class
+     * @param bool $strict Scalar coercion mode of the declaring file
      * @return CallableIR Expression graph
      */
-    public function expression(Expr $expression, string $path, string $symbol, string $className = ''): CallableIR
+    public function expression(Expr $expression, string $path, string $symbol, string $className = '', bool $strict = false): CallableIR
     {
         $g = $this->index->builder($path);
         $result = (new Lowering($g, $this->index, $symbol, $className))->expression($expression);
         $g->end(new Terminator('return', $result));
-        return new CallableIR($symbol, [], $g->finish(), $g->source($expression), className: $className);
+        return new CallableIR($symbol, [], $g->finish(), $g->source($expression), strict: $strict, className: $className);
     }
 
     /**
