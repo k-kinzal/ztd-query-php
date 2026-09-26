@@ -9,8 +9,7 @@ SQL Formatter formats MySQL, PostgreSQL, and SQLite statements with the **Compac
 
 ## Requirements
 
-- PHP 8.1 or higher with the zlib extension
-- [k-kinzal/sql-parser](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-parser)
+- PHP 8.1+ with the zlib extension
 
 ## Support Syntax
 

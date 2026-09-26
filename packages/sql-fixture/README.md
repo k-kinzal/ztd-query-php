@@ -9,9 +9,8 @@ SQL Fixture is a [FakerPHP](https://fakerphp.org/) provider that generates fixtu
 
 ## Requirements
 
-- PHP 8.1 or higher
+- PHP 8.1+
 - [fakerphp/faker](https://github.com/FakerPHP/Faker) ^1.23
-- [phpmyadmin/sql-parser](https://github.com/phpmyadmin/sql-parser) ^5.11
 
 ## Support Syntax
 

@@ -11,7 +11,7 @@ It reads grammars; it does not generate parsers. The tree is for tools that anal
 
 ## Requirements
 
-- PHP 8.1 or higher
+- PHP 8.1+
 
 ## Installation
 

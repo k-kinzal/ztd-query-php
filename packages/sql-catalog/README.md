@@ -9,7 +9,7 @@ SQL Catalog reads PHP source and reports every statement the code can send to a 
 
 ## Requirements
 
-- PHP 8.1+ with the json extension
+- PHP 8.1+
 
 ## Getting Started
 

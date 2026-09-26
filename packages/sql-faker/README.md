@@ -9,7 +9,7 @@ SQL Faker is a grammar-based SQL generator for MySQL, PostgreSQL, and SQLite. It
 
 ## Requirements
 
-- PHP 8.1 or higher
+- PHP 8.1+
 - [fakerphp/faker](https://github.com/FakerPHP/Faker) ^1.23
 
 ## Support Syntax
