@@ -43,8 +43,6 @@ Available commands:
   spec        Browse specifications and requirements, and verify linked tests unless --no-test is set.
 ```
 
-`requirements spec` reports specifications without test links as `unverified` and exits successfully unless an executed test fails. Add `--strict` to fail on missing links or an empty selection. Expensive linked tests can use `run: manual`; include them with `requirements spec --all`. See [test results and execution options](docs/cli.md#test-results) and [definition syntax](docs/definitions.md#tests).
-
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.

@@ -27,7 +27,7 @@ Specifications that no source describes, such as decisions of your own, are decl
 2. For each unit, add a specification that quotes it and links its tests, or an unsupported specification that explains why not.
 3. Run `requirements lint` and `requirements check` to validate the files and the quotations.
 4. Run `requirements coverage` to find the units nobody has accounted for.
-5. Run `requirements spec` to run automatic linked tests, or `requirements spec --all` to include manual tests. Add `--strict` to require test links for selected supported specifications.
+5. Run `requirements spec` to run the automatic linked tests.
 6. In CI, gate the coverage of new and changed units with a [snapshot](cli.md#ci).
 
 ## What it does not prove
