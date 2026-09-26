@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Configuration — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/456/k-kinzal/sql-catalog/doc/docs/configuration.md.html">
+<meta name="description" content="Configuration, a document of the k-kinzal/sql-catalog package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="Configuration — ZTD Query PHP">
+<meta property="og:description" content="Configuration, a document of the k-kinzal/sql-catalog package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/456/k-kinzal/sql-catalog/doc/docs/configuration.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/456/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../k-kinzal/sql-catalog/index.html">k-kinzal/sql-catalog</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/all-items.html">All items</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Namespaces</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Cli/index.html" title="SqlCatalog\Cli">SqlCatalog\Cli</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Analysis/index.html" title="SqlCatalog\Core\Analysis">SqlCatalog\Core\Analysis</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Analysis/Derivation/index.html" title="SqlCatalog\Core\Analysis\Derivation">SqlCatalog\Core\Analysis\Derivation</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Analysis/Derivation/Objects/index.html" title="SqlCatalog\Core\Analysis\Derivation\Objects">SqlCatalog\Core\Analysis\Derivation\Objects</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Analysis/Derivation/Slice/index.html" title="SqlCatalog\Core\Analysis\Derivation\Slice">SqlCatalog\Core\Analysis\Derivation\Slice</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Analysis/Effect/index.html" title="SqlCatalog\Core\Analysis\Effect">SqlCatalog\Core\Analysis\Effect</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Analysis/FunctionModel/index.html" title="SqlCatalog\Core\Analysis\FunctionModel">SqlCatalog\Core\Analysis\FunctionModel</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Analysis/Model/index.html" title="SqlCatalog\Core\Analysis\Model">SqlCatalog\Core\Analysis\Model</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Catalog/index.html" title="SqlCatalog\Core\Catalog">SqlCatalog\Core\Catalog</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Evaluation/index.html" title="SqlCatalog\Core\Evaluation">SqlCatalog\Core\Evaluation</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Extension/index.html" title="SqlCatalog\Core\Extension">SqlCatalog\Core\Extension</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Extension/Model/index.html" title="SqlCatalog\Core\Extension\Model">SqlCatalog\Core\Extension\Model</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Filter/index.html" title="SqlCatalog\Core\Filter">SqlCatalog\Core\Filter</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Php/index.html" title="SqlCatalog\Core\Php">SqlCatalog\Core\Php</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Reporter/index.html" title="SqlCatalog\Core\Reporter">SqlCatalog\Core\Reporter</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Source/index.html" title="SqlCatalog\Core\Source">SqlCatalog\Core\Source</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Sql/index.html" title="SqlCatalog\Core\Sql">SqlCatalog\Core\Sql</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Text/index.html" title="SqlCatalog\Core\Text">SqlCatalog\Core\Text</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Type/index.html" title="SqlCatalog\Core\Type">SqlCatalog\Core\Type</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Extension/Doctrine/index.html" title="SqlCatalog\Extension\Doctrine">SqlCatalog\Extension\Doctrine</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Extension/Laravel/index.html" title="SqlCatalog\Extension\Laravel">SqlCatalog\Extension\Laravel</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Extension/Mysqli/index.html" title="SqlCatalog\Extension\Mysqli">SqlCatalog\Extension\Mysqli</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Extension/Pdo/index.html" title="SqlCatalog\Extension\Pdo">SqlCatalog\Extension\Pdo</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Extension/WordPress/index.html" title="SqlCatalog\Extension\WordPress">SqlCatalog\Extension\WordPress</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Facade/index.html" title="SqlCatalog\Facade">SqlCatalog\Facade</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Platform/MySql/index.html" title="SqlCatalog\Platform\MySql">SqlCatalog\Platform\MySql</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Platform/PostgreSql/index.html" title="SqlCatalog\Platform\PostgreSql">SqlCatalog\Platform\PostgreSql</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Platform/Sqlite/index.html" title="SqlCatalog\Platform\Sqlite">SqlCatalog\Platform\Sqlite</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Reporter/Html/index.html" title="SqlCatalog\Reporter\Html">SqlCatalog\Reporter\Html</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Reporter/Html/Page/index.html" title="SqlCatalog\Reporter\Html\Page">SqlCatalog\Reporter\Html\Page</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Reporter/Html/Source/index.html" title="SqlCatalog\Reporter\Html\Source">SqlCatalog\Reporter\Html\Source</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Reporter/Json/index.html" title="SqlCatalog\Reporter\Json">SqlCatalog\Reporter\Json</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Reporter/Text/index.html" title="SqlCatalog\Reporter\Text">SqlCatalog\Reporter\Text</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../k-kinzal/sql-catalog/index.html">k-kinzal/sql-catalog</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">docs/configuration.md</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 2b829f23d1 to working tree">2b829f23d1 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 2b829f23d1 and working tree." data-off="This page documents what 2b829f23d1 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Configuration</h1><div class="symbol-meta"><span class="source-link">docs/configuration.md</span></div></div>
+<section class="readme prose" data-diff="same"><div class="doc-block" data-diff="same"><h2>Configuration</h2>
+</div><div class="doc-block" data-diff="same"><p>The configuration file stores the command line settings of a project, and registers function models. The command reads <code>.catalog.yaml</code> in the working directory when it exists; pass <code>--config FILE</code> to use another. The file is read as YAML data; nothing in it is executed except the function models it names.</p>
+</div><div class="doc-block" data-diff="same"><h3>Example</h3>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>paths: [src, app]
+exclude: [tests]
+extensions: [pdo, mysqli]
+reporter: html
+output: catalog
+function-models:
+  &#039;App\table_name&#039;: &#039;App\Catalog\TableNameModel&#039;</code></pre>
+</div><div class="doc-block" data-diff="same"><p>With this file, <code>vendor/bin/sql-catalog</code> writes the HTML report of <code>src</code> and <code>app</code> into <code>catalog/</code>.</p>
+</div><div class="doc-block" data-diff="same"><h3>Fields</h3>
+</div><div class="doc-block" data-diff="same"><p>Every field is optional.</p>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Key</th><th>Value</th><th>Description</th></tr></thead><tbody><tr><td><code>paths</code></td><td>list</td><td>Files and directories to analyze, when none are given on the command line.</td></tr><tr><td><code>exclude</code></td><td>list</td><td>Same as <code>--exclude</code>.</td></tr><tr><td><code>extensions</code></td><td>list</td><td>Same as <code>--extension</code>.</td></tr><tr><td><code>root</code></td><td>string</td><td>Same as <code>--root</code>. Default the directory of the configuration file.</td></tr><tr><td><code>output</code></td><td>string</td><td>Same as <code>--output</code>.</td></tr><tr><td><code>reporter</code></td><td>string</td><td>Same as <code>--reporter</code>.</td></tr><tr><td><code>fail-on</code></td><td>string</td><td>Same as <code>--fail-on</code>.</td></tr><tr><td><code>namespace</code>, <code>method</code>, <code>path</code>, <code>kind</code>, <code>table</code>, <code>sink</code></td><td>list</td><td>Same as the <a href="../../../../k-kinzal/sql-catalog/doc/docs/cli.md.html#filters">filter</a> options.</td></tr><tr><td><code>severity</code></td><td>string</td><td>Same as <code>--severity</code>.</td></tr><tr><td><code>function-models</code></td><td>mapping</td><td>Function names to models. See <a href="#function-models">function models</a>.</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p><code>paths</code>, <code>root</code> and <code>output</code> are relative to the directory of the configuration file. Paths given on the command line stay relative to the working directory.</p>
+</div><div class="doc-block" data-diff="same"><p>An option given on the command line replaces the configured value; for a list, the whole list is replaced. An empty list clears the configured value. Unknown keys and values of the wrong type exit with code <code>2</code>.</p>
+</div><div class="doc-block" data-diff="same"><h3>Function models</h3>
+</div><div class="doc-block" data-diff="same"><p>A function model tells the analyzer what a PHP function returns, so that SQL built with it resolves. Map the function name to a model:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>function-models:
+  array_fill: &#039;App\Catalog\ArrayFillModel&#039;
+  &#039;App\table_name&#039;: &#039;App\Catalog\TableNameModel::evaluate&#039;</code></pre>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Model</th><th>Form</th></tr></thead><tbody><tr><td>Invokable class</td><td><code>App\Catalog\TableNameModel</code>, constructed without arguments</td></tr><tr><td>Static method</td><td><code>App\Catalog\TableNameModel::evaluate</code></td></tr><tr><td>Function</td><td><code>App\Catalog\table_name_model</code></td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p>The model is loaded through the project&#039;s Composer autoloader. It receives the evaluated arguments as a <code>list&lt;SqlCatalog\Core\Evaluation\Domain&gt;</code>, in source order, and returns a <code>Domain</code> or <code>null</code>:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code><span class="tok-kw">namespace</span> <span class="tok-id">App\Catalog</span>;
+
+<span class="tok-kw">use</span> <span class="tok-id">SqlCatalog\Core\Evaluation\Domain</span>;
+
+<span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">TableNameModel</span>
+{
+    <span class="tok-com">/** @param list&lt;Domain&gt; $arguments */</span>
+    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__invoke</span>(<span class="tok-kw">array</span> <span class="tok-var">$arguments</span>): ?<span class="tok-id">Domain</span>
+    {
+        <span class="tok-kw">return</span> <span class="tok-id">Domain</span>::<span class="tok-id">literal</span>(<span class="tok-str">&#039;users&#039;</span>);
+    }
+}</code></pre>
+</div><div class="doc-block" data-diff="same"><p>Function names are case-insensitive and include their namespace. A configured model takes priority over the built-in model of the same name. Returning <code>null</code> passes the call to the previous model, and then to ordinary analysis of the function&#039;s source. Return <code>Domain::unknown()</code> to report the result as unknown instead.</p>
+</div><div class="doc-block" data-diff="same"><p>Built-in models cover <code>sprintf</code>, <code>vsprintf</code>, <code>implode</code>, <code>join</code>, <code>str_repeat</code>, <code>str_replace</code>, <code>strval</code>, <code>array_fill</code>, the trim and case functions, and a set of functions whose result is known only by type, such as <code>count</code>, <code>substr</code> and <code>json_encode</code>.</p>
+</div><div class="doc-block" data-diff="same"><p><code>array_fill</code> filled with <code>&#039;?&#039;</code> produces one placeholder, whatever the count, so that a placeholder list built with <code>implode</code> is catalogued as <code>IN (?)</code>:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code><span class="tok-var">$marks</span> = <span class="tok-id">implode</span>(<span class="tok-str">&#039;,&#039;</span>, <span class="tok-id">array_fill</span>(<span class="tok-num">0</span>, <span class="tok-id">count</span>(<span class="tok-var">$ids</span>), <span class="tok-str">&#039;?&#039;</span>));
+<span class="tok-var">$db</span>-&gt;<span class="tok-id">prepare</span>(<span class="tok-str">&#039;SELECT * FROM users WHERE id IN (&#039;</span> . <span class="tok-var">$marks</span> . <span class="tok-str">&#039;)&#039;</span>);</code></pre>
+</div></section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>

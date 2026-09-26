@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SQL Semantics for SQLite — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/456/k-kinzal/sql-semantics-sqlite/doc/README.md.html">
+<meta name="description" content="SQL Semantics for SQLite, a document of the k-kinzal/sql-semantics-sqlite package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="SQL Semantics for SQLite — ZTD Query PHP">
+<meta property="og:description" content="SQL Semantics for SQLite, a document of the k-kinzal/sql-semantics-sqlite package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/456/k-kinzal/sql-semantics-sqlite/doc/README.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/456/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../k-kinzal/sql-semantics-sqlite/index.html">k-kinzal/sql-semantics-sqlite</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../k-kinzal/sql-semantics-sqlite/all-items.html">All items</a></li><li data-diff="same"><a href="../../../k-kinzal/sql-semantics-sqlite/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Namespaces</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../k-kinzal/sql-semantics-sqlite/SqlSemantics/Platform/Sqlite/index.html" title="SqlSemantics\Platform\Sqlite">SqlSemantics\Platform\Sqlite</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../k-kinzal/sql-semantics-sqlite/index.html">k-kinzal/sql-semantics-sqlite</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">README.md</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 2b829f23d1 to working tree">2b829f23d1 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 2b829f23d1 and working tree." data-off="This page documents what 2b829f23d1 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>SQL Semantics for SQLite</h1><div class="symbol-meta"><span class="source-link">README.md</span></div></div>
+<section class="readme prose" data-diff="same"><div class="doc-block" data-diff="same"><h2>SQL Semantics for SQLite</h2>
+</div><div class="doc-block" data-diff="same"><p><a href="https://opensource.org/licenses/MIT"><span class="md-target" title="https://img.shields.io/badge/License-MIT-yellow.svg">License: MIT</span></a> <a href="https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-sqlite/"><span class="md-target" title="https://img.shields.io/badge/docs-sql--semantics--sqlite-0969da?logo=php&amp;logoColor=white">Docs</span></a> <a href="https://www.php.net/"><span class="md-target" title="https://img.shields.io/badge/PHP-8.1%2B-blue.svg">PHP Version</span></a> <a href="https://deepwiki.com/k-kinzal/ztd-query-php"><span class="md-target" title="https://deepwiki.com/badge.svg">Ask DeepWiki</span></a></p>
+</div><div class="doc-block" data-diff="same"><p>SQL Semantics for SQLite adds SQLite to <a href="https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics">SQL Semantics</a>: the typed statement models of the official SQLite grammars and the SQLite rules for schema binding. Installing it also installs the shared SQL Semantics runtime, and <code>Dialect::Sqlite</code> selects SQLite in the runtime&#039;s <code>Semantics</code>, <code>SchemaBuilder</code>, and <code>Binder</code>. No database connection is needed.</p>
+</div><div class="doc-block" data-diff="same"><h3>Requirements</h3>
+</div><div class="doc-block" data-diff="same"><ul><li>PHP 8.1+ with the zlib extension</li></ul>
+</div><div class="doc-block" data-diff="same"><h3>Support Syntax</h3>
+</div><div class="doc-block" data-diff="same"><p>The following grammar versions are supported. Pass the version tag as the second argument of <code>Semantics</code> or the third argument of <code>SchemaBuilder</code>; omitting it uses the default.</p>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Version</th><th>Version tag</th><th>Default</th></tr></thead><tbody><tr><td>3.47.2</td><td><code>sqlite-3.47.2</code></td><td>Yes</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><h3>Installation</h3>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>composer require k-kinzal/sql-semantics-sqlite</code></pre>
+</div><div class="doc-block" data-diff="same"><h3>Usage</h3>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Facade\Semantics</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Dialect</span>;
+
+<span class="tok-var">$statement</span> = (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">Sqlite</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&quot;INSERT OR REPLACE INTO users (id, name) VALUES (1, &#039;Alice&#039;)&quot;</span>);
+
+<span class="tok-var">$statement</span>-&gt;<span class="tok-id">toString</span>(); <span class="tok-com">// &quot;INSERT OR REPLACE INTO users( id , name ) VALUES( 1 , &#039;Alice&#039; )&quot;</span></code></pre>
+</div><div class="doc-block" data-diff="same"><p>See the <a href="https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics">SQL Semantics documentation</a> for statement models and schema binding.</p>
+</div><div class="doc-block" data-diff="same"><h3>License</h3>
+</div><div class="doc-block" data-diff="same"><p>MIT License. See <span class="md-target" title="LICENSE">LICENSE</span> for details.</p>
+</div></section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../assets/search-index.js" defer></script>
+<script src="../../../assets/app.js" defer></script>
+</body>
+</html>

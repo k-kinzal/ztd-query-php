@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Traceability — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/456/k-kinzal/requirements/doc/docs/traceability.md.html">
+<meta name="description" content="Traceability, a document of the k-kinzal/requirements package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="Traceability — ZTD Query PHP">
+<meta property="og:description" content="Traceability, a document of the k-kinzal/requirements package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/456/k-kinzal/requirements/doc/docs/traceability.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/456/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../k-kinzal/requirements/index.html">k-kinzal/requirements</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../k-kinzal/requirements/all-items.html">All items</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Namespaces</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Config/index.html" title="Requirements\Config">Requirements\Config</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Console/index.html" title="Requirements\Console">Requirements\Console</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Ears/index.html" title="Requirements\Ears">Requirements\Ears</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Markdown/index.html" title="Requirements\Markdown">Requirements\Markdown</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Model/index.html" title="Requirements\Model">Requirements\Model</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Report/index.html" title="Requirements\Report">Requirements\Report</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Source/index.html" title="Requirements\Source">Requirements\Source</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Test/index.html" title="Requirements\Test">Requirements\Test</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../k-kinzal/requirements/index.html">k-kinzal/requirements</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">docs/traceability.md</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 2b829f23d1 to working tree">2b829f23d1 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 2b829f23d1 and working tree." data-off="This page documents what 2b829f23d1 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Traceability</h1><div class="symbol-meta"><span class="source-link">docs/traceability.md</span></div></div>
+<section class="readme prose" data-diff="same"><div class="doc-block" data-diff="same"><h2>Traceability</h2>
+</div><div class="doc-block" data-diff="same"><p>A passing test suite shows that the tested behavior works. It does not show that the tests follow the manual, the RFC or the ticket they were written from, or which parts of it nobody has tested. requirements links each statement of such a source to the specification that restates it and to the tests that verify it, and reports what is left over.</p>
+</div><div class="doc-block" data-diff="same"><h3>Model</h3>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>source ── scope ── unit ◀── evidence ── requirement ◀── specification ── tests
+                        ◀── evidence ─────────────────── specification ── tests</code></pre>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Term</th><th>Meaning</th></tr></thead><tbody><tr><td>Source</td><td>A document you trace: a manual, an RFC, a JSON catalog, an issue tracker.</td></tr><tr><td>Scope</td><td>The part of the source to cover, chosen by a selector, for example every paragraph in <code>main</code>.</td></tr><tr><td>Unit</td><td>One element, value or line in the scope. Coverage counts units.</td></tr><tr><td>Evidence</td><td>An exact quotation of one unit. It detects when the source changes.</td></tr><tr><td>Requirement</td><td>Optional. A quoted statement that several specifications implement.</td></tr><tr><td>Specification</td><td>A testable statement in EARS form, linked to its tests. It can be <code>unsupported</code>, with a reason, when the project deliberately does not implement the source.</td></tr><tr><td>Test</td><td>A PHPUnit method or a Behat scenario, or a test of a custom runner.</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p>Specifications that no source describes, such as decisions of your own, are declared with <code>source: null</code> and a rationale, so they are visible instead of silently mixed in.</p>
+</div><div class="doc-block" data-diff="same"><h3>Workflow</h3>
+</div><div class="doc-block" data-diff="same"><ol><li>Choose the source and the scope to cover, and write a <a href="../../../../k-kinzal/requirements/doc/docs/definitions.md.html">definition file</a> for it.</li><li>For each unit, add a specification that quotes it and links its tests, or an unsupported specification that explains why not.</li><li>Run <code>requirements lint</code> and <code>requirements check</code> to validate the files and the quotations.</li><li>Run <code>requirements coverage</code> to find the units nobody has accounted for.</li><li>Run <code>requirements spec</code> to run the linked tests.</li><li>In CI, gate the coverage of new and changed units with a <a href="../../../../k-kinzal/requirements/doc/docs/cli.md.html#ci">snapshot</a>.</li></ol>
+</div><div class="doc-block" data-diff="same"><h3>What it does not prove</h3>
+</div><div class="doc-block" data-diff="same"><p>Matching quotations prove where a specification comes from, not that it means the same as its source, and passing tests prove only what they test. Reviewers still decide whether each specification and test is right. requirements makes that review possible for every unit, and never marks unknown behavior as unsupported by itself.</p>
+</div></section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>
