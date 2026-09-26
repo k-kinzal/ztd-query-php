@@ -39,6 +39,8 @@ jobs:
             split_repository: sql-semantics-sqlite
           - local_path: sql-catalog
             split_repository: sql-catalog
+          - local_path: requirements
+            split_repository: requirements
           - local_path: ztd-query-mysql
             split_repository: ztd-query-mysql
           - local_path: ztd-query-postgres
@@ -83,10 +85,10 @@ jobs:
                 )
               else . end) |
               .require |= with_entries(
-                if (.key | test("^k-kinzal/(ztd-query-(core|mysql|postgres|sqlite|pdo-adapter|mysqli-adapter)|sql-faker|sql-fixture|sql-catalog|bison-parser|lemon-parser|sql-parser|sql-formatter|sql-semantics(-mysql|-postgres|-sqlite)?)$")) and .value == "dev-main" then .value = $v else . end
+                if (.key | test("^k-kinzal/(ztd-query-(core|mysql|postgres|sqlite|pdo-adapter|mysqli-adapter)|sql-faker|sql-fixture|sql-catalog|bison-parser|lemon-parser|requirements|sql-parser|sql-formatter|sql-semantics(-mysql|-postgres|-sqlite)?)$")) and .value == "dev-main" then .value = $v else . end
               ) |
               ."require-dev" |= with_entries(
-                if (.key | test("^k-kinzal/(ztd-query-(core|mysql|postgres|sqlite|pdo-adapter|mysqli-adapter)|sql-faker|sql-fixture|sql-catalog|bison-parser|lemon-parser|sql-parser|sql-formatter|sql-semantics(-mysql|-postgres|-sqlite)?)$")) and .value == "dev-main" then .value = $v else . end
+                if (.key | test("^k-kinzal/(ztd-query-(core|mysql|postgres|sqlite|pdo-adapter|mysqli-adapter)|sql-faker|sql-fixture|sql-catalog|bison-parser|lemon-parser|requirements|sql-parser|sql-formatter|sql-semantics(-mysql|-postgres|-sqlite)?)$")) and .value == "dev-main" then .value = $v else . end
               )
             ' "$FILE" > "${FILE}.tmp" && mv "${FILE}.tmp" "$FILE"
           else
