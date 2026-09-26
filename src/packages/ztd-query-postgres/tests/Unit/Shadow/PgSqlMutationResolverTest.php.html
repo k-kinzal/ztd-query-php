@@ -274,13 +274,13 @@
 <span class="src-line" id="L236"><a class="ln" href="#L236">236</a>        ));</span>
 <span class="src-line" id="L237"><a class="ln" href="#L237">237</a>        <span class="tok-var">$shadowStore</span>-&gt;<span class="tok-id">set</span>(<span class="tok-str">&#039;users&#039;</span>, [[<span class="tok-str">&#039;id&#039;</span> =&gt; <span class="tok-num">1</span>, <span class="tok-str">&#039;name&#039;</span> =&gt; <span class="tok-str">&#039;Existing&#039;</span>]]);</span>
 <span class="src-line" id="L238"><a class="ln" href="#L238">238</a>        <span class="tok-var">$mutation</span> = <span class="tok-var">$resolver</span>-&gt;<span class="tok-id">resolve</span>(</span>
-<span class="src-line" id="L239"><a class="ln" href="#L239">239</a>            <span class="tok-str">&quot;INSERT INTO users (id, name) VALUES (1, &#039;Alice&#039;)&quot;</span>,</span>
+<span class="src-line" id="L239"><a class="ln" href="#L239">239</a>            <span class="tok-str">&quot;INSERT INTO users (id, name) VALUES (2, &#039;Inserted&#039;)&quot;</span>,</span>
 <span class="src-line" id="L240"><a class="ln" href="#L240">240</a>            <span class="tok-str">&#039;INSERT&#039;</span>,</span>
 <span class="src-line" id="L241"><a class="ln" href="#L241">241</a>            <span class="tok-id">QueryKind</span>::<span class="tok-id">WRITE_SIMULATED</span></span>
 <span class="src-line" id="L242"><a class="ln" href="#L242">242</a>        );</span>
 <span class="src-line" id="L243"><a class="ln" href="#L243">243</a></span>
 <span class="src-line" id="L244"><a class="ln" href="#L244">244</a>        <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">InsertMutation</span>::<span class="tok-kw">class</span>, <span class="tok-var">$mutation</span>);</span>
-<span class="src-line" id="L245"><a class="ln" href="#L245">245</a>        <span class="tok-var">$mutation</span>-&gt;<span class="tok-id">apply</span>(<span class="tok-var">$shadowStore</span>, [[<span class="tok-str">&#039;id&#039;</span> =&gt; <span class="tok-num">1</span>, <span class="tok-str">&#039;name&#039;</span> =&gt; <span class="tok-str">&#039;Inserted&#039;</span>]]);</span>
+<span class="src-line" id="L245"><a class="ln" href="#L245">245</a>        <span class="tok-var">$mutation</span>-&gt;<span class="tok-id">apply</span>(<span class="tok-var">$shadowStore</span>, [[<span class="tok-str">&#039;id&#039;</span> =&gt; <span class="tok-num">2</span>, <span class="tok-str">&#039;name&#039;</span> =&gt; <span class="tok-str">&#039;Inserted&#039;</span>]]);</span>
 <span class="src-line" id="L246"><a class="ln" href="#L246">246</a>        <span class="tok-id">self</span>::<span class="tok-id">assertCount</span>(<span class="tok-num">2</span>, <span class="tok-var">$shadowStore</span>-&gt;<span class="tok-id">get</span>(<span class="tok-str">&#039;users&#039;</span>));</span>
 <span class="src-line" id="L247"><a class="ln" href="#L247">247</a>    }</span>
 <span class="src-line" id="L248"><a class="ln" href="#L248">248</a></span>

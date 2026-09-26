@@ -48,13 +48,13 @@
 <span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Choice\BytePlanCompiler</span>;</span>
 <span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Choice\PlanBuilder</span>;</span>
 <span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Plan\GenerationPlan</span>;</span>
-<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\MySqlProvider</span>;</span>
-<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlFixture\Platform\MySql\MySqlSchemaParser</span>;</span>
-<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlFixture\Provider\FixtureGenerator</span>;</span>
-<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlFixture\Schema\SchemaParseException</span>;</span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Plan\ProductionPattern</span>;</span>
+<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\MySqlProvider</span>;</span>
+<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlFixture\Platform\MySql\MySqlSchemaParser</span>;</span>
+<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlFixture\Provider\FixtureGenerator</span>;</span>
 <span class="src-line" id="L17"><a class="ln" href="#L17">17</a></span>
 <span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-com"> * Mutates SQL structure and lexical choices, then checks the accepted-schema row contract.</span></span>
+<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-com"> * Mutates SQL structure and lexical choices, then checks schema acceptance and the generated row contract.</span></span>
 <span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">CreateTableTarget</span></span>
 <span class="src-line" id="L22"><a class="ln" href="#L22">22</a>{</span>
@@ -75,37 +75,35 @@
 <span class="src-line" id="L37"><a class="ln" href="#L37">37</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">faker</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();</span>
 <span class="src-line" id="L38"><a class="ln" href="#L38">38</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">sqlProvider</span> = <span class="tok-kw">new</span> <span class="tok-id">MySqlProvider</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">faker</span>, <span class="tok-var">$grammarVersion</span>);</span>
 <span class="src-line" id="L39"><a class="ln" href="#L39">39</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">planner</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">sqlProvider</span>-&gt;<span class="tok-id">planner</span>();</span>
-<span class="src-line" id="L40"><a class="ln" href="#L40">40</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">constraints</span> = <span class="tok-id">GenerationPlan</span>::<span class="tok-id">fromRule</span>(<span class="tok-str">&#039;create_table_stmt&#039;</span>)-&gt;<span class="tok-id">requiringNonEmpty</span>()-&gt;<span class="tok-id">withExpansionBudget</span>(<span class="tok-var">$maxExpansions</span>);</span>
-<span class="src-line" id="L41"><a class="ln" href="#L41">41</a>    }</span>
-<span class="src-line" id="L42"><a class="ln" href="#L42">42</a></span>
-<span class="src-line" id="L43"><a class="ln" href="#L43">43</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L44"><a class="ln" href="#L44">44</a><span class="tok-com">     * Accepted schemas must generate exactly their writable columns, including explicit overrides.</span></span>
-<span class="src-line" id="L45"><a class="ln" href="#L45">45</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L46"><a class="ln" href="#L46">46</a><span class="tok-com">     * @throws Error When generated fixture columns differ from the parsed schema</span></span>
-<span class="src-line" id="L47"><a class="ln" href="#L47">47</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L48"><a class="ln" href="#L48">48</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__invoke</span>(<span class="tok-id">string</span> <span class="tok-var">$input</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L49"><a class="ln" href="#L49">49</a>    {</span>
-<span class="src-line" id="L50"><a class="ln" href="#L50">50</a>        <span class="tok-var">$plan</span> = (<span class="tok-kw">new</span> <span class="tok-id">BytePlanCompiler</span>())-&gt;<span class="tok-id">compile</span>(<span class="tok-var">$input</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">planner</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">constraints</span>);</span>
-<span class="src-line" id="L51"><a class="ln" href="#L51">51</a>        <span class="tok-var">$sql</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">sqlProvider</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$plan</span>);</span>
-<span class="src-line" id="L52"><a class="ln" href="#L52">52</a>        <span class="tok-kw">try</span> {</span>
-<span class="src-line" id="L53"><a class="ln" href="#L53">53</a>            <span class="tok-var">$schema</span> = (<span class="tok-kw">new</span> <span class="tok-id">MySqlSchemaParser</span>())-&gt;<span class="tok-id">parse</span>(<span class="tok-var">$sql</span>);</span>
-<span class="src-line" id="L54"><a class="ln" href="#L54">54</a>        } <span class="tok-kw">catch</span> (<span class="tok-id">SchemaParseException</span>) {</span>
-<span class="src-line" id="L55"><a class="ln" href="#L55">55</a>            <span class="tok-kw">return</span>;</span>
-<span class="src-line" id="L56"><a class="ln" href="#L56">56</a>        }</span>
-<span class="src-line" id="L57"><a class="ln" href="#L57">57</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">faker</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-id">crc32</span>(<span class="tok-id">str_pad</span>(<span class="tok-var">$input</span>, <span class="tok-num">4</span>, <span class="tok-str">&quot;\0&quot;</span>)));</span>
-<span class="src-line" id="L58"><a class="ln" href="#L58">58</a>        <span class="tok-var">$generator</span> = <span class="tok-kw">new</span> <span class="tok-id">FixtureGenerator</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">faker</span>);</span>
-<span class="src-line" id="L59"><a class="ln" href="#L59">59</a>        <span class="tok-var">$row</span> = <span class="tok-var">$generator</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$schema</span>);</span>
-<span class="src-line" id="L60"><a class="ln" href="#L60">60</a>        <span class="tok-var">$writable</span> = <span class="tok-id">array_filter</span>(<span class="tok-var">$schema</span>-&gt;<span class="tok-id">columns</span>, <span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-var">$column</span>): <span class="tok-id">bool</span> =&gt; !<span class="tok-var">$column</span>-&gt;<span class="tok-id">autoIncrement</span> &amp;&amp; !<span class="tok-var">$column</span>-&gt;<span class="tok-id">generated</span>);</span>
-<span class="src-line" id="L61"><a class="ln" href="#L61">61</a>        <span class="tok-kw">if</span> (<span class="tok-id">array_keys</span>(<span class="tok-var">$row</span>) !== <span class="tok-id">array_keys</span>(<span class="tok-var">$writable</span>)) {</span>
-<span class="src-line" id="L62"><a class="ln" href="#L62">62</a>            <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">Error</span>(&quot;<span class="tok-str">Writable column mismatch; grammar=</span>{<span class="tok-var">$this</span>-&gt;<span class="tok-id">grammarVersion</span>}<span class="tok-str">; input=</span>&quot; . <span class="tok-id">bin2hex</span>(<span class="tok-var">$input</span>) . <span class="tok-str">&quot;\nSQL: &quot;</span> . <span class="tok-var">$sql</span>);</span>
-<span class="src-line" id="L63"><a class="ln" href="#L63">63</a>        }</span>
-<span class="src-line" id="L64"><a class="ln" href="#L64">64</a>        <span class="tok-var">$overridden</span> = <span class="tok-var">$generator</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$schema</span>, <span class="tok-var">$row</span>);</span>
-<span class="src-line" id="L65"><a class="ln" href="#L65">65</a>        <span class="tok-kw">if</span> (<span class="tok-var">$overridden</span> !== <span class="tok-var">$row</span>) {</span>
-<span class="src-line" id="L66"><a class="ln" href="#L66">66</a>            <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">Error</span>(<span class="tok-str">&#039;Override preservation mismatch; input=&#039;</span> . <span class="tok-id">bin2hex</span>(<span class="tok-var">$input</span>) . <span class="tok-str">&quot;\nSQL: &quot;</span> . <span class="tok-var">$sql</span>);</span>
-<span class="src-line" id="L67"><a class="ln" href="#L67">67</a>        }</span>
-<span class="src-line" id="L68"><a class="ln" href="#L68">68</a>    }</span>
-<span class="src-line" id="L69"><a class="ln" href="#L69">69</a>}</span>
-<span class="src-line" id="L70"><a class="ln" href="#L70">70</a></span>
+<span class="src-line" id="L40"><a class="ln" href="#L40">40</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">constraints</span> = <span class="tok-id">GenerationPlan</span>::<span class="tok-id">constrained</span>(<span class="tok-str">&#039;create_table_stmt&#039;</span>, [</span>
+<span class="src-line" id="L41"><a class="ln" href="#L41">41</a>            <span class="tok-str">&#039;create_table_stmt&#039;</span> =&gt; [<span class="tok-id">ProductionPattern</span>::<span class="tok-id">containing</span>(<span class="tok-str">&#039;table_element_list&#039;</span>)],</span>
+<span class="src-line" id="L42"><a class="ln" href="#L42">42</a>        ])-&gt;<span class="tok-id">requiringNonEmpty</span>()-&gt;<span class="tok-id">withExpansionBudget</span>(<span class="tok-var">$maxExpansions</span>);</span>
+<span class="src-line" id="L43"><a class="ln" href="#L43">43</a>    }</span>
+<span class="src-line" id="L44"><a class="ln" href="#L44">44</a></span>
+<span class="src-line" id="L45"><a class="ln" href="#L45">45</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L46"><a class="ln" href="#L46">46</a><span class="tok-com">     * Accepted schemas must generate exactly their writable columns, including explicit overrides.</span></span>
+<span class="src-line" id="L47"><a class="ln" href="#L47">47</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L48"><a class="ln" href="#L48">48</a><span class="tok-com">     * @throws Error When generated fixture columns differ from the parsed schema</span></span>
+<span class="src-line" id="L49"><a class="ln" href="#L49">49</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L50"><a class="ln" href="#L50">50</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__invoke</span>(<span class="tok-id">string</span> <span class="tok-var">$input</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L51"><a class="ln" href="#L51">51</a>    {</span>
+<span class="src-line" id="L52"><a class="ln" href="#L52">52</a>        <span class="tok-var">$plan</span> = (<span class="tok-kw">new</span> <span class="tok-id">BytePlanCompiler</span>())-&gt;<span class="tok-id">compile</span>(<span class="tok-var">$input</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">planner</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">constraints</span>);</span>
+<span class="src-line" id="L53"><a class="ln" href="#L53">53</a>        <span class="tok-var">$sql</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">sqlProvider</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$plan</span>);</span>
+<span class="src-line" id="L54"><a class="ln" href="#L54">54</a>        <span class="tok-var">$schema</span> = (<span class="tok-kw">new</span> <span class="tok-id">MySqlSchemaParser</span>())-&gt;<span class="tok-id">parse</span>(<span class="tok-var">$sql</span>);</span>
+<span class="src-line" id="L55"><a class="ln" href="#L55">55</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">faker</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-id">crc32</span>(<span class="tok-id">str_pad</span>(<span class="tok-var">$input</span>, <span class="tok-num">4</span>, <span class="tok-str">&quot;\0&quot;</span>)));</span>
+<span class="src-line" id="L56"><a class="ln" href="#L56">56</a>        <span class="tok-var">$generator</span> = <span class="tok-kw">new</span> <span class="tok-id">FixtureGenerator</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">faker</span>);</span>
+<span class="src-line" id="L57"><a class="ln" href="#L57">57</a>        <span class="tok-var">$row</span> = <span class="tok-var">$generator</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$schema</span>);</span>
+<span class="src-line" id="L58"><a class="ln" href="#L58">58</a>        <span class="tok-var">$writable</span> = <span class="tok-id">array_filter</span>(<span class="tok-var">$schema</span>-&gt;<span class="tok-id">columns</span>, <span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-var">$column</span>): <span class="tok-id">bool</span> =&gt; !<span class="tok-var">$column</span>-&gt;<span class="tok-id">autoIncrement</span> &amp;&amp; !<span class="tok-var">$column</span>-&gt;<span class="tok-id">generated</span>);</span>
+<span class="src-line" id="L59"><a class="ln" href="#L59">59</a>        <span class="tok-kw">if</span> (<span class="tok-id">array_keys</span>(<span class="tok-var">$row</span>) !== <span class="tok-id">array_keys</span>(<span class="tok-var">$writable</span>)) {</span>
+<span class="src-line" id="L60"><a class="ln" href="#L60">60</a>            <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">Error</span>(&quot;<span class="tok-str">Writable column mismatch; grammar=</span>{<span class="tok-var">$this</span>-&gt;<span class="tok-id">grammarVersion</span>}<span class="tok-str">; input=</span>&quot; . <span class="tok-id">bin2hex</span>(<span class="tok-var">$input</span>) . <span class="tok-str">&quot;\nSQL: &quot;</span> . <span class="tok-var">$sql</span>);</span>
+<span class="src-line" id="L61"><a class="ln" href="#L61">61</a>        }</span>
+<span class="src-line" id="L62"><a class="ln" href="#L62">62</a>        <span class="tok-var">$overridden</span> = <span class="tok-var">$generator</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$schema</span>, <span class="tok-var">$row</span>);</span>
+<span class="src-line" id="L63"><a class="ln" href="#L63">63</a>        <span class="tok-kw">if</span> (<span class="tok-var">$overridden</span> !== <span class="tok-var">$row</span>) {</span>
+<span class="src-line" id="L64"><a class="ln" href="#L64">64</a>            <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">Error</span>(<span class="tok-str">&#039;Override preservation mismatch; input=&#039;</span> . <span class="tok-id">bin2hex</span>(<span class="tok-var">$input</span>) . <span class="tok-str">&quot;\nSQL: &quot;</span> . <span class="tok-var">$sql</span>);</span>
+<span class="src-line" id="L65"><a class="ln" href="#L65">65</a>        }</span>
+<span class="src-line" id="L66"><a class="ln" href="#L66">66</a>    }</span>
+<span class="src-line" id="L67"><a class="ln" href="#L67">67</a>}</span>
+<span class="src-line" id="L68"><a class="ln" href="#L68">68</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
