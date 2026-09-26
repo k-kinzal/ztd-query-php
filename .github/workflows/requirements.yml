@@ -18,58 +18,151 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+env:
+  COMPOSER_NO_INTERACTION: '1'
+
 defaults:
   run:
+    shell: bash
     working-directory: packages/requirements
 
 jobs:
   test:
     name: Test (PHP ${{ matrix.php }})
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
         php: ['8.1', '8.2', '8.3', '8.4', '8.5']
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
           php-version: ${{ matrix.php }}
+          extensions: curl, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter, zlib
+          coverage: none
+      - name: Validate the Composer manifest and lock file
+        run: composer validate --strict --no-check-publish
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+        with:
+          working-directory: packages/requirements
+          dependency-versions: locked
+          composer-options: --prefer-dist
+          require-lock-file: true
+      - name: Check installed platform requirements
+        if: matrix.php == '8.1' || matrix.php == '8.2' || matrix.php == '8.3'
+        run: composer check-platform-reqs
+      - name: Check library requirements outside the locked ParaTest PHP range
+        if: matrix.php == '8.4' || matrix.php == '8.5'
+        run: composer check-platform-reqs --no-dev
+      - name: Run the tests in parallel
+        run: composer test
+
+  examples:
+    name: Examples
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+        with:
+          php-version: '8.3'
           extensions: curl, dom, mbstring, xml, xmlwriter
           coverage: none
-      - run: composer validate --strict
-      - run: composer install --no-interaction --prefer-dist
-      - run: composer check-platform-reqs
-      - run: composer test
-      - run: composer lint
-        if: matrix.php == '8.3'
-      - name: Check the documented example
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+        with:
+          working-directory: packages/requirements
+          dependency-versions: locked
+          composer-options: --prefer-dist --no-dev
+          require-lock-file: true
+      - name: Run each example as its own project
         run: |
-          php bin/requirements lint --config tests/Fixtures/Examples/requirements.yaml
-          php bin/requirements format --check --config tests/Fixtures/Examples/requirements.yaml
-          php bin/requirements check --config tests/Fixtures/Examples/requirements.yaml
-          php bin/requirements coverage --config tests/Fixtures/Examples/requirements.yaml
-      - name: Check the experimental Markdown example
-        run: |
-          php bin/requirements lint --config tests/Fixtures/Examples/Markdown/requirements.yaml
-          php bin/requirements format --check --config tests/Fixtures/Examples/Markdown/requirements.yaml
-          php bin/requirements check --config tests/Fixtures/Examples/Markdown/requirements.yaml
-          php bin/requirements coverage --config tests/Fixtures/Examples/Markdown/requirements.yaml
-      - name: Check custom source and test extensions
-        run: |
-          php bin/requirements lint --config tests/Fixtures/Examples/Extensions/requirements.yaml
-          php bin/requirements format --check --config tests/Fixtures/Examples/Extensions/requirements.yaml
-          php bin/requirements check --config tests/Fixtures/Examples/Extensions/requirements.yaml
-          php bin/requirements coverage --config tests/Fixtures/Examples/Extensions/requirements.yaml
-          php bin/requirements spec --config tests/Fixtures/Examples/Extensions/requirements.yaml
-      - name: Verify EARS acceptance specifications
+          for example in yaml markdown extensions; do
+            (
+              cd "examples/$example"
+              php ../../bin/requirements lint
+              php ../../bin/requirements format --check
+              php ../../bin/requirements check
+              php ../../bin/requirements coverage
+            )
+          done
+      - name: Verify the linked test of the extensions example
+        working-directory: packages/requirements/examples/extensions
+        run: php ../../bin/requirements spec
+
+  requirements:
+    name: Requirements
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+        with:
+          php-version: '8.3'
+          extensions: curl, dom, mbstring, pcntl, xml, xmlwriter
+          coverage: none
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+        with:
+          working-directory: packages/requirements
+          dependency-versions: locked
+          composer-options: --prefer-dist
+          require-lock-file: true
+      - name: Validate the EARS definitions
         run: |
           php bin/requirements lint
           php bin/requirements format --check
-          php bin/requirements spec
       - name: Check the published EARS source
-        if: matrix.php == '8.3'
         run: |
           php bin/requirements check
           php bin/requirements coverage
+      - name: Verify the EARS specifications
+        run: php bin/requirements spec
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+        with:
+          php-version: '8.3'
+          extensions: curl, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter, zlib
+          coverage: none
+      - name: Validate the Composer manifest and lock file
+        run: composer validate --strict --no-check-publish
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+        with:
+          working-directory: packages/requirements
+          dependency-versions: locked
+          composer-options: --prefer-dist
+          require-lock-file: true
+      - name: Check installed platform requirements
+        run: composer check-platform-reqs
+      - name: Check PSR-4 paths and ambiguous classes
+        run: composer autoload:check
+      - name: Check the formatting
+        run: composer format:check
+      - name: Analyse with PHPStan
+        run: composer phpstan
+      - name: Check PHP compatibility
+        run: composer compat
+      - name: Check the source metrics
+        run: composer loc-guard
+      - name: Check the directory structure
+        run: composer tree-guard
+      - name: Check the architecture layers
+        run: composer deptrac
