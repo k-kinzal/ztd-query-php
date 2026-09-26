@@ -10,7 +10,7 @@ use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 use ZtdQuery\Config\ZtdConfig;
-use ZtdQuery\Platform\Sqlite\SqliteSessionFactory;
+use ZtdQuery\Platform\Sqlite\SqlitePlatform;
 
 /**
  * @requires extension pdo_sqlite
@@ -30,14 +30,14 @@ final class SqliteDriverDetectionTest extends TestCase
         self::assertTrue($ztdPdo->isZtdEnabled());
     }
 
-    public function testExplicitSessionFactoryInjection(): void
+    public function testExplicitPlatformInjection(): void
     {
         $pdo = new PDO('sqlite::memory:', null, null, [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         ]);
 
-        $factory = new SqliteSessionFactory();
-        $ztdPdo = ZtdPdo::fromPdo($pdo, null, $factory);
+        $platform = new SqlitePlatform();
+        $ztdPdo = ZtdPdo::fromPdo($pdo, null, $platform);
 
         self::assertTrue($ztdPdo->isZtdEnabled());
     }
@@ -53,10 +53,10 @@ final class SqliteDriverDetectionTest extends TestCase
 
     public function testAConnectionOpenedByDsnUsesThePlatformItIsGiven(): void
     {
-        $factory = new SqliteSessionFactory();
+        $platform = new SqlitePlatform();
         $ztdPdo = new ZtdPdo('sqlite::memory:', null, null, [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        ], null, $factory);
+        ], null, $platform);
 
         self::assertTrue($ztdPdo->isZtdEnabled());
     }

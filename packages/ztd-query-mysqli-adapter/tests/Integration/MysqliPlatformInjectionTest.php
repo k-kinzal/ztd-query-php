@@ -12,7 +12,7 @@ use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use Testcontainers\Testcontainers;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
-use ZtdQuery\Platform\MySql\MySqlSessionFactory;
+use ZtdQuery\Platform\MySql\MySqlPlatform;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(ZtdMysqli::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\ZtdQuery\Adapter\Mysqli\Session\ConnectionExecution::class)]
@@ -26,9 +26,9 @@ use ZtdQuery\Platform\MySql\MySqlSessionFactory;
 #[\PHPUnit\Framework\Attributes\CoversClass(\ZtdQuery\Adapter\Mysqli\Native\MysqliPropertyReader::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\ZtdQuery\Adapter\Mysqli\Session\MysqliResultProcessor::class)]
 #[Large]
-final class MysqliSessionFactoryInjectionTest extends TestCase
+final class MysqliPlatformInjectionTest extends TestCase
 {
-    public function testExplicitMySqlSessionFactoryInjectionWorks(): void
+    public function testExplicitMySqlPlatformInjectionWorks(): void
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
@@ -37,8 +37,8 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL)', $table));
             $rawMysqli->query(sprintf("INSERT INTO `%s` (name) VALUES ('Alice'), ('Bob')", $table));
-            $factory = new MySqlSessionFactory();
-            $ztd = ZtdMysqli::fromMysqli($rawMysqli, null, $factory);
+            $platform = new MySqlPlatform();
+            $ztd = ZtdMysqli::fromMysqli($rawMysqli, null, $platform);
 
             $result = $ztd->query(sprintf('SELECT * FROM `%s`', $table));
             self::assertNotFalse($result);
@@ -51,7 +51,7 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
         }
     }
 
-    public function testInjectedFactoryInsertIsVisibleViaSelect(): void
+    public function testInjectedPlatformInsertIsVisibleViaSelect(): void
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
@@ -60,8 +60,8 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL)', $table));
             $rawMysqli->query(sprintf("INSERT INTO `%s` (name) VALUES ('Alice'), ('Bob')", $table));
-            $factory = new MySqlSessionFactory();
-            $ztd = ZtdMysqli::fromMysqli($rawMysqli, null, $factory);
+            $platform = new MySqlPlatform();
+            $ztd = ZtdMysqli::fromMysqli($rawMysqli, null, $platform);
 
             $ztd->query(sprintf(
                 "INSERT INTO `%s` (name) VALUES ('Charlie')",
@@ -80,7 +80,7 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
         }
     }
 
-    public function testInjectedFactoryDoesNotModifyPhysicalDatabase(): void
+    public function testInjectedPlatformDoesNotModifyPhysicalDatabase(): void
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
@@ -89,8 +89,8 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL)', $table));
             $rawMysqli->query(sprintf("INSERT INTO `%s` (name) VALUES ('Alice'), ('Bob')", $table));
-            $factory = new MySqlSessionFactory();
-            $ztd = ZtdMysqli::fromMysqli($rawMysqli, null, $factory);
+            $platform = new MySqlPlatform();
+            $ztd = ZtdMysqli::fromMysqli($rawMysqli, null, $platform);
 
             $ztd->query(sprintf(
                 "INSERT INTO `%s` (name) VALUES ('Charlie')",
@@ -110,7 +110,7 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
         }
     }
 
-    public function testInjectedFactoryPreparedStatementWorks(): void
+    public function testInjectedPlatformPreparedStatementWorks(): void
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
@@ -119,8 +119,8 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL)', $table));
             $rawMysqli->query(sprintf("INSERT INTO `%s` (name) VALUES ('Alice'), ('Bob')", $table));
-            $factory = new MySqlSessionFactory();
-            $ztd = ZtdMysqli::fromMysqli($rawMysqli, null, $factory);
+            $platform = new MySqlPlatform();
+            $ztd = ZtdMysqli::fromMysqli($rawMysqli, null, $platform);
 
             $ztd->query(sprintf(
                 "INSERT INTO `%s` (name) VALUES ('Charlie')",
@@ -144,7 +144,7 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
         }
     }
 
-    public function testInjectedFactoryAffectedRowsTracking(): void
+    public function testInjectedPlatformAffectedRowsTracking(): void
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
@@ -153,8 +153,8 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL)', $table));
             $rawMysqli->query(sprintf("INSERT INTO `%s` (name) VALUES ('Alice'), ('Bob')", $table));
-            $factory = new MySqlSessionFactory();
-            $ztd = ZtdMysqli::fromMysqli($rawMysqli, null, $factory);
+            $platform = new MySqlPlatform();
+            $ztd = ZtdMysqli::fromMysqli($rawMysqli, null, $platform);
 
             $ztd->query(sprintf(
                 "INSERT INTO `%s` (name) VALUES ('Charlie')",
@@ -167,7 +167,7 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
         }
     }
 
-    public function testDefaultFactoryBehaviorMatchesExplicitInjection(): void
+    public function testDefaultPlatformBehaviorMatchesExplicitInjection(): void
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {

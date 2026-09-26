@@ -12,8 +12,8 @@ use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\ExecuteResult;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
+use ZtdQuery\QueryExecutor;
 use ZtdQuery\Rewrite\RewritePlan;
-use ZtdQuery\Session;
 
 /**
  * Coordinates rewritten preparation, native execution and shadow post-processing.
@@ -30,7 +30,7 @@ final class StatementExecution implements StatementInterface
      */
     public function __construct(
         private NativePdoStatement $statement,
-        private readonly Session $session,
+        private readonly QueryExecutor $executor,
         private ?RewritePlan $plan,
         private readonly ?PreparedQuery $prepared = null,
         private readonly Bindings $bindings = new Bindings(),
@@ -58,13 +58,13 @@ final class StatementExecution implements StatementInterface
         $this->result = null;
         if ($this->prepared !== null) {
             $this->plan = $this->prepared->rewrite();
-            $compiled = $this->session->parameterBindingCompiler()?->compile($this->plan->sql(), $params)
+            $compiled = $this->executor->platform()->parameterBindingCompiler()?->compile($this->plan->sql(), $params)
                 ?? ['sql' => $this->plan->sql(), 'params' => $params];
             $this->statement = $this->prepared->prepare($compiled['sql']);
             $params = $compiled['params'];
             $this->bindings->apply($this->statement);
         }
-        if ($this->plan !== null && !$this->session->shouldExecute($this->plan)) {
+        if ($this->plan !== null && !$this->executor->shouldExecute($this->plan)) {
             return false;
         }
         $success = $this->prepared === null
@@ -73,7 +73,7 @@ final class StatementExecution implements StatementInterface
         if (!$success) {
             return false;
         }
-        if ($this->plan !== null && $this->session->needsPostProcessing($this->plan)) {
+        if ($this->plan !== null && $this->executor->needsPostProcessing($this->plan)) {
             return $this->postProcess($this->plan);
         }
         return true;
@@ -87,8 +87,10 @@ final class StatementExecution implements StatementInterface
     public function postProcess(RewritePlan $plan): bool
     {
         try {
-            /** @throws DatabaseException */
-            $this->result = $this->session->processExecutedStatement($plan, $this);
+            /**
+             * @throws DatabaseException
+             */
+            $this->result = $this->executor->processExecutedStatement($plan, $this);
         } catch (DatabaseException $exception) {
             throw new ZtdPdoException($exception->getMessage(), 0, $exception);
         }

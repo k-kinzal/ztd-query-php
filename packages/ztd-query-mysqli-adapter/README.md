@@ -45,6 +45,23 @@ final class UserQueryTest extends TestCase
 
 `ZtdMysqli::fromMysqli($mysqli)` wraps an existing connection instead of opening a new one, and `disableZtd()` and `enableZtd()` switch between the physical database and the session. Read the number of affected rows with `lastAffectedRows()`; the `affected_rows` property is not available on a `ZtdMysqli`.
 
+## Platform injection
+
+The database package implements the core `ZtdQuery\Platform` contract. Pass a platform
+when you need explicit dependency injection; otherwise the adapter uses `MySqlPlatform`.
+
+```php
+use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
+use ZtdQuery\Platform\MySql\MySqlPlatform;
+
+$native = new mysqli('127.0.0.1', 'root', 'root', 'test');
+$mysqli = ZtdMysqli::fromMysqli($native, platform: new MySqlPlatform());
+```
+
+The platform provides schema reflection, SQL rewriting, parameter compilation, and
+result metadata interpretation. Core creates a separate `Session` for each wrapper;
+a platform instance can be reused without sharing virtual tables or transactions.
+
 ## Configuration
 
 ```php

@@ -61,6 +61,68 @@ final class UserQueryTest extends TestCase
 
 `ZtdPdo::fromPdo($pdo)` wraps an existing connection instead of opening a new one, and `disableZtd()` and `enableZtd()` switch between the physical database and the session.
 
+## Core and platform API
+
+`ZtdQuery\Platform` defines database semantics. The database packages provide
+`MySqlPlatform`, `PgSqlPlatform`, and `SqlitePlatform`; PDO and mysqli adapters accept
+a platform through their `platform:` argument.
+
+`QueryExecutor` combines a `ConnectionInterface`, a `Platform`, and configuration.
+It reflects the catalog, creates the rewrite pipeline, executes result-select SQL,
+and applies mutations. `Session` owns virtual rows, table and view definitions,
+transaction snapshots, the enabled flag, and the last generated identity. It does
+not hold a database connection or provide dialect services.
+
+Custom driver integrations implement `ConnectionInterface` and `StatementInterface`.
+For example, this function accepts a connection and its platform without depending
+on a PDO or mysqli adapter:
+
+```php
+use ZtdQuery\Connection\ConnectionInterface;
+use ZtdQuery\Platform;
+use ZtdQuery\QueryExecutor;
+
+function simulatedUsers(ConnectionInterface $connection, Platform $platform): array
+{
+    $executor = new QueryExecutor($connection, $platform);
+    $executor->execStatement('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+    $executor->execStatement("INSERT INTO users VALUES (1, 'Alice')");
+    $plan = $executor->rewrite('SELECT name FROM users');
+    $statement = $connection->query($plan->sql());
+    if ($statement === false) {
+        throw new RuntimeException('The result-select query failed.');
+    }
+    return $executor->processExecutedStatement($plan, $statement)->fetchAll();
+}
+```
+
+All rewrite and mutation behavior remains in Core plus the injected platform. The
+database comparison fuzz targets use this boundary with minimal native connections,
+independently of the PDO and mysqli adapters.
+
+Each executor creates an isolated session by default. To supply virtual fixtures
+without reflecting a physical catalog, pass `session: new Session(...)` with a
+`ShadowStore`, `TableDefinitionRegistry`, and optional `ViewDefinitionSet`. The
+platform binds a fresh rewriter to that exact state. Transaction methods on this
+session change virtual state only; driver adapters coordinate native transactions.
+The enabled flag is likewise interpreted by adapters when deciding to pass SQL
+through; direct executor methods always simulate SQL.
+
+### Migrating from SessionFactory
+
+- Replace `MySqlSessionFactory`, `PgSqlSessionFactory`, and `SqliteSessionFactory`
+  with their corresponding `*Platform` implementations.
+- Replace the adapter's named `factory:` argument with `platform:`.
+- Replace `$factory->create($connection, $config)` with
+  `new QueryExecutor($connection, $platform, $config)`.
+- Call rewrite and execution methods on the executor. Access virtual state through
+  `$executor->session()` and dialect capabilities through `$executor->platform()`.
+- Implement `Platform` for custom database injection. Platform implementations do
+  not construct `Session` objects or choose execution policy.
+
+These changes replace the former factory contract and Session execution API;
+applications using only driver auto-detection keep the same adapter calls.
+
 ## Configuration
 
 ```php

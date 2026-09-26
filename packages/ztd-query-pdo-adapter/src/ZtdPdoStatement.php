@@ -15,8 +15,8 @@ use stdClass;
 use ZtdQuery\Adapter\Pdo\Session\BufferedRow;
 use ZtdQuery\Adapter\Pdo\Session\PreparedQuery;
 use ZtdQuery\Adapter\Pdo\Session\StatementExecution;
+use ZtdQuery\QueryExecutor;
 use ZtdQuery\Rewrite\RewritePlan;
-use ZtdQuery\Session;
 
 /**
  * PDOStatement wrapper that applies ZTD rewrite/simulation on execute().
@@ -49,12 +49,12 @@ final class ZtdPdoStatement extends NativePdoStatement
      */
     public function __construct(
         NativePdoStatement $statement,
-        Session $session,
+        QueryExecutor $executor,
         ?RewritePlan $plan,
         ?PreparedQuery $preparedExecution = null,
         private readonly int $defaultFetchMode = PDO::FETCH_BOTH,
     ) {
-        $this->execution = new StatementExecution($statement, $session, $plan, $preparedExecution);
+        $this->execution = new StatementExecution($statement, $executor, $plan, $preparedExecution);
         $this->bufferedRow = new BufferedRow();
     }
 
@@ -362,7 +362,9 @@ final class ZtdPdoStatement extends NativePdoStatement
     #[Override]
     public function errorInfo(): array
     {
-        /** @var array{0: string|null, 1: int|null, 2: string|null} */
+        /**
+         * @var array{0: string|null, 1: int|null, 2: string|null}
+         */
         return $this->execution->native()->errorInfo();
     }
 

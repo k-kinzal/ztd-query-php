@@ -13,9 +13,9 @@ use SensitiveParameter;
 use ZtdQuery\Adapter\Pdo\Session\ConnectionExecution;
 use ZtdQuery\Adapter\Pdo\Session\PreparedQuery;
 use ZtdQuery\Config\ZtdConfig;
-use ZtdQuery\Platform\SessionFactory;
+use ZtdQuery\Platform;
+use ZtdQuery\QueryExecutor;
 use ZtdQuery\Rewrite\RewritePlan;
-use ZtdQuery\Session;
 
 /**
  * PDO proxy that enforces ZTD behavior for reads and writes.
@@ -23,7 +23,7 @@ use ZtdQuery\Session;
  * Uses delegation pattern: extends PDO for type compatibility,
  * but delegates all operations to an inner PDO instance when using fromPdo().
  *
- * Supports multiple database platforms via SessionFactory injection or auto-detection:
+ * Supports multiple database platforms via Platform injection or auto-detection:
  * - MySQL (k-kinzal/ztd-query-mysql)
  * - PostgreSQL (k-kinzal/ztd-query-postgres)
  * - SQLite (k-kinzal/ztd-query-sqlite)
@@ -44,12 +44,12 @@ class ZtdPdo extends PDO
     /**
      * Configure a new ZTD-enabled PDO wrapper.
      *
-     * If $factory is provided, it is used directly to create the session.
-     * If $factory is null, the factory is auto-detected from the PDO driver name.
+     * If $platform is provided, its database semantics are used by the core executor.
+     * If $platform is null, the platform is auto-detected from the PDO driver name.
      *
      * @param array<int, mixed>|null $options Driver options, as PDO::__construct() takes them
      * @param ZtdConfig|null $config How ZTD is to behave, or null for the default
-     * @param SessionFactory|null $factory Platform to rewrite with, or null to read it off the driver
+     * @param Platform|null $platform Platform to rewrite with, or null to read it off the driver
      *
      * @throws RuntimeException When the driver has no platform package installed
      * @visibility public
@@ -57,10 +57,10 @@ class ZtdPdo extends PDO
      *     $pdo = new \ZtdQuery\Adapter\Pdo\ZtdPdo('sqlite::memory:');
      *     $pdo->isZtdEnabled() // => true
      */
-    public function __construct(string $dsn, ?string $username = null, ?string $password = null, ?array $options = null, ?ZtdConfig $config = null, ?SessionFactory $factory = null)
+    public function __construct(string $dsn, ?string $username = null, ?string $password = null, ?array $options = null, ?ZtdConfig $config = null, ?Platform $platform = null)
     {
         parent::__construct($dsn, $username, $password, $options);
-        $this->execution = new ConnectionExecution(new PDO($dsn, $username, $password, $options), $config, $factory);
+        $this->execution = new ConnectionExecution(new PDO($dsn, $username, $password, $options), $config, $platform);
     }
 
     /**
@@ -69,12 +69,12 @@ class ZtdPdo extends PDO
      * This allows reusing an existing PDO connection instead of creating a new one.
      * The wrapped PDO instance will be used for all database operations.
      *
-     * If $factory is provided, it is used directly to create the session.
-     * If $factory is null, the factory is auto-detected from the PDO driver name.
+     * If $platform is provided, its database semantics are used by the core executor.
+     * If $platform is null, the platform is auto-detected from the PDO driver name.
      *
      * @param PDO $pdo Connection to wrap
      * @param ZtdConfig|null $config How ZTD is to behave, or null for the default
-     * @param SessionFactory|null $factory Platform to rewrite with, or null to read it off the driver
+     * @param Platform|null $platform Platform to rewrite with, or null to read it off the driver
      *
      * @return static The connection, with ZTD in front of it
      *
@@ -86,10 +86,10 @@ class ZtdPdo extends PDO
      *     $pdo->isZtdEnabled() // => true
      *     $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) // => 'sqlite'
      */
-    public static function fromPdo(PDO $pdo, ?ZtdConfig $config = null, ?SessionFactory $factory = null): static
+    public static function fromPdo(PDO $pdo, ?ZtdConfig $config = null, ?Platform $platform = null): static
     {
         $instance = (new ReflectionClass(static::class))->newInstanceWithoutConstructor();
-        $instance->execution = new ConnectionExecution($pdo, $config, $factory);
+        $instance->execution = new ConnectionExecution($pdo, $config, $platform);
         return $instance;
     }
 
@@ -107,7 +107,7 @@ class ZtdPdo extends PDO
      */
     public function enableZtd(): void
     {
-        $this->execution->session()->enable();
+        $this->execution->executor()->session()->enable();
     }
 
     /**
@@ -126,7 +126,7 @@ class ZtdPdo extends PDO
      */
     public function disableZtd(): void
     {
-        $this->execution->session()->disable();
+        $this->execution->executor()->session()->disable();
     }
 
     /**
@@ -140,7 +140,7 @@ class ZtdPdo extends PDO
      */
     public function isZtdEnabled(): bool
     {
-        return $this->execution->session()->isEnabled();
+        return $this->execution->executor()->session()->isEnabled();
     }
 
     /**
@@ -168,8 +168,8 @@ class ZtdPdo extends PDO
         return $this->execution->prepare(
             $query,
             $options,
-            static fn (PDOStatement $statement, Session $session, RewritePlan $plan, PreparedQuery $prepared, int $mode): PDOStatement =>
-                new ZtdPdoStatement($statement, $session, $plan, $prepared, $mode),
+            static fn (PDOStatement $statement, QueryExecutor $executor, RewritePlan $plan, PreparedQuery $prepared, int $mode): PDOStatement =>
+                new ZtdPdoStatement($statement, $executor, $plan, $prepared, $mode),
         );
     }
 
@@ -366,7 +366,9 @@ class ZtdPdo extends PDO
     #[Override]
     public function errorInfo(): array
     {
-        /** @var array{0: string|null, 1: int|null, 2: string|null} */
+        /**
+         * @var array{0: string|null, 1: int|null, 2: string|null}
+         */
         return $this->execution->native()->errorInfo();
     }
 
@@ -421,7 +423,9 @@ class ZtdPdo extends PDO
     #[Override]
     public static function getAvailableDrivers(): array
     {
-        /** @var array<int, string> */
+        /**
+         * @var array<int, string>
+         */
         return PDO::getAvailableDrivers();
     }
 }

@@ -47,6 +47,24 @@ final class UserQueryTest extends TestCase
 
 `ZtdPdo::fromPdo($pdo)` wraps an existing connection instead of opening a new one, and `disableZtd()` and `enableZtd()` switch between the physical database and the session.
 
+## Platform injection
+
+The database package implements the core `ZtdQuery\Platform` contract. Pass a platform
+when you need explicit dependency injection; otherwise the adapter selects one from
+the native driver.
+
+```php
+use ZtdQuery\Adapter\Pdo\ZtdPdo;
+use ZtdQuery\Platform\Postgres\PgSqlPlatform;
+
+$native = new PDO('pgsql:host=127.0.0.1;dbname=test', 'postgres', 'postgres');
+$pdo = ZtdPdo::fromPdo($native, platform: new PgSqlPlatform());
+```
+
+The platform provides schema reflection, SQL rewriting, parameter compilation, and
+result metadata interpretation. Core creates a separate `Session` for each wrapper;
+a platform instance can be reused without sharing virtual tables or transactions.
+
 ## Configuration
 
 ```php

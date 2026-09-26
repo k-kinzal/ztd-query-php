@@ -45,7 +45,7 @@ final class ConnectionExecutionTest extends TestCase
         }
     }
 
-    public function testSessionKeepsSimulatedWritesOffTheNativeConnection(): void
+    public function testExecutorKeepsSimulatedWritesOffTheNativeConnection(): void
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
@@ -54,7 +54,7 @@ final class ConnectionExecutionTest extends TestCase
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
 
-            self::assertSame(1, $execution->session()->execStatement('INSERT INTO items VALUES (7)'));
+            self::assertSame(1, $execution->executor()->execStatement('INSERT INTO items VALUES (7)'));
             $result = $native->query('SELECT COUNT(*) FROM items');
             self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame(['0'], $result->fetch_row());
@@ -130,9 +130,9 @@ final class ConnectionExecutionTest extends TestCase
             $execution = new ConnectionExecution($native);
 
             self::assertTrue($execution->realQuery('BEGIN', $native->prepare(...)));
-            self::assertSame(1, $execution->session()->execStatement('INSERT INTO items VALUES (7)'));
+            self::assertSame(1, $execution->executor()->execStatement('INSERT INTO items VALUES (7)'));
             self::assertTrue($execution->realQuery('ROLLBACK', $native->prepare(...)));
-            $result = $native->query($execution->session()->rewrite('SELECT id FROM items')->sql());
+            $result = $native->query($execution->executor()->rewrite('SELECT id FROM items')->sql());
             self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame([], $result->fetch_all(MYSQLI_ASSOC));
         } finally {
@@ -150,9 +150,9 @@ final class ConnectionExecutionTest extends TestCase
             $execution = new ConnectionExecution($native);
 
             self::assertTrue($execution->beginTransaction());
-            self::assertSame(1, $execution->session()->execStatement('INSERT INTO items VALUES (7)'));
+            self::assertSame(1, $execution->executor()->execStatement('INSERT INTO items VALUES (7)'));
             self::assertTrue($execution->rollBack());
-            $result = $native->query($execution->session()->rewrite('SELECT id FROM items')->sql());
+            $result = $native->query($execution->executor()->rewrite('SELECT id FROM items')->sql());
             self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame([], $result->fetch_all(MYSQLI_ASSOC));
         } finally {
@@ -170,11 +170,11 @@ final class ConnectionExecutionTest extends TestCase
             $execution = new ConnectionExecution($native);
 
             self::assertTrue($execution->beginTransaction());
-            self::assertSame(1, $execution->session()->execStatement('INSERT INTO items VALUES (7)'));
+            self::assertSame(1, $execution->executor()->execStatement('INSERT INTO items VALUES (7)'));
             self::assertTrue($execution->commit());
             self::assertTrue($execution->beginTransaction());
             self::assertTrue($execution->rollBack());
-            $result = $native->query($execution->session()->rewrite('SELECT id FROM items')->sql());
+            $result = $native->query($execution->executor()->rewrite('SELECT id FROM items')->sql());
             self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame([['id' => '7']], $result->fetch_all(MYSQLI_ASSOC));
         } finally {
@@ -192,9 +192,9 @@ final class ConnectionExecutionTest extends TestCase
             $execution = new ConnectionExecution($native);
 
             self::assertTrue($execution->beginTransaction());
-            self::assertSame(1, $execution->session()->execStatement('INSERT INTO items VALUES (7)'));
+            self::assertSame(1, $execution->executor()->execStatement('INSERT INTO items VALUES (7)'));
             self::assertTrue($execution->rollBack());
-            $result = $native->query($execution->session()->rewrite('SELECT id FROM items')->sql());
+            $result = $native->query($execution->executor()->rewrite('SELECT id FROM items')->sql());
             self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame([], $result->fetch_all(MYSQLI_ASSOC));
         } finally {
@@ -212,11 +212,11 @@ final class ConnectionExecutionTest extends TestCase
             $execution = new ConnectionExecution($native);
 
             self::assertTrue($execution->autocommit(false));
-            self::assertSame(1, $execution->session()->execStatement('INSERT INTO items VALUES (7)'));
+            self::assertSame(1, $execution->executor()->execStatement('INSERT INTO items VALUES (7)'));
             self::assertTrue($execution->autocommit(true));
             self::assertTrue($execution->beginTransaction());
             self::assertTrue($execution->rollBack());
-            $result = $native->query($execution->session()->rewrite('SELECT id FROM items')->sql());
+            $result = $native->query($execution->executor()->rewrite('SELECT id FROM items')->sql());
             self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame([['id' => '7']], $result->fetch_all(MYSQLI_ASSOC));
         } finally {
@@ -253,9 +253,9 @@ final class ConnectionExecutionTest extends TestCase
 
             self::assertTrue($execution->beginTransaction());
             self::assertTrue($execution->savepoint('one'));
-            self::assertSame(1, $execution->session()->execStatement('INSERT INTO items VALUES (7)'));
+            self::assertSame(1, $execution->executor()->execStatement('INSERT INTO items VALUES (7)'));
             self::assertTrue($execution->realQuery('ROLLBACK TO SAVEPOINT one', $native->prepare(...)));
-            $result = $native->query($execution->session()->rewrite('SELECT id FROM items')->sql());
+            $result = $native->query($execution->executor()->rewrite('SELECT id FROM items')->sql());
             self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame([], $result->fetch_all(MYSQLI_ASSOC));
             self::assertTrue($execution->rollBack());

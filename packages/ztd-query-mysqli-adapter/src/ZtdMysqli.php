@@ -15,9 +15,9 @@ use ReturnTypeWillChange;
 use SensitiveParameter;
 use ZtdQuery\Adapter\Mysqli\Session\ConnectionExecution;
 use ZtdQuery\Config\ZtdConfig;
-use ZtdQuery\Platform\SessionFactory;
+use ZtdQuery\Platform;
+use ZtdQuery\QueryExecutor;
 use ZtdQuery\Rewrite\RewritePlan;
-use ZtdQuery\Session;
 
 /**
  * mysqli proxy that enforces ZTD behavior for reads and writes.
@@ -30,8 +30,8 @@ use ZtdQuery\Session;
  *
  * Properties are delegated via __get/__isset to the inner mysqli instance.
  *
- * Supports optional SessionFactory injection. If no factory is provided,
- * MySqlSessionFactory is used by default (mysqli is MySQL-only).
+ * Supports optional Platform injection. If no platform is provided,
+ * MySqlPlatform is used by default (mysqli is MySQL-only).
  *
  * @visibility public
  * @example Simulate writes without changing the native table
@@ -55,8 +55,8 @@ class ZtdMysqli extends mysqli
     /**
      * Configure a new ZTD-enabled mysqli wrapper.
      *
-     * If $factory is provided, it is used directly to create the session.
-     * If $factory is null, MySqlSessionFactory is used by default.
+     * If $platform is provided, its database semantics are used by the core executor.
+     * If $platform is null, MySqlPlatform is used by default.
      */
     public function __construct(
         ?string $hostname = null,
@@ -66,13 +66,13 @@ class ZtdMysqli extends mysqli
         ?int $port = null,
         ?string $socket = null,
         ?ZtdConfig $config = null,
-        ?SessionFactory $factory = null
+        ?Platform $platform = null
     ) {
         /**
          * Parent is initialized without connection; innerMysqli handles the real connection
          */
         parent::__construct();
-        $this->execution = new ConnectionExecution(new mysqli($hostname, $username, $password, $database, $port ?? 3306, $socket), $config, $factory);
+        $this->execution = new ConnectionExecution(new mysqli($hostname, $username, $password, $database, $port ?? 3306, $socket), $config, $platform);
     }
 
     /**
@@ -81,16 +81,16 @@ class ZtdMysqli extends mysqli
      * This allows reusing an existing mysqli connection instead of creating a new one.
      * The wrapped mysqli instance will be used for all database operations.
      *
-     * If $factory is provided, it is used directly to create the session.
-     * If $factory is null, MySqlSessionFactory is used by default.
+     * If $platform is provided, its database semantics are used by the core executor.
+     * If $platform is null, MySqlPlatform is used by default.
      */
-    public static function fromMysqli(mysqli $mysqli, ?ZtdConfig $config = null, ?SessionFactory $factory = null): self
+    public static function fromMysqli(mysqli $mysqli, ?ZtdConfig $config = null, ?Platform $platform = null): self
     {
         /**
          * @var self $instance
          */
         $instance = (new ReflectionClass(self::class))->newInstanceWithoutConstructor();
-        $instance->execution = new ConnectionExecution($mysqli, $config, $factory);
+        $instance->execution = new ConnectionExecution($mysqli, $config, $platform);
 
         return $instance;
     }
@@ -100,7 +100,7 @@ class ZtdMysqli extends mysqli
      */
     public function enableZtd(): void
     {
-        $this->execution->session()->enable();
+        $this->execution->executor()->session()->enable();
     }
 
     /**
@@ -108,7 +108,7 @@ class ZtdMysqli extends mysqli
      */
     public function disableZtd(): void
     {
-        $this->execution->session()->disable();
+        $this->execution->executor()->session()->disable();
     }
 
     /**
@@ -116,7 +116,7 @@ class ZtdMysqli extends mysqli
      */
     public function isZtdEnabled(): bool
     {
-        return $this->execution->session()->isEnabled();
+        return $this->execution->executor()->session()->isEnabled();
     }
 
     /**
@@ -165,7 +165,7 @@ class ZtdMysqli extends mysqli
     #[Override]
     public function prepare(string $query): mysqli_stmt|false
     {
-        return $this->execution->prepare($query, static fn (mysqli_stmt $statement, Session $session, RewritePlan $plan): ZtdMysqliStatement => new ZtdMysqliStatement($statement, $session, $plan));
+        return $this->execution->prepare($query, static fn (mysqli_stmt $statement, QueryExecutor $executor, RewritePlan $plan): ZtdMysqliStatement => new ZtdMysqliStatement($statement, $executor, $plan));
     }
 
     /**

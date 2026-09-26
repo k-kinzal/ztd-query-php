@@ -10,7 +10,7 @@ use ZtdQuery\Schema\TableDefinition;
 /**
  * Result of a ZTD statement execution.
  *
- * This interface encapsulates the result of executing a statement through Session,
+ * This interface encapsulates the result of executing a statement through QueryExecutor,
  * providing a unified API for fetching results whether from rewritten statements,
  * buffered rows (for simulated writes), or passthrough scenarios.
  *

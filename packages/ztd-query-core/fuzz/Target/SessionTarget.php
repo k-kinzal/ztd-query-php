@@ -7,23 +7,19 @@ namespace Fuzz\Target;
 use Error;
 use LogicException;
 use Tests\Fake\FakeConnection;
-use Tests\Fake\FakeSqlRewriter;
-use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Connection\ResultSet;
 use ZtdQuery\Exception\DuplicateKeyException;
 use ZtdQuery\Exception\NotNullViolationException;
-use ZtdQuery\ResultSelectRunner;
+use ZtdQuery\QueryExecutor;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
-use ZtdQuery\Session;
 use ZtdQuery\Shadow\Mutation\Row\DeleteMutation;
 use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
 use ZtdQuery\Shadow\Mutation\Row\UpdateMutation;
 use ZtdQuery\Shadow\Mutation\Table\CreateTableMutation;
 use ZtdQuery\Shadow\Mutation\Table\DropTableMutation;
 use ZtdQuery\Shadow\ShadowStore;
-use ZtdQuery\Shadow\ShadowTransactions;
 
 /**
  * Compares two isolated core sessions with independent array models.
@@ -42,7 +38,7 @@ final class SessionTarget
     /**
      * Core session under test.
      */
-    private readonly Session $session;
+    private readonly QueryExecutor $executor;
     /**
      * Recording physical connection, which must receive no queries.
      */
@@ -60,7 +56,7 @@ final class SessionTarget
             $this->store->set($table, []);
             $this->registry->register($table, self::definition());
         }
-        $this->session = new Session(new FakeSqlRewriter($this->store, $this->registry), $this->store, new ResultSelectRunner(), ZtdConfig::default(), $this->connection, new ShadowTransactions($this->store, $this->registry), $this->registry);
+        $this->executor = new QueryExecutor($this->connection, new \Tests\Fake\FakePlatform(), session: new \ZtdQuery\Session($this->store, $this->registry));
     }
 
     /**
@@ -81,12 +77,12 @@ final class SessionTarget
     {
         if ($operation >= 3 && $operation <= 8) {
             match ($operation) {
-                3 => $this->session->beginTransaction(),
-                4 => $this->session->commitTransaction(),
-                5 => $this->session->rollBackTransaction(),
-                6 => $this->session->transactions()->savepoint($name),
-                7 => $this->session->transactions()->rollBackTo($name),
-                8 => $this->session->transactions()->release($name),
+                3 => $this->executor->session()->beginTransaction(),
+                4 => $this->executor->session()->commitTransaction(),
+                5 => $this->executor->session()->rollBackTransaction(),
+                6 => $this->executor->session()->transactions()->savepoint($name),
+                7 => $this->executor->session()->transactions()->rollBackTo($name),
+                8 => $this->executor->session()->transactions()->release($name),
             };
             return;
         }
@@ -102,7 +98,7 @@ final class SessionTarget
             10 => new DropTableMutation('temporary', $this->registry, 'DROP', true),
             default => throw new LogicException('Unrecognized core operation.'),
         };
-        $this->session->applyShadow($mutation, new ResultSet($rows, []), 'fuzz operation');
+        $this->executor->applyShadow($mutation, new ResultSet($rows, []), 'fuzz operation');
     }
 
     /**
@@ -172,21 +168,21 @@ final class SessionTarget
      */
     public function __invoke(string $input): void
     {
-        $sessions = [new self(), new self()];
+        $executors = [new self(), new self()];
         foreach (str_split(($input === '' ? "\0" : substr($input, 0, 512)), 4) as $step => $chunk) {
             $chunk = str_pad($chunk, 4, "\0");
             $choice = ord($chunk[0]);
-            $session = $choice % 2;
+            $executor = $choice % 2;
             $operation = intdiv($choice, 2) % 13;
             $table = (ord($chunk[1]) % 2) === 0 ? 'items' : 'other';
             $id = (ord($chunk[2]) % 8) + 1;
             $valueChoice = ord($chunk[3]);
             $value = [$valueChoice, (string) $valueChoice, null, '', "O'Brien", ['opaque' => $valueChoice]][$valueChoice % 6];
             $name = 'point_' . ($valueChoice % 3);
-            $expected = $sessions[$session]->modelApply($operation, $table, $id, $value, $name);
+            $expected = $executors[$executor]->modelApply($operation, $table, $id, $value, $name);
             $failure = null;
             try {
-                $sessions[$session]->apply($operation, $table, $id, $value, $name);
+                $executors[$executor]->apply($operation, $table, $id, $value, $name);
             } catch (DatabaseException $error) {
                 $failure = $error;
             }
@@ -199,7 +195,7 @@ final class SessionTarget
             } elseif ($failure !== null) {
                 throw new Error('Valid core operation was rejected.', 0, $failure);
             }
-            foreach ($sessions as $actual) {
+            foreach ($executors as $actual) {
                 $actual->verify();
             }
         }
@@ -217,7 +213,7 @@ final class SessionTarget
             throw new Error('Core rows or catalog differ from the independent model.');
         }
         foreach (array_keys($expected) as $table) {
-            if ($this->session->tableDefinition($table)?->columns !== ['id', 'value']) {
+            if ($this->executor->session()->tableDefinition($table)?->columns !== ['id', 'value']) {
                 throw new Error('Rollback lost the column definitions.');
             }
         }
