@@ -76,6 +76,26 @@ final class SelectPart2WithSelectOptionsAndItemListOptIntoFromClauseOptWhereClau
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->selectOptionsAndItemList, $this->optInto, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optInto2, $this->optSelectLockType];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->selectOptionsAndItemList, \SqlSemantics\Statement\Model\MySql\Role\SelectOptionsAndItemListForm::class, $replace), $this->replacement($this->optInto, \SqlSemantics\Statement\Model\MySql\Role\OptIntoForm::class, $replace), $this->replacement($this->from, \SqlSemantics\Statement\Model\MySql\Role\FromClauseForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm::class, $replace), $this->replacement($this->optGroupClause, \SqlSemantics\Statement\Model\MySql\Role\OptGroupClauseForm::class, $replace), $this->replacement($this->optHavingClause, \SqlSemantics\Statement\Model\MySql\Role\OptHavingClauseForm::class, $replace), $this->replacement($this->orderBy, \SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm::class, $replace), $this->replacement($this->optLimitClause, \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm::class, $replace), $this->replacement($this->optProcedureAnalyseClause, \SqlSemantics\Statement\Model\MySql\Role\OptProcedureAnalyseClauseForm::class, $replace), $this->replacement($this->optInto2, \SqlSemantics\Statement\Model\MySql\Role\OptIntoForm::class, $replace), $this->replacement($this->optSelectLockType, \SqlSemantics\Statement\Model\MySql\Role\OptSelectLockTypeForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new selectOptionsAndItemList, preserving every other field.
      */
     public function withSelectOptionsAndItemList(\SqlSemantics\Statement\Model\MySql\Role\SelectOptionsAndItemListForm $selectOptionsAndItemList): self

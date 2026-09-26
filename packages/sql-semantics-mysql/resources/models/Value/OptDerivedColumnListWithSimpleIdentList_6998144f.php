@@ -40,6 +40,26 @@ final class OptDerivedColumnListWithSimpleIdentList_6998144f implements \SqlSema
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->simpleIdentList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->simpleIdentList, \SqlSemantics\Statement\Model\MySql\Role\SimpleIdentListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new simpleIdentList, preserving every other field.
      */
     public function withSimpleIdentList(\SqlSemantics\Statement\Model\MySql\Role\SimpleIdentListForm $simpleIdentList): self

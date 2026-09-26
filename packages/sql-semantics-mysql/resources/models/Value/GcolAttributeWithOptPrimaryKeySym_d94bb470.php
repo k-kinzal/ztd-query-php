@@ -38,6 +38,26 @@ final class GcolAttributeWithOptPrimaryKeySym_d94bb470 implements \SqlSemantics\
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optPrimary];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optPrimary, \SqlSemantics\Statement\Model\MySql\Role\OptPrimaryForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optPrimary, preserving every other field.
      */
     public function withOptPrimary(\SqlSemantics\Statement\Model\MySql\Role\OptPrimaryForm $optPrimary): self

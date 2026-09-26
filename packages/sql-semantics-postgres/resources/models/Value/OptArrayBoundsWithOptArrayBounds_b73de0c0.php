@@ -40,6 +40,26 @@ final class OptArrayBoundsWithOptArrayBounds_b73de0c0 implements \SqlSemantics\S
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optArrayBounds];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optArrayBounds, \SqlSemantics\Statement\Model\PostgreSql\Role\OptArrayBoundsForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optArrayBounds, preserving every other field.
      */
     public function withOptArrayBounds(\SqlSemantics\Statement\Model\PostgreSql\Role\OptArrayBoundsForm $optArrayBounds): self

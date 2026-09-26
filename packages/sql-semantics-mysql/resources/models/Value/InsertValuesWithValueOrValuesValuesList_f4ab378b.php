@@ -40,6 +40,26 @@ final class InsertValuesWithValueOrValuesValuesList_f4ab378b implements \SqlSema
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->valueOrValues, $this->valuesList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->valueOrValues, \SqlSemantics\Statement\Model\MySql\Role\ValueOrValuesForm::class, $replace), $this->replacement($this->valuesList, \SqlSemantics\Statement\Model\MySql\Role\ValuesListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new valueOrValues, preserving every other field.
      */
     public function withValueOrValues(\SqlSemantics\Statement\Model\MySql\Role\ValueOrValuesForm $valueOrValues): self

@@ -38,6 +38,26 @@ final class AlterGenericOptionElemWithSetGenericOptionElem_1fa554dd implements \
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->genericOptionElem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->genericOptionElem, \SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionElemForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new genericOptionElem, preserving every other field.
      */
     public function withGenericOptionElem(\SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionElemForm $genericOptionElem): self

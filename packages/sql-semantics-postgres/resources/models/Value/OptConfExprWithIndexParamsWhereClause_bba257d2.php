@@ -44,6 +44,26 @@ final class OptConfExprWithIndexParamsWhereClause_bba257d2 implements \SqlSemant
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->indexParams, $this->where];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->indexParams, \SqlSemantics\Statement\Model\PostgreSql\Role\IndexParamsForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\PostgreSql\Role\WhereClauseForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new indexParams, preserving every other field.
      */
     public function withIndexParams(\SqlSemantics\Statement\Model\PostgreSql\Role\IndexParamsForm $indexParams): self

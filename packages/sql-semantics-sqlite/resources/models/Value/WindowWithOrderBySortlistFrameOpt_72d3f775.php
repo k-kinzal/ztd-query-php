@@ -44,6 +44,26 @@ final class WindowWithOrderBySortlistFrameOpt_72d3f775 implements \SqlSemantics\
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->sortlist, $this->frameOpt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->sortlist, \SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm::class, $replace), $this->replacement($this->frameOpt, \SqlSemantics\Statement\Model\Sqlite\Role\FrameOptForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new sortlist, preserving every other field.
      */
     public function withSortlist(\SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm $sortlist): self

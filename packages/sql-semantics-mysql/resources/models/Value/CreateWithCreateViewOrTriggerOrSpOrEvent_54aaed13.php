@@ -38,6 +38,26 @@ final class CreateWithCreateViewOrTriggerOrSpOrEvent_54aaed13 implements \SqlSem
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->viewOrTriggerOrSpOrEvent];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->viewOrTriggerOrSpOrEvent, \SqlSemantics\Statement\Model\MySql\Role\ViewOrTriggerOrSpOrEventForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new viewOrTriggerOrSpOrEvent, preserving every other field.
      */
     public function withViewOrTriggerOrSpOrEvent(\SqlSemantics\Statement\Model\MySql\Role\ViewOrTriggerOrSpOrEventForm $viewOrTriggerOrSpOrEvent): self

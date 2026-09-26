@@ -44,6 +44,26 @@ final class CastTypeWithCharSymOptFieldLengthOptBinary_89a7039c implements \SqlS
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optFieldLength, $this->optBinary];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->charSym, $this->replacement($this->optFieldLength, \SqlSemantics\Statement\Model\MySql\Role\OptFieldLengthForm::class, $replace), $this->replacement($this->optBinary, \SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new charSym, preserving every other field.
      */
     public function withCharSym(string $charSym): self

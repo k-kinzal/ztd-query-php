@@ -38,6 +38,26 @@ final class SpProcStmtLeaveWithLeaveSymLabelIdent_1f97b4d7 implements \SqlSemant
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->labelIdent];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->labelIdent, \SqlSemantics\Statement\Model\MySql\Role\LabelIdentForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new labelIdent, preserving every other field.
      */
     public function withLabelIdent(\SqlSemantics\Statement\Model\MySql\Role\LabelIdentForm $labelIdent): self

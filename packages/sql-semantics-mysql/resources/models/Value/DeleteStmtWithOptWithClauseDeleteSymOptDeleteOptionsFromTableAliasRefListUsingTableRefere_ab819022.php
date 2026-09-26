@@ -58,6 +58,26 @@ final class DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsFromTableAliasRe
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->with, $this->optDeleteOptions, $this->tableAliasRefList, $this->tableReferenceList, $this->where];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->with, \SqlSemantics\Statement\Model\MySql\Role\OptWithClauseForm::class, $replace), $this->replacement($this->optDeleteOptions, \SqlSemantics\Statement\Model\MySql\Role\OptDeleteOptionsForm::class, $replace), $this->replacement($this->tableAliasRefList, \SqlSemantics\Statement\Model\MySql\Role\TableAliasRefListForm::class, $replace), $this->replacement($this->tableReferenceList, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new with, preserving every other field.
      */
     public function withWith(\SqlSemantics\Statement\Model\MySql\Role\OptWithClauseForm $with): self

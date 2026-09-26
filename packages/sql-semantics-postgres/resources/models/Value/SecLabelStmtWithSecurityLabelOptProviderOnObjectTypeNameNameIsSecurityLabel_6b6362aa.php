@@ -56,6 +56,26 @@ final class SecLabelStmtWithSecurityLabelOptProviderOnObjectTypeNameNameIsSecuri
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optProvider, $this->objectTypeName, $this->name, $this->securityLabel];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optProvider, \SqlSemantics\Statement\Model\PostgreSql\Role\OptProviderForm::class, $replace), $this->replacement($this->objectTypeName, \SqlSemantics\Statement\Model\PostgreSql\Role\ObjectTypeNameForm::class, $replace), $this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->securityLabel, \SqlSemantics\Statement\Model\PostgreSql\Role\SecurityLabelForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optProvider, preserving every other field.
      */
     public function withOptProvider(\SqlSemantics\Statement\Model\PostgreSql\Role\OptProviderForm $optProvider): self

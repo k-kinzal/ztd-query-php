@@ -62,6 +62,26 @@ final class SelectFromWithFromJoinTableListWhereClauseGroupClauseHavingClauseOpt
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->joinTableList, $this->where, $this->groupBy, $this->having, $this->orderBy, $this->optLimitClause, $this->procedureAnalyseClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->joinTableList, \SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\MySql\Role\WhereClauseForm::class, $replace), $this->replacement($this->groupBy, \SqlSemantics\Statement\Model\MySql\Role\GroupClauseForm::class, $replace), $this->replacement($this->having, \SqlSemantics\Statement\Model\MySql\Role\HavingClauseForm::class, $replace), $this->replacement($this->orderBy, \SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm::class, $replace), $this->replacement($this->optLimitClause, \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm::class, $replace), $this->replacement($this->procedureAnalyseClause, \SqlSemantics\Statement\Model\MySql\Role\ProcedureAnalyseClauseForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new joinTableList, preserving every other field.
      */
     public function withJoinTableList(\SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm $joinTableList): self

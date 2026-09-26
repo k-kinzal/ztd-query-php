@@ -42,6 +42,26 @@ final class TableElementListWithTableElementListTableElement_94252e94 implements
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableElementList, $this->tableElement];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableElementList, \SqlSemantics\Statement\Model\PostgreSql\Role\TableElementListForm::class, $replace), $this->replacement($this->tableElement, \SqlSemantics\Statement\Model\PostgreSql\Role\TableElementForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new tableElementList, preserving every other field.
      */
     public function withTableElementList(\SqlSemantics\Statement\Model\PostgreSql\Role\TableElementListForm $tableElementList): self

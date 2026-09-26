@@ -38,6 +38,26 @@ final class SpElseifsWithElseifSymSpIf_c8735ebb implements \SqlSemantics\Stateme
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->spIf];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->spIf, \SqlSemantics\Statement\Model\MySql\Role\SpIfForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new spIf, preserving every other field.
      */
     public function withSpIf(\SqlSemantics\Statement\Model\MySql\Role\SpIfForm $spIf): self

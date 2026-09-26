@@ -44,6 +44,26 @@ final class VcpuRangeSpecListWithVcpuRangeSpecListOptCommaVcpuNumOrRange_56b3cc9
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->vcpuRangeSpecList, $this->optComma, $this->vcpuNumOrRange];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->vcpuRangeSpecList, \SqlSemantics\Statement\Model\MySql\Role\VcpuRangeSpecListForm::class, $replace), $this->replacement($this->optComma, \SqlSemantics\Statement\Model\MySql\Role\OptCommaForm::class, $replace), $this->replacement($this->vcpuNumOrRange, \SqlSemantics\Statement\Model\MySql\Role\VcpuNumOrRangeForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new vcpuRangeSpecList, preserving every other field.
      */
     public function withVcpuRangeSpecList(\SqlSemantics\Statement\Model\MySql\Role\VcpuRangeSpecListForm $vcpuRangeSpecList): self

@@ -42,6 +42,26 @@ final class EventTriggerWhenListWithEventTriggerWhenListAndEventTriggerWhenItem_
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->eventTriggerWhenList, $this->eventTriggerWhenItem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->eventTriggerWhenList, \SqlSemantics\Statement\Model\PostgreSql\Role\EventTriggerWhenListForm::class, $replace), $this->replacement($this->eventTriggerWhenItem, \SqlSemantics\Statement\Model\PostgreSql\Role\EventTriggerWhenItemForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new eventTriggerWhenList, preserving every other field.
      */
     public function withEventTriggerWhenList(\SqlSemantics\Statement\Model\PostgreSql\Role\EventTriggerWhenListForm $eventTriggerWhenList): self

@@ -52,6 +52,26 @@ final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropObjectTypeAny
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->name, $this->addDrop, $this->objectTypeAnyName, $this->anyName];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->addDrop, \SqlSemantics\Statement\Model\PostgreSql\Role\AddDropForm::class, $replace), $this->replacement($this->objectTypeAnyName, \SqlSemantics\Statement\Model\PostgreSql\Role\ObjectTypeAnyNameForm::class, $replace), $this->replacement($this->anyName, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new name, preserving every other field.
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self

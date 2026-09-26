@@ -58,6 +58,26 @@ final class SpTailWithProcedureSymRememberNameSpNameSpPdparamListSpCChisticsSpPr
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->rememberName, $this->spName, $this->spPdparamList, $this->spCChistics, $this->spProcStmt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->rememberName, \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm::class, $replace), $this->replacement($this->spName, \SqlSemantics\Statement\Model\MySql\Role\SpNameForm::class, $replace), $this->replacement($this->spPdparamList, \SqlSemantics\Statement\Model\MySql\Role\SpPdparamListForm::class, $replace), $this->replacement($this->spCChistics, \SqlSemantics\Statement\Model\MySql\Role\SpCChisticsForm::class, $replace), $this->replacement($this->spProcStmt, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new rememberName, preserving every other field.
      */
     public function withRememberName(\SqlSemantics\Statement\Model\MySql\Role\RememberNameForm $rememberName): self

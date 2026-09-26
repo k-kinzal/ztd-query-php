@@ -50,6 +50,26 @@ final class ReindexStmtWithReindexOptReindexOptionListReindexTargetRelationOptCo
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optReindexOptionList, $this->reindexTargetRelation, $this->optConcurrently, $this->qualifiedName];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optReindexOptionList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptReindexOptionListForm::class, $replace), $this->replacement($this->reindexTargetRelation, \SqlSemantics\Statement\Model\PostgreSql\Role\ReindexTargetRelationForm::class, $replace), $this->replacement($this->optConcurrently, \SqlSemantics\Statement\Model\PostgreSql\Role\OptConcurrentlyForm::class, $replace), $this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optReindexOptionList, preserving every other field.
      */
     public function withOptReindexOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptReindexOptionListForm $optReindexOptionList): self

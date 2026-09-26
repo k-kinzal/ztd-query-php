@@ -42,6 +42,26 @@ final class ValuesWithValuesExprOrDefault_1c75d8ad implements \SqlSemantics\Stat
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->values, $this->exprOrDefault];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->values, \SqlSemantics\Statement\Model\MySql\Role\ValuesForm::class, $replace), $this->replacement($this->exprOrDefault, \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new values, preserving every other field.
      */
     public function withValues(\SqlSemantics\Statement\Model\MySql\Role\ValuesForm $values): self

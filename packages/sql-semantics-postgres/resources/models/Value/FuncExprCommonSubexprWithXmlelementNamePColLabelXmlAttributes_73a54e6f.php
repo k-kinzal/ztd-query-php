@@ -50,6 +50,26 @@ final class FuncExprCommonSubexprWithXmlelementNamePColLabelXmlAttributes_73a54e
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->colLabel, $this->xmlAttributes];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->colLabel, \SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm::class, $replace), $this->replacement($this->xmlAttributes, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributesForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new colLabel, preserving every other field.
      */
     public function withColLabel(\SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm $colLabel): self

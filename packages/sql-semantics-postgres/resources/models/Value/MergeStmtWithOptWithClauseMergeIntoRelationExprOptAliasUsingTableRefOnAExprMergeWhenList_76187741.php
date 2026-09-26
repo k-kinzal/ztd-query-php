@@ -64,6 +64,26 @@ final class MergeStmtWithOptWithClauseMergeIntoRelationExprOptAliasUsingTableRef
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->with, $this->relationExprOptAlias, $this->tableRef, $this->aExpr, $this->mergeWhenList, $this->returningClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->with, \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithClauseForm::class, $replace), $this->replacement($this->relationExprOptAlias, \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprOptAliasForm::class, $replace), $this->replacement($this->tableRef, \SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm::class, $replace), $this->replacement($this->aExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm::class, $replace), $this->replacement($this->mergeWhenList, \SqlSemantics\Statement\Model\PostgreSql\Role\MergeWhenListForm::class, $replace), $this->replacement($this->returningClause, \SqlSemantics\Statement\Model\PostgreSql\Role\ReturningClauseForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new with, preserving every other field.
      */
     public function withWith(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithClauseForm $with): self

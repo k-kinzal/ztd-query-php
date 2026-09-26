@@ -40,6 +40,26 @@ final class MasterDefWithMasterSslCertSymEqTextStringSysNonewline_7bd36e61 imple
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->textStringSysNonewline];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->textStringSysNonewline, \SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new textStringSysNonewline, preserving every other field.
      */
     public function withTextStringSysNonewline(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline): self

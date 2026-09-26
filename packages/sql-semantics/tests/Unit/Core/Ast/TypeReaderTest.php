@@ -9,47 +9,23 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Core\Binder;
 use SqlSemantics\Core\Dialect;
-use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\SemanticException;
 use SqlSemantics\Core\Type\Nullability;
+use SqlSemantics\Facade\Schema as SchemaFacade;
 use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
 use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 
 #[CoversClass(\SqlSemantics\Core\Ast\TypeReader::class)]
-#[CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
-#[CoversClass(\SqlSemantics\Core\Binding\ExpressionRules::class)]
-#[CoversClass(\SqlSemantics\Core\Binding\FromBinder::class)]
-#[CoversClass(\SqlSemantics\Core\Binding\LiteralBinder::class)]
-#[CoversClass(\SqlSemantics\Core\Binding\NullFacts::class)]
-#[CoversClass(\SqlSemantics\Core\Binding\ProjectionBinder::class)]
-#[CoversClass(\SqlSemantics\Core\Binding\SelectBinder::class)]
-#[CoversClass(\SqlSemantics\Core\Binding\SyntaxGuard::class)]
-#[CoversClass(\SqlSemantics\Core\Binding\SelectModifiersBinder::class)]
-#[CoversClass(\SqlSemantics\Core\Binding\TypeResolution::class)]
-#[CoversClass(Binder::class)]
-#[CoversClass(SchemaBuilder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(SchemaFacade::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\DialectParser::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\ColumnReader::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\ConstraintReader::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\Identifiers::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\SchemaReader::class)]
-#[CoversClass(\SqlSemantics\Core\Ast\StatementList::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\TokenGroups::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\Tree::class)]
-#[CoversClass(\SqlSemantics\Core\Binding\BoundRelation::class)]
-#[CoversClass(\SqlSemantics\Core\Binding\IdentitySequence::class)]
-#[CoversClass(\SqlSemantics\Core\Binding\Scope::class)]
-#[CoversClass(\SqlSemantics\Core\Binding\TableResolver::class)]
-#[CoversClass(\SqlSemantics\Core\Model\ColumnBinding::class)]
-#[CoversClass(\SqlSemantics\Core\Model\Expression::class)]
-#[CoversClass(\SqlSemantics\Core\Model\Join::class)]
-#[CoversClass(\SqlSemantics\Core\Model\Ordering::class)]
-#[CoversClass(\SqlSemantics\Core\Model\OutputColumn::class)]
-#[CoversClass(\SqlSemantics\Core\Model\BoundSelect::class)]
-#[CoversClass(\SqlSemantics\Core\Model\TableUse::class)]
 #[CoversClass(\SqlSemantics\Core\Schema::class)]
 #[CoversClass(\SqlSemantics\Core\Schema\ColumnDefinition::class)]
 #[CoversClass(\SqlSemantics\Core\Schema\TableConstraint::class)]
@@ -57,17 +33,14 @@ use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 #[CoversClass(SemanticException::class)]
 #[CoversClass(\SqlSemantics\Core\Type\TypeDescriptor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Policy\SyntaxRules::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\QueryRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\TypeRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\NameRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\SchemaRules::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\Sqlite\QueryRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\Sqlite\Platform::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\Sqlite\TypeRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\Sqlite\NameRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\Sqlite\SchemaRules::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\MySql\QueryRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\MySql\Platform::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\MySql\TypeRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\MySql\NameRules::class)]
@@ -80,13 +53,13 @@ final class TypeReaderTest extends TestCase
     #[TestWith([SqliteDialect::Sqlite])]
     public function testReadPreservesDecimalPrecisionAndScale(Dialect $dialect): void
     {
-        $table = (new SchemaBuilder($dialect))->build('CREATE TABLE users (amount DECIMAL(10, 2))')->tables[0];
+        $table = (new SchemaFacade($dialect))->analyze('CREATE TABLE users (amount DECIMAL(10, 2))')->tables[0];
         self::assertSame(['10', '2'], $table->columns[0]->type->modifiers);
     }
 
     public function testAffinityPreservesSqliteDeclaredTypes(): void
     {
-        $table = (new SchemaBuilder(SqliteDialect::Sqlite))->build('CREATE TABLE users (id TEXT PRIMARY KEY, score INTEGER)')->tables[0];
+        $table = (new SchemaFacade(SqliteDialect::Sqlite))->analyze('CREATE TABLE users (id TEXT PRIMARY KEY, score INTEGER)')->tables[0];
         self::assertSame(Nullability::MaybeNull, $table->columns[0]->nullability);
         self::assertSame('text', $table->columns[0]->type->affinity);
     }

@@ -26,7 +26,7 @@ final class ExprWithPlusMinusExpr_657f0f03 implements \SqlSemantics\Statement\Mo
     ) {
         $this->assertMatchesPattern($plusMinus, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['PLUS|MINUS'], 'The plusMinus must be a complete PLUS|MINUS lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 12,));
+        $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 12,), \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_RULES, 'expr');
     }
 
     /**
@@ -38,6 +38,26 @@ final class ExprWithPlusMinusExpr_657f0f03 implements \SqlSemantics\Statement\Mo
         $writer->append($this->plusMinus);
         $writer->comments($this->comments, 1);
         $this->expr->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->expr];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->plusMinus, $this->replacement($this->expr, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm::class, $replace), $this->comments);
     }
 
     /**

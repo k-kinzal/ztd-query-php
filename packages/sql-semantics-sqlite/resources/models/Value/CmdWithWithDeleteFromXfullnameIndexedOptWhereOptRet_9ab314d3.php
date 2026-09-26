@@ -52,6 +52,26 @@ final class CmdWithWithDeleteFromXfullnameIndexedOptWhereOptRet_9ab314d3 impleme
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->with, $this->xfullname, $this->indexedOpt, $this->whereOptRet];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->with, \SqlSemantics\Statement\Model\Sqlite\Role\WithForm::class, $replace), $this->replacement($this->xfullname, \SqlSemantics\Statement\Model\Sqlite\Role\XfullnameForm::class, $replace), $this->replacement($this->indexedOpt, \SqlSemantics\Statement\Model\Sqlite\Role\IndexedOptForm::class, $replace), $this->replacement($this->whereOptRet, \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptRetForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new with, preserving every other field.
      */
     public function withWith(\SqlSemantics\Statement\Model\Sqlite\Role\WithForm $with): self

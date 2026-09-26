@@ -44,6 +44,26 @@ final class TableFactorWithSelectDerivedInitGetSelectLexSelectDerived2_01d3d8c0 
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->selectDerivedInit, $this->getSelectLex, $this->selectDerived2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->selectDerivedInit, \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedInitForm::class, $replace), $this->replacement($this->getSelectLex, \SqlSemantics\Statement\Model\MySql\Role\GetSelectLexForm::class, $replace), $this->replacement($this->selectDerived2, \SqlSemantics\Statement\Model\MySql\Role\SelectDerived2Form::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new selectDerivedInit, preserving every other field.
      */
     public function withSelectDerivedInit(\SqlSemantics\Statement\Model\MySql\Role\SelectDerivedInitForm $selectDerivedInit): self

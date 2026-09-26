@@ -46,6 +46,26 @@ final class KeycacheStmtWithCacheSymIndexSymKeycacheListInSymKeyCacheName_839618
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->keycacheList, $this->keyCacheName];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->keycacheList, \SqlSemantics\Statement\Model\MySql\Role\KeycacheListForm::class, $replace), $this->replacement($this->keyCacheName, \SqlSemantics\Statement\Model\MySql\Role\KeyCacheNameForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new keycacheList, preserving every other field.
      */
     public function withKeycacheList(\SqlSemantics\Statement\Model\MySql\Role\KeycacheListForm $keycacheList): self

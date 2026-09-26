@@ -44,6 +44,26 @@ final class StartSlaveOptsWithSlaveUntilSlaveConnectionOptsOptChannel_c3a8db8c i
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->slaveUntil, $this->slaveConnectionOpts, $this->optChannel];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->slaveUntil, \SqlSemantics\Statement\Model\MySql\Role\SlaveUntilForm::class, $replace), $this->replacement($this->slaveConnectionOpts, \SqlSemantics\Statement\Model\MySql\Role\SlaveConnectionOptsForm::class, $replace), $this->replacement($this->optChannel, \SqlSemantics\Statement\Model\MySql\Role\OptChannelForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new slaveUntil, preserving every other field.
      */
     public function withSlaveUntil(\SqlSemantics\Statement\Model\MySql\Role\SlaveUntilForm $slaveUntil): self

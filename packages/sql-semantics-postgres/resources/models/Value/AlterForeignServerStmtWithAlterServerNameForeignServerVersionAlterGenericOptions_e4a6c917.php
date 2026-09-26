@@ -48,6 +48,26 @@ final class AlterForeignServerStmtWithAlterServerNameForeignServerVersionAlterGe
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->name, $this->foreignServerVersion, $this->alterGenericOptions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->foreignServerVersion, \SqlSemantics\Statement\Model\PostgreSql\Role\ForeignServerVersionForm::class, $replace), $this->replacement($this->alterGenericOptions, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterGenericOptionsForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new name, preserving every other field.
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self

@@ -42,6 +42,26 @@ final class SourceDefWithChangeReplicationSourceAutoPositionEqUlongNum_c18d87f8 
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->changeReplicationSourceAutoPosition, $this->ulongNum];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->changeReplicationSourceAutoPosition, \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceAutoPositionForm::class, $replace), $this->replacement($this->ulongNum, \SqlSemantics\Statement\Model\MySql\Role\UlongNumForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new changeReplicationSourceAutoPosition, preserving every other field.
      */
     public function withChangeReplicationSourceAutoPosition(\SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceAutoPositionForm $changeReplicationSourceAutoPosition): self

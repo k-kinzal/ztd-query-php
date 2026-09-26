@@ -60,6 +60,26 @@ final class KeyDefWithFulltextOptKeyOrIndexOptIdentInitKeyOptionsKeyListFulltext
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->fulltext, $this->optKeyOrIndex, $this->optIdent, $this->initKeyOptions, $this->keyList, $this->fulltextKeyOptions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->fulltext, \SqlSemantics\Statement\Model\MySql\Role\FulltextForm::class, $replace), $this->replacement($this->optKeyOrIndex, \SqlSemantics\Statement\Model\MySql\Role\OptKeyOrIndexForm::class, $replace), $this->replacement($this->optIdent, \SqlSemantics\Statement\Model\MySql\Role\OptIdentForm::class, $replace), $this->replacement($this->initKeyOptions, \SqlSemantics\Statement\Model\MySql\Role\InitKeyOptionsForm::class, $replace), $this->replacement($this->keyList, \SqlSemantics\Statement\Model\MySql\Role\KeyListForm::class, $replace), $this->replacement($this->fulltextKeyOptions, \SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptionsForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new fulltext, preserving every other field.
      */
     public function withFulltext(\SqlSemantics\Statement\Model\MySql\Role\FulltextForm $fulltext): self

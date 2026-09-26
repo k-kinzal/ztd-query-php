@@ -44,6 +44,26 @@ final class JoinedTableWithTableRefCrossJoinTableRef_23a87e7b implements \SqlSem
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableRef, $this->tableRef2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableRef, \SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm::class, $replace), $this->replacement($this->tableRef2, \SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new tableRef, preserving every other field.
      */
     public function withTableRef(\SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm $tableRef): self

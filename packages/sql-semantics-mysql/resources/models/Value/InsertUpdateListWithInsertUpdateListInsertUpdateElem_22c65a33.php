@@ -42,6 +42,26 @@ final class InsertUpdateListWithInsertUpdateListInsertUpdateElem_22c65a33 implem
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->insertUpdateList, $this->insertUpdateElem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->insertUpdateList, \SqlSemantics\Statement\Model\MySql\Role\InsertUpdateListForm::class, $replace), $this->replacement($this->insertUpdateElem, \SqlSemantics\Statement\Model\MySql\Role\InsertUpdateElemForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new insertUpdateList, preserving every other field.
      */
     public function withInsertUpdateList(\SqlSemantics\Statement\Model\MySql\Role\InsertUpdateListForm $insertUpdateList): self

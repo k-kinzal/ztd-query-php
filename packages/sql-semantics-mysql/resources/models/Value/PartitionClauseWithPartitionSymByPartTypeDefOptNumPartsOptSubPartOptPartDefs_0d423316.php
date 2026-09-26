@@ -52,6 +52,26 @@ final class PartitionClauseWithPartitionSymByPartTypeDefOptNumPartsOptSubPartOpt
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->partTypeDef, $this->optNumParts, $this->optSubPart, $this->optPartDefs];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->partTypeDef, \SqlSemantics\Statement\Model\MySql\Role\PartTypeDefForm::class, $replace), $this->replacement($this->optNumParts, \SqlSemantics\Statement\Model\MySql\Role\OptNumPartsForm::class, $replace), $this->replacement($this->optSubPart, \SqlSemantics\Statement\Model\MySql\Role\OptSubPartForm::class, $replace), $this->replacement($this->optPartDefs, \SqlSemantics\Statement\Model\MySql\Role\OptPartDefsForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new partTypeDef, preserving every other field.
      */
     public function withPartTypeDef(\SqlSemantics\Statement\Model\MySql\Role\PartTypeDefForm $partTypeDef): self

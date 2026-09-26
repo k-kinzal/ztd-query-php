@@ -42,6 +42,26 @@ final class ExecuteVarListWithExecuteVarListExecuteVarIdent_52936c33 implements 
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->executeVarList, $this->executeVarIdent];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->executeVarList, \SqlSemantics\Statement\Model\MySql\Role\ExecuteVarListForm::class, $replace), $this->replacement($this->executeVarIdent, \SqlSemantics\Statement\Model\MySql\Role\ExecuteVarIdentForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new executeVarList, preserving every other field.
      */
     public function withExecuteVarList(\SqlSemantics\Statement\Model\MySql\Role\ExecuteVarListForm $executeVarList): self

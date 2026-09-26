@@ -40,6 +40,26 @@ final class EcmdWithCmdxSemi_b7577a8f implements \SqlSemantics\Statement\Model\S
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->cmdx];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->cmdx, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm::class, $replace), $this->semi, $this->comments);
+    }
+
+    /**
      * Returns a copy with a new cmdx, preserving every other field.
      */
     public function withCmdx(\SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm $cmdx): self

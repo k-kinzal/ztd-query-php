@@ -44,6 +44,26 @@ final class XmltableColumnElWithColIdTypenameXmltableColumnOptionList_102f9cf2 i
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->colId, $this->typename, $this->xmltableColumnOptionList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->colId, \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm::class, $replace), $this->replacement($this->typename, \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm::class, $replace), $this->replacement($this->xmltableColumnOptionList, \SqlSemantics\Statement\Model\PostgreSql\Role\XmltableColumnOptionListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new colId, preserving every other field.
      */
     public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self

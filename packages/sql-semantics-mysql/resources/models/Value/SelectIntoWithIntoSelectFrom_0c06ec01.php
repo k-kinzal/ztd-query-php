@@ -40,6 +40,26 @@ final class SelectIntoWithIntoSelectFrom_0c06ec01 implements \SqlSemantics\State
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->into, $this->selectFrom];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->into, \SqlSemantics\Statement\Model\MySql\Role\IntoForm::class, $replace), $this->replacement($this->selectFrom, \SqlSemantics\Statement\Model\MySql\Role\SelectFromForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new into, preserving every other field.
      */
     public function withInto(\SqlSemantics\Statement\Model\MySql\Role\IntoForm $into): self

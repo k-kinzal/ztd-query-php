@@ -6,6 +6,7 @@ namespace SqlSemantics\Core\Ast;
 
 use SqlParser\Parser\Node;
 use SqlSemantics\Core\Analysis\ValueReader;
+use SqlSemantics\Core\Language;
 use SqlSemantics\Core\Schema\ColumnDefinition;
 use SqlSemantics\Core\Schema\TableConstraint;
 use SqlSemantics\Core\Type\Nullability;
@@ -23,7 +24,7 @@ final class ColumnReader
      */
     public function __construct(public readonly Identifiers $identifiers, ?ValueReader $values = null)
     {
-        $this->values = $values ?? $identifiers->dialect->platform()->values((new DialectParser($identifiers->dialect))->version());
+        $this->values = $values ?? $identifiers->dialect->platform()->values((new Language($identifiers->dialect))->version);
     }
 
     /**

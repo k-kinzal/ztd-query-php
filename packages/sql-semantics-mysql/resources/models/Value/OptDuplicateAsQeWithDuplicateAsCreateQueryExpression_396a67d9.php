@@ -40,6 +40,26 @@ final class OptDuplicateAsQeWithDuplicateAsCreateQueryExpression_396a67d9 implem
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->duplicate, $this->asCreateQueryExpression];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->duplicate, \SqlSemantics\Statement\Model\MySql\Role\DuplicateForm::class, $replace), $this->replacement($this->asCreateQueryExpression, \SqlSemantics\Statement\Model\MySql\Role\AsCreateQueryExpressionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new duplicate, preserving every other field.
      */
     public function withDuplicate(\SqlSemantics\Statement\Model\MySql\Role\DuplicateForm $duplicate): self

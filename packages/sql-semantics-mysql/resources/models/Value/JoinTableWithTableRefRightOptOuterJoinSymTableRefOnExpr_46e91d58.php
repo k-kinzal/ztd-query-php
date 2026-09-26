@@ -54,6 +54,26 @@ final class JoinTableWithTableRefRightOptOuterJoinSymTableRefOnExpr_46e91d58 imp
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableRef, $this->optOuter, $this->tableRef2, $this->expr];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableRef, \SqlSemantics\Statement\Model\MySql\Role\TableRefForm::class, $replace), $this->replacement($this->optOuter, \SqlSemantics\Statement\Model\MySql\Role\OptOuterForm::class, $replace), $this->replacement($this->tableRef2, \SqlSemantics\Statement\Model\MySql\Role\TableRefForm::class, $replace), $this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new tableRef, preserving every other field.
      */
     public function withTableRef(\SqlSemantics\Statement\Model\MySql\Role\TableRefForm $tableRef): self

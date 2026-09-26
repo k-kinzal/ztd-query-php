@@ -46,6 +46,26 @@ final class SpDeclWithDeclareSymSpDeclIdentsTypeWithOptCollateSpOptDefault_0ec33
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->spDeclIdents, $this->typeWithOptCollate, $this->spOptDefault];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->spDeclIdents, \SqlSemantics\Statement\Model\MySql\Role\SpDeclIdentsForm::class, $replace), $this->replacement($this->typeWithOptCollate, \SqlSemantics\Statement\Model\MySql\Role\TypeWithOptCollateForm::class, $replace), $this->replacement($this->spOptDefault, \SqlSemantics\Statement\Model\MySql\Role\SpOptDefaultForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new spDeclIdents, preserving every other field.
      */
     public function withSpDeclIdents(\SqlSemantics\Statement\Model\MySql\Role\SpDeclIdentsForm $spDeclIdents): self

@@ -40,6 +40,26 @@ final class SelectLimitWithLimitClauseOffsetClause_48e31c1e implements \SqlSeman
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->limitClause, $this->offsetClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->limitClause, \SqlSemantics\Statement\Model\PostgreSql\Role\LimitClauseForm::class, $replace), $this->replacement($this->offsetClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OffsetClauseForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new limitClause, preserving every other field.
      */
     public function withLimitClause(\SqlSemantics\Statement\Model\PostgreSql\Role\LimitClauseForm $limitClause): self

@@ -40,6 +40,26 @@ final class FdwOptionsWithFdwOptionsFdwOption_cc839aa7 implements \SqlSemantics\
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->fdwOptions, $this->fdwOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->fdwOptions, \SqlSemantics\Statement\Model\PostgreSql\Role\FdwOptionsForm::class, $replace), $this->replacement($this->fdwOption, \SqlSemantics\Statement\Model\PostgreSql\Role\FdwOptionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new fdwOptions, preserving every other field.
      */
     public function withFdwOptions(\SqlSemantics\Statement\Model\PostgreSql\Role\FdwOptionsForm $fdwOptions): self

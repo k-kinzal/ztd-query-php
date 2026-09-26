@@ -40,6 +40,26 @@ final class TableRefWithFuncTableFuncAliasClause_ddb1efaf implements \SqlSemanti
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->funcTable, $this->funcAliasClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->funcTable, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncTableForm::class, $replace), $this->replacement($this->funcAliasClause, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncAliasClauseForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new funcTable, preserving every other field.
      */
     public function withFuncTable(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncTableForm $funcTable): self

@@ -42,6 +42,26 @@ final class WindowFuncCallWithDenseRankSymWindowingClause_70d7a6d6 implements \S
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->windowingClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->windowingClause, \SqlSemantics\Statement\Model\MySql\Role\WindowingClauseForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new windowingClause, preserving every other field.
      */
     public function withWindowingClause(\SqlSemantics\Statement\Model\MySql\Role\WindowingClauseForm $windowingClause): self

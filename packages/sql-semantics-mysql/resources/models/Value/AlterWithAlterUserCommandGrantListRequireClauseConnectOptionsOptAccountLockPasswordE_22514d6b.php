@@ -12,7 +12,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterWithAlterUserCommandGrantListRequireClauseConnectOptionsOptAccountLockPasswordE_22514d6b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterWithAlterUserCommandGrantListRequireClauseConnectOptionsOptAccountLockPasswordE_22514d6b implements \SqlSemantics\Statement\Model\MySql\Role\AlterForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class AlterWithAlterUserCommandGrantListRequireClauseConnectOptionsOptAccountLockPasswordE_22514d6b implements \SqlSemantics\Statement\Model\MySql\Role\AlterForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
     use \SqlSemantics\Statement\Assertion;
 
@@ -49,6 +49,26 @@ final class AlterWithAlterUserCommandGrantListRequireClauseConnectOptionsOptAcco
         $this->connectOptions->write($writer);
         $writer->comments($this->comments, 4);
         $this->optAccountLockPasswordExpireOptions->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->alterUserCommand, $this->grantList, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->alterUserCommand, \SqlSemantics\Statement\Model\MySql\Role\AlterUserCommandForm::class, $replace), $this->replacement($this->grantList, \SqlSemantics\Statement\Model\MySql\Role\GrantListForm::class, $replace), $this->replacement($this->requireClause, \SqlSemantics\Statement\Model\MySql\Role\RequireClauseForm::class, $replace), $this->replacement($this->connectOptions, \SqlSemantics\Statement\Model\MySql\Role\ConnectOptionsForm::class, $replace), $this->replacement($this->optAccountLockPasswordExpireOptions, \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionsForm::class, $replace), $this->comments);
     }
 
     /**

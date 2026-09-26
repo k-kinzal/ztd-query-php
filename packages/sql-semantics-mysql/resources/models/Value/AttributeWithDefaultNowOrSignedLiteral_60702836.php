@@ -38,6 +38,26 @@ final class AttributeWithDefaultNowOrSignedLiteral_60702836 implements \SqlSeman
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->nowOrSignedLiteral];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->nowOrSignedLiteral, \SqlSemantics\Statement\Model\MySql\Role\NowOrSignedLiteralForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new nowOrSignedLiteral, preserving every other field.
      */
     public function withNowOrSignedLiteral(\SqlSemantics\Statement\Model\MySql\Role\NowOrSignedLiteralForm $nowOrSignedLiteral): self

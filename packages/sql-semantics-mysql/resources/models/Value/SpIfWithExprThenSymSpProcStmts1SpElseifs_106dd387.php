@@ -46,6 +46,26 @@ final class SpIfWithExprThenSymSpProcStmts1SpElseifs_106dd387 implements \SqlSem
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->expr, $this->spProcStmts1, $this->spElseifs];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->replacement($this->spProcStmts1, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmts1Form::class, $replace), $this->replacement($this->spElseifs, \SqlSemantics\Statement\Model\MySql\Role\SpElseifsForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new expr, preserving every other field.
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self

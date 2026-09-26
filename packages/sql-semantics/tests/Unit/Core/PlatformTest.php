@@ -6,48 +6,21 @@ namespace Tests\Unit\Core;
 
 use PHPUnit\Framework\TestCase;
 use SqlParser\Lexer\Token;
-use SqlSemantics\Core\Binder;
 use SqlSemantics\Core\Dialect;
-use SqlSemantics\Core\Model\Expression;
-use SqlSemantics\Core\Model\ExpressionKind;
-use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\Type\Nullability;
 use SqlSemantics\Core\Type\TypeDescriptor;
+use SqlSemantics\Facade\Schema as SchemaFacade;
 use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\SemanticException::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(SchemaBuilder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(SchemaFacade::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(Binder::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\NullFacts::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\TypeResolution::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\IdentitySequence::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\SyntaxGuard::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\Scope::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\BoundRelation::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\FromBinder::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\SelectModifiersBinder::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\TableResolver::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\SelectBinder::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\ProjectionBinder::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\ExpressionRules::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\LiteralBinder::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\ColumnDefinition::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\TableDefinition::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\ConstraintKind::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\TableConstraint::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(Nullability::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(TypeDescriptor::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(Expression::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Model\Join::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(ExpressionKind::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Model\BoundSelect::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Model\TableUse::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Model\ColumnBinding::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Model\Ordering::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Model\OutputColumn::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Model\JoinKind::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\DialectParser::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\TokenGroups::class)]
@@ -56,23 +29,25 @@ use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\SchemaReader::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\ConstraintReader::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\Identifiers::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\StatementList::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Policy\SyntaxRules::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\PostgreSql\QueryRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\PostgreSql\TypeRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\PostgreSql\NameRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\PostgreSql\SchemaRules::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\Sqlite\QueryRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\Sqlite\Platform::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\Sqlite\TypeRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\Sqlite\NameRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\Sqlite\SchemaRules::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\QueryRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\Platform::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\TypeRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\NameRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\SchemaRules::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Language::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Composition\Composition::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Composition\Operands::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Analysis\LeafReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Analysis\Vocabulary::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\Builder::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Analysis\ValueReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Statement\Statement::class)]
@@ -88,7 +63,7 @@ final class PlatformTest extends TestCase
         $platform->method('parser')->willReturn($parser);
         $dialect = self::createStub(Dialect::class);
         $dialect->method('platform')->willReturn($platform);
-        self::assertSame('application-1', (new \SqlSemantics\Core\Ast\DialectParser($dialect))->version());
+        self::assertSame('application-1', (new \SqlSemantics\Core\Ast\DialectParser(new \SqlSemantics\Core\Language($dialect)))->version());
     }
     public function testDefaultSchemaUsesTheLanguageNamespace(): void
     {
@@ -102,12 +77,12 @@ final class PlatformTest extends TestCase
         self::assertSame(PostgreSqlDialect::PostgreSql->platform()::class, $accept(PostgreSqlDialect::PostgreSql->platform())::class);
         self::assertSame(PostgreSqlDialect::PostgreSql->platform()->statementNames()[0], PostgreSqlDialect::PostgreSql->platform()->parser()->parse('SELECT 1')->name);
     }
-    public function testSyntaxRecognizesSelectBody(): void
+    public function testSyntaxRecognizesTheCreateTableDeclaration(): void
     {
         $accept = static fn (\SqlSemantics\Core\Platform $rules): \SqlSemantics\Core\Platform => $rules;
         self::assertSame(PostgreSqlDialect::PostgreSql->platform()::class, $accept(PostgreSqlDialect::PostgreSql->platform())::class);
-        $tree = PostgreSqlDialect::PostgreSql->platform()->parser()->parse('SELECT 1');
-        self::assertNotEmpty(\SqlSemantics\Core\Ast\Tree::outer($tree, PostgreSqlDialect::PostgreSql->platform()->syntax()->nodes('selectBody')));
+        $tree = PostgreSqlDialect::PostgreSql->platform()->parser()->parse('CREATE TABLE t (id INTEGER)');
+        self::assertNotEmpty(\SqlSemantics\Core\Ast\Tree::outer($tree, PostgreSqlDialect::PostgreSql->platform()->syntax()->nodes('createTable')));
     }
     public function testNamesDecodeQuotedIdentifiers(): void
     {
@@ -115,26 +90,24 @@ final class PlatformTest extends TestCase
         self::assertSame(PostgreSqlDialect::PostgreSql->platform()::class, $accept(PostgreSqlDialect::PostgreSql->platform())::class);
         self::assertSame('Mixed', PostgreSqlDialect::PostgreSql->platform()->names()->name(new Token(1, 'ID', '"Mixed"', 0)));
     }
-    public function testTypesRetainDialectIdentity(): void
+    public function testTypesReadDeclaredTypes(): void
     {
         $accept = static fn (\SqlSemantics\Core\Platform $rules): \SqlSemantics\Core\Platform => $rules;
         self::assertSame(PostgreSqlDialect::PostgreSql->platform()::class, $accept(PostgreSqlDialect::PostgreSql->platform())::class);
-        self::assertSame(PostgreSqlDialect::PostgreSql, PostgreSqlDialect::PostgreSql->platform()->types()->boolean()->dialect);
+        self::assertSame('integer', PostgreSqlDialect::PostgreSql->platform()->types()->canonical('INT4'));
     }
     public function testSchemaKeepsDeclarations(): void
     {
         $accept = static fn (\SqlSemantics\Core\Platform $rules): \SqlSemantics\Core\Platform => $rules;
         self::assertSame(PostgreSqlDialect::PostgreSql->platform()::class, $accept(PostgreSqlDialect::PostgreSql->platform())::class);
-        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
+        $schema = (new SchemaFacade(PostgreSqlDialect::PostgreSql))->analyze('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
         self::assertCount(2, $schema->tables[0]->columns);
     }
-    public function testQueryKeepsProjectionOrder(): void
+    public function testBuilderComposesValuesOfTheLanguage(): void
     {
-        $accept = static fn (\SqlSemantics\Core\Platform $rules): \SqlSemantics\Core\Platform => $rules;
-        self::assertSame(PostgreSqlDialect::PostgreSql->platform()::class, $accept(PostgreSqlDialect::PostgreSql->platform())::class);
-        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
-        $bound = (new Binder($schema))->bind('SELECT label, id FROM items');
-        self::assertSame(['label', 'id'], array_column($bound->outputs, 'name'));
+        $language = new \SqlSemantics\Core\Language(PostgreSqlDialect::PostgreSql);
+        $builder = PostgreSqlDialect::PostgreSql->platform()->builder($language);
+        self::assertSame('"Mixed" = 1', \SqlSemantics\Statement\Writer::render($builder->compare($builder->column('Mixed'), '=', $builder->integer(1))));
     }
     public function testValuesReconstructsUsingTheParserRelease(): void
     {

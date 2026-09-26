@@ -46,6 +46,26 @@ final class XaWithXaSymBeginOrStartXidOptJoinOrResume_d0ed05c5 implements \SqlSe
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->beginOrStart, $this->xid, $this->optJoinOrResume];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->beginOrStart, \SqlSemantics\Statement\Model\MySql\Role\BeginOrStartForm::class, $replace), $this->replacement($this->xid, \SqlSemantics\Statement\Model\MySql\Role\XidForm::class, $replace), $this->replacement($this->optJoinOrResume, \SqlSemantics\Statement\Model\MySql\Role\OptJoinOrResumeForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new beginOrStart, preserving every other field.
      */
     public function withBeginOrStart(\SqlSemantics\Statement\Model\MySql\Role\BeginOrStartForm $beginOrStart): self

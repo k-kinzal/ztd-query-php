@@ -48,6 +48,26 @@ final class SelectNoParensWithSelectClauseOptSortClauseSelectLimitOptForLockingC
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->selectClause, $this->optSortClause, $this->selectLimit, $this->optForLockingClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->selectClause, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectClauseForm::class, $replace), $this->replacement($this->optSortClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSortClauseForm::class, $replace), $this->replacement($this->selectLimit, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitForm::class, $replace), $this->replacement($this->optForLockingClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OptForLockingClauseForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new selectClause, preserving every other field.
      */
     public function withSelectClause(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectClauseForm $selectClause): self

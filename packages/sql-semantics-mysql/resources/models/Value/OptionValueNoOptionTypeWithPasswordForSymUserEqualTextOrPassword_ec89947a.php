@@ -48,6 +48,26 @@ final class OptionValueNoOptionTypeWithPasswordForSymUserEqualTextOrPassword_ec8
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->user, $this->equal, $this->textOrPassword];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->user, \SqlSemantics\Statement\Model\MySql\Role\UserForm::class, $replace), $this->replacement($this->equal, \SqlSemantics\Statement\Model\MySql\Role\EqualForm::class, $replace), $this->replacement($this->textOrPassword, \SqlSemantics\Statement\Model\MySql\Role\TextOrPasswordForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new user, preserving every other field.
      */
     public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self

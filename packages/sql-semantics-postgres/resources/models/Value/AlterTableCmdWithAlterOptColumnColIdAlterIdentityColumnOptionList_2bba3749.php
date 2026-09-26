@@ -46,6 +46,26 @@ final class AlterTableCmdWithAlterOptColumnColIdAlterIdentityColumnOptionList_2b
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optColumn, $this->colId, $this->alterIdentityColumnOptionList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optColumn, \SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnForm::class, $replace), $this->replacement($this->colId, \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm::class, $replace), $this->replacement($this->alterIdentityColumnOptionList, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterIdentityColumnOptionListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optColumn, preserving every other field.
      */
     public function withOptColumn(\SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnForm $optColumn): self

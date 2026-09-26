@@ -44,6 +44,26 @@ final class ReorgPartitionRuleWithReorganizeSymPartitionSymOptNoWriteToBinlogReo
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optNoWriteToBinlog, $this->reorgPartsRule];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optNoWriteToBinlog, \SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm::class, $replace), $this->replacement($this->reorgPartsRule, \SqlSemantics\Statement\Model\MySql\Role\ReorgPartsRuleForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optNoWriteToBinlog, preserving every other field.
      */
     public function withOptNoWriteToBinlog(\SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog): self

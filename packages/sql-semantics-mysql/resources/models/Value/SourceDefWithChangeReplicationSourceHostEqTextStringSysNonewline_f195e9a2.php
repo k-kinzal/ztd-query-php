@@ -42,6 +42,26 @@ final class SourceDefWithChangeReplicationSourceHostEqTextStringSysNonewline_f19
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->changeReplicationSourceHost, $this->textStringSysNonewline];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->changeReplicationSourceHost, \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceHostForm::class, $replace), $this->replacement($this->textStringSysNonewline, \SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new changeReplicationSourceHost, preserving every other field.
      */
     public function withChangeReplicationSourceHost(\SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceHostForm $changeReplicationSourceHost): self

@@ -40,6 +40,26 @@ final class SelectInit2WithSelectPart2UnionClause_dd0d3cd3 implements \SqlSemant
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->selectPart2, $this->unionClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->selectPart2, \SqlSemantics\Statement\Model\MySql\Role\SelectPart2Form::class, $replace), $this->replacement($this->unionClause, \SqlSemantics\Statement\Model\MySql\Role\UnionClauseForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new selectPart2, preserving every other field.
      */
     public function withSelectPart2(\SqlSemantics\Statement\Model\MySql\Role\SelectPart2Form $selectPart2): self

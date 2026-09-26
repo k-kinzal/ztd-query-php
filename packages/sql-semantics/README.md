@@ -5,7 +5,7 @@
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
-SQL Semantics is the semantic phase of a database front end for MySQL, PostgreSQL, and SQLite. It turns any statement of the shipped grammars into an immutable, typed statement model that writes the SQL back, and it binds SELECT statements against a schema built from CREATE TABLE statements, resolving names, types, conservative NULL facts, and the relation occurrences each value comes from. No database connection is needed. This package is the shared runtime; install it through the package of your database.
+SQL Semantics is the semantic phase of a database front end for MySQL, PostgreSQL, and SQLite. It reads SQL as the server reads it: with the grammar of one release, under the session settings that change tokenization, and with the parameter markers the statement was written for. Every statement of the shipped grammars becomes an immutable, typed statement model that writes the SQL back, can be walked and rewritten without naming its classes, and can be composed from PHP values under stable names. Table declarations become a state the statements are read against. No database connection is needed. This package is the shared runtime; install it through the package of your database.
 
 ## Requirements
 
@@ -13,7 +13,7 @@ SQL Semantics is the semantic phase of a database front end for MySQL, PostgreSQ
 
 ## Support Syntax
 
-The following grammar versions are supported. Pass the dialect of your database package and, optionally, the version tag to `Semantics` or `Schema`; omitting the version tag uses the default for that database. State declarations support all listed versions; SELECT binding with `Binder` requires MySQL 8.0 or later.
+The following grammar versions are supported. Pass the dialect of your database package and, optionally, the version tag to `Semantics` or `Schema`; omitting the version tag uses the default for that database. Common table expressions in `Builder` need MySQL 8.0 or later.
 
 ### MySQL
 
@@ -82,31 +82,48 @@ $statement->command;    // the typed model of the statement
 $statement->toString(); // 'WITH changed AS( UPDATE accounts SET balance = balance + 10 WHERE id = 7 RETURNING id , balance ) SELECT id , balance FROM changed ;'
 ```
 
-Update a SQLite WHERE clause with structured values while keeping the original statement:
+A MySQL session's `sql_mode` changes how text is read, and a statement written for PDO carries markers the server itself rejects. Both are part of the language:
 
 ```php
-use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
-use SqlSemantics\Statement\Model\Sqlite\Value\EcmdWithCmdxSemi_b7577a8f as CommandEnvelope;
-use SqlSemantics\Statement\Model\Sqlite\Value\ExprWithExprEqNeExpr_49d16f16 as Comparison;
-use SqlSemantics\Statement\Model\Sqlite\Value\ExprWithIdj_e1794d68 as Field;
-use SqlSemantics\Statement\Model\Sqlite\Value\OneselectWithSelectDistinctSelcollistFromWhereOptGroupbyOptHavingOptOrderbyOptLimitOpt_218e0475 as Select;
-use SqlSemantics\Statement\Model\Sqlite\Value\TermWithInteger_298801b2 as IntegerValue;
-use SqlSemantics\Statement\Model\Sqlite\Value\WhereOptWithWhereExpr_93445e09 as Where;
+use SqlSemantics\Core\Parameters;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Mode;
 
-$original = (new Semantics(SqliteDialect::Sqlite))->analyze('SELECT foo FROM items');
-$command = $original->command;
+$semantics = new Semantics(Dialect::MySql, 'mysql-8.4.7', Mode::fromString('ANSI_QUOTES,NO_BACKSLASH_ESCAPES'), Parameters::Pdo);
 
-if ($command instanceof CommandEnvelope && $command->cmdx instanceof Select) {
-    $where = new Where(new Comparison(new Field('foo'), '=', new IntegerValue('1')));
-    $select = $command->cmdx->withWhere($where);
-    $updated = $original->withCommand($command->withCmdx($select));
-
-    $original->toString(); // 'SELECT foo FROM items'
-    $updated->toString();  // 'SELECT foo FROM items WHERE foo = 1'
-}
+$semantics->analyze('SELECT "name" FROM users WHERE id = :id')->toString(); // "name" is an identifier, :id a parameter
+$semantics->split("SELECT 1; CREATE PROCEDURE p() BEGIN SELECT 1; SELECT 2; END; SELECT 3");
+// ['SELECT 1;', ' CREATE PROCEDURE p() BEGIN SELECT 1; SELECT 2; END;', ' SELECT 3']
 ```
 
-See [statement models](docs/statements.md) for building statements without SQL, and [schema binding](docs/binding.md) for names, types, and NULL facts.
+Walk any statement for the values of a role, rewrite it from the leaves up, and compose new values without naming a generated class:
+
+```php
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Statement\Element;
+use SqlSemantics\Statement\Model\Sqlite\Role\NmForm;
+use SqlSemantics\Statement\Model\Sqlite\Value\NmWithIdj_a2015ecf as Name;
+use SqlSemantics\Statement\Traversal;
+use SqlSemantics\Statement\Writer;
+
+$semantics = new Semantics(Dialect::Sqlite);
+$statement = $semantics->analyze('SELECT id FROM users WHERE active = 1');
+
+Traversal::find($statement->command, NmForm::class);                // every name in the statement
+$rewritten = Traversal::rewrite($statement->command, static fn (Element $value): Element => $value instanceof Name && $value->name === 'users' ? $value->withName('members') : $value);
+Writer::render($rewritten);                                         // 'SELECT id FROM members WHERE active = 1'
+
+$builder = $semantics->builder();
+$rows = $builder->unionAll($semantics->analyze("SELECT 1 AS id, 'a' AS name")->command, $semantics->analyze("SELECT 2, 'b'")->command);
+Writer::render($builder->with([$builder->cte('users', $rows)], $statement->command));
+// "WITH users AS( SELECT 1 AS id , 'a' AS name UNION ALL SELECT 2 , 'b' ) SELECT id FROM users WHERE active = 1"
+Writer::render($builder->compare($builder->column('select'), '=', $builder->string("it's")));
+// "\"select\" = 'it''s'"
+```
+
+See [statement models](docs/statements.md) for the models, traversal, comments, and statement boundaries; [composition](docs/composition.md) for building values from PHP data; and [schema state](docs/schema.md) for reading declarations.
 
 ## License
 

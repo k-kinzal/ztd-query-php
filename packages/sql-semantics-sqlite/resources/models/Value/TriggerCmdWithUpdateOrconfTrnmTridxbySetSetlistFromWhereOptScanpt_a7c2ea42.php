@@ -64,6 +64,26 @@ final class TriggerCmdWithUpdateOrconfTrnmTridxbySetSetlistFromWhereOptScanpt_a7
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->orconf, $this->trnm, $this->tridxby, $this->setlist, $this->from, $this->where, $this->scanpt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->orconf, \SqlSemantics\Statement\Model\Sqlite\Role\OrconfForm::class, $replace), $this->replacement($this->trnm, \SqlSemantics\Statement\Model\Sqlite\Role\TrnmForm::class, $replace), $this->replacement($this->tridxby, \SqlSemantics\Statement\Model\Sqlite\Role\TridxbyForm::class, $replace), $this->replacement($this->setlist, \SqlSemantics\Statement\Model\Sqlite\Role\SetlistForm::class, $replace), $this->replacement($this->from, \SqlSemantics\Statement\Model\Sqlite\Role\FromForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm::class, $replace), $this->replacement($this->scanpt, \SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new orconf, preserving every other field.
      */
     public function withOrconf(\SqlSemantics\Statement\Model\Sqlite\Role\OrconfForm $orconf): self

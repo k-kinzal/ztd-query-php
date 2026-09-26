@@ -40,6 +40,26 @@ final class GroupReplicationWithGroupReplicationStartOptGroupReplicationStartOpt
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->groupReplicationStart, $this->optGroupReplicationStartOptions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->groupReplicationStart, \SqlSemantics\Statement\Model\MySql\Role\GroupReplicationStartForm::class, $replace), $this->replacement($this->optGroupReplicationStartOptions, \SqlSemantics\Statement\Model\MySql\Role\OptGroupReplicationStartOptionsForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new groupReplicationStart, preserving every other field.
      */
     public function withGroupReplicationStart(\SqlSemantics\Statement\Model\MySql\Role\GroupReplicationStartForm $groupReplicationStart): self

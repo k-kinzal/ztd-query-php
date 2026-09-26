@@ -40,6 +40,26 @@ final class GcolAttributeListWithGcolAttributeListGcolAttribute_3e44e520 impleme
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->gcolAttributeList, $this->gcolAttribute];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->gcolAttributeList, \SqlSemantics\Statement\Model\MySql\Role\GcolAttributeListForm::class, $replace), $this->replacement($this->gcolAttribute, \SqlSemantics\Statement\Model\MySql\Role\GcolAttributeForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new gcolAttributeList, preserving every other field.
      */
     public function withGcolAttributeList(\SqlSemantics\Statement\Model\MySql\Role\GcolAttributeListForm $gcolAttributeList): self

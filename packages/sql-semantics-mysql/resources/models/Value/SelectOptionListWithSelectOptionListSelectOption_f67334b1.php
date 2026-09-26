@@ -40,6 +40,26 @@ final class SelectOptionListWithSelectOptionListSelectOption_f67334b1 implements
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->selectOptionList, $this->selectOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->selectOptionList, \SqlSemantics\Statement\Model\MySql\Role\SelectOptionListForm::class, $replace), $this->replacement($this->selectOption, \SqlSemantics\Statement\Model\MySql\Role\SelectOptionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new selectOptionList, preserving every other field.
      */
     public function withSelectOptionList(\SqlSemantics\Statement\Model\MySql\Role\SelectOptionListForm $selectOptionList): self

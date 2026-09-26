@@ -42,6 +42,26 @@ final class GorderListWithGorderListOrderExpr_dfb08b0b implements \SqlSemantics\
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->gorderList, $this->orderExpr];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->gorderList, \SqlSemantics\Statement\Model\MySql\Role\GorderListForm::class, $replace), $this->replacement($this->orderExpr, \SqlSemantics\Statement\Model\MySql\Role\OrderExprForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new gorderList, preserving every other field.
      */
     public function withGorderList(\SqlSemantics\Statement\Model\MySql\Role\GorderListForm $gorderList): self

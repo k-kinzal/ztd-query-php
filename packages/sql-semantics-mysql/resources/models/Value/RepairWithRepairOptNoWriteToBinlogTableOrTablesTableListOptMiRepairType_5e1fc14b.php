@@ -12,7 +12,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RepairWithRepairOptNoWriteToBinlogTableOrTablesTableListOptMiRepairType_5e1fc14b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class RepairWithRepairOptNoWriteToBinlogTableOrTablesTableListOptMiRepairType_5e1fc14b implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\RepairForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class RepairWithRepairOptNoWriteToBinlogTableOrTablesTableListOptMiRepairType_5e1fc14b implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\RepairForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
     use \SqlSemantics\Statement\Assertion;
 
@@ -47,6 +47,26 @@ final class RepairWithRepairOptNoWriteToBinlogTableOrTablesTableListOptMiRepairT
         $this->tableList->write($writer);
         $writer->comments($this->comments, 4);
         $this->optMiRepairType->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optNoWriteToBinlog, $this->tableOrTables, $this->tableList, $this->optMiRepairType];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optNoWriteToBinlog, \SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm::class, $replace), $this->replacement($this->tableOrTables, \SqlSemantics\Statement\Model\MySql\Role\TableOrTablesForm::class, $replace), $this->replacement($this->tableList, \SqlSemantics\Statement\Model\MySql\Role\TableListForm::class, $replace), $this->replacement($this->optMiRepairType, \SqlSemantics\Statement\Model\MySql\Role\OptMiRepairTypeForm::class, $replace), $this->comments);
     }
 
     /**

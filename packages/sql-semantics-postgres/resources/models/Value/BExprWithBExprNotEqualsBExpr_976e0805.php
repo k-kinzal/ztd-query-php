@@ -26,10 +26,10 @@ final class BExprWithBExprNotEqualsBExpr_976e0805 implements \SqlSemantics\State
         public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($bExpr), 'The bExpr must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($bExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 8,));
+        $this->assertOperandBindingStrength($bExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 8,), \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_RULES, 'b_expr');
         $this->assertMatchesPattern($notEquals, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['NOT_EQUALS'], 'The notEquals must be a complete NOT_EQUALS lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($bExpr2), 'The bExpr2 must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($bExpr2, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 8,));
+        $this->assertOperandBindingStrength($bExpr2, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 8,), \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_RULES, 'b_expr');
     }
 
     /**
@@ -43,6 +43,26 @@ final class BExprWithBExprNotEqualsBExpr_976e0805 implements \SqlSemantics\State
         $writer->append($this->notEquals);
         $writer->comments($this->comments, 2);
         $this->bExpr2->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->bExpr, $this->bExpr2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->bExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm::class, $replace), $this->notEquals, $this->replacement($this->bExpr2, \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm::class, $replace), $this->comments);
     }
 
     /**

@@ -48,6 +48,26 @@ final class SpProcStmtFetchWithFetchSymSpOptFetchNoiseIdentIntoSpFetchList_4d8ae
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->spOptFetchNoise, $this->ident, $this->spFetchList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->spOptFetchNoise, \SqlSemantics\Statement\Model\MySql\Role\SpOptFetchNoiseForm::class, $replace), $this->replacement($this->ident, \SqlSemantics\Statement\Model\MySql\Role\IdentForm::class, $replace), $this->replacement($this->spFetchList, \SqlSemantics\Statement\Model\MySql\Role\SpFetchListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new spOptFetchNoise, preserving every other field.
      */
     public function withSpOptFetchNoise(\SqlSemantics\Statement\Model\MySql\Role\SpOptFetchNoiseForm $spOptFetchNoise): self

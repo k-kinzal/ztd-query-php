@@ -42,6 +42,26 @@ final class CteListWithCteListCommonTableExpr_1cee770c implements \SqlSemantics\
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->cteList, $this->commonTableExpr];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->cteList, \SqlSemantics\Statement\Model\PostgreSql\Role\CteListForm::class, $replace), $this->replacement($this->commonTableExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\CommonTableExprForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new cteList, preserving every other field.
      */
     public function withCteList(\SqlSemantics\Statement\Model\PostgreSql\Role\CteListForm $cteList): self

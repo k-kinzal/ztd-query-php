@@ -42,6 +42,26 @@ final class ValuesListWithValuesListRowValue_7dec9bff implements \SqlSemantics\S
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->valuesList, $this->rowValue];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->valuesList, \SqlSemantics\Statement\Model\MySql\Role\ValuesListForm::class, $replace), $this->replacement($this->rowValue, \SqlSemantics\Statement\Model\MySql\Role\RowValueForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new valuesList, preserving every other field.
      */
     public function withValuesList(\SqlSemantics\Statement\Model\MySql\Role\ValuesListForm $valuesList): self

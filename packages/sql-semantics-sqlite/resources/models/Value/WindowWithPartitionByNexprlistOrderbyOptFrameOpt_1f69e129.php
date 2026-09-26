@@ -48,6 +48,26 @@ final class WindowWithPartitionByNexprlistOrderbyOptFrameOpt_1f69e129 implements
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->nexprlist, $this->orderBy, $this->frameOpt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->nexprlist, \SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm::class, $replace), $this->replacement($this->orderBy, \SqlSemantics\Statement\Model\Sqlite\Role\OrderbyOptForm::class, $replace), $this->replacement($this->frameOpt, \SqlSemantics\Statement\Model\Sqlite\Role\FrameOptForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new nexprlist, preserving every other field.
      */
     public function withNexprlist(\SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm $nexprlist): self
