@@ -12,7 +12,7 @@
             "dist": {
                 "type": "path",
                 "url": "../ztd-query-core",
-                "reference": "95f7a812f43fce3355576af05500b658eccfae36"
+                "reference": "b0da4be76fe69aba49c64d31e272e0d16a4e2b16"
             },
             "require": {
                 "php": "^8.1"
@@ -93,8 +93,7 @@
                 ],
                 "fuzz:session-state": [
                     "Composer\\Config::disableProcessTimeout",
-                    "@php -r '$dir=\"fuzz/corpus/session-state\"; is_dir($dir) || mkdir($dir,0777,true); foreach (glob(\"seeds/session-state/*\") as $seed) { copy($seed,$dir.\"/\".basename($seed)); }' --",
-                    "php-fuzzer fuzz fuzz/fuzz_session_state.php fuzz/corpus/session-state/ --timeout=15"
+                    "php-fuzzer fuzz fuzz/fuzz_session_state.php --timeout=15"
                 ],
                 "fuzz:smoke": [
                     "Composer\\Config::disableProcessTimeout",
@@ -1765,7 +1764,7 @@
             "dist": {
                 "type": "path",
                 "url": "../ztd-query-postgres",
-                "reference": "82d8e98e15a406023f5808d440b45d356f7a004d"
+                "reference": "6b593ac2d7f39bed274bca167cd8578f1de02b3f"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",

@@ -68,8 +68,7 @@
         "fuzz": "@fuzz:smoke",
         "fuzz:session-state": [
             "Composer\\Config::disableProcessTimeout",
-            "@php -r '$dir=\"fuzz/corpus/session-state\"; is_dir($dir) || mkdir($dir,0777,true); foreach (glob(\"seeds/session-state/*\") as $seed) { copy($seed,$dir.\"/\".basename($seed)); }' --",
-            "php-fuzzer fuzz fuzz/fuzz_session_state.php fuzz/corpus/session-state/ --timeout=15"
+            "php-fuzzer fuzz fuzz/fuzz_session_state.php --timeout=15"
         ],
         "fuzz:smoke": [
             "Composer\\Config::disableProcessTimeout",
