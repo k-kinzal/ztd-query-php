@@ -145,6 +145,39 @@ final class Domain
     }
 
     /**
+     * The elements the keys select from this domain's arrays, or null when that is not known.
+     *
+     * A resolved key reads the element written under it; a key that did not
+     * resolve reads whatever element the array holds. Every alternative here
+     * must be an array and every resolved key must find its element, so a
+     * lookup never resolves to a value the array does not hold. Keys paired
+     * from parts that vary independently select elements that are paired the
+     * same way, so the result stays marked as combined.
+     */
+    public function select(self $keys, ?string $expression = null): ?self
+    {
+        $selected = null;
+        foreach ($this->terms as $array) {
+            if (!$array instanceof ArrayTerm) {
+                return null;
+            }
+            foreach ($keys->terms as $key) {
+                $element = $key instanceof LiteralTerm
+                    ? $array->element($key->value)
+                    : $array->anyValue(Origin::Unresolved, $expression);
+                if ($element === null) {
+                    return null;
+                }
+                $selected = $selected === null ? $element : $selected->union($element);
+            }
+        }
+
+        return $selected === null
+            ? null
+            : self::fromTerms($selected->terms, $selected->widened || $this->widened, $selected->combined || $this->combined || $keys->combined);
+    }
+
+    /**
      * The term standing for a pattern, collapsed to a literal when fully resolved.
      */
     public static function asTerm(TextPattern $pattern): Term

@@ -107,6 +107,88 @@ final class DomainTest extends TestCase
         self::assertSame('id = {$}', $domain->patterns()[0]->display());
     }
 
+    public function testSelectReadsTheElementUnderAResolvedKey(): void
+    {
+        $arrays = Domain::of(new ArrayTerm([
+            new ArrayEntry(Domain::literal('u'), Domain::literal('users')),
+            new ArrayEntry(Domain::literal('a'), Domain::literal('admins')),
+        ]));
+
+        self::assertSame('admins', $arrays->select(Domain::literal('a'))?->soleLiteral()?->value);
+    }
+
+    public function testSelectReadsEveryElementUnderAKeyThatDidNotResolve(): void
+    {
+        $arrays = Domain::of(new ArrayTerm([
+            new ArrayEntry(Domain::literal('u'), Domain::literal('users')),
+            new ArrayEntry(Domain::literal('a'), Domain::literal('admins')),
+        ]));
+        $key = Domain::opaque(TypeShape::of(['string']), Origin::External, '$_GET[\'kind\']');
+
+        self::assertSame('literal:string:admins|literal:string:users', $arrays->select($key)?->signature());
+    }
+
+    public function testSelectReadsEachElementAKeyWithSeveralValuesNames(): void
+    {
+        $arrays = Domain::of(new ArrayTerm([
+            new ArrayEntry(Domain::literal('u'), Domain::literal('users')),
+            new ArrayEntry(Domain::literal('a'), Domain::literal('admins')),
+            new ArrayEntry(Domain::literal('g'), Domain::literal('guests')),
+        ]));
+        $keys = Domain::literal('u')->union(Domain::literal('g'));
+
+        self::assertSame('literal:string:guests|literal:string:users', $arrays->select($keys)?->signature());
+    }
+
+    public function testSelectReadsAcrossEveryArrayAlternative(): void
+    {
+        $arrays = Domain::of(new ArrayTerm([new ArrayEntry(Domain::literal('t'), Domain::literal('users'))]))
+            ->union(Domain::of(new ArrayTerm([new ArrayEntry(Domain::literal('t'), Domain::literal('admins'))])));
+
+        self::assertSame('literal:string:admins|literal:string:users', $arrays->select(Domain::literal('t'))?->signature());
+    }
+
+    public function testSelectKeepsAGapForAnArrayKnownOnlyInPart(): void
+    {
+        $arrays = Domain::of(new ArrayTerm([new ArrayEntry(Domain::literal('u'), Domain::literal('users'))], false));
+
+        self::assertSame('users', $arrays->select(Domain::literal('u'))?->soleLiteral()?->value);
+        $any = $arrays->select(Domain::unknown(), '$parts[$k]');
+        self::assertSame('literal:string:users|opaque:mixed:unresolved', $any?->signature());
+        self::assertEquals(new OpaqueTerm(TypeShape::unknown(), Origin::Unresolved, '$parts[$k]'), $any->terms[1]);
+    }
+
+    public function testSelectKeepsTheElementsMarkedAsCombinedWhenTheKeysWere(): void
+    {
+        $arrays = Domain::of(new ArrayTerm([
+            new ArrayEntry(Domain::literal('ab'), Domain::literal('users')),
+            new ArrayEntry(Domain::literal('ac'), Domain::literal('admins')),
+            new ArrayEntry(Domain::literal('xb'), Domain::literal('guests')),
+            new ArrayEntry(Domain::literal('xc'), Domain::literal('bots')),
+        ]));
+        $keys = Domain::literal('a')->concat(Domain::literal('b')->union(Domain::literal('c')));
+        $paired = Domain::literal('a')->union(Domain::literal('x'))->concat(Domain::literal('b')->union(Domain::literal('c')));
+
+        $plain = $arrays->select($keys);
+        self::assertNotNull($plain);
+        self::assertFalse($plain->combined);
+        self::assertFalse($plain->widened);
+        self::assertTrue($arrays->select($paired)?->combined);
+        self::assertTrue(Domain::fromTerms($arrays->terms, false, true)->select(Domain::literal('ab'))?->combined);
+        self::assertTrue(Domain::fromTerms($arrays->terms, true)->select(Domain::literal('ab'))?->widened);
+    }
+
+    public function testSelectClaimsNothingItCannotRead(): void
+    {
+        $array = Domain::of(new ArrayTerm([new ArrayEntry(Domain::literal('u'), Domain::literal('users'))]));
+
+        self::assertNull($array->select(Domain::literal('missing')), 'a resolved key the array does not hold');
+        self::assertNull($array->select(Domain::literal('missing')->union(Domain::literal('u'))), 'one of several keys missing');
+        self::assertNull($array->union(Domain::literal('users'))->select(Domain::literal('u')), 'an alternative that is not an array');
+        self::assertNull(Domain::unknown()->select(Domain::literal('u')), 'no array at all');
+        self::assertNull(Domain::of(new ArrayTerm([]))->select(Domain::unknown()), 'no element to read under an unknown key');
+    }
+
     public function testAsTermCollapsesAResolvedPatternToALiteral(): void
     {
         self::assertInstanceOf(LiteralTerm::class, Domain::asTerm(TextPattern::fromText('a')));
