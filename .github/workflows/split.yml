@@ -7,6 +7,13 @@ on:
     tags:
       - 'v*'
 
+# Each run pushes the whole state of a package, so runs for the same ref must not
+# overlap: a run for an older commit that pushes last would overwrite a newer one.
+# Queued runs wait for the running one, and only the newest queued run is kept.
+concurrency:
+  group: split-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   split:
     runs-on: ubuntu-latest
