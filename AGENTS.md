@@ -65,9 +65,6 @@ The repository is also an experiment in how AI agents can build something this c
 - [packages/sql-fixture/README.md](packages/sql-fixture/README.md) - Generating fixture data from CREATE TABLE statements, databases, or DDL files
 - [packages/sql-formatter/README.md](packages/sql-formatter/README.md) - Formatting SQL with layout presets: installation and usage
 - [packages/sql-parser/README.md](packages/sql-parser/README.md) - Lossless LALR(1) SQL parsers built from the official grammars
-- [packages/sql-parser/docs/architecture.md](packages/sql-parser/docs/architecture.md) - The layers from grammar to parse table to syntax tree
-- [packages/sql-parser/docs/usage.md](packages/sql-parser/docs/usage.md) - Parsing, tokenizing, and working with the syntax tree
-- [packages/sql-parser/fuzz/README.md](packages/sql-parser/fuzz/README.md) - Fuzz targets that parse sql-faker statements and write them back
 - [packages/sql-semantics/README.md](packages/sql-semantics/README.md) - Binding SQL to a schema: installation and usage
 - [packages/sql-semantics/docs/design.md](packages/sql-semantics/docs/design.md) - Design of the semantic phase and the information it derives
 - [packages/sql-semantics/docs/support.md](packages/sql-semantics/docs/support.md) - Supported language and the confidence contract
