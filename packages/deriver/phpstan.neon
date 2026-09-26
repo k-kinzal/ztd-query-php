@@ -1,0 +1,17 @@
+includes:
+    - vendor/phpstan/phpstan-strict-rules/rules.neon
+    - vendor/k-kinzal/php-ai-toolkit/extension.neon
+    - vendor/k-kinzal/php-ai-toolkit/rules.neon
+
+parameters:
+    toolkit:
+        broadCatchAllowedPaths:
+            - '*/src/Internal/Model/ModelBoundary.php'
+            - '*/src/Internal/Value/SecretFingerprint.php'
+        visibilityExemptNamespacePrefixes:
+            - 'Tests'
+    phpVersion: 80100
+    level: max
+    paths:
+        - src
+        - tests

@@ -9,6 +9,7 @@
     },
     "require": {
         "k-kinzal/bison-parser": "dev-main",
+        "k-kinzal/deriver": "dev-main",
         "k-kinzal/lemon-parser": "dev-main",
         "k-kinzal/sql-catalog": "dev-main",
         "k-kinzal/sql-faker": "dev-main",
@@ -59,7 +60,8 @@
                     "k-kinzal/requirements": "dev-main",
                     "k-kinzal/sql-semantics-mysql": "dev-main",
                     "k-kinzal/sql-semantics-postgres": "dev-main",
-                    "k-kinzal/sql-semantics-sqlite": "dev-main"
+                    "k-kinzal/sql-semantics-sqlite": "dev-main",
+                    "k-kinzal/deriver": "dev-main"
                 }
             }
         }
