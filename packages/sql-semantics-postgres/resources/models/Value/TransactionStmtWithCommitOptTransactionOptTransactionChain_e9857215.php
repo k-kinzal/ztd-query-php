@@ -17,11 +17,12 @@ final class TransactionStmtWithCommitOptTransactionOptTransactionChain_e9857215 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTransactionForm $optTransaction,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTransactionChainForm $optTransactionChain,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTransaction), 'The optTransaction must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTransactionChain), 'The optTransactionChain must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class TransactionStmtWithCommitOptTransactionOptTransactionChain_e9857215 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('COMMIT');
+        $writer->comments($this->comments, 1);
         $this->optTransaction->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optTransactionChain->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class TransactionStmtWithCommitOptTransactionOptTransactionChain_e9857215 
      */
     public function withOptTransaction(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTransactionForm $optTransaction): self
     {
-        return new self($optTransaction, $this->optTransactionChain);
+        return new self($optTransaction, $this->optTransactionChain, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class TransactionStmtWithCommitOptTransactionOptTransactionChain_e9857215 
      */
     public function withOptTransactionChain(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTransactionChainForm $optTransactionChain): self
     {
-        return new self($this->optTransaction, $optTransactionChain);
+        return new self($this->optTransaction, $optTransactionChain, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optTransaction, $this->optTransactionChain, $comments);
     }
 }

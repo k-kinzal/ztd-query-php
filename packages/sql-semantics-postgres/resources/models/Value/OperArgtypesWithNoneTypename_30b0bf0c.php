@@ -17,10 +17,11 @@ final class OperArgtypesWithNoneTypename_30b0bf0c implements \SqlSemantics\State
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
     }
@@ -30,10 +31,15 @@ final class OperArgtypesWithNoneTypename_30b0bf0c implements \SqlSemantics\State
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $writer->append('NONE');
+        $writer->comments($this->comments, 2);
         $writer->append(',');
+        $writer->comments($this->comments, 3);
         $this->typename->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
     }
 
@@ -42,6 +48,14 @@ final class OperArgtypesWithNoneTypename_30b0bf0c implements \SqlSemantics\State
      */
     public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
     {
-        return new self($typename);
+        return new self($typename, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->typename, $comments);
     }
 }

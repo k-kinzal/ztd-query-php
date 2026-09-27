@@ -17,11 +17,12 @@ final class FieldOptListWithFieldOptListFieldOption_3c4e5aec implements \SqlSema
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldOptListForm $fieldOptList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldOptionForm $fieldOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldOptList), 'The fieldOptList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldOption), 'The fieldOption must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class FieldOptListWithFieldOptListFieldOption_3c4e5aec implements \SqlSema
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->fieldOptList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->fieldOption->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class FieldOptListWithFieldOptListFieldOption_3c4e5aec implements \SqlSema
      */
     public function withFieldOptList(\SqlSemantics\Statement\Model\MySql\Role\FieldOptListForm $fieldOptList): self
     {
-        return new self($fieldOptList, $this->fieldOption);
+        return new self($fieldOptList, $this->fieldOption, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class FieldOptListWithFieldOptListFieldOption_3c4e5aec implements \SqlSema
      */
     public function withFieldOption(\SqlSemantics\Statement\Model\MySql\Role\FieldOptionForm $fieldOption): self
     {
-        return new self($this->fieldOptList, $fieldOption);
+        return new self($this->fieldOptList, $fieldOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->fieldOptList, $this->fieldOption, $comments);
     }
 }

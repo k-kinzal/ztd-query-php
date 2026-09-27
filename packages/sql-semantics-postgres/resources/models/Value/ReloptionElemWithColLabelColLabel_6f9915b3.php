@@ -17,11 +17,12 @@ final class ReloptionElemWithColLabelColLabel_6f9915b3 implements \SqlSemantics\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm $colLabel,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm $colLabel2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colLabel), 'The colLabel must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colLabel2), 'The colLabel2 must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class ReloptionElemWithColLabelColLabel_6f9915b3 implements \SqlSemantics\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->colLabel->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('.');
+        $writer->comments($this->comments, 2);
         $this->colLabel2->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class ReloptionElemWithColLabelColLabel_6f9915b3 implements \SqlSemantics\
      */
     public function withColLabel(\SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm $colLabel): self
     {
-        return new self($colLabel, $this->colLabel2);
+        return new self($colLabel, $this->colLabel2, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class ReloptionElemWithColLabelColLabel_6f9915b3 implements \SqlSemantics\
      */
     public function withColLabel2(\SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm $colLabel2): self
     {
-        return new self($this->colLabel, $colLabel2);
+        return new self($this->colLabel, $colLabel2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->colLabel, $this->colLabel2, $comments);
     }
 }

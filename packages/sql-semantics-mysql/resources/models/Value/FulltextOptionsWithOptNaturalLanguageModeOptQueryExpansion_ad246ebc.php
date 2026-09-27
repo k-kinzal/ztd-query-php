@@ -17,11 +17,12 @@ final class FulltextOptionsWithOptNaturalLanguageModeOptQueryExpansion_ad246ebc 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptNaturalLanguageModeForm $optNaturalLanguageMode,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptQueryExpansionForm $optQueryExpansion,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optNaturalLanguageMode), 'The optNaturalLanguageMode must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optQueryExpansion), 'The optQueryExpansion must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class FulltextOptionsWithOptNaturalLanguageModeOptQueryExpansion_ad246ebc 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optNaturalLanguageMode->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optQueryExpansion->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class FulltextOptionsWithOptNaturalLanguageModeOptQueryExpansion_ad246ebc 
      */
     public function withOptNaturalLanguageMode(\SqlSemantics\Statement\Model\MySql\Role\OptNaturalLanguageModeForm $optNaturalLanguageMode): self
     {
-        return new self($optNaturalLanguageMode, $this->optQueryExpansion);
+        return new self($optNaturalLanguageMode, $this->optQueryExpansion, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class FulltextOptionsWithOptNaturalLanguageModeOptQueryExpansion_ad246ebc 
      */
     public function withOptQueryExpansion(\SqlSemantics\Statement\Model\MySql\Role\OptQueryExpansionForm $optQueryExpansion): self
     {
-        return new self($this->optNaturalLanguageMode, $optQueryExpansion);
+        return new self($this->optNaturalLanguageMode, $optQueryExpansion, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optNaturalLanguageMode, $this->optQueryExpansion, $comments);
     }
 }

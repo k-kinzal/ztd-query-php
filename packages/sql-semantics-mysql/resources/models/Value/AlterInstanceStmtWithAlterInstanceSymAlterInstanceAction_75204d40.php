@@ -17,10 +17,11 @@ final class AlterInstanceStmtWithAlterInstanceSymAlterInstanceAction_75204d40 im
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterInstanceActionForm $alterInstanceAction,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterInstanceAction), 'The alterInstanceAction must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class AlterInstanceStmtWithAlterInstanceSymAlterInstanceAction_75204d40 im
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('INSTANCE');
+        $writer->comments($this->comments, 2);
         $this->alterInstanceAction->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class AlterInstanceStmtWithAlterInstanceSymAlterInstanceAction_75204d40 im
      */
     public function withAlterInstanceAction(\SqlSemantics\Statement\Model\MySql\Role\AlterInstanceActionForm $alterInstanceAction): self
     {
-        return new self($alterInstanceAction);
+        return new self($alterInstanceAction, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->alterInstanceAction, $comments);
     }
 }

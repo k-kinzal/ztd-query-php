@@ -17,11 +17,12 @@ final class ForLockingItemsWithForLockingItemsForLockingItem_9f47f1d2 implements
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ForLockingItemsForm $forLockingItems,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ForLockingItemForm $forLockingItem,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($forLockingItems), 'The forLockingItems must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($forLockingItem), 'The forLockingItem must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class ForLockingItemsWithForLockingItemsForLockingItem_9f47f1d2 implements
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->forLockingItems->write($writer);
+        $writer->comments($this->comments, 1);
         $this->forLockingItem->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class ForLockingItemsWithForLockingItemsForLockingItem_9f47f1d2 implements
      */
     public function withForLockingItems(\SqlSemantics\Statement\Model\PostgreSql\Role\ForLockingItemsForm $forLockingItems): self
     {
-        return new self($forLockingItems, $this->forLockingItem);
+        return new self($forLockingItems, $this->forLockingItem, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class ForLockingItemsWithForLockingItemsForLockingItem_9f47f1d2 implements
      */
     public function withForLockingItem(\SqlSemantics\Statement\Model\PostgreSql\Role\ForLockingItemForm $forLockingItem): self
     {
-        return new self($this->forLockingItems, $forLockingItem);
+        return new self($this->forLockingItems, $forLockingItem, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->forLockingItems, $this->forLockingItem, $comments);
     }
 }

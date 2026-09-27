@@ -17,13 +17,14 @@ final class Create3WithOptDuplicateOptAsCreateSelectUnionOpt_5e75a149 implements
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptDuplicateForm $optDuplicate,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptAsForm $optAs,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateSelectForm $createSelect,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UnionOptForm $unionOpt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDuplicate), 'The optDuplicate must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optAs), 'The optAs must be a generated immutable SQL value.');
@@ -36,11 +37,17 @@ final class Create3WithOptDuplicateOptAsCreateSelectUnionOpt_5e75a149 implements
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optDuplicate->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optAs->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('(');
+        $writer->comments($this->comments, 3);
         $this->createSelect->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
+        $writer->comments($this->comments, 5);
         $this->unionOpt->write($writer);
     }
 
@@ -49,7 +56,7 @@ final class Create3WithOptDuplicateOptAsCreateSelectUnionOpt_5e75a149 implements
      */
     public function withOptDuplicate(\SqlSemantics\Statement\Model\MySql\Role\OptDuplicateForm $optDuplicate): self
     {
-        return new self($optDuplicate, $this->optAs, $this->createSelect, $this->unionOpt);
+        return new self($optDuplicate, $this->optAs, $this->createSelect, $this->unionOpt, $this->comments);
     }
 
     /**
@@ -57,7 +64,7 @@ final class Create3WithOptDuplicateOptAsCreateSelectUnionOpt_5e75a149 implements
      */
     public function withOptAs(\SqlSemantics\Statement\Model\MySql\Role\OptAsForm $optAs): self
     {
-        return new self($this->optDuplicate, $optAs, $this->createSelect, $this->unionOpt);
+        return new self($this->optDuplicate, $optAs, $this->createSelect, $this->unionOpt, $this->comments);
     }
 
     /**
@@ -65,7 +72,7 @@ final class Create3WithOptDuplicateOptAsCreateSelectUnionOpt_5e75a149 implements
      */
     public function withCreateSelect(\SqlSemantics\Statement\Model\MySql\Role\CreateSelectForm $createSelect): self
     {
-        return new self($this->optDuplicate, $this->optAs, $createSelect, $this->unionOpt);
+        return new self($this->optDuplicate, $this->optAs, $createSelect, $this->unionOpt, $this->comments);
     }
 
     /**
@@ -73,6 +80,14 @@ final class Create3WithOptDuplicateOptAsCreateSelectUnionOpt_5e75a149 implements
      */
     public function withUnionOpt(\SqlSemantics\Statement\Model\MySql\Role\UnionOptForm $unionOpt): self
     {
-        return new self($this->optDuplicate, $this->optAs, $this->createSelect, $unionOpt);
+        return new self($this->optDuplicate, $this->optAs, $this->createSelect, $unionOpt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optDuplicate, $this->optAs, $this->createSelect, $this->unionOpt, $comments);
     }
 }

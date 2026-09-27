@@ -17,12 +17,13 @@ final class AlterUndoTablespaceStmtWithAlterUndoSymTablespaceSymIdentSetSymUndoT
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UndoTablespaceStateForm $undoTablespaceState,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUndoTablespaceOptionsForm $optUndoTablespaceOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($undoTablespaceState), 'The undoTablespaceState must be a generated immutable SQL value.');
@@ -34,12 +35,19 @@ final class AlterUndoTablespaceStmtWithAlterUndoSymTablespaceSymIdentSetSymUndoT
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('UNDO');
+        $writer->comments($this->comments, 2);
         $writer->append('TABLESPACE');
+        $writer->comments($this->comments, 3);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('SET');
+        $writer->comments($this->comments, 5);
         $this->undoTablespaceState->write($writer);
+        $writer->comments($this->comments, 6);
         $this->optUndoTablespaceOptions->write($writer);
     }
 
@@ -48,7 +56,7 @@ final class AlterUndoTablespaceStmtWithAlterUndoSymTablespaceSymIdentSetSymUndoT
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($ident, $this->undoTablespaceState, $this->optUndoTablespaceOptions);
+        return new self($ident, $this->undoTablespaceState, $this->optUndoTablespaceOptions, $this->comments);
     }
 
     /**
@@ -56,7 +64,7 @@ final class AlterUndoTablespaceStmtWithAlterUndoSymTablespaceSymIdentSetSymUndoT
      */
     public function withUndoTablespaceState(\SqlSemantics\Statement\Model\MySql\Role\UndoTablespaceStateForm $undoTablespaceState): self
     {
-        return new self($this->ident, $undoTablespaceState, $this->optUndoTablespaceOptions);
+        return new self($this->ident, $undoTablespaceState, $this->optUndoTablespaceOptions, $this->comments);
     }
 
     /**
@@ -64,6 +72,14 @@ final class AlterUndoTablespaceStmtWithAlterUndoSymTablespaceSymIdentSetSymUndoT
      */
     public function withOptUndoTablespaceOptions(\SqlSemantics\Statement\Model\MySql\Role\OptUndoTablespaceOptionsForm $optUndoTablespaceOptions): self
     {
-        return new self($this->ident, $this->undoTablespaceState, $optUndoTablespaceOptions);
+        return new self($this->ident, $this->undoTablespaceState, $optUndoTablespaceOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ident, $this->undoTablespaceState, $this->optUndoTablespaceOptions, $comments);
     }
 }

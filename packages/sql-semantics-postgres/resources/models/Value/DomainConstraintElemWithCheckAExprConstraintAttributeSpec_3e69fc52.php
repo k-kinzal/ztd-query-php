@@ -17,11 +17,12 @@ final class DomainConstraintElemWithCheckAExprConstraintAttributeSpec_3e69fc52 i
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeSpecForm $constraintAttributeSpec,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($constraintAttributeSpec), 'The constraintAttributeSpec must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class DomainConstraintElemWithCheckAExprConstraintAttributeSpec_3e69fc52 i
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CHECK');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->aExpr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
+        $writer->comments($this->comments, 4);
         $this->constraintAttributeSpec->write($writer);
     }
 
@@ -44,7 +50,7 @@ final class DomainConstraintElemWithCheckAExprConstraintAttributeSpec_3e69fc52 i
      */
     public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
     {
-        return new self($aExpr, $this->constraintAttributeSpec);
+        return new self($aExpr, $this->constraintAttributeSpec, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class DomainConstraintElemWithCheckAExprConstraintAttributeSpec_3e69fc52 i
      */
     public function withConstraintAttributeSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeSpecForm $constraintAttributeSpec): self
     {
-        return new self($this->aExpr, $constraintAttributeSpec);
+        return new self($this->aExpr, $constraintAttributeSpec, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->aExpr, $this->constraintAttributeSpec, $comments);
     }
 }

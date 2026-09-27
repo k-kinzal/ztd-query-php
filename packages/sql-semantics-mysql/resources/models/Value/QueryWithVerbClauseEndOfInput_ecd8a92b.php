@@ -17,10 +17,11 @@ final class QueryWithVerbClauseEndOfInput_ecd8a92b implements \SqlSemantics\Stat
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm $verbClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($verbClause), 'The verbClause must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class QueryWithVerbClauseEndOfInput_ecd8a92b implements \SqlSemantics\Stat
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->verbClause->write($writer);
+        $writer->comments($this->comments, 1);
     }
 
     /**
@@ -38,6 +41,14 @@ final class QueryWithVerbClauseEndOfInput_ecd8a92b implements \SqlSemantics\Stat
      */
     public function withVerbClause(\SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm $verbClause): self
     {
-        return new self($verbClause);
+        return new self($verbClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->verbClause, $comments);
     }
 }

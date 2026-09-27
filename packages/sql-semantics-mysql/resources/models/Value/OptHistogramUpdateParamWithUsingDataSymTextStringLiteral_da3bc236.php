@@ -17,10 +17,11 @@ final class OptHistogramUpdateParamWithUsingDataSymTextStringLiteral_da3bc236 im
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringLiteralForm $textStringLiteral,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringLiteral), 'The textStringLiteral must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class OptHistogramUpdateParamWithUsingDataSymTextStringLiteral_da3bc236 im
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('USING');
+        $writer->comments($this->comments, 1);
         $writer->append('DATA');
+        $writer->comments($this->comments, 2);
         $this->textStringLiteral->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class OptHistogramUpdateParamWithUsingDataSymTextStringLiteral_da3bc236 im
      */
     public function withTextStringLiteral(\SqlSemantics\Statement\Model\MySql\Role\TextStringLiteralForm $textStringLiteral): self
     {
-        return new self($textStringLiteral);
+        return new self($textStringLiteral, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->textStringLiteral, $comments);
     }
 }

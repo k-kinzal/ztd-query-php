@@ -17,11 +17,12 @@ final class OptIfExistsIdentWithIfExistsPersistedVariableIdent_385dc152 implemen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PersistedVariableIdentForm $persistedVariableIdent,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ifExists), 'The ifExists must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($persistedVariableIdent), 'The persistedVariableIdent must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class OptIfExistsIdentWithIfExistsPersistedVariableIdent_385dc152 implemen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->ifExists->write($writer);
+        $writer->comments($this->comments, 1);
         $this->persistedVariableIdent->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class OptIfExistsIdentWithIfExistsPersistedVariableIdent_385dc152 implemen
      */
     public function withIfExists(\SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists): self
     {
-        return new self($ifExists, $this->persistedVariableIdent);
+        return new self($ifExists, $this->persistedVariableIdent, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class OptIfExistsIdentWithIfExistsPersistedVariableIdent_385dc152 implemen
      */
     public function withPersistedVariableIdent(\SqlSemantics\Statement\Model\MySql\Role\PersistedVariableIdentForm $persistedVariableIdent): self
     {
-        return new self($this->ifExists, $persistedVariableIdent);
+        return new self($this->ifExists, $persistedVariableIdent, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ifExists, $this->persistedVariableIdent, $comments);
     }
 }

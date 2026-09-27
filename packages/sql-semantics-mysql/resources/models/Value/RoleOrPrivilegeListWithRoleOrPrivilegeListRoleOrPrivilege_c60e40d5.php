@@ -17,11 +17,12 @@ final class RoleOrPrivilegeListWithRoleOrPrivilegeListRoleOrPrivilege_c60e40d5 i
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeListForm $roleOrPrivilegeList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeForm $roleOrPrivilege,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($roleOrPrivilegeList), 'The roleOrPrivilegeList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($roleOrPrivilege), 'The roleOrPrivilege must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class RoleOrPrivilegeListWithRoleOrPrivilegeListRoleOrPrivilege_c60e40d5 i
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->roleOrPrivilegeList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->roleOrPrivilege->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class RoleOrPrivilegeListWithRoleOrPrivilegeListRoleOrPrivilege_c60e40d5 i
      */
     public function withRoleOrPrivilegeList(\SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeListForm $roleOrPrivilegeList): self
     {
-        return new self($roleOrPrivilegeList, $this->roleOrPrivilege);
+        return new self($roleOrPrivilegeList, $this->roleOrPrivilege, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class RoleOrPrivilegeListWithRoleOrPrivilegeListRoleOrPrivilege_c60e40d5 i
      */
     public function withRoleOrPrivilege(\SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeForm $roleOrPrivilege): self
     {
-        return new self($this->roleOrPrivilegeList, $roleOrPrivilege);
+        return new self($this->roleOrPrivilegeList, $roleOrPrivilege, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->roleOrPrivilegeList, $this->roleOrPrivilege, $comments);
     }
 }

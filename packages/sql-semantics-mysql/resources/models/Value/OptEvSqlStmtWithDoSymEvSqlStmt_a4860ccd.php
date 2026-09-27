@@ -17,10 +17,11 @@ final class OptEvSqlStmtWithDoSymEvSqlStmt_a4860ccd implements \SqlSemantics\Sta
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm $evSqlStmt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($evSqlStmt), 'The evSqlStmt must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class OptEvSqlStmtWithDoSymEvSqlStmt_a4860ccd implements \SqlSemantics\Sta
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('DO');
+        $writer->comments($this->comments, 1);
         $this->evSqlStmt->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class OptEvSqlStmtWithDoSymEvSqlStmt_a4860ccd implements \SqlSemantics\Sta
      */
     public function withEvSqlStmt(\SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm $evSqlStmt): self
     {
-        return new self($evSqlStmt);
+        return new self($evSqlStmt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->evSqlStmt, $comments);
     }
 }

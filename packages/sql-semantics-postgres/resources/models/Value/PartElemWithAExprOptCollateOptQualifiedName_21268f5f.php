@@ -17,12 +17,13 @@ final class PartElemWithAExprOptCollateOptQualifiedName_21268f5f implements \Sql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptCollateForm $optCollate,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptQualifiedNameForm $optQualifiedName,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optCollate), 'The optCollate must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class PartElemWithAExprOptCollateOptQualifiedName_21268f5f implements \Sql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->aExpr->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(')');
+        $writer->comments($this->comments, 3);
         $this->optCollate->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optQualifiedName->write($writer);
     }
 
@@ -46,7 +52,7 @@ final class PartElemWithAExprOptCollateOptQualifiedName_21268f5f implements \Sql
      */
     public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
     {
-        return new self($aExpr, $this->optCollate, $this->optQualifiedName);
+        return new self($aExpr, $this->optCollate, $this->optQualifiedName, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class PartElemWithAExprOptCollateOptQualifiedName_21268f5f implements \Sql
      */
     public function withOptCollate(\SqlSemantics\Statement\Model\PostgreSql\Role\OptCollateForm $optCollate): self
     {
-        return new self($this->aExpr, $optCollate, $this->optQualifiedName);
+        return new self($this->aExpr, $optCollate, $this->optQualifiedName, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class PartElemWithAExprOptCollateOptQualifiedName_21268f5f implements \Sql
      */
     public function withOptQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\OptQualifiedNameForm $optQualifiedName): self
     {
-        return new self($this->aExpr, $this->optCollate, $optQualifiedName);
+        return new self($this->aExpr, $this->optCollate, $optQualifiedName, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->aExpr, $this->optCollate, $this->optQualifiedName, $comments);
     }
 }

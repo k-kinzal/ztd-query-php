@@ -17,12 +17,13 @@ final class TypeWithRealTypeOptPrecisionFieldOptions_53962f7c implements \SqlSem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RealTypeForm $realType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptPrecisionForm $optPrecision,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldOptionsForm $fieldOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($realType), 'The realType must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optPrecision), 'The optPrecision must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class TypeWithRealTypeOptPrecisionFieldOptions_53962f7c implements \SqlSem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->realType->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optPrecision->write($writer);
+        $writer->comments($this->comments, 2);
         $this->fieldOptions->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class TypeWithRealTypeOptPrecisionFieldOptions_53962f7c implements \SqlSem
      */
     public function withRealType(\SqlSemantics\Statement\Model\MySql\Role\RealTypeForm $realType): self
     {
-        return new self($realType, $this->optPrecision, $this->fieldOptions);
+        return new self($realType, $this->optPrecision, $this->fieldOptions, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class TypeWithRealTypeOptPrecisionFieldOptions_53962f7c implements \SqlSem
      */
     public function withOptPrecision(\SqlSemantics\Statement\Model\MySql\Role\OptPrecisionForm $optPrecision): self
     {
-        return new self($this->realType, $optPrecision, $this->fieldOptions);
+        return new self($this->realType, $optPrecision, $this->fieldOptions, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class TypeWithRealTypeOptPrecisionFieldOptions_53962f7c implements \SqlSem
      */
     public function withFieldOptions(\SqlSemantics\Statement\Model\MySql\Role\FieldOptionsForm $fieldOptions): self
     {
-        return new self($this->realType, $this->optPrecision, $fieldOptions);
+        return new self($this->realType, $this->optPrecision, $fieldOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->realType, $this->optPrecision, $this->fieldOptions, $comments);
     }
 }

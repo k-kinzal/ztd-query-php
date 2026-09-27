@@ -17,10 +17,11 @@ final class OptInsertUpdateListWithOnDuplicateSymKeySymUpdateSymUpdateList_a1f14
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UpdateListForm $updateList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($updateList), 'The updateList must be a generated immutable SQL value.');
     }
@@ -30,10 +31,15 @@ final class OptInsertUpdateListWithOnDuplicateSymKeySymUpdateSymUpdateList_a1f14
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ON');
+        $writer->comments($this->comments, 1);
         $writer->append('DUPLICATE');
+        $writer->comments($this->comments, 2);
         $writer->append('KEY');
+        $writer->comments($this->comments, 3);
         $writer->append('UPDATE');
+        $writer->comments($this->comments, 4);
         $this->updateList->write($writer);
     }
 
@@ -42,6 +48,14 @@ final class OptInsertUpdateListWithOnDuplicateSymKeySymUpdateSymUpdateList_a1f14
      */
     public function withUpdateList(\SqlSemantics\Statement\Model\MySql\Role\UpdateListForm $updateList): self
     {
-        return new self($updateList);
+        return new self($updateList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->updateList, $comments);
     }
 }

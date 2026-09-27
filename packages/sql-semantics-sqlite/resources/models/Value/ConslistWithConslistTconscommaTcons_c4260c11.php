@@ -17,12 +17,13 @@ final class ConslistWithConslistTconscommaTcons_c4260c11 implements \SqlSemantic
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ConslistForm $conslist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TconscommaForm $tconscomma,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TconsForm $tcons,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($conslist), 'The conslist must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($tconscomma), 'The tconscomma must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class ConslistWithConslistTconscommaTcons_c4260c11 implements \SqlSemantic
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->conslist->write($writer);
+        $writer->comments($this->comments, 1);
         $this->tconscomma->write($writer);
+        $writer->comments($this->comments, 2);
         $this->tcons->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class ConslistWithConslistTconscommaTcons_c4260c11 implements \SqlSemantic
      */
     public function withConslist(\SqlSemantics\Statement\Model\Sqlite\Role\ConslistForm $conslist): self
     {
-        return new self($conslist, $this->tconscomma, $this->tcons);
+        return new self($conslist, $this->tconscomma, $this->tcons, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class ConslistWithConslistTconscommaTcons_c4260c11 implements \SqlSemantic
      */
     public function withTconscomma(\SqlSemantics\Statement\Model\Sqlite\Role\TconscommaForm $tconscomma): self
     {
-        return new self($this->conslist, $tconscomma, $this->tcons);
+        return new self($this->conslist, $tconscomma, $this->tcons, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class ConslistWithConslistTconscommaTcons_c4260c11 implements \SqlSemantic
      */
     public function withTcons(\SqlSemantics\Statement\Model\Sqlite\Role\TconsForm $tcons): self
     {
-        return new self($this->conslist, $this->tconscomma, $tcons);
+        return new self($this->conslist, $this->tconscomma, $tcons, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->conslist, $this->tconscomma, $this->tcons, $comments);
     }
 }

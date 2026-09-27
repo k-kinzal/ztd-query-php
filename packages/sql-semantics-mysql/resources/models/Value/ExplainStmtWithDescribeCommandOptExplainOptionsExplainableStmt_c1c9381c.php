@@ -17,12 +17,13 @@ final class ExplainStmtWithDescribeCommandOptExplainOptionsExplainableStmt_c1c93
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DescribeCommandForm $describeCommand,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptExplainOptionsForm $optExplainOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExplainableStmtForm $explainableStmt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($describeCommand), 'The describeCommand must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optExplainOptions), 'The optExplainOptions must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class ExplainStmtWithDescribeCommandOptExplainOptionsExplainableStmt_c1c93
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->describeCommand->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optExplainOptions->write($writer);
+        $writer->comments($this->comments, 2);
         $this->explainableStmt->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class ExplainStmtWithDescribeCommandOptExplainOptionsExplainableStmt_c1c93
      */
     public function withDescribeCommand(\SqlSemantics\Statement\Model\MySql\Role\DescribeCommandForm $describeCommand): self
     {
-        return new self($describeCommand, $this->optExplainOptions, $this->explainableStmt);
+        return new self($describeCommand, $this->optExplainOptions, $this->explainableStmt, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class ExplainStmtWithDescribeCommandOptExplainOptionsExplainableStmt_c1c93
      */
     public function withOptExplainOptions(\SqlSemantics\Statement\Model\MySql\Role\OptExplainOptionsForm $optExplainOptions): self
     {
-        return new self($this->describeCommand, $optExplainOptions, $this->explainableStmt);
+        return new self($this->describeCommand, $optExplainOptions, $this->explainableStmt, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class ExplainStmtWithDescribeCommandOptExplainOptionsExplainableStmt_c1c93
      */
     public function withExplainableStmt(\SqlSemantics\Statement\Model\MySql\Role\ExplainableStmtForm $explainableStmt): self
     {
-        return new self($this->describeCommand, $this->optExplainOptions, $explainableStmt);
+        return new self($this->describeCommand, $this->optExplainOptions, $explainableStmt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->describeCommand, $this->optExplainOptions, $this->explainableStmt, $comments);
     }
 }

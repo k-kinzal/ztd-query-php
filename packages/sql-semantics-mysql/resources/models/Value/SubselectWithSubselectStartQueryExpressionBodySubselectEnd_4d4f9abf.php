@@ -17,12 +17,13 @@ final class SubselectWithSubselectStartQueryExpressionBodySubselectEnd_4d4f9abf 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SubselectStartForm $subselectStart,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm $queryExpressionBody,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SubselectEndForm $subselectEnd,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($subselectStart), 'The subselectStart must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($queryExpressionBody), 'The queryExpressionBody must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class SubselectWithSubselectStartQueryExpressionBodySubselectEnd_4d4f9abf 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->subselectStart->write($writer);
+        $writer->comments($this->comments, 1);
         $this->queryExpressionBody->write($writer);
+        $writer->comments($this->comments, 2);
         $this->subselectEnd->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class SubselectWithSubselectStartQueryExpressionBodySubselectEnd_4d4f9abf 
      */
     public function withSubselectStart(\SqlSemantics\Statement\Model\MySql\Role\SubselectStartForm $subselectStart): self
     {
-        return new self($subselectStart, $this->queryExpressionBody, $this->subselectEnd);
+        return new self($subselectStart, $this->queryExpressionBody, $this->subselectEnd, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class SubselectWithSubselectStartQueryExpressionBodySubselectEnd_4d4f9abf 
      */
     public function withQueryExpressionBody(\SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm $queryExpressionBody): self
     {
-        return new self($this->subselectStart, $queryExpressionBody, $this->subselectEnd);
+        return new self($this->subselectStart, $queryExpressionBody, $this->subselectEnd, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class SubselectWithSubselectStartQueryExpressionBodySubselectEnd_4d4f9abf 
      */
     public function withSubselectEnd(\SqlSemantics\Statement\Model\MySql\Role\SubselectEndForm $subselectEnd): self
     {
-        return new self($this->subselectStart, $this->queryExpressionBody, $subselectEnd);
+        return new self($this->subselectStart, $this->queryExpressionBody, $subselectEnd, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->subselectStart, $this->queryExpressionBody, $this->subselectEnd, $comments);
     }
 }

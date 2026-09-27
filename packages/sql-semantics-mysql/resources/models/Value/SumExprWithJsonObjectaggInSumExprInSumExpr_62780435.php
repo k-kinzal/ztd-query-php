@@ -17,11 +17,12 @@ final class SumExprWithJsonObjectaggInSumExprInSumExpr_62780435 implements \SqlS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InSumExprForm $inSumExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InSumExprForm $inSumExpr2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($inSumExpr), 'The inSumExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($inSumExpr2), 'The inSumExpr2 must be a generated immutable SQL value.');
@@ -32,11 +33,17 @@ final class SumExprWithJsonObjectaggInSumExprInSumExpr_62780435 implements \SqlS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('JSON_OBJECTAGG');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->inSumExpr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(',');
+        $writer->comments($this->comments, 4);
         $this->inSumExpr2->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
     }
 
@@ -45,7 +52,7 @@ final class SumExprWithJsonObjectaggInSumExprInSumExpr_62780435 implements \SqlS
      */
     public function withInSumExpr(\SqlSemantics\Statement\Model\MySql\Role\InSumExprForm $inSumExpr): self
     {
-        return new self($inSumExpr, $this->inSumExpr2);
+        return new self($inSumExpr, $this->inSumExpr2, $this->comments);
     }
 
     /**
@@ -53,6 +60,14 @@ final class SumExprWithJsonObjectaggInSumExprInSumExpr_62780435 implements \SqlS
      */
     public function withInSumExpr2(\SqlSemantics\Statement\Model\MySql\Role\InSumExprForm $inSumExpr2): self
     {
-        return new self($this->inSumExpr, $inSumExpr2);
+        return new self($this->inSumExpr, $inSumExpr2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->inSumExpr, $this->inSumExpr2, $comments);
     }
 }

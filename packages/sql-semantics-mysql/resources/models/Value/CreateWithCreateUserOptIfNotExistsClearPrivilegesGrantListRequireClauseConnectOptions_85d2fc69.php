@@ -17,7 +17,7 @@ final class CreateWithCreateUserOptIfNotExistsClearPrivilegesGrantListRequireCla
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $user,
@@ -27,6 +27,7 @@ final class CreateWithCreateUserOptIfNotExistsClearPrivilegesGrantListRequireCla
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RequireClauseForm $requireClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ConnectOptionsForm $connectOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionsForm $optAccountLockPasswordExpireOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($user, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['USER'], 'The user must be a complete USER lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIfNotExists), 'The optIfNotExists must be a generated immutable SQL value.');
@@ -42,13 +43,21 @@ final class CreateWithCreateUserOptIfNotExistsClearPrivilegesGrantListRequireCla
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $writer->append($this->user);
+        $writer->comments($this->comments, 2);
         $this->optIfNotExists->write($writer);
+        $writer->comments($this->comments, 3);
         $this->clearPrivileges->write($writer);
+        $writer->comments($this->comments, 4);
         $this->grantList->write($writer);
+        $writer->comments($this->comments, 5);
         $this->requireClause->write($writer);
+        $writer->comments($this->comments, 6);
         $this->connectOptions->write($writer);
+        $writer->comments($this->comments, 7);
         $this->optAccountLockPasswordExpireOptions->write($writer);
     }
 
@@ -57,7 +66,7 @@ final class CreateWithCreateUserOptIfNotExistsClearPrivilegesGrantListRequireCla
      */
     public function withUser(string $user): self
     {
-        return new self($user, $this->optIfNotExists, $this->clearPrivileges, $this->grantList, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions);
+        return new self($user, $this->optIfNotExists, $this->clearPrivileges, $this->grantList, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->comments);
     }
 
     /**
@@ -65,7 +74,7 @@ final class CreateWithCreateUserOptIfNotExistsClearPrivilegesGrantListRequireCla
      */
     public function withOptIfNotExists(\SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists): self
     {
-        return new self($this->user, $optIfNotExists, $this->clearPrivileges, $this->grantList, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions);
+        return new self($this->user, $optIfNotExists, $this->clearPrivileges, $this->grantList, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->comments);
     }
 
     /**
@@ -73,7 +82,7 @@ final class CreateWithCreateUserOptIfNotExistsClearPrivilegesGrantListRequireCla
      */
     public function withClearPrivileges(\SqlSemantics\Statement\Model\MySql\Role\ClearPrivilegesForm $clearPrivileges): self
     {
-        return new self($this->user, $this->optIfNotExists, $clearPrivileges, $this->grantList, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions);
+        return new self($this->user, $this->optIfNotExists, $clearPrivileges, $this->grantList, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->comments);
     }
 
     /**
@@ -81,7 +90,7 @@ final class CreateWithCreateUserOptIfNotExistsClearPrivilegesGrantListRequireCla
      */
     public function withGrantList(\SqlSemantics\Statement\Model\MySql\Role\GrantListForm $grantList): self
     {
-        return new self($this->user, $this->optIfNotExists, $this->clearPrivileges, $grantList, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions);
+        return new self($this->user, $this->optIfNotExists, $this->clearPrivileges, $grantList, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->comments);
     }
 
     /**
@@ -89,7 +98,7 @@ final class CreateWithCreateUserOptIfNotExistsClearPrivilegesGrantListRequireCla
      */
     public function withRequireClause(\SqlSemantics\Statement\Model\MySql\Role\RequireClauseForm $requireClause): self
     {
-        return new self($this->user, $this->optIfNotExists, $this->clearPrivileges, $this->grantList, $requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions);
+        return new self($this->user, $this->optIfNotExists, $this->clearPrivileges, $this->grantList, $requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->comments);
     }
 
     /**
@@ -97,7 +106,7 @@ final class CreateWithCreateUserOptIfNotExistsClearPrivilegesGrantListRequireCla
      */
     public function withConnectOptions(\SqlSemantics\Statement\Model\MySql\Role\ConnectOptionsForm $connectOptions): self
     {
-        return new self($this->user, $this->optIfNotExists, $this->clearPrivileges, $this->grantList, $this->requireClause, $connectOptions, $this->optAccountLockPasswordExpireOptions);
+        return new self($this->user, $this->optIfNotExists, $this->clearPrivileges, $this->grantList, $this->requireClause, $connectOptions, $this->optAccountLockPasswordExpireOptions, $this->comments);
     }
 
     /**
@@ -105,6 +114,14 @@ final class CreateWithCreateUserOptIfNotExistsClearPrivilegesGrantListRequireCla
      */
     public function withOptAccountLockPasswordExpireOptions(\SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionsForm $optAccountLockPasswordExpireOptions): self
     {
-        return new self($this->user, $this->optIfNotExists, $this->clearPrivileges, $this->grantList, $this->requireClause, $this->connectOptions, $optAccountLockPasswordExpireOptions);
+        return new self($this->user, $this->optIfNotExists, $this->clearPrivileges, $this->grantList, $this->requireClause, $this->connectOptions, $optAccountLockPasswordExpireOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->user, $this->optIfNotExists, $this->clearPrivileges, $this->grantList, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class SpFdparamsWithSpFdparamsSpFdparam_20e01a48 implements \SqlSemantics\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpFdparamsForm $spFdparams,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpFdparamForm $spFdparam,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spFdparams), 'The spFdparams must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spFdparam), 'The spFdparam must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class SpFdparamsWithSpFdparamsSpFdparam_20e01a48 implements \SqlSemantics\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->spFdparams->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->spFdparam->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class SpFdparamsWithSpFdparamsSpFdparam_20e01a48 implements \SqlSemantics\
      */
     public function withSpFdparams(\SqlSemantics\Statement\Model\MySql\Role\SpFdparamsForm $spFdparams): self
     {
-        return new self($spFdparams, $this->spFdparam);
+        return new self($spFdparams, $this->spFdparam, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class SpFdparamsWithSpFdparamsSpFdparam_20e01a48 implements \SqlSemantics\
      */
     public function withSpFdparam(\SqlSemantics\Statement\Model\MySql\Role\SpFdparamForm $spFdparam): self
     {
-        return new self($this->spFdparams, $spFdparam);
+        return new self($this->spFdparams, $spFdparam, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->spFdparams, $this->spFdparam, $comments);
     }
 }

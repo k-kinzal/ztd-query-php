@@ -17,11 +17,12 @@ final class InsertQueryExpressionWithInsertColumnsQueryExpressionWithOptLockingC
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertColumnsForm $insertColumns,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionWithOptLockingClausesForm $queryExpressionWithOptLockingClauses,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($insertColumns), 'The insertColumns must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($queryExpressionWithOptLockingClauses), 'The queryExpressionWithOptLockingClauses must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class InsertQueryExpressionWithInsertColumnsQueryExpressionWithOptLockingC
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->insertColumns->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(')');
+        $writer->comments($this->comments, 3);
         $this->queryExpressionWithOptLockingClauses->write($writer);
     }
 
@@ -43,7 +48,7 @@ final class InsertQueryExpressionWithInsertColumnsQueryExpressionWithOptLockingC
      */
     public function withInsertColumns(\SqlSemantics\Statement\Model\MySql\Role\InsertColumnsForm $insertColumns): self
     {
-        return new self($insertColumns, $this->queryExpressionWithOptLockingClauses);
+        return new self($insertColumns, $this->queryExpressionWithOptLockingClauses, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class InsertQueryExpressionWithInsertColumnsQueryExpressionWithOptLockingC
      */
     public function withQueryExpressionWithOptLockingClauses(\SqlSemantics\Statement\Model\MySql\Role\QueryExpressionWithOptLockingClausesForm $queryExpressionWithOptLockingClauses): self
     {
-        return new self($this->insertColumns, $queryExpressionWithOptLockingClauses);
+        return new self($this->insertColumns, $queryExpressionWithOptLockingClauses, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->insertColumns, $this->queryExpressionWithOptLockingClauses, $comments);
     }
 }

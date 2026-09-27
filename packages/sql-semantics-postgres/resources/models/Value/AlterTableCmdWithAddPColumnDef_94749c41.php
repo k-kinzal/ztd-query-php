@@ -17,10 +17,11 @@ final class AlterTableCmdWithAddPColumnDef_94749c41 implements \SqlSemantics\Sta
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColumnDefForm $columnDef,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($columnDef), 'The columnDef must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class AlterTableCmdWithAddPColumnDef_94749c41 implements \SqlSemantics\Sta
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ADD');
+        $writer->comments($this->comments, 1);
         $this->columnDef->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class AlterTableCmdWithAddPColumnDef_94749c41 implements \SqlSemantics\Sta
      */
     public function withColumnDef(\SqlSemantics\Statement\Model\PostgreSql\Role\ColumnDefForm $columnDef): self
     {
-        return new self($columnDef);
+        return new self($columnDef, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->columnDef, $comments);
     }
 }

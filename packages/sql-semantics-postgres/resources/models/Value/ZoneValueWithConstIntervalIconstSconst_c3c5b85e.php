@@ -17,12 +17,13 @@ final class ZoneValueWithConstIntervalIconstSconst_c3c5b85e implements \SqlSeman
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ConstIntervalForm $constInterval,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($constInterval), 'The constInterval must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($iconst), 'The iconst must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class ZoneValueWithConstIntervalIconstSconst_c3c5b85e implements \SqlSeman
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->constInterval->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->iconst->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
+        $writer->comments($this->comments, 4);
         $this->sconst->write($writer);
     }
 
@@ -46,7 +52,7 @@ final class ZoneValueWithConstIntervalIconstSconst_c3c5b85e implements \SqlSeman
      */
     public function withConstInterval(\SqlSemantics\Statement\Model\PostgreSql\Role\ConstIntervalForm $constInterval): self
     {
-        return new self($constInterval, $this->iconst, $this->sconst);
+        return new self($constInterval, $this->iconst, $this->sconst, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class ZoneValueWithConstIntervalIconstSconst_c3c5b85e implements \SqlSeman
      */
     public function withIconst(\SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst): self
     {
-        return new self($this->constInterval, $iconst, $this->sconst);
+        return new self($this->constInterval, $iconst, $this->sconst, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class ZoneValueWithConstIntervalIconstSconst_c3c5b85e implements \SqlSeman
      */
     public function withSconst(\SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst): self
     {
-        return new self($this->constInterval, $this->iconst, $sconst);
+        return new self($this->constInterval, $this->iconst, $sconst, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->constInterval, $this->iconst, $this->sconst, $comments);
     }
 }

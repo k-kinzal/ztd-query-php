@@ -17,12 +17,13 @@ final class QueryExpressionWithQueryExpressionBodyOptOrderClauseOptLimitClause_1
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm $queryExpressionBody,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm $orderBy,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($queryExpressionBody), 'The queryExpressionBody must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderBy), 'The orderBy must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class QueryExpressionWithQueryExpressionBodyOptOrderClauseOptLimitClause_1
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->queryExpressionBody->write($writer);
+        $writer->comments($this->comments, 1);
         $this->orderBy->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optLimitClause->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class QueryExpressionWithQueryExpressionBodyOptOrderClauseOptLimitClause_1
      */
     public function withQueryExpressionBody(\SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm $queryExpressionBody): self
     {
-        return new self($queryExpressionBody, $this->orderBy, $this->optLimitClause);
+        return new self($queryExpressionBody, $this->orderBy, $this->optLimitClause, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class QueryExpressionWithQueryExpressionBodyOptOrderClauseOptLimitClause_1
      */
     public function withOrderBy(\SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm $orderBy): self
     {
-        return new self($this->queryExpressionBody, $orderBy, $this->optLimitClause);
+        return new self($this->queryExpressionBody, $orderBy, $this->optLimitClause, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class QueryExpressionWithQueryExpressionBodyOptOrderClauseOptLimitClause_1
      */
     public function withOptLimitClause(\SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause): self
     {
-        return new self($this->queryExpressionBody, $this->orderBy, $optLimitClause);
+        return new self($this->queryExpressionBody, $this->orderBy, $optLimitClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->queryExpressionBody, $this->orderBy, $this->optLimitClause, $comments);
     }
 }

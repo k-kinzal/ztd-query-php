@@ -17,12 +17,13 @@ final class SpIfWithExprThenSymSpProcStmts1SpElseifs_106dd387 implements \SqlSem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpProcStmts1Form $spProcStmts1,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpElseifsForm $spElseifs,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spProcStmts1), 'The spProcStmts1 must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class SpIfWithExprThenSymSpProcStmts1SpElseifs_106dd387 implements \SqlSem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('THEN');
+        $writer->comments($this->comments, 2);
         $this->spProcStmts1->write($writer);
+        $writer->comments($this->comments, 3);
         $this->spElseifs->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class SpIfWithExprThenSymSpProcStmts1SpElseifs_106dd387 implements \SqlSem
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($expr, $this->spProcStmts1, $this->spElseifs);
+        return new self($expr, $this->spProcStmts1, $this->spElseifs, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class SpIfWithExprThenSymSpProcStmts1SpElseifs_106dd387 implements \SqlSem
      */
     public function withSpProcStmts1(\SqlSemantics\Statement\Model\MySql\Role\SpProcStmts1Form $spProcStmts1): self
     {
-        return new self($this->expr, $spProcStmts1, $this->spElseifs);
+        return new self($this->expr, $spProcStmts1, $this->spElseifs, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class SpIfWithExprThenSymSpProcStmts1SpElseifs_106dd387 implements \SqlSem
      */
     public function withSpElseifs(\SqlSemantics\Statement\Model\MySql\Role\SpElseifsForm $spElseifs): self
     {
-        return new self($this->expr, $this->spProcStmts1, $spElseifs);
+        return new self($this->expr, $this->spProcStmts1, $spElseifs, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->expr, $this->spProcStmts1, $this->spElseifs, $comments);
     }
 }

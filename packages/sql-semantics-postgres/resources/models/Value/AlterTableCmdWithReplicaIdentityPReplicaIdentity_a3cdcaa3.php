@@ -17,10 +17,11 @@ final class AlterTableCmdWithReplicaIdentityPReplicaIdentity_a3cdcaa3 implements
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ReplicaIdentityForm $replicaIdentity,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($replicaIdentity), 'The replicaIdentity must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class AlterTableCmdWithReplicaIdentityPReplicaIdentity_a3cdcaa3 implements
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('REPLICA');
+        $writer->comments($this->comments, 1);
         $writer->append('IDENTITY');
+        $writer->comments($this->comments, 2);
         $this->replicaIdentity->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class AlterTableCmdWithReplicaIdentityPReplicaIdentity_a3cdcaa3 implements
      */
     public function withReplicaIdentity(\SqlSemantics\Statement\Model\PostgreSql\Role\ReplicaIdentityForm $replicaIdentity): self
     {
-        return new self($replicaIdentity);
+        return new self($replicaIdentity, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->replicaIdentity, $comments);
     }
 }

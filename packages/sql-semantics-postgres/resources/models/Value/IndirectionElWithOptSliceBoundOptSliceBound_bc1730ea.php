@@ -17,11 +17,12 @@ final class IndirectionElWithOptSliceBoundOptSliceBound_bc1730ea implements \Sql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm $optSliceBound,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm $optSliceBound2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optSliceBound), 'The optSliceBound must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optSliceBound2), 'The optSliceBound2 must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class IndirectionElWithOptSliceBoundOptSliceBound_bc1730ea implements \Sql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('[');
+        $writer->comments($this->comments, 1);
         $this->optSliceBound->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(':');
+        $writer->comments($this->comments, 3);
         $this->optSliceBound2->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(']');
     }
 
@@ -44,7 +50,7 @@ final class IndirectionElWithOptSliceBoundOptSliceBound_bc1730ea implements \Sql
      */
     public function withOptSliceBound(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm $optSliceBound): self
     {
-        return new self($optSliceBound, $this->optSliceBound2);
+        return new self($optSliceBound, $this->optSliceBound2, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class IndirectionElWithOptSliceBoundOptSliceBound_bc1730ea implements \Sql
      */
     public function withOptSliceBound2(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm $optSliceBound2): self
     {
-        return new self($this->optSliceBound, $optSliceBound2);
+        return new self($this->optSliceBound, $optSliceBound2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optSliceBound, $this->optSliceBound2, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class ExecuteStmtWithExecuteNameExecuteParamClause_8225ce8c implements \Sq
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ExecuteParamClauseForm $executeParamClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($executeParamClause), 'The executeParamClause must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class ExecuteStmtWithExecuteNameExecuteParamClause_8225ce8c implements \Sq
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('EXECUTE');
+        $writer->comments($this->comments, 1);
         $this->name->write($writer);
+        $writer->comments($this->comments, 2);
         $this->executeParamClause->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class ExecuteStmtWithExecuteNameExecuteParamClause_8225ce8c implements \Sq
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($name, $this->executeParamClause);
+        return new self($name, $this->executeParamClause, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class ExecuteStmtWithExecuteNameExecuteParamClause_8225ce8c implements \Sq
      */
     public function withExecuteParamClause(\SqlSemantics\Statement\Model\PostgreSql\Role\ExecuteParamClauseForm $executeParamClause): self
     {
-        return new self($this->name, $executeParamClause);
+        return new self($this->name, $executeParamClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->name, $this->executeParamClause, $comments);
     }
 }

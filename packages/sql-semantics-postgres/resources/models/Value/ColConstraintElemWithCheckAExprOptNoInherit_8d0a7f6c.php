@@ -17,11 +17,12 @@ final class ColConstraintElemWithCheckAExprOptNoInherit_8d0a7f6c implements \Sql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptNoInheritForm $optNoInherit,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optNoInherit), 'The optNoInherit must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class ColConstraintElemWithCheckAExprOptNoInherit_8d0a7f6c implements \Sql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CHECK');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->aExpr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
+        $writer->comments($this->comments, 4);
         $this->optNoInherit->write($writer);
     }
 
@@ -44,7 +50,7 @@ final class ColConstraintElemWithCheckAExprOptNoInherit_8d0a7f6c implements \Sql
      */
     public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
     {
-        return new self($aExpr, $this->optNoInherit);
+        return new self($aExpr, $this->optNoInherit, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class ColConstraintElemWithCheckAExprOptNoInherit_8d0a7f6c implements \Sql
      */
     public function withOptNoInherit(\SqlSemantics\Statement\Model\PostgreSql\Role\OptNoInheritForm $optNoInherit): self
     {
-        return new self($this->aExpr, $optNoInherit);
+        return new self($this->aExpr, $optNoInherit, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->aExpr, $this->optNoInherit, $comments);
     }
 }

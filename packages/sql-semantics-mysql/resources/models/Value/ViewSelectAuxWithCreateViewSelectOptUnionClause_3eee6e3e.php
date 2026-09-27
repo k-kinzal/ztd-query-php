@@ -17,11 +17,12 @@ final class ViewSelectAuxWithCreateViewSelectOptUnionClause_3eee6e3e implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateViewSelectForm $createViewSelect,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUnionClauseForm $optUnionClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createViewSelect), 'The createViewSelect must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUnionClause), 'The optUnionClause must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class ViewSelectAuxWithCreateViewSelectOptUnionClause_3eee6e3e implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->createViewSelect->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optUnionClause->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class ViewSelectAuxWithCreateViewSelectOptUnionClause_3eee6e3e implements 
      */
     public function withCreateViewSelect(\SqlSemantics\Statement\Model\MySql\Role\CreateViewSelectForm $createViewSelect): self
     {
-        return new self($createViewSelect, $this->optUnionClause);
+        return new self($createViewSelect, $this->optUnionClause, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class ViewSelectAuxWithCreateViewSelectOptUnionClause_3eee6e3e implements 
      */
     public function withOptUnionClause(\SqlSemantics\Statement\Model\MySql\Role\OptUnionClauseForm $optUnionClause): self
     {
-        return new self($this->createViewSelect, $optUnionClause);
+        return new self($this->createViewSelect, $optUnionClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->createViewSelect, $this->optUnionClause, $comments);
     }
 }

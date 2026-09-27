@@ -17,11 +17,12 @@ final class SpProcStmtsWithSpProcStmtsSpProcStmt_60bac25d implements \SqlSemanti
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtsForm $spProcStmts,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm $spProcStmt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spProcStmts), 'The spProcStmts must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spProcStmt), 'The spProcStmt must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class SpProcStmtsWithSpProcStmtsSpProcStmt_60bac25d implements \SqlSemanti
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->spProcStmts->write($writer);
+        $writer->comments($this->comments, 1);
         $this->spProcStmt->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(';');
     }
 
@@ -42,7 +46,7 @@ final class SpProcStmtsWithSpProcStmtsSpProcStmt_60bac25d implements \SqlSemanti
      */
     public function withSpProcStmts(\SqlSemantics\Statement\Model\MySql\Role\SpProcStmtsForm $spProcStmts): self
     {
-        return new self($spProcStmts, $this->spProcStmt);
+        return new self($spProcStmts, $this->spProcStmt, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class SpProcStmtsWithSpProcStmtsSpProcStmt_60bac25d implements \SqlSemanti
      */
     public function withSpProcStmt(\SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm $spProcStmt): self
     {
-        return new self($this->spProcStmts, $spProcStmt);
+        return new self($this->spProcStmts, $spProcStmt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->spProcStmts, $this->spProcStmt, $comments);
     }
 }

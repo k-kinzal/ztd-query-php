@@ -17,10 +17,11 @@ final class TriggerEventWithDeleteInsert_67056f08 implements \SqlSemantics\State
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $deleteInsert,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($deleteInsert, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['DELETE|INSERT'], 'The deleteInsert must be a complete DELETE|INSERT lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class TriggerEventWithDeleteInsert_67056f08 implements \SqlSemantics\State
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->deleteInsert);
     }
 
@@ -38,6 +40,14 @@ final class TriggerEventWithDeleteInsert_67056f08 implements \SqlSemantics\State
      */
     public function withDeleteInsert(string $deleteInsert): self
     {
-        return new self($deleteInsert);
+        return new self($deleteInsert, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->deleteInsert, $comments);
     }
 }

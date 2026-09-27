@@ -17,10 +17,11 @@ final class FilterDefWithReplicateWildDoTableEqOptFilterStringList_fcf50be5 impl
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptFilterStringListForm $optFilterStringList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optFilterStringList), 'The optFilterStringList must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class FilterDefWithReplicateWildDoTableEqOptFilterStringList_fcf50be5 impl
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('REPLICATE_WILD_DO_TABLE');
+        $writer->comments($this->comments, 1);
         $writer->append('=');
+        $writer->comments($this->comments, 2);
         $this->optFilterStringList->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class FilterDefWithReplicateWildDoTableEqOptFilterStringList_fcf50be5 impl
      */
     public function withOptFilterStringList(\SqlSemantics\Statement\Model\MySql\Role\OptFilterStringListForm $optFilterStringList): self
     {
-        return new self($optFilterStringList);
+        return new self($optFilterStringList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optFilterStringList, $comments);
     }
 }

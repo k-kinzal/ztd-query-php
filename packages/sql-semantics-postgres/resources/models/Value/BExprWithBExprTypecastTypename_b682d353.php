@@ -17,12 +17,13 @@ final class BExprWithBExprTypecastTypename_b682d353 implements \SqlSemantics\Sta
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr,
         public readonly string $typecast,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($bExpr), 'The bExpr must be a generated immutable SQL value.');
         $this->assertOperandBindingStrength($bExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 21,));
@@ -35,8 +36,11 @@ final class BExprWithBExprTypecastTypename_b682d353 implements \SqlSemantics\Sta
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->bExpr->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append($this->typecast);
+        $writer->comments($this->comments, 2);
         $this->typename->write($writer);
     }
 
@@ -45,7 +49,7 @@ final class BExprWithBExprTypecastTypename_b682d353 implements \SqlSemantics\Sta
      */
     public function withBExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr): self
     {
-        return new self($bExpr, $this->typecast, $this->typename);
+        return new self($bExpr, $this->typecast, $this->typename, $this->comments);
     }
 
     /**
@@ -53,7 +57,7 @@ final class BExprWithBExprTypecastTypename_b682d353 implements \SqlSemantics\Sta
      */
     public function withTypecast(string $typecast): self
     {
-        return new self($this->bExpr, $typecast, $this->typename);
+        return new self($this->bExpr, $typecast, $this->typename, $this->comments);
     }
 
     /**
@@ -61,6 +65,14 @@ final class BExprWithBExprTypecastTypename_b682d353 implements \SqlSemantics\Sta
      */
     public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
     {
-        return new self($this->bExpr, $this->typecast, $typename);
+        return new self($this->bExpr, $this->typecast, $typename, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->bExpr, $this->typecast, $this->typename, $comments);
     }
 }

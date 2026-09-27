@@ -17,12 +17,13 @@ final class CreateAmStmtWithCreateAccessMethodNameTypePAmTypeHandlerHandlerName_
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AmTypeForm $amType,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\HandlerNameForm $handlerName,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($amType), 'The amType must be a generated immutable SQL value.');
@@ -34,13 +35,21 @@ final class CreateAmStmtWithCreateAccessMethodNameTypePAmTypeHandlerHandlerName_
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $writer->append('ACCESS');
+        $writer->comments($this->comments, 2);
         $writer->append('METHOD');
+        $writer->comments($this->comments, 3);
         $this->name->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('TYPE');
+        $writer->comments($this->comments, 5);
         $this->amType->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append('HANDLER');
+        $writer->comments($this->comments, 7);
         $this->handlerName->write($writer);
     }
 
@@ -49,7 +58,7 @@ final class CreateAmStmtWithCreateAccessMethodNameTypePAmTypeHandlerHandlerName_
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($name, $this->amType, $this->handlerName);
+        return new self($name, $this->amType, $this->handlerName, $this->comments);
     }
 
     /**
@@ -57,7 +66,7 @@ final class CreateAmStmtWithCreateAccessMethodNameTypePAmTypeHandlerHandlerName_
      */
     public function withAmType(\SqlSemantics\Statement\Model\PostgreSql\Role\AmTypeForm $amType): self
     {
-        return new self($this->name, $amType, $this->handlerName);
+        return new self($this->name, $amType, $this->handlerName, $this->comments);
     }
 
     /**
@@ -65,6 +74,14 @@ final class CreateAmStmtWithCreateAccessMethodNameTypePAmTypeHandlerHandlerName_
      */
     public function withHandlerName(\SqlSemantics\Statement\Model\PostgreSql\Role\HandlerNameForm $handlerName): self
     {
-        return new self($this->name, $this->amType, $handlerName);
+        return new self($this->name, $this->amType, $handlerName, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->name, $this->amType, $this->handlerName, $comments);
     }
 }

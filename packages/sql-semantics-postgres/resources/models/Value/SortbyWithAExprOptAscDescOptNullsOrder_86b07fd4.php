@@ -17,12 +17,13 @@ final class SortbyWithAExprOptAscDescOptNullsOrder_86b07fd4 implements \SqlSeman
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptAscDescForm $optAscDesc,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptNullsOrderForm $optNullsOrder,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optAscDesc), 'The optAscDesc must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class SortbyWithAExprOptAscDescOptNullsOrder_86b07fd4 implements \SqlSeman
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->aExpr->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optAscDesc->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optNullsOrder->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class SortbyWithAExprOptAscDescOptNullsOrder_86b07fd4 implements \SqlSeman
      */
     public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
     {
-        return new self($aExpr, $this->optAscDesc, $this->optNullsOrder);
+        return new self($aExpr, $this->optAscDesc, $this->optNullsOrder, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class SortbyWithAExprOptAscDescOptNullsOrder_86b07fd4 implements \SqlSeman
      */
     public function withOptAscDesc(\SqlSemantics\Statement\Model\PostgreSql\Role\OptAscDescForm $optAscDesc): self
     {
-        return new self($this->aExpr, $optAscDesc, $this->optNullsOrder);
+        return new self($this->aExpr, $optAscDesc, $this->optNullsOrder, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class SortbyWithAExprOptAscDescOptNullsOrder_86b07fd4 implements \SqlSeman
      */
     public function withOptNullsOrder(\SqlSemantics\Statement\Model\PostgreSql\Role\OptNullsOrderForm $optNullsOrder): self
     {
-        return new self($this->aExpr, $this->optAscDesc, $optNullsOrder);
+        return new self($this->aExpr, $this->optAscDesc, $optNullsOrder, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->aExpr, $this->optAscDesc, $this->optNullsOrder, $comments);
     }
 }

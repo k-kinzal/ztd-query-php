@@ -17,11 +17,12 @@ final class RuleActionMultiWithRuleActionMultiRuleActionStmtOrEmpty_6d805bd8 imp
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionMultiForm $ruleActionMulti,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtOrEmptyForm $ruleActionStmtOrEmpty,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($ruleActionMulti), 'The ruleActionMulti must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($ruleActionStmtOrEmpty), 'The ruleActionStmtOrEmpty must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class RuleActionMultiWithRuleActionMultiRuleActionStmtOrEmpty_6d805bd8 imp
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->ruleActionMulti->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(';');
+        $writer->comments($this->comments, 2);
         $this->ruleActionStmtOrEmpty->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class RuleActionMultiWithRuleActionMultiRuleActionStmtOrEmpty_6d805bd8 imp
      */
     public function withRuleActionMulti(\SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionMultiForm $ruleActionMulti): self
     {
-        return new self($ruleActionMulti, $this->ruleActionStmtOrEmpty);
+        return new self($ruleActionMulti, $this->ruleActionStmtOrEmpty, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class RuleActionMultiWithRuleActionMultiRuleActionStmtOrEmpty_6d805bd8 imp
      */
     public function withRuleActionStmtOrEmpty(\SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtOrEmptyForm $ruleActionStmtOrEmpty): self
     {
-        return new self($this->ruleActionMulti, $ruleActionStmtOrEmpty);
+        return new self($this->ruleActionMulti, $ruleActionStmtOrEmpty, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ruleActionMulti, $this->ruleActionStmtOrEmpty, $comments);
     }
 }

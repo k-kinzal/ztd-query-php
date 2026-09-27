@@ -17,10 +17,11 @@ final class DeferSubclauseWithDeferrableInitDeferredPredOpt_1dbafeef implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\InitDeferredPredOptForm $initDeferredPredOpt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($initDeferredPredOpt), 'The initDeferredPredOpt must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class DeferSubclauseWithDeferrableInitDeferredPredOpt_1dbafeef implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('DEFERRABLE');
+        $writer->comments($this->comments, 1);
         $this->initDeferredPredOpt->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class DeferSubclauseWithDeferrableInitDeferredPredOpt_1dbafeef implements 
      */
     public function withInitDeferredPredOpt(\SqlSemantics\Statement\Model\Sqlite\Role\InitDeferredPredOptForm $initDeferredPredOpt): self
     {
-        return new self($initDeferredPredOpt);
+        return new self($initDeferredPredOpt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->initDeferredPredOpt, $comments);
     }
 }

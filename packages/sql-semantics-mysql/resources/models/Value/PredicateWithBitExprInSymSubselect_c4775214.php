@@ -17,11 +17,12 @@ final class PredicateWithBitExprInSymSubselect_c4775214 implements \SqlSemantics
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SubselectForm $subselect,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($bitExpr), 'The bitExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($subselect), 'The subselect must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class PredicateWithBitExprInSymSubselect_c4775214 implements \SqlSemantics
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->bitExpr->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('IN');
+        $writer->comments($this->comments, 2);
         $writer->append('(');
+        $writer->comments($this->comments, 3);
         $this->subselect->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
     }
 
@@ -44,7 +50,7 @@ final class PredicateWithBitExprInSymSubselect_c4775214 implements \SqlSemantics
      */
     public function withBitExpr(\SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr): self
     {
-        return new self($bitExpr, $this->subselect);
+        return new self($bitExpr, $this->subselect, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class PredicateWithBitExprInSymSubselect_c4775214 implements \SqlSemantics
      */
     public function withSubselect(\SqlSemantics\Statement\Model\MySql\Role\SubselectForm $subselect): self
     {
-        return new self($this->bitExpr, $subselect);
+        return new self($this->bitExpr, $subselect, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->bitExpr, $this->subselect, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class SelectOptionsAndItemListWithSelectOptionsSelectItemList_9ccf7cbf imp
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectOptionsForm $options,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm $projections,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($options), 'The options must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($projections), 'The projections must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class SelectOptionsAndItemListWithSelectOptionsSelectItemList_9ccf7cbf imp
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->options->write($writer);
+        $writer->comments($this->comments, 1);
         $this->projections->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class SelectOptionsAndItemListWithSelectOptionsSelectItemList_9ccf7cbf imp
      */
     public function withOptions(\SqlSemantics\Statement\Model\MySql\Role\SelectOptionsForm $options): self
     {
-        return new self($options, $this->projections);
+        return new self($options, $this->projections, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class SelectOptionsAndItemListWithSelectOptionsSelectItemList_9ccf7cbf imp
      */
     public function withProjections(\SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm $projections): self
     {
-        return new self($this->options, $projections);
+        return new self($this->options, $projections, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->options, $this->projections, $comments);
     }
 }

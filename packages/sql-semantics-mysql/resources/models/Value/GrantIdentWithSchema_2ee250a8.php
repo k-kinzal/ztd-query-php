@@ -17,10 +17,11 @@ final class GrantIdentWithSchema_2ee250a8 implements \SqlSemantics\Statement\Mod
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SchemaForm $schema,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($schema), 'The schema must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class GrantIdentWithSchema_2ee250a8 implements \SqlSemantics\Statement\Mod
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->schema->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('.');
+        $writer->comments($this->comments, 2);
         $writer->append('*');
     }
 
@@ -40,6 +44,14 @@ final class GrantIdentWithSchema_2ee250a8 implements \SqlSemantics\Statement\Mod
      */
     public function withSchema(\SqlSemantics\Statement\Model\MySql\Role\SchemaForm $schema): self
     {
-        return new self($schema);
+        return new self($schema, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->schema, $comments);
     }
 }

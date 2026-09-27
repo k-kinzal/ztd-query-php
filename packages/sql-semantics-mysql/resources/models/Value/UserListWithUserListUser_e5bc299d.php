@@ -17,11 +17,12 @@ final class UserListWithUserListUser_e5bc299d implements \SqlSemantics\Statement
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserForm $user,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($userList), 'The userList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class UserListWithUserListUser_e5bc299d implements \SqlSemantics\Statement
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->userList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->user->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class UserListWithUserListUser_e5bc299d implements \SqlSemantics\Statement
      */
     public function withUserList(\SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList): self
     {
-        return new self($userList, $this->user);
+        return new self($userList, $this->user, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class UserListWithUserListUser_e5bc299d implements \SqlSemantics\Statement
      */
     public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
     {
-        return new self($this->userList, $user);
+        return new self($this->userList, $user, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->userList, $this->user, $comments);
     }
 }

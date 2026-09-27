@@ -17,11 +17,12 @@ final class CommentStmtWithCommentOnRoutineFunctionWithArgtypesIsCommentText_0c6
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm $functionWithArgtypes,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CommentTextForm $commentText,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($functionWithArgtypes), 'The functionWithArgtypes must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($commentText), 'The commentText must be a generated immutable SQL value.');
@@ -32,11 +33,17 @@ final class CommentStmtWithCommentOnRoutineFunctionWithArgtypesIsCommentText_0c6
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('COMMENT');
+        $writer->comments($this->comments, 1);
         $writer->append('ON');
+        $writer->comments($this->comments, 2);
         $writer->append('ROUTINE');
+        $writer->comments($this->comments, 3);
         $this->functionWithArgtypes->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('IS');
+        $writer->comments($this->comments, 5);
         $this->commentText->write($writer);
     }
 
@@ -45,7 +52,7 @@ final class CommentStmtWithCommentOnRoutineFunctionWithArgtypesIsCommentText_0c6
      */
     public function withFunctionWithArgtypes(\SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm $functionWithArgtypes): self
     {
-        return new self($functionWithArgtypes, $this->commentText);
+        return new self($functionWithArgtypes, $this->commentText, $this->comments);
     }
 
     /**
@@ -53,6 +60,14 @@ final class CommentStmtWithCommentOnRoutineFunctionWithArgtypesIsCommentText_0c6
      */
     public function withCommentText(\SqlSemantics\Statement\Model\PostgreSql\Role\CommentTextForm $commentText): self
     {
-        return new self($this->functionWithArgtypes, $commentText);
+        return new self($this->functionWithArgtypes, $commentText, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->functionWithArgtypes, $this->commentText, $comments);
     }
 }

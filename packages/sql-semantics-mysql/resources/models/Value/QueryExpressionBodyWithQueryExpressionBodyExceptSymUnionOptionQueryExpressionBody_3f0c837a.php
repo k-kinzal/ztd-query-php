@@ -17,12 +17,13 @@ final class QueryExpressionBodyWithQueryExpressionBodyExceptSymUnionOptionQueryE
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm $queryExpressionBody,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UnionOptionForm $unionOption,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm $queryExpressionBody2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($queryExpressionBody), 'The queryExpressionBody must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($unionOption), 'The unionOption must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class QueryExpressionBodyWithQueryExpressionBodyExceptSymUnionOptionQueryE
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->queryExpressionBody->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('EXCEPT');
+        $writer->comments($this->comments, 2);
         $this->unionOption->write($writer);
+        $writer->comments($this->comments, 3);
         $this->queryExpressionBody2->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class QueryExpressionBodyWithQueryExpressionBodyExceptSymUnionOptionQueryE
      */
     public function withQueryExpressionBody(\SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm $queryExpressionBody): self
     {
-        return new self($queryExpressionBody, $this->unionOption, $this->queryExpressionBody2);
+        return new self($queryExpressionBody, $this->unionOption, $this->queryExpressionBody2, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class QueryExpressionBodyWithQueryExpressionBodyExceptSymUnionOptionQueryE
      */
     public function withUnionOption(\SqlSemantics\Statement\Model\MySql\Role\UnionOptionForm $unionOption): self
     {
-        return new self($this->queryExpressionBody, $unionOption, $this->queryExpressionBody2);
+        return new self($this->queryExpressionBody, $unionOption, $this->queryExpressionBody2, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class QueryExpressionBodyWithQueryExpressionBodyExceptSymUnionOptionQueryE
      */
     public function withQueryExpressionBody2(\SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm $queryExpressionBody2): self
     {
-        return new self($this->queryExpressionBody, $this->unionOption, $queryExpressionBody2);
+        return new self($this->queryExpressionBody, $this->unionOption, $queryExpressionBody2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->queryExpressionBody, $this->unionOption, $this->queryExpressionBody2, $comments);
     }
 }

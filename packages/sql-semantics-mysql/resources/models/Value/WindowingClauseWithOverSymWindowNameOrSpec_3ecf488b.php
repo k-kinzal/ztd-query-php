@@ -17,10 +17,11 @@ final class WindowingClauseWithOverSymWindowNameOrSpec_3ecf488b implements \SqlS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WindowNameOrSpecForm $windowNameOrSpec,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($windowNameOrSpec), 'The windowNameOrSpec must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class WindowingClauseWithOverSymWindowNameOrSpec_3ecf488b implements \SqlS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('OVER');
+        $writer->comments($this->comments, 1);
         $this->windowNameOrSpec->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class WindowingClauseWithOverSymWindowNameOrSpec_3ecf488b implements \SqlS
      */
     public function withWindowNameOrSpec(\SqlSemantics\Statement\Model\MySql\Role\WindowNameOrSpecForm $windowNameOrSpec): self
     {
-        return new self($windowNameOrSpec);
+        return new self($windowNameOrSpec, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->windowNameOrSpec, $comments);
     }
 }

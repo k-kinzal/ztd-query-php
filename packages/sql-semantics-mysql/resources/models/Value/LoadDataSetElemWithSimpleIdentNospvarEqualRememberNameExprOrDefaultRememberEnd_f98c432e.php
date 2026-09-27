@@ -17,7 +17,7 @@ final class LoadDataSetElemWithSimpleIdentNospvarEqualRememberNameExprOrDefaultR
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleIdentNospvarForm $simpleIdentNospvar,
@@ -25,6 +25,7 @@ final class LoadDataSetElemWithSimpleIdentNospvarEqualRememberNameExprOrDefaultR
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm $rememberName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm $exprOrDefault,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RememberEndForm $rememberEnd,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleIdentNospvar), 'The simpleIdentNospvar must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($equal), 'The equal must be a generated immutable SQL value.');
@@ -38,10 +39,15 @@ final class LoadDataSetElemWithSimpleIdentNospvarEqualRememberNameExprOrDefaultR
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->simpleIdentNospvar->write($writer);
+        $writer->comments($this->comments, 1);
         $this->equal->write($writer);
+        $writer->comments($this->comments, 2);
         $this->rememberName->write($writer);
+        $writer->comments($this->comments, 3);
         $this->exprOrDefault->write($writer);
+        $writer->comments($this->comments, 4);
         $this->rememberEnd->write($writer);
     }
 
@@ -50,7 +56,7 @@ final class LoadDataSetElemWithSimpleIdentNospvarEqualRememberNameExprOrDefaultR
      */
     public function withSimpleIdentNospvar(\SqlSemantics\Statement\Model\MySql\Role\SimpleIdentNospvarForm $simpleIdentNospvar): self
     {
-        return new self($simpleIdentNospvar, $this->equal, $this->rememberName, $this->exprOrDefault, $this->rememberEnd);
+        return new self($simpleIdentNospvar, $this->equal, $this->rememberName, $this->exprOrDefault, $this->rememberEnd, $this->comments);
     }
 
     /**
@@ -58,7 +64,7 @@ final class LoadDataSetElemWithSimpleIdentNospvarEqualRememberNameExprOrDefaultR
      */
     public function withEqual(\SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal): self
     {
-        return new self($this->simpleIdentNospvar, $equal, $this->rememberName, $this->exprOrDefault, $this->rememberEnd);
+        return new self($this->simpleIdentNospvar, $equal, $this->rememberName, $this->exprOrDefault, $this->rememberEnd, $this->comments);
     }
 
     /**
@@ -66,7 +72,7 @@ final class LoadDataSetElemWithSimpleIdentNospvarEqualRememberNameExprOrDefaultR
      */
     public function withRememberName(\SqlSemantics\Statement\Model\MySql\Role\RememberNameForm $rememberName): self
     {
-        return new self($this->simpleIdentNospvar, $this->equal, $rememberName, $this->exprOrDefault, $this->rememberEnd);
+        return new self($this->simpleIdentNospvar, $this->equal, $rememberName, $this->exprOrDefault, $this->rememberEnd, $this->comments);
     }
 
     /**
@@ -74,7 +80,7 @@ final class LoadDataSetElemWithSimpleIdentNospvarEqualRememberNameExprOrDefaultR
      */
     public function withExprOrDefault(\SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm $exprOrDefault): self
     {
-        return new self($this->simpleIdentNospvar, $this->equal, $this->rememberName, $exprOrDefault, $this->rememberEnd);
+        return new self($this->simpleIdentNospvar, $this->equal, $this->rememberName, $exprOrDefault, $this->rememberEnd, $this->comments);
     }
 
     /**
@@ -82,6 +88,14 @@ final class LoadDataSetElemWithSimpleIdentNospvarEqualRememberNameExprOrDefaultR
      */
     public function withRememberEnd(\SqlSemantics\Statement\Model\MySql\Role\RememberEndForm $rememberEnd): self
     {
-        return new self($this->simpleIdentNospvar, $this->equal, $this->rememberName, $this->exprOrDefault, $rememberEnd);
+        return new self($this->simpleIdentNospvar, $this->equal, $this->rememberName, $this->exprOrDefault, $rememberEnd, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->simpleIdentNospvar, $this->equal, $this->rememberName, $this->exprOrDefault, $this->rememberEnd, $comments);
     }
 }

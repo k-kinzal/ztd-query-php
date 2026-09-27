@@ -17,11 +17,12 @@ final class KeycacheWithCacheSymIndexSymKeycacheListOrPartsInSymKeyCacheName_6d2
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeycacheListOrPartsForm $keycacheListOrParts,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyCacheNameForm $keyCacheName,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keycacheListOrParts), 'The keycacheListOrParts must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyCacheName), 'The keyCacheName must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class KeycacheWithCacheSymIndexSymKeycacheListOrPartsInSymKeyCacheName_6d2
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CACHE');
+        $writer->comments($this->comments, 1);
         $writer->append('INDEX');
+        $writer->comments($this->comments, 2);
         $this->keycacheListOrParts->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('IN');
+        $writer->comments($this->comments, 4);
         $this->keyCacheName->write($writer);
     }
 
@@ -44,7 +50,7 @@ final class KeycacheWithCacheSymIndexSymKeycacheListOrPartsInSymKeyCacheName_6d2
      */
     public function withKeycacheListOrParts(\SqlSemantics\Statement\Model\MySql\Role\KeycacheListOrPartsForm $keycacheListOrParts): self
     {
-        return new self($keycacheListOrParts, $this->keyCacheName);
+        return new self($keycacheListOrParts, $this->keyCacheName, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class KeycacheWithCacheSymIndexSymKeycacheListOrPartsInSymKeyCacheName_6d2
      */
     public function withKeyCacheName(\SqlSemantics\Statement\Model\MySql\Role\KeyCacheNameForm $keyCacheName): self
     {
-        return new self($this->keycacheListOrParts, $keyCacheName);
+        return new self($this->keycacheListOrParts, $keyCacheName, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->keycacheListOrParts, $this->keyCacheName, $comments);
     }
 }

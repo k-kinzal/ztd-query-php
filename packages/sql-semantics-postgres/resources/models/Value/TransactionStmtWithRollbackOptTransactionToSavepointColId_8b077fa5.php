@@ -17,11 +17,12 @@ final class TransactionStmtWithRollbackOptTransactionToSavepointColId_8b077fa5 i
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTransactionForm $optTransaction,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTransaction), 'The optTransaction must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class TransactionStmtWithRollbackOptTransactionToSavepointColId_8b077fa5 i
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ROLLBACK');
+        $writer->comments($this->comments, 1);
         $this->optTransaction->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('TO');
+        $writer->comments($this->comments, 3);
         $writer->append('SAVEPOINT');
+        $writer->comments($this->comments, 4);
         $this->colId->write($writer);
     }
 
@@ -44,7 +50,7 @@ final class TransactionStmtWithRollbackOptTransactionToSavepointColId_8b077fa5 i
      */
     public function withOptTransaction(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTransactionForm $optTransaction): self
     {
-        return new self($optTransaction, $this->colId);
+        return new self($optTransaction, $this->colId, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class TransactionStmtWithRollbackOptTransactionToSavepointColId_8b077fa5 i
      */
     public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
     {
-        return new self($this->optTransaction, $colId);
+        return new self($this->optTransaction, $colId, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optTransaction, $this->colId, $comments);
     }
 }

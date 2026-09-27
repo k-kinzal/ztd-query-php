@@ -17,12 +17,13 @@ final class AlterUserWithUserIdentifiedWithPluginByRandomPasswordOptRetainCurren
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserForm $user,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentifiedWithPluginByRandomPasswordForm $identifiedWithPluginByRandomPassword,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptRetainCurrentPasswordForm $optRetainCurrentPassword,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identifiedWithPluginByRandomPassword), 'The identifiedWithPluginByRandomPassword must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class AlterUserWithUserIdentifiedWithPluginByRandomPasswordOptRetainCurren
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->user->write($writer);
+        $writer->comments($this->comments, 1);
         $this->identifiedWithPluginByRandomPassword->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optRetainCurrentPassword->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class AlterUserWithUserIdentifiedWithPluginByRandomPasswordOptRetainCurren
      */
     public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
     {
-        return new self($user, $this->identifiedWithPluginByRandomPassword, $this->optRetainCurrentPassword);
+        return new self($user, $this->identifiedWithPluginByRandomPassword, $this->optRetainCurrentPassword, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class AlterUserWithUserIdentifiedWithPluginByRandomPasswordOptRetainCurren
      */
     public function withIdentifiedWithPluginByRandomPassword(\SqlSemantics\Statement\Model\MySql\Role\IdentifiedWithPluginByRandomPasswordForm $identifiedWithPluginByRandomPassword): self
     {
-        return new self($this->user, $identifiedWithPluginByRandomPassword, $this->optRetainCurrentPassword);
+        return new self($this->user, $identifiedWithPluginByRandomPassword, $this->optRetainCurrentPassword, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class AlterUserWithUserIdentifiedWithPluginByRandomPasswordOptRetainCurren
      */
     public function withOptRetainCurrentPassword(\SqlSemantics\Statement\Model\MySql\Role\OptRetainCurrentPasswordForm $optRetainCurrentPassword): self
     {
-        return new self($this->user, $this->identifiedWithPluginByRandomPassword, $optRetainCurrentPassword);
+        return new self($this->user, $this->identifiedWithPluginByRandomPassword, $optRetainCurrentPassword, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->user, $this->identifiedWithPluginByRandomPassword, $this->optRetainCurrentPassword, $comments);
     }
 }

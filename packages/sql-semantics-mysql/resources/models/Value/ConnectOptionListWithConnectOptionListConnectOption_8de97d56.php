@@ -17,11 +17,12 @@ final class ConnectOptionListWithConnectOptionListConnectOption_8de97d56 impleme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ConnectOptionListForm $connectOptionList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ConnectOptionForm $connectOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($connectOptionList), 'The connectOptionList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($connectOption), 'The connectOption must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class ConnectOptionListWithConnectOptionListConnectOption_8de97d56 impleme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->connectOptionList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->connectOption->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class ConnectOptionListWithConnectOptionListConnectOption_8de97d56 impleme
      */
     public function withConnectOptionList(\SqlSemantics\Statement\Model\MySql\Role\ConnectOptionListForm $connectOptionList): self
     {
-        return new self($connectOptionList, $this->connectOption);
+        return new self($connectOptionList, $this->connectOption, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class ConnectOptionListWithConnectOptionListConnectOption_8de97d56 impleme
      */
     public function withConnectOption(\SqlSemantics\Statement\Model\MySql\Role\ConnectOptionForm $connectOption): self
     {
-        return new self($this->connectOptionList, $connectOption);
+        return new self($this->connectOptionList, $connectOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->connectOptionList, $this->connectOption, $comments);
     }
 }

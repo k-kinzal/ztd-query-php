@@ -17,7 +17,7 @@ final class RuleStmtWithCreateOptOrReplaceRuleNameAsOnEventToQualifiedNameWhereC
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm $optOrReplace,
@@ -27,6 +27,7 @@ final class RuleStmtWithCreateOptOrReplaceRuleNameAsOnEventToQualifiedNameWhereC
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\WhereClauseForm $where,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptInsteadForm $optInstead,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionListForm $ruleActionList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optOrReplace), 'The optOrReplace must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
@@ -42,18 +43,31 @@ final class RuleStmtWithCreateOptOrReplaceRuleNameAsOnEventToQualifiedNameWhereC
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $this->optOrReplace->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('RULE');
+        $writer->comments($this->comments, 3);
         $this->name->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('AS');
+        $writer->comments($this->comments, 5);
         $writer->append('ON');
+        $writer->comments($this->comments, 6);
         $this->event->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append('TO');
+        $writer->comments($this->comments, 8);
         $this->qualifiedName->write($writer);
+        $writer->comments($this->comments, 9);
         $this->where->write($writer);
+        $writer->comments($this->comments, 10);
         $writer->append('DO');
+        $writer->comments($this->comments, 11);
         $this->optInstead->write($writer);
+        $writer->comments($this->comments, 12);
         $this->ruleActionList->write($writer);
     }
 
@@ -62,7 +76,7 @@ final class RuleStmtWithCreateOptOrReplaceRuleNameAsOnEventToQualifiedNameWhereC
      */
     public function withOptOrReplace(\SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm $optOrReplace): self
     {
-        return new self($optOrReplace, $this->name, $this->event, $this->qualifiedName, $this->where, $this->optInstead, $this->ruleActionList);
+        return new self($optOrReplace, $this->name, $this->event, $this->qualifiedName, $this->where, $this->optInstead, $this->ruleActionList, $this->comments);
     }
 
     /**
@@ -70,7 +84,7 @@ final class RuleStmtWithCreateOptOrReplaceRuleNameAsOnEventToQualifiedNameWhereC
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($this->optOrReplace, $name, $this->event, $this->qualifiedName, $this->where, $this->optInstead, $this->ruleActionList);
+        return new self($this->optOrReplace, $name, $this->event, $this->qualifiedName, $this->where, $this->optInstead, $this->ruleActionList, $this->comments);
     }
 
     /**
@@ -78,7 +92,7 @@ final class RuleStmtWithCreateOptOrReplaceRuleNameAsOnEventToQualifiedNameWhereC
      */
     public function withEvent(\SqlSemantics\Statement\Model\PostgreSql\Role\EventForm $event): self
     {
-        return new self($this->optOrReplace, $this->name, $event, $this->qualifiedName, $this->where, $this->optInstead, $this->ruleActionList);
+        return new self($this->optOrReplace, $this->name, $event, $this->qualifiedName, $this->where, $this->optInstead, $this->ruleActionList, $this->comments);
     }
 
     /**
@@ -86,7 +100,7 @@ final class RuleStmtWithCreateOptOrReplaceRuleNameAsOnEventToQualifiedNameWhereC
      */
     public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
     {
-        return new self($this->optOrReplace, $this->name, $this->event, $qualifiedName, $this->where, $this->optInstead, $this->ruleActionList);
+        return new self($this->optOrReplace, $this->name, $this->event, $qualifiedName, $this->where, $this->optInstead, $this->ruleActionList, $this->comments);
     }
 
     /**
@@ -94,7 +108,7 @@ final class RuleStmtWithCreateOptOrReplaceRuleNameAsOnEventToQualifiedNameWhereC
      */
     public function withWhere(\SqlSemantics\Statement\Model\PostgreSql\Role\WhereClauseForm $where): self
     {
-        return new self($this->optOrReplace, $this->name, $this->event, $this->qualifiedName, $where, $this->optInstead, $this->ruleActionList);
+        return new self($this->optOrReplace, $this->name, $this->event, $this->qualifiedName, $where, $this->optInstead, $this->ruleActionList, $this->comments);
     }
 
     /**
@@ -102,7 +116,7 @@ final class RuleStmtWithCreateOptOrReplaceRuleNameAsOnEventToQualifiedNameWhereC
      */
     public function withOptInstead(\SqlSemantics\Statement\Model\PostgreSql\Role\OptInsteadForm $optInstead): self
     {
-        return new self($this->optOrReplace, $this->name, $this->event, $this->qualifiedName, $this->where, $optInstead, $this->ruleActionList);
+        return new self($this->optOrReplace, $this->name, $this->event, $this->qualifiedName, $this->where, $optInstead, $this->ruleActionList, $this->comments);
     }
 
     /**
@@ -110,6 +124,14 @@ final class RuleStmtWithCreateOptOrReplaceRuleNameAsOnEventToQualifiedNameWhereC
      */
     public function withRuleActionList(\SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionListForm $ruleActionList): self
     {
-        return new self($this->optOrReplace, $this->name, $this->event, $this->qualifiedName, $this->where, $this->optInstead, $ruleActionList);
+        return new self($this->optOrReplace, $this->name, $this->event, $this->qualifiedName, $this->where, $this->optInstead, $ruleActionList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optOrReplace, $this->name, $this->event, $this->qualifiedName, $this->where, $this->optInstead, $this->ruleActionList, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class ChangeTsOptionsWithChangeTsOptionsChangeTsOption_49e2d65e implements
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ChangeTsOptionsForm $changeTsOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ChangeTsOptionForm $changeTsOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($changeTsOptions), 'The changeTsOptions must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($changeTsOption), 'The changeTsOption must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class ChangeTsOptionsWithChangeTsOptionsChangeTsOption_49e2d65e implements
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->changeTsOptions->write($writer);
+        $writer->comments($this->comments, 1);
         $this->changeTsOption->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class ChangeTsOptionsWithChangeTsOptionsChangeTsOption_49e2d65e implements
      */
     public function withChangeTsOptions(\SqlSemantics\Statement\Model\MySql\Role\ChangeTsOptionsForm $changeTsOptions): self
     {
-        return new self($changeTsOptions, $this->changeTsOption);
+        return new self($changeTsOptions, $this->changeTsOption, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class ChangeTsOptionsWithChangeTsOptionsChangeTsOption_49e2d65e implements
      */
     public function withChangeTsOption(\SqlSemantics\Statement\Model\MySql\Role\ChangeTsOptionForm $changeTsOption): self
     {
-        return new self($this->changeTsOptions, $changeTsOption);
+        return new self($this->changeTsOptions, $changeTsOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->changeTsOptions, $this->changeTsOption, $comments);
     }
 }

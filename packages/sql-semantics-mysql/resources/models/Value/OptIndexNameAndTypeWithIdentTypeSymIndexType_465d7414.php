@@ -17,11 +17,12 @@ final class OptIndexNameAndTypeWithIdentTypeSymIndexType_465d7414 implements \Sq
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IndexTypeForm $indexType,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($indexType), 'The indexType must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class OptIndexNameAndTypeWithIdentTypeSymIndexType_465d7414 implements \Sq
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('TYPE');
+        $writer->comments($this->comments, 2);
         $this->indexType->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class OptIndexNameAndTypeWithIdentTypeSymIndexType_465d7414 implements \Sq
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($ident, $this->indexType);
+        return new self($ident, $this->indexType, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class OptIndexNameAndTypeWithIdentTypeSymIndexType_465d7414 implements \Sq
      */
     public function withIndexType(\SqlSemantics\Statement\Model\MySql\Role\IndexTypeForm $indexType): self
     {
-        return new self($this->ident, $indexType);
+        return new self($this->ident, $indexType, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ident, $this->indexType, $comments);
     }
 }

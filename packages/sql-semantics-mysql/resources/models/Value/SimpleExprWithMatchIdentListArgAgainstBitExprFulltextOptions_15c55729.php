@@ -17,12 +17,13 @@ final class SimpleExprWithMatchIdentListArgAgainstBitExprFulltextOptions_15c5572
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentListArgForm $identListArg,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FulltextOptionsForm $fulltextOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identListArg), 'The identListArg must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($bitExpr), 'The bitExpr must be a generated immutable SQL value.');
@@ -34,12 +35,19 @@ final class SimpleExprWithMatchIdentListArgAgainstBitExprFulltextOptions_15c5572
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('MATCH');
+        $writer->comments($this->comments, 1);
         $this->identListArg->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('AGAINST');
+        $writer->comments($this->comments, 3);
         $writer->append('(');
+        $writer->comments($this->comments, 4);
         $this->bitExpr->write($writer);
+        $writer->comments($this->comments, 5);
         $this->fulltextOptions->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append(')');
     }
 
@@ -48,7 +56,7 @@ final class SimpleExprWithMatchIdentListArgAgainstBitExprFulltextOptions_15c5572
      */
     public function withIdentListArg(\SqlSemantics\Statement\Model\MySql\Role\IdentListArgForm $identListArg): self
     {
-        return new self($identListArg, $this->bitExpr, $this->fulltextOptions);
+        return new self($identListArg, $this->bitExpr, $this->fulltextOptions, $this->comments);
     }
 
     /**
@@ -56,7 +64,7 @@ final class SimpleExprWithMatchIdentListArgAgainstBitExprFulltextOptions_15c5572
      */
     public function withBitExpr(\SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr): self
     {
-        return new self($this->identListArg, $bitExpr, $this->fulltextOptions);
+        return new self($this->identListArg, $bitExpr, $this->fulltextOptions, $this->comments);
     }
 
     /**
@@ -64,6 +72,14 @@ final class SimpleExprWithMatchIdentListArgAgainstBitExprFulltextOptions_15c5572
      */
     public function withFulltextOptions(\SqlSemantics\Statement\Model\MySql\Role\FulltextOptionsForm $fulltextOptions): self
     {
-        return new self($this->identListArg, $this->bitExpr, $fulltextOptions);
+        return new self($this->identListArg, $this->bitExpr, $fulltextOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->identListArg, $this->bitExpr, $this->fulltextOptions, $comments);
     }
 }

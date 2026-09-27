@@ -74,7 +74,7 @@ final class ConstraintReaderTest extends TestCase
         $table = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (id INTEGER, CONSTRAINT self_ref FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE DEFERRABLE)')->tables[0];
         self::assertSame('self_ref', $table->constraints[0]->name);
         self::assertSame(['id'], $table->constraints[0]->columns);
-        self::assertStringContainsString('DEFERRABLE', $table->constraints[0]->source->toString());
+        self::assertStringContainsString('DEFERRABLE', \SqlSemantics\Statement\Writer::render($table->constraints[0]->source));
     }
 
     public function testReferencesPreservesCompositeForeignKeyOrder(): void

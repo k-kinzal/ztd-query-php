@@ -17,7 +17,7 @@ final class CreateForeignServerStmtWithCreateServerIfPNotExistsNameOptTypeOptFor
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
@@ -25,6 +25,7 @@ final class CreateForeignServerStmtWithCreateServerIfPNotExistsNameOptTypeOptFor
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptForeignServerVersionForm $optForeignServerVersion,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name2,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreateGenericOptionsForm $createGenericOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optType), 'The optType must be a generated immutable SQL value.');
@@ -38,18 +39,31 @@ final class CreateForeignServerStmtWithCreateServerIfPNotExistsNameOptTypeOptFor
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $writer->append('SERVER');
+        $writer->comments($this->comments, 2);
         $writer->append('IF');
+        $writer->comments($this->comments, 3);
         $writer->append('NOT');
+        $writer->comments($this->comments, 4);
         $writer->append('EXISTS');
+        $writer->comments($this->comments, 5);
         $this->name->write($writer);
+        $writer->comments($this->comments, 6);
         $this->optType->write($writer);
+        $writer->comments($this->comments, 7);
         $this->optForeignServerVersion->write($writer);
+        $writer->comments($this->comments, 8);
         $writer->append('FOREIGN');
+        $writer->comments($this->comments, 9);
         $writer->append('DATA');
+        $writer->comments($this->comments, 10);
         $writer->append('WRAPPER');
+        $writer->comments($this->comments, 11);
         $this->name2->write($writer);
+        $writer->comments($this->comments, 12);
         $this->createGenericOptions->write($writer);
     }
 
@@ -58,7 +72,7 @@ final class CreateForeignServerStmtWithCreateServerIfPNotExistsNameOptTypeOptFor
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($name, $this->optType, $this->optForeignServerVersion, $this->name2, $this->createGenericOptions);
+        return new self($name, $this->optType, $this->optForeignServerVersion, $this->name2, $this->createGenericOptions, $this->comments);
     }
 
     /**
@@ -66,7 +80,7 @@ final class CreateForeignServerStmtWithCreateServerIfPNotExistsNameOptTypeOptFor
      */
     public function withOptType(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTypeForm $optType): self
     {
-        return new self($this->name, $optType, $this->optForeignServerVersion, $this->name2, $this->createGenericOptions);
+        return new self($this->name, $optType, $this->optForeignServerVersion, $this->name2, $this->createGenericOptions, $this->comments);
     }
 
     /**
@@ -74,7 +88,7 @@ final class CreateForeignServerStmtWithCreateServerIfPNotExistsNameOptTypeOptFor
      */
     public function withOptForeignServerVersion(\SqlSemantics\Statement\Model\PostgreSql\Role\OptForeignServerVersionForm $optForeignServerVersion): self
     {
-        return new self($this->name, $this->optType, $optForeignServerVersion, $this->name2, $this->createGenericOptions);
+        return new self($this->name, $this->optType, $optForeignServerVersion, $this->name2, $this->createGenericOptions, $this->comments);
     }
 
     /**
@@ -82,7 +96,7 @@ final class CreateForeignServerStmtWithCreateServerIfPNotExistsNameOptTypeOptFor
      */
     public function withName2(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name2): self
     {
-        return new self($this->name, $this->optType, $this->optForeignServerVersion, $name2, $this->createGenericOptions);
+        return new self($this->name, $this->optType, $this->optForeignServerVersion, $name2, $this->createGenericOptions, $this->comments);
     }
 
     /**
@@ -90,6 +104,14 @@ final class CreateForeignServerStmtWithCreateServerIfPNotExistsNameOptTypeOptFor
      */
     public function withCreateGenericOptions(\SqlSemantics\Statement\Model\PostgreSql\Role\CreateGenericOptionsForm $createGenericOptions): self
     {
-        return new self($this->name, $this->optType, $this->optForeignServerVersion, $this->name2, $createGenericOptions);
+        return new self($this->name, $this->optType, $this->optForeignServerVersion, $this->name2, $createGenericOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->name, $this->optType, $this->optForeignServerVersion, $this->name2, $this->createGenericOptions, $comments);
     }
 }

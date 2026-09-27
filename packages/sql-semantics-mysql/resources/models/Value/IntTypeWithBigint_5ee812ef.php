@@ -17,10 +17,11 @@ final class IntTypeWithBigint_5ee812ef implements \SqlSemantics\Statement\Model\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $bigint,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($bigint, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['BIGINT'], 'The bigint must be a complete BIGINT lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class IntTypeWithBigint_5ee812ef implements \SqlSemantics\Statement\Model\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->bigint);
     }
 
@@ -38,6 +40,14 @@ final class IntTypeWithBigint_5ee812ef implements \SqlSemantics\Statement\Model\
      */
     public function withBigint(string $bigint): self
     {
-        return new self($bigint);
+        return new self($bigint, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->bigint, $comments);
     }
 }

@@ -17,10 +17,11 @@ final class CharacterWithCharPOptVarying_1b8437f6 implements \SqlSemantics\State
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptVaryingForm $optVarying,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optVarying), 'The optVarying must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class CharacterWithCharPOptVarying_1b8437f6 implements \SqlSemantics\State
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CHAR');
+        $writer->comments($this->comments, 1);
         $this->optVarying->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class CharacterWithCharPOptVarying_1b8437f6 implements \SqlSemantics\State
      */
     public function withOptVarying(\SqlSemantics\Statement\Model\PostgreSql\Role\OptVaryingForm $optVarying): self
     {
-        return new self($optVarying);
+        return new self($optVarying, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optVarying, $comments);
     }
 }

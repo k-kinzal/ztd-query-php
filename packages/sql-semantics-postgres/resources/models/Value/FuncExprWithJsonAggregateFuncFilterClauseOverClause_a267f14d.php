@@ -17,12 +17,13 @@ final class FuncExprWithJsonAggregateFuncFilterClauseOverClause_a267f14d impleme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonAggregateFuncForm $jsonAggregateFunc,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FilterClauseForm $filterClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OverClauseForm $overClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonAggregateFunc), 'The jsonAggregateFunc must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($filterClause), 'The filterClause must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class FuncExprWithJsonAggregateFuncFilterClauseOverClause_a267f14d impleme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->jsonAggregateFunc->write($writer);
+        $writer->comments($this->comments, 1);
         $this->filterClause->write($writer);
+        $writer->comments($this->comments, 2);
         $this->overClause->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class FuncExprWithJsonAggregateFuncFilterClauseOverClause_a267f14d impleme
      */
     public function withJsonAggregateFunc(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonAggregateFuncForm $jsonAggregateFunc): self
     {
-        return new self($jsonAggregateFunc, $this->filterClause, $this->overClause);
+        return new self($jsonAggregateFunc, $this->filterClause, $this->overClause, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class FuncExprWithJsonAggregateFuncFilterClauseOverClause_a267f14d impleme
      */
     public function withFilterClause(\SqlSemantics\Statement\Model\PostgreSql\Role\FilterClauseForm $filterClause): self
     {
-        return new self($this->jsonAggregateFunc, $filterClause, $this->overClause);
+        return new self($this->jsonAggregateFunc, $filterClause, $this->overClause, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class FuncExprWithJsonAggregateFuncFilterClauseOverClause_a267f14d impleme
      */
     public function withOverClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OverClauseForm $overClause): self
     {
-        return new self($this->jsonAggregateFunc, $this->filterClause, $overClause);
+        return new self($this->jsonAggregateFunc, $this->filterClause, $overClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->jsonAggregateFunc, $this->filterClause, $this->overClause, $comments);
     }
 }

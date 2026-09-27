@@ -17,11 +17,12 @@ final class WindowDefinitionWithWindowNameAsWindowSpec_51fa306c implements \SqlS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WindowNameForm $windowName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WindowSpecForm $windowSpec,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($windowName), 'The windowName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($windowSpec), 'The windowSpec must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class WindowDefinitionWithWindowNameAsWindowSpec_51fa306c implements \SqlS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->windowName->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('AS');
+        $writer->comments($this->comments, 2);
         $this->windowSpec->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class WindowDefinitionWithWindowNameAsWindowSpec_51fa306c implements \SqlS
      */
     public function withWindowName(\SqlSemantics\Statement\Model\MySql\Role\WindowNameForm $windowName): self
     {
-        return new self($windowName, $this->windowSpec);
+        return new self($windowName, $this->windowSpec, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class WindowDefinitionWithWindowNameAsWindowSpec_51fa306c implements \SqlS
      */
     public function withWindowSpec(\SqlSemantics\Statement\Model\MySql\Role\WindowSpecForm $windowSpec): self
     {
-        return new self($this->windowName, $windowSpec);
+        return new self($this->windowName, $windowSpec, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->windowName, $this->windowSpec, $comments);
     }
 }

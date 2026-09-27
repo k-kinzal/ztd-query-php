@@ -17,10 +17,11 @@ final class AlterWithAlterTablespaceSymAlterTablespaceInfo_f0b5456c implements \
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceInfoForm $alterTablespaceInfo,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterTablespaceInfo), 'The alterTablespaceInfo must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class AlterWithAlterTablespaceSymAlterTablespaceInfo_f0b5456c implements \
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('TABLESPACE');
+        $writer->comments($this->comments, 2);
         $this->alterTablespaceInfo->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class AlterWithAlterTablespaceSymAlterTablespaceInfo_f0b5456c implements \
      */
     public function withAlterTablespaceInfo(\SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceInfoForm $alterTablespaceInfo): self
     {
-        return new self($alterTablespaceInfo);
+        return new self($alterTablespaceInfo, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->alterTablespaceInfo, $comments);
     }
 }

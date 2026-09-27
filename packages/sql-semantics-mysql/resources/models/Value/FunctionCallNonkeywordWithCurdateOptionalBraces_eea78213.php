@@ -17,11 +17,12 @@ final class FunctionCallNonkeywordWithCurdateOptionalBraces_eea78213 implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $curdate,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptionalBracesForm $optionalBraces,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($curdate, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['CURDATE'], 'The curdate must be a complete CURDATE lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optionalBraces), 'The optionalBraces must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class FunctionCallNonkeywordWithCurdateOptionalBraces_eea78213 implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->curdate);
+        $writer->comments($this->comments, 1);
         $this->optionalBraces->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class FunctionCallNonkeywordWithCurdateOptionalBraces_eea78213 implements 
      */
     public function withCurdate(string $curdate): self
     {
-        return new self($curdate, $this->optionalBraces);
+        return new self($curdate, $this->optionalBraces, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class FunctionCallNonkeywordWithCurdateOptionalBraces_eea78213 implements 
      */
     public function withOptionalBraces(\SqlSemantics\Statement\Model\MySql\Role\OptionalBracesForm $optionalBraces): self
     {
-        return new self($this->curdate, $optionalBraces);
+        return new self($this->curdate, $optionalBraces, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->curdate, $this->optionalBraces, $comments);
     }
 }

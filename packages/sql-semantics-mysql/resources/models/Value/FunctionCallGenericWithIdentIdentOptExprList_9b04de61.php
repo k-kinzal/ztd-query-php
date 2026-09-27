@@ -17,12 +17,13 @@ final class FunctionCallGenericWithIdentIdentOptExprList_9b04de61 implements \Sq
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptExprListForm $optExprList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident2), 'The ident2 must be a generated immutable SQL value.');
@@ -34,11 +35,17 @@ final class FunctionCallGenericWithIdentIdentOptExprList_9b04de61 implements \Sq
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('.');
+        $writer->comments($this->comments, 2);
         $this->ident2->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('(');
+        $writer->comments($this->comments, 4);
         $this->optExprList->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
     }
 
@@ -47,7 +54,7 @@ final class FunctionCallGenericWithIdentIdentOptExprList_9b04de61 implements \Sq
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($ident, $this->ident2, $this->optExprList);
+        return new self($ident, $this->ident2, $this->optExprList, $this->comments);
     }
 
     /**
@@ -55,7 +62,7 @@ final class FunctionCallGenericWithIdentIdentOptExprList_9b04de61 implements \Sq
      */
     public function withIdent2(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident2): self
     {
-        return new self($this->ident, $ident2, $this->optExprList);
+        return new self($this->ident, $ident2, $this->optExprList, $this->comments);
     }
 
     /**
@@ -63,6 +70,14 @@ final class FunctionCallGenericWithIdentIdentOptExprList_9b04de61 implements \Sq
      */
     public function withOptExprList(\SqlSemantics\Statement\Model\MySql\Role\OptExprListForm $optExprList): self
     {
-        return new self($this->ident, $this->ident2, $optExprList);
+        return new self($this->ident, $this->ident2, $optExprList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ident, $this->ident2, $this->optExprList, $comments);
     }
 }

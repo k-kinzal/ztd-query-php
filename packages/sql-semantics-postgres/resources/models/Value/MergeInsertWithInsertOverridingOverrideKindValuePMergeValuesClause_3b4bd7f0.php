@@ -17,11 +17,12 @@ final class MergeInsertWithInsertOverridingOverrideKindValuePMergeValuesClause_3
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OverrideKindForm $overrideKind,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\MergeValuesClauseForm $mergeValuesClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($overrideKind), 'The overrideKind must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($mergeValuesClause), 'The mergeValuesClause must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class MergeInsertWithInsertOverridingOverrideKindValuePMergeValuesClause_3
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('INSERT');
+        $writer->comments($this->comments, 1);
         $writer->append('OVERRIDING');
+        $writer->comments($this->comments, 2);
         $this->overrideKind->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('VALUE');
+        $writer->comments($this->comments, 4);
         $this->mergeValuesClause->write($writer);
     }
 
@@ -44,7 +50,7 @@ final class MergeInsertWithInsertOverridingOverrideKindValuePMergeValuesClause_3
      */
     public function withOverrideKind(\SqlSemantics\Statement\Model\PostgreSql\Role\OverrideKindForm $overrideKind): self
     {
-        return new self($overrideKind, $this->mergeValuesClause);
+        return new self($overrideKind, $this->mergeValuesClause, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class MergeInsertWithInsertOverridingOverrideKindValuePMergeValuesClause_3
      */
     public function withMergeValuesClause(\SqlSemantics\Statement\Model\PostgreSql\Role\MergeValuesClauseForm $mergeValuesClause): self
     {
-        return new self($this->overrideKind, $mergeValuesClause);
+        return new self($this->overrideKind, $mergeValuesClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->overrideKind, $this->mergeValuesClause, $comments);
     }
 }

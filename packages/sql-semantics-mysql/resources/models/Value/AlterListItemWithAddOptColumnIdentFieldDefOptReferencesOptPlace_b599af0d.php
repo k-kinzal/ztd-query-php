@@ -17,7 +17,7 @@ final class AlterListItemWithAddOptColumnIdentFieldDefOptReferencesOptPlace_b599
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptColumnForm $optColumn,
@@ -25,6 +25,7 @@ final class AlterListItemWithAddOptColumnIdentFieldDefOptReferencesOptPlace_b599
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldDefForm $fieldDef,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptReferencesForm $optReferences,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptPlaceForm $optPlace,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optColumn), 'The optColumn must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
@@ -38,11 +39,17 @@ final class AlterListItemWithAddOptColumnIdentFieldDefOptReferencesOptPlace_b599
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ADD');
+        $writer->comments($this->comments, 1);
         $this->optColumn->write($writer);
+        $writer->comments($this->comments, 2);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 3);
         $this->fieldDef->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optReferences->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optPlace->write($writer);
     }
 
@@ -51,7 +58,7 @@ final class AlterListItemWithAddOptColumnIdentFieldDefOptReferencesOptPlace_b599
      */
     public function withOptColumn(\SqlSemantics\Statement\Model\MySql\Role\OptColumnForm $optColumn): self
     {
-        return new self($optColumn, $this->ident, $this->fieldDef, $this->optReferences, $this->optPlace);
+        return new self($optColumn, $this->ident, $this->fieldDef, $this->optReferences, $this->optPlace, $this->comments);
     }
 
     /**
@@ -59,7 +66,7 @@ final class AlterListItemWithAddOptColumnIdentFieldDefOptReferencesOptPlace_b599
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($this->optColumn, $ident, $this->fieldDef, $this->optReferences, $this->optPlace);
+        return new self($this->optColumn, $ident, $this->fieldDef, $this->optReferences, $this->optPlace, $this->comments);
     }
 
     /**
@@ -67,7 +74,7 @@ final class AlterListItemWithAddOptColumnIdentFieldDefOptReferencesOptPlace_b599
      */
     public function withFieldDef(\SqlSemantics\Statement\Model\MySql\Role\FieldDefForm $fieldDef): self
     {
-        return new self($this->optColumn, $this->ident, $fieldDef, $this->optReferences, $this->optPlace);
+        return new self($this->optColumn, $this->ident, $fieldDef, $this->optReferences, $this->optPlace, $this->comments);
     }
 
     /**
@@ -75,7 +82,7 @@ final class AlterListItemWithAddOptColumnIdentFieldDefOptReferencesOptPlace_b599
      */
     public function withOptReferences(\SqlSemantics\Statement\Model\MySql\Role\OptReferencesForm $optReferences): self
     {
-        return new self($this->optColumn, $this->ident, $this->fieldDef, $optReferences, $this->optPlace);
+        return new self($this->optColumn, $this->ident, $this->fieldDef, $optReferences, $this->optPlace, $this->comments);
     }
 
     /**
@@ -83,6 +90,14 @@ final class AlterListItemWithAddOptColumnIdentFieldDefOptReferencesOptPlace_b599
      */
     public function withOptPlace(\SqlSemantics\Statement\Model\MySql\Role\OptPlaceForm $optPlace): self
     {
-        return new self($this->optColumn, $this->ident, $this->fieldDef, $this->optReferences, $optPlace);
+        return new self($this->optColumn, $this->ident, $this->fieldDef, $this->optReferences, $optPlace, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optColumn, $this->ident, $this->fieldDef, $this->optReferences, $this->optPlace, $comments);
     }
 }

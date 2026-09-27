@@ -17,12 +17,13 @@ final class SelectStmtWithIntoWithQueryExpressionLockingClauseListIntoClause_693
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionForm $query,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LockingClauseListForm $lockingClauseList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IntoClauseForm $intoClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($query), 'The query must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($lockingClauseList), 'The lockingClauseList must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class SelectStmtWithIntoWithQueryExpressionLockingClauseListIntoClause_693
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->query->write($writer);
+        $writer->comments($this->comments, 1);
         $this->lockingClauseList->write($writer);
+        $writer->comments($this->comments, 2);
         $this->intoClause->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class SelectStmtWithIntoWithQueryExpressionLockingClauseListIntoClause_693
      */
     public function withQuery(\SqlSemantics\Statement\Model\MySql\Role\QueryExpressionForm $query): self
     {
-        return new self($query, $this->lockingClauseList, $this->intoClause);
+        return new self($query, $this->lockingClauseList, $this->intoClause, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class SelectStmtWithIntoWithQueryExpressionLockingClauseListIntoClause_693
      */
     public function withLockingClauseList(\SqlSemantics\Statement\Model\MySql\Role\LockingClauseListForm $lockingClauseList): self
     {
-        return new self($this->query, $lockingClauseList, $this->intoClause);
+        return new self($this->query, $lockingClauseList, $this->intoClause, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class SelectStmtWithIntoWithQueryExpressionLockingClauseListIntoClause_693
      */
     public function withIntoClause(\SqlSemantics\Statement\Model\MySql\Role\IntoClauseForm $intoClause): self
     {
-        return new self($this->query, $this->lockingClauseList, $intoClause);
+        return new self($this->query, $this->lockingClauseList, $intoClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->query, $this->lockingClauseList, $this->intoClause, $comments);
     }
 }

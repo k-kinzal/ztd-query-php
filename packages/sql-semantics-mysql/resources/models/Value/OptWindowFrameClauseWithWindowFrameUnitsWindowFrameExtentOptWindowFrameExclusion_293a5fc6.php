@@ -17,12 +17,13 @@ final class OptWindowFrameClauseWithWindowFrameUnitsWindowFrameExtentOptWindowFr
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WindowFrameUnitsForm $windowFrameUnits,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WindowFrameExtentForm $windowFrameExtent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWindowFrameExclusionForm $optWindowFrameExclusion,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($windowFrameUnits), 'The windowFrameUnits must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($windowFrameExtent), 'The windowFrameExtent must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class OptWindowFrameClauseWithWindowFrameUnitsWindowFrameExtentOptWindowFr
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->windowFrameUnits->write($writer);
+        $writer->comments($this->comments, 1);
         $this->windowFrameExtent->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optWindowFrameExclusion->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class OptWindowFrameClauseWithWindowFrameUnitsWindowFrameExtentOptWindowFr
      */
     public function withWindowFrameUnits(\SqlSemantics\Statement\Model\MySql\Role\WindowFrameUnitsForm $windowFrameUnits): self
     {
-        return new self($windowFrameUnits, $this->windowFrameExtent, $this->optWindowFrameExclusion);
+        return new self($windowFrameUnits, $this->windowFrameExtent, $this->optWindowFrameExclusion, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class OptWindowFrameClauseWithWindowFrameUnitsWindowFrameExtentOptWindowFr
      */
     public function withWindowFrameExtent(\SqlSemantics\Statement\Model\MySql\Role\WindowFrameExtentForm $windowFrameExtent): self
     {
-        return new self($this->windowFrameUnits, $windowFrameExtent, $this->optWindowFrameExclusion);
+        return new self($this->windowFrameUnits, $windowFrameExtent, $this->optWindowFrameExclusion, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class OptWindowFrameClauseWithWindowFrameUnitsWindowFrameExtentOptWindowFr
      */
     public function withOptWindowFrameExclusion(\SqlSemantics\Statement\Model\MySql\Role\OptWindowFrameExclusionForm $optWindowFrameExclusion): self
     {
-        return new self($this->windowFrameUnits, $this->windowFrameExtent, $optWindowFrameExclusion);
+        return new self($this->windowFrameUnits, $this->windowFrameExtent, $optWindowFrameExclusion, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->windowFrameUnits, $this->windowFrameExtent, $this->optWindowFrameExclusion, $comments);
     }
 }

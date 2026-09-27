@@ -17,13 +17,14 @@ final class ReindexStmtWithReindexOptReindexOptionListReindexTargetRelationOptCo
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptReindexOptionListForm $optReindexOptionList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ReindexTargetRelationForm $reindexTargetRelation,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptConcurrentlyForm $optConcurrently,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optReindexOptionList), 'The optReindexOptionList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($reindexTargetRelation), 'The reindexTargetRelation must be a generated immutable SQL value.');
@@ -36,10 +37,15 @@ final class ReindexStmtWithReindexOptReindexOptionListReindexTargetRelationOptCo
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('REINDEX');
+        $writer->comments($this->comments, 1);
         $this->optReindexOptionList->write($writer);
+        $writer->comments($this->comments, 2);
         $this->reindexTargetRelation->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optConcurrently->write($writer);
+        $writer->comments($this->comments, 4);
         $this->qualifiedName->write($writer);
     }
 
@@ -48,7 +54,7 @@ final class ReindexStmtWithReindexOptReindexOptionListReindexTargetRelationOptCo
      */
     public function withOptReindexOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptReindexOptionListForm $optReindexOptionList): self
     {
-        return new self($optReindexOptionList, $this->reindexTargetRelation, $this->optConcurrently, $this->qualifiedName);
+        return new self($optReindexOptionList, $this->reindexTargetRelation, $this->optConcurrently, $this->qualifiedName, $this->comments);
     }
 
     /**
@@ -56,7 +62,7 @@ final class ReindexStmtWithReindexOptReindexOptionListReindexTargetRelationOptCo
      */
     public function withReindexTargetRelation(\SqlSemantics\Statement\Model\PostgreSql\Role\ReindexTargetRelationForm $reindexTargetRelation): self
     {
-        return new self($this->optReindexOptionList, $reindexTargetRelation, $this->optConcurrently, $this->qualifiedName);
+        return new self($this->optReindexOptionList, $reindexTargetRelation, $this->optConcurrently, $this->qualifiedName, $this->comments);
     }
 
     /**
@@ -64,7 +70,7 @@ final class ReindexStmtWithReindexOptReindexOptionListReindexTargetRelationOptCo
      */
     public function withOptConcurrently(\SqlSemantics\Statement\Model\PostgreSql\Role\OptConcurrentlyForm $optConcurrently): self
     {
-        return new self($this->optReindexOptionList, $this->reindexTargetRelation, $optConcurrently, $this->qualifiedName);
+        return new self($this->optReindexOptionList, $this->reindexTargetRelation, $optConcurrently, $this->qualifiedName, $this->comments);
     }
 
     /**
@@ -72,6 +78,14 @@ final class ReindexStmtWithReindexOptReindexOptionListReindexTargetRelationOptCo
      */
     public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
     {
-        return new self($this->optReindexOptionList, $this->reindexTargetRelation, $this->optConcurrently, $qualifiedName);
+        return new self($this->optReindexOptionList, $this->reindexTargetRelation, $this->optConcurrently, $qualifiedName, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optReindexOptionList, $this->reindexTargetRelation, $this->optConcurrently, $this->qualifiedName, $comments);
     }
 }

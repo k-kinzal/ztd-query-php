@@ -17,12 +17,13 @@ final class CmdWithCreatekwTriggerDeclBeginTriggerCmdListEnd_8217e10b implements
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CreatekwForm $createkw,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TriggerDeclForm $triggerDecl,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TriggerCmdListForm $triggerCmdList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($createkw), 'The createkw must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($triggerDecl), 'The triggerDecl must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class CmdWithCreatekwTriggerDeclBeginTriggerCmdListEnd_8217e10b implements
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->createkw->write($writer);
+        $writer->comments($this->comments, 1);
         $this->triggerDecl->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('BEGIN');
+        $writer->comments($this->comments, 3);
         $this->triggerCmdList->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('END');
     }
 
@@ -46,7 +52,7 @@ final class CmdWithCreatekwTriggerDeclBeginTriggerCmdListEnd_8217e10b implements
      */
     public function withCreatekw(\SqlSemantics\Statement\Model\Sqlite\Role\CreatekwForm $createkw): self
     {
-        return new self($createkw, $this->triggerDecl, $this->triggerCmdList);
+        return new self($createkw, $this->triggerDecl, $this->triggerCmdList, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class CmdWithCreatekwTriggerDeclBeginTriggerCmdListEnd_8217e10b implements
      */
     public function withTriggerDecl(\SqlSemantics\Statement\Model\Sqlite\Role\TriggerDeclForm $triggerDecl): self
     {
-        return new self($this->createkw, $triggerDecl, $this->triggerCmdList);
+        return new self($this->createkw, $triggerDecl, $this->triggerCmdList, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class CmdWithCreatekwTriggerDeclBeginTriggerCmdListEnd_8217e10b implements
      */
     public function withTriggerCmdList(\SqlSemantics\Statement\Model\Sqlite\Role\TriggerCmdListForm $triggerCmdList): self
     {
-        return new self($this->createkw, $this->triggerDecl, $triggerCmdList);
+        return new self($this->createkw, $this->triggerDecl, $triggerCmdList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->createkw, $this->triggerDecl, $this->triggerCmdList, $comments);
     }
 }

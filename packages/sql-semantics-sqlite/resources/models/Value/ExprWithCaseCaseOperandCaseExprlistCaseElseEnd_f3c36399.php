@@ -17,12 +17,13 @@ final class ExprWithCaseCaseOperandCaseExprlistCaseElseEnd_f3c36399 implements \
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CaseOperandForm $caseOperand,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CaseExprlistForm $caseExprlist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CaseElseForm $caseElse,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($caseOperand), 'The caseOperand must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($caseExprlist), 'The caseExprlist must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class ExprWithCaseCaseOperandCaseExprlistCaseElseEnd_f3c36399 implements \
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CASE');
+        $writer->comments($this->comments, 1);
         $this->caseOperand->write($writer);
+        $writer->comments($this->comments, 2);
         $this->caseExprlist->write($writer);
+        $writer->comments($this->comments, 3);
         $this->caseElse->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('END');
     }
 
@@ -46,7 +52,7 @@ final class ExprWithCaseCaseOperandCaseExprlistCaseElseEnd_f3c36399 implements \
      */
     public function withCaseOperand(\SqlSemantics\Statement\Model\Sqlite\Role\CaseOperandForm $caseOperand): self
     {
-        return new self($caseOperand, $this->caseExprlist, $this->caseElse);
+        return new self($caseOperand, $this->caseExprlist, $this->caseElse, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class ExprWithCaseCaseOperandCaseExprlistCaseElseEnd_f3c36399 implements \
      */
     public function withCaseExprlist(\SqlSemantics\Statement\Model\Sqlite\Role\CaseExprlistForm $caseExprlist): self
     {
-        return new self($this->caseOperand, $caseExprlist, $this->caseElse);
+        return new self($this->caseOperand, $caseExprlist, $this->caseElse, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class ExprWithCaseCaseOperandCaseExprlistCaseElseEnd_f3c36399 implements \
      */
     public function withCaseElse(\SqlSemantics\Statement\Model\Sqlite\Role\CaseElseForm $caseElse): self
     {
-        return new self($this->caseOperand, $this->caseExprlist, $caseElse);
+        return new self($this->caseOperand, $this->caseExprlist, $caseElse, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->caseOperand, $this->caseExprlist, $this->caseElse, $comments);
     }
 }

@@ -17,12 +17,13 @@ final class MergeWhenClauseWithMergeWhenTgtMatchedOptMergeWhenConditionThenMerge
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\MergeWhenTgtMatchedForm $mergeWhenTgtMatched,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptMergeWhenConditionForm $optMergeWhenCondition,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\MergeDeleteForm $mergeDelete,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($mergeWhenTgtMatched), 'The mergeWhenTgtMatched must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optMergeWhenCondition), 'The optMergeWhenCondition must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class MergeWhenClauseWithMergeWhenTgtMatchedOptMergeWhenConditionThenMerge
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->mergeWhenTgtMatched->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optMergeWhenCondition->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('THEN');
+        $writer->comments($this->comments, 3);
         $this->mergeDelete->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class MergeWhenClauseWithMergeWhenTgtMatchedOptMergeWhenConditionThenMerge
      */
     public function withMergeWhenTgtMatched(\SqlSemantics\Statement\Model\PostgreSql\Role\MergeWhenTgtMatchedForm $mergeWhenTgtMatched): self
     {
-        return new self($mergeWhenTgtMatched, $this->optMergeWhenCondition, $this->mergeDelete);
+        return new self($mergeWhenTgtMatched, $this->optMergeWhenCondition, $this->mergeDelete, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class MergeWhenClauseWithMergeWhenTgtMatchedOptMergeWhenConditionThenMerge
      */
     public function withOptMergeWhenCondition(\SqlSemantics\Statement\Model\PostgreSql\Role\OptMergeWhenConditionForm $optMergeWhenCondition): self
     {
-        return new self($this->mergeWhenTgtMatched, $optMergeWhenCondition, $this->mergeDelete);
+        return new self($this->mergeWhenTgtMatched, $optMergeWhenCondition, $this->mergeDelete, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class MergeWhenClauseWithMergeWhenTgtMatchedOptMergeWhenConditionThenMerge
      */
     public function withMergeDelete(\SqlSemantics\Statement\Model\PostgreSql\Role\MergeDeleteForm $mergeDelete): self
     {
-        return new self($this->mergeWhenTgtMatched, $this->optMergeWhenCondition, $mergeDelete);
+        return new self($this->mergeWhenTgtMatched, $this->optMergeWhenCondition, $mergeDelete, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->mergeWhenTgtMatched, $this->optMergeWhenCondition, $this->mergeDelete, $comments);
     }
 }

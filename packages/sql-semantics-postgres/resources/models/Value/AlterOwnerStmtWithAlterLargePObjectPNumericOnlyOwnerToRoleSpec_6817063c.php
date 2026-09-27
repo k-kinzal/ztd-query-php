@@ -17,11 +17,12 @@ final class AlterOwnerStmtWithAlterLargePObjectPNumericOnlyOwnerToRoleSpec_68170
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyForm $numericOnly,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($numericOnly), 'The numericOnly must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleSpec), 'The roleSpec must be a generated immutable SQL value.');
@@ -32,12 +33,19 @@ final class AlterOwnerStmtWithAlterLargePObjectPNumericOnlyOwnerToRoleSpec_68170
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('LARGE');
+        $writer->comments($this->comments, 2);
         $writer->append('OBJECT');
+        $writer->comments($this->comments, 3);
         $this->numericOnly->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('OWNER');
+        $writer->comments($this->comments, 5);
         $writer->append('TO');
+        $writer->comments($this->comments, 6);
         $this->roleSpec->write($writer);
     }
 
@@ -46,7 +54,7 @@ final class AlterOwnerStmtWithAlterLargePObjectPNumericOnlyOwnerToRoleSpec_68170
      */
     public function withNumericOnly(\SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyForm $numericOnly): self
     {
-        return new self($numericOnly, $this->roleSpec);
+        return new self($numericOnly, $this->roleSpec, $this->comments);
     }
 
     /**
@@ -54,6 +62,14 @@ final class AlterOwnerStmtWithAlterLargePObjectPNumericOnlyOwnerToRoleSpec_68170
      */
     public function withRoleSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec): self
     {
-        return new self($this->numericOnly, $roleSpec);
+        return new self($this->numericOnly, $roleSpec, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->numericOnly, $this->roleSpec, $comments);
     }
 }

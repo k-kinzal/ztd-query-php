@@ -17,10 +17,11 @@ final class AlterTableCmdWithAddPTableConstraint_74a4af80 implements \SqlSemanti
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TableConstraintForm $tableConstraint,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($tableConstraint), 'The tableConstraint must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class AlterTableCmdWithAddPTableConstraint_74a4af80 implements \SqlSemanti
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ADD');
+        $writer->comments($this->comments, 1);
         $this->tableConstraint->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class AlterTableCmdWithAddPTableConstraint_74a4af80 implements \SqlSemanti
      */
     public function withTableConstraint(\SqlSemantics\Statement\Model\PostgreSql\Role\TableConstraintForm $tableConstraint): self
     {
-        return new self($tableConstraint);
+        return new self($tableConstraint, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableConstraint, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class FulltextKeyOptsWithFulltextKeyOptsFulltextKeyOpt_06840da3 implements
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptsForm $fulltextKeyOpts,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptForm $fulltextKeyOpt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fulltextKeyOpts), 'The fulltextKeyOpts must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fulltextKeyOpt), 'The fulltextKeyOpt must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class FulltextKeyOptsWithFulltextKeyOptsFulltextKeyOpt_06840da3 implements
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->fulltextKeyOpts->write($writer);
+        $writer->comments($this->comments, 1);
         $this->fulltextKeyOpt->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class FulltextKeyOptsWithFulltextKeyOptsFulltextKeyOpt_06840da3 implements
      */
     public function withFulltextKeyOpts(\SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptsForm $fulltextKeyOpts): self
     {
-        return new self($fulltextKeyOpts, $this->fulltextKeyOpt);
+        return new self($fulltextKeyOpts, $this->fulltextKeyOpt, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class FulltextKeyOptsWithFulltextKeyOptsFulltextKeyOpt_06840da3 implements
      */
     public function withFulltextKeyOpt(\SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptForm $fulltextKeyOpt): self
     {
-        return new self($this->fulltextKeyOpts, $fulltextKeyOpt);
+        return new self($this->fulltextKeyOpts, $fulltextKeyOpt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->fulltextKeyOpts, $this->fulltextKeyOpt, $comments);
     }
 }

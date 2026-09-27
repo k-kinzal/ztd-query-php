@@ -17,11 +17,12 @@ final class FuncArgsWithDefaultsListWithFuncArgsWithDefaultsListFuncArgWithDefau
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsWithDefaultsListForm $funcArgsWithDefaultsList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgWithDefaultForm $funcArgWithDefault,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcArgsWithDefaultsList), 'The funcArgsWithDefaultsList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcArgWithDefault), 'The funcArgWithDefault must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class FuncArgsWithDefaultsListWithFuncArgsWithDefaultsListFuncArgWithDefau
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->funcArgsWithDefaultsList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->funcArgWithDefault->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class FuncArgsWithDefaultsListWithFuncArgsWithDefaultsListFuncArgWithDefau
      */
     public function withFuncArgsWithDefaultsList(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsWithDefaultsListForm $funcArgsWithDefaultsList): self
     {
-        return new self($funcArgsWithDefaultsList, $this->funcArgWithDefault);
+        return new self($funcArgsWithDefaultsList, $this->funcArgWithDefault, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class FuncArgsWithDefaultsListWithFuncArgsWithDefaultsListFuncArgWithDefau
      */
     public function withFuncArgWithDefault(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgWithDefaultForm $funcArgWithDefault): self
     {
-        return new self($this->funcArgsWithDefaultsList, $funcArgWithDefault);
+        return new self($this->funcArgsWithDefaultsList, $funcArgWithDefault, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->funcArgsWithDefaultsList, $this->funcArgWithDefault, $comments);
     }
 }

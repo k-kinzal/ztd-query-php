@@ -17,10 +17,11 @@ final class OptIncludeWithIncludeIndexIncludingParams_07f42a16 implements \SqlSe
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IndexIncludingParamsForm $indexIncludingParams,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($indexIncludingParams), 'The indexIncludingParams must be a generated immutable SQL value.');
     }
@@ -30,9 +31,13 @@ final class OptIncludeWithIncludeIndexIncludingParams_07f42a16 implements \SqlSe
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('INCLUDE');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->indexIncludingParams->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
     }
 
@@ -41,6 +46,14 @@ final class OptIncludeWithIncludeIndexIncludingParams_07f42a16 implements \SqlSe
      */
     public function withIndexIncludingParams(\SqlSemantics\Statement\Model\PostgreSql\Role\IndexIncludingParamsForm $indexIncludingParams): self
     {
-        return new self($indexIncludingParams);
+        return new self($indexIncludingParams, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->indexIncludingParams, $comments);
     }
 }

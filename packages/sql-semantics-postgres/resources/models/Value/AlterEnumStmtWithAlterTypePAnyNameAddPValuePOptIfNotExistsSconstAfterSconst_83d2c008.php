@@ -17,13 +17,14 @@ final class AlterEnumStmtWithAlterTypePAnyNameAddPValuePOptIfNotExistsSconstAfte
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptIfNotExistsForm $optIfNotExists,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optIfNotExists), 'The optIfNotExists must be a generated immutable SQL value.');
@@ -36,14 +37,23 @@ final class AlterEnumStmtWithAlterTypePAnyNameAddPValuePOptIfNotExistsSconstAfte
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('TYPE');
+        $writer->comments($this->comments, 2);
         $this->anyName->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('ADD');
+        $writer->comments($this->comments, 4);
         $writer->append('VALUE');
+        $writer->comments($this->comments, 5);
         $this->optIfNotExists->write($writer);
+        $writer->comments($this->comments, 6);
         $this->sconst->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append('AFTER');
+        $writer->comments($this->comments, 8);
         $this->sconst2->write($writer);
     }
 
@@ -52,7 +62,7 @@ final class AlterEnumStmtWithAlterTypePAnyNameAddPValuePOptIfNotExistsSconstAfte
      */
     public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
     {
-        return new self($anyName, $this->optIfNotExists, $this->sconst, $this->sconst2);
+        return new self($anyName, $this->optIfNotExists, $this->sconst, $this->sconst2, $this->comments);
     }
 
     /**
@@ -60,7 +70,7 @@ final class AlterEnumStmtWithAlterTypePAnyNameAddPValuePOptIfNotExistsSconstAfte
      */
     public function withOptIfNotExists(\SqlSemantics\Statement\Model\PostgreSql\Role\OptIfNotExistsForm $optIfNotExists): self
     {
-        return new self($this->anyName, $optIfNotExists, $this->sconst, $this->sconst2);
+        return new self($this->anyName, $optIfNotExists, $this->sconst, $this->sconst2, $this->comments);
     }
 
     /**
@@ -68,7 +78,7 @@ final class AlterEnumStmtWithAlterTypePAnyNameAddPValuePOptIfNotExistsSconstAfte
      */
     public function withSconst(\SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst): self
     {
-        return new self($this->anyName, $this->optIfNotExists, $sconst, $this->sconst2);
+        return new self($this->anyName, $this->optIfNotExists, $sconst, $this->sconst2, $this->comments);
     }
 
     /**
@@ -76,6 +86,14 @@ final class AlterEnumStmtWithAlterTypePAnyNameAddPValuePOptIfNotExistsSconstAfte
      */
     public function withSconst2(\SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst2): self
     {
-        return new self($this->anyName, $this->optIfNotExists, $this->sconst, $sconst2);
+        return new self($this->anyName, $this->optIfNotExists, $this->sconst, $sconst2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->anyName, $this->optIfNotExists, $this->sconst, $this->sconst2, $comments);
     }
 }

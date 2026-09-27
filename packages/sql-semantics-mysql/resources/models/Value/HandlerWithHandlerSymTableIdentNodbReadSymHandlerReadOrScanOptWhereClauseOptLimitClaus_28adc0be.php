@@ -17,13 +17,14 @@ final class HandlerWithHandlerSymTableIdentNodbReadSymHandlerReadOrScanOptWhereC
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentNodbForm $tableIdentNodb,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\HandlerReadOrScanForm $handlerReadOrScan,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm $where,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdentNodb), 'The tableIdentNodb must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($handlerReadOrScan), 'The handlerReadOrScan must be a generated immutable SQL value.');
@@ -36,11 +37,17 @@ final class HandlerWithHandlerSymTableIdentNodbReadSymHandlerReadOrScanOptWhereC
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('HANDLER');
+        $writer->comments($this->comments, 1);
         $this->tableIdentNodb->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('READ');
+        $writer->comments($this->comments, 3);
         $this->handlerReadOrScan->write($writer);
+        $writer->comments($this->comments, 4);
         $this->where->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optLimitClause->write($writer);
     }
 
@@ -49,7 +56,7 @@ final class HandlerWithHandlerSymTableIdentNodbReadSymHandlerReadOrScanOptWhereC
      */
     public function withTableIdentNodb(\SqlSemantics\Statement\Model\MySql\Role\TableIdentNodbForm $tableIdentNodb): self
     {
-        return new self($tableIdentNodb, $this->handlerReadOrScan, $this->where, $this->optLimitClause);
+        return new self($tableIdentNodb, $this->handlerReadOrScan, $this->where, $this->optLimitClause, $this->comments);
     }
 
     /**
@@ -57,7 +64,7 @@ final class HandlerWithHandlerSymTableIdentNodbReadSymHandlerReadOrScanOptWhereC
      */
     public function withHandlerReadOrScan(\SqlSemantics\Statement\Model\MySql\Role\HandlerReadOrScanForm $handlerReadOrScan): self
     {
-        return new self($this->tableIdentNodb, $handlerReadOrScan, $this->where, $this->optLimitClause);
+        return new self($this->tableIdentNodb, $handlerReadOrScan, $this->where, $this->optLimitClause, $this->comments);
     }
 
     /**
@@ -65,7 +72,7 @@ final class HandlerWithHandlerSymTableIdentNodbReadSymHandlerReadOrScanOptWhereC
      */
     public function withWhere(\SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm $where): self
     {
-        return new self($this->tableIdentNodb, $this->handlerReadOrScan, $where, $this->optLimitClause);
+        return new self($this->tableIdentNodb, $this->handlerReadOrScan, $where, $this->optLimitClause, $this->comments);
     }
 
     /**
@@ -73,6 +80,14 @@ final class HandlerWithHandlerSymTableIdentNodbReadSymHandlerReadOrScanOptWhereC
      */
     public function withOptLimitClause(\SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause): self
     {
-        return new self($this->tableIdentNodb, $this->handlerReadOrScan, $this->where, $optLimitClause);
+        return new self($this->tableIdentNodb, $this->handlerReadOrScan, $this->where, $optLimitClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableIdentNodb, $this->handlerReadOrScan, $this->where, $this->optLimitClause, $comments);
     }
 }

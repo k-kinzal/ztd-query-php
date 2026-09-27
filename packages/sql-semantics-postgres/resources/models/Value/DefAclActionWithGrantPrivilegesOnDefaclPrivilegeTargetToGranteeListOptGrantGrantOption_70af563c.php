@@ -17,13 +17,14 @@ final class DefAclActionWithGrantPrivilegesOnDefaclPrivilegeTargetToGranteeListO
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegesForm $privileges,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DefaclPrivilegeTargetForm $defaclPrivilegeTarget,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GranteeListForm $granteeList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptGrantGrantOptionForm $optGrantGrantOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($privileges), 'The privileges must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($defaclPrivilegeTarget), 'The defaclPrivilegeTarget must be a generated immutable SQL value.');
@@ -36,12 +37,19 @@ final class DefAclActionWithGrantPrivilegesOnDefaclPrivilegeTargetToGranteeListO
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('GRANT');
+        $writer->comments($this->comments, 1);
         $this->privileges->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('ON');
+        $writer->comments($this->comments, 3);
         $this->defaclPrivilegeTarget->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('TO');
+        $writer->comments($this->comments, 5);
         $this->granteeList->write($writer);
+        $writer->comments($this->comments, 6);
         $this->optGrantGrantOption->write($writer);
     }
 
@@ -50,7 +58,7 @@ final class DefAclActionWithGrantPrivilegesOnDefaclPrivilegeTargetToGranteeListO
      */
     public function withPrivileges(\SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegesForm $privileges): self
     {
-        return new self($privileges, $this->defaclPrivilegeTarget, $this->granteeList, $this->optGrantGrantOption);
+        return new self($privileges, $this->defaclPrivilegeTarget, $this->granteeList, $this->optGrantGrantOption, $this->comments);
     }
 
     /**
@@ -58,7 +66,7 @@ final class DefAclActionWithGrantPrivilegesOnDefaclPrivilegeTargetToGranteeListO
      */
     public function withDefaclPrivilegeTarget(\SqlSemantics\Statement\Model\PostgreSql\Role\DefaclPrivilegeTargetForm $defaclPrivilegeTarget): self
     {
-        return new self($this->privileges, $defaclPrivilegeTarget, $this->granteeList, $this->optGrantGrantOption);
+        return new self($this->privileges, $defaclPrivilegeTarget, $this->granteeList, $this->optGrantGrantOption, $this->comments);
     }
 
     /**
@@ -66,7 +74,7 @@ final class DefAclActionWithGrantPrivilegesOnDefaclPrivilegeTargetToGranteeListO
      */
     public function withGranteeList(\SqlSemantics\Statement\Model\PostgreSql\Role\GranteeListForm $granteeList): self
     {
-        return new self($this->privileges, $this->defaclPrivilegeTarget, $granteeList, $this->optGrantGrantOption);
+        return new self($this->privileges, $this->defaclPrivilegeTarget, $granteeList, $this->optGrantGrantOption, $this->comments);
     }
 
     /**
@@ -74,6 +82,14 @@ final class DefAclActionWithGrantPrivilegesOnDefaclPrivilegeTargetToGranteeListO
      */
     public function withOptGrantGrantOption(\SqlSemantics\Statement\Model\PostgreSql\Role\OptGrantGrantOptionForm $optGrantGrantOption): self
     {
-        return new self($this->privileges, $this->defaclPrivilegeTarget, $this->granteeList, $optGrantGrantOption);
+        return new self($this->privileges, $this->defaclPrivilegeTarget, $this->granteeList, $optGrantGrantOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->privileges, $this->defaclPrivilegeTarget, $this->granteeList, $this->optGrantGrantOption, $comments);
     }
 }

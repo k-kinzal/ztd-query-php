@@ -17,11 +17,12 @@ final class AnylistWithAnylistLpAnylistRp_0c30e0aa implements \SqlSemantics\Stat
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\AnylistForm $anylist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\AnylistForm $anylist2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($anylist), 'The anylist must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($anylist2), 'The anylist2 must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class AnylistWithAnylistLpAnylistRp_0c30e0aa implements \SqlSemantics\Stat
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->anylist->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->anylist2->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
     }
 
@@ -43,7 +48,7 @@ final class AnylistWithAnylistLpAnylistRp_0c30e0aa implements \SqlSemantics\Stat
      */
     public function withAnylist(\SqlSemantics\Statement\Model\Sqlite\Role\AnylistForm $anylist): self
     {
-        return new self($anylist, $this->anylist2);
+        return new self($anylist, $this->anylist2, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class AnylistWithAnylistLpAnylistRp_0c30e0aa implements \SqlSemantics\Stat
      */
     public function withAnylist2(\SqlSemantics\Statement\Model\Sqlite\Role\AnylistForm $anylist2): self
     {
-        return new self($this->anylist, $anylist2);
+        return new self($this->anylist, $anylist2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->anylist, $this->anylist2, $comments);
     }
 }

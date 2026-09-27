@@ -17,11 +17,12 @@ final class OptHistogramWithUpdateSymHistogramSymOnSymIdentStringListOptHistogra
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentStringListForm $identStringList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptHistogramUpdateParamForm $optHistogramUpdateParam,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identStringList), 'The identStringList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optHistogramUpdateParam), 'The optHistogramUpdateParam must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class OptHistogramWithUpdateSymHistogramSymOnSymIdentStringListOptHistogra
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('UPDATE');
+        $writer->comments($this->comments, 1);
         $writer->append('HISTOGRAM');
+        $writer->comments($this->comments, 2);
         $writer->append('ON');
+        $writer->comments($this->comments, 3);
         $this->identStringList->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optHistogramUpdateParam->write($writer);
     }
 
@@ -44,7 +50,7 @@ final class OptHistogramWithUpdateSymHistogramSymOnSymIdentStringListOptHistogra
      */
     public function withIdentStringList(\SqlSemantics\Statement\Model\MySql\Role\IdentStringListForm $identStringList): self
     {
-        return new self($identStringList, $this->optHistogramUpdateParam);
+        return new self($identStringList, $this->optHistogramUpdateParam, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class OptHistogramWithUpdateSymHistogramSymOnSymIdentStringListOptHistogra
      */
     public function withOptHistogramUpdateParam(\SqlSemantics\Statement\Model\MySql\Role\OptHistogramUpdateParamForm $optHistogramUpdateParam): self
     {
-        return new self($this->identStringList, $optHistogramUpdateParam);
+        return new self($this->identStringList, $optHistogramUpdateParam, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->identStringList, $this->optHistogramUpdateParam, $comments);
     }
 }

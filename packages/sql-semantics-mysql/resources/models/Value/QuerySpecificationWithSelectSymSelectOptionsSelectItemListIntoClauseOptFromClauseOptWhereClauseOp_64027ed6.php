@@ -17,7 +17,7 @@ final class QuerySpecificationWithSelectSymSelectOptionsSelectItemListIntoClause
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectOptionsForm $options,
@@ -29,6 +29,7 @@ final class QuerySpecificationWithSelectSymSelectOptionsSelectItemListIntoClause
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptHavingClauseForm $optHavingClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWindowClauseForm $optWindowClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptQualifyClauseForm $optQualifyClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($options), 'The options must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($projections), 'The projections must be a generated immutable SQL value.');
@@ -46,15 +47,25 @@ final class QuerySpecificationWithSelectSymSelectOptionsSelectItemListIntoClause
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SELECT');
+        $writer->comments($this->comments, 1);
         $this->options->write($writer);
+        $writer->comments($this->comments, 2);
         $this->projections->write($writer);
+        $writer->comments($this->comments, 3);
         $this->intoClause->write($writer);
+        $writer->comments($this->comments, 4);
         $this->from->write($writer);
+        $writer->comments($this->comments, 5);
         $this->where->write($writer);
+        $writer->comments($this->comments, 6);
         $this->optGroupClause->write($writer);
+        $writer->comments($this->comments, 7);
         $this->optHavingClause->write($writer);
+        $writer->comments($this->comments, 8);
         $this->optWindowClause->write($writer);
+        $writer->comments($this->comments, 9);
         $this->optQualifyClause->write($writer);
     }
 
@@ -63,7 +74,7 @@ final class QuerySpecificationWithSelectSymSelectOptionsSelectItemListIntoClause
      */
     public function withOptions(\SqlSemantics\Statement\Model\MySql\Role\SelectOptionsForm $options): self
     {
-        return new self($options, $this->projections, $this->intoClause, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->optWindowClause, $this->optQualifyClause);
+        return new self($options, $this->projections, $this->intoClause, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->optWindowClause, $this->optQualifyClause, $this->comments);
     }
 
     /**
@@ -71,7 +82,7 @@ final class QuerySpecificationWithSelectSymSelectOptionsSelectItemListIntoClause
      */
     public function withProjections(\SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm $projections): self
     {
-        return new self($this->options, $projections, $this->intoClause, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->optWindowClause, $this->optQualifyClause);
+        return new self($this->options, $projections, $this->intoClause, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->optWindowClause, $this->optQualifyClause, $this->comments);
     }
 
     /**
@@ -79,7 +90,7 @@ final class QuerySpecificationWithSelectSymSelectOptionsSelectItemListIntoClause
      */
     public function withIntoClause(\SqlSemantics\Statement\Model\MySql\Role\IntoClauseForm $intoClause): self
     {
-        return new self($this->options, $this->projections, $intoClause, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->optWindowClause, $this->optQualifyClause);
+        return new self($this->options, $this->projections, $intoClause, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->optWindowClause, $this->optQualifyClause, $this->comments);
     }
 
     /**
@@ -87,7 +98,7 @@ final class QuerySpecificationWithSelectSymSelectOptionsSelectItemListIntoClause
      */
     public function withFrom(\SqlSemantics\Statement\Model\MySql\Role\OptFromClauseForm $from): self
     {
-        return new self($this->options, $this->projections, $this->intoClause, $from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->optWindowClause, $this->optQualifyClause);
+        return new self($this->options, $this->projections, $this->intoClause, $from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->optWindowClause, $this->optQualifyClause, $this->comments);
     }
 
     /**
@@ -95,7 +106,7 @@ final class QuerySpecificationWithSelectSymSelectOptionsSelectItemListIntoClause
      */
     public function withWhere(\SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm $where): self
     {
-        return new self($this->options, $this->projections, $this->intoClause, $this->from, $where, $this->optGroupClause, $this->optHavingClause, $this->optWindowClause, $this->optQualifyClause);
+        return new self($this->options, $this->projections, $this->intoClause, $this->from, $where, $this->optGroupClause, $this->optHavingClause, $this->optWindowClause, $this->optQualifyClause, $this->comments);
     }
 
     /**
@@ -103,7 +114,7 @@ final class QuerySpecificationWithSelectSymSelectOptionsSelectItemListIntoClause
      */
     public function withOptGroupClause(\SqlSemantics\Statement\Model\MySql\Role\OptGroupClauseForm $optGroupClause): self
     {
-        return new self($this->options, $this->projections, $this->intoClause, $this->from, $this->where, $optGroupClause, $this->optHavingClause, $this->optWindowClause, $this->optQualifyClause);
+        return new self($this->options, $this->projections, $this->intoClause, $this->from, $this->where, $optGroupClause, $this->optHavingClause, $this->optWindowClause, $this->optQualifyClause, $this->comments);
     }
 
     /**
@@ -111,7 +122,7 @@ final class QuerySpecificationWithSelectSymSelectOptionsSelectItemListIntoClause
      */
     public function withOptHavingClause(\SqlSemantics\Statement\Model\MySql\Role\OptHavingClauseForm $optHavingClause): self
     {
-        return new self($this->options, $this->projections, $this->intoClause, $this->from, $this->where, $this->optGroupClause, $optHavingClause, $this->optWindowClause, $this->optQualifyClause);
+        return new self($this->options, $this->projections, $this->intoClause, $this->from, $this->where, $this->optGroupClause, $optHavingClause, $this->optWindowClause, $this->optQualifyClause, $this->comments);
     }
 
     /**
@@ -119,7 +130,7 @@ final class QuerySpecificationWithSelectSymSelectOptionsSelectItemListIntoClause
      */
     public function withOptWindowClause(\SqlSemantics\Statement\Model\MySql\Role\OptWindowClauseForm $optWindowClause): self
     {
-        return new self($this->options, $this->projections, $this->intoClause, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $optWindowClause, $this->optQualifyClause);
+        return new self($this->options, $this->projections, $this->intoClause, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $optWindowClause, $this->optQualifyClause, $this->comments);
     }
 
     /**
@@ -127,6 +138,14 @@ final class QuerySpecificationWithSelectSymSelectOptionsSelectItemListIntoClause
      */
     public function withOptQualifyClause(\SqlSemantics\Statement\Model\MySql\Role\OptQualifyClauseForm $optQualifyClause): self
     {
-        return new self($this->options, $this->projections, $this->intoClause, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->optWindowClause, $optQualifyClause);
+        return new self($this->options, $this->projections, $this->intoClause, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->optWindowClause, $optQualifyClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->options, $this->projections, $this->intoClause, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->optWindowClause, $this->optQualifyClause, $comments);
     }
 }

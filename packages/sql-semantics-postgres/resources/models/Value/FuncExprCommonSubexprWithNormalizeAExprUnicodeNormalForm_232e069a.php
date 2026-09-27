@@ -17,11 +17,12 @@ final class FuncExprCommonSubexprWithNormalizeAExprUnicodeNormalForm_232e069a im
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\UnicodeNormalFormForm $unicodeNormalForm,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($unicodeNormalForm), 'The unicodeNormalForm must be a generated immutable SQL value.');
@@ -32,11 +33,17 @@ final class FuncExprCommonSubexprWithNormalizeAExprUnicodeNormalForm_232e069a im
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('NORMALIZE');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->aExpr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(',');
+        $writer->comments($this->comments, 4);
         $this->unicodeNormalForm->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
     }
 
@@ -45,7 +52,7 @@ final class FuncExprCommonSubexprWithNormalizeAExprUnicodeNormalForm_232e069a im
      */
     public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
     {
-        return new self($aExpr, $this->unicodeNormalForm);
+        return new self($aExpr, $this->unicodeNormalForm, $this->comments);
     }
 
     /**
@@ -53,6 +60,14 @@ final class FuncExprCommonSubexprWithNormalizeAExprUnicodeNormalForm_232e069a im
      */
     public function withUnicodeNormalForm(\SqlSemantics\Statement\Model\PostgreSql\Role\UnicodeNormalFormForm $unicodeNormalForm): self
     {
-        return new self($this->aExpr, $unicodeNormalForm);
+        return new self($this->aExpr, $unicodeNormalForm, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->aExpr, $this->unicodeNormalForm, $comments);
     }
 }

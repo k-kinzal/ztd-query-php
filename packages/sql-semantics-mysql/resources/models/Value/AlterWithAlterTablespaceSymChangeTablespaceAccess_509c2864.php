@@ -17,10 +17,11 @@ final class AlterWithAlterTablespaceSymChangeTablespaceAccess_509c2864 implement
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ChangeTablespaceAccessForm $changeTablespaceAccess,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($changeTablespaceAccess), 'The changeTablespaceAccess must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class AlterWithAlterTablespaceSymChangeTablespaceAccess_509c2864 implement
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('TABLESPACE');
+        $writer->comments($this->comments, 2);
         $this->changeTablespaceAccess->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class AlterWithAlterTablespaceSymChangeTablespaceAccess_509c2864 implement
      */
     public function withChangeTablespaceAccess(\SqlSemantics\Statement\Model\MySql\Role\ChangeTablespaceAccessForm $changeTablespaceAccess): self
     {
-        return new self($changeTablespaceAccess);
+        return new self($changeTablespaceAccess, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->changeTablespaceAccess, $comments);
     }
 }

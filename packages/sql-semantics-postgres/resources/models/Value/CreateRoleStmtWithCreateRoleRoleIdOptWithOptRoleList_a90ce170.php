@@ -17,12 +17,13 @@ final class CreateRoleStmtWithCreateRoleRoleIdOptWithOptRoleList_a90ce170 implem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoleIdForm $roleId,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptRoleListForm $optRoleList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleId), 'The roleId must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optWith), 'The optWith must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class CreateRoleStmtWithCreateRoleRoleIdOptWithOptRoleList_a90ce170 implem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $writer->append('ROLE');
+        $writer->comments($this->comments, 2);
         $this->roleId->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optWith->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optRoleList->write($writer);
     }
 
@@ -46,7 +52,7 @@ final class CreateRoleStmtWithCreateRoleRoleIdOptWithOptRoleList_a90ce170 implem
      */
     public function withRoleId(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleIdForm $roleId): self
     {
-        return new self($roleId, $this->optWith, $this->optRoleList);
+        return new self($roleId, $this->optWith, $this->optRoleList, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class CreateRoleStmtWithCreateRoleRoleIdOptWithOptRoleList_a90ce170 implem
      */
     public function withOptWith(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith): self
     {
-        return new self($this->roleId, $optWith, $this->optRoleList);
+        return new self($this->roleId, $optWith, $this->optRoleList, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class CreateRoleStmtWithCreateRoleRoleIdOptWithOptRoleList_a90ce170 implem
      */
     public function withOptRoleList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptRoleListForm $optRoleList): self
     {
-        return new self($this->roleId, $this->optWith, $optRoleList);
+        return new self($this->roleId, $this->optWith, $optRoleList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->roleId, $this->optWith, $this->optRoleList, $comments);
     }
 }

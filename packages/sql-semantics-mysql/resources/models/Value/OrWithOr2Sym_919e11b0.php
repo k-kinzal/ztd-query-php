@@ -17,10 +17,11 @@ final class OrWithOr2Sym_919e11b0 implements \SqlSemantics\Statement\Model\MySql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $or2Sym,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($or2Sym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['OR2_SYM'], 'The or2Sym must be a complete OR2_SYM lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class OrWithOr2Sym_919e11b0 implements \SqlSemantics\Statement\Model\MySql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->or2Sym);
     }
 
@@ -38,6 +40,14 @@ final class OrWithOr2Sym_919e11b0 implements \SqlSemantics\Statement\Model\MySql
      */
     public function withOr2Sym(string $or2Sym): self
     {
-        return new self($or2Sym);
+        return new self($or2Sym, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->or2Sym, $comments);
     }
 }

@@ -133,4 +133,14 @@ final class TypeRulesTest extends TestCase
         $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(Dialect::Sqlite, 'integer'), Nullability::NotNull, $source, symbol: '1');
         self::assertSame($expression, (new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->project($expression));
     }
+    #[\PHPUnit\Framework\Attributes\TestWith(['ANY'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['"ANY"'])]
+    public function testReadPreservesAnyValuesInStrictTables(string $declaredType): void
+    {
+        $table = (new \SqlParser\Sqlite\SqliteParser())->parse('CREATE TABLE t (value ' . $declaredType . ') STRICT');
+        $type = (new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->read($table->find('typetoken')[0], $table);
+        self::assertSame('any', $type->name);
+        self::assertSame('blob', $type->affinity);
+    }
+
 }

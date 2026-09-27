@@ -17,11 +17,12 @@ final class GcolAttributeListWithGcolAttributeListGcolAttribute_3e44e520 impleme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GcolAttributeListForm $gcolAttributeList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GcolAttributeForm $gcolAttribute,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($gcolAttributeList), 'The gcolAttributeList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($gcolAttribute), 'The gcolAttribute must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class GcolAttributeListWithGcolAttributeListGcolAttribute_3e44e520 impleme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->gcolAttributeList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->gcolAttribute->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class GcolAttributeListWithGcolAttributeListGcolAttribute_3e44e520 impleme
      */
     public function withGcolAttributeList(\SqlSemantics\Statement\Model\MySql\Role\GcolAttributeListForm $gcolAttributeList): self
     {
-        return new self($gcolAttributeList, $this->gcolAttribute);
+        return new self($gcolAttributeList, $this->gcolAttribute, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class GcolAttributeListWithGcolAttributeListGcolAttribute_3e44e520 impleme
      */
     public function withGcolAttribute(\SqlSemantics\Statement\Model\MySql\Role\GcolAttributeForm $gcolAttribute): self
     {
-        return new self($this->gcolAttributeList, $gcolAttribute);
+        return new self($this->gcolAttributeList, $gcolAttribute, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->gcolAttributeList, $this->gcolAttribute, $comments);
     }
 }

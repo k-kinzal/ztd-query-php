@@ -17,12 +17,13 @@ final class OptionValueNoOptionTypeWithIdentOrTextEqualExpr_245dc00a implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText), 'The identOrText must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($equal), 'The equal must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class OptionValueNoOptionTypeWithIdentOrTextEqualExpr_245dc00a implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
-        $writer->append('@');
+        $writer->comments($this->comments, 0);
+        $writer->append('@', prefix: true);
+        $writer->comments($this->comments, 1);
         $this->identOrText->write($writer);
+        $writer->comments($this->comments, 2);
         $this->equal->write($writer);
+        $writer->comments($this->comments, 3);
         $this->expr->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class OptionValueNoOptionTypeWithIdentOrTextEqualExpr_245dc00a implements 
      */
     public function withIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText): self
     {
-        return new self($identOrText, $this->equal, $this->expr);
+        return new self($identOrText, $this->equal, $this->expr, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class OptionValueNoOptionTypeWithIdentOrTextEqualExpr_245dc00a implements 
      */
     public function withEqual(\SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal): self
     {
-        return new self($this->identOrText, $equal, $this->expr);
+        return new self($this->identOrText, $equal, $this->expr, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class OptionValueNoOptionTypeWithIdentOrTextEqualExpr_245dc00a implements 
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($this->identOrText, $this->equal, $expr);
+        return new self($this->identOrText, $this->equal, $expr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->identOrText, $this->equal, $this->expr, $comments);
     }
 }

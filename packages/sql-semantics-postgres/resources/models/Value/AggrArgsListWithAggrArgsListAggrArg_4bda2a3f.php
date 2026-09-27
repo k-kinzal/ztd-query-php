@@ -17,11 +17,12 @@ final class AggrArgsListWithAggrArgsListAggrArg_4bda2a3f implements \SqlSemantic
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgsListForm $aggrArgsList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgForm $aggrArg,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aggrArgsList), 'The aggrArgsList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aggrArg), 'The aggrArg must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class AggrArgsListWithAggrArgsListAggrArg_4bda2a3f implements \SqlSemantic
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->aggrArgsList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->aggrArg->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class AggrArgsListWithAggrArgsListAggrArg_4bda2a3f implements \SqlSemantic
      */
     public function withAggrArgsList(\SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgsListForm $aggrArgsList): self
     {
-        return new self($aggrArgsList, $this->aggrArg);
+        return new self($aggrArgsList, $this->aggrArg, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class AggrArgsListWithAggrArgsListAggrArg_4bda2a3f implements \SqlSemantic
      */
     public function withAggrArg(\SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgForm $aggrArg): self
     {
-        return new self($this->aggrArgsList, $aggrArg);
+        return new self($this->aggrArgsList, $aggrArg, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->aggrArgsList, $this->aggrArg, $comments);
     }
 }

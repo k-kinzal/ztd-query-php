@@ -17,13 +17,14 @@ final class RevokeWithRevokeIfExistsAllOptPrivilegesGrantOptionFromUserListOptIg
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptPrivilegesForm $optPrivileges,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIgnoreUnknownUserForm $optIgnoreUnknownUser,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ifExists), 'The ifExists must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optPrivileges), 'The optPrivileges must be a generated immutable SQL value.');
@@ -36,15 +37,25 @@ final class RevokeWithRevokeIfExistsAllOptPrivilegesGrantOptionFromUserListOptIg
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('REVOKE');
+        $writer->comments($this->comments, 1);
         $this->ifExists->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('ALL');
+        $writer->comments($this->comments, 3);
         $this->optPrivileges->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(',');
+        $writer->comments($this->comments, 5);
         $writer->append('GRANT');
+        $writer->comments($this->comments, 6);
         $writer->append('OPTION');
+        $writer->comments($this->comments, 7);
         $writer->append('FROM');
+        $writer->comments($this->comments, 8);
         $this->userList->write($writer);
+        $writer->comments($this->comments, 9);
         $this->optIgnoreUnknownUser->write($writer);
     }
 
@@ -53,7 +64,7 @@ final class RevokeWithRevokeIfExistsAllOptPrivilegesGrantOptionFromUserListOptIg
      */
     public function withIfExists(\SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists): self
     {
-        return new self($ifExists, $this->optPrivileges, $this->userList, $this->optIgnoreUnknownUser);
+        return new self($ifExists, $this->optPrivileges, $this->userList, $this->optIgnoreUnknownUser, $this->comments);
     }
 
     /**
@@ -61,7 +72,7 @@ final class RevokeWithRevokeIfExistsAllOptPrivilegesGrantOptionFromUserListOptIg
      */
     public function withOptPrivileges(\SqlSemantics\Statement\Model\MySql\Role\OptPrivilegesForm $optPrivileges): self
     {
-        return new self($this->ifExists, $optPrivileges, $this->userList, $this->optIgnoreUnknownUser);
+        return new self($this->ifExists, $optPrivileges, $this->userList, $this->optIgnoreUnknownUser, $this->comments);
     }
 
     /**
@@ -69,7 +80,7 @@ final class RevokeWithRevokeIfExistsAllOptPrivilegesGrantOptionFromUserListOptIg
      */
     public function withUserList(\SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList): self
     {
-        return new self($this->ifExists, $this->optPrivileges, $userList, $this->optIgnoreUnknownUser);
+        return new self($this->ifExists, $this->optPrivileges, $userList, $this->optIgnoreUnknownUser, $this->comments);
     }
 
     /**
@@ -77,6 +88,14 @@ final class RevokeWithRevokeIfExistsAllOptPrivilegesGrantOptionFromUserListOptIg
      */
     public function withOptIgnoreUnknownUser(\SqlSemantics\Statement\Model\MySql\Role\OptIgnoreUnknownUserForm $optIgnoreUnknownUser): self
     {
-        return new self($this->ifExists, $this->optPrivileges, $this->userList, $optIgnoreUnknownUser);
+        return new self($this->ifExists, $this->optPrivileges, $this->userList, $optIgnoreUnknownUser, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ifExists, $this->optPrivileges, $this->userList, $this->optIgnoreUnknownUser, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class JsonFormatClauseWithFormatLaJsonEncodingName_35bf3aa1 implements \Sq
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $formatLa,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($formatLa, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['FORMAT_LA'], 'The formatLa must be a complete FORMAT_LA lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class JsonFormatClauseWithFormatLaJsonEncodingName_35bf3aa1 implements \Sq
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->formatLa);
+        $writer->comments($this->comments, 1);
         $writer->append('JSON');
+        $writer->comments($this->comments, 2);
         $writer->append('ENCODING');
+        $writer->comments($this->comments, 3);
         $this->name->write($writer);
     }
 
@@ -43,7 +48,7 @@ final class JsonFormatClauseWithFormatLaJsonEncodingName_35bf3aa1 implements \Sq
      */
     public function withFormatLa(string $formatLa): self
     {
-        return new self($formatLa, $this->name);
+        return new self($formatLa, $this->name, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class JsonFormatClauseWithFormatLaJsonEncodingName_35bf3aa1 implements \Sq
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($this->formatLa, $name);
+        return new self($this->formatLa, $name, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->formatLa, $this->name, $comments);
     }
 }

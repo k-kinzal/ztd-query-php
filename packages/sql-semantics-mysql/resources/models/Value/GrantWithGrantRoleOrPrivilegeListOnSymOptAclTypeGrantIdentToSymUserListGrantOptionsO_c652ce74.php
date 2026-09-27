@@ -17,7 +17,7 @@ final class GrantWithGrantRoleOrPrivilegeListOnSymOptAclTypeGrantIdentToSymUserL
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeListForm $roleOrPrivilegeList,
@@ -26,6 +26,7 @@ final class GrantWithGrantRoleOrPrivilegeListOnSymOptAclTypeGrantIdentToSymUserL
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GrantOptionsForm $grantOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptGrantAsForm $optGrantAs,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($roleOrPrivilegeList), 'The roleOrPrivilegeList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optAclType), 'The optAclType must be a generated immutable SQL value.');
@@ -40,14 +41,23 @@ final class GrantWithGrantRoleOrPrivilegeListOnSymOptAclTypeGrantIdentToSymUserL
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('GRANT');
+        $writer->comments($this->comments, 1);
         $this->roleOrPrivilegeList->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('ON');
+        $writer->comments($this->comments, 3);
         $this->optAclType->write($writer);
+        $writer->comments($this->comments, 4);
         $this->grantIdent->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('TO');
+        $writer->comments($this->comments, 6);
         $this->userList->write($writer);
+        $writer->comments($this->comments, 7);
         $this->grantOptions->write($writer);
+        $writer->comments($this->comments, 8);
         $this->optGrantAs->write($writer);
     }
 
@@ -56,7 +66,7 @@ final class GrantWithGrantRoleOrPrivilegeListOnSymOptAclTypeGrantIdentToSymUserL
      */
     public function withRoleOrPrivilegeList(\SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeListForm $roleOrPrivilegeList): self
     {
-        return new self($roleOrPrivilegeList, $this->optAclType, $this->grantIdent, $this->userList, $this->grantOptions, $this->optGrantAs);
+        return new self($roleOrPrivilegeList, $this->optAclType, $this->grantIdent, $this->userList, $this->grantOptions, $this->optGrantAs, $this->comments);
     }
 
     /**
@@ -64,7 +74,7 @@ final class GrantWithGrantRoleOrPrivilegeListOnSymOptAclTypeGrantIdentToSymUserL
      */
     public function withOptAclType(\SqlSemantics\Statement\Model\MySql\Role\OptAclTypeForm $optAclType): self
     {
-        return new self($this->roleOrPrivilegeList, $optAclType, $this->grantIdent, $this->userList, $this->grantOptions, $this->optGrantAs);
+        return new self($this->roleOrPrivilegeList, $optAclType, $this->grantIdent, $this->userList, $this->grantOptions, $this->optGrantAs, $this->comments);
     }
 
     /**
@@ -72,7 +82,7 @@ final class GrantWithGrantRoleOrPrivilegeListOnSymOptAclTypeGrantIdentToSymUserL
      */
     public function withGrantIdent(\SqlSemantics\Statement\Model\MySql\Role\GrantIdentForm $grantIdent): self
     {
-        return new self($this->roleOrPrivilegeList, $this->optAclType, $grantIdent, $this->userList, $this->grantOptions, $this->optGrantAs);
+        return new self($this->roleOrPrivilegeList, $this->optAclType, $grantIdent, $this->userList, $this->grantOptions, $this->optGrantAs, $this->comments);
     }
 
     /**
@@ -80,7 +90,7 @@ final class GrantWithGrantRoleOrPrivilegeListOnSymOptAclTypeGrantIdentToSymUserL
      */
     public function withUserList(\SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList): self
     {
-        return new self($this->roleOrPrivilegeList, $this->optAclType, $this->grantIdent, $userList, $this->grantOptions, $this->optGrantAs);
+        return new self($this->roleOrPrivilegeList, $this->optAclType, $this->grantIdent, $userList, $this->grantOptions, $this->optGrantAs, $this->comments);
     }
 
     /**
@@ -88,7 +98,7 @@ final class GrantWithGrantRoleOrPrivilegeListOnSymOptAclTypeGrantIdentToSymUserL
      */
     public function withGrantOptions(\SqlSemantics\Statement\Model\MySql\Role\GrantOptionsForm $grantOptions): self
     {
-        return new self($this->roleOrPrivilegeList, $this->optAclType, $this->grantIdent, $this->userList, $grantOptions, $this->optGrantAs);
+        return new self($this->roleOrPrivilegeList, $this->optAclType, $this->grantIdent, $this->userList, $grantOptions, $this->optGrantAs, $this->comments);
     }
 
     /**
@@ -96,6 +106,14 @@ final class GrantWithGrantRoleOrPrivilegeListOnSymOptAclTypeGrantIdentToSymUserL
      */
     public function withOptGrantAs(\SqlSemantics\Statement\Model\MySql\Role\OptGrantAsForm $optGrantAs): self
     {
-        return new self($this->roleOrPrivilegeList, $this->optAclType, $this->grantIdent, $this->userList, $this->grantOptions, $optGrantAs);
+        return new self($this->roleOrPrivilegeList, $this->optAclType, $this->grantIdent, $this->userList, $this->grantOptions, $optGrantAs, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->roleOrPrivilegeList, $this->optAclType, $this->grantIdent, $this->userList, $this->grantOptions, $this->optGrantAs, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class AExprWithNotLaAExpr_1ebc1180 implements \SqlSemantics\Statement\Mode
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $notLa,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($notLa, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['NOT_LA'], 'The notLa must be a complete NOT_LA lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
@@ -33,7 +34,9 @@ final class AExprWithNotLaAExpr_1ebc1180 implements \SqlSemantics\Statement\Mode
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->notLa);
+        $writer->comments($this->comments, 1);
         $this->aExpr->write($writer);
     }
 
@@ -42,7 +45,7 @@ final class AExprWithNotLaAExpr_1ebc1180 implements \SqlSemantics\Statement\Mode
      */
     public function withNotLa(string $notLa): self
     {
-        return new self($notLa, $this->aExpr);
+        return new self($notLa, $this->aExpr, $this->comments);
     }
 
     /**
@@ -50,6 +53,14 @@ final class AExprWithNotLaAExpr_1ebc1180 implements \SqlSemantics\Statement\Mode
      */
     public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
     {
-        return new self($this->notLa, $aExpr);
+        return new self($this->notLa, $aExpr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->notLa, $this->aExpr, $comments);
     }
 }

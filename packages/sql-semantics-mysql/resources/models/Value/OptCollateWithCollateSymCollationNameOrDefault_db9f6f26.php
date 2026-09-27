@@ -17,10 +17,11 @@ final class OptCollateWithCollateSymCollationNameOrDefault_db9f6f26 implements \
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CollationNameOrDefaultForm $collationNameOrDefault,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($collationNameOrDefault), 'The collationNameOrDefault must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class OptCollateWithCollateSymCollationNameOrDefault_db9f6f26 implements \
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('COLLATE');
+        $writer->comments($this->comments, 1);
         $this->collationNameOrDefault->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class OptCollateWithCollateSymCollationNameOrDefault_db9f6f26 implements \
      */
     public function withCollationNameOrDefault(\SqlSemantics\Statement\Model\MySql\Role\CollationNameOrDefaultForm $collationNameOrDefault): self
     {
-        return new self($collationNameOrDefault);
+        return new self($collationNameOrDefault, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->collationNameOrDefault, $comments);
     }
 }

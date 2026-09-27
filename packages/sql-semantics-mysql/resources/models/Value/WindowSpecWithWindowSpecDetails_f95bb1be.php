@@ -17,10 +17,11 @@ final class WindowSpecWithWindowSpecDetails_f95bb1be implements \SqlSemantics\St
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WindowSpecDetailsForm $windowSpecDetails,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($windowSpecDetails), 'The windowSpecDetails must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class WindowSpecWithWindowSpecDetails_f95bb1be implements \SqlSemantics\St
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->windowSpecDetails->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(')');
     }
 
@@ -40,6 +44,14 @@ final class WindowSpecWithWindowSpecDetails_f95bb1be implements \SqlSemantics\St
      */
     public function withWindowSpecDetails(\SqlSemantics\Statement\Model\MySql\Role\WindowSpecDetailsForm $windowSpecDetails): self
     {
-        return new self($windowSpecDetails);
+        return new self($windowSpecDetails, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->windowSpecDetails, $comments);
     }
 }

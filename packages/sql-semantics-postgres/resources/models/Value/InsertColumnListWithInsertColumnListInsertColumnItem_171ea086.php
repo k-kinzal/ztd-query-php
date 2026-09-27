@@ -17,11 +17,12 @@ final class InsertColumnListWithInsertColumnListInsertColumnItem_171ea086 implem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\InsertColumnListForm $insertColumnList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\InsertColumnItemForm $insertColumnItem,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($insertColumnList), 'The insertColumnList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($insertColumnItem), 'The insertColumnItem must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class InsertColumnListWithInsertColumnListInsertColumnItem_171ea086 implem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->insertColumnList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->insertColumnItem->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class InsertColumnListWithInsertColumnListInsertColumnItem_171ea086 implem
      */
     public function withInsertColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\InsertColumnListForm $insertColumnList): self
     {
-        return new self($insertColumnList, $this->insertColumnItem);
+        return new self($insertColumnList, $this->insertColumnItem, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class InsertColumnListWithInsertColumnListInsertColumnItem_171ea086 implem
      */
     public function withInsertColumnItem(\SqlSemantics\Statement\Model\PostgreSql\Role\InsertColumnItemForm $insertColumnItem): self
     {
-        return new self($this->insertColumnList, $insertColumnItem);
+        return new self($this->insertColumnList, $insertColumnItem, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->insertColumnList, $this->insertColumnItem, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class DiagnosticsInformationWithConditionSymConditionNumberConditionInform
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ConditionNumberForm $conditionNumber,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ConditionInformationForm $conditionInformation,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($conditionNumber), 'The conditionNumber must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($conditionInformation), 'The conditionInformation must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class DiagnosticsInformationWithConditionSymConditionNumberConditionInform
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CONDITION');
+        $writer->comments($this->comments, 1);
         $this->conditionNumber->write($writer);
+        $writer->comments($this->comments, 2);
         $this->conditionInformation->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class DiagnosticsInformationWithConditionSymConditionNumberConditionInform
      */
     public function withConditionNumber(\SqlSemantics\Statement\Model\MySql\Role\ConditionNumberForm $conditionNumber): self
     {
-        return new self($conditionNumber, $this->conditionInformation);
+        return new self($conditionNumber, $this->conditionInformation, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class DiagnosticsInformationWithConditionSymConditionNumberConditionInform
      */
     public function withConditionInformation(\SqlSemantics\Statement\Model\MySql\Role\ConditionInformationForm $conditionInformation): self
     {
-        return new self($this->conditionNumber, $conditionInformation);
+        return new self($this->conditionNumber, $conditionInformation, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->conditionNumber, $this->conditionInformation, $comments);
     }
 }

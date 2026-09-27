@@ -17,7 +17,7 @@ final class RevokeRoleStmtWithRevokeColIdOptionForPrivilegeListFromRoleListOptGr
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
@@ -25,6 +25,7 @@ final class RevokeRoleStmtWithRevokeColIdOptionForPrivilegeListFromRoleListOptGr
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoleListForm $roleList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptGrantedByForm $optGrantedBy,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($privilegeList), 'The privilegeList must be a generated immutable SQL value.');
@@ -38,14 +39,23 @@ final class RevokeRoleStmtWithRevokeColIdOptionForPrivilegeListFromRoleListOptGr
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('REVOKE');
+        $writer->comments($this->comments, 1);
         $this->colId->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('OPTION');
+        $writer->comments($this->comments, 3);
         $writer->append('FOR');
+        $writer->comments($this->comments, 4);
         $this->privilegeList->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('FROM');
+        $writer->comments($this->comments, 6);
         $this->roleList->write($writer);
+        $writer->comments($this->comments, 7);
         $this->optGrantedBy->write($writer);
+        $writer->comments($this->comments, 8);
         $this->optDropBehavior->write($writer);
     }
 
@@ -54,7 +64,7 @@ final class RevokeRoleStmtWithRevokeColIdOptionForPrivilegeListFromRoleListOptGr
      */
     public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
     {
-        return new self($colId, $this->privilegeList, $this->roleList, $this->optGrantedBy, $this->optDropBehavior);
+        return new self($colId, $this->privilegeList, $this->roleList, $this->optGrantedBy, $this->optDropBehavior, $this->comments);
     }
 
     /**
@@ -62,7 +72,7 @@ final class RevokeRoleStmtWithRevokeColIdOptionForPrivilegeListFromRoleListOptGr
      */
     public function withPrivilegeList(\SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegeListForm $privilegeList): self
     {
-        return new self($this->colId, $privilegeList, $this->roleList, $this->optGrantedBy, $this->optDropBehavior);
+        return new self($this->colId, $privilegeList, $this->roleList, $this->optGrantedBy, $this->optDropBehavior, $this->comments);
     }
 
     /**
@@ -70,7 +80,7 @@ final class RevokeRoleStmtWithRevokeColIdOptionForPrivilegeListFromRoleListOptGr
      */
     public function withRoleList(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleListForm $roleList): self
     {
-        return new self($this->colId, $this->privilegeList, $roleList, $this->optGrantedBy, $this->optDropBehavior);
+        return new self($this->colId, $this->privilegeList, $roleList, $this->optGrantedBy, $this->optDropBehavior, $this->comments);
     }
 
     /**
@@ -78,7 +88,7 @@ final class RevokeRoleStmtWithRevokeColIdOptionForPrivilegeListFromRoleListOptGr
      */
     public function withOptGrantedBy(\SqlSemantics\Statement\Model\PostgreSql\Role\OptGrantedByForm $optGrantedBy): self
     {
-        return new self($this->colId, $this->privilegeList, $this->roleList, $optGrantedBy, $this->optDropBehavior);
+        return new self($this->colId, $this->privilegeList, $this->roleList, $optGrantedBy, $this->optDropBehavior, $this->comments);
     }
 
     /**
@@ -86,6 +96,14 @@ final class RevokeRoleStmtWithRevokeColIdOptionForPrivilegeListFromRoleListOptGr
      */
     public function withOptDropBehavior(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior): self
     {
-        return new self($this->colId, $this->privilegeList, $this->roleList, $this->optGrantedBy, $optDropBehavior);
+        return new self($this->colId, $this->privilegeList, $this->roleList, $this->optGrantedBy, $optDropBehavior, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->colId, $this->privilegeList, $this->roleList, $this->optGrantedBy, $this->optDropBehavior, $comments);
     }
 }

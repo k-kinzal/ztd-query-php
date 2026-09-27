@@ -17,10 +17,11 @@ final class TransactionModeItemWithIsolationLevelIsoLevel_0821c5ed implements \S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IsoLevelForm $isoLevel,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($isoLevel), 'The isoLevel must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class TransactionModeItemWithIsolationLevelIsoLevel_0821c5ed implements \S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ISOLATION');
+        $writer->comments($this->comments, 1);
         $writer->append('LEVEL');
+        $writer->comments($this->comments, 2);
         $this->isoLevel->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class TransactionModeItemWithIsolationLevelIsoLevel_0821c5ed implements \S
      */
     public function withIsoLevel(\SqlSemantics\Statement\Model\PostgreSql\Role\IsoLevelForm $isoLevel): self
     {
-        return new self($isoLevel);
+        return new self($isoLevel, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->isoLevel, $comments);
     }
 }

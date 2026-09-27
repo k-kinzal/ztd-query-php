@@ -17,13 +17,14 @@ final class SetlistWithSetlistCommaNmEqExpr_08ee1b3e implements \SqlSemantics\St
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SetlistForm $setlist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
         public readonly string $eq,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($setlist), 'The setlist must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
@@ -36,10 +37,15 @@ final class SetlistWithSetlistCommaNmEqExpr_08ee1b3e implements \SqlSemantics\St
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->setlist->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->nm->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append($this->eq);
+        $writer->comments($this->comments, 4);
         $this->expr->write($writer);
     }
 
@@ -48,7 +54,7 @@ final class SetlistWithSetlistCommaNmEqExpr_08ee1b3e implements \SqlSemantics\St
      */
     public function withSetlist(\SqlSemantics\Statement\Model\Sqlite\Role\SetlistForm $setlist): self
     {
-        return new self($setlist, $this->nm, $this->eq, $this->expr);
+        return new self($setlist, $this->nm, $this->eq, $this->expr, $this->comments);
     }
 
     /**
@@ -56,7 +62,7 @@ final class SetlistWithSetlistCommaNmEqExpr_08ee1b3e implements \SqlSemantics\St
      */
     public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
     {
-        return new self($this->setlist, $nm, $this->eq, $this->expr);
+        return new self($this->setlist, $nm, $this->eq, $this->expr, $this->comments);
     }
 
     /**
@@ -64,7 +70,7 @@ final class SetlistWithSetlistCommaNmEqExpr_08ee1b3e implements \SqlSemantics\St
      */
     public function withEq(string $eq): self
     {
-        return new self($this->setlist, $this->nm, $eq, $this->expr);
+        return new self($this->setlist, $this->nm, $eq, $this->expr, $this->comments);
     }
 
     /**
@@ -72,6 +78,14 @@ final class SetlistWithSetlistCommaNmEqExpr_08ee1b3e implements \SqlSemantics\St
      */
     public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
     {
-        return new self($this->setlist, $this->nm, $this->eq, $expr);
+        return new self($this->setlist, $this->nm, $this->eq, $expr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->setlist, $this->nm, $this->eq, $this->expr, $comments);
     }
 }

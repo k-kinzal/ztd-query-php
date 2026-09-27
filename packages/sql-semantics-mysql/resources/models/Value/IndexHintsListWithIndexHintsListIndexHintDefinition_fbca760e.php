@@ -17,11 +17,12 @@ final class IndexHintsListWithIndexHintsListIndexHintDefinition_fbca760e impleme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IndexHintsListForm $indexHintsList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IndexHintDefinitionForm $indexHintDefinition,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($indexHintsList), 'The indexHintsList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($indexHintDefinition), 'The indexHintDefinition must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class IndexHintsListWithIndexHintsListIndexHintDefinition_fbca760e impleme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->indexHintsList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->indexHintDefinition->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class IndexHintsListWithIndexHintsListIndexHintDefinition_fbca760e impleme
      */
     public function withIndexHintsList(\SqlSemantics\Statement\Model\MySql\Role\IndexHintsListForm $indexHintsList): self
     {
-        return new self($indexHintsList, $this->indexHintDefinition);
+        return new self($indexHintsList, $this->indexHintDefinition, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class IndexHintsListWithIndexHintsListIndexHintDefinition_fbca760e impleme
      */
     public function withIndexHintDefinition(\SqlSemantics\Statement\Model\MySql\Role\IndexHintDefinitionForm $indexHintDefinition): self
     {
-        return new self($this->indexHintsList, $indexHintDefinition);
+        return new self($this->indexHintsList, $indexHintDefinition, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->indexHintsList, $this->indexHintDefinition, $comments);
     }
 }

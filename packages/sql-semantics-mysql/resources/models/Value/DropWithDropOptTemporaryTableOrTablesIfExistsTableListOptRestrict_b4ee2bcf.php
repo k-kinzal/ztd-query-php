@@ -17,7 +17,7 @@ final class DropWithDropOptTemporaryTableOrTablesIfExistsTableListOptRestrict_b4
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptTemporaryForm $optTemporary,
@@ -25,6 +25,7 @@ final class DropWithDropOptTemporaryTableOrTablesIfExistsTableListOptRestrict_b4
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableListForm $tableList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptRestrictForm $optRestrict,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optTemporary), 'The optTemporary must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableOrTables), 'The tableOrTables must be a generated immutable SQL value.');
@@ -38,11 +39,17 @@ final class DropWithDropOptTemporaryTableOrTablesIfExistsTableListOptRestrict_b4
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('DROP');
+        $writer->comments($this->comments, 1);
         $this->optTemporary->write($writer);
+        $writer->comments($this->comments, 2);
         $this->tableOrTables->write($writer);
+        $writer->comments($this->comments, 3);
         $this->ifExists->write($writer);
+        $writer->comments($this->comments, 4);
         $this->tableList->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optRestrict->write($writer);
     }
 
@@ -51,7 +58,7 @@ final class DropWithDropOptTemporaryTableOrTablesIfExistsTableListOptRestrict_b4
      */
     public function withOptTemporary(\SqlSemantics\Statement\Model\MySql\Role\OptTemporaryForm $optTemporary): self
     {
-        return new self($optTemporary, $this->tableOrTables, $this->ifExists, $this->tableList, $this->optRestrict);
+        return new self($optTemporary, $this->tableOrTables, $this->ifExists, $this->tableList, $this->optRestrict, $this->comments);
     }
 
     /**
@@ -59,7 +66,7 @@ final class DropWithDropOptTemporaryTableOrTablesIfExistsTableListOptRestrict_b4
      */
     public function withTableOrTables(\SqlSemantics\Statement\Model\MySql\Role\TableOrTablesForm $tableOrTables): self
     {
-        return new self($this->optTemporary, $tableOrTables, $this->ifExists, $this->tableList, $this->optRestrict);
+        return new self($this->optTemporary, $tableOrTables, $this->ifExists, $this->tableList, $this->optRestrict, $this->comments);
     }
 
     /**
@@ -67,7 +74,7 @@ final class DropWithDropOptTemporaryTableOrTablesIfExistsTableListOptRestrict_b4
      */
     public function withIfExists(\SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists): self
     {
-        return new self($this->optTemporary, $this->tableOrTables, $ifExists, $this->tableList, $this->optRestrict);
+        return new self($this->optTemporary, $this->tableOrTables, $ifExists, $this->tableList, $this->optRestrict, $this->comments);
     }
 
     /**
@@ -75,7 +82,7 @@ final class DropWithDropOptTemporaryTableOrTablesIfExistsTableListOptRestrict_b4
      */
     public function withTableList(\SqlSemantics\Statement\Model\MySql\Role\TableListForm $tableList): self
     {
-        return new self($this->optTemporary, $this->tableOrTables, $this->ifExists, $tableList, $this->optRestrict);
+        return new self($this->optTemporary, $this->tableOrTables, $this->ifExists, $tableList, $this->optRestrict, $this->comments);
     }
 
     /**
@@ -83,6 +90,14 @@ final class DropWithDropOptTemporaryTableOrTablesIfExistsTableListOptRestrict_b4
      */
     public function withOptRestrict(\SqlSemantics\Statement\Model\MySql\Role\OptRestrictForm $optRestrict): self
     {
-        return new self($this->optTemporary, $this->tableOrTables, $this->ifExists, $this->tableList, $optRestrict);
+        return new self($this->optTemporary, $this->tableOrTables, $this->ifExists, $this->tableList, $optRestrict, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optTemporary, $this->tableOrTables, $this->ifExists, $this->tableList, $this->optRestrict, $comments);
     }
 }

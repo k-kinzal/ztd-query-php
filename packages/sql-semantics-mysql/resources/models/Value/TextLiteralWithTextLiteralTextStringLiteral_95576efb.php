@@ -17,11 +17,12 @@ final class TextLiteralWithTextLiteralTextStringLiteral_95576efb implements \Sql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextLiteralForm $textLiteral,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringLiteralForm $textStringLiteral,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textLiteral), 'The textLiteral must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringLiteral), 'The textStringLiteral must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class TextLiteralWithTextLiteralTextStringLiteral_95576efb implements \Sql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->textLiteral->write($writer);
+        $writer->comments($this->comments, 1);
         $this->textStringLiteral->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class TextLiteralWithTextLiteralTextStringLiteral_95576efb implements \Sql
      */
     public function withTextLiteral(\SqlSemantics\Statement\Model\MySql\Role\TextLiteralForm $textLiteral): self
     {
-        return new self($textLiteral, $this->textStringLiteral);
+        return new self($textLiteral, $this->textStringLiteral, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class TextLiteralWithTextLiteralTextStringLiteral_95576efb implements \Sql
      */
     public function withTextStringLiteral(\SqlSemantics\Statement\Model\MySql\Role\TextStringLiteralForm $textStringLiteral): self
     {
-        return new self($this->textLiteral, $textStringLiteral);
+        return new self($this->textLiteral, $textStringLiteral, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->textLiteral, $this->textStringLiteral, $comments);
     }
 }

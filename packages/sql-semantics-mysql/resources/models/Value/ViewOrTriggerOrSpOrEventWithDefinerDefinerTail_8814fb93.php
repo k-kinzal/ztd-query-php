@@ -17,11 +17,12 @@ final class ViewOrTriggerOrSpOrEventWithDefinerDefinerTail_8814fb93 implements \
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DefinerForm $definer,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DefinerTailForm $definerTail,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($definer), 'The definer must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($definerTail), 'The definerTail must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class ViewOrTriggerOrSpOrEventWithDefinerDefinerTail_8814fb93 implements \
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->definer->write($writer);
+        $writer->comments($this->comments, 1);
         $this->definerTail->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class ViewOrTriggerOrSpOrEventWithDefinerDefinerTail_8814fb93 implements \
      */
     public function withDefiner(\SqlSemantics\Statement\Model\MySql\Role\DefinerForm $definer): self
     {
-        return new self($definer, $this->definerTail);
+        return new self($definer, $this->definerTail, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class ViewOrTriggerOrSpOrEventWithDefinerDefinerTail_8814fb93 implements \
      */
     public function withDefinerTail(\SqlSemantics\Statement\Model\MySql\Role\DefinerTailForm $definerTail): self
     {
-        return new self($this->definer, $definerTail);
+        return new self($this->definer, $definerTail, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->definer, $this->definerTail, $comments);
     }
 }

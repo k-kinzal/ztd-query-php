@@ -17,11 +17,12 @@ final class CreatefuncOptListWithCreatefuncOptListCreatefuncOptItem_7fe6dac5 imp
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreatefuncOptListForm $createfuncOptList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreatefuncOptItemForm $createfuncOptItem,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createfuncOptList), 'The createfuncOptList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createfuncOptItem), 'The createfuncOptItem must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class CreatefuncOptListWithCreatefuncOptListCreatefuncOptItem_7fe6dac5 imp
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->createfuncOptList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->createfuncOptItem->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class CreatefuncOptListWithCreatefuncOptListCreatefuncOptItem_7fe6dac5 imp
      */
     public function withCreatefuncOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\CreatefuncOptListForm $createfuncOptList): self
     {
-        return new self($createfuncOptList, $this->createfuncOptItem);
+        return new self($createfuncOptList, $this->createfuncOptItem, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class CreatefuncOptListWithCreatefuncOptListCreatefuncOptItem_7fe6dac5 imp
      */
     public function withCreatefuncOptItem(\SqlSemantics\Statement\Model\PostgreSql\Role\CreatefuncOptItemForm $createfuncOptItem): self
     {
-        return new self($this->createfuncOptList, $createfuncOptItem);
+        return new self($this->createfuncOptList, $createfuncOptItem, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->createfuncOptList, $this->createfuncOptItem, $comments);
     }
 }

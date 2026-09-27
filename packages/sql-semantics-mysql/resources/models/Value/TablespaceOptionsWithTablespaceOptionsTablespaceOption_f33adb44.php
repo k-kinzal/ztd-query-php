@@ -17,11 +17,12 @@ final class TablespaceOptionsWithTablespaceOptionsTablespaceOption_f33adb44 impl
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TablespaceOptionsForm $tablespaceOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TablespaceOptionForm $tablespaceOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tablespaceOptions), 'The tablespaceOptions must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tablespaceOption), 'The tablespaceOption must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class TablespaceOptionsWithTablespaceOptionsTablespaceOption_f33adb44 impl
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tablespaceOptions->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->tablespaceOption->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class TablespaceOptionsWithTablespaceOptionsTablespaceOption_f33adb44 impl
      */
     public function withTablespaceOptions(\SqlSemantics\Statement\Model\MySql\Role\TablespaceOptionsForm $tablespaceOptions): self
     {
-        return new self($tablespaceOptions, $this->tablespaceOption);
+        return new self($tablespaceOptions, $this->tablespaceOption, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class TablespaceOptionsWithTablespaceOptionsTablespaceOption_f33adb44 impl
      */
     public function withTablespaceOption(\SqlSemantics\Statement\Model\MySql\Role\TablespaceOptionForm $tablespaceOption): self
     {
-        return new self($this->tablespaceOptions, $tablespaceOption);
+        return new self($this->tablespaceOptions, $tablespaceOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tablespaceOptions, $this->tablespaceOption, $comments);
     }
 }

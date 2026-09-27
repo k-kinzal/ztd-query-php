@@ -17,7 +17,7 @@ final class CreateConversionStmtWithCreateOptDefaultConversionPAnyNameForSconstT
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptDefaultForm $optDefault,
@@ -25,6 +25,7 @@ final class CreateConversionStmtWithCreateOptDefaultConversionPAnyNameForSconstT
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst2,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optDefault), 'The optDefault must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
@@ -38,15 +39,25 @@ final class CreateConversionStmtWithCreateOptDefaultConversionPAnyNameForSconstT
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $this->optDefault->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('CONVERSION');
+        $writer->comments($this->comments, 3);
         $this->anyName->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('FOR');
+        $writer->comments($this->comments, 5);
         $this->sconst->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append('TO');
+        $writer->comments($this->comments, 7);
         $this->sconst2->write($writer);
+        $writer->comments($this->comments, 8);
         $writer->append('FROM');
+        $writer->comments($this->comments, 9);
         $this->anyName2->write($writer);
     }
 
@@ -55,7 +66,7 @@ final class CreateConversionStmtWithCreateOptDefaultConversionPAnyNameForSconstT
      */
     public function withOptDefault(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDefaultForm $optDefault): self
     {
-        return new self($optDefault, $this->anyName, $this->sconst, $this->sconst2, $this->anyName2);
+        return new self($optDefault, $this->anyName, $this->sconst, $this->sconst2, $this->anyName2, $this->comments);
     }
 
     /**
@@ -63,7 +74,7 @@ final class CreateConversionStmtWithCreateOptDefaultConversionPAnyNameForSconstT
      */
     public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
     {
-        return new self($this->optDefault, $anyName, $this->sconst, $this->sconst2, $this->anyName2);
+        return new self($this->optDefault, $anyName, $this->sconst, $this->sconst2, $this->anyName2, $this->comments);
     }
 
     /**
@@ -71,7 +82,7 @@ final class CreateConversionStmtWithCreateOptDefaultConversionPAnyNameForSconstT
      */
     public function withSconst(\SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst): self
     {
-        return new self($this->optDefault, $this->anyName, $sconst, $this->sconst2, $this->anyName2);
+        return new self($this->optDefault, $this->anyName, $sconst, $this->sconst2, $this->anyName2, $this->comments);
     }
 
     /**
@@ -79,7 +90,7 @@ final class CreateConversionStmtWithCreateOptDefaultConversionPAnyNameForSconstT
      */
     public function withSconst2(\SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst2): self
     {
-        return new self($this->optDefault, $this->anyName, $this->sconst, $sconst2, $this->anyName2);
+        return new self($this->optDefault, $this->anyName, $this->sconst, $sconst2, $this->anyName2, $this->comments);
     }
 
     /**
@@ -87,6 +98,14 @@ final class CreateConversionStmtWithCreateOptDefaultConversionPAnyNameForSconstT
      */
     public function withAnyName2(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName2): self
     {
-        return new self($this->optDefault, $this->anyName, $this->sconst, $this->sconst2, $anyName2);
+        return new self($this->optDefault, $this->anyName, $this->sconst, $this->sconst2, $anyName2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optDefault, $this->anyName, $this->sconst, $this->sconst2, $this->anyName2, $comments);
     }
 }

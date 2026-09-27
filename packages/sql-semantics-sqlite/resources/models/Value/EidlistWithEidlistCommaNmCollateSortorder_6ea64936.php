@@ -17,13 +17,14 @@ final class EidlistWithEidlistCommaNmCollateSortorder_6ea64936 implements \SqlSe
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\EidlistForm $eidlist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CollateForm $collate,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SortorderForm $sortorder,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($eidlist), 'The eidlist must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
@@ -36,10 +37,15 @@ final class EidlistWithEidlistCommaNmCollateSortorder_6ea64936 implements \SqlSe
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->eidlist->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->nm->write($writer);
+        $writer->comments($this->comments, 3);
         $this->collate->write($writer);
+        $writer->comments($this->comments, 4);
         $this->sortorder->write($writer);
     }
 
@@ -48,7 +54,7 @@ final class EidlistWithEidlistCommaNmCollateSortorder_6ea64936 implements \SqlSe
      */
     public function withEidlist(\SqlSemantics\Statement\Model\Sqlite\Role\EidlistForm $eidlist): self
     {
-        return new self($eidlist, $this->nm, $this->collate, $this->sortorder);
+        return new self($eidlist, $this->nm, $this->collate, $this->sortorder, $this->comments);
     }
 
     /**
@@ -56,7 +62,7 @@ final class EidlistWithEidlistCommaNmCollateSortorder_6ea64936 implements \SqlSe
      */
     public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
     {
-        return new self($this->eidlist, $nm, $this->collate, $this->sortorder);
+        return new self($this->eidlist, $nm, $this->collate, $this->sortorder, $this->comments);
     }
 
     /**
@@ -64,7 +70,7 @@ final class EidlistWithEidlistCommaNmCollateSortorder_6ea64936 implements \SqlSe
      */
     public function withCollate(\SqlSemantics\Statement\Model\Sqlite\Role\CollateForm $collate): self
     {
-        return new self($this->eidlist, $this->nm, $collate, $this->sortorder);
+        return new self($this->eidlist, $this->nm, $collate, $this->sortorder, $this->comments);
     }
 
     /**
@@ -72,6 +78,14 @@ final class EidlistWithEidlistCommaNmCollateSortorder_6ea64936 implements \SqlSe
      */
     public function withSortorder(\SqlSemantics\Statement\Model\Sqlite\Role\SortorderForm $sortorder): self
     {
-        return new self($this->eidlist, $this->nm, $this->collate, $sortorder);
+        return new self($this->eidlist, $this->nm, $this->collate, $sortorder, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->eidlist, $this->nm, $this->collate, $this->sortorder, $comments);
     }
 }

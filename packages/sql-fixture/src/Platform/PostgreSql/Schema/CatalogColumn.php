@@ -35,7 +35,7 @@ final class CatalogColumn
         }
 
         if ($type === 'ARRAY') {
-            return strtoupper($col['udt_name']);
+            return $this->elementType($col['udt_name']) . '[]';
         }
 
         if ($type === 'USER-DEFINED') {
@@ -46,6 +46,30 @@ final class CatalogColumn
     }
 
     /**
+     * Names the declared type of an array element from the catalog type of the array, such as `_int4`.
+     *
+     * @param string $udtName Catalog type name of the array, with its leading underscore
+     *
+     * @return string The type name a CREATE TABLE declares, such as `INTEGER`
+     */
+    public function elementType(string $udtName): string
+    {
+        $element = strtolower(ltrim($udtName, '_'));
+
+        return match ($element) {
+            'int2' => 'SMALLINT',
+            'int4' => 'INTEGER',
+            'int8' => 'BIGINT',
+            'float4' => 'REAL',
+            'float8' => 'DOUBLE PRECISION',
+            'bool' => 'BOOLEAN',
+            'varchar' => 'VARCHAR',
+            'bpchar' => 'CHAR',
+            default => strtoupper($element),
+        };
+    }
+
+    /**
      * @param array{data_type: string, udt_name: string, character_maximum_length: ?string, numeric_precision: ?string, numeric_scale: ?string} $row
      */
     public function resolveType(array $row): string
@@ -53,8 +77,7 @@ final class CatalogColumn
         $type = strtoupper($row['data_type']);
 
         if ($type === 'ARRAY') {
-            $elementType = strtoupper(ltrim($row['udt_name'], '_'));
-            return $elementType . '_ARRAY';
+            return $this->elementType($row['udt_name']) . '_ARRAY';
         }
 
         if ($type === 'USER-DEFINED') {

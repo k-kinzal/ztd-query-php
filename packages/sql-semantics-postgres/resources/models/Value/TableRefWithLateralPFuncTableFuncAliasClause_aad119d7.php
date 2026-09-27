@@ -17,11 +17,12 @@ final class TableRefWithLateralPFuncTableFuncAliasClause_aad119d7 implements \Sq
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncTableForm $funcTable,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncAliasClauseForm $funcAliasClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcTable), 'The funcTable must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcAliasClause), 'The funcAliasClause must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class TableRefWithLateralPFuncTableFuncAliasClause_aad119d7 implements \Sq
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('LATERAL');
+        $writer->comments($this->comments, 1);
         $this->funcTable->write($writer);
+        $writer->comments($this->comments, 2);
         $this->funcAliasClause->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class TableRefWithLateralPFuncTableFuncAliasClause_aad119d7 implements \Sq
      */
     public function withFuncTable(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncTableForm $funcTable): self
     {
-        return new self($funcTable, $this->funcAliasClause);
+        return new self($funcTable, $this->funcAliasClause, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class TableRefWithLateralPFuncTableFuncAliasClause_aad119d7 implements \Sq
      */
     public function withFuncAliasClause(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncAliasClauseForm $funcAliasClause): self
     {
-        return new self($this->funcTable, $funcAliasClause);
+        return new self($this->funcTable, $funcAliasClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->funcTable, $this->funcAliasClause, $comments);
     }
 }

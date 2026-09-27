@@ -64,4 +64,20 @@ final class DialectParserTest extends TestCase
         $this->expectExceptionMessage('Unsupported');
         new DialectParser($dialect, 'unavailable-release');
     }
+
+    public function testParseScriptPreservesStringAndRoutineSemicolons(): void
+    {
+        $parser = new DialectParser(MySqlDialect::MySql);
+        $trees = $parser->parseScript("CREATE PROCEDURE p() BEGIN SELECT ';'; SELECT 2; END; DROP TABLE IF EXISTS t;");
+        self::assertCount(2, $trees);
+        self::assertStringContainsString("SELECT ';'", $trees[0]->toString());
+        self::assertStringContainsString('DROP TABLE', $trees[1]->toString());
+    }
+
+    public function testParseScriptRejectsAnInvalidTrailingCommand(): void
+    {
+        $this->expectException(\SqlParser\Parser\SyntaxException::class);
+        (new DialectParser(MySqlDialect::MySql))->parseScript('DROP TABLE t; CREATE TABLE');
+    }
+
 }

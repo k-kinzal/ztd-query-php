@@ -17,10 +17,11 @@ final class SpProcStmts1WithSpProcStmt_71dd5f4a implements \SqlSemantics\Stateme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm $spProcStmt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spProcStmt), 'The spProcStmt must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class SpProcStmts1WithSpProcStmt_71dd5f4a implements \SqlSemantics\Stateme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->spProcStmt->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(';');
     }
 
@@ -39,6 +42,14 @@ final class SpProcStmts1WithSpProcStmt_71dd5f4a implements \SqlSemantics\Stateme
      */
     public function withSpProcStmt(\SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm $spProcStmt): self
     {
-        return new self($spProcStmt);
+        return new self($spProcStmt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->spProcStmt, $comments);
     }
 }

@@ -17,12 +17,13 @@ final class TriggerCmdListWithTriggerCmdListTriggerCmdSemi_a3990e43 implements \
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TriggerCmdListForm $triggerCmdList,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TriggerCmdForm $triggerCmd,
         public readonly string $semi,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($triggerCmdList), 'The triggerCmdList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($triggerCmd), 'The triggerCmd must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class TriggerCmdListWithTriggerCmdListTriggerCmdSemi_a3990e43 implements \
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->triggerCmdList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->triggerCmd->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append($this->semi);
     }
 
@@ -44,7 +48,7 @@ final class TriggerCmdListWithTriggerCmdListTriggerCmdSemi_a3990e43 implements \
      */
     public function withTriggerCmdList(\SqlSemantics\Statement\Model\Sqlite\Role\TriggerCmdListForm $triggerCmdList): self
     {
-        return new self($triggerCmdList, $this->triggerCmd, $this->semi);
+        return new self($triggerCmdList, $this->triggerCmd, $this->semi, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class TriggerCmdListWithTriggerCmdListTriggerCmdSemi_a3990e43 implements \
      */
     public function withTriggerCmd(\SqlSemantics\Statement\Model\Sqlite\Role\TriggerCmdForm $triggerCmd): self
     {
-        return new self($this->triggerCmdList, $triggerCmd, $this->semi);
+        return new self($this->triggerCmdList, $triggerCmd, $this->semi, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class TriggerCmdListWithTriggerCmdListTriggerCmdSemi_a3990e43 implements \
      */
     public function withSemi(string $semi): self
     {
-        return new self($this->triggerCmdList, $this->triggerCmd, $semi);
+        return new self($this->triggerCmdList, $this->triggerCmd, $semi, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->triggerCmdList, $this->triggerCmd, $this->semi, $comments);
     }
 }

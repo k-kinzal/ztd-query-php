@@ -17,11 +17,12 @@ final class AlterDefaultPrivilegesStmtWithAlterDefaultPrivilegesDefAclOptionList
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DefAclOptionListForm $defAclOptionList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DefAclActionForm $defAclAction,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($defAclOptionList), 'The defAclOptionList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($defAclAction), 'The defAclAction must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class AlterDefaultPrivilegesStmtWithAlterDefaultPrivilegesDefAclOptionList
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('DEFAULT');
+        $writer->comments($this->comments, 2);
         $writer->append('PRIVILEGES');
+        $writer->comments($this->comments, 3);
         $this->defAclOptionList->write($writer);
+        $writer->comments($this->comments, 4);
         $this->defAclAction->write($writer);
     }
 
@@ -44,7 +50,7 @@ final class AlterDefaultPrivilegesStmtWithAlterDefaultPrivilegesDefAclOptionList
      */
     public function withDefAclOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\DefAclOptionListForm $defAclOptionList): self
     {
-        return new self($defAclOptionList, $this->defAclAction);
+        return new self($defAclOptionList, $this->defAclAction, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class AlterDefaultPrivilegesStmtWithAlterDefaultPrivilegesDefAclOptionList
      */
     public function withDefAclAction(\SqlSemantics\Statement\Model\PostgreSql\Role\DefAclActionForm $defAclAction): self
     {
-        return new self($this->defAclOptionList, $defAclAction);
+        return new self($this->defAclOptionList, $defAclAction, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->defAclOptionList, $this->defAclAction, $comments);
     }
 }

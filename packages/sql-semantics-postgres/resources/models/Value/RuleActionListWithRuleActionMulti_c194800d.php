@@ -17,10 +17,11 @@ final class RuleActionListWithRuleActionMulti_c194800d implements \SqlSemantics\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionMultiForm $ruleActionMulti,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($ruleActionMulti), 'The ruleActionMulti must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class RuleActionListWithRuleActionMulti_c194800d implements \SqlSemantics\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->ruleActionMulti->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(')');
     }
 
@@ -40,6 +44,14 @@ final class RuleActionListWithRuleActionMulti_c194800d implements \SqlSemantics\
      */
     public function withRuleActionMulti(\SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionMultiForm $ruleActionMulti): self
     {
-        return new self($ruleActionMulti);
+        return new self($ruleActionMulti, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ruleActionMulti, $comments);
     }
 }

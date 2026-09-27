@@ -17,10 +17,11 @@ final class ExprWithIdj_e1794d68 implements \SqlSemantics\Statement\Model\Sqlite
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $idj,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($idj, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['idj'], 'The idj must be a complete idj lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class ExprWithIdj_e1794d68 implements \SqlSemantics\Statement\Model\Sqlite
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->idj);
     }
 
@@ -38,6 +40,14 @@ final class ExprWithIdj_e1794d68 implements \SqlSemantics\Statement\Model\Sqlite
      */
     public function withIdj(string $idj): self
     {
-        return new self($idj);
+        return new self($idj, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->idj, $comments);
     }
 }

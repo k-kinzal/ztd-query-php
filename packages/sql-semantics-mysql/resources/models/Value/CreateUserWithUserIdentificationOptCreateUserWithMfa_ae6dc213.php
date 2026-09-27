@@ -17,12 +17,13 @@ final class CreateUserWithUserIdentificationOptCreateUserWithMfa_ae6dc213 implem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserForm $user,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentificationForm $identification,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCreateUserWithMfaForm $optCreateUserWithMfa,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identification), 'The identification must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class CreateUserWithUserIdentificationOptCreateUserWithMfa_ae6dc213 implem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->user->write($writer);
+        $writer->comments($this->comments, 1);
         $this->identification->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optCreateUserWithMfa->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class CreateUserWithUserIdentificationOptCreateUserWithMfa_ae6dc213 implem
      */
     public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
     {
-        return new self($user, $this->identification, $this->optCreateUserWithMfa);
+        return new self($user, $this->identification, $this->optCreateUserWithMfa, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class CreateUserWithUserIdentificationOptCreateUserWithMfa_ae6dc213 implem
      */
     public function withIdentification(\SqlSemantics\Statement\Model\MySql\Role\IdentificationForm $identification): self
     {
-        return new self($this->user, $identification, $this->optCreateUserWithMfa);
+        return new self($this->user, $identification, $this->optCreateUserWithMfa, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class CreateUserWithUserIdentificationOptCreateUserWithMfa_ae6dc213 implem
      */
     public function withOptCreateUserWithMfa(\SqlSemantics\Statement\Model\MySql\Role\OptCreateUserWithMfaForm $optCreateUserWithMfa): self
     {
-        return new self($this->user, $this->identification, $optCreateUserWithMfa);
+        return new self($this->user, $this->identification, $optCreateUserWithMfa, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->user, $this->identification, $this->optCreateUserWithMfa, $comments);
     }
 }

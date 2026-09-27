@@ -17,11 +17,12 @@ final class SimpleTypenameWithConstIntervalIconst_98481113 implements \SqlSemant
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ConstIntervalForm $constInterval,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($constInterval), 'The constInterval must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($iconst), 'The iconst must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class SimpleTypenameWithConstIntervalIconst_98481113 implements \SqlSemant
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->constInterval->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->iconst->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
     }
 
@@ -43,7 +48,7 @@ final class SimpleTypenameWithConstIntervalIconst_98481113 implements \SqlSemant
      */
     public function withConstInterval(\SqlSemantics\Statement\Model\PostgreSql\Role\ConstIntervalForm $constInterval): self
     {
-        return new self($constInterval, $this->iconst);
+        return new self($constInterval, $this->iconst, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class SimpleTypenameWithConstIntervalIconst_98481113 implements \SqlSemant
      */
     public function withIconst(\SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst): self
     {
-        return new self($this->constInterval, $iconst);
+        return new self($this->constInterval, $iconst, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->constInterval, $this->iconst, $comments);
     }
 }

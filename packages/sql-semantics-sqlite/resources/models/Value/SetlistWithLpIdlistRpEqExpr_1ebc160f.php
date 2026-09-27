@@ -17,12 +17,13 @@ final class SetlistWithLpIdlistRpEqExpr_1ebc160f implements \SqlSemantics\Statem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\IdlistForm $idlist,
         public readonly string $eq,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($idlist), 'The idlist must be a generated immutable SQL value.');
         $this->assertMatchesPattern($eq, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['EQ'], 'The eq must be a complete EQ lexical spelling.');
@@ -34,10 +35,15 @@ final class SetlistWithLpIdlistRpEqExpr_1ebc160f implements \SqlSemantics\Statem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->idlist->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(')');
+        $writer->comments($this->comments, 3);
         $writer->append($this->eq);
+        $writer->comments($this->comments, 4);
         $this->expr->write($writer);
     }
 
@@ -46,7 +52,7 @@ final class SetlistWithLpIdlistRpEqExpr_1ebc160f implements \SqlSemantics\Statem
      */
     public function withIdlist(\SqlSemantics\Statement\Model\Sqlite\Role\IdlistForm $idlist): self
     {
-        return new self($idlist, $this->eq, $this->expr);
+        return new self($idlist, $this->eq, $this->expr, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class SetlistWithLpIdlistRpEqExpr_1ebc160f implements \SqlSemantics\Statem
      */
     public function withEq(string $eq): self
     {
-        return new self($this->idlist, $eq, $this->expr);
+        return new self($this->idlist, $eq, $this->expr, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class SetlistWithLpIdlistRpEqExpr_1ebc160f implements \SqlSemantics\Statem
      */
     public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
     {
-        return new self($this->idlist, $this->eq, $expr);
+        return new self($this->idlist, $this->eq, $expr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->idlist, $this->eq, $this->expr, $comments);
     }
 }

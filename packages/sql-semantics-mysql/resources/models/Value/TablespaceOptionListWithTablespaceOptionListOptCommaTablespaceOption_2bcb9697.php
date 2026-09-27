@@ -17,12 +17,13 @@ final class TablespaceOptionListWithTablespaceOptionListOptCommaTablespaceOption
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TablespaceOptionListForm $tablespaceOptionList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCommaForm $optComma,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TablespaceOptionForm $tablespaceOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tablespaceOptionList), 'The tablespaceOptionList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optComma), 'The optComma must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class TablespaceOptionListWithTablespaceOptionListOptCommaTablespaceOption
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tablespaceOptionList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optComma->write($writer);
+        $writer->comments($this->comments, 2);
         $this->tablespaceOption->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class TablespaceOptionListWithTablespaceOptionListOptCommaTablespaceOption
      */
     public function withTablespaceOptionList(\SqlSemantics\Statement\Model\MySql\Role\TablespaceOptionListForm $tablespaceOptionList): self
     {
-        return new self($tablespaceOptionList, $this->optComma, $this->tablespaceOption);
+        return new self($tablespaceOptionList, $this->optComma, $this->tablespaceOption, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class TablespaceOptionListWithTablespaceOptionListOptCommaTablespaceOption
      */
     public function withOptComma(\SqlSemantics\Statement\Model\MySql\Role\OptCommaForm $optComma): self
     {
-        return new self($this->tablespaceOptionList, $optComma, $this->tablespaceOption);
+        return new self($this->tablespaceOptionList, $optComma, $this->tablespaceOption, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class TablespaceOptionListWithTablespaceOptionListOptCommaTablespaceOption
      */
     public function withTablespaceOption(\SqlSemantics\Statement\Model\MySql\Role\TablespaceOptionForm $tablespaceOption): self
     {
-        return new self($this->tablespaceOptionList, $this->optComma, $tablespaceOption);
+        return new self($this->tablespaceOptionList, $this->optComma, $tablespaceOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tablespaceOptionList, $this->optComma, $this->tablespaceOption, $comments);
     }
 }

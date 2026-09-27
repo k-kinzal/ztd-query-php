@@ -15,11 +15,29 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
 final class AlterTablePartitionOptionsWithRemoveSymPartitioningSym_c96cd05c implements \SqlSemantics\Statement\Model\MySql\Role\AlterTablePartitionOptionsForm
 {
     /**
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
+     */
+    public function __construct(
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
+    ) {
+    }
+
+    /**
      * Writes SQL entirely from this value's fields.
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('REMOVE');
+        $writer->comments($this->comments, 1);
         $writer->append('PARTITIONING');
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($comments);
     }
 }

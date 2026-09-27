@@ -17,7 +17,7 @@ final class ShowParamWithOptFullColumnsFromOrInTableIdentOptDbWildAndWhere_f45e2
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptFullForm $optFull,
@@ -26,6 +26,7 @@ final class ShowParamWithOptFullColumnsFromOrInTableIdentOptDbWildAndWhere_f45e2
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptDbForm $optDb,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm $wildAndWhere,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optFull), 'The optFull must be a generated immutable SQL value.');
         $this->assertMatchesPattern($columns, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['COLUMNS'], 'The columns must be a complete COLUMNS lexical spelling.');
@@ -40,11 +41,17 @@ final class ShowParamWithOptFullColumnsFromOrInTableIdentOptDbWildAndWhere_f45e2
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optFull->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append($this->columns);
+        $writer->comments($this->comments, 2);
         $this->fromOrIn->write($writer);
+        $writer->comments($this->comments, 3);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optDb->write($writer);
+        $writer->comments($this->comments, 5);
         $this->wildAndWhere->write($writer);
     }
 
@@ -53,7 +60,7 @@ final class ShowParamWithOptFullColumnsFromOrInTableIdentOptDbWildAndWhere_f45e2
      */
     public function withOptFull(\SqlSemantics\Statement\Model\MySql\Role\OptFullForm $optFull): self
     {
-        return new self($optFull, $this->columns, $this->fromOrIn, $this->tableIdent, $this->optDb, $this->wildAndWhere);
+        return new self($optFull, $this->columns, $this->fromOrIn, $this->tableIdent, $this->optDb, $this->wildAndWhere, $this->comments);
     }
 
     /**
@@ -61,7 +68,7 @@ final class ShowParamWithOptFullColumnsFromOrInTableIdentOptDbWildAndWhere_f45e2
      */
     public function withColumns(string $columns): self
     {
-        return new self($this->optFull, $columns, $this->fromOrIn, $this->tableIdent, $this->optDb, $this->wildAndWhere);
+        return new self($this->optFull, $columns, $this->fromOrIn, $this->tableIdent, $this->optDb, $this->wildAndWhere, $this->comments);
     }
 
     /**
@@ -69,7 +76,7 @@ final class ShowParamWithOptFullColumnsFromOrInTableIdentOptDbWildAndWhere_f45e2
      */
     public function withFromOrIn(\SqlSemantics\Statement\Model\MySql\Role\FromOrInForm $fromOrIn): self
     {
-        return new self($this->optFull, $this->columns, $fromOrIn, $this->tableIdent, $this->optDb, $this->wildAndWhere);
+        return new self($this->optFull, $this->columns, $fromOrIn, $this->tableIdent, $this->optDb, $this->wildAndWhere, $this->comments);
     }
 
     /**
@@ -77,7 +84,7 @@ final class ShowParamWithOptFullColumnsFromOrInTableIdentOptDbWildAndWhere_f45e2
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($this->optFull, $this->columns, $this->fromOrIn, $tableIdent, $this->optDb, $this->wildAndWhere);
+        return new self($this->optFull, $this->columns, $this->fromOrIn, $tableIdent, $this->optDb, $this->wildAndWhere, $this->comments);
     }
 
     /**
@@ -85,7 +92,7 @@ final class ShowParamWithOptFullColumnsFromOrInTableIdentOptDbWildAndWhere_f45e2
      */
     public function withOptDb(\SqlSemantics\Statement\Model\MySql\Role\OptDbForm $optDb): self
     {
-        return new self($this->optFull, $this->columns, $this->fromOrIn, $this->tableIdent, $optDb, $this->wildAndWhere);
+        return new self($this->optFull, $this->columns, $this->fromOrIn, $this->tableIdent, $optDb, $this->wildAndWhere, $this->comments);
     }
 
     /**
@@ -93,6 +100,14 @@ final class ShowParamWithOptFullColumnsFromOrInTableIdentOptDbWildAndWhere_f45e2
      */
     public function withWildAndWhere(\SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm $wildAndWhere): self
     {
-        return new self($this->optFull, $this->columns, $this->fromOrIn, $this->tableIdent, $this->optDb, $wildAndWhere);
+        return new self($this->optFull, $this->columns, $this->fromOrIn, $this->tableIdent, $this->optDb, $wildAndWhere, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optFull, $this->columns, $this->fromOrIn, $this->tableIdent, $this->optDb, $this->wildAndWhere, $comments);
     }
 }

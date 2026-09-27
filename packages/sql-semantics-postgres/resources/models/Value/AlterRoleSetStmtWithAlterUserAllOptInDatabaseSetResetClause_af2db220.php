@@ -17,11 +17,12 @@ final class AlterRoleSetStmtWithAlterUserAllOptInDatabaseSetResetClause_af2db220
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptInDatabaseForm $optInDatabase,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetResetClauseForm $setResetClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optInDatabase), 'The optInDatabase must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setResetClause), 'The setResetClause must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class AlterRoleSetStmtWithAlterUserAllOptInDatabaseSetResetClause_af2db220
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('USER');
+        $writer->comments($this->comments, 2);
         $writer->append('ALL');
+        $writer->comments($this->comments, 3);
         $this->optInDatabase->write($writer);
+        $writer->comments($this->comments, 4);
         $this->setResetClause->write($writer);
     }
 
@@ -44,7 +50,7 @@ final class AlterRoleSetStmtWithAlterUserAllOptInDatabaseSetResetClause_af2db220
      */
     public function withOptInDatabase(\SqlSemantics\Statement\Model\PostgreSql\Role\OptInDatabaseForm $optInDatabase): self
     {
-        return new self($optInDatabase, $this->setResetClause);
+        return new self($optInDatabase, $this->setResetClause, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class AlterRoleSetStmtWithAlterUserAllOptInDatabaseSetResetClause_af2db220
      */
     public function withSetResetClause(\SqlSemantics\Statement\Model\PostgreSql\Role\SetResetClauseForm $setResetClause): self
     {
-        return new self($this->optInDatabase, $setResetClause);
+        return new self($this->optInDatabase, $setResetClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optInDatabase, $this->setResetClause, $comments);
     }
 }

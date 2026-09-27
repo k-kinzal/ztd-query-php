@@ -17,11 +17,12 @@ final class SetTargetListWithSetTargetListSetTarget_2d80de9b implements \SqlSema
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetTargetListForm $setTargetList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetTargetForm $setTarget,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setTargetList), 'The setTargetList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setTarget), 'The setTarget must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class SetTargetListWithSetTargetListSetTarget_2d80de9b implements \SqlSema
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->setTargetList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->setTarget->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class SetTargetListWithSetTargetListSetTarget_2d80de9b implements \SqlSema
      */
     public function withSetTargetList(\SqlSemantics\Statement\Model\PostgreSql\Role\SetTargetListForm $setTargetList): self
     {
-        return new self($setTargetList, $this->setTarget);
+        return new self($setTargetList, $this->setTarget, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class SetTargetListWithSetTargetListSetTarget_2d80de9b implements \SqlSema
      */
     public function withSetTarget(\SqlSemantics\Statement\Model\PostgreSql\Role\SetTargetForm $setTarget): self
     {
-        return new self($this->setTargetList, $setTarget);
+        return new self($this->setTargetList, $setTarget, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->setTargetList, $this->setTarget, $comments);
     }
 }

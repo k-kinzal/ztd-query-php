@@ -17,13 +17,14 @@ final class SelectPart2WithSelectOptionsSelectItemListSelectIntoSelectLockType_5
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectOptionsForm $options,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm $projections,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectIntoForm $selectInto,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectLockTypeForm $selectLockType,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($options), 'The options must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($projections), 'The projections must be a generated immutable SQL value.');
@@ -36,9 +37,13 @@ final class SelectPart2WithSelectOptionsSelectItemListSelectIntoSelectLockType_5
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->options->write($writer);
+        $writer->comments($this->comments, 1);
         $this->projections->write($writer);
+        $writer->comments($this->comments, 2);
         $this->selectInto->write($writer);
+        $writer->comments($this->comments, 3);
         $this->selectLockType->write($writer);
     }
 
@@ -47,7 +52,7 @@ final class SelectPart2WithSelectOptionsSelectItemListSelectIntoSelectLockType_5
      */
     public function withOptions(\SqlSemantics\Statement\Model\MySql\Role\SelectOptionsForm $options): self
     {
-        return new self($options, $this->projections, $this->selectInto, $this->selectLockType);
+        return new self($options, $this->projections, $this->selectInto, $this->selectLockType, $this->comments);
     }
 
     /**
@@ -55,7 +60,7 @@ final class SelectPart2WithSelectOptionsSelectItemListSelectIntoSelectLockType_5
      */
     public function withProjections(\SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm $projections): self
     {
-        return new self($this->options, $projections, $this->selectInto, $this->selectLockType);
+        return new self($this->options, $projections, $this->selectInto, $this->selectLockType, $this->comments);
     }
 
     /**
@@ -63,7 +68,7 @@ final class SelectPart2WithSelectOptionsSelectItemListSelectIntoSelectLockType_5
      */
     public function withSelectInto(\SqlSemantics\Statement\Model\MySql\Role\SelectIntoForm $selectInto): self
     {
-        return new self($this->options, $this->projections, $selectInto, $this->selectLockType);
+        return new self($this->options, $this->projections, $selectInto, $this->selectLockType, $this->comments);
     }
 
     /**
@@ -71,6 +76,14 @@ final class SelectPart2WithSelectOptionsSelectItemListSelectIntoSelectLockType_5
      */
     public function withSelectLockType(\SqlSemantics\Statement\Model\MySql\Role\SelectLockTypeForm $selectLockType): self
     {
-        return new self($this->options, $this->projections, $this->selectInto, $selectLockType);
+        return new self($this->options, $this->projections, $this->selectInto, $selectLockType, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->options, $this->projections, $this->selectInto, $this->selectLockType, $comments);
     }
 }

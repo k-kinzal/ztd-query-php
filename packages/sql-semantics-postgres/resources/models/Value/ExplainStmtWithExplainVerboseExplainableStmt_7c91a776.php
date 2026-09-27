@@ -17,10 +17,11 @@ final class ExplainStmtWithExplainVerboseExplainableStmt_7c91a776 implements \Sq
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm $explainableStmt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($explainableStmt), 'The explainableStmt must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class ExplainStmtWithExplainVerboseExplainableStmt_7c91a776 implements \Sq
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('EXPLAIN');
+        $writer->comments($this->comments, 1);
         $writer->append('VERBOSE');
+        $writer->comments($this->comments, 2);
         $this->explainableStmt->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class ExplainStmtWithExplainVerboseExplainableStmt_7c91a776 implements \Sq
      */
     public function withExplainableStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm $explainableStmt): self
     {
-        return new self($explainableStmt);
+        return new self($explainableStmt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->explainableStmt, $comments);
     }
 }

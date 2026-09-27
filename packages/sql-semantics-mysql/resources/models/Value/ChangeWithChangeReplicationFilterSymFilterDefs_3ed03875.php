@@ -17,10 +17,11 @@ final class ChangeWithChangeReplicationFilterSymFilterDefs_3ed03875 implements \
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FilterDefsForm $filterDefs,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($filterDefs), 'The filterDefs must be a generated immutable SQL value.');
     }
@@ -30,9 +31,13 @@ final class ChangeWithChangeReplicationFilterSymFilterDefs_3ed03875 implements \
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CHANGE');
+        $writer->comments($this->comments, 1);
         $writer->append('REPLICATION');
+        $writer->comments($this->comments, 2);
         $writer->append('FILTER');
+        $writer->comments($this->comments, 3);
         $this->filterDefs->write($writer);
     }
 
@@ -41,6 +46,14 @@ final class ChangeWithChangeReplicationFilterSymFilterDefs_3ed03875 implements \
      */
     public function withFilterDefs(\SqlSemantics\Statement\Model\MySql\Role\FilterDefsForm $filterDefs): self
     {
-        return new self($filterDefs);
+        return new self($filterDefs, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->filterDefs, $comments);
     }
 }

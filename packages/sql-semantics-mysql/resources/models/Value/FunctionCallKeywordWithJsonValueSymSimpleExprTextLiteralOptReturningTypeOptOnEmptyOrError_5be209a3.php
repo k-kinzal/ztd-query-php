@@ -17,13 +17,14 @@ final class FunctionCallKeywordWithJsonValueSymSimpleExprTextLiteralOptReturning
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm $simpleExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextLiteralForm $textLiteral,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptReturningTypeForm $optReturningType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptOnEmptyOrErrorForm $optOnEmptyOrError,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleExpr), 'The simpleExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textLiteral), 'The textLiteral must be a generated immutable SQL value.');
@@ -36,13 +37,21 @@ final class FunctionCallKeywordWithJsonValueSymSimpleExprTextLiteralOptReturning
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('JSON_VALUE');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->simpleExpr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(',');
+        $writer->comments($this->comments, 4);
         $this->textLiteral->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optReturningType->write($writer);
+        $writer->comments($this->comments, 6);
         $this->optOnEmptyOrError->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append(')');
     }
 
@@ -51,7 +60,7 @@ final class FunctionCallKeywordWithJsonValueSymSimpleExprTextLiteralOptReturning
      */
     public function withSimpleExpr(\SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm $simpleExpr): self
     {
-        return new self($simpleExpr, $this->textLiteral, $this->optReturningType, $this->optOnEmptyOrError);
+        return new self($simpleExpr, $this->textLiteral, $this->optReturningType, $this->optOnEmptyOrError, $this->comments);
     }
 
     /**
@@ -59,7 +68,7 @@ final class FunctionCallKeywordWithJsonValueSymSimpleExprTextLiteralOptReturning
      */
     public function withTextLiteral(\SqlSemantics\Statement\Model\MySql\Role\TextLiteralForm $textLiteral): self
     {
-        return new self($this->simpleExpr, $textLiteral, $this->optReturningType, $this->optOnEmptyOrError);
+        return new self($this->simpleExpr, $textLiteral, $this->optReturningType, $this->optOnEmptyOrError, $this->comments);
     }
 
     /**
@@ -67,7 +76,7 @@ final class FunctionCallKeywordWithJsonValueSymSimpleExprTextLiteralOptReturning
      */
     public function withOptReturningType(\SqlSemantics\Statement\Model\MySql\Role\OptReturningTypeForm $optReturningType): self
     {
-        return new self($this->simpleExpr, $this->textLiteral, $optReturningType, $this->optOnEmptyOrError);
+        return new self($this->simpleExpr, $this->textLiteral, $optReturningType, $this->optOnEmptyOrError, $this->comments);
     }
 
     /**
@@ -75,6 +84,14 @@ final class FunctionCallKeywordWithJsonValueSymSimpleExprTextLiteralOptReturning
      */
     public function withOptOnEmptyOrError(\SqlSemantics\Statement\Model\MySql\Role\OptOnEmptyOrErrorForm $optOnEmptyOrError): self
     {
-        return new self($this->simpleExpr, $this->textLiteral, $this->optReturningType, $optOnEmptyOrError);
+        return new self($this->simpleExpr, $this->textLiteral, $this->optReturningType, $optOnEmptyOrError, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->simpleExpr, $this->textLiteral, $this->optReturningType, $this->optOnEmptyOrError, $comments);
     }
 }

@@ -17,10 +17,11 @@ final class SortClauseWithOrderBySortbyList_47f0296b implements \SqlSemantics\St
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SortbyListForm $sortbyList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($sortbyList), 'The sortbyList must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class SortClauseWithOrderBySortbyList_47f0296b implements \SqlSemantics\St
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ORDER');
+        $writer->comments($this->comments, 1);
         $writer->append('BY');
+        $writer->comments($this->comments, 2);
         $this->sortbyList->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class SortClauseWithOrderBySortbyList_47f0296b implements \SqlSemantics\St
      */
     public function withSortbyList(\SqlSemantics\Statement\Model\PostgreSql\Role\SortbyListForm $sortbyList): self
     {
-        return new self($sortbyList);
+        return new self($sortbyList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->sortbyList, $comments);
     }
 }

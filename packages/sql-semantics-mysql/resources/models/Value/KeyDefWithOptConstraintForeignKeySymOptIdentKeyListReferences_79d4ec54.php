@@ -17,13 +17,14 @@ final class KeyDefWithOptConstraintForeignKeySymOptIdentKeyListReferences_79d4ec
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptConstraintForm $optConstraint,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIdentForm $optIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyListForm $keyList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ReferencesForm $references,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optConstraint), 'The optConstraint must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIdent), 'The optIdent must be a generated immutable SQL value.');
@@ -36,13 +37,21 @@ final class KeyDefWithOptConstraintForeignKeySymOptIdentKeyListReferences_79d4ec
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optConstraint->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('FOREIGN');
+        $writer->comments($this->comments, 2);
         $writer->append('KEY');
+        $writer->comments($this->comments, 3);
         $this->optIdent->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('(');
+        $writer->comments($this->comments, 5);
         $this->keyList->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append(')');
+        $writer->comments($this->comments, 7);
         $this->references->write($writer);
     }
 
@@ -51,7 +60,7 @@ final class KeyDefWithOptConstraintForeignKeySymOptIdentKeyListReferences_79d4ec
      */
     public function withOptConstraint(\SqlSemantics\Statement\Model\MySql\Role\OptConstraintForm $optConstraint): self
     {
-        return new self($optConstraint, $this->optIdent, $this->keyList, $this->references);
+        return new self($optConstraint, $this->optIdent, $this->keyList, $this->references, $this->comments);
     }
 
     /**
@@ -59,7 +68,7 @@ final class KeyDefWithOptConstraintForeignKeySymOptIdentKeyListReferences_79d4ec
      */
     public function withOptIdent(\SqlSemantics\Statement\Model\MySql\Role\OptIdentForm $optIdent): self
     {
-        return new self($this->optConstraint, $optIdent, $this->keyList, $this->references);
+        return new self($this->optConstraint, $optIdent, $this->keyList, $this->references, $this->comments);
     }
 
     /**
@@ -67,7 +76,7 @@ final class KeyDefWithOptConstraintForeignKeySymOptIdentKeyListReferences_79d4ec
      */
     public function withKeyList(\SqlSemantics\Statement\Model\MySql\Role\KeyListForm $keyList): self
     {
-        return new self($this->optConstraint, $this->optIdent, $keyList, $this->references);
+        return new self($this->optConstraint, $this->optIdent, $keyList, $this->references, $this->comments);
     }
 
     /**
@@ -75,6 +84,14 @@ final class KeyDefWithOptConstraintForeignKeySymOptIdentKeyListReferences_79d4ec
      */
     public function withReferences(\SqlSemantics\Statement\Model\MySql\Role\ReferencesForm $references): self
     {
-        return new self($this->optConstraint, $this->optIdent, $this->keyList, $references);
+        return new self($this->optConstraint, $this->optIdent, $this->keyList, $references, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optConstraint, $this->optIdent, $this->keyList, $this->references, $comments);
     }
 }

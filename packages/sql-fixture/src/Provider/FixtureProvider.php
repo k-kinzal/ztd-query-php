@@ -16,11 +16,19 @@ use SqlFixture\Schema\SchemaParserInterface;
 use SqlFixture\Schema\StaticSchemaResolver;
 use SqlFixture\Schema\TableSchema;
 use SqlFixture\TypeMapper\TypeMapperInterface;
+use SqlFixture\Version\ServerVersion;
 
 /**
  * Faker provider that generates fixtures from CREATE TABLE SQL statements.
  *
+ * The dialect and, optionally, the version tag select the release the
+ * statements are read for; omitting the version tag uses the default of the
+ * dialect.
+ *
  * @visibility public
+ * @example Read statements as a MySQL 8.0 server does
+ *     $provider = new \SqlFixture\Provider\FixtureProvider(\Faker\Factory::create(), dialect: 'mysql', version: 'mysql-8.0.44');
+ *     $provider->getVersion() // => 'mysql-8.0.44'
  * @example Generate a row while leaving the auto-increment key to the database
  *     $provider = new \SqlFixture\Provider\FixtureProvider(\Faker\Factory::create());
  *     $provider->fixture('CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(30))', ['name' => 'Alice']) // => ['name' => 'Alice']
@@ -36,11 +44,16 @@ class FixtureProvider extends SqlSchemaProvider
 {
     private FixtureGenerator $fixtureGenerator;
     private string $dialect;
+    private ServerVersion $version;
     private Generator $faker;
     private StaticSchemaResolver $schemaResolver;
 
     /**
-     * @param string $dialect SQL dialect ('mysql' or 'sqlite')
+     * @param string $dialect SQL dialect: 'mysql', 'pgsql' or 'sqlite'
+     * @param string|null $version Version tag such as 'mysql-8.4.7', or null for the default of the dialect
+     *
+     * @throws Exception\UnsupportedDriverException If the dialect is not supported
+     * @throws \SqlFixture\Version\UnsupportedVersionException If the version tag is not a supported release of the dialect
      */
     public function __construct(
         Generator $faker,
@@ -48,14 +61,16 @@ class FixtureProvider extends SqlSchemaProvider
         ?HydratorInterface $hydrator = null,
         ?SchemaParserInterface $schemaParser = null,
         string $dialect = PlatformFactory::DRIVER_MYSQL,
+        ?string $version = null,
     ) {
         parent::__construct($faker);
         $this->faker = $faker;
         $this->dialect = $dialect;
+        $this->version = PlatformFactory::resolveVersion($dialect, $version);
         $this->schemaResolver = new StaticSchemaResolver();
 
         $typeMapper ??= PlatformFactory::createTypeMapper($dialect);
-        $schemaParser ??= PlatformFactory::createSchemaParser($dialect);
+        $schemaParser ??= PlatformFactory::createSchemaParser($dialect, $this->version->tag);
 
         $this->fixtureGenerator = new FixtureGenerator($faker, $typeMapper, $hydrator, $schemaParser);
     }
@@ -68,6 +83,7 @@ class FixtureProvider extends SqlSchemaProvider
      * @param array<string, mixed> $overrides Override values
      * @param class-string<T>|null $className Deserialization target class
      * @param string|null $dialect SQL dialect for this specific call (overrides constructor default)
+     * @param string|null $version Version tag for this specific call (overrides constructor default; the default of the dialect when only the dialect is overridden)
      * @return ($className is null ? array<string, mixed> : T)
      */
     public function fixture(
@@ -75,8 +91,9 @@ class FixtureProvider extends SqlSchemaProvider
         array $overrides = [],
         ?string $className = null,
         ?string $dialect = null,
+        ?string $version = null,
     ): array|object {
-        $schema = $this->getSchema($createTableSql, $dialect);
+        $schema = $this->getSchema($createTableSql, $dialect, $version);
         return $this->fixtureGenerator->generate($schema, $overrides, $className);
     }
 
@@ -126,5 +143,13 @@ class FixtureProvider extends SqlSchemaProvider
     public function getDialect(): string
     {
         return $this->dialect;
+    }
+
+    /**
+     * Get the version tag of the release statements are read for.
+     */
+    public function getVersion(): string
+    {
+        return $this->version->tag;
     }
 }

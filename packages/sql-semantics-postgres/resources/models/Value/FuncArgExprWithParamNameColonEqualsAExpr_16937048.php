@@ -17,12 +17,13 @@ final class FuncArgExprWithParamNameColonEqualsAExpr_16937048 implements \SqlSem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ParamNameForm $paramName,
         public readonly string $colonEquals,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($paramName), 'The paramName must be a generated immutable SQL value.');
         $this->assertMatchesPattern($colonEquals, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['COLON_EQUALS'], 'The colonEquals must be a complete COLON_EQUALS lexical spelling.');
@@ -34,8 +35,11 @@ final class FuncArgExprWithParamNameColonEqualsAExpr_16937048 implements \SqlSem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->paramName->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append($this->colonEquals);
+        $writer->comments($this->comments, 2);
         $this->aExpr->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class FuncArgExprWithParamNameColonEqualsAExpr_16937048 implements \SqlSem
      */
     public function withParamName(\SqlSemantics\Statement\Model\PostgreSql\Role\ParamNameForm $paramName): self
     {
-        return new self($paramName, $this->colonEquals, $this->aExpr);
+        return new self($paramName, $this->colonEquals, $this->aExpr, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class FuncArgExprWithParamNameColonEqualsAExpr_16937048 implements \SqlSem
      */
     public function withColonEquals(string $colonEquals): self
     {
-        return new self($this->paramName, $colonEquals, $this->aExpr);
+        return new self($this->paramName, $colonEquals, $this->aExpr, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class FuncArgExprWithParamNameColonEqualsAExpr_16937048 implements \SqlSem
      */
     public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
     {
-        return new self($this->paramName, $this->colonEquals, $aExpr);
+        return new self($this->paramName, $this->colonEquals, $aExpr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->paramName, $this->colonEquals, $this->aExpr, $comments);
     }
 }

@@ -17,10 +17,11 @@ final class WindowFrameStartWithParamMarkerPrecedingSym_4773f42b implements \Sql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ParamMarkerForm $paramMarker,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($paramMarker), 'The paramMarker must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class WindowFrameStartWithParamMarkerPrecedingSym_4773f42b implements \Sql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->paramMarker->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('PRECEDING');
     }
 
@@ -39,6 +42,14 @@ final class WindowFrameStartWithParamMarkerPrecedingSym_4773f42b implements \Sql
      */
     public function withParamMarker(\SqlSemantics\Statement\Model\MySql\Role\ParamMarkerForm $paramMarker): self
     {
-        return new self($paramMarker);
+        return new self($paramMarker, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->paramMarker, $comments);
     }
 }

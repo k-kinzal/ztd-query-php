@@ -17,13 +17,14 @@ final class CreateWithCreateDatabaseOptIfNotExistsIdentOptCreateDatabaseOptions_
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $database,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCreateDatabaseOptionsForm $optCreateDatabaseOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($database, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DATABASE'], 'The database must be a complete DATABASE lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIfNotExists), 'The optIfNotExists must be a generated immutable SQL value.');
@@ -36,10 +37,15 @@ final class CreateWithCreateDatabaseOptIfNotExistsIdentOptCreateDatabaseOptions_
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $writer->append($this->database);
+        $writer->comments($this->comments, 2);
         $this->optIfNotExists->write($writer);
+        $writer->comments($this->comments, 3);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optCreateDatabaseOptions->write($writer);
     }
 
@@ -48,7 +54,7 @@ final class CreateWithCreateDatabaseOptIfNotExistsIdentOptCreateDatabaseOptions_
      */
     public function withDatabase(string $database): self
     {
-        return new self($database, $this->optIfNotExists, $this->ident, $this->optCreateDatabaseOptions);
+        return new self($database, $this->optIfNotExists, $this->ident, $this->optCreateDatabaseOptions, $this->comments);
     }
 
     /**
@@ -56,7 +62,7 @@ final class CreateWithCreateDatabaseOptIfNotExistsIdentOptCreateDatabaseOptions_
      */
     public function withOptIfNotExists(\SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists): self
     {
-        return new self($this->database, $optIfNotExists, $this->ident, $this->optCreateDatabaseOptions);
+        return new self($this->database, $optIfNotExists, $this->ident, $this->optCreateDatabaseOptions, $this->comments);
     }
 
     /**
@@ -64,7 +70,7 @@ final class CreateWithCreateDatabaseOptIfNotExistsIdentOptCreateDatabaseOptions_
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($this->database, $this->optIfNotExists, $ident, $this->optCreateDatabaseOptions);
+        return new self($this->database, $this->optIfNotExists, $ident, $this->optCreateDatabaseOptions, $this->comments);
     }
 
     /**
@@ -72,6 +78,14 @@ final class CreateWithCreateDatabaseOptIfNotExistsIdentOptCreateDatabaseOptions_
      */
     public function withOptCreateDatabaseOptions(\SqlSemantics\Statement\Model\MySql\Role\OptCreateDatabaseOptionsForm $optCreateDatabaseOptions): self
     {
-        return new self($this->database, $this->optIfNotExists, $this->ident, $optCreateDatabaseOptions);
+        return new self($this->database, $this->optIfNotExists, $this->ident, $optCreateDatabaseOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->database, $this->optIfNotExists, $this->ident, $this->optCreateDatabaseOptions, $comments);
     }
 }

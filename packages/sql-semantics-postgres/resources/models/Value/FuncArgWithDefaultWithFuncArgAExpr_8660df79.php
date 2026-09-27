@@ -17,11 +17,12 @@ final class FuncArgWithDefaultWithFuncArgAExpr_8660df79 implements \SqlSemantics
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgForm $funcArg,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcArg), 'The funcArg must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class FuncArgWithDefaultWithFuncArgAExpr_8660df79 implements \SqlSemantics
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->funcArg->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('=');
+        $writer->comments($this->comments, 2);
         $this->aExpr->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class FuncArgWithDefaultWithFuncArgAExpr_8660df79 implements \SqlSemantics
      */
     public function withFuncArg(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgForm $funcArg): self
     {
-        return new self($funcArg, $this->aExpr);
+        return new self($funcArg, $this->aExpr, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class FuncArgWithDefaultWithFuncArgAExpr_8660df79 implements \SqlSemantics
      */
     public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
     {
-        return new self($this->funcArg, $aExpr);
+        return new self($this->funcArg, $aExpr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->funcArg, $this->aExpr, $comments);
     }
 }

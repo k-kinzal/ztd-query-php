@@ -17,13 +17,14 @@ final class TableConstraintDefWithFulltextSymOptKeyOrIndexOptIdentKeyListWithExp
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptKeyOrIndexForm $optKeyOrIndex,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIdentForm $optIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyListWithExpressionForm $keyListWithExpression,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptFulltextIndexOptionsForm $optFulltextIndexOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optKeyOrIndex), 'The optKeyOrIndex must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIdent), 'The optIdent must be a generated immutable SQL value.');
@@ -36,12 +37,19 @@ final class TableConstraintDefWithFulltextSymOptKeyOrIndexOptIdentKeyListWithExp
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('FULLTEXT');
+        $writer->comments($this->comments, 1);
         $this->optKeyOrIndex->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optIdent->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('(');
+        $writer->comments($this->comments, 4);
         $this->keyListWithExpression->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
+        $writer->comments($this->comments, 6);
         $this->optFulltextIndexOptions->write($writer);
     }
 
@@ -50,7 +58,7 @@ final class TableConstraintDefWithFulltextSymOptKeyOrIndexOptIdentKeyListWithExp
      */
     public function withOptKeyOrIndex(\SqlSemantics\Statement\Model\MySql\Role\OptKeyOrIndexForm $optKeyOrIndex): self
     {
-        return new self($optKeyOrIndex, $this->optIdent, $this->keyListWithExpression, $this->optFulltextIndexOptions);
+        return new self($optKeyOrIndex, $this->optIdent, $this->keyListWithExpression, $this->optFulltextIndexOptions, $this->comments);
     }
 
     /**
@@ -58,7 +66,7 @@ final class TableConstraintDefWithFulltextSymOptKeyOrIndexOptIdentKeyListWithExp
      */
     public function withOptIdent(\SqlSemantics\Statement\Model\MySql\Role\OptIdentForm $optIdent): self
     {
-        return new self($this->optKeyOrIndex, $optIdent, $this->keyListWithExpression, $this->optFulltextIndexOptions);
+        return new self($this->optKeyOrIndex, $optIdent, $this->keyListWithExpression, $this->optFulltextIndexOptions, $this->comments);
     }
 
     /**
@@ -66,7 +74,7 @@ final class TableConstraintDefWithFulltextSymOptKeyOrIndexOptIdentKeyListWithExp
      */
     public function withKeyListWithExpression(\SqlSemantics\Statement\Model\MySql\Role\KeyListWithExpressionForm $keyListWithExpression): self
     {
-        return new self($this->optKeyOrIndex, $this->optIdent, $keyListWithExpression, $this->optFulltextIndexOptions);
+        return new self($this->optKeyOrIndex, $this->optIdent, $keyListWithExpression, $this->optFulltextIndexOptions, $this->comments);
     }
 
     /**
@@ -74,6 +82,14 @@ final class TableConstraintDefWithFulltextSymOptKeyOrIndexOptIdentKeyListWithExp
      */
     public function withOptFulltextIndexOptions(\SqlSemantics\Statement\Model\MySql\Role\OptFulltextIndexOptionsForm $optFulltextIndexOptions): self
     {
-        return new self($this->optKeyOrIndex, $this->optIdent, $this->keyListWithExpression, $optFulltextIndexOptions);
+        return new self($this->optKeyOrIndex, $this->optIdent, $this->keyListWithExpression, $optFulltextIndexOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optKeyOrIndex, $this->optIdent, $this->keyListWithExpression, $this->optFulltextIndexOptions, $comments);
     }
 }

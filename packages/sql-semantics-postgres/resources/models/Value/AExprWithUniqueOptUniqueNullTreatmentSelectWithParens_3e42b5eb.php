@@ -17,11 +17,12 @@ final class AExprWithUniqueOptUniqueNullTreatmentSelectWithParens_3e42b5eb imple
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptUniqueNullTreatmentForm $optUniqueNullTreatment,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectWithParensForm $selectWithParens,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optUniqueNullTreatment), 'The optUniqueNullTreatment must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($selectWithParens), 'The selectWithParens must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class AExprWithUniqueOptUniqueNullTreatmentSelectWithParens_3e42b5eb imple
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('UNIQUE');
+        $writer->comments($this->comments, 1);
         $this->optUniqueNullTreatment->write($writer);
+        $writer->comments($this->comments, 2);
         $this->selectWithParens->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class AExprWithUniqueOptUniqueNullTreatmentSelectWithParens_3e42b5eb imple
      */
     public function withOptUniqueNullTreatment(\SqlSemantics\Statement\Model\PostgreSql\Role\OptUniqueNullTreatmentForm $optUniqueNullTreatment): self
     {
-        return new self($optUniqueNullTreatment, $this->selectWithParens);
+        return new self($optUniqueNullTreatment, $this->selectWithParens, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class AExprWithUniqueOptUniqueNullTreatmentSelectWithParens_3e42b5eb imple
      */
     public function withSelectWithParens(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectWithParensForm $selectWithParens): self
     {
-        return new self($this->optUniqueNullTreatment, $selectWithParens);
+        return new self($this->optUniqueNullTreatment, $selectWithParens, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optUniqueNullTreatment, $this->selectWithParens, $comments);
     }
 }

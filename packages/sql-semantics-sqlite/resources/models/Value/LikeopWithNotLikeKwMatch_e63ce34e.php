@@ -17,10 +17,11 @@ final class LikeopWithNotLikeKwMatch_e63ce34e implements \SqlSemantics\Statement
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $likeKwMatch,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($likeKwMatch, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['LIKE_KW|MATCH'], 'The likeKwMatch must be a complete LIKE_KW|MATCH lexical spelling.');
     }
@@ -30,7 +31,9 @@ final class LikeopWithNotLikeKwMatch_e63ce34e implements \SqlSemantics\Statement
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('NOT');
+        $writer->comments($this->comments, 1);
         $writer->append($this->likeKwMatch);
     }
 
@@ -39,6 +42,14 @@ final class LikeopWithNotLikeKwMatch_e63ce34e implements \SqlSemantics\Statement
      */
     public function withLikeKwMatch(string $likeKwMatch): self
     {
-        return new self($likeKwMatch);
+        return new self($likeKwMatch, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->likeKwMatch, $comments);
     }
 }

@@ -17,13 +17,14 @@ final class SelectPart2WithSelectOptionsAndItemListOptOrderClauseOptLimitClauseO
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectOptionsAndItemListForm $selectOptionsAndItemList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm $orderBy,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSelectLockTypeForm $optSelectLockType,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectOptionsAndItemList), 'The selectOptionsAndItemList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderBy), 'The orderBy must be a generated immutable SQL value.');
@@ -36,9 +37,13 @@ final class SelectPart2WithSelectOptionsAndItemListOptOrderClauseOptLimitClauseO
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->selectOptionsAndItemList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->orderBy->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optLimitClause->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optSelectLockType->write($writer);
     }
 
@@ -47,7 +52,7 @@ final class SelectPart2WithSelectOptionsAndItemListOptOrderClauseOptLimitClauseO
      */
     public function withSelectOptionsAndItemList(\SqlSemantics\Statement\Model\MySql\Role\SelectOptionsAndItemListForm $selectOptionsAndItemList): self
     {
-        return new self($selectOptionsAndItemList, $this->orderBy, $this->optLimitClause, $this->optSelectLockType);
+        return new self($selectOptionsAndItemList, $this->orderBy, $this->optLimitClause, $this->optSelectLockType, $this->comments);
     }
 
     /**
@@ -55,7 +60,7 @@ final class SelectPart2WithSelectOptionsAndItemListOptOrderClauseOptLimitClauseO
      */
     public function withOrderBy(\SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm $orderBy): self
     {
-        return new self($this->selectOptionsAndItemList, $orderBy, $this->optLimitClause, $this->optSelectLockType);
+        return new self($this->selectOptionsAndItemList, $orderBy, $this->optLimitClause, $this->optSelectLockType, $this->comments);
     }
 
     /**
@@ -63,7 +68,7 @@ final class SelectPart2WithSelectOptionsAndItemListOptOrderClauseOptLimitClauseO
      */
     public function withOptLimitClause(\SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause): self
     {
-        return new self($this->selectOptionsAndItemList, $this->orderBy, $optLimitClause, $this->optSelectLockType);
+        return new self($this->selectOptionsAndItemList, $this->orderBy, $optLimitClause, $this->optSelectLockType, $this->comments);
     }
 
     /**
@@ -71,6 +76,14 @@ final class SelectPart2WithSelectOptionsAndItemListOptOrderClauseOptLimitClauseO
      */
     public function withOptSelectLockType(\SqlSemantics\Statement\Model\MySql\Role\OptSelectLockTypeForm $optSelectLockType): self
     {
-        return new self($this->selectOptionsAndItemList, $this->orderBy, $this->optLimitClause, $optSelectLockType);
+        return new self($this->selectOptionsAndItemList, $this->orderBy, $this->optLimitClause, $optSelectLockType, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->selectOptionsAndItemList, $this->orderBy, $this->optLimitClause, $this->optSelectLockType, $comments);
     }
 }

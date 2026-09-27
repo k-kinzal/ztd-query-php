@@ -17,7 +17,7 @@ final class PLpgSqlExprWithOptDistinctClauseOptTargetListFromClauseWhereClauseGr
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptDistinctClauseForm $optDistinctClause,
@@ -30,6 +30,7 @@ final class PLpgSqlExprWithOptDistinctClauseOptTargetListFromClauseWhereClauseGr
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptSortClauseForm $optSortClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptSelectLimitForm $optSelectLimit,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptForLockingClauseForm $optForLockingClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optDistinctClause), 'The optDistinctClause must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($projections), 'The projections must be a generated immutable SQL value.');
@@ -48,15 +49,25 @@ final class PLpgSqlExprWithOptDistinctClauseOptTargetListFromClauseWhereClauseGr
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optDistinctClause->write($writer);
+        $writer->comments($this->comments, 1);
         $this->projections->write($writer);
+        $writer->comments($this->comments, 2);
         $this->from->write($writer);
+        $writer->comments($this->comments, 3);
         $this->where->write($writer);
+        $writer->comments($this->comments, 4);
         $this->groupBy->write($writer);
+        $writer->comments($this->comments, 5);
         $this->having->write($writer);
+        $writer->comments($this->comments, 6);
         $this->windowClause->write($writer);
+        $writer->comments($this->comments, 7);
         $this->optSortClause->write($writer);
+        $writer->comments($this->comments, 8);
         $this->optSelectLimit->write($writer);
+        $writer->comments($this->comments, 9);
         $this->optForLockingClause->write($writer);
     }
 
@@ -65,7 +76,7 @@ final class PLpgSqlExprWithOptDistinctClauseOptTargetListFromClauseWhereClauseGr
      */
     public function withOptDistinctClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDistinctClauseForm $optDistinctClause): self
     {
-        return new self($optDistinctClause, $this->projections, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause, $this->optSortClause, $this->optSelectLimit, $this->optForLockingClause);
+        return new self($optDistinctClause, $this->projections, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause, $this->optSortClause, $this->optSelectLimit, $this->optForLockingClause, $this->comments);
     }
 
     /**
@@ -73,7 +84,7 @@ final class PLpgSqlExprWithOptDistinctClauseOptTargetListFromClauseWhereClauseGr
      */
     public function withProjections(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTargetListForm $projections): self
     {
-        return new self($this->optDistinctClause, $projections, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause, $this->optSortClause, $this->optSelectLimit, $this->optForLockingClause);
+        return new self($this->optDistinctClause, $projections, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause, $this->optSortClause, $this->optSelectLimit, $this->optForLockingClause, $this->comments);
     }
 
     /**
@@ -81,7 +92,7 @@ final class PLpgSqlExprWithOptDistinctClauseOptTargetListFromClauseWhereClauseGr
      */
     public function withFrom(\SqlSemantics\Statement\Model\PostgreSql\Role\FromClauseForm $from): self
     {
-        return new self($this->optDistinctClause, $this->projections, $from, $this->where, $this->groupBy, $this->having, $this->windowClause, $this->optSortClause, $this->optSelectLimit, $this->optForLockingClause);
+        return new self($this->optDistinctClause, $this->projections, $from, $this->where, $this->groupBy, $this->having, $this->windowClause, $this->optSortClause, $this->optSelectLimit, $this->optForLockingClause, $this->comments);
     }
 
     /**
@@ -89,7 +100,7 @@ final class PLpgSqlExprWithOptDistinctClauseOptTargetListFromClauseWhereClauseGr
      */
     public function withWhere(\SqlSemantics\Statement\Model\PostgreSql\Role\WhereClauseForm $where): self
     {
-        return new self($this->optDistinctClause, $this->projections, $this->from, $where, $this->groupBy, $this->having, $this->windowClause, $this->optSortClause, $this->optSelectLimit, $this->optForLockingClause);
+        return new self($this->optDistinctClause, $this->projections, $this->from, $where, $this->groupBy, $this->having, $this->windowClause, $this->optSortClause, $this->optSelectLimit, $this->optForLockingClause, $this->comments);
     }
 
     /**
@@ -97,7 +108,7 @@ final class PLpgSqlExprWithOptDistinctClauseOptTargetListFromClauseWhereClauseGr
      */
     public function withGroupBy(\SqlSemantics\Statement\Model\PostgreSql\Role\GroupClauseForm $groupBy): self
     {
-        return new self($this->optDistinctClause, $this->projections, $this->from, $this->where, $groupBy, $this->having, $this->windowClause, $this->optSortClause, $this->optSelectLimit, $this->optForLockingClause);
+        return new self($this->optDistinctClause, $this->projections, $this->from, $this->where, $groupBy, $this->having, $this->windowClause, $this->optSortClause, $this->optSelectLimit, $this->optForLockingClause, $this->comments);
     }
 
     /**
@@ -105,7 +116,7 @@ final class PLpgSqlExprWithOptDistinctClauseOptTargetListFromClauseWhereClauseGr
      */
     public function withHaving(\SqlSemantics\Statement\Model\PostgreSql\Role\HavingClauseForm $having): self
     {
-        return new self($this->optDistinctClause, $this->projections, $this->from, $this->where, $this->groupBy, $having, $this->windowClause, $this->optSortClause, $this->optSelectLimit, $this->optForLockingClause);
+        return new self($this->optDistinctClause, $this->projections, $this->from, $this->where, $this->groupBy, $having, $this->windowClause, $this->optSortClause, $this->optSelectLimit, $this->optForLockingClause, $this->comments);
     }
 
     /**
@@ -113,7 +124,7 @@ final class PLpgSqlExprWithOptDistinctClauseOptTargetListFromClauseWhereClauseGr
      */
     public function withWindowClause(\SqlSemantics\Statement\Model\PostgreSql\Role\WindowClauseForm $windowClause): self
     {
-        return new self($this->optDistinctClause, $this->projections, $this->from, $this->where, $this->groupBy, $this->having, $windowClause, $this->optSortClause, $this->optSelectLimit, $this->optForLockingClause);
+        return new self($this->optDistinctClause, $this->projections, $this->from, $this->where, $this->groupBy, $this->having, $windowClause, $this->optSortClause, $this->optSelectLimit, $this->optForLockingClause, $this->comments);
     }
 
     /**
@@ -121,7 +132,7 @@ final class PLpgSqlExprWithOptDistinctClauseOptTargetListFromClauseWhereClauseGr
      */
     public function withOptSortClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSortClauseForm $optSortClause): self
     {
-        return new self($this->optDistinctClause, $this->projections, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause, $optSortClause, $this->optSelectLimit, $this->optForLockingClause);
+        return new self($this->optDistinctClause, $this->projections, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause, $optSortClause, $this->optSelectLimit, $this->optForLockingClause, $this->comments);
     }
 
     /**
@@ -129,7 +140,7 @@ final class PLpgSqlExprWithOptDistinctClauseOptTargetListFromClauseWhereClauseGr
      */
     public function withOptSelectLimit(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSelectLimitForm $optSelectLimit): self
     {
-        return new self($this->optDistinctClause, $this->projections, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause, $this->optSortClause, $optSelectLimit, $this->optForLockingClause);
+        return new self($this->optDistinctClause, $this->projections, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause, $this->optSortClause, $optSelectLimit, $this->optForLockingClause, $this->comments);
     }
 
     /**
@@ -137,6 +148,14 @@ final class PLpgSqlExprWithOptDistinctClauseOptTargetListFromClauseWhereClauseGr
      */
     public function withOptForLockingClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptForLockingClauseForm $optForLockingClause): self
     {
-        return new self($this->optDistinctClause, $this->projections, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause, $this->optSortClause, $this->optSelectLimit, $optForLockingClause);
+        return new self($this->optDistinctClause, $this->projections, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause, $this->optSortClause, $this->optSelectLimit, $optForLockingClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optDistinctClause, $this->projections, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause, $this->optSortClause, $this->optSelectLimit, $this->optForLockingClause, $comments);
     }
 }

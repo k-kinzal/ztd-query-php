@@ -17,11 +17,12 @@ final class WithListWithWithListCommonTableExpr_018fb771 implements \SqlSemantic
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WithListForm $withList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CommonTableExprForm $commonTableExpr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($withList), 'The withList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($commonTableExpr), 'The commonTableExpr must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class WithListWithWithListCommonTableExpr_018fb771 implements \SqlSemantic
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->withList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->commonTableExpr->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class WithListWithWithListCommonTableExpr_018fb771 implements \SqlSemantic
      */
     public function withWithList(\SqlSemantics\Statement\Model\MySql\Role\WithListForm $withList): self
     {
-        return new self($withList, $this->commonTableExpr);
+        return new self($withList, $this->commonTableExpr, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class WithListWithWithListCommonTableExpr_018fb771 implements \SqlSemantic
      */
     public function withCommonTableExpr(\SqlSemantics\Statement\Model\MySql\Role\CommonTableExprForm $commonTableExpr): self
     {
-        return new self($this->withList, $commonTableExpr);
+        return new self($this->withList, $commonTableExpr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->withList, $this->commonTableExpr, $comments);
     }
 }

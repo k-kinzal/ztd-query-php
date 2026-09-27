@@ -17,11 +17,12 @@ final class SelectOptionListWithSelectOptionListSelectOption_f67334b1 implements
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectOptionListForm $selectOptionList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectOptionForm $selectOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectOptionList), 'The selectOptionList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectOption), 'The selectOption must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class SelectOptionListWithSelectOptionListSelectOption_f67334b1 implements
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->selectOptionList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->selectOption->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class SelectOptionListWithSelectOptionListSelectOption_f67334b1 implements
      */
     public function withSelectOptionList(\SqlSemantics\Statement\Model\MySql\Role\SelectOptionListForm $selectOptionList): self
     {
-        return new self($selectOptionList, $this->selectOption);
+        return new self($selectOptionList, $this->selectOption, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class SelectOptionListWithSelectOptionListSelectOption_f67334b1 implements
      */
     public function withSelectOption(\SqlSemantics\Statement\Model\MySql\Role\SelectOptionForm $selectOption): self
     {
-        return new self($this->selectOptionList, $selectOption);
+        return new self($this->selectOptionList, $selectOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->selectOptionList, $this->selectOption, $comments);
     }
 }

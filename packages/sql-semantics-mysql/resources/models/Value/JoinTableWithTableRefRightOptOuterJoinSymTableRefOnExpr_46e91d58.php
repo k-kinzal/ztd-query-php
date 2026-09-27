@@ -17,13 +17,14 @@ final class JoinTableWithTableRefRightOptOuterJoinSymTableRefOnExpr_46e91d58 imp
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableRefForm $tableRef,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptOuterForm $optOuter,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableRefForm $tableRef2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableRef), 'The tableRef must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optOuter), 'The optOuter must be a generated immutable SQL value.');
@@ -36,12 +37,19 @@ final class JoinTableWithTableRefRightOptOuterJoinSymTableRefOnExpr_46e91d58 imp
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableRef->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('RIGHT');
+        $writer->comments($this->comments, 2);
         $this->optOuter->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('JOIN');
+        $writer->comments($this->comments, 4);
         $this->tableRef2->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('ON');
+        $writer->comments($this->comments, 6);
         $this->expr->write($writer);
     }
 
@@ -50,7 +58,7 @@ final class JoinTableWithTableRefRightOptOuterJoinSymTableRefOnExpr_46e91d58 imp
      */
     public function withTableRef(\SqlSemantics\Statement\Model\MySql\Role\TableRefForm $tableRef): self
     {
-        return new self($tableRef, $this->optOuter, $this->tableRef2, $this->expr);
+        return new self($tableRef, $this->optOuter, $this->tableRef2, $this->expr, $this->comments);
     }
 
     /**
@@ -58,7 +66,7 @@ final class JoinTableWithTableRefRightOptOuterJoinSymTableRefOnExpr_46e91d58 imp
      */
     public function withOptOuter(\SqlSemantics\Statement\Model\MySql\Role\OptOuterForm $optOuter): self
     {
-        return new self($this->tableRef, $optOuter, $this->tableRef2, $this->expr);
+        return new self($this->tableRef, $optOuter, $this->tableRef2, $this->expr, $this->comments);
     }
 
     /**
@@ -66,7 +74,7 @@ final class JoinTableWithTableRefRightOptOuterJoinSymTableRefOnExpr_46e91d58 imp
      */
     public function withTableRef2(\SqlSemantics\Statement\Model\MySql\Role\TableRefForm $tableRef2): self
     {
-        return new self($this->tableRef, $this->optOuter, $tableRef2, $this->expr);
+        return new self($this->tableRef, $this->optOuter, $tableRef2, $this->expr, $this->comments);
     }
 
     /**
@@ -74,6 +82,14 @@ final class JoinTableWithTableRefRightOptOuterJoinSymTableRefOnExpr_46e91d58 imp
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($this->tableRef, $this->optOuter, $this->tableRef2, $expr);
+        return new self($this->tableRef, $this->optOuter, $this->tableRef2, $expr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableRef, $this->optOuter, $this->tableRef2, $this->expr, $comments);
     }
 }

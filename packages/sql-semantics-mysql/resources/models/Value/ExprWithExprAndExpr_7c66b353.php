@@ -17,12 +17,13 @@ final class ExprWithExprAndExpr_7c66b353 implements \SqlSemantics\Statement\Mode
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AndForm $and,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
         $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 6,  'mysql-5.7.44' => 7,  'mysql-8.0.44' => 12,  'mysql-8.1.0' => 12,  'mysql-8.2.0' => 12,  'mysql-8.3.0' => 12,  'mysql-8.4.7' => 12,  'mysql-9.0.1' => 12,  'mysql-9.1.0' => 12,));
@@ -36,8 +37,11 @@ final class ExprWithExprAndExpr_7c66b353 implements \SqlSemantics\Statement\Mode
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 1);
         $this->and->write($writer);
+        $writer->comments($this->comments, 2);
         $this->expr2->write($writer);
     }
 
@@ -46,7 +50,7 @@ final class ExprWithExprAndExpr_7c66b353 implements \SqlSemantics\Statement\Mode
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($expr, $this->and, $this->expr2);
+        return new self($expr, $this->and, $this->expr2, $this->comments);
     }
 
     /**
@@ -54,7 +58,7 @@ final class ExprWithExprAndExpr_7c66b353 implements \SqlSemantics\Statement\Mode
      */
     public function withAnd(\SqlSemantics\Statement\Model\MySql\Role\AndForm $and): self
     {
-        return new self($this->expr, $and, $this->expr2);
+        return new self($this->expr, $and, $this->expr2, $this->comments);
     }
 
     /**
@@ -62,6 +66,14 @@ final class ExprWithExprAndExpr_7c66b353 implements \SqlSemantics\Statement\Mode
      */
     public function withExpr2(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr2): self
     {
-        return new self($this->expr, $this->and, $expr2);
+        return new self($this->expr, $this->and, $expr2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->expr, $this->and, $this->expr2, $comments);
     }
 }

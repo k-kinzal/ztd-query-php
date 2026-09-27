@@ -17,11 +17,12 @@ final class FrameBoundWithExprPrecedingFollowing_8e76d151 implements \SqlSemanti
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
         public readonly string $precedingFollowing,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
         $this->assertMatchesPattern($precedingFollowing, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['PRECEDING|FOLLOWING'], 'The precedingFollowing must be a complete PRECEDING|FOLLOWING lexical spelling.');
@@ -32,7 +33,9 @@ final class FrameBoundWithExprPrecedingFollowing_8e76d151 implements \SqlSemanti
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append($this->precedingFollowing);
     }
 
@@ -41,7 +44,7 @@ final class FrameBoundWithExprPrecedingFollowing_8e76d151 implements \SqlSemanti
      */
     public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
     {
-        return new self($expr, $this->precedingFollowing);
+        return new self($expr, $this->precedingFollowing, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class FrameBoundWithExprPrecedingFollowing_8e76d151 implements \SqlSemanti
      */
     public function withPrecedingFollowing(string $precedingFollowing): self
     {
-        return new self($this->expr, $precedingFollowing);
+        return new self($this->expr, $precedingFollowing, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->expr, $this->precedingFollowing, $comments);
     }
 }

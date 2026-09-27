@@ -17,10 +17,11 @@ final class OffsetClauseWithOffsetSelectOffsetValue_7022c424 implements \SqlSema
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectOffsetValueForm $selectOffsetValue,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($selectOffsetValue), 'The selectOffsetValue must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class OffsetClauseWithOffsetSelectOffsetValue_7022c424 implements \SqlSema
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('OFFSET');
+        $writer->comments($this->comments, 1);
         $this->selectOffsetValue->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class OffsetClauseWithOffsetSelectOffsetValue_7022c424 implements \SqlSema
      */
     public function withSelectOffsetValue(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectOffsetValueForm $selectOffsetValue): self
     {
-        return new self($selectOffsetValue);
+        return new self($selectOffsetValue, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->selectOffsetValue, $comments);
     }
 }

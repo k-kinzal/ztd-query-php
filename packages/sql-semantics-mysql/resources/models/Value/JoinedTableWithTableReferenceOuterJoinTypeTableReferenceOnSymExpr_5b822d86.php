@@ -17,13 +17,14 @@ final class JoinedTableWithTableReferenceOuterJoinTypeTableReferenceOnSymExpr_5b
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OuterJoinTypeForm $outerJoinType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableReference), 'The tableReference must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($outerJoinType), 'The outerJoinType must be a generated immutable SQL value.');
@@ -36,10 +37,15 @@ final class JoinedTableWithTableReferenceOuterJoinTypeTableReferenceOnSymExpr_5b
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableReference->write($writer);
+        $writer->comments($this->comments, 1);
         $this->outerJoinType->write($writer);
+        $writer->comments($this->comments, 2);
         $this->tableReference2->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('ON');
+        $writer->comments($this->comments, 4);
         $this->expr->write($writer);
     }
 
@@ -48,7 +54,7 @@ final class JoinedTableWithTableReferenceOuterJoinTypeTableReferenceOnSymExpr_5b
      */
     public function withTableReference(\SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference): self
     {
-        return new self($tableReference, $this->outerJoinType, $this->tableReference2, $this->expr);
+        return new self($tableReference, $this->outerJoinType, $this->tableReference2, $this->expr, $this->comments);
     }
 
     /**
@@ -56,7 +62,7 @@ final class JoinedTableWithTableReferenceOuterJoinTypeTableReferenceOnSymExpr_5b
      */
     public function withOuterJoinType(\SqlSemantics\Statement\Model\MySql\Role\OuterJoinTypeForm $outerJoinType): self
     {
-        return new self($this->tableReference, $outerJoinType, $this->tableReference2, $this->expr);
+        return new self($this->tableReference, $outerJoinType, $this->tableReference2, $this->expr, $this->comments);
     }
 
     /**
@@ -64,7 +70,7 @@ final class JoinedTableWithTableReferenceOuterJoinTypeTableReferenceOnSymExpr_5b
      */
     public function withTableReference2(\SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference2): self
     {
-        return new self($this->tableReference, $this->outerJoinType, $tableReference2, $this->expr);
+        return new self($this->tableReference, $this->outerJoinType, $tableReference2, $this->expr, $this->comments);
     }
 
     /**
@@ -72,6 +78,14 @@ final class JoinedTableWithTableReferenceOuterJoinTypeTableReferenceOnSymExpr_5b
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($this->tableReference, $this->outerJoinType, $this->tableReference2, $expr);
+        return new self($this->tableReference, $this->outerJoinType, $this->tableReference2, $expr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableReference, $this->outerJoinType, $this->tableReference2, $this->expr, $comments);
     }
 }

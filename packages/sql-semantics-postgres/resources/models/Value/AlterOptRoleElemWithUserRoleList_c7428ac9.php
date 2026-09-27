@@ -17,10 +17,11 @@ final class AlterOptRoleElemWithUserRoleList_c7428ac9 implements \SqlSemantics\S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoleListForm $roleList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleList), 'The roleList must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class AlterOptRoleElemWithUserRoleList_c7428ac9 implements \SqlSemantics\S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('USER');
+        $writer->comments($this->comments, 1);
         $this->roleList->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class AlterOptRoleElemWithUserRoleList_c7428ac9 implements \SqlSemantics\S
      */
     public function withRoleList(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleListForm $roleList): self
     {
-        return new self($roleList);
+        return new self($roleList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->roleList, $comments);
     }
 }

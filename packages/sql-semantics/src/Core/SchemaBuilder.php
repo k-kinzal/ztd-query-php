@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Core;
 
-use SqlParser\Parser\Node;
-use SqlSemantics\Core\Ast\DialectParser;
-use SqlSemantics\Core\Ast\Identifiers;
-use SqlSemantics\Core\Ast\SchemaReader;
+use SqlSemantics\Core\Analysis\SchemaAnalyzer;
 
 /**
- * Constructs schema declarations and their resolution context from CREATE TABLE SQL.
+ * Compatibility entry point for closed catalog binding.
+ *
+ * @deprecated Use \SqlSemantics\Facade\Schema::analyze() to read state declarations.
  *
  * @example Accept this semantic value in a database-independent consumer
  *     $consume = static fn (\SqlSemantics\Core\SchemaBuilder $value): string => $value::class;
@@ -20,7 +19,7 @@ use SqlSemantics\Core\Ast\SchemaReader;
  */
 final class SchemaBuilder
 {
-    private readonly DialectParser $parser;
+    private readonly SchemaAnalyzer $semantics;
 
     /**
      * Namespace used for unqualified table declarations and references.
@@ -35,7 +34,7 @@ final class SchemaBuilder
     public function __construct(public readonly Dialect $dialect, ?string $defaultSchema = null, ?string $grammarVersion = null)
     {
         $this->defaultSchema = $defaultSchema ?? $dialect->platform()->defaultSchema();
-        $this->parser = new DialectParser($dialect, $grammarVersion);
+        $this->semantics = new SchemaAnalyzer($dialect, $this->defaultSchema, $grammarVersion);
     }
 
     /**
@@ -48,9 +47,6 @@ final class SchemaBuilder
      */
     public function build(string ...$sql): Schema
     {
-        $trees = array_map(fn (string $text): Node => $this->parser->parse($text), array_values($sql));
-        $tables = (new SchemaReader(new Identifiers($this->dialect), $this->defaultSchema))->read($trees);
-
-        return new Schema($this->dialect, $tables, $this->defaultSchema, $this->parser->version());
+        return $this->semantics->read(...$sql);
     }
 }

@@ -17,12 +17,13 @@ final class FilterDbPairListWithFilterDbPairListFilterDbIdentFilterDbIdent_a1228
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FilterDbPairListForm $filterDbPairList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FilterDbIdentForm $filterDbIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FilterDbIdentForm $filterDbIdent2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($filterDbPairList), 'The filterDbPairList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($filterDbIdent), 'The filterDbIdent must be a generated immutable SQL value.');
@@ -34,12 +35,19 @@ final class FilterDbPairListWithFilterDbPairListFilterDbIdentFilterDbIdent_a1228
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->filterDbPairList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $writer->append('(');
+        $writer->comments($this->comments, 3);
         $this->filterDbIdent->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(',');
+        $writer->comments($this->comments, 5);
         $this->filterDbIdent2->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append(')');
     }
 
@@ -48,7 +56,7 @@ final class FilterDbPairListWithFilterDbPairListFilterDbIdentFilterDbIdent_a1228
      */
     public function withFilterDbPairList(\SqlSemantics\Statement\Model\MySql\Role\FilterDbPairListForm $filterDbPairList): self
     {
-        return new self($filterDbPairList, $this->filterDbIdent, $this->filterDbIdent2);
+        return new self($filterDbPairList, $this->filterDbIdent, $this->filterDbIdent2, $this->comments);
     }
 
     /**
@@ -56,7 +64,7 @@ final class FilterDbPairListWithFilterDbPairListFilterDbIdentFilterDbIdent_a1228
      */
     public function withFilterDbIdent(\SqlSemantics\Statement\Model\MySql\Role\FilterDbIdentForm $filterDbIdent): self
     {
-        return new self($this->filterDbPairList, $filterDbIdent, $this->filterDbIdent2);
+        return new self($this->filterDbPairList, $filterDbIdent, $this->filterDbIdent2, $this->comments);
     }
 
     /**
@@ -64,6 +72,14 @@ final class FilterDbPairListWithFilterDbPairListFilterDbIdentFilterDbIdent_a1228
      */
     public function withFilterDbIdent2(\SqlSemantics\Statement\Model\MySql\Role\FilterDbIdentForm $filterDbIdent2): self
     {
-        return new self($this->filterDbPairList, $this->filterDbIdent, $filterDbIdent2);
+        return new self($this->filterDbPairList, $this->filterDbIdent, $filterDbIdent2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->filterDbPairList, $this->filterDbIdent, $this->filterDbIdent2, $comments);
     }
 }

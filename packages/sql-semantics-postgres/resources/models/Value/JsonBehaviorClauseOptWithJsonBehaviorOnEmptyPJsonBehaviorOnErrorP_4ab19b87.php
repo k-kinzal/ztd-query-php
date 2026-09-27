@@ -17,11 +17,12 @@ final class JsonBehaviorClauseOptWithJsonBehaviorOnEmptyPJsonBehaviorOnErrorP_4a
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorForm $jsonBehavior,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorForm $jsonBehavior2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonBehavior), 'The jsonBehavior must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonBehavior2), 'The jsonBehavior2 must be a generated immutable SQL value.');
@@ -32,11 +33,17 @@ final class JsonBehaviorClauseOptWithJsonBehaviorOnEmptyPJsonBehaviorOnErrorP_4a
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->jsonBehavior->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('ON');
+        $writer->comments($this->comments, 2);
         $writer->append('EMPTY');
+        $writer->comments($this->comments, 3);
         $this->jsonBehavior2->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('ON');
+        $writer->comments($this->comments, 5);
         $writer->append('ERROR');
     }
 
@@ -45,7 +52,7 @@ final class JsonBehaviorClauseOptWithJsonBehaviorOnEmptyPJsonBehaviorOnErrorP_4a
      */
     public function withJsonBehavior(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorForm $jsonBehavior): self
     {
-        return new self($jsonBehavior, $this->jsonBehavior2);
+        return new self($jsonBehavior, $this->jsonBehavior2, $this->comments);
     }
 
     /**
@@ -53,6 +60,14 @@ final class JsonBehaviorClauseOptWithJsonBehaviorOnEmptyPJsonBehaviorOnErrorP_4a
      */
     public function withJsonBehavior2(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorForm $jsonBehavior2): self
     {
-        return new self($this->jsonBehavior, $jsonBehavior2);
+        return new self($this->jsonBehavior, $jsonBehavior2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->jsonBehavior, $this->jsonBehavior2, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class TableRefWithXmltableOptAliasClause_980a8c2e implements \SqlSemantics
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\XmltableForm $xmltable,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptAliasClauseForm $optAliasClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($xmltable), 'The xmltable must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optAliasClause), 'The optAliasClause must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class TableRefWithXmltableOptAliasClause_980a8c2e implements \SqlSemantics
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->xmltable->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optAliasClause->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class TableRefWithXmltableOptAliasClause_980a8c2e implements \SqlSemantics
      */
     public function withXmltable(\SqlSemantics\Statement\Model\PostgreSql\Role\XmltableForm $xmltable): self
     {
-        return new self($xmltable, $this->optAliasClause);
+        return new self($xmltable, $this->optAliasClause, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class TableRefWithXmltableOptAliasClause_980a8c2e implements \SqlSemantics
      */
     public function withOptAliasClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptAliasClauseForm $optAliasClause): self
     {
-        return new self($this->xmltable, $optAliasClause);
+        return new self($this->xmltable, $optAliasClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->xmltable, $this->optAliasClause, $comments);
     }
 }

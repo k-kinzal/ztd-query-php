@@ -17,11 +17,12 @@ final class PartTypeDefWithRangeSymColumnsNameList_15280a45 implements \SqlSeman
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $columns,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NameListForm $nameList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($columns, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['COLUMNS'], 'The columns must be a complete COLUMNS lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($nameList), 'The nameList must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class PartTypeDefWithRangeSymColumnsNameList_15280a45 implements \SqlSeman
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('RANGE');
+        $writer->comments($this->comments, 1);
         $writer->append($this->columns);
+        $writer->comments($this->comments, 2);
         $writer->append('(');
+        $writer->comments($this->comments, 3);
         $this->nameList->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
     }
 
@@ -44,7 +50,7 @@ final class PartTypeDefWithRangeSymColumnsNameList_15280a45 implements \SqlSeman
      */
     public function withColumns(string $columns): self
     {
-        return new self($columns, $this->nameList);
+        return new self($columns, $this->nameList, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class PartTypeDefWithRangeSymColumnsNameList_15280a45 implements \SqlSeman
      */
     public function withNameList(\SqlSemantics\Statement\Model\MySql\Role\NameListForm $nameList): self
     {
-        return new self($this->columns, $nameList);
+        return new self($this->columns, $nameList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->columns, $this->nameList, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class FulltextIndexOptionsWithFulltextIndexOptionsFulltextIndexOption_109a
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FulltextIndexOptionsForm $fulltextIndexOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FulltextIndexOptionForm $fulltextIndexOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fulltextIndexOptions), 'The fulltextIndexOptions must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fulltextIndexOption), 'The fulltextIndexOption must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class FulltextIndexOptionsWithFulltextIndexOptionsFulltextIndexOption_109a
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->fulltextIndexOptions->write($writer);
+        $writer->comments($this->comments, 1);
         $this->fulltextIndexOption->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class FulltextIndexOptionsWithFulltextIndexOptionsFulltextIndexOption_109a
      */
     public function withFulltextIndexOptions(\SqlSemantics\Statement\Model\MySql\Role\FulltextIndexOptionsForm $fulltextIndexOptions): self
     {
-        return new self($fulltextIndexOptions, $this->fulltextIndexOption);
+        return new self($fulltextIndexOptions, $this->fulltextIndexOption, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class FulltextIndexOptionsWithFulltextIndexOptionsFulltextIndexOption_109a
      */
     public function withFulltextIndexOption(\SqlSemantics\Statement\Model\MySql\Role\FulltextIndexOptionForm $fulltextIndexOption): self
     {
-        return new self($this->fulltextIndexOptions, $fulltextIndexOption);
+        return new self($this->fulltextIndexOptions, $fulltextIndexOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->fulltextIndexOptions, $this->fulltextIndexOption, $comments);
     }
 }

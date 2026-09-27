@@ -17,13 +17,14 @@ final class KeycacheStmtWithCacheSymIndexSymTableIdentAdmPartitionOptCacheKeyLis
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AdmPartitionForm $admPartition,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCacheKeyListForm $optCacheKeyList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyCacheNameForm $keyCacheName,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($admPartition), 'The admPartition must be a generated immutable SQL value.');
@@ -36,12 +37,19 @@ final class KeycacheStmtWithCacheSymIndexSymTableIdentAdmPartitionOptCacheKeyLis
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CACHE');
+        $writer->comments($this->comments, 1);
         $writer->append('INDEX');
+        $writer->comments($this->comments, 2);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 3);
         $this->admPartition->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optCacheKeyList->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('IN');
+        $writer->comments($this->comments, 6);
         $this->keyCacheName->write($writer);
     }
 
@@ -50,7 +58,7 @@ final class KeycacheStmtWithCacheSymIndexSymTableIdentAdmPartitionOptCacheKeyLis
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($tableIdent, $this->admPartition, $this->optCacheKeyList, $this->keyCacheName);
+        return new self($tableIdent, $this->admPartition, $this->optCacheKeyList, $this->keyCacheName, $this->comments);
     }
 
     /**
@@ -58,7 +66,7 @@ final class KeycacheStmtWithCacheSymIndexSymTableIdentAdmPartitionOptCacheKeyLis
      */
     public function withAdmPartition(\SqlSemantics\Statement\Model\MySql\Role\AdmPartitionForm $admPartition): self
     {
-        return new self($this->tableIdent, $admPartition, $this->optCacheKeyList, $this->keyCacheName);
+        return new self($this->tableIdent, $admPartition, $this->optCacheKeyList, $this->keyCacheName, $this->comments);
     }
 
     /**
@@ -66,7 +74,7 @@ final class KeycacheStmtWithCacheSymIndexSymTableIdentAdmPartitionOptCacheKeyLis
      */
     public function withOptCacheKeyList(\SqlSemantics\Statement\Model\MySql\Role\OptCacheKeyListForm $optCacheKeyList): self
     {
-        return new self($this->tableIdent, $this->admPartition, $optCacheKeyList, $this->keyCacheName);
+        return new self($this->tableIdent, $this->admPartition, $optCacheKeyList, $this->keyCacheName, $this->comments);
     }
 
     /**
@@ -74,6 +82,14 @@ final class KeycacheStmtWithCacheSymIndexSymTableIdentAdmPartitionOptCacheKeyLis
      */
     public function withKeyCacheName(\SqlSemantics\Statement\Model\MySql\Role\KeyCacheNameForm $keyCacheName): self
     {
-        return new self($this->tableIdent, $this->admPartition, $this->optCacheKeyList, $keyCacheName);
+        return new self($this->tableIdent, $this->admPartition, $this->optCacheKeyList, $keyCacheName, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableIdent, $this->admPartition, $this->optCacheKeyList, $this->keyCacheName, $comments);
     }
 }

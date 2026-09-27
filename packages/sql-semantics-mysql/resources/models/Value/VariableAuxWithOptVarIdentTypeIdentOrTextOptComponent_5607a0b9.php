@@ -17,12 +17,13 @@ final class VariableAuxWithOptVarIdentTypeIdentOrTextOptComponent_5607a0b9 imple
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptVarIdentTypeForm $optVarIdentType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptComponentForm $optComponent,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optVarIdentType), 'The optVarIdentType must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText), 'The identOrText must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class VariableAuxWithOptVarIdentTypeIdentOrTextOptComponent_5607a0b9 imple
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
-        $writer->append('@');
+        $writer->comments($this->comments, 0);
+        $writer->append('@', prefix: true);
+        $writer->comments($this->comments, 1);
         $this->optVarIdentType->write($writer);
+        $writer->comments($this->comments, 2);
         $this->identOrText->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optComponent->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class VariableAuxWithOptVarIdentTypeIdentOrTextOptComponent_5607a0b9 imple
      */
     public function withOptVarIdentType(\SqlSemantics\Statement\Model\MySql\Role\OptVarIdentTypeForm $optVarIdentType): self
     {
-        return new self($optVarIdentType, $this->identOrText, $this->optComponent);
+        return new self($optVarIdentType, $this->identOrText, $this->optComponent, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class VariableAuxWithOptVarIdentTypeIdentOrTextOptComponent_5607a0b9 imple
      */
     public function withIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText): self
     {
-        return new self($this->optVarIdentType, $identOrText, $this->optComponent);
+        return new self($this->optVarIdentType, $identOrText, $this->optComponent, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class VariableAuxWithOptVarIdentTypeIdentOrTextOptComponent_5607a0b9 imple
      */
     public function withOptComponent(\SqlSemantics\Statement\Model\MySql\Role\OptComponentForm $optComponent): self
     {
-        return new self($this->optVarIdentType, $this->identOrText, $optComponent);
+        return new self($this->optVarIdentType, $this->identOrText, $optComponent, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optVarIdentType, $this->identOrText, $this->optComponent, $comments);
     }
 }

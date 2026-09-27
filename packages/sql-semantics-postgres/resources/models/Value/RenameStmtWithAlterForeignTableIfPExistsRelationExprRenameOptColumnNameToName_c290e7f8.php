@@ -17,13 +17,14 @@ final class RenameStmtWithAlterForeignTableIfPExistsRelationExprRenameOptColumnN
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm $relationExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnForm $optColumn,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($relationExpr), 'The relationExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optColumn), 'The optColumn must be a generated immutable SQL value.');
@@ -36,16 +37,27 @@ final class RenameStmtWithAlterForeignTableIfPExistsRelationExprRenameOptColumnN
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('FOREIGN');
+        $writer->comments($this->comments, 2);
         $writer->append('TABLE');
+        $writer->comments($this->comments, 3);
         $writer->append('IF');
+        $writer->comments($this->comments, 4);
         $writer->append('EXISTS');
+        $writer->comments($this->comments, 5);
         $this->relationExpr->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append('RENAME');
+        $writer->comments($this->comments, 7);
         $this->optColumn->write($writer);
+        $writer->comments($this->comments, 8);
         $this->name->write($writer);
+        $writer->comments($this->comments, 9);
         $writer->append('TO');
+        $writer->comments($this->comments, 10);
         $this->name2->write($writer);
     }
 
@@ -54,7 +66,7 @@ final class RenameStmtWithAlterForeignTableIfPExistsRelationExprRenameOptColumnN
      */
     public function withRelationExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm $relationExpr): self
     {
-        return new self($relationExpr, $this->optColumn, $this->name, $this->name2);
+        return new self($relationExpr, $this->optColumn, $this->name, $this->name2, $this->comments);
     }
 
     /**
@@ -62,7 +74,7 @@ final class RenameStmtWithAlterForeignTableIfPExistsRelationExprRenameOptColumnN
      */
     public function withOptColumn(\SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnForm $optColumn): self
     {
-        return new self($this->relationExpr, $optColumn, $this->name, $this->name2);
+        return new self($this->relationExpr, $optColumn, $this->name, $this->name2, $this->comments);
     }
 
     /**
@@ -70,7 +82,7 @@ final class RenameStmtWithAlterForeignTableIfPExistsRelationExprRenameOptColumnN
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($this->relationExpr, $this->optColumn, $name, $this->name2);
+        return new self($this->relationExpr, $this->optColumn, $name, $this->name2, $this->comments);
     }
 
     /**
@@ -78,6 +90,14 @@ final class RenameStmtWithAlterForeignTableIfPExistsRelationExprRenameOptColumnN
      */
     public function withName2(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name2): self
     {
-        return new self($this->relationExpr, $this->optColumn, $this->name, $name2);
+        return new self($this->relationExpr, $this->optColumn, $this->name, $name2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->relationExpr, $this->optColumn, $this->name, $this->name2, $comments);
     }
 }

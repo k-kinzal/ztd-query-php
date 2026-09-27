@@ -17,12 +17,13 @@ final class CommentStmtWithCommentOnOperatorFamilyAnyNameUsingNameIsCommentText_
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CommentTextForm $commentText,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
@@ -34,14 +35,23 @@ final class CommentStmtWithCommentOnOperatorFamilyAnyNameUsingNameIsCommentText_
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('COMMENT');
+        $writer->comments($this->comments, 1);
         $writer->append('ON');
+        $writer->comments($this->comments, 2);
         $writer->append('OPERATOR');
+        $writer->comments($this->comments, 3);
         $writer->append('FAMILY');
+        $writer->comments($this->comments, 4);
         $this->anyName->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('USING');
+        $writer->comments($this->comments, 6);
         $this->name->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append('IS');
+        $writer->comments($this->comments, 8);
         $this->commentText->write($writer);
     }
 
@@ -50,7 +60,7 @@ final class CommentStmtWithCommentOnOperatorFamilyAnyNameUsingNameIsCommentText_
      */
     public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
     {
-        return new self($anyName, $this->name, $this->commentText);
+        return new self($anyName, $this->name, $this->commentText, $this->comments);
     }
 
     /**
@@ -58,7 +68,7 @@ final class CommentStmtWithCommentOnOperatorFamilyAnyNameUsingNameIsCommentText_
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($this->anyName, $name, $this->commentText);
+        return new self($this->anyName, $name, $this->commentText, $this->comments);
     }
 
     /**
@@ -66,6 +76,14 @@ final class CommentStmtWithCommentOnOperatorFamilyAnyNameUsingNameIsCommentText_
      */
     public function withCommentText(\SqlSemantics\Statement\Model\PostgreSql\Role\CommentTextForm $commentText): self
     {
-        return new self($this->anyName, $this->name, $commentText);
+        return new self($this->anyName, $this->name, $commentText, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->anyName, $this->name, $this->commentText, $comments);
     }
 }

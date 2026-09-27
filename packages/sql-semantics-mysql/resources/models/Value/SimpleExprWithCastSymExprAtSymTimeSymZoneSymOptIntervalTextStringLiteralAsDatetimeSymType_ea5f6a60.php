@@ -17,13 +17,14 @@ final class SimpleExprWithCastSymExprAtSymTimeSymZoneSymOptIntervalTextStringLit
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIntervalForm $optInterval,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringLiteralForm $textStringLiteral,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TypeDatetimePrecisionForm $typeDatetimePrecision,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optInterval), 'The optInterval must be a generated immutable SQL value.');
@@ -36,17 +37,29 @@ final class SimpleExprWithCastSymExprAtSymTimeSymZoneSymOptIntervalTextStringLit
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CAST');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('AT');
+        $writer->comments($this->comments, 4);
         $writer->append('TIME');
+        $writer->comments($this->comments, 5);
         $writer->append('ZONE');
+        $writer->comments($this->comments, 6);
         $this->optInterval->write($writer);
+        $writer->comments($this->comments, 7);
         $this->textStringLiteral->write($writer);
+        $writer->comments($this->comments, 8);
         $writer->append('AS');
+        $writer->comments($this->comments, 9);
         $writer->append('DATETIME');
+        $writer->comments($this->comments, 10);
         $this->typeDatetimePrecision->write($writer);
+        $writer->comments($this->comments, 11);
         $writer->append(')');
     }
 
@@ -55,7 +68,7 @@ final class SimpleExprWithCastSymExprAtSymTimeSymZoneSymOptIntervalTextStringLit
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($expr, $this->optInterval, $this->textStringLiteral, $this->typeDatetimePrecision);
+        return new self($expr, $this->optInterval, $this->textStringLiteral, $this->typeDatetimePrecision, $this->comments);
     }
 
     /**
@@ -63,7 +76,7 @@ final class SimpleExprWithCastSymExprAtSymTimeSymZoneSymOptIntervalTextStringLit
      */
     public function withOptInterval(\SqlSemantics\Statement\Model\MySql\Role\OptIntervalForm $optInterval): self
     {
-        return new self($this->expr, $optInterval, $this->textStringLiteral, $this->typeDatetimePrecision);
+        return new self($this->expr, $optInterval, $this->textStringLiteral, $this->typeDatetimePrecision, $this->comments);
     }
 
     /**
@@ -71,7 +84,7 @@ final class SimpleExprWithCastSymExprAtSymTimeSymZoneSymOptIntervalTextStringLit
      */
     public function withTextStringLiteral(\SqlSemantics\Statement\Model\MySql\Role\TextStringLiteralForm $textStringLiteral): self
     {
-        return new self($this->expr, $this->optInterval, $textStringLiteral, $this->typeDatetimePrecision);
+        return new self($this->expr, $this->optInterval, $textStringLiteral, $this->typeDatetimePrecision, $this->comments);
     }
 
     /**
@@ -79,6 +92,14 @@ final class SimpleExprWithCastSymExprAtSymTimeSymZoneSymOptIntervalTextStringLit
      */
     public function withTypeDatetimePrecision(\SqlSemantics\Statement\Model\MySql\Role\TypeDatetimePrecisionForm $typeDatetimePrecision): self
     {
-        return new self($this->expr, $this->optInterval, $this->textStringLiteral, $typeDatetimePrecision);
+        return new self($this->expr, $this->optInterval, $this->textStringLiteral, $typeDatetimePrecision, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->expr, $this->optInterval, $this->textStringLiteral, $this->typeDatetimePrecision, $comments);
     }
 }

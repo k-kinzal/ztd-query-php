@@ -17,10 +17,11 @@ final class FieldTermWithOptionallyEnclosedByTextString_94cd4b91 implements \Sql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringForm $textString,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textString), 'The textString must be a generated immutable SQL value.');
     }
@@ -30,9 +31,13 @@ final class FieldTermWithOptionallyEnclosedByTextString_94cd4b91 implements \Sql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('OPTIONALLY');
+        $writer->comments($this->comments, 1);
         $writer->append('ENCLOSED');
+        $writer->comments($this->comments, 2);
         $writer->append('BY');
+        $writer->comments($this->comments, 3);
         $this->textString->write($writer);
     }
 
@@ -41,6 +46,14 @@ final class FieldTermWithOptionallyEnclosedByTextString_94cd4b91 implements \Sql
      */
     public function withTextString(\SqlSemantics\Statement\Model\MySql\Role\TextStringForm $textString): self
     {
-        return new self($textString);
+        return new self($textString, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->textString, $comments);
     }
 }

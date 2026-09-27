@@ -17,11 +17,12 @@ final class OptIndexLockAndAlgorithmWithAlterAlgorithmOptionAlterLockOption_9ad3
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterAlgorithmOptionForm $alterAlgorithmOption,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterLockOptionForm $alterLockOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterAlgorithmOption), 'The alterAlgorithmOption must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterLockOption), 'The alterLockOption must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class OptIndexLockAndAlgorithmWithAlterAlgorithmOptionAlterLockOption_9ad3
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->alterAlgorithmOption->write($writer);
+        $writer->comments($this->comments, 1);
         $this->alterLockOption->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class OptIndexLockAndAlgorithmWithAlterAlgorithmOptionAlterLockOption_9ad3
      */
     public function withAlterAlgorithmOption(\SqlSemantics\Statement\Model\MySql\Role\AlterAlgorithmOptionForm $alterAlgorithmOption): self
     {
-        return new self($alterAlgorithmOption, $this->alterLockOption);
+        return new self($alterAlgorithmOption, $this->alterLockOption, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class OptIndexLockAndAlgorithmWithAlterAlgorithmOptionAlterLockOption_9ad3
      */
     public function withAlterLockOption(\SqlSemantics\Statement\Model\MySql\Role\AlterLockOptionForm $alterLockOption): self
     {
-        return new self($this->alterAlgorithmOption, $alterLockOption);
+        return new self($this->alterAlgorithmOption, $alterLockOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->alterAlgorithmOption, $this->alterLockOption, $comments);
     }
 }

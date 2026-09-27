@@ -17,11 +17,12 @@ final class GeneratedWithLpExprRpId_5d74118d implements \SqlSemantics\Statement\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
         public readonly string $name,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
         $this->assertMatchesPattern($name, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['ID'], 'The name must be a complete ID lexical spelling.');
@@ -32,9 +33,13 @@ final class GeneratedWithLpExprRpId_5d74118d implements \SqlSemantics\Statement\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(')');
+        $writer->comments($this->comments, 3);
         $writer->append($this->name, true);
     }
 
@@ -43,7 +48,7 @@ final class GeneratedWithLpExprRpId_5d74118d implements \SqlSemantics\Statement\
      */
     public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
     {
-        return new self($expr, $this->name);
+        return new self($expr, $this->name, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class GeneratedWithLpExprRpId_5d74118d implements \SqlSemantics\Statement\
      */
     public function withName(string $name): self
     {
-        return new self($this->expr, $name);
+        return new self($this->expr, $name, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->expr, $this->name, $comments);
     }
 }

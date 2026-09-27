@@ -17,11 +17,12 @@ final class OrderListWithOrderListOrderExpr_57c6cce7 implements \SqlSemantics\St
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OrderListForm $orderList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OrderExprForm $orderExpr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderList), 'The orderList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderExpr), 'The orderExpr must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class OrderListWithOrderListOrderExpr_57c6cce7 implements \SqlSemantics\St
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->orderList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->orderExpr->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class OrderListWithOrderListOrderExpr_57c6cce7 implements \SqlSemantics\St
      */
     public function withOrderList(\SqlSemantics\Statement\Model\MySql\Role\OrderListForm $orderList): self
     {
-        return new self($orderList, $this->orderExpr);
+        return new self($orderList, $this->orderExpr, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class OrderListWithOrderListOrderExpr_57c6cce7 implements \SqlSemantics\St
      */
     public function withOrderExpr(\SqlSemantics\Statement\Model\MySql\Role\OrderExprForm $orderExpr): self
     {
-        return new self($this->orderList, $orderExpr);
+        return new self($this->orderList, $orderExpr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->orderList, $this->orderExpr, $comments);
     }
 }

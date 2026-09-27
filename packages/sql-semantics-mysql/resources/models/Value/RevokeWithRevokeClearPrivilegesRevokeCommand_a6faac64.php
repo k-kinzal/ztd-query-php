@@ -17,11 +17,12 @@ final class RevokeWithRevokeClearPrivilegesRevokeCommand_a6faac64 implements \Sq
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ClearPrivilegesForm $clearPrivileges,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RevokeCommandForm $revokeCommand,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($clearPrivileges), 'The clearPrivileges must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($revokeCommand), 'The revokeCommand must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class RevokeWithRevokeClearPrivilegesRevokeCommand_a6faac64 implements \Sq
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('REVOKE');
+        $writer->comments($this->comments, 1);
         $this->clearPrivileges->write($writer);
+        $writer->comments($this->comments, 2);
         $this->revokeCommand->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class RevokeWithRevokeClearPrivilegesRevokeCommand_a6faac64 implements \Sq
      */
     public function withClearPrivileges(\SqlSemantics\Statement\Model\MySql\Role\ClearPrivilegesForm $clearPrivileges): self
     {
-        return new self($clearPrivileges, $this->revokeCommand);
+        return new self($clearPrivileges, $this->revokeCommand, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class RevokeWithRevokeClearPrivilegesRevokeCommand_a6faac64 implements \Sq
      */
     public function withRevokeCommand(\SqlSemantics\Statement\Model\MySql\Role\RevokeCommandForm $revokeCommand): self
     {
-        return new self($this->clearPrivileges, $revokeCommand);
+        return new self($this->clearPrivileges, $revokeCommand, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->clearPrivileges, $this->revokeCommand, $comments);
     }
 }

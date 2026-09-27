@@ -17,11 +17,12 @@ final class JsonValueExprListWithJsonValueExprListJsonValueExpr_ffed7cab impleme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprListForm $jsonValueExprList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprForm $jsonValueExpr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonValueExprList), 'The jsonValueExprList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonValueExpr), 'The jsonValueExpr must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class JsonValueExprListWithJsonValueExprListJsonValueExpr_ffed7cab impleme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->jsonValueExprList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->jsonValueExpr->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class JsonValueExprListWithJsonValueExprListJsonValueExpr_ffed7cab impleme
      */
     public function withJsonValueExprList(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprListForm $jsonValueExprList): self
     {
-        return new self($jsonValueExprList, $this->jsonValueExpr);
+        return new self($jsonValueExprList, $this->jsonValueExpr, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class JsonValueExprListWithJsonValueExprListJsonValueExpr_ffed7cab impleme
      */
     public function withJsonValueExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprForm $jsonValueExpr): self
     {
-        return new self($this->jsonValueExprList, $jsonValueExpr);
+        return new self($this->jsonValueExprList, $jsonValueExpr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->jsonValueExprList, $this->jsonValueExpr, $comments);
     }
 }

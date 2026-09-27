@@ -17,11 +17,12 @@ final class AlterEventTrigStmtWithAlterEventTriggerNameEnableTrigger_2586b917 im
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\EnableTriggerForm $enableTrigger,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($enableTrigger), 'The enableTrigger must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class AlterEventTrigStmtWithAlterEventTriggerNameEnableTrigger_2586b917 im
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('EVENT');
+        $writer->comments($this->comments, 2);
         $writer->append('TRIGGER');
+        $writer->comments($this->comments, 3);
         $this->name->write($writer);
+        $writer->comments($this->comments, 4);
         $this->enableTrigger->write($writer);
     }
 
@@ -44,7 +50,7 @@ final class AlterEventTrigStmtWithAlterEventTriggerNameEnableTrigger_2586b917 im
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($name, $this->enableTrigger);
+        return new self($name, $this->enableTrigger, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class AlterEventTrigStmtWithAlterEventTriggerNameEnableTrigger_2586b917 im
      */
     public function withEnableTrigger(\SqlSemantics\Statement\Model\PostgreSql\Role\EnableTriggerForm $enableTrigger): self
     {
-        return new self($this->name, $enableTrigger);
+        return new self($this->name, $enableTrigger, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->name, $this->enableTrigger, $comments);
     }
 }

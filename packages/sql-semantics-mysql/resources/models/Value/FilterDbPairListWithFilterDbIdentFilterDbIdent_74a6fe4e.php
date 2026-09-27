@@ -17,11 +17,12 @@ final class FilterDbPairListWithFilterDbIdentFilterDbIdent_74a6fe4e implements \
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FilterDbIdentForm $filterDbIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FilterDbIdentForm $filterDbIdent2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($filterDbIdent), 'The filterDbIdent must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($filterDbIdent2), 'The filterDbIdent2 must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class FilterDbPairListWithFilterDbIdentFilterDbIdent_74a6fe4e implements \
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->filterDbIdent->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(',');
+        $writer->comments($this->comments, 3);
         $this->filterDbIdent2->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
     }
 
@@ -44,7 +50,7 @@ final class FilterDbPairListWithFilterDbIdentFilterDbIdent_74a6fe4e implements \
      */
     public function withFilterDbIdent(\SqlSemantics\Statement\Model\MySql\Role\FilterDbIdentForm $filterDbIdent): self
     {
-        return new self($filterDbIdent, $this->filterDbIdent2);
+        return new self($filterDbIdent, $this->filterDbIdent2, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class FilterDbPairListWithFilterDbIdentFilterDbIdent_74a6fe4e implements \
      */
     public function withFilterDbIdent2(\SqlSemantics\Statement\Model\MySql\Role\FilterDbIdentForm $filterDbIdent2): self
     {
-        return new self($this->filterDbIdent, $filterDbIdent2);
+        return new self($this->filterDbIdent, $filterDbIdent2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->filterDbIdent, $this->filterDbIdent2, $comments);
     }
 }

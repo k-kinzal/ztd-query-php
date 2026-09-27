@@ -17,7 +17,7 @@ final class CmdWithCreatekwTempViewIfnotexistsNmDbnmEidlistOptAsSelect_982c3d9a 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CreatekwForm $createkw,
@@ -27,6 +27,7 @@ final class CmdWithCreatekwTempViewIfnotexistsNmDbnmEidlistOptAsSelect_982c3d9a 
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\EidlistOptForm $eidlistOpt,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm $select,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($createkw), 'The createkw must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($temp), 'The temp must be a generated immutable SQL value.');
@@ -42,14 +43,23 @@ final class CmdWithCreatekwTempViewIfnotexistsNmDbnmEidlistOptAsSelect_982c3d9a 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->createkw->write($writer);
+        $writer->comments($this->comments, 1);
         $this->temp->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('VIEW');
+        $writer->comments($this->comments, 3);
         $this->ifnotexists->write($writer);
+        $writer->comments($this->comments, 4);
         $this->nm->write($writer);
+        $writer->comments($this->comments, 5);
         $this->dbnm->write($writer);
+        $writer->comments($this->comments, 6);
         $this->eidlistOpt->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append('AS');
+        $writer->comments($this->comments, 8);
         $this->select->write($writer);
     }
 
@@ -58,7 +68,7 @@ final class CmdWithCreatekwTempViewIfnotexistsNmDbnmEidlistOptAsSelect_982c3d9a 
      */
     public function withCreatekw(\SqlSemantics\Statement\Model\Sqlite\Role\CreatekwForm $createkw): self
     {
-        return new self($createkw, $this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->eidlistOpt, $this->select);
+        return new self($createkw, $this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->eidlistOpt, $this->select, $this->comments);
     }
 
     /**
@@ -66,7 +76,7 @@ final class CmdWithCreatekwTempViewIfnotexistsNmDbnmEidlistOptAsSelect_982c3d9a 
      */
     public function withTemp(\SqlSemantics\Statement\Model\Sqlite\Role\TempForm $temp): self
     {
-        return new self($this->createkw, $temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->eidlistOpt, $this->select);
+        return new self($this->createkw, $temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->eidlistOpt, $this->select, $this->comments);
     }
 
     /**
@@ -74,7 +84,7 @@ final class CmdWithCreatekwTempViewIfnotexistsNmDbnmEidlistOptAsSelect_982c3d9a 
      */
     public function withIfnotexists(\SqlSemantics\Statement\Model\Sqlite\Role\IfnotexistsForm $ifnotexists): self
     {
-        return new self($this->createkw, $this->temp, $ifnotexists, $this->nm, $this->dbnm, $this->eidlistOpt, $this->select);
+        return new self($this->createkw, $this->temp, $ifnotexists, $this->nm, $this->dbnm, $this->eidlistOpt, $this->select, $this->comments);
     }
 
     /**
@@ -82,7 +92,7 @@ final class CmdWithCreatekwTempViewIfnotexistsNmDbnmEidlistOptAsSelect_982c3d9a 
      */
     public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
     {
-        return new self($this->createkw, $this->temp, $this->ifnotexists, $nm, $this->dbnm, $this->eidlistOpt, $this->select);
+        return new self($this->createkw, $this->temp, $this->ifnotexists, $nm, $this->dbnm, $this->eidlistOpt, $this->select, $this->comments);
     }
 
     /**
@@ -90,7 +100,7 @@ final class CmdWithCreatekwTempViewIfnotexistsNmDbnmEidlistOptAsSelect_982c3d9a 
      */
     public function withDbnm(\SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm): self
     {
-        return new self($this->createkw, $this->temp, $this->ifnotexists, $this->nm, $dbnm, $this->eidlistOpt, $this->select);
+        return new self($this->createkw, $this->temp, $this->ifnotexists, $this->nm, $dbnm, $this->eidlistOpt, $this->select, $this->comments);
     }
 
     /**
@@ -98,7 +108,7 @@ final class CmdWithCreatekwTempViewIfnotexistsNmDbnmEidlistOptAsSelect_982c3d9a 
      */
     public function withEidlistOpt(\SqlSemantics\Statement\Model\Sqlite\Role\EidlistOptForm $eidlistOpt): self
     {
-        return new self($this->createkw, $this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $eidlistOpt, $this->select);
+        return new self($this->createkw, $this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $eidlistOpt, $this->select, $this->comments);
     }
 
     /**
@@ -106,6 +116,14 @@ final class CmdWithCreatekwTempViewIfnotexistsNmDbnmEidlistOptAsSelect_982c3d9a 
      */
     public function withSelect(\SqlSemantics\Statement\Model\Sqlite\Role\SelectForm $select): self
     {
-        return new self($this->createkw, $this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->eidlistOpt, $select);
+        return new self($this->createkw, $this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->eidlistOpt, $select, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->createkw, $this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->eidlistOpt, $this->select, $comments);
     }
 }

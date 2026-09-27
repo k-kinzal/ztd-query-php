@@ -17,12 +17,13 @@ final class LockingClauseWithForSymLockStrengthTableLockingListOptLockedRowActio
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LockStrengthForm $lockStrength,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableLockingListForm $tableLockingList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLockedRowActionForm $optLockedRowAction,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($lockStrength), 'The lockStrength must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableLockingList), 'The tableLockingList must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class LockingClauseWithForSymLockStrengthTableLockingListOptLockedRowActio
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('FOR');
+        $writer->comments($this->comments, 1);
         $this->lockStrength->write($writer);
+        $writer->comments($this->comments, 2);
         $this->tableLockingList->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optLockedRowAction->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class LockingClauseWithForSymLockStrengthTableLockingListOptLockedRowActio
      */
     public function withLockStrength(\SqlSemantics\Statement\Model\MySql\Role\LockStrengthForm $lockStrength): self
     {
-        return new self($lockStrength, $this->tableLockingList, $this->optLockedRowAction);
+        return new self($lockStrength, $this->tableLockingList, $this->optLockedRowAction, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class LockingClauseWithForSymLockStrengthTableLockingListOptLockedRowActio
      */
     public function withTableLockingList(\SqlSemantics\Statement\Model\MySql\Role\TableLockingListForm $tableLockingList): self
     {
-        return new self($this->lockStrength, $tableLockingList, $this->optLockedRowAction);
+        return new self($this->lockStrength, $tableLockingList, $this->optLockedRowAction, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class LockingClauseWithForSymLockStrengthTableLockingListOptLockedRowActio
      */
     public function withOptLockedRowAction(\SqlSemantics\Statement\Model\MySql\Role\OptLockedRowActionForm $optLockedRowAction): self
     {
-        return new self($this->lockStrength, $this->tableLockingList, $optLockedRowAction);
+        return new self($this->lockStrength, $this->tableLockingList, $optLockedRowAction, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->lockStrength, $this->tableLockingList, $this->optLockedRowAction, $comments);
     }
 }

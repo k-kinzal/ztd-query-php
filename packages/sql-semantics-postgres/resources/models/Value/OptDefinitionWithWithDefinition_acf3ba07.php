@@ -17,10 +17,11 @@ final class OptDefinitionWithWithDefinition_acf3ba07 implements \SqlSemantics\St
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DefinitionForm $definition,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($definition), 'The definition must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class OptDefinitionWithWithDefinition_acf3ba07 implements \SqlSemantics\St
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('WITH');
+        $writer->comments($this->comments, 1);
         $this->definition->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class OptDefinitionWithWithDefinition_acf3ba07 implements \SqlSemantics\St
      */
     public function withDefinition(\SqlSemantics\Statement\Model\PostgreSql\Role\DefinitionForm $definition): self
     {
-        return new self($definition);
+        return new self($definition, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->definition, $comments);
     }
 }

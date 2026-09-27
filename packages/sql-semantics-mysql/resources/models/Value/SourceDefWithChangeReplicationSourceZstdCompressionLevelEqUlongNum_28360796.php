@@ -17,11 +17,12 @@ final class SourceDefWithChangeReplicationSourceZstdCompressionLevelEqUlongNum_2
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceZstdCompressionLevelForm $changeReplicationSourceZstdCompressionLevel,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($changeReplicationSourceZstdCompressionLevel), 'The changeReplicationSourceZstdCompressionLevel must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ulongNum), 'The ulongNum must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class SourceDefWithChangeReplicationSourceZstdCompressionLevelEqUlongNum_2
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->changeReplicationSourceZstdCompressionLevel->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('=');
+        $writer->comments($this->comments, 2);
         $this->ulongNum->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class SourceDefWithChangeReplicationSourceZstdCompressionLevelEqUlongNum_2
      */
     public function withChangeReplicationSourceZstdCompressionLevel(\SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceZstdCompressionLevelForm $changeReplicationSourceZstdCompressionLevel): self
     {
-        return new self($changeReplicationSourceZstdCompressionLevel, $this->ulongNum);
+        return new self($changeReplicationSourceZstdCompressionLevel, $this->ulongNum, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class SourceDefWithChangeReplicationSourceZstdCompressionLevelEqUlongNum_2
      */
     public function withUlongNum(\SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum): self
     {
-        return new self($this->changeReplicationSourceZstdCompressionLevel, $ulongNum);
+        return new self($this->changeReplicationSourceZstdCompressionLevel, $ulongNum, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->changeReplicationSourceZstdCompressionLevel, $this->ulongNum, $comments);
     }
 }

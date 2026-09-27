@@ -17,12 +17,13 @@ final class SelectItemWithRememberNameTableWildRememberEnd_453e61c2 implements \
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm $rememberName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableWildForm $tableWild,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RememberEndForm $rememberEnd,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($rememberName), 'The rememberName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableWild), 'The tableWild must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class SelectItemWithRememberNameTableWildRememberEnd_453e61c2 implements \
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->rememberName->write($writer);
+        $writer->comments($this->comments, 1);
         $this->tableWild->write($writer);
+        $writer->comments($this->comments, 2);
         $this->rememberEnd->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class SelectItemWithRememberNameTableWildRememberEnd_453e61c2 implements \
      */
     public function withRememberName(\SqlSemantics\Statement\Model\MySql\Role\RememberNameForm $rememberName): self
     {
-        return new self($rememberName, $this->tableWild, $this->rememberEnd);
+        return new self($rememberName, $this->tableWild, $this->rememberEnd, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class SelectItemWithRememberNameTableWildRememberEnd_453e61c2 implements \
      */
     public function withTableWild(\SqlSemantics\Statement\Model\MySql\Role\TableWildForm $tableWild): self
     {
-        return new self($this->rememberName, $tableWild, $this->rememberEnd);
+        return new self($this->rememberName, $tableWild, $this->rememberEnd, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class SelectItemWithRememberNameTableWildRememberEnd_453e61c2 implements \
      */
     public function withRememberEnd(\SqlSemantics\Statement\Model\MySql\Role\RememberEndForm $rememberEnd): self
     {
-        return new self($this->rememberName, $this->tableWild, $rememberEnd);
+        return new self($this->rememberName, $this->tableWild, $rememberEnd, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->rememberName, $this->tableWild, $this->rememberEnd, $comments);
     }
 }

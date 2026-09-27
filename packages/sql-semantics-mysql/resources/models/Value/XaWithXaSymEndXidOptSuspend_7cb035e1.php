@@ -17,11 +17,12 @@ final class XaWithXaSymEndXidOptSuspend_7cb035e1 implements \SqlSemantics\Statem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\XidForm $xid,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSuspendForm $optSuspend,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($xid), 'The xid must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optSuspend), 'The optSuspend must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class XaWithXaSymEndXidOptSuspend_7cb035e1 implements \SqlSemantics\Statem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('XA');
+        $writer->comments($this->comments, 1);
         $writer->append('END');
+        $writer->comments($this->comments, 2);
         $this->xid->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optSuspend->write($writer);
     }
 
@@ -43,7 +48,7 @@ final class XaWithXaSymEndXidOptSuspend_7cb035e1 implements \SqlSemantics\Statem
      */
     public function withXid(\SqlSemantics\Statement\Model\MySql\Role\XidForm $xid): self
     {
-        return new self($xid, $this->optSuspend);
+        return new self($xid, $this->optSuspend, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class XaWithXaSymEndXidOptSuspend_7cb035e1 implements \SqlSemantics\Statem
      */
     public function withOptSuspend(\SqlSemantics\Statement\Model\MySql\Role\OptSuspendForm $optSuspend): self
     {
-        return new self($this->xid, $optSuspend);
+        return new self($this->xid, $optSuspend, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->xid, $this->optSuspend, $comments);
     }
 }

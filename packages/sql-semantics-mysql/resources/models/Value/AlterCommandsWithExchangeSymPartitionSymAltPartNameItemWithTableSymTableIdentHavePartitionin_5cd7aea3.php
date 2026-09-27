@@ -17,12 +17,13 @@ final class AlterCommandsWithExchangeSymPartitionSymAltPartNameItemWithTableSymT
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AltPartNameItemForm $altPartNameItem,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\HavePartitioningForm $havePartitioning,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($altPartNameItem), 'The altPartNameItem must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
@@ -34,12 +35,19 @@ final class AlterCommandsWithExchangeSymPartitionSymAltPartNameItemWithTableSymT
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('EXCHANGE');
+        $writer->comments($this->comments, 1);
         $writer->append('PARTITION');
+        $writer->comments($this->comments, 2);
         $this->altPartNameItem->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('WITH');
+        $writer->comments($this->comments, 4);
         $writer->append('TABLE');
+        $writer->comments($this->comments, 5);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 6);
         $this->havePartitioning->write($writer);
     }
 
@@ -48,7 +56,7 @@ final class AlterCommandsWithExchangeSymPartitionSymAltPartNameItemWithTableSymT
      */
     public function withAltPartNameItem(\SqlSemantics\Statement\Model\MySql\Role\AltPartNameItemForm $altPartNameItem): self
     {
-        return new self($altPartNameItem, $this->tableIdent, $this->havePartitioning);
+        return new self($altPartNameItem, $this->tableIdent, $this->havePartitioning, $this->comments);
     }
 
     /**
@@ -56,7 +64,7 @@ final class AlterCommandsWithExchangeSymPartitionSymAltPartNameItemWithTableSymT
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($this->altPartNameItem, $tableIdent, $this->havePartitioning);
+        return new self($this->altPartNameItem, $tableIdent, $this->havePartitioning, $this->comments);
     }
 
     /**
@@ -64,6 +72,14 @@ final class AlterCommandsWithExchangeSymPartitionSymAltPartNameItemWithTableSymT
      */
     public function withHavePartitioning(\SqlSemantics\Statement\Model\MySql\Role\HavePartitioningForm $havePartitioning): self
     {
-        return new self($this->altPartNameItem, $this->tableIdent, $havePartitioning);
+        return new self($this->altPartNameItem, $this->tableIdent, $havePartitioning, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->altPartNameItem, $this->tableIdent, $this->havePartitioning, $comments);
     }
 }

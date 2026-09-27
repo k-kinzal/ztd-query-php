@@ -17,12 +17,13 @@ final class FrameOptWithRangeOrRowsFrameBoundSFrameExcludeOpt_6d30675d implement
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\RangeOrRowsForm $rangeOrRows,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\FrameBoundSForm $frameBoundS,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\FrameExcludeOptForm $frameExcludeOpt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($rangeOrRows), 'The rangeOrRows must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($frameBoundS), 'The frameBoundS must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class FrameOptWithRangeOrRowsFrameBoundSFrameExcludeOpt_6d30675d implement
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->rangeOrRows->write($writer);
+        $writer->comments($this->comments, 1);
         $this->frameBoundS->write($writer);
+        $writer->comments($this->comments, 2);
         $this->frameExcludeOpt->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class FrameOptWithRangeOrRowsFrameBoundSFrameExcludeOpt_6d30675d implement
      */
     public function withRangeOrRows(\SqlSemantics\Statement\Model\Sqlite\Role\RangeOrRowsForm $rangeOrRows): self
     {
-        return new self($rangeOrRows, $this->frameBoundS, $this->frameExcludeOpt);
+        return new self($rangeOrRows, $this->frameBoundS, $this->frameExcludeOpt, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class FrameOptWithRangeOrRowsFrameBoundSFrameExcludeOpt_6d30675d implement
      */
     public function withFrameBoundS(\SqlSemantics\Statement\Model\Sqlite\Role\FrameBoundSForm $frameBoundS): self
     {
-        return new self($this->rangeOrRows, $frameBoundS, $this->frameExcludeOpt);
+        return new self($this->rangeOrRows, $frameBoundS, $this->frameExcludeOpt, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class FrameOptWithRangeOrRowsFrameBoundSFrameExcludeOpt_6d30675d implement
      */
     public function withFrameExcludeOpt(\SqlSemantics\Statement\Model\Sqlite\Role\FrameExcludeOptForm $frameExcludeOpt): self
     {
-        return new self($this->rangeOrRows, $this->frameBoundS, $frameExcludeOpt);
+        return new self($this->rangeOrRows, $this->frameBoundS, $frameExcludeOpt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->rangeOrRows, $this->frameBoundS, $this->frameExcludeOpt, $comments);
     }
 }

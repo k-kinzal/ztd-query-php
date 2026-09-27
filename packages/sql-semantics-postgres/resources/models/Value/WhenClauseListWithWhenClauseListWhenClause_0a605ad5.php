@@ -17,11 +17,12 @@ final class WhenClauseListWithWhenClauseListWhenClause_0a605ad5 implements \SqlS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\WhenClauseListForm $whenClauseList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\WhenClauseForm $whenClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($whenClauseList), 'The whenClauseList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($whenClause), 'The whenClause must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class WhenClauseListWithWhenClauseListWhenClause_0a605ad5 implements \SqlS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->whenClauseList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->whenClause->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class WhenClauseListWithWhenClauseListWhenClause_0a605ad5 implements \SqlS
      */
     public function withWhenClauseList(\SqlSemantics\Statement\Model\PostgreSql\Role\WhenClauseListForm $whenClauseList): self
     {
-        return new self($whenClauseList, $this->whenClause);
+        return new self($whenClauseList, $this->whenClause, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class WhenClauseListWithWhenClauseListWhenClause_0a605ad5 implements \SqlS
      */
     public function withWhenClause(\SqlSemantics\Statement\Model\PostgreSql\Role\WhenClauseForm $whenClause): self
     {
-        return new self($this->whenClauseList, $whenClause);
+        return new self($this->whenClauseList, $whenClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->whenClauseList, $this->whenClause, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class OptSourceCountWithIdentSysNum_720bcd2a implements \SqlSemantics\Stat
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentSysForm $identSys,
         public readonly string $value,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identSys), 'The identSys must be a generated immutable SQL value.');
         $this->assertMatchesPattern($value, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['NUM'], 'The value must be a complete NUM lexical spelling.');
@@ -32,7 +33,9 @@ final class OptSourceCountWithIdentSysNum_720bcd2a implements \SqlSemantics\Stat
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->identSys->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append($this->value);
     }
 
@@ -41,7 +44,7 @@ final class OptSourceCountWithIdentSysNum_720bcd2a implements \SqlSemantics\Stat
      */
     public function withIdentSys(\SqlSemantics\Statement\Model\MySql\Role\IdentSysForm $identSys): self
     {
-        return new self($identSys, $this->value);
+        return new self($identSys, $this->value, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class OptSourceCountWithIdentSysNum_720bcd2a implements \SqlSemantics\Stat
      */
     public function withValue(string $value): self
     {
-        return new self($this->identSys, $value);
+        return new self($this->identSys, $value, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->identSys, $this->value, $comments);
     }
 }

@@ -17,10 +17,11 @@ final class AlterInstanceActionWithRotateSymIdentOrTextMasterSymKeySym_b558a985 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText), 'The identOrText must be a generated immutable SQL value.');
     }
@@ -30,9 +31,13 @@ final class AlterInstanceActionWithRotateSymIdentOrTextMasterSymKeySym_b558a985 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ROTATE');
+        $writer->comments($this->comments, 1);
         $this->identOrText->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('MASTER');
+        $writer->comments($this->comments, 3);
         $writer->append('KEY');
     }
 
@@ -41,6 +46,14 @@ final class AlterInstanceActionWithRotateSymIdentOrTextMasterSymKeySym_b558a985 
      */
     public function withIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText): self
     {
-        return new self($identOrText);
+        return new self($identOrText, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->identOrText, $comments);
     }
 }

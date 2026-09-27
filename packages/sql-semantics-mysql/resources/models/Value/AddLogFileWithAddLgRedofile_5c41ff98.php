@@ -17,10 +17,11 @@ final class AddLogFileWithAddLgRedofile_5c41ff98 implements \SqlSemantics\Statem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LgRedofileForm $lgRedofile,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($lgRedofile), 'The lgRedofile must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class AddLogFileWithAddLgRedofile_5c41ff98 implements \SqlSemantics\Statem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ADD');
+        $writer->comments($this->comments, 1);
         $this->lgRedofile->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class AddLogFileWithAddLgRedofile_5c41ff98 implements \SqlSemantics\Statem
      */
     public function withLgRedofile(\SqlSemantics\Statement\Model\MySql\Role\LgRedofileForm $lgRedofile): self
     {
-        return new self($lgRedofile);
+        return new self($lgRedofile, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->lgRedofile, $comments);
     }
 }

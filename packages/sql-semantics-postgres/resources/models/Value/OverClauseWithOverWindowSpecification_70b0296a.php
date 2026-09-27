@@ -17,10 +17,11 @@ final class OverClauseWithOverWindowSpecification_70b0296a implements \SqlSemant
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\WindowSpecificationForm $windowSpecification,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($windowSpecification), 'The windowSpecification must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class OverClauseWithOverWindowSpecification_70b0296a implements \SqlSemant
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('OVER');
+        $writer->comments($this->comments, 1);
         $this->windowSpecification->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class OverClauseWithOverWindowSpecification_70b0296a implements \SqlSemant
      */
     public function withWindowSpecification(\SqlSemantics\Statement\Model\PostgreSql\Role\WindowSpecificationForm $windowSpecification): self
     {
-        return new self($windowSpecification);
+        return new self($windowSpecification, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->windowSpecification, $comments);
     }
 }

@@ -17,12 +17,13 @@ final class WindowWithPartitionByNexprlistOrderbyOptFrameOpt_1f69e129 implements
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm $nexprlist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\OrderbyOptForm $orderBy,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\FrameOptForm $frameOpt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nexprlist), 'The nexprlist must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($orderBy), 'The orderBy must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class WindowWithPartitionByNexprlistOrderbyOptFrameOpt_1f69e129 implements
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('PARTITION');
+        $writer->comments($this->comments, 1);
         $writer->append('BY');
+        $writer->comments($this->comments, 2);
         $this->nexprlist->write($writer);
+        $writer->comments($this->comments, 3);
         $this->orderBy->write($writer);
+        $writer->comments($this->comments, 4);
         $this->frameOpt->write($writer);
     }
 
@@ -46,7 +52,7 @@ final class WindowWithPartitionByNexprlistOrderbyOptFrameOpt_1f69e129 implements
      */
     public function withNexprlist(\SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm $nexprlist): self
     {
-        return new self($nexprlist, $this->orderBy, $this->frameOpt);
+        return new self($nexprlist, $this->orderBy, $this->frameOpt, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class WindowWithPartitionByNexprlistOrderbyOptFrameOpt_1f69e129 implements
      */
     public function withOrderBy(\SqlSemantics\Statement\Model\Sqlite\Role\OrderbyOptForm $orderBy): self
     {
-        return new self($this->nexprlist, $orderBy, $this->frameOpt);
+        return new self($this->nexprlist, $orderBy, $this->frameOpt, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class WindowWithPartitionByNexprlistOrderbyOptFrameOpt_1f69e129 implements
      */
     public function withFrameOpt(\SqlSemantics\Statement\Model\Sqlite\Role\FrameOptForm $frameOpt): self
     {
-        return new self($this->nexprlist, $this->orderBy, $frameOpt);
+        return new self($this->nexprlist, $this->orderBy, $frameOpt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->nexprlist, $this->orderBy, $this->frameOpt, $comments);
     }
 }

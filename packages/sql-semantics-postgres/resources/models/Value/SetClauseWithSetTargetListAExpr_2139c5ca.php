@@ -17,11 +17,12 @@ final class SetClauseWithSetTargetListAExpr_2139c5ca implements \SqlSemantics\St
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetTargetListForm $setTargetList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setTargetList), 'The setTargetList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class SetClauseWithSetTargetListAExpr_2139c5ca implements \SqlSemantics\St
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->setTargetList->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(')');
+        $writer->comments($this->comments, 3);
         $writer->append('=');
+        $writer->comments($this->comments, 4);
         $this->aExpr->write($writer);
     }
 
@@ -44,7 +50,7 @@ final class SetClauseWithSetTargetListAExpr_2139c5ca implements \SqlSemantics\St
      */
     public function withSetTargetList(\SqlSemantics\Statement\Model\PostgreSql\Role\SetTargetListForm $setTargetList): self
     {
-        return new self($setTargetList, $this->aExpr);
+        return new self($setTargetList, $this->aExpr, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class SetClauseWithSetTargetListAExpr_2139c5ca implements \SqlSemantics\St
      */
     public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
     {
-        return new self($this->setTargetList, $aExpr);
+        return new self($this->setTargetList, $aExpr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->setTargetList, $this->aExpr, $comments);
     }
 }

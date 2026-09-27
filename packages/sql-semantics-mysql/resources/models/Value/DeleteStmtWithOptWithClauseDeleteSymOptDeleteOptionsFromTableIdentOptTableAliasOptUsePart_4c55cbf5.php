@@ -17,7 +17,7 @@ final class DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsFromTableIdentOp
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWithClauseForm $with,
@@ -28,6 +28,7 @@ final class DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsFromTableIdentOp
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm $where,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm $orderBy,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSimpleLimitForm $optSimpleLimit,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($with), 'The with must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDeleteOptions), 'The optDeleteOptions must be a generated immutable SQL value.');
@@ -44,15 +45,25 @@ final class DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsFromTableIdentOp
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->with->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('DELETE');
+        $writer->comments($this->comments, 2);
         $this->optDeleteOptions->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('FROM');
+        $writer->comments($this->comments, 4);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optTableAlias->write($writer);
+        $writer->comments($this->comments, 6);
         $this->optUsePartition->write($writer);
+        $writer->comments($this->comments, 7);
         $this->where->write($writer);
+        $writer->comments($this->comments, 8);
         $this->orderBy->write($writer);
+        $writer->comments($this->comments, 9);
         $this->optSimpleLimit->write($writer);
     }
 
@@ -61,7 +72,7 @@ final class DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsFromTableIdentOp
      */
     public function withWith(\SqlSemantics\Statement\Model\MySql\Role\OptWithClauseForm $with): self
     {
-        return new self($with, $this->optDeleteOptions, $this->tableIdent, $this->optTableAlias, $this->optUsePartition, $this->where, $this->orderBy, $this->optSimpleLimit);
+        return new self($with, $this->optDeleteOptions, $this->tableIdent, $this->optTableAlias, $this->optUsePartition, $this->where, $this->orderBy, $this->optSimpleLimit, $this->comments);
     }
 
     /**
@@ -69,7 +80,7 @@ final class DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsFromTableIdentOp
      */
     public function withOptDeleteOptions(\SqlSemantics\Statement\Model\MySql\Role\OptDeleteOptionsForm $optDeleteOptions): self
     {
-        return new self($this->with, $optDeleteOptions, $this->tableIdent, $this->optTableAlias, $this->optUsePartition, $this->where, $this->orderBy, $this->optSimpleLimit);
+        return new self($this->with, $optDeleteOptions, $this->tableIdent, $this->optTableAlias, $this->optUsePartition, $this->where, $this->orderBy, $this->optSimpleLimit, $this->comments);
     }
 
     /**
@@ -77,7 +88,7 @@ final class DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsFromTableIdentOp
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($this->with, $this->optDeleteOptions, $tableIdent, $this->optTableAlias, $this->optUsePartition, $this->where, $this->orderBy, $this->optSimpleLimit);
+        return new self($this->with, $this->optDeleteOptions, $tableIdent, $this->optTableAlias, $this->optUsePartition, $this->where, $this->orderBy, $this->optSimpleLimit, $this->comments);
     }
 
     /**
@@ -85,7 +96,7 @@ final class DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsFromTableIdentOp
      */
     public function withOptTableAlias(\SqlSemantics\Statement\Model\MySql\Role\OptTableAliasForm $optTableAlias): self
     {
-        return new self($this->with, $this->optDeleteOptions, $this->tableIdent, $optTableAlias, $this->optUsePartition, $this->where, $this->orderBy, $this->optSimpleLimit);
+        return new self($this->with, $this->optDeleteOptions, $this->tableIdent, $optTableAlias, $this->optUsePartition, $this->where, $this->orderBy, $this->optSimpleLimit, $this->comments);
     }
 
     /**
@@ -93,7 +104,7 @@ final class DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsFromTableIdentOp
      */
     public function withOptUsePartition(\SqlSemantics\Statement\Model\MySql\Role\OptUsePartitionForm $optUsePartition): self
     {
-        return new self($this->with, $this->optDeleteOptions, $this->tableIdent, $this->optTableAlias, $optUsePartition, $this->where, $this->orderBy, $this->optSimpleLimit);
+        return new self($this->with, $this->optDeleteOptions, $this->tableIdent, $this->optTableAlias, $optUsePartition, $this->where, $this->orderBy, $this->optSimpleLimit, $this->comments);
     }
 
     /**
@@ -101,7 +112,7 @@ final class DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsFromTableIdentOp
      */
     public function withWhere(\SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm $where): self
     {
-        return new self($this->with, $this->optDeleteOptions, $this->tableIdent, $this->optTableAlias, $this->optUsePartition, $where, $this->orderBy, $this->optSimpleLimit);
+        return new self($this->with, $this->optDeleteOptions, $this->tableIdent, $this->optTableAlias, $this->optUsePartition, $where, $this->orderBy, $this->optSimpleLimit, $this->comments);
     }
 
     /**
@@ -109,7 +120,7 @@ final class DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsFromTableIdentOp
      */
     public function withOrderBy(\SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm $orderBy): self
     {
-        return new self($this->with, $this->optDeleteOptions, $this->tableIdent, $this->optTableAlias, $this->optUsePartition, $this->where, $orderBy, $this->optSimpleLimit);
+        return new self($this->with, $this->optDeleteOptions, $this->tableIdent, $this->optTableAlias, $this->optUsePartition, $this->where, $orderBy, $this->optSimpleLimit, $this->comments);
     }
 
     /**
@@ -117,6 +128,14 @@ final class DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsFromTableIdentOp
      */
     public function withOptSimpleLimit(\SqlSemantics\Statement\Model\MySql\Role\OptSimpleLimitForm $optSimpleLimit): self
     {
-        return new self($this->with, $this->optDeleteOptions, $this->tableIdent, $this->optTableAlias, $this->optUsePartition, $this->where, $this->orderBy, $optSimpleLimit);
+        return new self($this->with, $this->optDeleteOptions, $this->tableIdent, $this->optTableAlias, $this->optUsePartition, $this->where, $this->orderBy, $optSimpleLimit, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->with, $this->optDeleteOptions, $this->tableIdent, $this->optTableAlias, $this->optUsePartition, $this->where, $this->orderBy, $this->optSimpleLimit, $comments);
     }
 }

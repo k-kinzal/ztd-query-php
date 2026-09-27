@@ -17,13 +17,14 @@ final class SpPdparamWithSpOptInoutIdentTypeOptCollate_193121f1 implements \SqlS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpOptInoutForm $spOptInout,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TypeForm $type,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCollateForm $optCollate,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spOptInout), 'The spOptInout must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
@@ -36,9 +37,13 @@ final class SpPdparamWithSpOptInoutIdentTypeOptCollate_193121f1 implements \SqlS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->spOptInout->write($writer);
+        $writer->comments($this->comments, 1);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 2);
         $this->type->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optCollate->write($writer);
     }
 
@@ -47,7 +52,7 @@ final class SpPdparamWithSpOptInoutIdentTypeOptCollate_193121f1 implements \SqlS
      */
     public function withSpOptInout(\SqlSemantics\Statement\Model\MySql\Role\SpOptInoutForm $spOptInout): self
     {
-        return new self($spOptInout, $this->ident, $this->type, $this->optCollate);
+        return new self($spOptInout, $this->ident, $this->type, $this->optCollate, $this->comments);
     }
 
     /**
@@ -55,7 +60,7 @@ final class SpPdparamWithSpOptInoutIdentTypeOptCollate_193121f1 implements \SqlS
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($this->spOptInout, $ident, $this->type, $this->optCollate);
+        return new self($this->spOptInout, $ident, $this->type, $this->optCollate, $this->comments);
     }
 
     /**
@@ -63,7 +68,7 @@ final class SpPdparamWithSpOptInoutIdentTypeOptCollate_193121f1 implements \SqlS
      */
     public function withType(\SqlSemantics\Statement\Model\MySql\Role\TypeForm $type): self
     {
-        return new self($this->spOptInout, $this->ident, $type, $this->optCollate);
+        return new self($this->spOptInout, $this->ident, $type, $this->optCollate, $this->comments);
     }
 
     /**
@@ -71,6 +76,14 @@ final class SpPdparamWithSpOptInoutIdentTypeOptCollate_193121f1 implements \SqlS
      */
     public function withOptCollate(\SqlSemantics\Statement\Model\MySql\Role\OptCollateForm $optCollate): self
     {
-        return new self($this->spOptInout, $this->ident, $this->type, $optCollate);
+        return new self($this->spOptInout, $this->ident, $this->type, $optCollate, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->spOptInout, $this->ident, $this->type, $this->optCollate, $comments);
     }
 }

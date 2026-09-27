@@ -17,11 +17,12 @@ final class FieldListWithFieldListFieldListItem_ff2bc09a implements \SqlSemantic
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldListForm $fieldList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldListItemForm $fieldListItem,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldList), 'The fieldList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldListItem), 'The fieldListItem must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class FieldListWithFieldListFieldListItem_ff2bc09a implements \SqlSemantic
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->fieldList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->fieldListItem->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class FieldListWithFieldListFieldListItem_ff2bc09a implements \SqlSemantic
      */
     public function withFieldList(\SqlSemantics\Statement\Model\MySql\Role\FieldListForm $fieldList): self
     {
-        return new self($fieldList, $this->fieldListItem);
+        return new self($fieldList, $this->fieldListItem, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class FieldListWithFieldListFieldListItem_ff2bc09a implements \SqlSemantic
      */
     public function withFieldListItem(\SqlSemantics\Statement\Model\MySql\Role\FieldListItemForm $fieldListItem): self
     {
-        return new self($this->fieldList, $fieldListItem);
+        return new self($this->fieldList, $fieldListItem, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->fieldList, $this->fieldListItem, $comments);
     }
 }

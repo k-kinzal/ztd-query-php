@@ -17,11 +17,12 @@ final class AlterDatabaseOptionWithReadSymOnlySymOptEqualTernaryOption_73040304 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TernaryOptionForm $ternaryOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ternaryOption), 'The ternaryOption must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class AlterDatabaseOptionWithReadSymOnlySymOptEqualTernaryOption_73040304 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('READ');
+        $writer->comments($this->comments, 1);
         $writer->append('ONLY');
+        $writer->comments($this->comments, 2);
         $this->optEqual->write($writer);
+        $writer->comments($this->comments, 3);
         $this->ternaryOption->write($writer);
     }
 
@@ -43,7 +48,7 @@ final class AlterDatabaseOptionWithReadSymOnlySymOptEqualTernaryOption_73040304 
      */
     public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
     {
-        return new self($optEqual, $this->ternaryOption);
+        return new self($optEqual, $this->ternaryOption, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class AlterDatabaseOptionWithReadSymOnlySymOptEqualTernaryOption_73040304 
      */
     public function withTernaryOption(\SqlSemantics\Statement\Model\MySql\Role\TernaryOptionForm $ternaryOption): self
     {
-        return new self($this->optEqual, $ternaryOption);
+        return new self($this->optEqual, $ternaryOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optEqual, $this->ternaryOption, $comments);
     }
 }

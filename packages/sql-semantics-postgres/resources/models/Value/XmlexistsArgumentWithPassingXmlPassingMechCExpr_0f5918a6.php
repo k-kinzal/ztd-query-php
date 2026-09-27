@@ -17,11 +17,12 @@ final class XmlexistsArgumentWithPassingXmlPassingMechCExpr_0f5918a6 implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\XmlPassingMechForm $xmlPassingMech,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm $cExpr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($xmlPassingMech), 'The xmlPassingMech must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($cExpr), 'The cExpr must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class XmlexistsArgumentWithPassingXmlPassingMechCExpr_0f5918a6 implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('PASSING');
+        $writer->comments($this->comments, 1);
         $this->xmlPassingMech->write($writer);
+        $writer->comments($this->comments, 2);
         $this->cExpr->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class XmlexistsArgumentWithPassingXmlPassingMechCExpr_0f5918a6 implements 
      */
     public function withXmlPassingMech(\SqlSemantics\Statement\Model\PostgreSql\Role\XmlPassingMechForm $xmlPassingMech): self
     {
-        return new self($xmlPassingMech, $this->cExpr);
+        return new self($xmlPassingMech, $this->cExpr, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class XmlexistsArgumentWithPassingXmlPassingMechCExpr_0f5918a6 implements 
      */
     public function withCExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm $cExpr): self
     {
-        return new self($this->xmlPassingMech, $cExpr);
+        return new self($this->xmlPassingMech, $cExpr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->xmlPassingMech, $this->cExpr, $comments);
     }
 }

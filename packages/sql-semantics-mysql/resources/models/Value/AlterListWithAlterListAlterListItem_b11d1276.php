@@ -17,11 +17,12 @@ final class AlterListWithAlterListAlterListItem_b11d1276 implements \SqlSemantic
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterListForm $alterList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterListItemForm $alterListItem,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterList), 'The alterList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterListItem), 'The alterListItem must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class AlterListWithAlterListAlterListItem_b11d1276 implements \SqlSemantic
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->alterList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->alterListItem->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class AlterListWithAlterListAlterListItem_b11d1276 implements \SqlSemantic
      */
     public function withAlterList(\SqlSemantics\Statement\Model\MySql\Role\AlterListForm $alterList): self
     {
-        return new self($alterList, $this->alterListItem);
+        return new self($alterList, $this->alterListItem, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class AlterListWithAlterListAlterListItem_b11d1276 implements \SqlSemantic
      */
     public function withAlterListItem(\SqlSemantics\Statement\Model\MySql\Role\AlterListItemForm $alterListItem): self
     {
-        return new self($this->alterList, $alterListItem);
+        return new self($this->alterList, $alterListItem, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->alterList, $this->alterListItem, $comments);
     }
 }

@@ -17,12 +17,13 @@ final class CmdWithRollbackTransOptToSavepointOptNm_89eb621f implements \SqlSema
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TransOptForm $transOpt,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SavepointOptForm $savepointOpt,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($transOpt), 'The transOpt must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($savepointOpt), 'The savepointOpt must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class CmdWithRollbackTransOptToSavepointOptNm_89eb621f implements \SqlSema
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ROLLBACK');
+        $writer->comments($this->comments, 1);
         $this->transOpt->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('TO');
+        $writer->comments($this->comments, 3);
         $this->savepointOpt->write($writer);
+        $writer->comments($this->comments, 4);
         $this->nm->write($writer);
     }
 
@@ -46,7 +52,7 @@ final class CmdWithRollbackTransOptToSavepointOptNm_89eb621f implements \SqlSema
      */
     public function withTransOpt(\SqlSemantics\Statement\Model\Sqlite\Role\TransOptForm $transOpt): self
     {
-        return new self($transOpt, $this->savepointOpt, $this->nm);
+        return new self($transOpt, $this->savepointOpt, $this->nm, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class CmdWithRollbackTransOptToSavepointOptNm_89eb621f implements \SqlSema
      */
     public function withSavepointOpt(\SqlSemantics\Statement\Model\Sqlite\Role\SavepointOptForm $savepointOpt): self
     {
-        return new self($this->transOpt, $savepointOpt, $this->nm);
+        return new self($this->transOpt, $savepointOpt, $this->nm, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class CmdWithRollbackTransOptToSavepointOptNm_89eb621f implements \SqlSema
      */
     public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
     {
-        return new self($this->transOpt, $this->savepointOpt, $nm);
+        return new self($this->transOpt, $this->savepointOpt, $nm, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->transOpt, $this->savepointOpt, $this->nm, $comments);
     }
 }

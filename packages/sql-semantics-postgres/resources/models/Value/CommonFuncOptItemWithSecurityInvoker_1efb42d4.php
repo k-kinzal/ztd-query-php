@@ -15,11 +15,29 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
 final class CommonFuncOptItemWithSecurityInvoker_1efb42d4 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterfuncOptListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CommonFuncOptItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CreatefuncOptItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CreatefuncOptListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptCreatefuncOptListForm
 {
     /**
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
+     */
+    public function __construct(
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
+    ) {
+    }
+
+    /**
      * Writes SQL entirely from this value's fields.
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SECURITY');
+        $writer->comments($this->comments, 1);
         $writer->append('INVOKER');
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($comments);
     }
 }

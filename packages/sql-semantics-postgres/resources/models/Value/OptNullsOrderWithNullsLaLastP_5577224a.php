@@ -17,10 +17,11 @@ final class OptNullsOrderWithNullsLaLastP_5577224a implements \SqlSemantics\Stat
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $nullsLa,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($nullsLa, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['NULLS_LA'], 'The nullsLa must be a complete NULLS_LA lexical spelling.');
     }
@@ -30,7 +31,9 @@ final class OptNullsOrderWithNullsLaLastP_5577224a implements \SqlSemantics\Stat
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->nullsLa);
+        $writer->comments($this->comments, 1);
         $writer->append('LAST');
     }
 
@@ -39,6 +42,14 @@ final class OptNullsOrderWithNullsLaLastP_5577224a implements \SqlSemantics\Stat
      */
     public function withNullsLa(string $nullsLa): self
     {
-        return new self($nullsLa);
+        return new self($nullsLa, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->nullsLa, $comments);
     }
 }

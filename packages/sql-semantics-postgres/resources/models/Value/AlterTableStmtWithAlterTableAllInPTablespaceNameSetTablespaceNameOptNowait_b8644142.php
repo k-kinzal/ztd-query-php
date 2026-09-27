@@ -17,12 +17,13 @@ final class AlterTableStmtWithAlterTableAllInPTablespaceNameSetTablespaceNameOpt
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name2,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptNowaitForm $optNowait,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name2), 'The name2 must be a generated immutable SQL value.');
@@ -34,15 +35,25 @@ final class AlterTableStmtWithAlterTableAllInPTablespaceNameSetTablespaceNameOpt
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('TABLE');
+        $writer->comments($this->comments, 2);
         $writer->append('ALL');
+        $writer->comments($this->comments, 3);
         $writer->append('IN');
+        $writer->comments($this->comments, 4);
         $writer->append('TABLESPACE');
+        $writer->comments($this->comments, 5);
         $this->name->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append('SET');
+        $writer->comments($this->comments, 7);
         $writer->append('TABLESPACE');
+        $writer->comments($this->comments, 8);
         $this->name2->write($writer);
+        $writer->comments($this->comments, 9);
         $this->optNowait->write($writer);
     }
 
@@ -51,7 +62,7 @@ final class AlterTableStmtWithAlterTableAllInPTablespaceNameSetTablespaceNameOpt
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($name, $this->name2, $this->optNowait);
+        return new self($name, $this->name2, $this->optNowait, $this->comments);
     }
 
     /**
@@ -59,7 +70,7 @@ final class AlterTableStmtWithAlterTableAllInPTablespaceNameSetTablespaceNameOpt
      */
     public function withName2(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name2): self
     {
-        return new self($this->name, $name2, $this->optNowait);
+        return new self($this->name, $name2, $this->optNowait, $this->comments);
     }
 
     /**
@@ -67,6 +78,14 @@ final class AlterTableStmtWithAlterTableAllInPTablespaceNameSetTablespaceNameOpt
      */
     public function withOptNowait(\SqlSemantics\Statement\Model\PostgreSql\Role\OptNowaitForm $optNowait): self
     {
-        return new self($this->name, $this->name2, $optNowait);
+        return new self($this->name, $this->name2, $optNowait, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->name, $this->name2, $this->optNowait, $comments);
     }
 }

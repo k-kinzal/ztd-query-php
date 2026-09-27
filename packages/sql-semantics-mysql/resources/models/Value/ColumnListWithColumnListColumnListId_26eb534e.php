@@ -17,11 +17,12 @@ final class ColumnListWithColumnListColumnListId_26eb534e implements \SqlSemanti
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ColumnListForm $columnList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ColumnListIdForm $columnListId,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($columnList), 'The columnList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($columnListId), 'The columnListId must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class ColumnListWithColumnListColumnListId_26eb534e implements \SqlSemanti
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->columnList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->columnListId->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class ColumnListWithColumnListColumnListId_26eb534e implements \SqlSemanti
      */
     public function withColumnList(\SqlSemantics\Statement\Model\MySql\Role\ColumnListForm $columnList): self
     {
-        return new self($columnList, $this->columnListId);
+        return new self($columnList, $this->columnListId, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class ColumnListWithColumnListColumnListId_26eb534e implements \SqlSemanti
      */
     public function withColumnListId(\SqlSemantics\Statement\Model\MySql\Role\ColumnListIdForm $columnListId): self
     {
-        return new self($this->columnList, $columnListId);
+        return new self($this->columnList, $columnListId, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->columnList, $this->columnListId, $comments);
     }
 }

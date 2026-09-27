@@ -17,10 +17,11 @@ final class CastTypeWithUnsignedIntSym_6741dfef implements \SqlSemantics\Stateme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $intSym,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($intSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['INT_SYM'], 'The intSym must be a complete INT_SYM lexical spelling.');
     }
@@ -30,7 +31,9 @@ final class CastTypeWithUnsignedIntSym_6741dfef implements \SqlSemantics\Stateme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('UNSIGNED');
+        $writer->comments($this->comments, 1);
         $writer->append($this->intSym);
     }
 
@@ -39,6 +42,14 @@ final class CastTypeWithUnsignedIntSym_6741dfef implements \SqlSemantics\Stateme
      */
     public function withIntSym(string $intSym): self
     {
-        return new self($intSym);
+        return new self($intSym, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->intSym, $comments);
     }
 }

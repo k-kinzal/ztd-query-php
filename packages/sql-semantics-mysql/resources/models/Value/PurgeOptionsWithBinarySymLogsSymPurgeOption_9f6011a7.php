@@ -17,10 +17,11 @@ final class PurgeOptionsWithBinarySymLogsSymPurgeOption_9f6011a7 implements \Sql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PurgeOptionForm $purgeOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($purgeOption), 'The purgeOption must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class PurgeOptionsWithBinarySymLogsSymPurgeOption_9f6011a7 implements \Sql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('BINARY');
+        $writer->comments($this->comments, 1);
         $writer->append('LOGS');
+        $writer->comments($this->comments, 2);
         $this->purgeOption->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class PurgeOptionsWithBinarySymLogsSymPurgeOption_9f6011a7 implements \Sql
      */
     public function withPurgeOption(\SqlSemantics\Statement\Model\MySql\Role\PurgeOptionForm $purgeOption): self
     {
-        return new self($purgeOption);
+        return new self($purgeOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->purgeOption, $comments);
     }
 }

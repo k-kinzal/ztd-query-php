@@ -17,10 +17,11 @@ final class OptReplacePasswordWithReplaceSymTextStringPassword_baa2ba02 implemen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringPasswordForm $textStringPassword,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringPassword), 'The textStringPassword must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class OptReplacePasswordWithReplaceSymTextStringPassword_baa2ba02 implemen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('REPLACE');
+        $writer->comments($this->comments, 1);
         $this->textStringPassword->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class OptReplacePasswordWithReplaceSymTextStringPassword_baa2ba02 implemen
      */
     public function withTextStringPassword(\SqlSemantics\Statement\Model\MySql\Role\TextStringPasswordForm $textStringPassword): self
     {
-        return new self($textStringPassword);
+        return new self($textStringPassword, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->textStringPassword, $comments);
     }
 }

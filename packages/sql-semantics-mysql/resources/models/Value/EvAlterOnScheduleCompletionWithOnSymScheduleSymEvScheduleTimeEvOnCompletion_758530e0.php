@@ -17,11 +17,12 @@ final class EvAlterOnScheduleCompletionWithOnSymScheduleSymEvScheduleTimeEvOnCom
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EvScheduleTimeForm $evScheduleTime,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EvOnCompletionForm $evOnCompletion,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($evScheduleTime), 'The evScheduleTime must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($evOnCompletion), 'The evOnCompletion must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class EvAlterOnScheduleCompletionWithOnSymScheduleSymEvScheduleTimeEvOnCom
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ON');
+        $writer->comments($this->comments, 1);
         $writer->append('SCHEDULE');
+        $writer->comments($this->comments, 2);
         $this->evScheduleTime->write($writer);
+        $writer->comments($this->comments, 3);
         $this->evOnCompletion->write($writer);
     }
 
@@ -43,7 +48,7 @@ final class EvAlterOnScheduleCompletionWithOnSymScheduleSymEvScheduleTimeEvOnCom
      */
     public function withEvScheduleTime(\SqlSemantics\Statement\Model\MySql\Role\EvScheduleTimeForm $evScheduleTime): self
     {
-        return new self($evScheduleTime, $this->evOnCompletion);
+        return new self($evScheduleTime, $this->evOnCompletion, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class EvAlterOnScheduleCompletionWithOnSymScheduleSymEvScheduleTimeEvOnCom
      */
     public function withEvOnCompletion(\SqlSemantics\Statement\Model\MySql\Role\EvOnCompletionForm $evOnCompletion): self
     {
-        return new self($this->evScheduleTime, $evOnCompletion);
+        return new self($this->evScheduleTime, $evOnCompletion, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->evScheduleTime, $this->evOnCompletion, $comments);
     }
 }

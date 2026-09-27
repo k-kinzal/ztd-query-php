@@ -17,12 +17,13 @@ final class PartOptionWithOptStorageEngineSymOptEqualIdentOrText_6c2f88e4 implem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptStorageForm $optStorage,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optStorage), 'The optStorage must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class PartOptionWithOptStorageEngineSymOptEqualIdentOrText_6c2f88e4 implem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optStorage->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('ENGINE');
+        $writer->comments($this->comments, 2);
         $this->optEqual->write($writer);
+        $writer->comments($this->comments, 3);
         $this->identOrText->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class PartOptionWithOptStorageEngineSymOptEqualIdentOrText_6c2f88e4 implem
      */
     public function withOptStorage(\SqlSemantics\Statement\Model\MySql\Role\OptStorageForm $optStorage): self
     {
-        return new self($optStorage, $this->optEqual, $this->identOrText);
+        return new self($optStorage, $this->optEqual, $this->identOrText, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class PartOptionWithOptStorageEngineSymOptEqualIdentOrText_6c2f88e4 implem
      */
     public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
     {
-        return new self($this->optStorage, $optEqual, $this->identOrText);
+        return new self($this->optStorage, $optEqual, $this->identOrText, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class PartOptionWithOptStorageEngineSymOptEqualIdentOrText_6c2f88e4 implem
      */
     public function withIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText): self
     {
-        return new self($this->optStorage, $this->optEqual, $identOrText);
+        return new self($this->optStorage, $this->optEqual, $identOrText, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optStorage, $this->optEqual, $this->identOrText, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class ValuesRowListWithValuesRowListRowValueExplicit_734510f7 implements \
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ValuesRowListForm $valuesRowList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RowValueExplicitForm $rowValueExplicit,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($valuesRowList), 'The valuesRowList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($rowValueExplicit), 'The rowValueExplicit must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class ValuesRowListWithValuesRowListRowValueExplicit_734510f7 implements \
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->valuesRowList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->rowValueExplicit->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class ValuesRowListWithValuesRowListRowValueExplicit_734510f7 implements \
      */
     public function withValuesRowList(\SqlSemantics\Statement\Model\MySql\Role\ValuesRowListForm $valuesRowList): self
     {
-        return new self($valuesRowList, $this->rowValueExplicit);
+        return new self($valuesRowList, $this->rowValueExplicit, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class ValuesRowListWithValuesRowListRowValueExplicit_734510f7 implements \
      */
     public function withRowValueExplicit(\SqlSemantics\Statement\Model\MySql\Role\RowValueExplicitForm $rowValueExplicit): self
     {
-        return new self($this->valuesRowList, $rowValueExplicit);
+        return new self($this->valuesRowList, $rowValueExplicit, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->valuesRowList, $this->rowValueExplicit, $comments);
     }
 }

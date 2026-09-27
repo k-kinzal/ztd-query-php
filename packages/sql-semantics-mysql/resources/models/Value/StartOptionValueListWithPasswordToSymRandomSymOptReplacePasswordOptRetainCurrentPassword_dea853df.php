@@ -17,11 +17,12 @@ final class StartOptionValueListWithPasswordToSymRandomSymOptReplacePasswordOptR
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptReplacePasswordForm $optReplacePassword,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptRetainCurrentPasswordForm $optRetainCurrentPassword,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optReplacePassword), 'The optReplacePassword must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optRetainCurrentPassword), 'The optRetainCurrentPassword must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class StartOptionValueListWithPasswordToSymRandomSymOptReplacePasswordOptR
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('PASSWORD');
+        $writer->comments($this->comments, 1);
         $writer->append('TO');
+        $writer->comments($this->comments, 2);
         $writer->append('RANDOM');
+        $writer->comments($this->comments, 3);
         $this->optReplacePassword->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optRetainCurrentPassword->write($writer);
     }
 
@@ -44,7 +50,7 @@ final class StartOptionValueListWithPasswordToSymRandomSymOptReplacePasswordOptR
      */
     public function withOptReplacePassword(\SqlSemantics\Statement\Model\MySql\Role\OptReplacePasswordForm $optReplacePassword): self
     {
-        return new self($optReplacePassword, $this->optRetainCurrentPassword);
+        return new self($optReplacePassword, $this->optRetainCurrentPassword, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class StartOptionValueListWithPasswordToSymRandomSymOptReplacePasswordOptR
      */
     public function withOptRetainCurrentPassword(\SqlSemantics\Statement\Model\MySql\Role\OptRetainCurrentPasswordForm $optRetainCurrentPassword): self
     {
-        return new self($this->optReplacePassword, $optRetainCurrentPassword);
+        return new self($this->optReplacePassword, $optRetainCurrentPassword, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optReplacePassword, $this->optRetainCurrentPassword, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class FuncExprCommonSubexprWithJsonSerializeJsonValueExprJsonReturningClau
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprForm $jsonValueExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonReturningClauseOptForm $jsonReturningClauseOpt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonValueExpr), 'The jsonValueExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonReturningClauseOpt), 'The jsonReturningClauseOpt must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class FuncExprCommonSubexprWithJsonSerializeJsonValueExprJsonReturningClau
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('JSON_SERIALIZE');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->jsonValueExpr->write($writer);
+        $writer->comments($this->comments, 3);
         $this->jsonReturningClauseOpt->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
     }
 
@@ -44,7 +50,7 @@ final class FuncExprCommonSubexprWithJsonSerializeJsonValueExprJsonReturningClau
      */
     public function withJsonValueExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprForm $jsonValueExpr): self
     {
-        return new self($jsonValueExpr, $this->jsonReturningClauseOpt);
+        return new self($jsonValueExpr, $this->jsonReturningClauseOpt, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class FuncExprCommonSubexprWithJsonSerializeJsonValueExprJsonReturningClau
      */
     public function withJsonReturningClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonReturningClauseOptForm $jsonReturningClauseOpt): self
     {
-        return new self($this->jsonValueExpr, $jsonReturningClauseOpt);
+        return new self($this->jsonValueExpr, $jsonReturningClauseOpt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->jsonValueExpr, $this->jsonReturningClauseOpt, $comments);
     }
 }

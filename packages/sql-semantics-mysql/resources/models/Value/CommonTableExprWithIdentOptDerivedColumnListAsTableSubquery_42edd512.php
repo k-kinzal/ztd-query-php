@@ -17,12 +17,13 @@ final class CommonTableExprWithIdentOptDerivedColumnListAsTableSubquery_42edd512
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptDerivedColumnListForm $optDerivedColumnList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableSubqueryForm $tableSubquery,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDerivedColumnList), 'The optDerivedColumnList must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class CommonTableExprWithIdentOptDerivedColumnListAsTableSubquery_42edd512
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optDerivedColumnList->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('AS');
+        $writer->comments($this->comments, 3);
         $this->tableSubquery->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class CommonTableExprWithIdentOptDerivedColumnListAsTableSubquery_42edd512
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($ident, $this->optDerivedColumnList, $this->tableSubquery);
+        return new self($ident, $this->optDerivedColumnList, $this->tableSubquery, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class CommonTableExprWithIdentOptDerivedColumnListAsTableSubquery_42edd512
      */
     public function withOptDerivedColumnList(\SqlSemantics\Statement\Model\MySql\Role\OptDerivedColumnListForm $optDerivedColumnList): self
     {
-        return new self($this->ident, $optDerivedColumnList, $this->tableSubquery);
+        return new self($this->ident, $optDerivedColumnList, $this->tableSubquery, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class CommonTableExprWithIdentOptDerivedColumnListAsTableSubquery_42edd512
      */
     public function withTableSubquery(\SqlSemantics\Statement\Model\MySql\Role\TableSubqueryForm $tableSubquery): self
     {
-        return new self($this->ident, $this->optDerivedColumnList, $tableSubquery);
+        return new self($this->ident, $this->optDerivedColumnList, $tableSubquery, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ident, $this->optDerivedColumnList, $this->tableSubquery, $comments);
     }
 }

@@ -9,7 +9,7 @@ use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\Type\TypeDescriptor;
 
 /**
- * Interprets a supported built-in type declaration without erasing its modifiers.
+ * Interprets a declared type without erasing its modifiers.
  *
  * @visibility SqlSemantics
  */
@@ -23,11 +23,11 @@ final class TypeReader
     }
 
     /**
-     * Reads the declared built-in type and preserves its modifiers.
+     * Reads a declared type, including table-dependent storage rules and modifiers.
      */
-    public function read(Node $node): TypeDescriptor
+    public function read(Node $node, ?Node $table = null): TypeDescriptor
     {
-        return $this->dialect->platform()->types()->read($node);
+        return $this->dialect->platform()->types()->read($node, $table);
     }
 
     /**
