@@ -60,8 +60,11 @@ final class Traversal
      * Rebuilds a value from the leaves up, giving every value, children first, to the function.
      *
      * The function answers the value to keep, which may be the one it was
-     * given. A replacement must be a value the position accepts, and the
-     * replacement for the root is answered as is.
+     * given. A value nothing below which is replaced reaches the function as
+     * the value itself, so a value of the statement, such as the name of a
+     * resolved reference, can be recognized by identity. A replacement must
+     * be a value the position accepts, and the replacement for the root is
+     * answered as is.
      *
      * @param callable(Element): Element $replace
      */

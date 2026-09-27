@@ -52,13 +52,15 @@ final class SourceDefWithChangeReplicationSourceTlsCiphersuitesEqSourceTlsCipher
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->changeReplicationSourceTlsCiphersuites, \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceTlsCiphersuitesForm::class, $replace), $this->replacement($this->sourceTlsCiphersuitesDef, \SqlSemantics\Statement\Model\MySql\Role\SourceTlsCiphersuitesDefForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->changeReplicationSourceTlsCiphersuites, \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceTlsCiphersuitesForm::class, $replace), $this->replacement($this->sourceTlsCiphersuitesDef, \SqlSemantics\Statement\Model\MySql\Role\SourceTlsCiphersuitesDefForm::class, $replace)];
+
+        return $mapped === [$this->changeReplicationSourceTlsCiphersuites, $this->sourceTlsCiphersuitesDef] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

@@ -56,13 +56,15 @@ final class IndirectionElWithOptSliceBoundOptSliceBound_bc1730ea implements \Sql
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->optSliceBound, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm::class, $replace), $this->replacement($this->optSliceBound2, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optSliceBound, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm::class, $replace), $this->replacement($this->optSliceBound2, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm::class, $replace)];
+
+        return $mapped === [$this->optSliceBound, $this->optSliceBound2] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

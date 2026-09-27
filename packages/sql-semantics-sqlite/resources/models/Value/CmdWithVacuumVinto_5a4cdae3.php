@@ -48,13 +48,15 @@ final class CmdWithVacuumVinto_5a4cdae3 implements \SqlSemantics\Statement\Model
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->vinto, \SqlSemantics\Statement\Model\Sqlite\Role\VintoForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->vinto, \SqlSemantics\Statement\Model\Sqlite\Role\VintoForm::class, $replace)];
+
+        return $mapped === [$this->vinto] ? $this : new self($mapped[0], $this->comments);
     }
 
     /**

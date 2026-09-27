@@ -52,13 +52,15 @@ final class LoadDataSetListWithLoadDataSetListLoadDataSetElem_d637b29d implement
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->loadDataSetList, \SqlSemantics\Statement\Model\MySql\Role\LoadDataSetListForm::class, $replace), $this->replacement($this->loadDataSetElem, \SqlSemantics\Statement\Model\MySql\Role\LoadDataSetElemForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->loadDataSetList, \SqlSemantics\Statement\Model\MySql\Role\LoadDataSetListForm::class, $replace), $this->replacement($this->loadDataSetElem, \SqlSemantics\Statement\Model\MySql\Role\LoadDataSetElemForm::class, $replace)];
+
+        return $mapped === [$this->loadDataSetList, $this->loadDataSetElem] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

@@ -50,13 +50,15 @@ final class QueryExpressionBodyWithQuerySpecificationOptUnionOrderOrLimit_c93fd0
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->query, \SqlSemantics\Statement\Model\MySql\Role\QuerySpecificationForm::class, $replace), $this->replacement($this->optUnionOrderOrLimit, \SqlSemantics\Statement\Model\MySql\Role\OptUnionOrderOrLimitForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->query, \SqlSemantics\Statement\Model\MySql\Role\QuerySpecificationForm::class, $replace), $this->replacement($this->optUnionOrderOrLimit, \SqlSemantics\Statement\Model\MySql\Role\OptUnionOrderOrLimitForm::class, $replace)];
+
+        return $mapped === [$this->query, $this->optUnionOrderOrLimit] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

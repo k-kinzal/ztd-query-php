@@ -64,13 +64,15 @@ final class VacuumStmtWithVacuumOptFullOptFreezeOptVerboseOptAnalyzeOptVacuumRel
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->optFull, \SqlSemantics\Statement\Model\PostgreSql\Role\OptFullForm::class, $replace), $this->replacement($this->optFreeze, \SqlSemantics\Statement\Model\PostgreSql\Role\OptFreezeForm::class, $replace), $this->replacement($this->optVerbose, \SqlSemantics\Statement\Model\PostgreSql\Role\OptVerboseForm::class, $replace), $this->replacement($this->optAnalyze, \SqlSemantics\Statement\Model\PostgreSql\Role\OptAnalyzeForm::class, $replace), $this->replacement($this->optVacuumRelationList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptVacuumRelationListForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optFull, \SqlSemantics\Statement\Model\PostgreSql\Role\OptFullForm::class, $replace), $this->replacement($this->optFreeze, \SqlSemantics\Statement\Model\PostgreSql\Role\OptFreezeForm::class, $replace), $this->replacement($this->optVerbose, \SqlSemantics\Statement\Model\PostgreSql\Role\OptVerboseForm::class, $replace), $this->replacement($this->optAnalyze, \SqlSemantics\Statement\Model\PostgreSql\Role\OptAnalyzeForm::class, $replace), $this->replacement($this->optVacuumRelationList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptVacuumRelationListForm::class, $replace)];
+
+        return $mapped === [$this->optFull, $this->optFreeze, $this->optVerbose, $this->optAnalyze, $this->optVacuumRelationList] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $this->comments);
     }
 
     /**

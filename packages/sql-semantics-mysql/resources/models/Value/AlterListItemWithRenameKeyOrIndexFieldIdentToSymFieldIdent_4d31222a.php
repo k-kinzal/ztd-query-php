@@ -58,13 +58,15 @@ final class AlterListItemWithRenameKeyOrIndexFieldIdentToSymFieldIdent_4d31222a 
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->keyOrIndex, \SqlSemantics\Statement\Model\MySql\Role\KeyOrIndexForm::class, $replace), $this->replacement($this->fieldIdent, \SqlSemantics\Statement\Model\MySql\Role\FieldIdentForm::class, $replace), $this->replacement($this->fieldIdent2, \SqlSemantics\Statement\Model\MySql\Role\FieldIdentForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->keyOrIndex, \SqlSemantics\Statement\Model\MySql\Role\KeyOrIndexForm::class, $replace), $this->replacement($this->fieldIdent, \SqlSemantics\Statement\Model\MySql\Role\FieldIdentForm::class, $replace), $this->replacement($this->fieldIdent2, \SqlSemantics\Statement\Model\MySql\Role\FieldIdentForm::class, $replace)];
+
+        return $mapped === [$this->keyOrIndex, $this->fieldIdent, $this->fieldIdent2] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

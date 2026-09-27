@@ -70,13 +70,15 @@ final class ExecuteStmtWithCreateOptTempTableCreateAsTargetAsExecuteNameExecuteP
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->optTemp, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm::class, $replace), $this->replacement($this->createAsTarget, \SqlSemantics\Statement\Model\PostgreSql\Role\CreateAsTargetForm::class, $replace), $this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->executeParamClause, \SqlSemantics\Statement\Model\PostgreSql\Role\ExecuteParamClauseForm::class, $replace), $this->replacement($this->optWithData, \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithDataForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optTemp, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm::class, $replace), $this->replacement($this->createAsTarget, \SqlSemantics\Statement\Model\PostgreSql\Role\CreateAsTargetForm::class, $replace), $this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->executeParamClause, \SqlSemantics\Statement\Model\PostgreSql\Role\ExecuteParamClauseForm::class, $replace), $this->replacement($this->optWithData, \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithDataForm::class, $replace)];
+
+        return $mapped === [$this->optTemp, $this->createAsTarget, $this->name, $this->executeParamClause, $this->optWithData] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $this->comments);
     }
 
     /**

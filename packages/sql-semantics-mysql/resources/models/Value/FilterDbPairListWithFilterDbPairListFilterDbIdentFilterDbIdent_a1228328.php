@@ -62,13 +62,15 @@ final class FilterDbPairListWithFilterDbPairListFilterDbIdentFilterDbIdent_a1228
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->filterDbPairList, \SqlSemantics\Statement\Model\MySql\Role\FilterDbPairListForm::class, $replace), $this->replacement($this->filterDbIdent, \SqlSemantics\Statement\Model\MySql\Role\FilterDbIdentForm::class, $replace), $this->replacement($this->filterDbIdent2, \SqlSemantics\Statement\Model\MySql\Role\FilterDbIdentForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->filterDbPairList, \SqlSemantics\Statement\Model\MySql\Role\FilterDbPairListForm::class, $replace), $this->replacement($this->filterDbIdent, \SqlSemantics\Statement\Model\MySql\Role\FilterDbIdentForm::class, $replace), $this->replacement($this->filterDbIdent2, \SqlSemantics\Statement\Model\MySql\Role\FilterDbIdentForm::class, $replace)];
+
+        return $mapped === [$this->filterDbPairList, $this->filterDbIdent, $this->filterDbIdent2] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

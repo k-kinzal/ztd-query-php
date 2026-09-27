@@ -48,13 +48,15 @@ final class VarcharWithCharVarying_35d3e7d5 implements \SqlSemantics\Statement\M
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->char, \SqlSemantics\Statement\Model\MySql\Role\CharForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->char, \SqlSemantics\Statement\Model\MySql\Role\CharForm::class, $replace)];
+
+        return $mapped === [$this->char] ? $this : new self($mapped[0], $this->comments);
     }
 
     /**

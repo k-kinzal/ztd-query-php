@@ -54,13 +54,15 @@ final class TypeWithVarcharFieldLengthOptCharsetWithOptBinary_e26c3c11 implement
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->varchar, \SqlSemantics\Statement\Model\MySql\Role\VarcharForm::class, $replace), $this->replacement($this->fieldLength, \SqlSemantics\Statement\Model\MySql\Role\FieldLengthForm::class, $replace), $this->replacement($this->optCharsetWithOptBinary, \SqlSemantics\Statement\Model\MySql\Role\OptCharsetWithOptBinaryForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->varchar, \SqlSemantics\Statement\Model\MySql\Role\VarcharForm::class, $replace), $this->replacement($this->fieldLength, \SqlSemantics\Statement\Model\MySql\Role\FieldLengthForm::class, $replace), $this->replacement($this->optCharsetWithOptBinary, \SqlSemantics\Statement\Model\MySql\Role\OptCharsetWithOptBinaryForm::class, $replace)];
+
+        return $mapped === [$this->varchar, $this->fieldLength, $this->optCharsetWithOptBinary] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

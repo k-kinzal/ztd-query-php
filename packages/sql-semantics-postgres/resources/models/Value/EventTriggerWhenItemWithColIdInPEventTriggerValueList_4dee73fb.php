@@ -56,13 +56,15 @@ final class EventTriggerWhenItemWithColIdInPEventTriggerValueList_4dee73fb imple
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->colId, \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm::class, $replace), $this->replacement($this->eventTriggerValueList, \SqlSemantics\Statement\Model\PostgreSql\Role\EventTriggerValueListForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->colId, \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm::class, $replace), $this->replacement($this->eventTriggerValueList, \SqlSemantics\Statement\Model\PostgreSql\Role\EventTriggerValueListForm::class, $replace)];
+
+        return $mapped === [$this->colId, $this->eventTriggerValueList] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

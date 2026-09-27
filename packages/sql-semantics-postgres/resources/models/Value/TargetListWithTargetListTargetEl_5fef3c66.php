@@ -52,13 +52,15 @@ final class TargetListWithTargetListTargetEl_5fef3c66 implements \SqlSemantics\S
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->projections, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetListForm::class, $replace), $this->replacement($this->targetEl, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetElForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->projections, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetListForm::class, $replace), $this->replacement($this->targetEl, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetElForm::class, $replace)];
+
+        return $mapped === [$this->projections, $this->targetEl] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

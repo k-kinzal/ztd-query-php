@@ -54,13 +54,15 @@ final class TypeWithFloatSymFloatOptionsFieldOptions_5933fc02 implements \SqlSem
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->floatSym, $this->replacement($this->floatOptions, \SqlSemantics\Statement\Model\MySql\Role\FloatOptionsForm::class, $replace), $this->replacement($this->fieldOptions, \SqlSemantics\Statement\Model\MySql\Role\FieldOptionsForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->floatOptions, \SqlSemantics\Statement\Model\MySql\Role\FloatOptionsForm::class, $replace), $this->replacement($this->fieldOptions, \SqlSemantics\Statement\Model\MySql\Role\FieldOptionsForm::class, $replace)];
+
+        return $mapped === [$this->floatOptions, $this->fieldOptions] ? $this : new self($this->floatSym, $mapped[0], $mapped[1], $this->comments);
     }
 
     /**

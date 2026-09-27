@@ -54,13 +54,15 @@ final class EcmdWithExplainCmdxSemi_177c493a implements \SqlSemantics\Statement\
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->explain, \SqlSemantics\Statement\Model\Sqlite\Role\ExplainForm::class, $replace), $this->replacement($this->cmdx, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm::class, $replace), $this->semi, $this->comments);
+        $mapped = [$this->replacement($this->explain, \SqlSemantics\Statement\Model\Sqlite\Role\ExplainForm::class, $replace), $this->replacement($this->cmdx, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm::class, $replace)];
+
+        return $mapped === [$this->explain, $this->cmdx] ? $this : new self($mapped[0], $mapped[1], $this->semi, $this->comments);
     }
 
     /**

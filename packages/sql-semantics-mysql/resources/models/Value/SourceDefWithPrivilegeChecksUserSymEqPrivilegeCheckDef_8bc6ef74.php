@@ -50,13 +50,15 @@ final class SourceDefWithPrivilegeChecksUserSymEqPrivilegeCheckDef_8bc6ef74 impl
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->privilegeCheckDef, \SqlSemantics\Statement\Model\MySql\Role\PrivilegeCheckDefForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->privilegeCheckDef, \SqlSemantics\Statement\Model\MySql\Role\PrivilegeCheckDefForm::class, $replace)];
+
+        return $mapped === [$this->privilegeCheckDef] ? $this : new self($mapped[0], $this->comments);
     }
 
     /**

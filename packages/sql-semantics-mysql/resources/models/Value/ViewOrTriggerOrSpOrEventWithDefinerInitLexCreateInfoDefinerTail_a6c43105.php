@@ -54,13 +54,15 @@ final class ViewOrTriggerOrSpOrEventWithDefinerInitLexCreateInfoDefinerTail_a6c4
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->definer, \SqlSemantics\Statement\Model\MySql\Role\DefinerForm::class, $replace), $this->replacement($this->initLexCreateInfo, \SqlSemantics\Statement\Model\MySql\Role\InitLexCreateInfoForm::class, $replace), $this->replacement($this->definerTail, \SqlSemantics\Statement\Model\MySql\Role\DefinerTailForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->definer, \SqlSemantics\Statement\Model\MySql\Role\DefinerForm::class, $replace), $this->replacement($this->initLexCreateInfo, \SqlSemantics\Statement\Model\MySql\Role\InitLexCreateInfoForm::class, $replace), $this->replacement($this->definerTail, \SqlSemantics\Statement\Model\MySql\Role\DefinerTailForm::class, $replace)];
+
+        return $mapped === [$this->definer, $this->initLexCreateInfo, $this->definerTail] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

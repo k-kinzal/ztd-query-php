@@ -58,13 +58,15 @@ final class SignalInformationItemListWithSignalInformationItemListSignalConditio
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->signalInformationItemList, \SqlSemantics\Statement\Model\MySql\Role\SignalInformationItemListForm::class, $replace), $this->replacement($this->signalConditionInformationItemName, \SqlSemantics\Statement\Model\MySql\Role\SignalConditionInformationItemNameForm::class, $replace), $this->replacement($this->signalAllowedExpr, \SqlSemantics\Statement\Model\MySql\Role\SignalAllowedExprForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->signalInformationItemList, \SqlSemantics\Statement\Model\MySql\Role\SignalInformationItemListForm::class, $replace), $this->replacement($this->signalConditionInformationItemName, \SqlSemantics\Statement\Model\MySql\Role\SignalConditionInformationItemNameForm::class, $replace), $this->replacement($this->signalAllowedExpr, \SqlSemantics\Statement\Model\MySql\Role\SignalAllowedExprForm::class, $replace)];
+
+        return $mapped === [$this->signalInformationItemList, $this->signalConditionInformationItemName, $this->signalAllowedExpr] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

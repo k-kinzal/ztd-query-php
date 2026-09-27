@@ -64,13 +64,15 @@ final class FuncExprCommonSubexprWithJsonObjectJsonNameAndValueListJsonObjectCon
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->jsonNameAndValueList, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonNameAndValueListForm::class, $replace), $this->replacement($this->jsonObjectConstructorNullClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonObjectConstructorNullClauseOptForm::class, $replace), $this->replacement($this->jsonKeyUniquenessConstraintOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonKeyUniquenessConstraintOptForm::class, $replace), $this->replacement($this->jsonOutputClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonOutputClauseOptForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->jsonNameAndValueList, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonNameAndValueListForm::class, $replace), $this->replacement($this->jsonObjectConstructorNullClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonObjectConstructorNullClauseOptForm::class, $replace), $this->replacement($this->jsonKeyUniquenessConstraintOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonKeyUniquenessConstraintOptForm::class, $replace), $this->replacement($this->jsonOutputClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonOutputClauseOptForm::class, $replace)];
+
+        return $mapped === [$this->jsonNameAndValueList, $this->jsonObjectConstructorNullClauseOpt, $this->jsonKeyUniquenessConstraintOpt, $this->jsonOutputClauseOpt] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $this->comments);
     }
 
     /**

@@ -76,13 +76,15 @@ final class OneselectWithSelectDistinctSelcollistFromWhereOptGroupbyOptHavingOpt
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->distinct, \SqlSemantics\Statement\Model\Sqlite\Role\DistinctForm::class, $replace), $this->replacement($this->projections, \SqlSemantics\Statement\Model\Sqlite\Role\SelcollistForm::class, $replace), $this->replacement($this->from, \SqlSemantics\Statement\Model\Sqlite\Role\FromForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm::class, $replace), $this->replacement($this->groupBy, \SqlSemantics\Statement\Model\Sqlite\Role\GroupbyOptForm::class, $replace), $this->replacement($this->having, \SqlSemantics\Statement\Model\Sqlite\Role\HavingOptForm::class, $replace), $this->replacement($this->orderBy, \SqlSemantics\Statement\Model\Sqlite\Role\OrderbyOptForm::class, $replace), $this->replacement($this->pagination, \SqlSemantics\Statement\Model\Sqlite\Role\LimitOptForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->distinct, \SqlSemantics\Statement\Model\Sqlite\Role\DistinctForm::class, $replace), $this->replacement($this->projections, \SqlSemantics\Statement\Model\Sqlite\Role\SelcollistForm::class, $replace), $this->replacement($this->from, \SqlSemantics\Statement\Model\Sqlite\Role\FromForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm::class, $replace), $this->replacement($this->groupBy, \SqlSemantics\Statement\Model\Sqlite\Role\GroupbyOptForm::class, $replace), $this->replacement($this->having, \SqlSemantics\Statement\Model\Sqlite\Role\HavingOptForm::class, $replace), $this->replacement($this->orderBy, \SqlSemantics\Statement\Model\Sqlite\Role\OrderbyOptForm::class, $replace), $this->replacement($this->pagination, \SqlSemantics\Statement\Model\Sqlite\Role\LimitOptForm::class, $replace)];
+
+        return $mapped === [$this->distinct, $this->projections, $this->from, $this->where, $this->groupBy, $this->having, $this->orderBy, $this->pagination] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $mapped[5], $mapped[6], $mapped[7], $this->comments);
     }
 
     /**

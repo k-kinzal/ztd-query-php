@@ -76,13 +76,15 @@ final class ConstraintElemWithForeignKeyColumnListReferencesQualifiedNameOptColu
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->columnList, \SqlSemantics\Statement\Model\PostgreSql\Role\ColumnListForm::class, $replace), $this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->optColumnList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnListForm::class, $replace), $this->replacement($this->keyMatch, \SqlSemantics\Statement\Model\PostgreSql\Role\KeyMatchForm::class, $replace), $this->replacement($this->keyActions, \SqlSemantics\Statement\Model\PostgreSql\Role\KeyActionsForm::class, $replace), $this->replacement($this->constraintAttributeSpec, \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeSpecForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->columnList, \SqlSemantics\Statement\Model\PostgreSql\Role\ColumnListForm::class, $replace), $this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->optColumnList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnListForm::class, $replace), $this->replacement($this->keyMatch, \SqlSemantics\Statement\Model\PostgreSql\Role\KeyMatchForm::class, $replace), $this->replacement($this->keyActions, \SqlSemantics\Statement\Model\PostgreSql\Role\KeyActionsForm::class, $replace), $this->replacement($this->constraintAttributeSpec, \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeSpecForm::class, $replace)];
+
+        return $mapped === [$this->columnList, $this->qualifiedName, $this->optColumnList, $this->keyMatch, $this->keyActions, $this->constraintAttributeSpec] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $mapped[5], $this->comments);
     }
 
     /**

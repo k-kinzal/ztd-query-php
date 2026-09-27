@@ -50,13 +50,15 @@ final class OptAttributeListWithOptAttributeListAttribute_1ec347af implements \S
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->optAttributeList, \SqlSemantics\Statement\Model\MySql\Role\OptAttributeListForm::class, $replace), $this->replacement($this->attribute, \SqlSemantics\Statement\Model\MySql\Role\AttributeForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optAttributeList, \SqlSemantics\Statement\Model\MySql\Role\OptAttributeListForm::class, $replace), $this->replacement($this->attribute, \SqlSemantics\Statement\Model\MySql\Role\AttributeForm::class, $replace)];
+
+        return $mapped === [$this->optAttributeList, $this->attribute] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

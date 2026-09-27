@@ -52,13 +52,15 @@ final class ExecuteVarListWithExecuteVarListExecuteVarIdent_52936c33 implements 
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->executeVarList, \SqlSemantics\Statement\Model\MySql\Role\ExecuteVarListForm::class, $replace), $this->replacement($this->executeVarIdent, \SqlSemantics\Statement\Model\MySql\Role\ExecuteVarIdentForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->executeVarList, \SqlSemantics\Statement\Model\MySql\Role\ExecuteVarListForm::class, $replace), $this->replacement($this->executeVarIdent, \SqlSemantics\Statement\Model\MySql\Role\ExecuteVarIdentForm::class, $replace)];
+
+        return $mapped === [$this->executeVarList, $this->executeVarIdent] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

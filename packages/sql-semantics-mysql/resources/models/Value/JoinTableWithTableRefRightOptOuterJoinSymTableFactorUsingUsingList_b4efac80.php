@@ -68,13 +68,15 @@ final class JoinTableWithTableRefRightOptOuterJoinSymTableFactorUsingUsingList_b
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->tableRef, \SqlSemantics\Statement\Model\MySql\Role\TableRefForm::class, $replace), $this->replacement($this->optOuter, \SqlSemantics\Statement\Model\MySql\Role\OptOuterForm::class, $replace), $this->replacement($this->tableFactor, \SqlSemantics\Statement\Model\MySql\Role\TableFactorForm::class, $replace), $this->replacement($this->usingList, \SqlSemantics\Statement\Model\MySql\Role\UsingListForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->tableRef, \SqlSemantics\Statement\Model\MySql\Role\TableRefForm::class, $replace), $this->replacement($this->optOuter, \SqlSemantics\Statement\Model\MySql\Role\OptOuterForm::class, $replace), $this->replacement($this->tableFactor, \SqlSemantics\Statement\Model\MySql\Role\TableFactorForm::class, $replace), $this->replacement($this->usingList, \SqlSemantics\Statement\Model\MySql\Role\UsingListForm::class, $replace)];
+
+        return $mapped === [$this->tableRef, $this->optOuter, $this->tableFactor, $this->usingList] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $this->comments);
     }
 
     /**

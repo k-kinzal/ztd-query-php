@@ -54,13 +54,15 @@ final class SelectItemWithRememberNameTableWildRememberEnd_453e61c2 implements \
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->rememberName, \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm::class, $replace), $this->replacement($this->tableWild, \SqlSemantics\Statement\Model\MySql\Role\TableWildForm::class, $replace), $this->replacement($this->rememberEnd, \SqlSemantics\Statement\Model\MySql\Role\RememberEndForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->rememberName, \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm::class, $replace), $this->replacement($this->tableWild, \SqlSemantics\Statement\Model\MySql\Role\TableWildForm::class, $replace), $this->replacement($this->rememberEnd, \SqlSemantics\Statement\Model\MySql\Role\RememberEndForm::class, $replace)];
+
+        return $mapped === [$this->rememberName, $this->tableWild, $this->rememberEnd] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

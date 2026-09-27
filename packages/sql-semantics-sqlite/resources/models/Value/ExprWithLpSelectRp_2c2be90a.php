@@ -50,13 +50,15 @@ final class ExprWithLpSelectRp_2c2be90a implements \SqlSemantics\Statement\Model
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->select, \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->select, \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm::class, $replace)];
+
+        return $mapped === [$this->select] ? $this : new self($mapped[0], $this->comments);
     }
 
     /**

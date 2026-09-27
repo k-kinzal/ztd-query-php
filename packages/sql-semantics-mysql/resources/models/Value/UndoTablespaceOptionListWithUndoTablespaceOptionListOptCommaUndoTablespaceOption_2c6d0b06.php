@@ -54,13 +54,15 @@ final class UndoTablespaceOptionListWithUndoTablespaceOptionListOptCommaUndoTabl
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->undoTablespaceOptionList, \SqlSemantics\Statement\Model\MySql\Role\UndoTablespaceOptionListForm::class, $replace), $this->replacement($this->optComma, \SqlSemantics\Statement\Model\MySql\Role\OptCommaForm::class, $replace), $this->replacement($this->undoTablespaceOption, \SqlSemantics\Statement\Model\MySql\Role\UndoTablespaceOptionForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->undoTablespaceOptionList, \SqlSemantics\Statement\Model\MySql\Role\UndoTablespaceOptionListForm::class, $replace), $this->replacement($this->optComma, \SqlSemantics\Statement\Model\MySql\Role\OptCommaForm::class, $replace), $this->replacement($this->undoTablespaceOption, \SqlSemantics\Statement\Model\MySql\Role\UndoTablespaceOptionForm::class, $replace)];
+
+        return $mapped === [$this->undoTablespaceOptionList, $this->optComma, $this->undoTablespaceOption] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

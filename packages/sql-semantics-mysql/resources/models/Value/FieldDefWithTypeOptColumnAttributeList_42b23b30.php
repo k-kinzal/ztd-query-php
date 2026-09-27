@@ -50,13 +50,15 @@ final class FieldDefWithTypeOptColumnAttributeList_42b23b30 implements \SqlSeman
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->type, \SqlSemantics\Statement\Model\MySql\Role\TypeForm::class, $replace), $this->replacement($this->optColumnAttributeList, \SqlSemantics\Statement\Model\MySql\Role\OptColumnAttributeListForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->type, \SqlSemantics\Statement\Model\MySql\Role\TypeForm::class, $replace), $this->replacement($this->optColumnAttributeList, \SqlSemantics\Statement\Model\MySql\Role\OptColumnAttributeListForm::class, $replace)];
+
+        return $mapped === [$this->type, $this->optColumnAttributeList] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

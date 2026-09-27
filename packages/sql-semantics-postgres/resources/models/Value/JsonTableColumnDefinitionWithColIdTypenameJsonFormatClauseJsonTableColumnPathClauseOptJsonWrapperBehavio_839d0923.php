@@ -70,13 +70,15 @@ final class JsonTableColumnDefinitionWithColIdTypenameJsonFormatClauseJsonTableC
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->colId, \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm::class, $replace), $this->replacement($this->typename, \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm::class, $replace), $this->replacement($this->jsonFormatClause, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonFormatClauseForm::class, $replace), $this->replacement($this->jsonTableColumnPathClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnPathClauseOptForm::class, $replace), $this->replacement($this->jsonWrapperBehavior, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonWrapperBehaviorForm::class, $replace), $this->replacement($this->jsonQuotesClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonQuotesClauseOptForm::class, $replace), $this->replacement($this->jsonBehaviorClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorClauseOptForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->colId, \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm::class, $replace), $this->replacement($this->typename, \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm::class, $replace), $this->replacement($this->jsonFormatClause, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonFormatClauseForm::class, $replace), $this->replacement($this->jsonTableColumnPathClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnPathClauseOptForm::class, $replace), $this->replacement($this->jsonWrapperBehavior, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonWrapperBehaviorForm::class, $replace), $this->replacement($this->jsonQuotesClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonQuotesClauseOptForm::class, $replace), $this->replacement($this->jsonBehaviorClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorClauseOptForm::class, $replace)];
+
+        return $mapped === [$this->colId, $this->typename, $this->jsonFormatClause, $this->jsonTableColumnPathClauseOpt, $this->jsonWrapperBehavior, $this->jsonQuotesClauseOpt, $this->jsonBehaviorClauseOpt] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $mapped[5], $mapped[6], $this->comments);
     }
 
     /**

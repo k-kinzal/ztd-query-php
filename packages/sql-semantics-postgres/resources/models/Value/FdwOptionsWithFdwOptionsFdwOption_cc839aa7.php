@@ -50,13 +50,15 @@ final class FdwOptionsWithFdwOptionsFdwOption_cc839aa7 implements \SqlSemantics\
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->fdwOptions, \SqlSemantics\Statement\Model\PostgreSql\Role\FdwOptionsForm::class, $replace), $this->replacement($this->fdwOption, \SqlSemantics\Statement\Model\PostgreSql\Role\FdwOptionForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->fdwOptions, \SqlSemantics\Statement\Model\PostgreSql\Role\FdwOptionsForm::class, $replace), $this->replacement($this->fdwOption, \SqlSemantics\Statement\Model\PostgreSql\Role\FdwOptionForm::class, $replace)];
+
+        return $mapped === [$this->fdwOptions, $this->fdwOption] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

@@ -104,12 +104,12 @@ final class Resolver
             throw new SemanticException('duplicate-table', 'Duplicate table declaration: ' . $table, $tree);
         }
         if ($known !== null) {
-            return new Reference($site->value, $site->name, ReferenceKind::Dependency, $known[1], $known[0], true);
+            return new Reference($site->value, $site->name, ReferenceKind::Dependency, $known[1], $known[0], true, $site->values);
         }
         $definition = $this->declared($declarations, $relations, $schema, $table);
         $relations->declare($schema, $table, $definition, null);
 
-        return new Reference($site->value, $site->name, ReferenceKind::Declaration, null, $definition, $site->conditional);
+        return new Reference($site->value, $site->name, ReferenceKind::Declaration, null, $definition, $site->conditional, $site->values);
     }
 
     /**
@@ -120,7 +120,7 @@ final class Resolver
     public function refer(NameSite $site, Relations $relations, Node $tree): Reference
     {
         if ($site->kind === ReferenceKind::CommonTableExpression) {
-            return new Reference($site->value, $site->name, ReferenceKind::CommonTableExpression);
+            return new Reference($site->value, $site->name, ReferenceKind::CommonTableExpression, values: $site->values);
         }
         [$schema, $table] = $relations->qualified($site->name);
         $known = $relations->lookup($schema, $table);
@@ -129,16 +129,16 @@ final class Resolver
                 throw new SemanticException('unknown-table', 'Cannot drop an unknown table: ' . $table, $tree);
             }
 
-            return new Reference($site->value, $site->name, ReferenceKind::Drop, $known[1] ?? null, $known[0] ?? null, $site->conditional);
+            return new Reference($site->value, $site->name, ReferenceKind::Drop, $known[1] ?? null, $known[0] ?? null, $site->conditional, $site->values);
         }
         if ($site->scope->contains($site->name, $this->language->dialect->platform()->names())) {
-            return new Reference($site->value, $site->name, ReferenceKind::CommonTableExpression);
+            return new Reference($site->value, $site->name, ReferenceKind::CommonTableExpression, values: $site->values);
         }
         if ($known === null) {
             throw new SemanticException('unknown-table', 'No dependency declares the table ' . implode('.', $site->name), $tree);
         }
 
-        return new Reference($site->value, $site->name, $known[1] === null ? ReferenceKind::Declaration : ReferenceKind::Dependency, $known[1], $known[0]);
+        return new Reference($site->value, $site->name, $known[1] === null ? ReferenceKind::Declaration : ReferenceKind::Dependency, $known[1], $known[0], false, $site->values);
     }
 
     /**

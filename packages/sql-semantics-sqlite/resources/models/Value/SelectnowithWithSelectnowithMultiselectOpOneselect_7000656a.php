@@ -54,13 +54,15 @@ final class SelectnowithWithSelectnowithMultiselectOpOneselect_7000656a implemen
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->selectnowith, \SqlSemantics\Statement\Model\Sqlite\Role\SelectnowithForm::class, $replace), $this->replacement($this->multiselectOp, \SqlSemantics\Statement\Model\Sqlite\Role\MultiselectOpForm::class, $replace), $this->replacement($this->oneselect, \SqlSemantics\Statement\Model\Sqlite\Role\OneselectForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->selectnowith, \SqlSemantics\Statement\Model\Sqlite\Role\SelectnowithForm::class, $replace), $this->replacement($this->multiselectOp, \SqlSemantics\Statement\Model\Sqlite\Role\MultiselectOpForm::class, $replace), $this->replacement($this->oneselect, \SqlSemantics\Statement\Model\Sqlite\Role\OneselectForm::class, $replace)];
+
+        return $mapped === [$this->selectnowith, $this->multiselectOp, $this->oneselect] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

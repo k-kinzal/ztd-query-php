@@ -52,13 +52,15 @@ final class StartTransactionOptionListWithStartTransactionOptionListStartTransac
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->startTransactionOptionList, \SqlSemantics\Statement\Model\MySql\Role\StartTransactionOptionListForm::class, $replace), $this->replacement($this->startTransactionOption, \SqlSemantics\Statement\Model\MySql\Role\StartTransactionOptionForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->startTransactionOptionList, \SqlSemantics\Statement\Model\MySql\Role\StartTransactionOptionListForm::class, $replace), $this->replacement($this->startTransactionOption, \SqlSemantics\Statement\Model\MySql\Role\StartTransactionOptionForm::class, $replace)];
+
+        return $mapped === [$this->startTransactionOptionList, $this->startTransactionOption] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

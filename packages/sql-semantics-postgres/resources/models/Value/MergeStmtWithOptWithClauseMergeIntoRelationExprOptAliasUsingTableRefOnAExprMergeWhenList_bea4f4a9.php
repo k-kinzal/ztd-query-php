@@ -70,13 +70,15 @@ final class MergeStmtWithOptWithClauseMergeIntoRelationExprOptAliasUsingTableRef
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->with, \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithClauseForm::class, $replace), $this->replacement($this->relationExprOptAlias, \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprOptAliasForm::class, $replace), $this->replacement($this->tableRef, \SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm::class, $replace), $this->replacement($this->aExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm::class, $replace), $this->replacement($this->mergeWhenList, \SqlSemantics\Statement\Model\PostgreSql\Role\MergeWhenListForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->with, \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithClauseForm::class, $replace), $this->replacement($this->relationExprOptAlias, \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprOptAliasForm::class, $replace), $this->replacement($this->tableRef, \SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm::class, $replace), $this->replacement($this->aExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm::class, $replace), $this->replacement($this->mergeWhenList, \SqlSemantics\Statement\Model\PostgreSql\Role\MergeWhenListForm::class, $replace)];
+
+        return $mapped === [$this->with, $this->relationExprOptAlias, $this->tableRef, $this->aExpr, $this->mergeWhenList] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $this->comments);
     }
 
     /**

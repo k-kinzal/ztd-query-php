@@ -52,13 +52,15 @@ final class ShowParamWithOptVarTypeVariablesOptWildOrWhereForShow_cae7073b imple
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->optVarType, \SqlSemantics\Statement\Model\MySql\Role\OptVarTypeForm::class, $replace), $this->replacement($this->optWildOrWhereForShow, \SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForShowForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optVarType, \SqlSemantics\Statement\Model\MySql\Role\OptVarTypeForm::class, $replace), $this->replacement($this->optWildOrWhereForShow, \SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForShowForm::class, $replace)];
+
+        return $mapped === [$this->optVarType, $this->optWildOrWhereForShow] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

@@ -90,13 +90,15 @@ final class CreateStmtWithCreateOptTempTableIfPNotExistsQualifiedNameOfAnyNameOp
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->optTemp, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm::class, $replace), $this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->anyName, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm::class, $replace), $this->replacement($this->optTypedTableElementList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTypedTableElementListForm::class, $replace), $this->replacement($this->optPartitionSpec, \SqlSemantics\Statement\Model\PostgreSql\Role\OptPartitionSpecForm::class, $replace), $this->replacement($this->tableAccessMethodClause, \SqlSemantics\Statement\Model\PostgreSql\Role\TableAccessMethodClauseForm::class, $replace), $this->replacement($this->optWith, \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm::class, $replace), $this->replacement($this->onCommitOption, \SqlSemantics\Statement\Model\PostgreSql\Role\OnCommitOptionForm::class, $replace), $this->replacement($this->optTableSpace, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTableSpaceForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optTemp, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm::class, $replace), $this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->anyName, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm::class, $replace), $this->replacement($this->optTypedTableElementList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTypedTableElementListForm::class, $replace), $this->replacement($this->optPartitionSpec, \SqlSemantics\Statement\Model\PostgreSql\Role\OptPartitionSpecForm::class, $replace), $this->replacement($this->tableAccessMethodClause, \SqlSemantics\Statement\Model\PostgreSql\Role\TableAccessMethodClauseForm::class, $replace), $this->replacement($this->optWith, \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm::class, $replace), $this->replacement($this->onCommitOption, \SqlSemantics\Statement\Model\PostgreSql\Role\OnCommitOptionForm::class, $replace), $this->replacement($this->optTableSpace, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTableSpaceForm::class, $replace)];
+
+        return $mapped === [$this->optTemp, $this->qualifiedName, $this->anyName, $this->optTypedTableElementList, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $mapped[5], $mapped[6], $mapped[7], $mapped[8], $this->comments);
     }
 
     /**

@@ -52,13 +52,15 @@ final class SpFdparamsWithSpFdparamsSpFdparam_20e01a48 implements \SqlSemantics\
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->spFdparams, \SqlSemantics\Statement\Model\MySql\Role\SpFdparamsForm::class, $replace), $this->replacement($this->spFdparam, \SqlSemantics\Statement\Model\MySql\Role\SpFdparamForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->spFdparams, \SqlSemantics\Statement\Model\MySql\Role\SpFdparamsForm::class, $replace), $this->replacement($this->spFdparam, \SqlSemantics\Statement\Model\MySql\Role\SpFdparamForm::class, $replace)];
+
+        return $mapped === [$this->spFdparams, $this->spFdparam] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

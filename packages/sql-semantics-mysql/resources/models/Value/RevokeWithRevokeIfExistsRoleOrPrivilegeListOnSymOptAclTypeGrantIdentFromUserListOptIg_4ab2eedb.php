@@ -72,13 +72,15 @@ final class RevokeWithRevokeIfExistsRoleOrPrivilegeListOnSymOptAclTypeGrantIdent
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->ifExists, \SqlSemantics\Statement\Model\MySql\Role\IfExistsForm::class, $replace), $this->replacement($this->roleOrPrivilegeList, \SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeListForm::class, $replace), $this->replacement($this->optAclType, \SqlSemantics\Statement\Model\MySql\Role\OptAclTypeForm::class, $replace), $this->replacement($this->grantIdent, \SqlSemantics\Statement\Model\MySql\Role\GrantIdentForm::class, $replace), $this->replacement($this->userList, \SqlSemantics\Statement\Model\MySql\Role\UserListForm::class, $replace), $this->replacement($this->optIgnoreUnknownUser, \SqlSemantics\Statement\Model\MySql\Role\OptIgnoreUnknownUserForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->ifExists, \SqlSemantics\Statement\Model\MySql\Role\IfExistsForm::class, $replace), $this->replacement($this->roleOrPrivilegeList, \SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeListForm::class, $replace), $this->replacement($this->optAclType, \SqlSemantics\Statement\Model\MySql\Role\OptAclTypeForm::class, $replace), $this->replacement($this->grantIdent, \SqlSemantics\Statement\Model\MySql\Role\GrantIdentForm::class, $replace), $this->replacement($this->userList, \SqlSemantics\Statement\Model\MySql\Role\UserListForm::class, $replace), $this->replacement($this->optIgnoreUnknownUser, \SqlSemantics\Statement\Model\MySql\Role\OptIgnoreUnknownUserForm::class, $replace)];
+
+        return $mapped === [$this->ifExists, $this->roleOrPrivilegeList, $this->optAclType, $this->grantIdent, $this->userList, $this->optIgnoreUnknownUser] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $mapped[5], $this->comments);
     }
 
     /**

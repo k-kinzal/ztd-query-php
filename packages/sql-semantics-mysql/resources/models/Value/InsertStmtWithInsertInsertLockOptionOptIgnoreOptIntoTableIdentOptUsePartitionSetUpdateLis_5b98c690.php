@@ -74,13 +74,15 @@ final class InsertStmtWithInsertInsertLockOptionOptIgnoreOptIntoTableIdentOptUse
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->insertLockOption, \SqlSemantics\Statement\Model\MySql\Role\InsertLockOptionForm::class, $replace), $this->replacement($this->optIgnore, \SqlSemantics\Statement\Model\MySql\Role\OptIgnoreForm::class, $replace), $this->replacement($this->optInto, \SqlSemantics\Statement\Model\MySql\Role\OptIntoForm::class, $replace), $this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->optUsePartition, \SqlSemantics\Statement\Model\MySql\Role\OptUsePartitionForm::class, $replace), $this->replacement($this->updateList, \SqlSemantics\Statement\Model\MySql\Role\UpdateListForm::class, $replace), $this->replacement($this->optInsertUpdateList, \SqlSemantics\Statement\Model\MySql\Role\OptInsertUpdateListForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->insertLockOption, \SqlSemantics\Statement\Model\MySql\Role\InsertLockOptionForm::class, $replace), $this->replacement($this->optIgnore, \SqlSemantics\Statement\Model\MySql\Role\OptIgnoreForm::class, $replace), $this->replacement($this->optInto, \SqlSemantics\Statement\Model\MySql\Role\OptIntoForm::class, $replace), $this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->optUsePartition, \SqlSemantics\Statement\Model\MySql\Role\OptUsePartitionForm::class, $replace), $this->replacement($this->updateList, \SqlSemantics\Statement\Model\MySql\Role\UpdateListForm::class, $replace), $this->replacement($this->optInsertUpdateList, \SqlSemantics\Statement\Model\MySql\Role\OptInsertUpdateListForm::class, $replace)];
+
+        return $mapped === [$this->insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $this->updateList, $this->optInsertUpdateList] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $mapped[5], $mapped[6], $this->comments);
     }
 
     /**

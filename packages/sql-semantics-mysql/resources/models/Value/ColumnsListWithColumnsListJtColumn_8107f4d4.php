@@ -52,13 +52,15 @@ final class ColumnsListWithColumnsListJtColumn_8107f4d4 implements \SqlSemantics
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->columnsList, \SqlSemantics\Statement\Model\MySql\Role\ColumnsListForm::class, $replace), $this->replacement($this->jtColumn, \SqlSemantics\Statement\Model\MySql\Role\JtColumnForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->columnsList, \SqlSemantics\Statement\Model\MySql\Role\ColumnsListForm::class, $replace), $this->replacement($this->jtColumn, \SqlSemantics\Statement\Model\MySql\Role\JtColumnForm::class, $replace)];
+
+        return $mapped === [$this->columnsList, $this->jtColumn] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

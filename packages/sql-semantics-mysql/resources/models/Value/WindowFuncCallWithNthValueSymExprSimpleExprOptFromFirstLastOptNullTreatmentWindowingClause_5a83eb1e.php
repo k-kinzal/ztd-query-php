@@ -70,13 +70,15 @@ final class WindowFuncCallWithNthValueSymExprSimpleExprOptFromFirstLastOptNullTr
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->replacement($this->simpleExpr, \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm::class, $replace), $this->replacement($this->optFromFirstLast, \SqlSemantics\Statement\Model\MySql\Role\OptFromFirstLastForm::class, $replace), $this->replacement($this->optNullTreatment, \SqlSemantics\Statement\Model\MySql\Role\OptNullTreatmentForm::class, $replace), $this->replacement($this->windowingClause, \SqlSemantics\Statement\Model\MySql\Role\WindowingClauseForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->replacement($this->simpleExpr, \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm::class, $replace), $this->replacement($this->optFromFirstLast, \SqlSemantics\Statement\Model\MySql\Role\OptFromFirstLastForm::class, $replace), $this->replacement($this->optNullTreatment, \SqlSemantics\Statement\Model\MySql\Role\OptNullTreatmentForm::class, $replace), $this->replacement($this->windowingClause, \SqlSemantics\Statement\Model\MySql\Role\WindowingClauseForm::class, $replace)];
+
+        return $mapped === [$this->expr, $this->simpleExpr, $this->optFromFirstLast, $this->optNullTreatment, $this->windowingClause] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $this->comments);
     }
 
     /**

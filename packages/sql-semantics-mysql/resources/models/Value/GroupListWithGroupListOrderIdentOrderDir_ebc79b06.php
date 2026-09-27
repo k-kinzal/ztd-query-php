@@ -56,13 +56,15 @@ final class GroupListWithGroupListOrderIdentOrderDir_ebc79b06 implements \SqlSem
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->groupList, \SqlSemantics\Statement\Model\MySql\Role\GroupListForm::class, $replace), $this->replacement($this->orderIdent, \SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm::class, $replace), $this->replacement($this->orderDir, \SqlSemantics\Statement\Model\MySql\Role\OrderDirForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->groupList, \SqlSemantics\Statement\Model\MySql\Role\GroupListForm::class, $replace), $this->replacement($this->orderIdent, \SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm::class, $replace), $this->replacement($this->orderDir, \SqlSemantics\Statement\Model\MySql\Role\OrderDirForm::class, $replace)];
+
+        return $mapped === [$this->groupList, $this->orderIdent, $this->orderDir] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

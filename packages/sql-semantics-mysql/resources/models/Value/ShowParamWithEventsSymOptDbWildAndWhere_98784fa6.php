@@ -52,13 +52,15 @@ final class ShowParamWithEventsSymOptDbWildAndWhere_98784fa6 implements \SqlSema
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->optDb, \SqlSemantics\Statement\Model\MySql\Role\OptDbForm::class, $replace), $this->replacement($this->wildAndWhere, \SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optDb, \SqlSemantics\Statement\Model\MySql\Role\OptDbForm::class, $replace), $this->replacement($this->wildAndWhere, \SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm::class, $replace)];
+
+        return $mapped === [$this->optDb, $this->wildAndWhere] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

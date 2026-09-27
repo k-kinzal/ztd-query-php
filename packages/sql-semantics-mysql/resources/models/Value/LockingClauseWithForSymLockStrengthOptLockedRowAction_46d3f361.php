@@ -52,13 +52,15 @@ final class LockingClauseWithForSymLockStrengthOptLockedRowAction_46d3f361 imple
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->lockStrength, \SqlSemantics\Statement\Model\MySql\Role\LockStrengthForm::class, $replace), $this->replacement($this->optLockedRowAction, \SqlSemantics\Statement\Model\MySql\Role\OptLockedRowActionForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->lockStrength, \SqlSemantics\Statement\Model\MySql\Role\LockStrengthForm::class, $replace), $this->replacement($this->optLockedRowAction, \SqlSemantics\Statement\Model\MySql\Role\OptLockedRowActionForm::class, $replace)];
+
+        return $mapped === [$this->lockStrength, $this->optLockedRowAction] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

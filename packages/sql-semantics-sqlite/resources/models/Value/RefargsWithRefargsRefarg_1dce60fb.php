@@ -50,13 +50,15 @@ final class RefargsWithRefargsRefarg_1dce60fb implements \SqlSemantics\Statement
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->refargs, \SqlSemantics\Statement\Model\Sqlite\Role\RefargsForm::class, $replace), $this->replacement($this->refarg, \SqlSemantics\Statement\Model\Sqlite\Role\RefargForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->refargs, \SqlSemantics\Statement\Model\Sqlite\Role\RefargsForm::class, $replace), $this->replacement($this->refarg, \SqlSemantics\Statement\Model\Sqlite\Role\RefargForm::class, $replace)];
+
+        return $mapped === [$this->refargs, $this->refarg] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

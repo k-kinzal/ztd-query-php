@@ -52,13 +52,15 @@ final class PreloadListWithPreloadListPreloadKeys_ed175b42 implements \SqlSemant
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->preloadList, \SqlSemantics\Statement\Model\MySql\Role\PreloadListForm::class, $replace), $this->replacement($this->preloadKeys, \SqlSemantics\Statement\Model\MySql\Role\PreloadKeysForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->preloadList, \SqlSemantics\Statement\Model\MySql\Role\PreloadListForm::class, $replace), $this->replacement($this->preloadKeys, \SqlSemantics\Statement\Model\MySql\Role\PreloadKeysForm::class, $replace)];
+
+        return $mapped === [$this->preloadList, $this->preloadKeys] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

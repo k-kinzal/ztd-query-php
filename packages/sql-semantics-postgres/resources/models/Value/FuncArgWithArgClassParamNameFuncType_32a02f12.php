@@ -54,13 +54,15 @@ final class FuncArgWithArgClassParamNameFuncType_32a02f12 implements \SqlSemanti
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->argClass, \SqlSemantics\Statement\Model\PostgreSql\Role\ArgClassForm::class, $replace), $this->replacement($this->paramName, \SqlSemantics\Statement\Model\PostgreSql\Role\ParamNameForm::class, $replace), $this->replacement($this->funcType, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncTypeForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->argClass, \SqlSemantics\Statement\Model\PostgreSql\Role\ArgClassForm::class, $replace), $this->replacement($this->paramName, \SqlSemantics\Statement\Model\PostgreSql\Role\ParamNameForm::class, $replace), $this->replacement($this->funcType, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncTypeForm::class, $replace)];
+
+        return $mapped === [$this->argClass, $this->paramName, $this->funcType] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

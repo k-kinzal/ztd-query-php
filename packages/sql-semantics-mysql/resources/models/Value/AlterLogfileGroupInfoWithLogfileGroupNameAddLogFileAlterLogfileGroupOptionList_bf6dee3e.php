@@ -54,13 +54,15 @@ final class AlterLogfileGroupInfoWithLogfileGroupNameAddLogFileAlterLogfileGroup
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->logfileGroupName, \SqlSemantics\Statement\Model\MySql\Role\LogfileGroupNameForm::class, $replace), $this->replacement($this->addLogFile, \SqlSemantics\Statement\Model\MySql\Role\AddLogFileForm::class, $replace), $this->replacement($this->alterLogfileGroupOptionList, \SqlSemantics\Statement\Model\MySql\Role\AlterLogfileGroupOptionListForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->logfileGroupName, \SqlSemantics\Statement\Model\MySql\Role\LogfileGroupNameForm::class, $replace), $this->replacement($this->addLogFile, \SqlSemantics\Statement\Model\MySql\Role\AddLogFileForm::class, $replace), $this->replacement($this->alterLogfileGroupOptionList, \SqlSemantics\Statement\Model\MySql\Role\AlterLogfileGroupOptionListForm::class, $replace)];
+
+        return $mapped === [$this->logfileGroupName, $this->addLogFile, $this->alterLogfileGroupOptionList] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

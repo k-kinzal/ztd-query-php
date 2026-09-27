@@ -52,13 +52,15 @@ final class OptExplainForSchemaWithForSymDatabaseIdentOrText_73971dbf implements
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->database, $this->replacement($this->identOrText, \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->identOrText, \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm::class, $replace)];
+
+        return $mapped === [$this->identOrText] ? $this : new self($this->database, $mapped[0], $this->comments);
     }
 
     /**

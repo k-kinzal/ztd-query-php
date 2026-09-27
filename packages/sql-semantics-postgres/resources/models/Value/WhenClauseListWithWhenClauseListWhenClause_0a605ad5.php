@@ -50,13 +50,15 @@ final class WhenClauseListWithWhenClauseListWhenClause_0a605ad5 implements \SqlS
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->whenClauseList, \SqlSemantics\Statement\Model\PostgreSql\Role\WhenClauseListForm::class, $replace), $this->replacement($this->whenClause, \SqlSemantics\Statement\Model\PostgreSql\Role\WhenClauseForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->whenClauseList, \SqlSemantics\Statement\Model\PostgreSql\Role\WhenClauseListForm::class, $replace), $this->replacement($this->whenClause, \SqlSemantics\Statement\Model\PostgreSql\Role\WhenClauseForm::class, $replace)];
+
+        return $mapped === [$this->whenClauseList, $this->whenClause] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

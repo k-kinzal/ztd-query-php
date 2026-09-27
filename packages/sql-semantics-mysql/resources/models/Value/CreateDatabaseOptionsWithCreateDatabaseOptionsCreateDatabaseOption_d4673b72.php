@@ -50,13 +50,15 @@ final class CreateDatabaseOptionsWithCreateDatabaseOptionsCreateDatabaseOption_d
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->createDatabaseOptions, \SqlSemantics\Statement\Model\MySql\Role\CreateDatabaseOptionsForm::class, $replace), $this->replacement($this->createDatabaseOption, \SqlSemantics\Statement\Model\MySql\Role\CreateDatabaseOptionForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->createDatabaseOptions, \SqlSemantics\Statement\Model\MySql\Role\CreateDatabaseOptionsForm::class, $replace), $this->replacement($this->createDatabaseOption, \SqlSemantics\Statement\Model\MySql\Role\CreateDatabaseOptionForm::class, $replace)];
+
+        return $mapped === [$this->createDatabaseOptions, $this->createDatabaseOption] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

@@ -76,13 +76,15 @@ final class StartReplicaStmtWithStartSymReplicaOptReplicaThreadOptionListOptRepl
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->replica, \SqlSemantics\Statement\Model\MySql\Role\ReplicaForm::class, $replace), $this->replacement($this->optReplicaThreadOptionList, \SqlSemantics\Statement\Model\MySql\Role\OptReplicaThreadOptionListForm::class, $replace), $this->replacement($this->optReplicaUntil, \SqlSemantics\Statement\Model\MySql\Role\OptReplicaUntilForm::class, $replace), $this->replacement($this->optUserOption, \SqlSemantics\Statement\Model\MySql\Role\OptUserOptionForm::class, $replace), $this->replacement($this->optPasswordOption, \SqlSemantics\Statement\Model\MySql\Role\OptPasswordOptionForm::class, $replace), $this->replacement($this->optDefaultAuthOption, \SqlSemantics\Statement\Model\MySql\Role\OptDefaultAuthOptionForm::class, $replace), $this->replacement($this->optPluginDirOption, \SqlSemantics\Statement\Model\MySql\Role\OptPluginDirOptionForm::class, $replace), $this->replacement($this->optChannel, \SqlSemantics\Statement\Model\MySql\Role\OptChannelForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->replica, \SqlSemantics\Statement\Model\MySql\Role\ReplicaForm::class, $replace), $this->replacement($this->optReplicaThreadOptionList, \SqlSemantics\Statement\Model\MySql\Role\OptReplicaThreadOptionListForm::class, $replace), $this->replacement($this->optReplicaUntil, \SqlSemantics\Statement\Model\MySql\Role\OptReplicaUntilForm::class, $replace), $this->replacement($this->optUserOption, \SqlSemantics\Statement\Model\MySql\Role\OptUserOptionForm::class, $replace), $this->replacement($this->optPasswordOption, \SqlSemantics\Statement\Model\MySql\Role\OptPasswordOptionForm::class, $replace), $this->replacement($this->optDefaultAuthOption, \SqlSemantics\Statement\Model\MySql\Role\OptDefaultAuthOptionForm::class, $replace), $this->replacement($this->optPluginDirOption, \SqlSemantics\Statement\Model\MySql\Role\OptPluginDirOptionForm::class, $replace), $this->replacement($this->optChannel, \SqlSemantics\Statement\Model\MySql\Role\OptChannelForm::class, $replace)];
+
+        return $mapped === [$this->replica, $this->optReplicaThreadOptionList, $this->optReplicaUntil, $this->optUserOption, $this->optPasswordOption, $this->optDefaultAuthOption, $this->optPluginDirOption, $this->optChannel] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $mapped[5], $mapped[6], $mapped[7], $this->comments);
     }
 
     /**

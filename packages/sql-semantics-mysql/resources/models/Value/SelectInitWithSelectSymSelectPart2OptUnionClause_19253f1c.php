@@ -52,13 +52,15 @@ final class SelectInitWithSelectSymSelectPart2OptUnionClause_19253f1c implements
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->selectPart2, \SqlSemantics\Statement\Model\MySql\Role\SelectPart2Form::class, $replace), $this->replacement($this->optUnionClause, \SqlSemantics\Statement\Model\MySql\Role\OptUnionClauseForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->selectPart2, \SqlSemantics\Statement\Model\MySql\Role\SelectPart2Form::class, $replace), $this->replacement($this->optUnionClause, \SqlSemantics\Statement\Model\MySql\Role\OptUnionClauseForm::class, $replace)];
+
+        return $mapped === [$this->selectPart2, $this->optUnionClause] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

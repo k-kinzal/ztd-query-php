@@ -55,7 +55,7 @@ A SQLite primary key column is the rowid alias, and NOT NULL, only when it is th
 
 ## References
 
-Every table name a statement writes is a `Statement\Reference`: the name value as written, so it can be found and rewritten in the statement, its decoded parts with the schema before the table, its kind, and what it resolves to.
+Every table name a statement writes is a `Statement\Reference`: the name value as written, so it can be found and rewritten in the statement, its decoded parts with the schema before the table, its kind, and what it resolves to. The value is the one in the statement itself, and `Traversal::rewrite()` gives the function that same value while nothing below it is replaced, so a rewrite can change exactly the names that resolve to tables by identity; see [traversal](statements.md#traversal). SQLite's FROM writes a qualified name as two values of one form, a schema and a `.name`, with no single value for the whole name; `values` lists every value that writes a name, and `value` is the first.
 
 | Kind | Meaning |
 |------|---------|

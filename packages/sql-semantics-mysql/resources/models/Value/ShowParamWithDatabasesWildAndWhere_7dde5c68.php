@@ -50,13 +50,15 @@ final class ShowParamWithDatabasesWildAndWhere_7dde5c68 implements \SqlSemantics
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->databases, $this->replacement($this->wildAndWhere, \SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->wildAndWhere, \SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm::class, $replace)];
+
+        return $mapped === [$this->wildAndWhere] ? $this : new self($this->databases, $mapped[0], $this->comments);
     }
 
     /**

@@ -69,9 +69,9 @@ final class NameSites
                         continue;
                     }
                     $conditional = isset($site['conditional']) && $this->forms->conditional($shape['symbols'], $children, $site['conditional']);
-                    foreach ($this->named($shape['symbols'], $children, $site, $taken, $consumed) as [$named, $parts, $position]) {
+                    foreach ($this->named($shape['symbols'], $children, $site, $taken, $consumed) as [$values, $parts, $position]) {
                         if ($kind !== null) {
-                            $sites[] = new NameSite($named, $parts, $kind, $conditional, $scopes[$this->forms->index($shape['symbols'], $position)]);
+                            $sites[] = new NameSite($values[0], $parts, $kind, $conditional, $scopes[$this->forms->index($shape['symbols'], $position)], $values);
                         }
                     }
                 }
@@ -98,14 +98,17 @@ final class NameSites
     }
 
     /**
-     * Answers the values a site names with their decoded parts and the symbol position they are written at, marking the positions it takes and the values it reads.
+     * Answers the names a site reads, each as the values that write it with its decoded parts and the symbol position it is written at, marking the positions it takes and the values it reads.
+     *
+     * A pair writes one name as separate values; the values that write
+     * nothing, such as an absent schema, are left out.
      *
      * @param list<string> $symbols
      * @param list<Element> $children
      * @param Site $site
      * @param array<int, true> $taken
      * @param array<int, true> $consumed
-     * @return list<array{Element, non-empty-list<string>, int}>
+     * @return list<array{non-empty-list<Element>, non-empty-list<string>, int}>
      *
      * @throws LogicException When the site names a symbol the form does not have
      */
@@ -123,7 +126,9 @@ final class NameSites
             }
             $parts = array_merge(...array_map($this->parts(...), $values));
 
-            return $parts === [] || $first === null ? [] : [[$values[0], $parts, $first]];
+            $written = array_values(array_filter($values, static fn (Element $value): bool => Writer::render($value) !== ''));
+
+            return $parts === [] || $first === null || $written === [] ? [] : [[$written, $parts, $first]];
         }
         if (isset($site['name'])) {
             $position = $this->forms->position($symbols, $site['name'], $taken);
@@ -132,7 +137,7 @@ final class NameSites
             $this->consume($consumed, $value);
             $parts = $this->parts($value);
 
-            return $parts === [] ? [] : [[$value, $parts, $position]];
+            return $parts === [] ? [] : [[[$value], $parts, $position]];
         }
         $position = $this->forms->position($symbols, $site['names'] ?? '', $taken);
         $taken[$position] = true;
@@ -140,7 +145,7 @@ final class NameSites
         $this->consume($consumed, $list);
         $items = isset($site['list']) ? $this->forms->unfold($list, $site['list'][0], $site['list'][1]) : [$list];
 
-        return array_values(array_filter(array_map(fn (Element $item): array => [$item, $this->parts($item), $position], $items), static fn (array $named): bool => $named[1] !== []));
+        return array_values(array_filter(array_map(fn (Element $item): array => [[$item], $this->parts($item), $position], $items), static fn (array $named): bool => $named[1] !== []));
     }
 
     /**

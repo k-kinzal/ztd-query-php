@@ -54,13 +54,15 @@ final class GeometryFunctionWithGeometrycollectionSymOptExprList_9b37789e implem
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->geometrycollectionSym, $this->replacement($this->optExprList, \SqlSemantics\Statement\Model\MySql\Role\OptExprListForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optExprList, \SqlSemantics\Statement\Model\MySql\Role\OptExprListForm::class, $replace)];
+
+        return $mapped === [$this->optExprList] ? $this : new self($this->geometrycollectionSym, $mapped[0], $this->comments);
     }
 
     /**

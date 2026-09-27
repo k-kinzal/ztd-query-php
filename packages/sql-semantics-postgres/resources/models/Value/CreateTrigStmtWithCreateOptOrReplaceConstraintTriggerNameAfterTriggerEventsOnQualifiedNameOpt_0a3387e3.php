@@ -104,13 +104,15 @@ final class CreateTrigStmtWithCreateOptOrReplaceConstraintTriggerNameAfterTrigge
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->optOrReplace, \SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm::class, $replace), $this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->triggerEvents, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerEventsForm::class, $replace), $this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->optConstrFromTable, \SqlSemantics\Statement\Model\PostgreSql\Role\OptConstrFromTableForm::class, $replace), $this->replacement($this->constraintAttributeSpec, \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeSpecForm::class, $replace), $this->replacement($this->triggerWhen, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerWhenForm::class, $replace), $this->replacement($this->functionOrProcedure, \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionOrProcedureForm::class, $replace), $this->replacement($this->funcName, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm::class, $replace), $this->replacement($this->triggerFuncArgs, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerFuncArgsForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optOrReplace, \SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm::class, $replace), $this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->triggerEvents, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerEventsForm::class, $replace), $this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->optConstrFromTable, \SqlSemantics\Statement\Model\PostgreSql\Role\OptConstrFromTableForm::class, $replace), $this->replacement($this->constraintAttributeSpec, \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeSpecForm::class, $replace), $this->replacement($this->triggerWhen, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerWhenForm::class, $replace), $this->replacement($this->functionOrProcedure, \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionOrProcedureForm::class, $replace), $this->replacement($this->funcName, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm::class, $replace), $this->replacement($this->triggerFuncArgs, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerFuncArgsForm::class, $replace)];
+
+        return $mapped === [$this->optOrReplace, $this->name, $this->triggerEvents, $this->qualifiedName, $this->optConstrFromTable, $this->constraintAttributeSpec, $this->triggerWhen, $this->functionOrProcedure, $this->funcName, $this->triggerFuncArgs] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $mapped[5], $mapped[6], $mapped[7], $mapped[8], $mapped[9], $this->comments);
     }
 
     /**

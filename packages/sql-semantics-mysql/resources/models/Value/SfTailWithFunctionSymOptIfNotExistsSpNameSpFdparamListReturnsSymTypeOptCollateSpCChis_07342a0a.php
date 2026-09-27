@@ -78,13 +78,15 @@ final class SfTailWithFunctionSymOptIfNotExistsSpNameSpFdparamListReturnsSymType
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->optIfNotExists, \SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm::class, $replace), $this->replacement($this->spName, \SqlSemantics\Statement\Model\MySql\Role\SpNameForm::class, $replace), $this->replacement($this->spFdparamList, \SqlSemantics\Statement\Model\MySql\Role\SpFdparamListForm::class, $replace), $this->replacement($this->type, \SqlSemantics\Statement\Model\MySql\Role\TypeForm::class, $replace), $this->replacement($this->optCollate, \SqlSemantics\Statement\Model\MySql\Role\OptCollateForm::class, $replace), $this->replacement($this->spCChistics, \SqlSemantics\Statement\Model\MySql\Role\SpCChisticsForm::class, $replace), $this->replacement($this->spProcStmt, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optIfNotExists, \SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm::class, $replace), $this->replacement($this->spName, \SqlSemantics\Statement\Model\MySql\Role\SpNameForm::class, $replace), $this->replacement($this->spFdparamList, \SqlSemantics\Statement\Model\MySql\Role\SpFdparamListForm::class, $replace), $this->replacement($this->type, \SqlSemantics\Statement\Model\MySql\Role\TypeForm::class, $replace), $this->replacement($this->optCollate, \SqlSemantics\Statement\Model\MySql\Role\OptCollateForm::class, $replace), $this->replacement($this->spCChistics, \SqlSemantics\Statement\Model\MySql\Role\SpCChisticsForm::class, $replace), $this->replacement($this->spProcStmt, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm::class, $replace)];
+
+        return $mapped === [$this->optIfNotExists, $this->spName, $this->spFdparamList, $this->type, $this->optCollate, $this->spCChistics, $this->spProcStmt] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $mapped[5], $mapped[6], $this->comments);
     }
 
     /**

@@ -52,13 +52,15 @@ final class TransactionCharacteristicsWithIsolationLevelTransactionAccessMode_a9
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->isolationLevel, \SqlSemantics\Statement\Model\MySql\Role\IsolationLevelForm::class, $replace), $this->replacement($this->transactionAccessMode, \SqlSemantics\Statement\Model\MySql\Role\TransactionAccessModeForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->isolationLevel, \SqlSemantics\Statement\Model\MySql\Role\IsolationLevelForm::class, $replace), $this->replacement($this->transactionAccessMode, \SqlSemantics\Statement\Model\MySql\Role\TransactionAccessModeForm::class, $replace)];
+
+        return $mapped === [$this->isolationLevel, $this->transactionAccessMode] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

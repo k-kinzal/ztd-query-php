@@ -72,13 +72,15 @@ final class TconsWithForeignKeyLpEidlistRpReferencesNmEidlistOptRefargsDeferSubc
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->eidlist, \SqlSemantics\Statement\Model\Sqlite\Role\EidlistForm::class, $replace), $this->replacement($this->nm, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace), $this->replacement($this->eidlistOpt, \SqlSemantics\Statement\Model\Sqlite\Role\EidlistOptForm::class, $replace), $this->replacement($this->refargs, \SqlSemantics\Statement\Model\Sqlite\Role\RefargsForm::class, $replace), $this->replacement($this->deferSubclauseOpt, \SqlSemantics\Statement\Model\Sqlite\Role\DeferSubclauseOptForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->eidlist, \SqlSemantics\Statement\Model\Sqlite\Role\EidlistForm::class, $replace), $this->replacement($this->nm, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace), $this->replacement($this->eidlistOpt, \SqlSemantics\Statement\Model\Sqlite\Role\EidlistOptForm::class, $replace), $this->replacement($this->refargs, \SqlSemantics\Statement\Model\Sqlite\Role\RefargsForm::class, $replace), $this->replacement($this->deferSubclauseOpt, \SqlSemantics\Statement\Model\Sqlite\Role\DeferSubclauseOptForm::class, $replace)];
+
+        return $mapped === [$this->eidlist, $this->nm, $this->eidlistOpt, $this->refargs, $this->deferSubclauseOpt] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $this->comments);
     }
 
     /**

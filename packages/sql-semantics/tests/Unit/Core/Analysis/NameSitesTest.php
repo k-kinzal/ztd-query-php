@@ -88,7 +88,7 @@ final class NameSitesTest extends TestCase
         $consumed = [];
         $named = $sites->named(['ident', '.', 'ident'], $qualified->children(), ['rule' => 'table_ident', 'pair' => ['ident', 'ident']], $taken, $consumed);
         self::assertSame([['db', 't']], array_column($named, 1));
-        self::assertSame('db', Writer::render($named[0][0]));
+        self::assertSame(['db', 't'], array_map(Writer::render(...), $named[0][0]));
         self::assertSame([0 => true, 2 => true], $taken);
     }
 

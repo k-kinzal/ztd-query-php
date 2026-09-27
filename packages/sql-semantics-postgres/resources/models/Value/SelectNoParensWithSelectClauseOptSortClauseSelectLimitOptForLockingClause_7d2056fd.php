@@ -58,13 +58,15 @@ final class SelectNoParensWithSelectClauseOptSortClauseSelectLimitOptForLockingC
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->selectClause, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectClauseForm::class, $replace), $this->replacement($this->optSortClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSortClauseForm::class, $replace), $this->replacement($this->selectLimit, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitForm::class, $replace), $this->replacement($this->optForLockingClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OptForLockingClauseForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->selectClause, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectClauseForm::class, $replace), $this->replacement($this->optSortClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSortClauseForm::class, $replace), $this->replacement($this->selectLimit, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitForm::class, $replace), $this->replacement($this->optForLockingClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OptForLockingClauseForm::class, $replace)];
+
+        return $mapped === [$this->selectClause, $this->optSortClause, $this->selectLimit, $this->optForLockingClause] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $this->comments);
     }
 
     /**

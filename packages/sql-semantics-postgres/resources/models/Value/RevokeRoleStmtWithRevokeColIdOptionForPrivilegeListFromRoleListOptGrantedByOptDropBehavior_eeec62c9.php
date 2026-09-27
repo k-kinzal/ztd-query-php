@@ -70,13 +70,15 @@ final class RevokeRoleStmtWithRevokeColIdOptionForPrivilegeListFromRoleListOptGr
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->colId, \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm::class, $replace), $this->replacement($this->privilegeList, \SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegeListForm::class, $replace), $this->replacement($this->roleList, \SqlSemantics\Statement\Model\PostgreSql\Role\RoleListForm::class, $replace), $this->replacement($this->optGrantedBy, \SqlSemantics\Statement\Model\PostgreSql\Role\OptGrantedByForm::class, $replace), $this->replacement($this->optDropBehavior, \SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->colId, \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm::class, $replace), $this->replacement($this->privilegeList, \SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegeListForm::class, $replace), $this->replacement($this->roleList, \SqlSemantics\Statement\Model\PostgreSql\Role\RoleListForm::class, $replace), $this->replacement($this->optGrantedBy, \SqlSemantics\Statement\Model\PostgreSql\Role\OptGrantedByForm::class, $replace), $this->replacement($this->optDropBehavior, \SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm::class, $replace)];
+
+        return $mapped === [$this->colId, $this->privilegeList, $this->roleList, $this->optGrantedBy, $this->optDropBehavior] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $this->comments);
     }
 
     /**

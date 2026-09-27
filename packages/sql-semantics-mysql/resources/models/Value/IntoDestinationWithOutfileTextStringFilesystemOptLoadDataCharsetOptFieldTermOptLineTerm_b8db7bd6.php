@@ -60,13 +60,15 @@ final class IntoDestinationWithOutfileTextStringFilesystemOptLoadDataCharsetOptF
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->textStringFilesystem, \SqlSemantics\Statement\Model\MySql\Role\TextStringFilesystemForm::class, $replace), $this->replacement($this->optLoadDataCharset, \SqlSemantics\Statement\Model\MySql\Role\OptLoadDataCharsetForm::class, $replace), $this->replacement($this->optFieldTerm, \SqlSemantics\Statement\Model\MySql\Role\OptFieldTermForm::class, $replace), $this->replacement($this->optLineTerm, \SqlSemantics\Statement\Model\MySql\Role\OptLineTermForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->textStringFilesystem, \SqlSemantics\Statement\Model\MySql\Role\TextStringFilesystemForm::class, $replace), $this->replacement($this->optLoadDataCharset, \SqlSemantics\Statement\Model\MySql\Role\OptLoadDataCharsetForm::class, $replace), $this->replacement($this->optFieldTerm, \SqlSemantics\Statement\Model\MySql\Role\OptFieldTermForm::class, $replace), $this->replacement($this->optLineTerm, \SqlSemantics\Statement\Model\MySql\Role\OptLineTermForm::class, $replace)];
+
+        return $mapped === [$this->textStringFilesystem, $this->optLoadDataCharset, $this->optFieldTerm, $this->optLineTerm] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $this->comments);
     }
 
     /**

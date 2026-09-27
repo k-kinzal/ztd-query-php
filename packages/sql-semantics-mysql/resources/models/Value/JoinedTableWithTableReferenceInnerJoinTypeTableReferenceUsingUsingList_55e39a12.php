@@ -64,13 +64,15 @@ final class JoinedTableWithTableReferenceInnerJoinTypeTableReferenceUsingUsingLi
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->tableReference, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm::class, $replace), $this->replacement($this->innerJoinType, \SqlSemantics\Statement\Model\MySql\Role\InnerJoinTypeForm::class, $replace), $this->replacement($this->tableReference2, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm::class, $replace), $this->replacement($this->usingList, \SqlSemantics\Statement\Model\MySql\Role\UsingListForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->tableReference, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm::class, $replace), $this->replacement($this->innerJoinType, \SqlSemantics\Statement\Model\MySql\Role\InnerJoinTypeForm::class, $replace), $this->replacement($this->tableReference2, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm::class, $replace), $this->replacement($this->usingList, \SqlSemantics\Statement\Model\MySql\Role\UsingListForm::class, $replace)];
+
+        return $mapped === [$this->tableReference, $this->innerJoinType, $this->tableReference2, $this->usingList] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $this->comments);
     }
 
     /**

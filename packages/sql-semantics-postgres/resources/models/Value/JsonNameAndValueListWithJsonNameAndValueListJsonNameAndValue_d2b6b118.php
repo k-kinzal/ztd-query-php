@@ -52,13 +52,15 @@ final class JsonNameAndValueListWithJsonNameAndValueListJsonNameAndValue_d2b6b11
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->jsonNameAndValueList, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonNameAndValueListForm::class, $replace), $this->replacement($this->jsonNameAndValue, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonNameAndValueForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->jsonNameAndValueList, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonNameAndValueListForm::class, $replace), $this->replacement($this->jsonNameAndValue, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonNameAndValueForm::class, $replace)];
+
+        return $mapped === [$this->jsonNameAndValueList, $this->jsonNameAndValue] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

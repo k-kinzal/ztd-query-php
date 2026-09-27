@@ -65,6 +65,13 @@ $tables = Traversal::find($statement->command, TableIdentForm::class);
 $unqualified = Traversal::rewrite($statement->command, static fn (Element $value): Element => $value instanceof QualifiedTable ? $value->ident2 : $value);
 ```
 
+A value whose children are all kept is kept itself, so `rewrite()` gives the function the values of the statement unchanged until something below them is replaced, and a value found earlier, such as the name of a resolved reference, can be recognized by identity:
+
+```php
+$reference = $query->resolution->tables()[0];
+$shadowed = Traversal::rewrite($query->command, static fn (Element $value): Element => $value === $reference->value ? $builder->table('shadow_users') : $value);
+```
+
 A replacement must be a value the position accepts: `map()` checks it against the role of the position and throws `InvalidArgumentException` otherwise. Lexical fields such as a name or a literal spelling, and comments, are not child values; the typed `with*()` methods change them.
 
 ## Reconstructing SQL

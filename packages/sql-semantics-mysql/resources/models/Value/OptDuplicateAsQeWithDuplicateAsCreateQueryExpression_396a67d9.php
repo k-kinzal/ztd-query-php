@@ -50,13 +50,15 @@ final class OptDuplicateAsQeWithDuplicateAsCreateQueryExpression_396a67d9 implem
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->duplicate, \SqlSemantics\Statement\Model\MySql\Role\DuplicateForm::class, $replace), $this->replacement($this->asCreateQueryExpression, \SqlSemantics\Statement\Model\MySql\Role\AsCreateQueryExpressionForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->duplicate, \SqlSemantics\Statement\Model\MySql\Role\DuplicateForm::class, $replace), $this->replacement($this->asCreateQueryExpression, \SqlSemantics\Statement\Model\MySql\Role\AsCreateQueryExpressionForm::class, $replace)];
+
+        return $mapped === [$this->duplicate, $this->asCreateQueryExpression] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

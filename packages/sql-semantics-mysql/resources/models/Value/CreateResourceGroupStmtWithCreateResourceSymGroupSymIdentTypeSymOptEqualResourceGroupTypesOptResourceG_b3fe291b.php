@@ -74,13 +74,15 @@ final class CreateResourceGroupStmtWithCreateResourceSymGroupSymIdentTypeSymOptE
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->ident, \SqlSemantics\Statement\Model\MySql\Role\IdentForm::class, $replace), $this->replacement($this->optEqual, \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm::class, $replace), $this->replacement($this->resourceGroupTypes, \SqlSemantics\Statement\Model\MySql\Role\ResourceGroupTypesForm::class, $replace), $this->replacement($this->optResourceGroupVcpuList, \SqlSemantics\Statement\Model\MySql\Role\OptResourceGroupVcpuListForm::class, $replace), $this->replacement($this->optResourceGroupPriority, \SqlSemantics\Statement\Model\MySql\Role\OptResourceGroupPriorityForm::class, $replace), $this->replacement($this->optResourceGroupEnableDisable, \SqlSemantics\Statement\Model\MySql\Role\OptResourceGroupEnableDisableForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->ident, \SqlSemantics\Statement\Model\MySql\Role\IdentForm::class, $replace), $this->replacement($this->optEqual, \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm::class, $replace), $this->replacement($this->resourceGroupTypes, \SqlSemantics\Statement\Model\MySql\Role\ResourceGroupTypesForm::class, $replace), $this->replacement($this->optResourceGroupVcpuList, \SqlSemantics\Statement\Model\MySql\Role\OptResourceGroupVcpuListForm::class, $replace), $this->replacement($this->optResourceGroupPriority, \SqlSemantics\Statement\Model\MySql\Role\OptResourceGroupPriorityForm::class, $replace), $this->replacement($this->optResourceGroupEnableDisable, \SqlSemantics\Statement\Model\MySql\Role\OptResourceGroupEnableDisableForm::class, $replace)];
+
+        return $mapped === [$this->ident, $this->optEqual, $this->resourceGroupTypes, $this->optResourceGroupVcpuList, $this->optResourceGroupPriority, $this->optResourceGroupEnableDisable] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $mapped[5], $this->comments);
     }
 
     /**

@@ -58,13 +58,15 @@ final class AlterForeignServerStmtWithAlterServerNameForeignServerVersionAlterGe
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->foreignServerVersion, \SqlSemantics\Statement\Model\PostgreSql\Role\ForeignServerVersionForm::class, $replace), $this->replacement($this->alterGenericOptions, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterGenericOptionsForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->foreignServerVersion, \SqlSemantics\Statement\Model\PostgreSql\Role\ForeignServerVersionForm::class, $replace), $this->replacement($this->alterGenericOptions, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterGenericOptionsForm::class, $replace)];
+
+        return $mapped === [$this->name, $this->foreignServerVersion, $this->alterGenericOptions] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

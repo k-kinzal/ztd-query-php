@@ -50,13 +50,15 @@ final class FieldTermWithEscapedByTextString_e321c03d implements \SqlSemantics\S
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->textString, \SqlSemantics\Statement\Model\MySql\Role\TextStringForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->textString, \SqlSemantics\Statement\Model\MySql\Role\TextStringForm::class, $replace)];
+
+        return $mapped === [$this->textString] ? $this : new self($mapped[0], $this->comments);
     }
 
     /**

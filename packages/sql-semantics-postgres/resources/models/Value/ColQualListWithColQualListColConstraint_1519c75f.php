@@ -50,13 +50,15 @@ final class ColQualListWithColQualListColConstraint_1519c75f implements \SqlSema
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->colQualList, \SqlSemantics\Statement\Model\PostgreSql\Role\ColQualListForm::class, $replace), $this->replacement($this->colConstraint, \SqlSemantics\Statement\Model\PostgreSql\Role\ColConstraintForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->colQualList, \SqlSemantics\Statement\Model\PostgreSql\Role\ColQualListForm::class, $replace), $this->replacement($this->colConstraint, \SqlSemantics\Statement\Model\PostgreSql\Role\ColConstraintForm::class, $replace)];
+
+        return $mapped === [$this->colQualList, $this->colConstraint] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

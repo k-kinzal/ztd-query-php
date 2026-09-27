@@ -54,13 +54,15 @@ final class UpsertWithOnConflictDoNothingReturning_162a31bb implements \SqlSeman
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->returning, \SqlSemantics\Statement\Model\Sqlite\Role\ReturningForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->returning, \SqlSemantics\Statement\Model\Sqlite\Role\ReturningForm::class, $replace)];
+
+        return $mapped === [$this->returning] ? $this : new self($mapped[0], $this->comments);
     }
 
     /**

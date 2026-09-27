@@ -50,13 +50,15 @@ final class ColumnAttributeListWithColumnAttributeListColumnAttribute_162e97dd i
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->columnAttributeList, \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeListForm::class, $replace), $this->replacement($this->columnAttribute, \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->columnAttributeList, \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeListForm::class, $replace), $this->replacement($this->columnAttribute, \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeForm::class, $replace)];
+
+        return $mapped === [$this->columnAttributeList, $this->columnAttribute] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

@@ -52,13 +52,15 @@ final class CteListWithCteListCommonTableExpr_1cee770c implements \SqlSemantics\
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->cteList, \SqlSemantics\Statement\Model\PostgreSql\Role\CteListForm::class, $replace), $this->replacement($this->commonTableExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\CommonTableExprForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->cteList, \SqlSemantics\Statement\Model\PostgreSql\Role\CteListForm::class, $replace), $this->replacement($this->commonTableExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\CommonTableExprForm::class, $replace)];
+
+        return $mapped === [$this->cteList, $this->commonTableExpr] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

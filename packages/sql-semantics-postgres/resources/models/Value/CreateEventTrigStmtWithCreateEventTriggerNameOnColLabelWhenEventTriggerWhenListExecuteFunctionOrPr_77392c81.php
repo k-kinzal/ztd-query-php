@@ -78,13 +78,15 @@ final class CreateEventTrigStmtWithCreateEventTriggerNameOnColLabelWhenEventTrig
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->colLabel, \SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm::class, $replace), $this->replacement($this->eventTriggerWhenList, \SqlSemantics\Statement\Model\PostgreSql\Role\EventTriggerWhenListForm::class, $replace), $this->replacement($this->functionOrProcedure, \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionOrProcedureForm::class, $replace), $this->replacement($this->funcName, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->colLabel, \SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm::class, $replace), $this->replacement($this->eventTriggerWhenList, \SqlSemantics\Statement\Model\PostgreSql\Role\EventTriggerWhenListForm::class, $replace), $this->replacement($this->functionOrProcedure, \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionOrProcedureForm::class, $replace), $this->replacement($this->funcName, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm::class, $replace)];
+
+        return $mapped === [$this->name, $this->colLabel, $this->eventTriggerWhenList, $this->functionOrProcedure, $this->funcName] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $this->comments);
     }
 
     /**

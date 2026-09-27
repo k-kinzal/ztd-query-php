@@ -54,13 +54,15 @@ final class FuncTypeWithTypeFunctionNameAttrsTypeP_268248d7 implements \SqlSeman
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->typeFunctionName, \SqlSemantics\Statement\Model\PostgreSql\Role\TypeFunctionNameForm::class, $replace), $this->replacement($this->attrs, \SqlSemantics\Statement\Model\PostgreSql\Role\AttrsForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->typeFunctionName, \SqlSemantics\Statement\Model\PostgreSql\Role\TypeFunctionNameForm::class, $replace), $this->replacement($this->attrs, \SqlSemantics\Statement\Model\PostgreSql\Role\AttrsForm::class, $replace)];
+
+        return $mapped === [$this->typeFunctionName, $this->attrs] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

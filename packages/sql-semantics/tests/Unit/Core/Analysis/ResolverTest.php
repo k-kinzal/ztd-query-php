@@ -20,8 +20,10 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
 use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
+use SqlSemantics\Statement\Element;
 use SqlSemantics\Statement\Reference;
 use SqlSemantics\Statement\ReferenceKind;
+use SqlSemantics\Statement\Traversal;
 use SqlSemantics\Statement\Writer;
 use Tests\Contract\Resolved;
 use Tests\Contract\Resolving;
@@ -58,7 +60,7 @@ use Tests\Contract\Resolving;
 #[UsesClass(Reference::class)]
 #[UsesClass(\SqlSemantics\Statement\Comments::class)]
 #[UsesClass(Writer::class)]
-#[UsesClass(\SqlSemantics\Statement\Traversal::class)]
+#[UsesClass(Traversal::class)]
 #[UsesClass(\SqlSemantics\Statement\Assertion::class)]
 #[UsesClass(\SqlSemantics\Statement\ImmutableGraph::class)]
 #[UsesClass(\SqlSemantics\Statement\Declaration\TableDefinition::class)]
@@ -295,6 +297,30 @@ final class ResolverTest extends TestCase
         $query = $semantics->analyze('SELECT id FROM users', [$users]);
         self::assertSame($users, Resolved::of($query)->references[0]->declaration);
         self::assertSame('id', Resolved::of($query)->references[0]->table?->columns[0]->name);
+    }
+
+    #[TestWith([MySqlDialect::MySql, 'app.users', 'WITH users AS( SELECT 1 ) SELECT * FROM users , shadow'])]
+    #[TestWith([PostgreSqlDialect::PostgreSql, 'app.users', 'WITH users AS( SELECT 1 ) SELECT * FROM users , shadow'])]
+    public function testResolveAnswersNamesARewriteRecognizesByIdentity(Dialect $dialect, string $table, string $expected): void
+    {
+        $semantics = new Semantics($dialect);
+        $users = $semantics->analyze('CREATE TABLE ' . $table . ' (id INTEGER)');
+        $query = $semantics->analyze('WITH users AS (SELECT 1) SELECT * FROM users, ' . $table, [$users]);
+        $table = Resolved::of($query)->tables()[0]->value;
+        $shadow = $semantics->builder()->table('shadow');
+        self::assertSame($expected, Writer::render(Traversal::rewrite($query->command, static fn (Element $value): Element => $value === $table ? $shadow : $value)));
+    }
+
+    public function testResolveAnswersEveryValueOfANameAFormWritesAsSeparateValues(): void
+    {
+        $semantics = new Semantics(SqliteDialect::Sqlite);
+        $users = $semantics->analyze('CREATE TABLE main.users (id INTEGER)');
+        $query = $semantics->analyze('SELECT * FROM users, main.users', [$users]);
+        [$plain, $qualified] = Resolved::of($query)->tables();
+        self::assertSame([$plain->value], $plain->values);
+        self::assertSame(['main', '.users'], array_map(Writer::render(...), $qualified->values));
+        self::assertSame($qualified->value, $qualified->values[0]);
+        self::assertSame($qualified->values, array_values(array_filter(Traversal::find($query->command, Element::class), static fn (Element $value): bool => in_array($value, $qualified->values, true))));
     }
 
     public function testDeclarePutsANewTableInForceAndRefersToAConditionalDuplicate(): void

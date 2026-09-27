@@ -66,13 +66,15 @@ final class FunctionCallNonkeywordWithSubstringExprExprExpr_bf7601f4 implements 
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->substring, $this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->replacement($this->expr2, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->replacement($this->expr3, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->replacement($this->expr2, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->replacement($this->expr3, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace)];
+
+        return $mapped === [$this->expr, $this->expr2, $this->expr3] ? $this : new self($this->substring, $mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

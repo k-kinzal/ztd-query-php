@@ -52,13 +52,15 @@ final class KeyListWithExpressionWithKeyListWithExpressionKeyPartWithExpression_
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->keyListWithExpression, \SqlSemantics\Statement\Model\MySql\Role\KeyListWithExpressionForm::class, $replace), $this->replacement($this->keyPartWithExpression, \SqlSemantics\Statement\Model\MySql\Role\KeyPartWithExpressionForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->keyListWithExpression, \SqlSemantics\Statement\Model\MySql\Role\KeyListWithExpressionForm::class, $replace), $this->replacement($this->keyPartWithExpression, \SqlSemantics\Statement\Model\MySql\Role\KeyPartWithExpressionForm::class, $replace)];
+
+        return $mapped === [$this->keyListWithExpression, $this->keyPartWithExpression] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**
