@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Model\Compilation;
 
-use Deriver\ControlFlow\Instruction;
 use Deriver\Exception\InvalidInputException;
 use Deriver\Model\Binding\LocationRef;
 use Deriver\Model\Compilation\PlanCompiler;
@@ -22,7 +21,7 @@ use PHPUnit\Framework\TestCase;
  * @covers \Deriver\Model\Compilation\PlanLocations
  */
 #[CoversClass(PlanLocations::class)]
-#[UsesClass(Instruction::class)]
+#[UsesClass(\Deriver\ControlFlow\Instruction::class)]
 #[UsesClass(LocationRef::class)]
 #[UsesClass(PlanCompiler::class)]
 #[UsesClass(Expression::class)]

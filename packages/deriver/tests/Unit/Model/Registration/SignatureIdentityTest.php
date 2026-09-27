@@ -7,7 +7,6 @@ namespace Tests\Unit\Model\Registration;
 use Deriver\Model\Registration\SignatureIdentity;
 use Deriver\Model\Signature\Parameter;
 use Deriver\Model\Signature\Signature;
-use Deriver\Value\Identity;
 use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
@@ -20,7 +19,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(SignatureIdentity::class)]
 #[UsesClass(Parameter::class)]
 #[UsesClass(Signature::class)]
-#[UsesClass(Identity::class)]
+#[UsesClass(\Deriver\Value\Identity::class)]
 #[UsesClass(Term::class)]
 #[Small]
 final class SignatureIdentityTest extends TestCase

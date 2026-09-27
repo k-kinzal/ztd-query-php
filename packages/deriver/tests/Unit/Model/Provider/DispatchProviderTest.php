@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Model\Provider;
 
-use Deriver\Model\Provider\DispatchDecision;
 use Deriver\Model\Provider\DispatchProvider;
 use Deriver\Model\Provider\DispatchRequest;
-use Deriver\Model\Provider\DispatchTarget;
 use Deriver\Project\TargetProfile;
 use Deriver\Reference\SourceRef;
 use Deriver\Value\Term;
@@ -21,9 +19,9 @@ use PHPUnit\Framework\TestCase;
  */
 #[CoversClass(DispatchProvider::class)]
 #[UsesClass(\Deriver\Model\Provider\DeclarationProvider::class)]
-#[UsesClass(DispatchDecision::class)]
+#[UsesClass(\Deriver\Model\Provider\DispatchDecision::class)]
 #[UsesClass(DispatchRequest::class)]
-#[UsesClass(DispatchTarget::class)]
+#[UsesClass(\Deriver\Model\Provider\DispatchTarget::class)]
 #[UsesClass(\Deriver\Model\Provider\EntryPointProvider::class)]
 #[UsesClass(\Deriver\Model\Provider\EnvironmentProvider::class)]
 #[UsesClass(\Deriver\Model\Provider\ObservationProvider::class)]

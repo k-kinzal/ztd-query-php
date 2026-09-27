@@ -5,13 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Result\Serialization;
 
 use Deriver\Exception\InvalidInputException;
-use Deriver\Result\Serialization\Decode\Fields;
-use Deriver\Result\Serialization\Decode\Scalar;
-use Deriver\Result\Serialization\JsonText;
-use Deriver\Result\Serialization\ValueGraph;
 use Deriver\Result\Serialization\ValueReader;
-use Deriver\Value\Identity;
-use Deriver\Value\SecretFingerprint;
 use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -24,12 +18,12 @@ use stdClass;
  * @covers \Deriver\Result\Serialization\ValueReader
  */
 #[CoversClass(ValueReader::class)]
-#[UsesClass(Fields::class)]
-#[UsesClass(Scalar::class)]
-#[UsesClass(JsonText::class)]
-#[UsesClass(ValueGraph::class)]
-#[UsesClass(Identity::class)]
-#[UsesClass(SecretFingerprint::class)]
+#[UsesClass(\Deriver\Result\Serialization\Decode\Fields::class)]
+#[UsesClass(\Deriver\Result\Serialization\Decode\Scalar::class)]
+#[UsesClass(\Deriver\Result\Serialization\JsonText::class)]
+#[UsesClass(\Deriver\Result\Serialization\ValueGraph::class)]
+#[UsesClass(\Deriver\Value\Identity::class)]
+#[UsesClass(\Deriver\Value\SecretFingerprint::class)]
 #[UsesClass(Term::class)]
 #[Small]
 final class ValueReaderTest extends TestCase

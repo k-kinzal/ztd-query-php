@@ -4,16 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Source\Validation;
 
-use Deriver\Project\SourceLimits;
 use Deriver\Project\TargetProfile;
 use Deriver\Source\Cache\SyntaxCache;
-use Deriver\Source\Cache\SyntaxTree;
-use Deriver\Source\Compilation\Control\DestructuringLowering;
-use Deriver\Source\MagicContext;
-use Deriver\Source\SyntaxSize;
 use Deriver\Source\Validation\AssignmentPatterns;
-use Deriver\Source\Validation\ClassScope;
-use Deriver\Source\Validation\TargetSyntax;
 use PhpParser\ErrorHandler\Collecting;
 use PhpParser\Node\ArrayItem;
 use PhpParser\Node\Expr;
@@ -28,15 +21,15 @@ use PHPUnit\Framework\TestCase;
 use Tests\Fake\Programs\DestructuringPrograms;
 
 #[CoversClass(AssignmentPatterns::class)]
-#[UsesClass(SourceLimits::class)]
+#[UsesClass(\Deriver\Project\SourceLimits::class)]
 #[UsesClass(TargetProfile::class)]
 #[UsesClass(SyntaxCache::class)]
-#[UsesClass(SyntaxTree::class)]
-#[UsesClass(DestructuringLowering::class)]
-#[UsesClass(MagicContext::class)]
-#[UsesClass(SyntaxSize::class)]
-#[UsesClass(ClassScope::class)]
-#[UsesClass(TargetSyntax::class)]
+#[UsesClass(\Deriver\Source\Cache\SyntaxTree::class)]
+#[UsesClass(\Deriver\Source\Compilation\Control\DestructuringLowering::class)]
+#[UsesClass(\Deriver\Source\MagicContext::class)]
+#[UsesClass(\Deriver\Source\SyntaxSize::class)]
+#[UsesClass(\Deriver\Source\Validation\ClassScope::class)]
+#[UsesClass(\Deriver\Source\Validation\TargetSyntax::class)]
 #[Small]
 final class AssignmentPatternsTest extends TestCase
 {

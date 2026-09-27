@@ -6,57 +6,12 @@ namespace Tests\Unit\Evaluation\Summary;
 
 use Deriver\ControlFlow\BasicBlock;
 use Deriver\ControlFlow\CallableGraph;
-use Deriver\ControlFlow\CallableIdentity;
-use Deriver\ControlFlow\CatchTarget;
-use Deriver\ControlFlow\ClassDeclaration;
-use Deriver\ControlFlow\ExceptionRegion;
 use Deriver\ControlFlow\Instruction;
-use Deriver\ControlFlow\Parameter;
 use Deriver\ControlFlow\Terminator;
-use Deriver\Evaluation\Context;
-use Deriver\Evaluation\Control\Resources;
 use Deriver\Evaluation\Summary\Isolation;
 use Deriver\Model\CallModel;
-use Deriver\Model\Registration\Extensions;
-use Deriver\Model\Registration\Registry;
-use Deriver\Model\Registration\StateRegistry;
-use Deriver\Project\Configuration;
-use Deriver\Project\ProjectInput;
-use Deriver\Project\SourceFile;
-use Deriver\Project\SourceLimits;
-use Deriver\Project\TargetProfile;
 use Deriver\Query\Budget;
-use Deriver\Query\QueryScope;
-use Deriver\Query\ResourceLimits;
-use Deriver\Query\ReturnQuery;
 use Deriver\Reference\SourceRef;
-use Deriver\Source\Cache\GraphCache;
-use Deriver\Source\Cache\GraphTemplate;
-use Deriver\Source\Cache\SnapshotRebase;
-use Deriver\Source\Cache\SyntaxCache;
-use Deriver\Source\Cache\SyntaxTree;
-use Deriver\Source\Compilation\AssignmentLowering;
-use Deriver\Source\Compilation\CallableCompiler;
-use Deriver\Source\Compilation\CallLowering;
-use Deriver\Source\Compilation\Control\DestructuringLowering;
-use Deriver\Source\Compilation\Control\ExceptionLowering;
-use Deriver\Source\Compilation\Control\StaticLowering;
-use Deriver\Source\Compilation\EffectInspection;
-use Deriver\Source\Compilation\ExpressionLowering;
-use Deriver\Source\Compilation\GraphBuilder;
-use Deriver\Source\Compilation\Lowering;
-use Deriver\Source\Compilation\StatementLowering;
-use Deriver\Source\ConstantSignatures;
-use Deriver\Source\Declaration\CallableSource;
-use Deriver\Source\Declaration\DeclarationScanner;
-use Deriver\Source\Declaration\ProjectIndex;
-use Deriver\Source\Declaration\Traits\Composition;
-use Deriver\Source\LineMap;
-use Deriver\Source\MagicContext;
-use Deriver\Source\SyntaxSize;
-use Deriver\Source\Validation\AssignmentPatterns;
-use Deriver\Source\Validation\ClassScope;
-use Deriver\Source\Validation\TargetSyntax;
 use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
@@ -70,55 +25,55 @@ use Tests\Fake\SolverFixture;
 #[CoversClass(Isolation::class)]
 #[UsesClass(BasicBlock::class)]
 #[UsesClass(CallableGraph::class)]
-#[UsesClass(CallableIdentity::class)]
-#[UsesClass(CatchTarget::class)]
-#[UsesClass(ClassDeclaration::class)]
-#[UsesClass(ExceptionRegion::class)]
+#[UsesClass(\Deriver\ControlFlow\CallableIdentity::class)]
+#[UsesClass(\Deriver\ControlFlow\CatchTarget::class)]
+#[UsesClass(\Deriver\ControlFlow\ClassDeclaration::class)]
+#[UsesClass(\Deriver\ControlFlow\ExceptionRegion::class)]
 #[UsesClass(Instruction::class)]
-#[UsesClass(Parameter::class)]
+#[UsesClass(\Deriver\ControlFlow\Parameter::class)]
 #[UsesClass(Terminator::class)]
-#[UsesClass(Context::class)]
-#[UsesClass(Resources::class)]
-#[UsesClass(Extensions::class)]
-#[UsesClass(Registry::class)]
-#[UsesClass(StateRegistry::class)]
-#[UsesClass(Configuration::class)]
-#[UsesClass(ProjectInput::class)]
-#[UsesClass(SourceFile::class)]
-#[UsesClass(SourceLimits::class)]
-#[UsesClass(TargetProfile::class)]
+#[UsesClass(\Deriver\Evaluation\Context::class)]
+#[UsesClass(\Deriver\Evaluation\Control\Resources::class)]
+#[UsesClass(\Deriver\Model\Registration\Extensions::class)]
+#[UsesClass(\Deriver\Model\Registration\Registry::class)]
+#[UsesClass(\Deriver\Model\Registration\StateRegistry::class)]
+#[UsesClass(\Deriver\Project\Configuration::class)]
+#[UsesClass(\Deriver\Project\ProjectInput::class)]
+#[UsesClass(\Deriver\Project\SourceFile::class)]
+#[UsesClass(\Deriver\Project\SourceLimits::class)]
+#[UsesClass(\Deriver\Project\TargetProfile::class)]
 #[UsesClass(Budget::class)]
-#[UsesClass(QueryScope::class)]
-#[UsesClass(ResourceLimits::class)]
-#[UsesClass(ReturnQuery::class)]
+#[UsesClass(\Deriver\Query\QueryScope::class)]
+#[UsesClass(\Deriver\Query\ResourceLimits::class)]
+#[UsesClass(\Deriver\Query\ReturnQuery::class)]
 #[UsesClass(SourceRef::class)]
-#[UsesClass(GraphCache::class)]
-#[UsesClass(GraphTemplate::class)]
-#[UsesClass(SnapshotRebase::class)]
-#[UsesClass(SyntaxCache::class)]
-#[UsesClass(SyntaxTree::class)]
-#[UsesClass(AssignmentLowering::class)]
-#[UsesClass(CallLowering::class)]
-#[UsesClass(CallableCompiler::class)]
-#[UsesClass(DestructuringLowering::class)]
-#[UsesClass(ExceptionLowering::class)]
-#[UsesClass(StaticLowering::class)]
-#[UsesClass(EffectInspection::class)]
-#[UsesClass(ExpressionLowering::class)]
-#[UsesClass(GraphBuilder::class)]
-#[UsesClass(Lowering::class)]
-#[UsesClass(StatementLowering::class)]
-#[UsesClass(ConstantSignatures::class)]
-#[UsesClass(CallableSource::class)]
-#[UsesClass(DeclarationScanner::class)]
-#[UsesClass(ProjectIndex::class)]
-#[UsesClass(Composition::class)]
-#[UsesClass(LineMap::class)]
-#[UsesClass(MagicContext::class)]
-#[UsesClass(SyntaxSize::class)]
-#[UsesClass(AssignmentPatterns::class)]
-#[UsesClass(ClassScope::class)]
-#[UsesClass(TargetSyntax::class)]
+#[UsesClass(\Deriver\Source\Cache\GraphCache::class)]
+#[UsesClass(\Deriver\Source\Cache\GraphTemplate::class)]
+#[UsesClass(\Deriver\Source\Cache\SnapshotRebase::class)]
+#[UsesClass(\Deriver\Source\Cache\SyntaxCache::class)]
+#[UsesClass(\Deriver\Source\Cache\SyntaxTree::class)]
+#[UsesClass(\Deriver\Source\Compilation\AssignmentLowering::class)]
+#[UsesClass(\Deriver\Source\Compilation\CallLowering::class)]
+#[UsesClass(\Deriver\Source\Compilation\CallableCompiler::class)]
+#[UsesClass(\Deriver\Source\Compilation\Control\DestructuringLowering::class)]
+#[UsesClass(\Deriver\Source\Compilation\Control\ExceptionLowering::class)]
+#[UsesClass(\Deriver\Source\Compilation\Control\StaticLowering::class)]
+#[UsesClass(\Deriver\Source\Compilation\EffectInspection::class)]
+#[UsesClass(\Deriver\Source\Compilation\ExpressionLowering::class)]
+#[UsesClass(\Deriver\Source\Compilation\GraphBuilder::class)]
+#[UsesClass(\Deriver\Source\Compilation\Lowering::class)]
+#[UsesClass(\Deriver\Source\Compilation\StatementLowering::class)]
+#[UsesClass(\Deriver\Source\ConstantSignatures::class)]
+#[UsesClass(\Deriver\Source\Declaration\CallableSource::class)]
+#[UsesClass(\Deriver\Source\Declaration\DeclarationScanner::class)]
+#[UsesClass(\Deriver\Source\Declaration\ProjectIndex::class)]
+#[UsesClass(\Deriver\Source\Declaration\Traits\Composition::class)]
+#[UsesClass(\Deriver\Source\LineMap::class)]
+#[UsesClass(\Deriver\Source\MagicContext::class)]
+#[UsesClass(\Deriver\Source\SyntaxSize::class)]
+#[UsesClass(\Deriver\Source\Validation\AssignmentPatterns::class)]
+#[UsesClass(\Deriver\Source\Validation\ClassScope::class)]
+#[UsesClass(\Deriver\Source\Validation\TargetSyntax::class)]
 #[UsesClass(Term::class)]
 #[Small]
 final class IsolationTest extends TestCase

@@ -4,25 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Evaluation\Call\Model;
 
-use Deriver\ControlFlow\BasicBlock;
-use Deriver\ControlFlow\CallableGraph;
 use Deriver\ControlFlow\Instruction;
-use Deriver\ControlFlow\Parameter;
-use Deriver\ControlFlow\Terminator;
-use Deriver\Evaluation\Call\ArgumentOrder;
 use Deriver\Evaluation\Call\Model\Inputs;
 use Deriver\Evaluation\Call\PassedArgument;
-use Deriver\Evaluation\Completion;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
-use Deriver\Memory\Materialization;
-use Deriver\Memory\Memory;
-use Deriver\Model\Binding\ArgumentBindings;
-use Deriver\Model\Binding\BoundArgument;
-use Deriver\Model\Binding\LocationRef;
-use Deriver\Model\Compilation\PlanCompiler;
 use Deriver\Model\ModelDescriptor;
-use Deriver\Model\Plan\SemanticPlan;
 use Deriver\Model\Signature\Signature;
 use Deriver\Reference\SourceRef;
 use Deriver\Value\Term;
@@ -35,24 +21,24 @@ use PHPUnit\Framework\TestCase;
  * @covers \Deriver\Evaluation\Call\Model\Inputs
  */
 #[CoversClass(Inputs::class)]
-#[UsesClass(BasicBlock::class)]
-#[UsesClass(CallableGraph::class)]
+#[UsesClass(\Deriver\ControlFlow\BasicBlock::class)]
+#[UsesClass(\Deriver\ControlFlow\CallableGraph::class)]
 #[UsesClass(Instruction::class)]
-#[UsesClass(Parameter::class)]
-#[UsesClass(Terminator::class)]
-#[UsesClass(ArgumentOrder::class)]
+#[UsesClass(\Deriver\ControlFlow\Parameter::class)]
+#[UsesClass(\Deriver\ControlFlow\Terminator::class)]
+#[UsesClass(\Deriver\Evaluation\Call\ArgumentOrder::class)]
 #[UsesClass(PassedArgument::class)]
-#[UsesClass(Completion::class)]
+#[UsesClass(\Deriver\Evaluation\Completion::class)]
 #[UsesClass(State::class)]
-#[UsesClass(Location::class)]
-#[UsesClass(Materialization::class)]
-#[UsesClass(Memory::class)]
-#[UsesClass(ArgumentBindings::class)]
-#[UsesClass(BoundArgument::class)]
-#[UsesClass(LocationRef::class)]
-#[UsesClass(PlanCompiler::class)]
+#[UsesClass(\Deriver\Memory\Location::class)]
+#[UsesClass(\Deriver\Memory\Materialization::class)]
+#[UsesClass(\Deriver\Memory\Memory::class)]
+#[UsesClass(\Deriver\Model\Binding\ArgumentBindings::class)]
+#[UsesClass(\Deriver\Model\Binding\BoundArgument::class)]
+#[UsesClass(\Deriver\Model\Binding\LocationRef::class)]
+#[UsesClass(\Deriver\Model\Compilation\PlanCompiler::class)]
 #[UsesClass(ModelDescriptor::class)]
-#[UsesClass(SemanticPlan::class)]
+#[UsesClass(\Deriver\Model\Plan\SemanticPlan::class)]
 #[UsesClass(\Deriver\Model\Signature\Parameter::class)]
 #[UsesClass(Signature::class)]
 #[UsesClass(SourceRef::class)]

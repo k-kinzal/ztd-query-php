@@ -4,15 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Source\Cache;
 
-use Deriver\Project\SourceLimits;
 use Deriver\Project\TargetProfile;
 use Deriver\Source\Cache\SyntaxCache;
 use Deriver\Source\Cache\SyntaxTree;
-use Deriver\Source\MagicContext;
-use Deriver\Source\SyntaxSize;
-use Deriver\Source\Validation\AssignmentPatterns;
-use Deriver\Source\Validation\ClassScope;
-use Deriver\Source\Validation\TargetSyntax;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -22,14 +16,14 @@ use PHPUnit\Framework\TestCase;
  * @covers \Deriver\Source\Cache\SyntaxTree
  */
 #[CoversClass(SyntaxTree::class)]
-#[UsesClass(SourceLimits::class)]
+#[UsesClass(\Deriver\Project\SourceLimits::class)]
 #[UsesClass(TargetProfile::class)]
 #[UsesClass(SyntaxCache::class)]
-#[UsesClass(MagicContext::class)]
-#[UsesClass(SyntaxSize::class)]
-#[UsesClass(AssignmentPatterns::class)]
-#[UsesClass(ClassScope::class)]
-#[UsesClass(TargetSyntax::class)]
+#[UsesClass(\Deriver\Source\MagicContext::class)]
+#[UsesClass(\Deriver\Source\SyntaxSize::class)]
+#[UsesClass(\Deriver\Source\Validation\AssignmentPatterns::class)]
+#[UsesClass(\Deriver\Source\Validation\ClassScope::class)]
+#[UsesClass(\Deriver\Source\Validation\TargetSyntax::class)]
 #[Small]
 final class SyntaxTreeTest extends TestCase
 {

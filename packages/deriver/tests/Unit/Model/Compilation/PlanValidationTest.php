@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Model\Compilation;
 
 use Deriver\Model\Binding\LocationRef;
-use Deriver\Model\Compilation\PlanFootprints;
 use Deriver\Model\Compilation\PlanValidation;
 use Deriver\Model\Plan\Action;
 use Deriver\Model\Plan\Expression;
@@ -23,7 +22,7 @@ use PHPUnit\Framework\TestCase;
  */
 #[CoversClass(PlanValidation::class)]
 #[UsesClass(LocationRef::class)]
-#[UsesClass(PlanFootprints::class)]
+#[UsesClass(\Deriver\Model\Compilation\PlanFootprints::class)]
 #[UsesClass(Action::class)]
 #[UsesClass(Expression::class)]
 #[UsesClass(SemanticPlan::class)]

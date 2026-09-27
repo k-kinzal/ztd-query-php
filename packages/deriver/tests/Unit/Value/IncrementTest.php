@@ -4,10 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Value;
 
-use Deriver\Value\Arithmetic;
 use Deriver\Value\Increment;
-use Deriver\Value\NumericString;
-use Deriver\Value\Operations;
 use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
@@ -18,9 +15,9 @@ use PHPUnit\Framework\TestCase;
  * @covers \Deriver\Value\Increment
  */
 #[CoversClass(Increment::class)]
-#[UsesClass(Arithmetic::class)]
-#[UsesClass(NumericString::class)]
-#[UsesClass(Operations::class)]
+#[UsesClass(\Deriver\Value\Arithmetic::class)]
+#[UsesClass(\Deriver\Value\NumericString::class)]
+#[UsesClass(\Deriver\Value\Operations::class)]
 #[UsesClass(Term::class)]
 #[Small]
 final class IncrementTest extends TestCase

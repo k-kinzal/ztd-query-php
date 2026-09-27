@@ -7,7 +7,6 @@ namespace Tests\Unit\Model\Registration;
 use Deriver\Exception\InvalidInputException;
 use Deriver\Model\ModelDescriptor;
 use Deriver\Model\Registration\ModelPrecedence;
-use Deriver\Model\Signature\Signature;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -19,7 +18,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(ModelPrecedence::class)]
 #[UsesClass(InvalidInputException::class)]
 #[UsesClass(ModelDescriptor::class)]
-#[UsesClass(Signature::class)]
+#[UsesClass(\Deriver\Model\Signature\Signature::class)]
 #[Small]
 final class ModelPrecedenceTest extends TestCase
 {

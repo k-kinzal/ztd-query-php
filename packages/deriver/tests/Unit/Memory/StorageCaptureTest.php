@@ -7,7 +7,6 @@ namespace Tests\Unit\Memory;
 use Deriver\Memory\Location;
 use Deriver\Memory\Memory;
 use Deriver\Memory\StorageCapture;
-use Deriver\Result\StorageSnapshot;
 use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
@@ -19,7 +18,7 @@ use PHPUnit\Framework\TestCase;
  */
 #[CoversClass(StorageCapture::class)]
 #[UsesClass(Location::class)]
-#[UsesClass(StorageSnapshot::class)]
+#[UsesClass(\Deriver\Result\StorageSnapshot::class)]
 #[UsesClass(Term::class)]
 #[Small]
 final class StorageCaptureTest extends TestCase

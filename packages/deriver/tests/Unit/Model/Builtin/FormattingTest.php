@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Model\Builtin;
 
 use Deriver\Model\Builtin\Formatting;
-use Deriver\Value\Operations;
 use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
@@ -16,7 +15,7 @@ use PHPUnit\Framework\TestCase;
  * @covers \Deriver\Model\Builtin\Formatting
  */
 #[CoversClass(Formatting::class)]
-#[UsesClass(Operations::class)]
+#[UsesClass(\Deriver\Value\Operations::class)]
 #[UsesClass(Term::class)]
 #[Small]
 final class FormattingTest extends TestCase

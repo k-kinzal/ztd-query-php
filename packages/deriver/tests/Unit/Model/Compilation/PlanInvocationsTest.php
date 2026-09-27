@@ -4,12 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Model\Compilation;
 
-use Deriver\ControlFlow\Argument;
-use Deriver\ControlFlow\Instruction;
 use Deriver\Model\Binding\LocationRef;
 use Deriver\Model\Compilation\PlanCompiler;
 use Deriver\Model\Compilation\PlanInvocations;
-use Deriver\Model\Compilation\PlanLocations;
 use Deriver\Model\Plan\Action;
 use Deriver\Model\Plan\CallArgument;
 use Deriver\Model\Plan\Expression;
@@ -25,11 +22,11 @@ use PHPUnit\Framework\TestCase;
  * @covers \Deriver\Model\Compilation\PlanInvocations
  */
 #[CoversClass(PlanInvocations::class)]
-#[UsesClass(Argument::class)]
-#[UsesClass(Instruction::class)]
+#[UsesClass(\Deriver\ControlFlow\Argument::class)]
+#[UsesClass(\Deriver\ControlFlow\Instruction::class)]
 #[UsesClass(LocationRef::class)]
 #[UsesClass(PlanCompiler::class)]
-#[UsesClass(PlanLocations::class)]
+#[UsesClass(\Deriver\Model\Compilation\PlanLocations::class)]
 #[UsesClass(Action::class)]
 #[UsesClass(CallArgument::class)]
 #[UsesClass(Expression::class)]

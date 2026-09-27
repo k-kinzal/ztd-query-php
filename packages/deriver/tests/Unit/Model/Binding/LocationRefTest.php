@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Model\Binding;
 
 use Deriver\Model\Binding\LocationRef;
-use Deriver\Model\Plan\Expression;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -15,7 +14,7 @@ use PHPUnit\Framework\TestCase;
  * @covers \Deriver\Model\Binding\LocationRef
  */
 #[CoversClass(LocationRef::class)]
-#[UsesClass(Expression::class)]
+#[UsesClass(\Deriver\Model\Plan\Expression::class)]
 #[Small]
 final class LocationRefTest extends TestCase
 {

@@ -7,9 +7,6 @@ namespace Tests\Unit\Model\Registration;
 use Deriver\Exception\InvalidInputException;
 use Deriver\Model\Registration\StateRegistry;
 use Deriver\Model\State\StateSlot;
-use Deriver\Value\Identity;
-use Deriver\Value\Lattice;
-use Deriver\Value\SecretFingerprint;
 use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
@@ -21,9 +18,9 @@ use PHPUnit\Framework\TestCase;
  */
 #[CoversClass(StateRegistry::class)]
 #[UsesClass(StateSlot::class)]
-#[UsesClass(Identity::class)]
-#[UsesClass(Lattice::class)]
-#[UsesClass(SecretFingerprint::class)]
+#[UsesClass(\Deriver\Value\Identity::class)]
+#[UsesClass(\Deriver\Value\Lattice::class)]
+#[UsesClass(\Deriver\Value\SecretFingerprint::class)]
 #[UsesClass(Term::class)]
 #[Small]
 final class StateRegistryTest extends TestCase

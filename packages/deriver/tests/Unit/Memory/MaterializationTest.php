@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Memory;
 
-use Deriver\Memory\Location;
 use Deriver\Memory\Materialization;
 use Deriver\Memory\Memory;
 use Deriver\Value\Term;
@@ -17,7 +16,7 @@ use PHPUnit\Framework\TestCase;
  * @covers \Deriver\Memory\Materialization
  */
 #[CoversClass(Materialization::class)]
-#[UsesClass(Location::class)]
+#[UsesClass(\Deriver\Memory\Location::class)]
 #[UsesClass(Memory::class)]
 #[UsesClass(Term::class)]
 #[Small]

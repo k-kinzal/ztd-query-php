@@ -4,25 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Source\Declaration;
 
-use Deriver\ControlFlow\CallableIdentity;
-use Deriver\Project\ProjectInput;
-use Deriver\Project\SourceFile;
-use Deriver\Project\SourceLimits;
-use Deriver\Project\TargetProfile;
-use Deriver\Source\Cache\SyntaxCache;
-use Deriver\Source\Cache\SyntaxTree;
-use Deriver\Source\Compilation\EffectInspection;
-use Deriver\Source\Declaration\CallableSource;
 use Deriver\Source\Declaration\CallSiteIndex;
-use Deriver\Source\Declaration\DeclarationScanner;
-use Deriver\Source\Declaration\ProjectIndex;
-use Deriver\Source\Declaration\Traits\Composition;
-use Deriver\Source\LineMap;
-use Deriver\Source\MagicContext;
-use Deriver\Source\SyntaxSize;
-use Deriver\Source\Validation\AssignmentPatterns;
-use Deriver\Source\Validation\ClassScope;
-use Deriver\Source\Validation\TargetSyntax;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -32,24 +14,24 @@ use PHPUnit\Framework\TestCase;
  * @covers \Deriver\Source\Declaration\CallSiteIndex
  */
 #[CoversClass(CallSiteIndex::class)]
-#[UsesClass(CallableIdentity::class)]
-#[UsesClass(ProjectInput::class)]
-#[UsesClass(SourceFile::class)]
-#[UsesClass(SourceLimits::class)]
-#[UsesClass(TargetProfile::class)]
-#[UsesClass(SyntaxCache::class)]
-#[UsesClass(SyntaxTree::class)]
-#[UsesClass(EffectInspection::class)]
-#[UsesClass(CallableSource::class)]
-#[UsesClass(DeclarationScanner::class)]
-#[UsesClass(ProjectIndex::class)]
-#[UsesClass(Composition::class)]
-#[UsesClass(LineMap::class)]
-#[UsesClass(MagicContext::class)]
-#[UsesClass(SyntaxSize::class)]
-#[UsesClass(AssignmentPatterns::class)]
-#[UsesClass(ClassScope::class)]
-#[UsesClass(TargetSyntax::class)]
+#[UsesClass(\Deriver\ControlFlow\CallableIdentity::class)]
+#[UsesClass(\Deriver\Project\ProjectInput::class)]
+#[UsesClass(\Deriver\Project\SourceFile::class)]
+#[UsesClass(\Deriver\Project\SourceLimits::class)]
+#[UsesClass(\Deriver\Project\TargetProfile::class)]
+#[UsesClass(\Deriver\Source\Cache\SyntaxCache::class)]
+#[UsesClass(\Deriver\Source\Cache\SyntaxTree::class)]
+#[UsesClass(\Deriver\Source\Compilation\EffectInspection::class)]
+#[UsesClass(\Deriver\Source\Declaration\CallableSource::class)]
+#[UsesClass(\Deriver\Source\Declaration\DeclarationScanner::class)]
+#[UsesClass(\Deriver\Source\Declaration\ProjectIndex::class)]
+#[UsesClass(\Deriver\Source\Declaration\Traits\Composition::class)]
+#[UsesClass(\Deriver\Source\LineMap::class)]
+#[UsesClass(\Deriver\Source\MagicContext::class)]
+#[UsesClass(\Deriver\Source\SyntaxSize::class)]
+#[UsesClass(\Deriver\Source\Validation\AssignmentPatterns::class)]
+#[UsesClass(\Deriver\Source\Validation\ClassScope::class)]
+#[UsesClass(\Deriver\Source\Validation\TargetSyntax::class)]
 #[Small]
 final class CallSiteIndexTest extends TestCase
 {

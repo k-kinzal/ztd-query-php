@@ -5,12 +5,8 @@ declare(strict_types=1);
 namespace Tests\Unit\Evaluation\Summary;
 
 use Deriver\Evaluation\Completion;
-use Deriver\Evaluation\Havoc;
 use Deriver\Evaluation\State;
 use Deriver\Evaluation\Summary\CompletionRecord;
-use Deriver\Memory\Location;
-use Deriver\Memory\Memory;
-use Deriver\Value\Identity;
 use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
@@ -22,11 +18,11 @@ use PHPUnit\Framework\TestCase;
  */
 #[CoversClass(CompletionRecord::class)]
 #[UsesClass(Completion::class)]
-#[UsesClass(Havoc::class)]
+#[UsesClass(\Deriver\Evaluation\Havoc::class)]
 #[UsesClass(State::class)]
-#[UsesClass(Location::class)]
-#[UsesClass(Memory::class)]
-#[UsesClass(Identity::class)]
+#[UsesClass(\Deriver\Memory\Location::class)]
+#[UsesClass(\Deriver\Memory\Memory::class)]
+#[UsesClass(\Deriver\Value\Identity::class)]
 #[UsesClass(Term::class)]
 #[Small]
 final class CompletionRecordTest extends TestCase

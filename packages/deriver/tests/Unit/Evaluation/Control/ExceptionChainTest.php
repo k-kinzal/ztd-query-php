@@ -4,50 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Evaluation\Control;
 
-use Deriver\ControlFlow\CallableIdentity;
-use Deriver\ControlFlow\ClassDeclaration;
 use Deriver\ControlFlow\ExceptionRegion;
-use Deriver\ControlFlow\PropertyDeclaration;
-use Deriver\Evaluation\Call\Creation\Builtins;
-use Deriver\Evaluation\Call\Dispatch;
-use Deriver\Evaluation\Call\Native\Properties;
-use Deriver\Evaluation\Call\Native\Signatures;
 use Deriver\Evaluation\Completion;
-use Deriver\Evaluation\Context;
 use Deriver\Evaluation\Control\ExceptionChain;
 use Deriver\Evaluation\Control\Handler;
-use Deriver\Evaluation\Control\Resources;
 use Deriver\Evaluation\Control\Unwinding;
 use Deriver\Evaluation\State;
 use Deriver\Memory\Location;
-use Deriver\Memory\Memory;
-use Deriver\Model\Registration\Extensions;
-use Deriver\Model\Registration\Registry;
-use Deriver\Model\Registration\StateRegistry;
-use Deriver\Project\Configuration;
-use Deriver\Project\ProjectInput;
-use Deriver\Project\SourceFile;
-use Deriver\Project\SourceLimits;
-use Deriver\Project\TargetProfile;
-use Deriver\Query\Budget;
-use Deriver\Query\QueryScope;
-use Deriver\Query\ResourceLimits;
-use Deriver\Query\ReturnQuery;
-use Deriver\Source\Cache\SyntaxCache;
-use Deriver\Source\Cache\SyntaxTree;
-use Deriver\Source\ConstantSignatures;
-use Deriver\Source\Declaration\CallableSource;
-use Deriver\Source\Declaration\DeclarationScanner;
-use Deriver\Source\Declaration\ProjectIndex;
-use Deriver\Source\Declaration\Traits\Composition;
-use Deriver\Source\LineMap;
-use Deriver\Source\MagicContext;
-use Deriver\Source\SyntaxSize;
-use Deriver\Source\Validation\AssignmentPatterns;
-use Deriver\Source\Validation\ClassScope;
-use Deriver\Source\Validation\TargetSyntax;
-use Deriver\Value\Arrays;
-use Deriver\Value\Operations;
 use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -57,49 +20,49 @@ use PHPUnit\Framework\TestCase;
 use Tests\Fake\SolverFixture;
 
 #[CoversClass(ExceptionChain::class)]
-#[UsesClass(CallableIdentity::class)]
-#[UsesClass(ClassDeclaration::class)]
+#[UsesClass(\Deriver\ControlFlow\CallableIdentity::class)]
+#[UsesClass(\Deriver\ControlFlow\ClassDeclaration::class)]
 #[UsesClass(ExceptionRegion::class)]
-#[UsesClass(PropertyDeclaration::class)]
-#[UsesClass(Builtins::class)]
-#[UsesClass(Dispatch::class)]
-#[UsesClass(Properties::class)]
-#[UsesClass(Signatures::class)]
+#[UsesClass(\Deriver\ControlFlow\PropertyDeclaration::class)]
+#[UsesClass(\Deriver\Evaluation\Call\Creation\Builtins::class)]
+#[UsesClass(\Deriver\Evaluation\Call\Dispatch::class)]
+#[UsesClass(\Deriver\Evaluation\Call\Native\Properties::class)]
+#[UsesClass(\Deriver\Evaluation\Call\Native\Signatures::class)]
 #[UsesClass(Completion::class)]
-#[UsesClass(Context::class)]
+#[UsesClass(\Deriver\Evaluation\Context::class)]
 #[UsesClass(Handler::class)]
-#[UsesClass(Resources::class)]
+#[UsesClass(\Deriver\Evaluation\Control\Resources::class)]
 #[UsesClass(Unwinding::class)]
 #[UsesClass(State::class)]
 #[UsesClass(Location::class)]
-#[UsesClass(Memory::class)]
-#[UsesClass(Extensions::class)]
-#[UsesClass(Registry::class)]
-#[UsesClass(StateRegistry::class)]
-#[UsesClass(Configuration::class)]
-#[UsesClass(ProjectInput::class)]
-#[UsesClass(SourceFile::class)]
-#[UsesClass(SourceLimits::class)]
-#[UsesClass(TargetProfile::class)]
-#[UsesClass(Budget::class)]
-#[UsesClass(QueryScope::class)]
-#[UsesClass(ResourceLimits::class)]
-#[UsesClass(ReturnQuery::class)]
-#[UsesClass(SyntaxCache::class)]
-#[UsesClass(SyntaxTree::class)]
-#[UsesClass(ConstantSignatures::class)]
-#[UsesClass(CallableSource::class)]
-#[UsesClass(DeclarationScanner::class)]
-#[UsesClass(ProjectIndex::class)]
-#[UsesClass(Composition::class)]
-#[UsesClass(LineMap::class)]
-#[UsesClass(MagicContext::class)]
-#[UsesClass(SyntaxSize::class)]
-#[UsesClass(AssignmentPatterns::class)]
-#[UsesClass(ClassScope::class)]
-#[UsesClass(TargetSyntax::class)]
-#[UsesClass(Arrays::class)]
-#[UsesClass(Operations::class)]
+#[UsesClass(\Deriver\Memory\Memory::class)]
+#[UsesClass(\Deriver\Model\Registration\Extensions::class)]
+#[UsesClass(\Deriver\Model\Registration\Registry::class)]
+#[UsesClass(\Deriver\Model\Registration\StateRegistry::class)]
+#[UsesClass(\Deriver\Project\Configuration::class)]
+#[UsesClass(\Deriver\Project\ProjectInput::class)]
+#[UsesClass(\Deriver\Project\SourceFile::class)]
+#[UsesClass(\Deriver\Project\SourceLimits::class)]
+#[UsesClass(\Deriver\Project\TargetProfile::class)]
+#[UsesClass(\Deriver\Query\Budget::class)]
+#[UsesClass(\Deriver\Query\QueryScope::class)]
+#[UsesClass(\Deriver\Query\ResourceLimits::class)]
+#[UsesClass(\Deriver\Query\ReturnQuery::class)]
+#[UsesClass(\Deriver\Source\Cache\SyntaxCache::class)]
+#[UsesClass(\Deriver\Source\Cache\SyntaxTree::class)]
+#[UsesClass(\Deriver\Source\ConstantSignatures::class)]
+#[UsesClass(\Deriver\Source\Declaration\CallableSource::class)]
+#[UsesClass(\Deriver\Source\Declaration\DeclarationScanner::class)]
+#[UsesClass(\Deriver\Source\Declaration\ProjectIndex::class)]
+#[UsesClass(\Deriver\Source\Declaration\Traits\Composition::class)]
+#[UsesClass(\Deriver\Source\LineMap::class)]
+#[UsesClass(\Deriver\Source\MagicContext::class)]
+#[UsesClass(\Deriver\Source\SyntaxSize::class)]
+#[UsesClass(\Deriver\Source\Validation\AssignmentPatterns::class)]
+#[UsesClass(\Deriver\Source\Validation\ClassScope::class)]
+#[UsesClass(\Deriver\Source\Validation\TargetSyntax::class)]
+#[UsesClass(\Deriver\Value\Arrays::class)]
+#[UsesClass(\Deriver\Value\Operations::class)]
 #[UsesClass(Term::class)]
 #[Small]
 final class ExceptionChainTest extends TestCase

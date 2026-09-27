@@ -4,38 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Source\Declaration\Traits;
 
-use Deriver\ControlFlow\BasicBlock;
-use Deriver\ControlFlow\CallableGraph;
-use Deriver\ControlFlow\CallableIdentity;
 use Deriver\ControlFlow\ClassDeclaration;
-use Deriver\ControlFlow\Terminator;
-use Deriver\Project\ProjectInput;
-use Deriver\Project\SourceFile;
-use Deriver\Project\SourceLimits;
-use Deriver\Project\TargetProfile;
-use Deriver\Reference\SourceRef;
-use Deriver\Result\Frontier;
-use Deriver\Source\Cache\GraphCache;
-use Deriver\Source\Cache\GraphTemplate;
-use Deriver\Source\Cache\SnapshotRebase;
-use Deriver\Source\Cache\SyntaxCache;
-use Deriver\Source\Cache\SyntaxTree;
-use Deriver\Source\Compilation\CallableCompiler;
-use Deriver\Source\Compilation\GraphBuilder;
-use Deriver\Source\Compilation\Lowering;
-use Deriver\Source\ConstantSignatures;
 use Deriver\Source\Declaration\CallableSource;
-use Deriver\Source\Declaration\DeclarationScanner;
-use Deriver\Source\Declaration\ProjectIndex;
-use Deriver\Source\Declaration\Traits\Composition;
-use Deriver\Source\Declaration\Traits\LexicalConstants;
 use Deriver\Source\Declaration\Traits\Members;
-use Deriver\Source\LineMap;
-use Deriver\Source\MagicContext;
-use Deriver\Source\SyntaxSize;
-use Deriver\Source\Validation\AssignmentPatterns;
-use Deriver\Source\Validation\ClassScope;
-use Deriver\Source\Validation\TargetSyntax;
 use PhpParser\Modifiers;
 use PhpParser\Node\Name;
 use PhpParser\Node\Stmt;
@@ -50,37 +21,37 @@ use Tests\Fake\SourceFixture;
  * @covers \Deriver\Source\Declaration\Traits\Members
  */
 #[CoversClass(Members::class)]
-#[UsesClass(BasicBlock::class)]
-#[UsesClass(CallableGraph::class)]
-#[UsesClass(CallableIdentity::class)]
+#[UsesClass(\Deriver\ControlFlow\BasicBlock::class)]
+#[UsesClass(\Deriver\ControlFlow\CallableGraph::class)]
+#[UsesClass(\Deriver\ControlFlow\CallableIdentity::class)]
 #[UsesClass(ClassDeclaration::class)]
-#[UsesClass(Terminator::class)]
-#[UsesClass(ProjectInput::class)]
-#[UsesClass(SourceFile::class)]
-#[UsesClass(SourceLimits::class)]
-#[UsesClass(TargetProfile::class)]
-#[UsesClass(SourceRef::class)]
-#[UsesClass(Frontier::class)]
-#[UsesClass(GraphCache::class)]
-#[UsesClass(GraphTemplate::class)]
-#[UsesClass(SnapshotRebase::class)]
-#[UsesClass(SyntaxCache::class)]
-#[UsesClass(SyntaxTree::class)]
-#[UsesClass(CallableCompiler::class)]
-#[UsesClass(GraphBuilder::class)]
-#[UsesClass(Lowering::class)]
-#[UsesClass(ConstantSignatures::class)]
+#[UsesClass(\Deriver\ControlFlow\Terminator::class)]
+#[UsesClass(\Deriver\Project\ProjectInput::class)]
+#[UsesClass(\Deriver\Project\SourceFile::class)]
+#[UsesClass(\Deriver\Project\SourceLimits::class)]
+#[UsesClass(\Deriver\Project\TargetProfile::class)]
+#[UsesClass(\Deriver\Reference\SourceRef::class)]
+#[UsesClass(\Deriver\Result\Frontier::class)]
+#[UsesClass(\Deriver\Source\Cache\GraphCache::class)]
+#[UsesClass(\Deriver\Source\Cache\GraphTemplate::class)]
+#[UsesClass(\Deriver\Source\Cache\SnapshotRebase::class)]
+#[UsesClass(\Deriver\Source\Cache\SyntaxCache::class)]
+#[UsesClass(\Deriver\Source\Cache\SyntaxTree::class)]
+#[UsesClass(\Deriver\Source\Compilation\CallableCompiler::class)]
+#[UsesClass(\Deriver\Source\Compilation\GraphBuilder::class)]
+#[UsesClass(\Deriver\Source\Compilation\Lowering::class)]
+#[UsesClass(\Deriver\Source\ConstantSignatures::class)]
 #[UsesClass(CallableSource::class)]
-#[UsesClass(DeclarationScanner::class)]
-#[UsesClass(ProjectIndex::class)]
-#[UsesClass(Composition::class)]
-#[UsesClass(LexicalConstants::class)]
-#[UsesClass(LineMap::class)]
-#[UsesClass(MagicContext::class)]
-#[UsesClass(SyntaxSize::class)]
-#[UsesClass(AssignmentPatterns::class)]
-#[UsesClass(ClassScope::class)]
-#[UsesClass(TargetSyntax::class)]
+#[UsesClass(\Deriver\Source\Declaration\DeclarationScanner::class)]
+#[UsesClass(\Deriver\Source\Declaration\ProjectIndex::class)]
+#[UsesClass(\Deriver\Source\Declaration\Traits\Composition::class)]
+#[UsesClass(\Deriver\Source\Declaration\Traits\LexicalConstants::class)]
+#[UsesClass(\Deriver\Source\LineMap::class)]
+#[UsesClass(\Deriver\Source\MagicContext::class)]
+#[UsesClass(\Deriver\Source\SyntaxSize::class)]
+#[UsesClass(\Deriver\Source\Validation\AssignmentPatterns::class)]
+#[UsesClass(\Deriver\Source\Validation\ClassScope::class)]
+#[UsesClass(\Deriver\Source\Validation\TargetSyntax::class)]
 #[Small]
 final class MembersTest extends TestCase
 {

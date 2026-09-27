@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Model\Intrinsic;
 
-use Deriver\Model\Intrinsic\IntrinsicDescriptor;
 use Deriver\Model\Intrinsic\PureIntrinsic;
 use Deriver\Project\TargetProfile;
 use Deriver\Value\Term;
@@ -17,7 +16,7 @@ use PHPUnit\Framework\TestCase;
  * @covers \Deriver\Model\Intrinsic\PureIntrinsic
  */
 #[CoversClass(PureIntrinsic::class)]
-#[UsesClass(IntrinsicDescriptor::class)]
+#[UsesClass(\Deriver\Model\Intrinsic\IntrinsicDescriptor::class)]
 #[UsesClass(TargetProfile::class)]
 #[UsesClass(Term::class)]
 #[Small]

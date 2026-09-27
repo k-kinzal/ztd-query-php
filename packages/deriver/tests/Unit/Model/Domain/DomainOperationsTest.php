@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Model\Domain;
 
-use Deriver\Model\Contract\DomainLaws;
 use Deriver\Model\Domain\AbstractDomain;
 use Deriver\Model\Domain\DomainFact;
 use Deriver\Model\Domain\DomainOperations;
@@ -17,7 +16,7 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
 #[CoversClass(DomainOperations::class)]
-#[UsesClass(DomainLaws::class)]
+#[UsesClass(\Deriver\Model\Contract\DomainLaws::class)]
 #[UsesClass(DomainFact::class)]
 #[UsesClass(Projection::class)]
 #[UsesClass(Term::class)]

@@ -16,12 +16,9 @@ use Deriver\Query\ValueQuery;
 use Deriver\Reference\ExpressionRef;
 use Deriver\Reference\PointRef;
 use Deriver\Reference\SourceRef;
-use Deriver\Result\Serialization\JsonText;
 use Deriver\Result\Serialization\QueryEncoding;
 use Deriver\Result\Serialization\ValueGraph;
-use Deriver\Value\Identity;
 use Deriver\Value\Projection;
-use Deriver\Value\SecretFingerprint;
 use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -43,11 +40,11 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(ExpressionRef::class)]
 #[UsesClass(PointRef::class)]
 #[UsesClass(SourceRef::class)]
-#[UsesClass(JsonText::class)]
+#[UsesClass(\Deriver\Result\Serialization\JsonText::class)]
 #[UsesClass(ValueGraph::class)]
-#[UsesClass(Identity::class)]
+#[UsesClass(\Deriver\Value\Identity::class)]
 #[UsesClass(Projection::class)]
-#[UsesClass(SecretFingerprint::class)]
+#[UsesClass(\Deriver\Value\SecretFingerprint::class)]
 #[UsesClass(Term::class)]
 #[Small]
 final class QueryEncodingTest extends TestCase

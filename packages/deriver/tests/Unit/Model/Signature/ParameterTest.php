@@ -4,123 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Model\Signature;
 
-use Deriver\Analysis\QueryExecution;
-use Deriver\Analysis\QueryValidation;
-use Deriver\Analysis\ResultAssessment;
-use Deriver\Analysis\Session;
-use Deriver\Analyzer;
-use Deriver\ControlFlow\Argument;
-use Deriver\ControlFlow\BasicBlock;
-use Deriver\ControlFlow\CallableGraph;
-use Deriver\ControlFlow\CallableIdentity;
-use Deriver\ControlFlow\Instruction;
-use Deriver\ControlFlow\Terminator;
-use Deriver\Evaluation\Call\ArgumentBinding;
-use Deriver\Evaluation\Call\ArgumentOrder;
-use Deriver\Evaluation\Call\CallableCheck;
-use Deriver\Evaluation\Call\CallExecutor;
-use Deriver\Evaluation\Call\CallResolution;
-use Deriver\Evaluation\Call\Dispatch;
-use Deriver\Evaluation\Call\Model\Inputs;
-use Deriver\Evaluation\Call\ParameterBinding;
-use Deriver\Evaluation\Call\PassedArgument;
-use Deriver\Evaluation\Call\Preparation\Arguments;
-use Deriver\Evaluation\Call\Preparation\Modes;
-use Deriver\Evaluation\Call\Preparation\Resolution;
-use Deriver\Evaluation\Call\Preparation\Target;
-use Deriver\Evaluation\Call\Preparation\Transfer;
-use Deriver\Evaluation\Call\TypeBinding;
-use Deriver\Evaluation\Call\TypeCheck;
-use Deriver\Evaluation\Completion;
-use Deriver\Evaluation\Context;
-use Deriver\Evaluation\Control\ObservationLimit;
-use Deriver\Evaluation\Control\Resources;
-use Deriver\Evaluation\Control\StateJoin;
-use Deriver\Evaluation\Control\Unwinding;
-use Deriver\Evaluation\Demand\Discovery;
-use Deriver\Evaluation\Dependencies;
-use Deriver\Evaluation\InstructionTransfer;
-use Deriver\Evaluation\Machine;
-use Deriver\Evaluation\Model\SlotReference;
-use Deriver\Evaluation\ObservationCollector;
-use Deriver\Evaluation\Operation\Conversions;
-use Deriver\Evaluation\Operation\ScalarErrors;
-use Deriver\Evaluation\State;
-use Deriver\Evaluation\Summary\Evaluation;
-use Deriver\Evaluation\Summary\Isolation;
-use Deriver\Evaluation\Transfer\MemoryStep;
-use Deriver\Evaluation\Transfer\PureStep;
-use Deriver\Evaluation\Transfer\ReferenceAssignment;
-use Deriver\Memory\Location;
-use Deriver\Memory\Materialization;
-use Deriver\Memory\Memory;
-use Deriver\Memory\StorageCapture;
-use Deriver\Model\Binding\ArgumentBindings;
-use Deriver\Model\Binding\BoundArgument;
-use Deriver\Model\Builtin\Library;
-use Deriver\Model\CallDescription;
-use Deriver\Model\Compilation\PlanActions;
-use Deriver\Model\Compilation\PlanCompiler;
-use Deriver\Model\Compilation\PlanFootprints;
-use Deriver\Model\Compilation\PlanValidation;
-use Deriver\Model\ModelDecision;
 use Deriver\Model\ModelDescriptor;
 use Deriver\Model\Plan\Action;
 use Deriver\Model\Plan\Expression;
 use Deriver\Model\Plan\SemanticPlan;
-use Deriver\Model\Registration\Extensions;
-use Deriver\Model\Registration\ModelPrecedence;
-use Deriver\Model\Registration\ProviderInputs;
-use Deriver\Model\Registration\Registry;
-use Deriver\Model\Registration\SignatureIdentity;
-use Deriver\Model\Registration\StateRegistry;
 use Deriver\Model\Signature\Parameter;
 use Deriver\Model\Signature\Signature;
 use Deriver\Project\Configuration;
-use Deriver\Project\EntryPoint;
-use Deriver\Project\ProjectInput;
-use Deriver\Project\ProjectSnapshot;
-use Deriver\Project\SourceFile;
-use Deriver\Project\SourceLimits;
-use Deriver\Project\TargetProfile;
-use Deriver\Query\Budget;
-use Deriver\Query\QueryScope;
-use Deriver\Query\ResourceLimits;
 use Deriver\Query\ReturnQuery;
-use Deriver\Reference\ResultRef;
-use Deriver\Reference\SourceRef;
-use Deriver\Result\Alternative;
-use Deriver\Result\Assessment;
-use Deriver\Result\Derivation;
-use Deriver\Result\DerivationResult;
-use Deriver\Result\Serialization\JsonText;
-use Deriver\Result\Serialization\QueryEncoding;
-use Deriver\Result\Serialization\ValueGraph;
-use Deriver\Result\Statistics;
-use Deriver\Result\StorageSnapshot;
-use Deriver\Source\Cache\GraphCache;
-use Deriver\Source\Cache\GraphTemplate;
-use Deriver\Source\Cache\SnapshotRebase;
-use Deriver\Source\Cache\SyntaxCache;
-use Deriver\Source\Cache\SyntaxTree;
-use Deriver\Source\Compilation\CallableCompiler;
-use Deriver\Source\Compilation\CallLowering;
-use Deriver\Source\Compilation\ExpressionLowering;
-use Deriver\Source\Compilation\GraphBuilder;
-use Deriver\Source\Compilation\Lowering;
-use Deriver\Source\Compilation\StatementLowering;
-use Deriver\Source\Declaration\CallableSource;
-use Deriver\Source\Declaration\DeclarationScanner;
-use Deriver\Source\Declaration\ProjectIndex;
-use Deriver\Source\Declaration\Traits\Composition;
-use Deriver\Source\LineMap;
-use Deriver\Source\MagicContext;
-use Deriver\Source\SyntaxSize;
-use Deriver\Source\Validation\AssignmentPatterns;
-use Deriver\Source\Validation\ClassScope;
-use Deriver\Source\Validation\TargetSyntax;
-use Deriver\Value\Identity;
-use Deriver\Value\Operations;
 use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -129,123 +20,123 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(Parameter::class)]
-#[UsesClass(QueryExecution::class)]
-#[UsesClass(QueryValidation::class)]
-#[UsesClass(ResultAssessment::class)]
-#[UsesClass(Session::class)]
-#[UsesClass(Analyzer::class)]
-#[UsesClass(Argument::class)]
-#[UsesClass(BasicBlock::class)]
-#[UsesClass(CallableGraph::class)]
-#[UsesClass(CallableIdentity::class)]
-#[UsesClass(Instruction::class)]
+#[UsesClass(\Deriver\Analysis\QueryExecution::class)]
+#[UsesClass(\Deriver\Analysis\QueryValidation::class)]
+#[UsesClass(\Deriver\Analysis\ResultAssessment::class)]
+#[UsesClass(\Deriver\Analysis\Session::class)]
+#[UsesClass(\Deriver\Analyzer::class)]
+#[UsesClass(\Deriver\ControlFlow\Argument::class)]
+#[UsesClass(\Deriver\ControlFlow\BasicBlock::class)]
+#[UsesClass(\Deriver\ControlFlow\CallableGraph::class)]
+#[UsesClass(\Deriver\ControlFlow\CallableIdentity::class)]
+#[UsesClass(\Deriver\ControlFlow\Instruction::class)]
 #[UsesClass(\Deriver\ControlFlow\Parameter::class)]
-#[UsesClass(Terminator::class)]
-#[UsesClass(ArgumentBinding::class)]
-#[UsesClass(ArgumentOrder::class)]
-#[UsesClass(CallExecutor::class)]
-#[UsesClass(CallResolution::class)]
-#[UsesClass(CallableCheck::class)]
-#[UsesClass(Dispatch::class)]
-#[UsesClass(Inputs::class)]
-#[UsesClass(ParameterBinding::class)]
-#[UsesClass(PassedArgument::class)]
-#[UsesClass(Arguments::class)]
-#[UsesClass(Modes::class)]
-#[UsesClass(Resolution::class)]
-#[UsesClass(Target::class)]
-#[UsesClass(Transfer::class)]
-#[UsesClass(TypeBinding::class)]
-#[UsesClass(TypeCheck::class)]
-#[UsesClass(Completion::class)]
-#[UsesClass(Context::class)]
-#[UsesClass(ObservationLimit::class)]
-#[UsesClass(Resources::class)]
-#[UsesClass(StateJoin::class)]
-#[UsesClass(Unwinding::class)]
-#[UsesClass(Discovery::class)]
-#[UsesClass(Dependencies::class)]
-#[UsesClass(InstructionTransfer::class)]
-#[UsesClass(Machine::class)]
-#[UsesClass(SlotReference::class)]
-#[UsesClass(ObservationCollector::class)]
-#[UsesClass(Conversions::class)]
-#[UsesClass(ScalarErrors::class)]
-#[UsesClass(State::class)]
-#[UsesClass(Evaluation::class)]
-#[UsesClass(Isolation::class)]
-#[UsesClass(MemoryStep::class)]
-#[UsesClass(PureStep::class)]
-#[UsesClass(ReferenceAssignment::class)]
-#[UsesClass(Location::class)]
-#[UsesClass(Materialization::class)]
-#[UsesClass(Memory::class)]
-#[UsesClass(StorageCapture::class)]
-#[UsesClass(ArgumentBindings::class)]
-#[UsesClass(BoundArgument::class)]
-#[UsesClass(Library::class)]
-#[UsesClass(CallDescription::class)]
-#[UsesClass(PlanActions::class)]
-#[UsesClass(PlanCompiler::class)]
-#[UsesClass(PlanFootprints::class)]
-#[UsesClass(PlanValidation::class)]
-#[UsesClass(ModelDecision::class)]
+#[UsesClass(\Deriver\ControlFlow\Terminator::class)]
+#[UsesClass(\Deriver\Evaluation\Call\ArgumentBinding::class)]
+#[UsesClass(\Deriver\Evaluation\Call\ArgumentOrder::class)]
+#[UsesClass(\Deriver\Evaluation\Call\CallExecutor::class)]
+#[UsesClass(\Deriver\Evaluation\Call\CallResolution::class)]
+#[UsesClass(\Deriver\Evaluation\Call\CallableCheck::class)]
+#[UsesClass(\Deriver\Evaluation\Call\Dispatch::class)]
+#[UsesClass(\Deriver\Evaluation\Call\Model\Inputs::class)]
+#[UsesClass(\Deriver\Evaluation\Call\ParameterBinding::class)]
+#[UsesClass(\Deriver\Evaluation\Call\PassedArgument::class)]
+#[UsesClass(\Deriver\Evaluation\Call\Preparation\Arguments::class)]
+#[UsesClass(\Deriver\Evaluation\Call\Preparation\Modes::class)]
+#[UsesClass(\Deriver\Evaluation\Call\Preparation\Resolution::class)]
+#[UsesClass(\Deriver\Evaluation\Call\Preparation\Target::class)]
+#[UsesClass(\Deriver\Evaluation\Call\Preparation\Transfer::class)]
+#[UsesClass(\Deriver\Evaluation\Call\TypeBinding::class)]
+#[UsesClass(\Deriver\Evaluation\Call\TypeCheck::class)]
+#[UsesClass(\Deriver\Evaluation\Completion::class)]
+#[UsesClass(\Deriver\Evaluation\Context::class)]
+#[UsesClass(\Deriver\Evaluation\Control\ObservationLimit::class)]
+#[UsesClass(\Deriver\Evaluation\Control\Resources::class)]
+#[UsesClass(\Deriver\Evaluation\Control\StateJoin::class)]
+#[UsesClass(\Deriver\Evaluation\Control\Unwinding::class)]
+#[UsesClass(\Deriver\Evaluation\Demand\Discovery::class)]
+#[UsesClass(\Deriver\Evaluation\Dependencies::class)]
+#[UsesClass(\Deriver\Evaluation\InstructionTransfer::class)]
+#[UsesClass(\Deriver\Evaluation\Machine::class)]
+#[UsesClass(\Deriver\Evaluation\Model\SlotReference::class)]
+#[UsesClass(\Deriver\Evaluation\ObservationCollector::class)]
+#[UsesClass(\Deriver\Evaluation\Operation\Conversions::class)]
+#[UsesClass(\Deriver\Evaluation\Operation\ScalarErrors::class)]
+#[UsesClass(\Deriver\Evaluation\State::class)]
+#[UsesClass(\Deriver\Evaluation\Summary\Evaluation::class)]
+#[UsesClass(\Deriver\Evaluation\Summary\Isolation::class)]
+#[UsesClass(\Deriver\Evaluation\Transfer\MemoryStep::class)]
+#[UsesClass(\Deriver\Evaluation\Transfer\PureStep::class)]
+#[UsesClass(\Deriver\Evaluation\Transfer\ReferenceAssignment::class)]
+#[UsesClass(\Deriver\Memory\Location::class)]
+#[UsesClass(\Deriver\Memory\Materialization::class)]
+#[UsesClass(\Deriver\Memory\Memory::class)]
+#[UsesClass(\Deriver\Memory\StorageCapture::class)]
+#[UsesClass(\Deriver\Model\Binding\ArgumentBindings::class)]
+#[UsesClass(\Deriver\Model\Binding\BoundArgument::class)]
+#[UsesClass(\Deriver\Model\Builtin\Library::class)]
+#[UsesClass(\Deriver\Model\CallDescription::class)]
+#[UsesClass(\Deriver\Model\Compilation\PlanActions::class)]
+#[UsesClass(\Deriver\Model\Compilation\PlanCompiler::class)]
+#[UsesClass(\Deriver\Model\Compilation\PlanFootprints::class)]
+#[UsesClass(\Deriver\Model\Compilation\PlanValidation::class)]
+#[UsesClass(\Deriver\Model\ModelDecision::class)]
 #[UsesClass(ModelDescriptor::class)]
 #[UsesClass(Action::class)]
 #[UsesClass(Expression::class)]
 #[UsesClass(SemanticPlan::class)]
-#[UsesClass(Extensions::class)]
-#[UsesClass(ModelPrecedence::class)]
-#[UsesClass(ProviderInputs::class)]
-#[UsesClass(Registry::class)]
-#[UsesClass(SignatureIdentity::class)]
-#[UsesClass(StateRegistry::class)]
+#[UsesClass(\Deriver\Model\Registration\Extensions::class)]
+#[UsesClass(\Deriver\Model\Registration\ModelPrecedence::class)]
+#[UsesClass(\Deriver\Model\Registration\ProviderInputs::class)]
+#[UsesClass(\Deriver\Model\Registration\Registry::class)]
+#[UsesClass(\Deriver\Model\Registration\SignatureIdentity::class)]
+#[UsesClass(\Deriver\Model\Registration\StateRegistry::class)]
 #[UsesClass(Signature::class)]
 #[UsesClass(Configuration::class)]
-#[UsesClass(EntryPoint::class)]
-#[UsesClass(ProjectInput::class)]
-#[UsesClass(ProjectSnapshot::class)]
-#[UsesClass(SourceFile::class)]
-#[UsesClass(SourceLimits::class)]
-#[UsesClass(TargetProfile::class)]
-#[UsesClass(Budget::class)]
-#[UsesClass(QueryScope::class)]
-#[UsesClass(ResourceLimits::class)]
+#[UsesClass(\Deriver\Project\EntryPoint::class)]
+#[UsesClass(\Deriver\Project\ProjectInput::class)]
+#[UsesClass(\Deriver\Project\ProjectSnapshot::class)]
+#[UsesClass(\Deriver\Project\SourceFile::class)]
+#[UsesClass(\Deriver\Project\SourceLimits::class)]
+#[UsesClass(\Deriver\Project\TargetProfile::class)]
+#[UsesClass(\Deriver\Query\Budget::class)]
+#[UsesClass(\Deriver\Query\QueryScope::class)]
+#[UsesClass(\Deriver\Query\ResourceLimits::class)]
 #[UsesClass(ReturnQuery::class)]
-#[UsesClass(ResultRef::class)]
-#[UsesClass(SourceRef::class)]
-#[UsesClass(Alternative::class)]
-#[UsesClass(Assessment::class)]
-#[UsesClass(Derivation::class)]
-#[UsesClass(DerivationResult::class)]
-#[UsesClass(JsonText::class)]
-#[UsesClass(QueryEncoding::class)]
-#[UsesClass(ValueGraph::class)]
-#[UsesClass(Statistics::class)]
-#[UsesClass(StorageSnapshot::class)]
-#[UsesClass(GraphCache::class)]
-#[UsesClass(GraphTemplate::class)]
-#[UsesClass(SnapshotRebase::class)]
-#[UsesClass(SyntaxCache::class)]
-#[UsesClass(SyntaxTree::class)]
-#[UsesClass(CallLowering::class)]
-#[UsesClass(CallableCompiler::class)]
-#[UsesClass(ExpressionLowering::class)]
-#[UsesClass(GraphBuilder::class)]
-#[UsesClass(Lowering::class)]
-#[UsesClass(StatementLowering::class)]
-#[UsesClass(CallableSource::class)]
-#[UsesClass(DeclarationScanner::class)]
-#[UsesClass(ProjectIndex::class)]
-#[UsesClass(Composition::class)]
-#[UsesClass(LineMap::class)]
-#[UsesClass(MagicContext::class)]
-#[UsesClass(SyntaxSize::class)]
-#[UsesClass(AssignmentPatterns::class)]
-#[UsesClass(ClassScope::class)]
-#[UsesClass(TargetSyntax::class)]
-#[UsesClass(Identity::class)]
-#[UsesClass(Operations::class)]
+#[UsesClass(\Deriver\Reference\ResultRef::class)]
+#[UsesClass(\Deriver\Reference\SourceRef::class)]
+#[UsesClass(\Deriver\Result\Alternative::class)]
+#[UsesClass(\Deriver\Result\Assessment::class)]
+#[UsesClass(\Deriver\Result\Derivation::class)]
+#[UsesClass(\Deriver\Result\DerivationResult::class)]
+#[UsesClass(\Deriver\Result\Serialization\JsonText::class)]
+#[UsesClass(\Deriver\Result\Serialization\QueryEncoding::class)]
+#[UsesClass(\Deriver\Result\Serialization\ValueGraph::class)]
+#[UsesClass(\Deriver\Result\Statistics::class)]
+#[UsesClass(\Deriver\Result\StorageSnapshot::class)]
+#[UsesClass(\Deriver\Source\Cache\GraphCache::class)]
+#[UsesClass(\Deriver\Source\Cache\GraphTemplate::class)]
+#[UsesClass(\Deriver\Source\Cache\SnapshotRebase::class)]
+#[UsesClass(\Deriver\Source\Cache\SyntaxCache::class)]
+#[UsesClass(\Deriver\Source\Cache\SyntaxTree::class)]
+#[UsesClass(\Deriver\Source\Compilation\CallLowering::class)]
+#[UsesClass(\Deriver\Source\Compilation\CallableCompiler::class)]
+#[UsesClass(\Deriver\Source\Compilation\ExpressionLowering::class)]
+#[UsesClass(\Deriver\Source\Compilation\GraphBuilder::class)]
+#[UsesClass(\Deriver\Source\Compilation\Lowering::class)]
+#[UsesClass(\Deriver\Source\Compilation\StatementLowering::class)]
+#[UsesClass(\Deriver\Source\Declaration\CallableSource::class)]
+#[UsesClass(\Deriver\Source\Declaration\DeclarationScanner::class)]
+#[UsesClass(\Deriver\Source\Declaration\ProjectIndex::class)]
+#[UsesClass(\Deriver\Source\Declaration\Traits\Composition::class)]
+#[UsesClass(\Deriver\Source\LineMap::class)]
+#[UsesClass(\Deriver\Source\MagicContext::class)]
+#[UsesClass(\Deriver\Source\SyntaxSize::class)]
+#[UsesClass(\Deriver\Source\Validation\AssignmentPatterns::class)]
+#[UsesClass(\Deriver\Source\Validation\ClassScope::class)]
+#[UsesClass(\Deriver\Source\Validation\TargetSyntax::class)]
+#[UsesClass(\Deriver\Value\Identity::class)]
+#[UsesClass(\Deriver\Value\Operations::class)]
 #[UsesClass(Term::class)]
 #[Small]
 final class ParameterTest extends TestCase

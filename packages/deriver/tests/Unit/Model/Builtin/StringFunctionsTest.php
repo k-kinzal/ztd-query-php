@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Model\Builtin;
 
 use Deriver\Model\Builtin\StringFunctions;
-use Deriver\Model\Builtin\TypePredicates;
-use Deriver\Value\Operations;
 use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -15,8 +13,8 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(StringFunctions::class)]
-#[UsesClass(TypePredicates::class)]
-#[UsesClass(Operations::class)]
+#[UsesClass(\Deriver\Model\Builtin\TypePredicates::class)]
+#[UsesClass(\Deriver\Value\Operations::class)]
 #[UsesClass(Term::class)]
 #[Small]
 final class StringFunctionsTest extends TestCase

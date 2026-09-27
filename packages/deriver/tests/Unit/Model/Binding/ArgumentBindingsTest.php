@@ -5,11 +5,8 @@ declare(strict_types=1);
 namespace Tests\Unit\Model\Binding;
 
 use Deriver\Model\Binding\ArgumentBindings;
-use Deriver\Model\Binding\BoundArgument;
-use Deriver\Model\Binding\LocationRef;
 use Deriver\Model\Signature\Parameter;
 use Deriver\Model\Signature\Signature;
-use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -19,11 +16,11 @@ use PHPUnit\Framework\TestCase;
  * @covers \Deriver\Model\Binding\ArgumentBindings
  */
 #[CoversClass(ArgumentBindings::class)]
-#[UsesClass(BoundArgument::class)]
-#[UsesClass(LocationRef::class)]
+#[UsesClass(\Deriver\Model\Binding\BoundArgument::class)]
+#[UsesClass(\Deriver\Model\Binding\LocationRef::class)]
 #[UsesClass(Parameter::class)]
 #[UsesClass(Signature::class)]
-#[UsesClass(Term::class)]
+#[UsesClass(\Deriver\Value\Term::class)]
 #[Small]
 final class ArgumentBindingsTest extends TestCase
 {

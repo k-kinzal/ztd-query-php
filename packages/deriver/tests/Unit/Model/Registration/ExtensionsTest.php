@@ -5,16 +5,10 @@ declare(strict_types=1);
 namespace Tests\Unit\Model\Registration;
 
 use Deriver\Exception\InvalidInputException;
-use Deriver\Model\Contract\DomainLaws;
-use Deriver\Model\Domain\DomainFact;
 use Deriver\Model\Intrinsic\IntrinsicDescriptor;
 use Deriver\Model\Intrinsic\PureIntrinsic;
 use Deriver\Model\Registration\Extensions;
 use Deriver\Project\Configuration;
-use Deriver\Project\SourceLimits;
-use Deriver\Project\TargetProfile;
-use Deriver\Query\ResourceLimits;
-use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -24,15 +18,15 @@ use PHPUnit\Framework\TestCase;
  * @covers \Deriver\Model\Registration\Extensions
  */
 #[CoversClass(Extensions::class)]
-#[UsesClass(DomainLaws::class)]
-#[UsesClass(DomainFact::class)]
+#[UsesClass(\Deriver\Model\Contract\DomainLaws::class)]
+#[UsesClass(\Deriver\Model\Domain\DomainFact::class)]
 #[UsesClass(\Deriver\Model\Domain\DomainOperations::class)]
 #[UsesClass(IntrinsicDescriptor::class)]
 #[UsesClass(Configuration::class)]
-#[UsesClass(SourceLimits::class)]
-#[UsesClass(TargetProfile::class)]
-#[UsesClass(ResourceLimits::class)]
-#[UsesClass(Term::class)]
+#[UsesClass(\Deriver\Project\SourceLimits::class)]
+#[UsesClass(\Deriver\Project\TargetProfile::class)]
+#[UsesClass(\Deriver\Query\ResourceLimits::class)]
+#[UsesClass(\Deriver\Value\Term::class)]
 #[Small]
 final class ExtensionsTest extends TestCase
 {

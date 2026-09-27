@@ -4,14 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Model\Compilation;
 
-use Deriver\ControlFlow\Instruction;
-use Deriver\ControlFlow\Terminator;
 use Deriver\Exception\InvalidInputException;
 use Deriver\Model\Binding\LocationRef;
 use Deriver\Model\Compilation\PlanActions;
 use Deriver\Model\Compilation\PlanCompiler;
-use Deriver\Model\Compilation\PlanInvocations;
-use Deriver\Model\Compilation\PlanLocations;
 use Deriver\Model\Plan\Action;
 use Deriver\Model\Plan\Expression;
 use Deriver\Reference\SourceRef;
@@ -26,12 +22,12 @@ use PHPUnit\Framework\TestCase;
  * @covers \Deriver\Model\Compilation\PlanActions
  */
 #[CoversClass(PlanActions::class)]
-#[UsesClass(Instruction::class)]
-#[UsesClass(Terminator::class)]
+#[UsesClass(\Deriver\ControlFlow\Instruction::class)]
+#[UsesClass(\Deriver\ControlFlow\Terminator::class)]
 #[UsesClass(LocationRef::class)]
 #[UsesClass(PlanCompiler::class)]
-#[UsesClass(PlanInvocations::class)]
-#[UsesClass(PlanLocations::class)]
+#[UsesClass(\Deriver\Model\Compilation\PlanInvocations::class)]
+#[UsesClass(\Deriver\Model\Compilation\PlanLocations::class)]
 #[UsesClass(Action::class)]
 #[UsesClass(Expression::class)]
 #[UsesClass(SourceRef::class)]

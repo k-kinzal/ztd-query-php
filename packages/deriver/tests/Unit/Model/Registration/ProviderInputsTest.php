@@ -7,12 +7,7 @@ namespace Tests\Unit\Model\Registration;
 use Deriver\Exception\InvalidInputException;
 use Deriver\Model\Registration\ProviderInputs;
 use Deriver\Project\Configuration;
-use Deriver\Project\EntryPoint;
 use Deriver\Project\ProjectInput;
-use Deriver\Project\SourceFile;
-use Deriver\Project\SourceLimits;
-use Deriver\Project\TargetProfile;
-use Deriver\Query\ResourceLimits;
 use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
@@ -24,12 +19,12 @@ use PHPUnit\Framework\TestCase;
  */
 #[CoversClass(ProviderInputs::class)]
 #[UsesClass(Configuration::class)]
-#[UsesClass(EntryPoint::class)]
+#[UsesClass(\Deriver\Project\EntryPoint::class)]
 #[UsesClass(ProjectInput::class)]
-#[UsesClass(SourceFile::class)]
-#[UsesClass(SourceLimits::class)]
-#[UsesClass(TargetProfile::class)]
-#[UsesClass(ResourceLimits::class)]
+#[UsesClass(\Deriver\Project\SourceFile::class)]
+#[UsesClass(\Deriver\Project\SourceLimits::class)]
+#[UsesClass(\Deriver\Project\TargetProfile::class)]
+#[UsesClass(\Deriver\Query\ResourceLimits::class)]
 #[UsesClass(Term::class)]
 #[Small]
 final class ProviderInputsTest extends TestCase

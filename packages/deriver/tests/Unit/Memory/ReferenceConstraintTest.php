@@ -7,8 +7,6 @@ namespace Tests\Unit\Memory;
 use Deriver\Memory\Location;
 use Deriver\Memory\Memory;
 use Deriver\Memory\ReferenceConstraint;
-use Deriver\Value\Arrays;
-use Deriver\Value\Operations;
 use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
@@ -21,8 +19,8 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(ReferenceConstraint::class)]
 #[UsesClass(Location::class)]
 #[UsesClass(Memory::class)]
-#[UsesClass(Arrays::class)]
-#[UsesClass(Operations::class)]
+#[UsesClass(\Deriver\Value\Arrays::class)]
+#[UsesClass(\Deriver\Value\Operations::class)]
 #[UsesClass(Term::class)]
 #[Small]
 final class ReferenceConstraintTest extends TestCase

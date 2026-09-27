@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Result\Serialization\Decode;
 
 use Deriver\Exception\InvalidInputException;
-use Deriver\Result\Serialization\Decode\Fields;
 use Deriver\Result\Serialization\Decode\Scalar;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
@@ -16,7 +15,7 @@ use PHPUnit\Framework\TestCase;
  * @covers \Deriver\Result\Serialization\Decode\Scalar
  */
 #[CoversClass(Scalar::class)]
-#[UsesClass(Fields::class)]
+#[UsesClass(\Deriver\Result\Serialization\Decode\Fields::class)]
 #[Small]
 final class ScalarTest extends TestCase
 {
