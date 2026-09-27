@@ -1,0 +1,11 @@
+「SchemaBuilder の対応範囲は前回と同じで、テーブルオプション・生成列・COLLATE・DROP併記などを拒否します。sql-fixture の読取り経路には使えません。」という指摘がありました。
+Semantics対応の際に対応できたと思っていたのですが抜けているようです。
+SchemaBuilderにおいてもSchemaの構造化、型付け、不変条件、イミュータブル構造が必要です。
+またSchemaBuilderという名前がSemantics側と合わなくなった認識です。
+sql-fakerのPlan機能を使ってfuzzで事前状態定義のSQLを対象にFuzzingを行い、sql-semanticsにおいてsql-fakerが生成するSQLを全て処理可能であるという性質を満たしてください。
+
+sql-semantics系の修正を行いSchemaBuilderを適切な形にしてください。
+
+---
+
+正確にはSchemaが受けるのはSemanticsを分析するのに必要になる状態構造です。SchemaとSemanticsの2つでsql-fakerの全生成を扱えるという認識です。あくまでもsql-semanticsとしてであり、どちらかで全てを扱える必要はないです。またおそらく極少数のsqlはsql-semanticsでは扱えない認識です。扱う意味がないというかなんというか。
