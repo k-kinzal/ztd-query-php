@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Core\Ast\Tree;
+use SqlSemantics\Core\Analysis\ValueReader;
 use SqlSemantics\Core\Policy\TypeRules as Contract;
-use SqlSemantics\Statement\Declaration\TypeDescriptor;
+use SqlSemantics\Statement\Declaration\Builtin;
+use SqlSemantics\Statement\Declaration\TypeDeclaration;
 
 /**
  * Sqlite TypeRules implementation.
@@ -16,80 +17,40 @@ use SqlSemantics\Statement\Declaration\TypeDescriptor;
  */
 final class TypeRules implements Contract
 {
+    private const SUPPORTED = [
+        Builtin::Unknown,
+        Builtin::Dynamic,
+        Builtin::Any,
+        Builtin::TinyInt,
+        Builtin::SmallInt,
+        Builtin::MediumInt,
+        Builtin::Integer,
+        Builtin::BigInt,
+        Builtin::Numeric,
+        Builtin::Real,
+        Builtin::DoublePrecision,
+        Builtin::Boolean,
+        Builtin::Char,
+        Builtin::VarChar,
+        Builtin::Text,
+        Builtin::Blob,
+        Builtin::Date,
+        Builtin::DateTime,
+    ];
+
     /**
-     * Reads a declared type, including table-dependent storage rules and modifiers.
+     * Reads a declared type name, its affinity, and the table options that change it.
      */
-    public function read(Node $node, ?Node $table = null): TypeDescriptor
+    public function read(Node $node, ValueReader $values, ?Node $table = null): TypeDeclaration
     {
-        $tokens = $node->tokens();
-        $words = [];
-        $modifiers = [];
-        $inModifiers = false;
-        foreach ($tokens as $token) {
-            if ($token->text === '(') {
-                $inModifiers = true;
-            } elseif ($token->text === ')') {
-                $inModifiers = false;
-            } elseif ($token->text !== ',') {
-                if ($inModifiers) {
-                    $modifiers[] = $token->text;
-                } else {
-                    $words[] = strtoupper((new NameRules())->name($token));
-                }
-            }
-        }
-        $name = implode(' ', $words);
-        $affinity = $this->affinity($name);
-        if ($name === 'ANY' && $table !== null) {
-            foreach (Tree::outer($table, ['table_option']) as $option) {
-                if (strtoupper(Tree::text($option)) === 'STRICT') {
-                    $affinity = 'blob';
-                }
-            }
-        }
-        return new TypeDescriptor(strtolower($name), $modifiers, $affinity);
+        return (new TypeReader())->read($node, $table);
     }
 
     /**
-     * Resolves the built-in aliases modeled for this dialect.
+     * Reports whether this dialect has the built-in type.
      */
-    public function canonical(string $name): ?string
+    public function supports(Builtin $type): bool
     {
-        return match ($name) {
-            'INT', 'INTEGER', 'INT4' => 'integer',
-            'SMALLINT', 'INT2' => 'smallint',
-            'BIGINT', 'INT8' => 'bigint',
-            'DEC', 'DECIMAL', 'NUMERIC' => 'numeric',
-            'REAL' => 'real',
-            'FLOAT4' => 'real',
-            'DOUBLE', 'DOUBLE PRECISION', 'FLOAT8' => 'double precision',
-            'BOOL', 'BOOLEAN' => 'boolean',
-            'VARCHAR', 'CHARACTER VARYING', 'CHAR VARYING' => 'varchar',
-            'CHAR', 'CHARACTER' => 'char',
-            'TEXT', 'DATE', 'TIME', 'TIMESTAMP', 'JSON' => strtolower($name),
-            'TINYINT', 'MEDIUMINT', 'DATETIME', 'BLOB' => null,
-            'UUID', 'BYTEA', 'JSONB', 'TIMESTAMPTZ', 'TIMETZ', 'INTERVAL' => null,
-            default => null,
-        };
-    }
-
-    /**
-     * Computes storage affinity from a declaration name.
-     */
-    public function affinity(string $name): string
-    {
-        if (str_contains($name, 'INT')) {
-            return 'integer';
-        }
-        if (str_contains($name, 'CHAR') || str_contains($name, 'CLOB') || str_contains($name, 'TEXT')) {
-            return 'text';
-        }
-        if ($name === '' || str_contains($name, 'BLOB')) {
-            return 'blob';
-        }
-        if (str_contains($name, 'REAL') || str_contains($name, 'FLOA') || str_contains($name, 'DOUB')) {
-            return 'real';
-        }
-        return 'numeric';
+        return in_array($type, self::SUPPORTED, true);
     }
 }

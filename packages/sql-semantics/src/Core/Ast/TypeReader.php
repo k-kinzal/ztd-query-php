@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Core\Ast;
 
+use LogicException;
 use SqlParser\Parser\Node;
+use SqlSemantics\Core\Analysis\ValueReader;
 use SqlSemantics\Core\Dialect;
-use SqlSemantics\Statement\Declaration\TypeDescriptor;
+use SqlSemantics\Statement\Declaration\Builtin;
+use SqlSemantics\Statement\Declaration\TypeDeclaration;
 
 /**
- * Interprets a declared type without erasing its modifiers.
+ * Interprets a declared type into typed facts using the dialect's type policy.
  *
  * @visibility SqlSemantics
  */
@@ -23,26 +26,19 @@ final class TypeReader
     }
 
     /**
-     * Reads a declared type, including table-dependent storage rules and modifiers.
+     * Reads a declared type, including table-dependent storage rules and the column facts it implies.
+     *
+     * @throws LogicException When the dialect policy produces a built-in type it does not support
      */
-    public function read(Node $node, ?Node $table = null): TypeDescriptor
+    public function read(Node $node, ValueReader $values, ?Node $table = null): TypeDeclaration
     {
-        return $this->dialect->platform()->types()->read($node, $table);
-    }
+        $types = $this->dialect->platform()->types();
+        $declaration = $types->read($node, $values, $table);
+        $name = $declaration->type->name;
+        if ($name instanceof Builtin && !$types->supports($name)) {
+            throw new LogicException('The type policy produced an unsupported built-in type: ' . $name->value);
+        }
 
-    /**
-     * Resolves the built-in aliases modeled for this dialect.
-     */
-    public function canonical(string $name): ?string
-    {
-        return $this->dialect->platform()->types()->canonical($name);
-    }
-
-    /**
-     * Computes storage affinity using the supplied declaration policy.
-     */
-    public function affinity(string $name): string
-    {
-        return $this->dialect->platform()->types()->affinity($name);
+        return $declaration;
     }
 }

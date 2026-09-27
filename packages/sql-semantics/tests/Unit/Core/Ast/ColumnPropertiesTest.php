@@ -29,6 +29,13 @@ use Tests\Contract\Resolved;
 #[CoversClass(\SqlSemantics\Statement\Declaration\TableDefinition::class)]
 #[CoversClass(SemanticException::class)]
 #[CoversClass(\SqlSemantics\Statement\Declaration\TypeDescriptor::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\Builtin::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\TypeName::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\TypeDeclaration::class)]
+#[CoversClass(\SqlSemantics\Core\Ast\Numbers::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\MySql\TypeReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\TypeReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\Sqlite\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Policy\SyntaxRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\TypeRules::class)]
@@ -80,7 +87,8 @@ final class ColumnPropertiesTest extends TestCase
         $state = Resolved::of((new Semantics(MySqlDialect::MySql))->analyze('CREATE TABLE t (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, note TEXT)', []));
         self::assertTrue($state->declarations[0]->columns[0]->autoIncrement);
         self::assertFalse($state->declarations[0]->columns[1]->autoIncrement);
-        self::assertSame('BIGINT UNSIGNED', $state->declarations[0]->columns[0]->type->name);
+        self::assertSame(\SqlSemantics\Statement\Declaration\Builtin::BigInt, $state->declarations[0]->columns[0]->type->name);
+        self::assertTrue($state->declarations[0]->columns[0]->type->unsigned);
     }
 
 

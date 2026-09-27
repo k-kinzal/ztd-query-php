@@ -22,6 +22,12 @@ use Tests\Contract\Resolved;
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TableConstraint::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(Nullability::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(TypeDescriptor::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\Builtin::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TypeName::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TypeDeclaration::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\Numbers::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\Invariant::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\DialectParser::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\TokenGroups::class)]
@@ -90,7 +96,7 @@ final class PlatformTest extends TestCase
 
     public function testTypesReadDeclaredTypes(): void
     {
-        self::assertSame('integer', Dialect::PostgreSql->platform()->types()->canonical('INTEGER'));
+        self::assertTrue(Dialect::PostgreSql->platform()->types()->supports(\SqlSemantics\Statement\Declaration\Builtin::Integer));
     }
 
     public function testParserReadsNamedPlaceholdersOnRequest(): void

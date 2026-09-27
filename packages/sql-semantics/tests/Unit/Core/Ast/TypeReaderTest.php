@@ -32,6 +32,12 @@ use Tests\Contract\Resolved;
 #[CoversClass(\SqlSemantics\Statement\Declaration\TableDefinition::class)]
 #[CoversClass(SemanticException::class)]
 #[CoversClass(\SqlSemantics\Statement\Declaration\TypeDescriptor::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\TypeDeclaration::class)]
+#[CoversClass(\SqlSemantics\Core\Ast\Numbers::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\Invariant::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\MySql\TypeReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\TypeReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\Sqlite\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Policy\SyntaxRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\TypeRules::class)]
@@ -54,132 +60,72 @@ final class TypeReaderTest extends TestCase
     public function testReadPreservesDecimalPrecisionAndScale(Dialect $dialect): void
     {
         $table = Resolved::of((new Semantics($dialect))->analyze('CREATE TABLE users (amount DECIMAL(10, 2))', []))->declarations[0];
-        self::assertSame(['10', '2'], $table->columns[0]->type->modifiers);
+        self::assertSame(\SqlSemantics\Statement\Declaration\Builtin::Numeric, $table->columns[0]->type->name);
+        self::assertSame(10, $table->columns[0]->type->precision);
+        self::assertSame(2, $table->columns[0]->type->scale);
+        self::assertNull($table->columns[0]->type->length);
     }
 
-    public function testAffinityPreservesSqliteDeclaredTypes(): void
+    public function testReadKeepsSqliteDeclaredTypesWithTheirAffinity(): void
     {
         $table = Resolved::of((new Semantics(SqliteDialect::Sqlite))->analyze('CREATE TABLE users (id TEXT PRIMARY KEY, score INTEGER)', []))->declarations[0];
         self::assertSame(Nullability::MaybeNull, $table->columns[0]->nullability);
-        self::assertSame('text', $table->columns[0]->type->affinity);
+        self::assertSame(\SqlSemantics\Statement\Declaration\Affinity::Text, $table->columns[0]->type->affinity);
+        self::assertNull(Resolved::of((new Semantics(PostgreSqlDialect::PostgreSql))->analyze('CREATE TABLE users (id TEXT)', []))->declarations[0]->columns[0]->type->affinity);
     }
 
-    public function testCanonicalRejectsUnsupportedDomainNames(): void
+    public function testReadKeepsUnmodeledNamesAsTypeNames(): void
     {
-        $reader = new \SqlSemantics\Core\Ast\TypeReader(PostgreSqlDialect::PostgreSql);
-        self::assertNull($reader->canonical('CUSTOM_DOMAIN'));
-        self::assertSame('integer', $reader->canonical('INT4'));
-        self::assertSame('boolean', $reader->canonical('BOOL'));
+        $column = Resolved::of((new Semantics(PostgreSqlDialect::PostgreSql))->analyze('CREATE TABLE users (amount app.custom_domain(3))', []))->declarations[0]->columns[0];
+        self::assertInstanceOf(\SqlSemantics\Statement\Declaration\TypeName::class, $column->type->name);
+        self::assertSame(['app', 'custom_domain'], $column->type->name->parts);
+        self::assertNull($column->type->length);
     }
 
-    #[DataProvider('providerCanonicalTypes')]
-    public function testCanonicalModelsOnlyKnownDialectTypes(Dialect $dialect, string $input, ?string $expected): void
+    #[DataProvider('providerSynonyms')]
+    public function testReadResolvesEverySynonymToTheSameBuiltinType(Dialect $dialect, string $declaration, \SqlSemantics\Statement\Declaration\Builtin $expected): void
     {
-        self::assertSame($expected, (new \SqlSemantics\Core\Ast\TypeReader($dialect))->canonical($input));
-    }
-
-    /**
-     * @return iterable<string, array{Dialect, string, ?string}>
-     */
-    public static function providerCanonicalTypes(): iterable
-    {
-        yield 'PostgreSql-INT' => [PostgreSqlDialect::PostgreSql, 'INT', 'integer'];
-        yield 'PostgreSql-INT4' => [PostgreSqlDialect::PostgreSql, 'INT4', 'integer'];
-        yield 'PostgreSql-SMALLINT' => [PostgreSqlDialect::PostgreSql, 'SMALLINT', 'smallint'];
-        yield 'PostgreSql-INT2' => [PostgreSqlDialect::PostgreSql, 'INT2', 'smallint'];
-        yield 'PostgreSql-BIGINT' => [PostgreSqlDialect::PostgreSql, 'BIGINT', 'bigint'];
-        yield 'PostgreSql-INT8' => [PostgreSqlDialect::PostgreSql, 'INT8', 'bigint'];
-        yield 'PostgreSql-DEC' => [PostgreSqlDialect::PostgreSql, 'DEC', 'numeric'];
-        yield 'PostgreSql-DECIMAL' => [PostgreSqlDialect::PostgreSql, 'DECIMAL', 'numeric'];
-        yield 'PostgreSql-NUMERIC' => [PostgreSqlDialect::PostgreSql, 'NUMERIC', 'numeric'];
-        yield 'PostgreSql-REAL' => [PostgreSqlDialect::PostgreSql, 'REAL', 'real'];
-        yield 'PostgreSql-FLOAT4' => [PostgreSqlDialect::PostgreSql, 'FLOAT4', 'real'];
-        yield 'PostgreSql-DOUBLE' => [PostgreSqlDialect::PostgreSql, 'DOUBLE', 'double precision'];
-        yield 'PostgreSql-DOUBLE PRECISION' => [PostgreSqlDialect::PostgreSql, 'DOUBLE PRECISION', 'double precision'];
-        yield 'PostgreSql-FLOAT8' => [PostgreSqlDialect::PostgreSql, 'FLOAT8', 'double precision'];
-        yield 'PostgreSql-BOOL' => [PostgreSqlDialect::PostgreSql, 'BOOL', 'boolean'];
-        yield 'PostgreSql-BOOLEAN' => [PostgreSqlDialect::PostgreSql, 'BOOLEAN', 'boolean'];
-        yield 'PostgreSql-VARCHAR' => [PostgreSqlDialect::PostgreSql, 'VARCHAR', 'varchar'];
-        yield 'PostgreSql-CHARACTER VARYING' => [PostgreSqlDialect::PostgreSql, 'CHARACTER VARYING', 'varchar'];
-        yield 'PostgreSql-CHAR VARYING' => [PostgreSqlDialect::PostgreSql, 'CHAR VARYING', 'varchar'];
-        yield 'PostgreSql-CHAR' => [PostgreSqlDialect::PostgreSql, 'CHAR', 'char'];
-        yield 'PostgreSql-CHARACTER' => [PostgreSqlDialect::PostgreSql, 'CHARACTER', 'char'];
-        yield 'PostgreSql-TEXT' => [PostgreSqlDialect::PostgreSql, 'TEXT', 'text'];
-        yield 'PostgreSql-DATE' => [PostgreSqlDialect::PostgreSql, 'DATE', 'date'];
-        yield 'PostgreSql-TIME' => [PostgreSqlDialect::PostgreSql, 'TIME', 'time'];
-        yield 'PostgreSql-TIMESTAMP' => [PostgreSqlDialect::PostgreSql, 'TIMESTAMP', 'timestamp'];
-        yield 'PostgreSql-JSON' => [PostgreSqlDialect::PostgreSql, 'JSON', 'json'];
-        yield 'PostgreSql-TINYINT' => [PostgreSqlDialect::PostgreSql, 'TINYINT', null];
-        yield 'PostgreSql-MEDIUMINT' => [PostgreSqlDialect::PostgreSql, 'MEDIUMINT', null];
-        yield 'PostgreSql-DATETIME' => [PostgreSqlDialect::PostgreSql, 'DATETIME', null];
-        yield 'PostgreSql-BLOB' => [PostgreSqlDialect::PostgreSql, 'BLOB', null];
-        yield 'PostgreSql-UUID' => [PostgreSqlDialect::PostgreSql, 'UUID', 'uuid'];
-        yield 'PostgreSql-BYTEA' => [PostgreSqlDialect::PostgreSql, 'BYTEA', 'bytea'];
-        yield 'PostgreSql-JSONB' => [PostgreSqlDialect::PostgreSql, 'JSONB', 'jsonb'];
-        yield 'PostgreSql-TIMESTAMPTZ' => [PostgreSqlDialect::PostgreSql, 'TIMESTAMPTZ', 'timestamptz'];
-        yield 'PostgreSql-TIMETZ' => [PostgreSqlDialect::PostgreSql, 'TIMETZ', 'timetz'];
-        yield 'PostgreSql-INTERVAL' => [PostgreSqlDialect::PostgreSql, 'INTERVAL', 'interval'];
-        yield 'PostgreSql-UNSUPPORTED' => [PostgreSqlDialect::PostgreSql, 'UNSUPPORTED', null];
-        yield 'MySql-INT' => [MySqlDialect::MySql, 'INT', 'integer'];
-        yield 'MySql-INT4' => [MySqlDialect::MySql, 'INT4', 'integer'];
-        yield 'MySql-SMALLINT' => [MySqlDialect::MySql, 'SMALLINT', 'smallint'];
-        yield 'MySql-INT2' => [MySqlDialect::MySql, 'INT2', 'smallint'];
-        yield 'MySql-BIGINT' => [MySqlDialect::MySql, 'BIGINT', 'bigint'];
-        yield 'MySql-INT8' => [MySqlDialect::MySql, 'INT8', 'bigint'];
-        yield 'MySql-DEC' => [MySqlDialect::MySql, 'DEC', 'numeric'];
-        yield 'MySql-DECIMAL' => [MySqlDialect::MySql, 'DECIMAL', 'numeric'];
-        yield 'MySql-NUMERIC' => [MySqlDialect::MySql, 'NUMERIC', 'numeric'];
-        yield 'MySql-REAL' => [MySqlDialect::MySql, 'REAL', 'double precision'];
-        yield 'MySql-FLOAT4' => [MySqlDialect::MySql, 'FLOAT4', 'real'];
-        yield 'MySql-DOUBLE' => [MySqlDialect::MySql, 'DOUBLE', 'double precision'];
-        yield 'MySql-DOUBLE PRECISION' => [MySqlDialect::MySql, 'DOUBLE PRECISION', 'double precision'];
-        yield 'MySql-FLOAT8' => [MySqlDialect::MySql, 'FLOAT8', 'double precision'];
-        yield 'MySql-BOOL' => [MySqlDialect::MySql, 'BOOL', 'tinyint'];
-        yield 'MySql-BOOLEAN' => [MySqlDialect::MySql, 'BOOLEAN', 'tinyint'];
-        yield 'MySql-VARCHAR' => [MySqlDialect::MySql, 'VARCHAR', 'varchar'];
-        yield 'MySql-CHARACTER VARYING' => [MySqlDialect::MySql, 'CHARACTER VARYING', 'varchar'];
-        yield 'MySql-CHAR VARYING' => [MySqlDialect::MySql, 'CHAR VARYING', 'varchar'];
-        yield 'MySql-CHAR' => [MySqlDialect::MySql, 'CHAR', 'char'];
-        yield 'MySql-CHARACTER' => [MySqlDialect::MySql, 'CHARACTER', 'char'];
-        yield 'MySql-TEXT' => [MySqlDialect::MySql, 'TEXT', 'text'];
-        yield 'MySql-DATE' => [MySqlDialect::MySql, 'DATE', 'date'];
-        yield 'MySql-TIME' => [MySqlDialect::MySql, 'TIME', 'time'];
-        yield 'MySql-TIMESTAMP' => [MySqlDialect::MySql, 'TIMESTAMP', 'timestamp'];
-        yield 'MySql-JSON' => [MySqlDialect::MySql, 'JSON', 'json'];
-        yield 'MySql-TINYINT' => [MySqlDialect::MySql, 'TINYINT', 'tinyint'];
-        yield 'MySql-MEDIUMINT' => [MySqlDialect::MySql, 'MEDIUMINT', 'mediumint'];
-        yield 'MySql-DATETIME' => [MySqlDialect::MySql, 'DATETIME', 'datetime'];
-        yield 'MySql-BLOB' => [MySqlDialect::MySql, 'BLOB', 'blob'];
-        yield 'MySql-UUID' => [MySqlDialect::MySql, 'UUID', null];
-        yield 'MySql-BYTEA' => [MySqlDialect::MySql, 'BYTEA', null];
-        yield 'MySql-JSONB' => [MySqlDialect::MySql, 'JSONB', null];
-        yield 'MySql-TIMESTAMPTZ' => [MySqlDialect::MySql, 'TIMESTAMPTZ', null];
-        yield 'MySql-TIMETZ' => [MySqlDialect::MySql, 'TIMETZ', null];
-        yield 'MySql-INTERVAL' => [MySqlDialect::MySql, 'INTERVAL', null];
-        yield 'MySql-UNSUPPORTED' => [MySqlDialect::MySql, 'UNSUPPORTED', null];
-    }
-
-    #[DataProvider('providerAffinities')]
-    public function testAffinityUsesSqlitePrecedence(string $input, string $expected): void
-    {
-        self::assertSame($expected, (new \SqlSemantics\Core\Ast\TypeReader(SqliteDialect::Sqlite))->affinity($input));
+        $column = Resolved::of((new Semantics($dialect))->analyze('CREATE TABLE users (value ' . $declaration . ')', []))->declarations[0]->columns[0];
+        self::assertSame($expected, $column->type->name);
     }
 
     /**
-     * @return iterable<string, array{string, string}>
+     * @return iterable<string, array{Dialect, string, \SqlSemantics\Statement\Declaration\Builtin}>
      */
-    public static function providerAffinities(): iterable
+    public static function providerSynonyms(): iterable
     {
-        yield 'FLOATING POINT' => ['FLOATING POINT', 'integer'];
-        yield 'CHARINT' => ['CHARINT', 'integer'];
-        yield 'VARCHAR' => ['VARCHAR', 'text'];
-        yield 'CLOB' => ['CLOB', 'text'];
-        yield 'TEXT' => ['TEXT', 'text'];
-        yield 'empty' => ['', 'blob'];
-        yield 'BLOB' => ['BLOB', 'blob'];
-        yield 'REAL' => ['REAL', 'real'];
-        yield 'FLOAT' => ['FLOAT', 'real'];
-        yield 'DOUBLE' => ['DOUBLE', 'real'];
-        yield 'BOOLEAN' => ['BOOLEAN', 'numeric'];
+        $rows = [
+            [PostgreSqlDialect::PostgreSql, 'INT', 'Integer'], [PostgreSqlDialect::PostgreSql, 'INTEGER', 'Integer'], [PostgreSqlDialect::PostgreSql, 'INT4', 'Integer'],
+            [PostgreSqlDialect::PostgreSql, 'SMALLINT', 'SmallInt'], [PostgreSqlDialect::PostgreSql, 'INT2', 'SmallInt'],
+            [PostgreSqlDialect::PostgreSql, 'BIGINT', 'BigInt'], [PostgreSqlDialect::PostgreSql, 'INT8', 'BigInt'],
+            [PostgreSqlDialect::PostgreSql, 'DEC', 'Numeric'], [PostgreSqlDialect::PostgreSql, 'DECIMAL', 'Numeric'], [PostgreSqlDialect::PostgreSql, 'NUMERIC', 'Numeric'],
+            [PostgreSqlDialect::PostgreSql, 'REAL', 'Real'], [PostgreSqlDialect::PostgreSql, 'FLOAT4', 'Real'],
+            [PostgreSqlDialect::PostgreSql, 'DOUBLE PRECISION', 'DoublePrecision'], [PostgreSqlDialect::PostgreSql, 'FLOAT8', 'DoublePrecision'], [PostgreSqlDialect::PostgreSql, 'FLOAT', 'DoublePrecision'],
+            [PostgreSqlDialect::PostgreSql, 'BOOL', 'Boolean'], [PostgreSqlDialect::PostgreSql, 'BOOLEAN', 'Boolean'],
+            [PostgreSqlDialect::PostgreSql, 'VARCHAR', 'VarChar'], [PostgreSqlDialect::PostgreSql, 'CHARACTER VARYING', 'VarChar'], [PostgreSqlDialect::PostgreSql, 'CHAR VARYING', 'VarChar'],
+            [PostgreSqlDialect::PostgreSql, 'CHAR', 'Char'], [PostgreSqlDialect::PostgreSql, 'CHARACTER', 'Char'], [PostgreSqlDialect::PostgreSql, 'BPCHAR', 'Char'],
+            [PostgreSqlDialect::PostgreSql, 'TEXT', 'Text'], [PostgreSqlDialect::PostgreSql, 'DATE', 'Date'], [PostgreSqlDialect::PostgreSql, 'TIME', 'Time'],
+            [PostgreSqlDialect::PostgreSql, 'TIMESTAMP', 'Timestamp'], [PostgreSqlDialect::PostgreSql, 'TIMESTAMPTZ', 'TimestampTz'], [PostgreSqlDialect::PostgreSql, 'TIMETZ', 'TimeTz'],
+            [PostgreSqlDialect::PostgreSql, 'JSON', 'Json'], [PostgreSqlDialect::PostgreSql, 'JSONB', 'Jsonb'], [PostgreSqlDialect::PostgreSql, 'UUID', 'Uuid'],
+            [PostgreSqlDialect::PostgreSql, 'BYTEA', 'Bytea'], [PostgreSqlDialect::PostgreSql, 'INTERVAL', 'Interval'],
+            [MySqlDialect::MySql, 'INT', 'Integer'], [MySqlDialect::MySql, 'INTEGER', 'Integer'], [MySqlDialect::MySql, 'INT4', 'Integer'],
+            [MySqlDialect::MySql, 'TINYINT', 'TinyInt'], [MySqlDialect::MySql, 'INT1', 'TinyInt'], [MySqlDialect::MySql, 'BOOL', 'TinyInt'], [MySqlDialect::MySql, 'BOOLEAN', 'TinyInt'],
+            [MySqlDialect::MySql, 'SMALLINT', 'SmallInt'], [MySqlDialect::MySql, 'INT2', 'SmallInt'],
+            [MySqlDialect::MySql, 'MEDIUMINT', 'MediumInt'], [MySqlDialect::MySql, 'INT3', 'MediumInt'], [MySqlDialect::MySql, 'MIDDLEINT', 'MediumInt'],
+            [MySqlDialect::MySql, 'BIGINT', 'BigInt'], [MySqlDialect::MySql, 'INT8', 'BigInt'],
+            [MySqlDialect::MySql, 'DEC', 'Numeric'], [MySqlDialect::MySql, 'DECIMAL', 'Numeric'], [MySqlDialect::MySql, 'NUMERIC', 'Numeric'], [MySqlDialect::MySql, 'FIXED', 'Numeric'],
+            [MySqlDialect::MySql, 'FLOAT', 'Real'], [MySqlDialect::MySql, 'FLOAT4', 'Real'],
+            [MySqlDialect::MySql, 'DOUBLE', 'DoublePrecision'], [MySqlDialect::MySql, 'DOUBLE PRECISION', 'DoublePrecision'], [MySqlDialect::MySql, 'FLOAT8', 'DoublePrecision'], [MySqlDialect::MySql, 'REAL', 'DoublePrecision'],
+            [MySqlDialect::MySql, 'VARCHAR(1)', 'VarChar'], [MySqlDialect::MySql, 'CHARACTER VARYING(1)', 'VarChar'], [MySqlDialect::MySql, 'CHAR VARYING(1)', 'VarChar'], [MySqlDialect::MySql, 'NVARCHAR(1)', 'VarChar'], [MySqlDialect::MySql, 'NATIONAL VARCHAR(1)', 'VarChar'],
+            [MySqlDialect::MySql, 'CHAR', 'Char'], [MySqlDialect::MySql, 'CHARACTER', 'Char'], [MySqlDialect::MySql, 'NCHAR', 'Char'], [MySqlDialect::MySql, 'NATIONAL CHAR', 'Char'],
+            [MySqlDialect::MySql, 'TEXT', 'Text'], [MySqlDialect::MySql, 'LONG', 'MediumText'], [MySqlDialect::MySql, 'LONG VARCHAR', 'MediumText'], [MySqlDialect::MySql, 'LONG VARBINARY', 'MediumBlob'],
+            [MySqlDialect::MySql, 'DATE', 'Date'], [MySqlDialect::MySql, 'TIME', 'Time'], [MySqlDialect::MySql, 'TIMESTAMP', 'Timestamp'], [MySqlDialect::MySql, 'DATETIME', 'DateTime'], [MySqlDialect::MySql, 'JSON', 'Json'], [MySqlDialect::MySql, 'BLOB', 'Blob'],
+            [MySqlDialect::MySql, 'CHAR BYTE', 'Binary'], [MySqlDialect::MySql, 'CHAR CHARACTER SET binary', 'Binary'], [MySqlDialect::MySql, 'VARCHAR(1) CHARSET binary', 'VarBinary'], [MySqlDialect::MySql, 'TEXT CHARSET binary', 'Blob'],
+            [SqliteDialect::Sqlite, 'INT', 'Integer'], [SqliteDialect::Sqlite, 'INTEGER', 'Integer'], [SqliteDialect::Sqlite, 'INT2', 'SmallInt'], [SqliteDialect::Sqlite, 'INT8', 'BigInt'],
+            [SqliteDialect::Sqlite, 'VARYING CHARACTER', 'VarChar'], [SqliteDialect::Sqlite, 'CLOB', 'Text'], [SqliteDialect::Sqlite, 'DOUBLE PRECISION', 'DoublePrecision'], [SqliteDialect::Sqlite, 'BOOLEAN', 'Boolean'], [SqliteDialect::Sqlite, 'ANY', 'Any'],
+        ];
+        foreach ($rows as [$dialect, $declaration, $case]) {
+            yield $dialect->value . '-' . $declaration => [$dialect, $declaration, constant(\SqlSemantics\Statement\Declaration\Builtin::class . '::' . $case)];
+        }
     }
 }

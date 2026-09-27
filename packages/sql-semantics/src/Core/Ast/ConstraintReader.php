@@ -28,12 +28,16 @@ final class ConstraintReader
 
     /**
      * Reads an integrity condition, or returns null for another attribute.
+     *
+     * A bare KEY attribute of a column declares its primary key; a bare KEY
+     * element of a table declares an index, which is not an integrity condition.
      */
     public function read(Node $node, ?string $column = null): ?TableConstraint
     {
         [$name, $tokens] = TokenGroups::constraintHeader($node->tokens(), $this->identifiers);
         $kind = match (strtoupper($tokens[0]->text ?? '')) {
             'PRIMARY' => ConstraintKind::PrimaryKey,
+            'KEY' => $column === null ? null : ConstraintKind::PrimaryKey,
             'UNIQUE' => ConstraintKind::Unique,
             'FOREIGN', 'REFERENCES' => ConstraintKind::ForeignKey,
             'CHECK' => ConstraintKind::Check,

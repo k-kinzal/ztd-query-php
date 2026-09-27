@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Core\Analysis\ValueReader;
 use SqlSemantics\Core\Policy\TypeRules as Contract;
-use SqlSemantics\Statement\Declaration\TypeDescriptor;
+use SqlSemantics\Statement\Declaration\Builtin;
+use SqlSemantics\Statement\Declaration\TypeDeclaration;
 
 /**
  * MySql TypeRules implementation.
@@ -15,73 +17,64 @@ use SqlSemantics\Statement\Declaration\TypeDescriptor;
  */
 final class TypeRules implements Contract
 {
+    private const SUPPORTED = [
+        Builtin::Unknown,
+        Builtin::TinyInt,
+        Builtin::SmallInt,
+        Builtin::MediumInt,
+        Builtin::Integer,
+        Builtin::BigInt,
+        Builtin::Numeric,
+        Builtin::Real,
+        Builtin::DoublePrecision,
+        Builtin::Bit,
+        Builtin::Char,
+        Builtin::VarChar,
+        Builtin::TinyText,
+        Builtin::Text,
+        Builtin::MediumText,
+        Builtin::LongText,
+        Builtin::Enum,
+        Builtin::Set,
+        Builtin::Binary,
+        Builtin::VarBinary,
+        Builtin::TinyBlob,
+        Builtin::Blob,
+        Builtin::MediumBlob,
+        Builtin::LongBlob,
+        Builtin::Date,
+        Builtin::Time,
+        Builtin::DateTime,
+        Builtin::Timestamp,
+        Builtin::Year,
+        Builtin::Json,
+        Builtin::Vector,
+        Builtin::Geometry,
+        Builtin::GeometryCollection,
+        Builtin::Point,
+        Builtin::MultiPoint,
+        Builtin::LineString,
+        Builtin::MultiLineString,
+        Builtin::Polygon,
+        Builtin::MultiPolygon,
+    ];
+
+
+
+
     /**
-     * Reads a declared type, including table-dependent storage rules and modifiers.
+     * Reads a declared type by its keyword tokens, arguments and attributes.
      */
-    public function read(Node $node, ?Node $table = null): TypeDescriptor
+    public function read(Node $node, ValueReader $values, ?Node $table = null): TypeDeclaration
     {
-        $tokens = $node->tokens();
-        $words = [];
-        $modifiers = [];
-        $inModifiers = false;
-        foreach ($tokens as $token) {
-            if ($token->text === '(') {
-                $inModifiers = true;
-            } elseif ($token->text === ')') {
-                $inModifiers = false;
-            } elseif ($token->text !== ',') {
-                if ($inModifiers) {
-                    $modifiers[] = $token->text;
-                } else {
-                    $words[] = $token->text;
-                }
-            }
-        }
-        $name = implode(' ', $words);
-        $canonical = $this->canonical(strtoupper($name)) ?? $name;
-        return new TypeDescriptor($canonical, $modifiers);
+        return (new TypeReader())->read($node, $values);
     }
 
     /**
-     * Resolves the built-in aliases modeled for this dialect.
+     * Reports whether this dialect has the built-in type.
      */
-    public function canonical(string $name): ?string
+    public function supports(Builtin $type): bool
     {
-        return match ($name) {
-            'INT', 'INTEGER', 'INT4' => 'integer',
-            'SMALLINT', 'INT2' => 'smallint',
-            'BIGINT', 'INT8' => 'bigint',
-            'DEC', 'DECIMAL', 'NUMERIC' => 'numeric',
-            'REAL' => 'double precision',
-            'FLOAT4' => 'real',
-            'DOUBLE', 'DOUBLE PRECISION', 'FLOAT8' => 'double precision',
-            'BOOL', 'BOOLEAN' => 'tinyint',
-            'VARCHAR', 'CHARACTER VARYING', 'CHAR VARYING' => 'varchar',
-            'CHAR', 'CHARACTER' => 'char',
-            'TEXT', 'DATE', 'TIME', 'TIMESTAMP', 'JSON' => strtolower($name),
-            'TINYINT', 'MEDIUMINT', 'DATETIME', 'BLOB' => strtolower($name),
-            'UUID', 'BYTEA', 'JSONB', 'TIMESTAMPTZ', 'TIMETZ', 'INTERVAL' => null,
-            default => null,
-        };
-    }
-
-    /**
-     * Computes storage affinity from a declaration name.
-     */
-    public function affinity(string $name): string
-    {
-        if (str_contains($name, 'INT')) {
-            return 'integer';
-        }
-        if (str_contains($name, 'CHAR') || str_contains($name, 'CLOB') || str_contains($name, 'TEXT')) {
-            return 'text';
-        }
-        if ($name === '' || str_contains($name, 'BLOB')) {
-            return 'blob';
-        }
-        if (str_contains($name, 'REAL') || str_contains($name, 'FLOA') || str_contains($name, 'DOUB')) {
-            return 'real';
-        }
-        return 'numeric';
+        return in_array($type, self::SUPPORTED, true);
     }
 }

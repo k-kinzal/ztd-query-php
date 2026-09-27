@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Core\Analysis\ValueReader;
 use SqlSemantics\Core\Policy\TypeRules as Contract;
-use SqlSemantics\Statement\Declaration\TypeDescriptor;
+use SqlSemantics\Statement\Declaration\Builtin;
+use SqlSemantics\Statement\Declaration\TypeDeclaration;
 
 /**
  * PostgreSql TypeRules implementation.
@@ -15,73 +17,38 @@ use SqlSemantics\Statement\Declaration\TypeDescriptor;
  */
 final class TypeRules implements Contract
 {
+    private const SUPPORTED = [
+        Builtin::Unknown,
+        Builtin::SmallInt, Builtin::Integer, Builtin::BigInt, Builtin::Numeric, Builtin::Real, Builtin::DoublePrecision, Builtin::Money,
+        Builtin::Boolean, Builtin::Bit, Builtin::BitVarying,
+        Builtin::Char, Builtin::VarChar, Builtin::Text, Builtin::QuotedChar, Builtin::Name, Builtin::Bytea,
+        Builtin::Date, Builtin::Time, Builtin::TimeTz, Builtin::Timestamp, Builtin::TimestampTz, Builtin::Interval,
+        Builtin::Json, Builtin::Jsonb, Builtin::JsonPath, Builtin::Xml, Builtin::Uuid,
+        Builtin::Point, Builtin::Line, Builtin::LineSegment, Builtin::Box, Builtin::Path, Builtin::Polygon, Builtin::Circle,
+        Builtin::Inet, Builtin::Cidr, Builtin::MacAddr, Builtin::MacAddr8, Builtin::TsVector, Builtin::TsQuery,
+        Builtin::Int4Range, Builtin::Int8Range, Builtin::NumRange, Builtin::TsRange, Builtin::TsTzRange, Builtin::DateRange,
+        Builtin::Int4MultiRange, Builtin::Int8MultiRange, Builtin::NumMultiRange, Builtin::TsMultiRange, Builtin::TsTzMultiRange, Builtin::DateMultiRange,
+        Builtin::Oid, Builtin::RegClass, Builtin::RegCollation, Builtin::RegConfig, Builtin::RegDictionary, Builtin::RegNamespace,
+        Builtin::RegOper, Builtin::RegOperator, Builtin::RegProc, Builtin::RegProcedure, Builtin::RegRole, Builtin::RegType,
+        Builtin::PgLsn, Builtin::PgSnapshot, Builtin::TxidSnapshot,
+    ];
+
+
+
+
     /**
-     * Reads a declared type, including table-dependent storage rules and modifiers.
+     * Reads a declared type by its grammar production and the catalog names it refers to.
      */
-    public function read(Node $node, ?Node $table = null): TypeDescriptor
+    public function read(Node $node, ValueReader $values, ?Node $table = null): TypeDeclaration
     {
-        $tokens = $node->tokens();
-        $words = [];
-        $modifiers = [];
-        $inModifiers = false;
-        foreach ($tokens as $token) {
-            if ($token->text === '(') {
-                $inModifiers = true;
-            } elseif ($token->text === ')') {
-                $inModifiers = false;
-            } elseif ($token->text !== ',') {
-                if ($inModifiers) {
-                    $modifiers[] = $token->text;
-                } else {
-                    $words[] = $token->text;
-                }
-            }
-        }
-        $name = implode(' ', $words);
-        $canonical = $this->canonical(strtoupper($name)) ?? $name;
-        return new TypeDescriptor($canonical, $modifiers);
+        return (new TypeReader())->read($node);
     }
 
     /**
-     * Resolves the built-in aliases modeled for this dialect.
+     * Reports whether this dialect has the built-in type.
      */
-    public function canonical(string $name): ?string
+    public function supports(Builtin $type): bool
     {
-        return match ($name) {
-            'INT', 'INTEGER', 'INT4' => 'integer',
-            'SMALLINT', 'INT2' => 'smallint',
-            'BIGINT', 'INT8' => 'bigint',
-            'DEC', 'DECIMAL', 'NUMERIC' => 'numeric',
-            'REAL' => 'real',
-            'FLOAT4' => 'real',
-            'DOUBLE', 'DOUBLE PRECISION', 'FLOAT8' => 'double precision',
-            'BOOL', 'BOOLEAN' => 'boolean',
-            'VARCHAR', 'CHARACTER VARYING', 'CHAR VARYING' => 'varchar',
-            'CHAR', 'CHARACTER' => 'char',
-            'TEXT', 'DATE', 'TIME', 'TIMESTAMP', 'JSON' => strtolower($name),
-            'TINYINT', 'MEDIUMINT', 'DATETIME', 'BLOB' => null,
-            'UUID', 'BYTEA', 'JSONB', 'TIMESTAMPTZ', 'TIMETZ', 'INTERVAL' => strtolower($name),
-            default => null,
-        };
-    }
-
-    /**
-     * Computes storage affinity from a declaration name.
-     */
-    public function affinity(string $name): string
-    {
-        if (str_contains($name, 'INT')) {
-            return 'integer';
-        }
-        if (str_contains($name, 'CHAR') || str_contains($name, 'CLOB') || str_contains($name, 'TEXT')) {
-            return 'text';
-        }
-        if ($name === '' || str_contains($name, 'BLOB')) {
-            return 'blob';
-        }
-        if (str_contains($name, 'REAL') || str_contains($name, 'FLOA') || str_contains($name, 'DOUB')) {
-            return 'real';
-        }
-        return 'numeric';
+        return in_array($type, self::SUPPORTED, true);
     }
 }

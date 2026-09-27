@@ -33,30 +33,28 @@ use Tests\Contract\Resolved;
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\PostgreSql\NameRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\PostgreSql\SchemaRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(Dialect::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\PostgreSql\TypeReader::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\Numbers::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\Builtin::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TypeName::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TypeDeclaration::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\Affinity::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\IntervalFields::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\Invariant::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
 final class TypeRulesTest extends TestCase
 {
-    public function testReadPreservesModifiers(): void
+    public function testReadPreservesPrecisionAndScale(): void
     {
         $schema = Resolved::of((new Semantics(Dialect::PostgreSql))->analyze('CREATE TABLE items (value DECIMAL(10, 2))', []));
-        self::assertSame(['10', '2'], $schema->declarations[0]->columns[0]->type->modifiers);
+        self::assertSame(\SqlSemantics\Statement\Declaration\Builtin::Numeric, $schema->declarations[0]->columns[0]->type->name);
+        self::assertSame(10, $schema->declarations[0]->columns[0]->type->precision);
+        self::assertSame(2, $schema->declarations[0]->columns[0]->type->scale);
     }
 
-    public function testCanonicalResolvesInteger(): void
+    public function testSupportsTheDeclaredTypeVocabulary(): void
     {
-        self::assertSame('integer', (new \SqlSemantics\Platform\PostgreSql\TypeRules())->canonical('INT'));
+        self::assertTrue((new \SqlSemantics\Platform\PostgreSql\TypeRules())->supports(\SqlSemantics\Statement\Declaration\Builtin::Integer));
+        self::assertFalse((new \SqlSemantics\Platform\PostgreSql\TypeRules())->supports(\SqlSemantics\Statement\Declaration\Builtin::TsVector) && (new \SqlSemantics\Platform\PostgreSql\TypeRules())->supports(\SqlSemantics\Statement\Declaration\Builtin::MediumInt) && (new \SqlSemantics\Platform\PostgreSql\TypeRules())->supports(\SqlSemantics\Statement\Declaration\Builtin::Any));
     }
-
-    public function testAffinityUsesDeclaredTypePrecedence(): void
-    {
-        self::assertSame('integer', (new \SqlSemantics\Platform\PostgreSql\TypeRules())->affinity('FLOATING POINT'));
-    }
-
-
-
-
-
-
-
-
 }

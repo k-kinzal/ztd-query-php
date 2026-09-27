@@ -60,10 +60,12 @@ final class SchemaRules implements Contract
     }
 
     /**
+     * Primary key columns are always nonnullable, whatever their declaration.
+     *
      * @param list<string> $primary
      * @param list<TableConstraint> $constraints
      */
-    public function primaryNotNull(ColumnDefinition $column, array $primary, array $constraints): bool
+    public function primaryNotNull(ColumnDefinition $column, Node $declaration, array $primary, array $constraints): bool
     {
         return true;
     }

@@ -38,10 +38,12 @@ interface SchemaRules
     public function columnNodes(Node $create): array;
 
     /**
+     * Reports whether a primary key column is nonnullable, given its exact declaration.
+     *
      * @param list<string> $primary
      * @param list<TableConstraint> $constraints
      */
-    public function primaryNotNull(ColumnDefinition $column, array $primary, array $constraints): bool;
+    public function primaryNotNull(ColumnDefinition $column, Node $declaration, array $primary, array $constraints): bool;
 
     /**
      * Selects the syntax node that owns the complete declaration.
