@@ -7,8 +7,8 @@ namespace SqlSemantics\Core\Policy;
 use SqlParser\Parser\Node;
 use SqlSemantics\Core\Analysis\ValueReader;
 use SqlSemantics\Core\SemanticException;
-use SqlSemantics\Core\Type\Builtin;
-use SqlSemantics\Core\Type\TypeDeclaration;
+use SqlSemantics\Statement\Declaration\Builtin;
+use SqlSemantics\Statement\Declaration\TypeDeclaration;
 
 /**
  * Supplies declared type interpretation.

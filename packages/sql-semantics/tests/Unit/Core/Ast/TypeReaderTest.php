@@ -11,14 +11,15 @@ use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\SemanticException;
-use SqlSemantics\Core\Type\Nullability;
-use SqlSemantics\Facade\Schema as SchemaFacade;
+use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
 use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
+use SqlSemantics\Statement\Declaration\Nullability;
+use Tests\Contract\Resolved;
 
 #[CoversClass(\SqlSemantics\Core\Ast\TypeReader::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(SchemaFacade::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(Semantics::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\DialectParser::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\ColumnReader::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\ConstraintReader::class)]
@@ -26,15 +27,14 @@ use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 #[CoversClass(\SqlSemantics\Core\Ast\SchemaReader::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\TokenGroups::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\Tree::class)]
-#[CoversClass(\SqlSemantics\Core\Schema::class)]
-#[CoversClass(\SqlSemantics\Core\Schema\ColumnDefinition::class)]
-#[CoversClass(\SqlSemantics\Core\Schema\TableConstraint::class)]
-#[CoversClass(\SqlSemantics\Core\Schema\TableDefinition::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\ColumnDefinition::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\TableConstraint::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\TableDefinition::class)]
 #[CoversClass(SemanticException::class)]
-#[CoversClass(\SqlSemantics\Core\Type\TypeDescriptor::class)]
-#[CoversClass(\SqlSemantics\Core\Type\TypeDeclaration::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\TypeDescriptor::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\TypeDeclaration::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\Numbers::class)]
-#[CoversClass(\SqlSemantics\Core\Schema\Invariant::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\Invariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\MySql\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\Sqlite\TypeReader::class)]
@@ -59,8 +59,8 @@ final class TypeReaderTest extends TestCase
     #[TestWith([SqliteDialect::Sqlite])]
     public function testReadPreservesDecimalPrecisionAndScale(Dialect $dialect): void
     {
-        $table = (new SchemaFacade($dialect))->analyze('CREATE TABLE users (amount DECIMAL(10, 2))')->tables[0];
-        self::assertSame(\SqlSemantics\Core\Type\Builtin::Numeric, $table->columns[0]->type->name);
+        $table = Resolved::of((new Semantics($dialect))->analyze('CREATE TABLE users (amount DECIMAL(10, 2))', []))->declarations[0];
+        self::assertSame(\SqlSemantics\Statement\Declaration\Builtin::Numeric, $table->columns[0]->type->name);
         self::assertSame(10, $table->columns[0]->type->precision);
         self::assertSame(2, $table->columns[0]->type->scale);
         self::assertNull($table->columns[0]->type->length);
@@ -68,29 +68,29 @@ final class TypeReaderTest extends TestCase
 
     public function testReadKeepsSqliteDeclaredTypesWithTheirAffinity(): void
     {
-        $table = (new SchemaFacade(SqliteDialect::Sqlite))->analyze('CREATE TABLE users (id TEXT PRIMARY KEY, score INTEGER)')->tables[0];
+        $table = Resolved::of((new Semantics(SqliteDialect::Sqlite))->analyze('CREATE TABLE users (id TEXT PRIMARY KEY, score INTEGER)', []))->declarations[0];
         self::assertSame(Nullability::MaybeNull, $table->columns[0]->nullability);
-        self::assertSame(\SqlSemantics\Core\Type\Affinity::Text, $table->columns[0]->type->affinity);
-        self::assertNull((new SchemaFacade(PostgreSqlDialect::PostgreSql))->analyze('CREATE TABLE users (id TEXT)')->tables[0]->columns[0]->type->affinity);
+        self::assertSame(\SqlSemantics\Statement\Declaration\Affinity::Text, $table->columns[0]->type->affinity);
+        self::assertNull(Resolved::of((new Semantics(PostgreSqlDialect::PostgreSql))->analyze('CREATE TABLE users (id TEXT)', []))->declarations[0]->columns[0]->type->affinity);
     }
 
     public function testReadKeepsUnmodeledNamesAsTypeNames(): void
     {
-        $column = (new SchemaFacade(PostgreSqlDialect::PostgreSql))->analyze('CREATE TABLE users (amount app.custom_domain(3))')->tables[0]->columns[0];
-        self::assertInstanceOf(\SqlSemantics\Core\Type\TypeName::class, $column->type->name);
+        $column = Resolved::of((new Semantics(PostgreSqlDialect::PostgreSql))->analyze('CREATE TABLE users (amount app.custom_domain(3))', []))->declarations[0]->columns[0];
+        self::assertInstanceOf(\SqlSemantics\Statement\Declaration\TypeName::class, $column->type->name);
         self::assertSame(['app', 'custom_domain'], $column->type->name->parts);
         self::assertNull($column->type->length);
     }
 
     #[DataProvider('providerSynonyms')]
-    public function testReadResolvesEverySynonymToTheSameBuiltinType(Dialect $dialect, string $declaration, \SqlSemantics\Core\Type\Builtin $expected): void
+    public function testReadResolvesEverySynonymToTheSameBuiltinType(Dialect $dialect, string $declaration, \SqlSemantics\Statement\Declaration\Builtin $expected): void
     {
-        $column = (new SchemaFacade($dialect))->analyze('CREATE TABLE users (value ' . $declaration . ')')->tables[0]->columns[0];
+        $column = Resolved::of((new Semantics($dialect))->analyze('CREATE TABLE users (value ' . $declaration . ')', []))->declarations[0]->columns[0];
         self::assertSame($expected, $column->type->name);
     }
 
     /**
-     * @return iterable<string, array{Dialect, string, \SqlSemantics\Core\Type\Builtin}>
+     * @return iterable<string, array{Dialect, string, \SqlSemantics\Statement\Declaration\Builtin}>
      */
     public static function providerSynonyms(): iterable
     {
@@ -125,7 +125,7 @@ final class TypeReaderTest extends TestCase
             [SqliteDialect::Sqlite, 'VARYING CHARACTER', 'VarChar'], [SqliteDialect::Sqlite, 'CLOB', 'Text'], [SqliteDialect::Sqlite, 'DOUBLE PRECISION', 'DoublePrecision'], [SqliteDialect::Sqlite, 'BOOLEAN', 'Boolean'], [SqliteDialect::Sqlite, 'ANY', 'Any'],
         ];
         foreach ($rows as [$dialect, $declaration, $case]) {
-            yield $dialect->value . '-' . $declaration => [$dialect, $declaration, constant(\SqlSemantics\Core\Type\Builtin::class . '::' . $case)];
+            yield $dialect->value . '-' . $declaration => [$dialect, $declaration, constant(\SqlSemantics\Statement\Declaration\Builtin::class . '::' . $case)];
         }
     }
 }

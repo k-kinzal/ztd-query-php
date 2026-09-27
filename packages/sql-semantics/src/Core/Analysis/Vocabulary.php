@@ -29,6 +29,11 @@ final class Vocabulary
     private array $reach = [];
 
     /**
+     * @var array<class-string<Element>, array{rule: string, symbols: list<string>}>|null The form of each value class
+     */
+    private ?array $shapes = null;
+
+    /**
      * @param array<string, array<int, Recipe>> $recipes The recipes by rule and alternative
      * @param array<string, list<string>> $classes The member terminals of each terminal class
      * @param array<string, string> $fallbacks The terminal the parser retries with, by the terminal it rejects
@@ -83,6 +88,35 @@ final class Vocabulary
         }
 
         return null;
+    }
+
+    /**
+     * Answers the rule and symbols of the form a value is an instance of, or null for a choice or a foreign value.
+     *
+     * @return array{rule: string, symbols: list<string>}|null
+     */
+    public function shape(Element $value): ?array
+    {
+        if ($this->shapes === null) {
+            $this->shapes = [];
+            foreach ($this->recipes as $rule => $alternatives) {
+                foreach ($alternatives as $recipe) {
+                    if (isset($recipe['class'])) {
+                        $this->shapes[$recipe['class']] = ['rule' => $rule, 'symbols' => $recipe['symbols']];
+                    }
+                }
+            }
+        }
+
+        return $this->shapes[$value::class] ?? null;
+    }
+
+    /**
+     * Reports whether a symbol names a rule of the grammar rather than a terminal.
+     */
+    public function isRule(string $symbol): bool
+    {
+        return isset($this->recipes[$symbol]);
     }
 
     /**

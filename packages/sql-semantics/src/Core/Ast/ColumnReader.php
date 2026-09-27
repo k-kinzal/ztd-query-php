@@ -7,11 +7,11 @@ namespace SqlSemantics\Core\Ast;
 use SqlParser\Parser\Node;
 use SqlSemantics\Core\Analysis\ValueReader;
 use SqlSemantics\Core\Language;
-use SqlSemantics\Core\Schema\ColumnDefinition;
-use SqlSemantics\Core\Schema\ConstraintKind;
-use SqlSemantics\Core\Schema\GenerationKind;
-use SqlSemantics\Core\Schema\TableConstraint;
-use SqlSemantics\Core\Type\Nullability;
+use SqlSemantics\Statement\Declaration\ColumnDefinition;
+use SqlSemantics\Statement\Declaration\ConstraintKind;
+use SqlSemantics\Statement\Declaration\GenerationKind;
+use SqlSemantics\Statement\Declaration\Nullability;
+use SqlSemantics\Statement\Declaration\TableConstraint;
 
 /**
  * Reads declaration-level nullability, defaults, and column constraints.

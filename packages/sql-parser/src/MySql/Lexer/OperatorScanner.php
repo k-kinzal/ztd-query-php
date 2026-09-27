@@ -13,7 +13,7 @@ use SqlParser\Lexer\LexicalException;
  * Comparison operators take the longest spelling the keyword table knows,
  * `&&` and `||` are the boolean operators, `:=` assigns, and `->` and `->>`
  * are the JSON operators of releases that have them. Every other punctuation
- * character is a token of its own. Under the PDO parameter syntax, `:name`
+ * character is a token of its own. Under the named parameter syntax, `:name`
  * is a parameter marker as `?` is.
  *
  * @visibility root

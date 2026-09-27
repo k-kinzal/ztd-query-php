@@ -6,10 +6,9 @@ namespace SqlSemantics\Platform\PostgreSql;
 
 use SqlParser\Parser\Node;
 use SqlSemantics\Core\Analysis\ValueReader;
-use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\Policy\TypeRules as Contract;
-use SqlSemantics\Core\Type\Builtin;
-use SqlSemantics\Core\Type\TypeDeclaration;
+use SqlSemantics\Statement\Declaration\Builtin;
+use SqlSemantics\Statement\Declaration\TypeDeclaration;
 
 /**
  * PostgreSql TypeRules implementation.
@@ -38,18 +37,11 @@ final class TypeRules implements Contract
 
 
     /**
-     * Retains the language identity used in semantic output.
-     */
-    public function __construct(private readonly Dialect $dialect)
-    {
-    }
-
-    /**
      * Reads a declared type by its grammar production and the catalog names it refers to.
      */
     public function read(Node $node, ValueReader $values, ?Node $table = null): TypeDeclaration
     {
-        return (new TypeReader($this->dialect))->read($node);
+        return (new TypeReader())->read($node);
     }
 
     /**

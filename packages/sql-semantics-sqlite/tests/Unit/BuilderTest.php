@@ -104,10 +104,11 @@ final class BuilderTest extends TestCase
     public function testParameterFollowsTheParameterSyntax(): void
     {
         $native = new Semantics(Dialect::Sqlite);
-        $pdo = new Semantics(Dialect::Sqlite, parameters: Parameters::Pdo);
         self::assertSame('?3', Writer::render($native->builder()->parameter(3)));
-        self::assertSame('?', Writer::render($pdo->builder()->parameter(3)));
+        self::assertSame(':user_id', Writer::render($native->builder()->parameter('user_id')));
+        self::assertSame(':id', Writer::render((new Semantics(Dialect::Sqlite, parameters: Parameters::Named))->builder()->parameter('id')));
         Composed::assertExpressionRoundTrips($native, $native->builder()->parameter(3));
+        Composed::assertExpressionRoundTrips($native, $native->builder()->parameter('user_id'));
         $this->expectException(CompositionException::class);
         $native->builder()->parameter(0);
     }

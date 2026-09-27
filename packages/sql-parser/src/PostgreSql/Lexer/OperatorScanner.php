@@ -6,7 +6,6 @@ namespace SqlParser\PostgreSql\Lexer;
 
 use SqlParser\Lexer\Lexeme;
 use SqlParser\Lexer\LexicalException;
-use SqlParser\Lexer\ParameterSyntax;
 
 /**
  * Reads PostgreSQL's operators and punctuation.
@@ -16,8 +15,7 @@ use SqlParser\Lexer\ParameterSyntax;
  * unless it also holds a character that only user-defined operators use, so
  * that `a<-1` reads as `a < -1`. A single character that stands for itself
  * and the few two-character comparisons have terminals of their own. Under
- * the PDO parameter syntax, `:name` and a lone `?` are parameters, and `??`
- * begins an operator, as PDO reads them.
+ * the named parameter syntax, `:name` is a parameter.
  *
  * @visibility root
  */
@@ -56,11 +54,6 @@ final class OperatorScanner
     {
         $cursor = $scan->cursor;
         $start = $cursor->offset();
-        if ($scan->parameters === ParameterSyntax::Pdo && $cursor->peek() === '?' && $cursor->peek(1) !== '?') {
-            $cursor->take(1);
-
-            return $scan->lexeme('PARAM', $start);
-        }
         $run = $this->operatorRun($cursor->source, $start);
         if ($run === null || strlen($run) === 1) {
             $pair = substr($cursor->source, $start, 2);

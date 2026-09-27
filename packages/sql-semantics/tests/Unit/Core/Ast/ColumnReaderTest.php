@@ -10,14 +10,15 @@ use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\SemanticException;
-use SqlSemantics\Core\Type\Nullability;
-use SqlSemantics\Facade\Schema as SchemaFacade;
+use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
 use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
+use SqlSemantics\Statement\Declaration\Nullability;
+use Tests\Contract\Resolved;
 
 #[CoversClass(\SqlSemantics\Core\Ast\ColumnReader::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(SchemaFacade::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(Semantics::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\DialectParser::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\ConstraintReader::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\Identifiers::class)]
@@ -25,17 +26,16 @@ use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 #[CoversClass(\SqlSemantics\Core\Ast\TokenGroups::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\Tree::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\TypeReader::class)]
-#[CoversClass(\SqlSemantics\Core\Schema::class)]
-#[CoversClass(\SqlSemantics\Core\Schema\ColumnDefinition::class)]
-#[CoversClass(\SqlSemantics\Core\Schema\TableConstraint::class)]
-#[CoversClass(\SqlSemantics\Core\Schema\TableDefinition::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\ColumnDefinition::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\TableConstraint::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\TableDefinition::class)]
 #[CoversClass(SemanticException::class)]
-#[CoversClass(\SqlSemantics\Core\Type\TypeDescriptor::class)]
-#[CoversClass(\SqlSemantics\Core\Type\Builtin::class)]
-#[CoversClass(\SqlSemantics\Core\Type\TypeName::class)]
-#[CoversClass(\SqlSemantics\Core\Type\TypeDeclaration::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\TypeDescriptor::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\Builtin::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\TypeName::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\TypeDeclaration::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\Numbers::class)]
-#[CoversClass(\SqlSemantics\Core\Schema\Invariant::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\Invariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\MySql\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\Sqlite\TypeReader::class)]
@@ -60,7 +60,7 @@ final class ColumnReaderTest extends TestCase
     #[TestWith([SqliteDialect::Sqlite])]
     public function testReadPreservesDeclaredNullabilityIndependentlyOfUsage(Dialect $dialect): void
     {
-        $table = (new SchemaFacade($dialect))->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)')->tables[0];
+        $table = Resolved::of((new Semantics($dialect))->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)', []))->declarations[0];
         self::assertSame(Nullability::MaybeNull, $table->columns[1]->nullability);
         self::assertSame(Nullability::NotNull, $table->columns[2]->nullability);
         self::assertNull($table->columns[1]->defaultExpression);

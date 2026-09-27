@@ -9,7 +9,6 @@ use SqlParser\Parser\SqlParser;
 use SqlParser\Sqlite\SqliteParser;
 use SqlSemantics\Core\Analysis\TriviaReader;
 use SqlSemantics\Core\Builder as Composer;
-use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\Language;
 use SqlSemantics\Core\Mode as SessionMode;
 use SqlSemantics\Core\Parameters;
@@ -23,13 +22,6 @@ use SqlSemantics\Core\Policy;
  */
 final class Platform implements Contract
 {
-    /**
-     * Retains the public language identity in all semantic types.
-     */
-    public function __construct(private readonly Dialect $dialect)
-    {
-    }
-
     /**
      * Configures the selected grammar release and parameter syntax; this database has no session mode.
      *
@@ -83,7 +75,6 @@ final class Platform implements Contract
     {
         return new Policy\SyntaxRules([
             'autoIncrement' => ['autoinc'],
-            'dropTableName' => ['fullname'],
             'generationStorage' => ['generated'],
             'generationClause' => [],
             'columnName' => ['nm'],
@@ -95,6 +86,31 @@ final class Platform implements Contract
             'tableName' => ['nm'],
             'tableConstraint' => ['tcons'],
         ]);
+    }
+
+    /**
+     * Names the positions where the grammar writes table names, and the forms that declare, drop, or merely name tables.
+     */
+    public function relations(): Policy\RelationRules
+    {
+        return new Policy\RelationRules(
+            nameSymbols: ['fullname', 'xfullname', 'add_column_fullname'],
+            declarations: [['rule' => 'create_table', 'pair' => ['nm', 'dbnm'], 'conditional' => 'ifnotexists']],
+            drops: [['rule' => 'cmd', 'requires' => ['DROP', 'TABLE', 'fullname'], 'names' => 'fullname', 'conditional' => 'ifexists']],
+            commonTableExpressions: [['rule' => 'wqitem', 'name' => 'withnm']],
+            ignored: [
+                ['rule' => 'cmd', 'requires' => ['createkw', 'VIEW'], 'pair' => ['nm', 'dbnm']],
+                ['rule' => 'cmd', 'requires' => ['createkw', 'INDEX'], 'pair' => ['nm', 'dbnm']],
+                ['rule' => 'cmd', 'requires' => ['DROP', 'VIEW'], 'name' => 'fullname'],
+                ['rule' => 'cmd', 'requires' => ['DROP', 'TRIGGER'], 'name' => 'fullname'],
+                ['rule' => 'cmd', 'requires' => ['DROP', 'INDEX'], 'name' => 'fullname'],
+            ],
+            pairs: [
+                ['rule' => 'seltablist', 'requires' => ['nm', 'dbnm'], 'pair' => ['nm', 'dbnm']],
+                ['rule' => 'cmd', 'requires' => ['createkw', 'INDEX', 'ON'], 'pair' => ['nm']],
+            ],
+            parts: ['xfullname' => ['nm DOT nm AS nm' => [0, 1], 'nm AS nm' => [0]]],
+        );
     }
 
     /**
@@ -110,7 +126,7 @@ final class Platform implements Contract
      */
     public function types(): Policy\TypeRules
     {
-        return new TypeRules($this->dialect);
+        return new TypeRules();
     }
 
     /**

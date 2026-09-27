@@ -76,12 +76,12 @@ final class PostgreSqlParserTest extends TestCase
         (new PostgreSqlParser())->tokenize("SELECT 'abc");
     }
 
-    public function testParseReadsPdoParametersUnderThePdoSyntax(): void
+    public function testParseReadsNamedParametersUnderTheNamedSyntax(): void
     {
-        $sql = "UPDATE users SET name = :name, tags = tags ?? 'x' WHERE id = :id AND status = ? AND created < \$1::date";
+        $sql = "UPDATE users SET name = :name, tags = tags ? 'x' WHERE id = :id AND created < \$1::date";
 
-        self::assertSame($sql, (new PostgreSqlParser(parameters: ParameterSyntax::Pdo))->parse($sql)->toString());
-        self::assertSame(4, count(array_filter((new PostgreSqlParser(parameters: ParameterSyntax::Pdo))->tokenize($sql), static fn (Token $token): bool => $token->name === 'PARAM')));
+        self::assertSame($sql, (new PostgreSqlParser(parameters: ParameterSyntax::Named))->parse($sql)->toString());
+        self::assertSame(3, count(array_filter((new PostgreSqlParser(parameters: ParameterSyntax::Named))->tokenize($sql), static fn (Token $token): bool => $token->name === 'PARAM')));
 
         $this->expectException(SyntaxException::class);
 

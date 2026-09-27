@@ -8,11 +8,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\SemanticException;
-use SqlSemantics\Facade\Schema as SchemaFacade;
+use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
+use Tests\Contract\Resolved;
 
 #[CoversClass(\SqlSemantics\Core\Ast\ConstraintReader::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(SchemaFacade::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(Semantics::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\DialectParser::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\ColumnReader::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\Identifiers::class)]
@@ -20,17 +21,16 @@ use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 #[CoversClass(\SqlSemantics\Core\Ast\TokenGroups::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\Tree::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\TypeReader::class)]
-#[CoversClass(\SqlSemantics\Core\Schema::class)]
-#[CoversClass(\SqlSemantics\Core\Schema\ColumnDefinition::class)]
-#[CoversClass(\SqlSemantics\Core\Schema\TableConstraint::class)]
-#[CoversClass(\SqlSemantics\Core\Schema\TableDefinition::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\ColumnDefinition::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\TableConstraint::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\TableDefinition::class)]
 #[CoversClass(SemanticException::class)]
-#[CoversClass(\SqlSemantics\Core\Type\TypeDescriptor::class)]
-#[CoversClass(\SqlSemantics\Core\Type\Builtin::class)]
-#[CoversClass(\SqlSemantics\Core\Type\TypeName::class)]
-#[CoversClass(\SqlSemantics\Core\Type\TypeDeclaration::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\TypeDescriptor::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\Builtin::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\TypeName::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\TypeDeclaration::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\Numbers::class)]
-#[CoversClass(\SqlSemantics\Core\Schema\Invariant::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\Invariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\MySql\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\Sqlite\TypeReader::class)]
@@ -52,7 +52,7 @@ final class ConstraintReaderTest extends TestCase
 {
     public function testReadNamedForeignKey(): void
     {
-        $table = (new SchemaFacade(PostgreSqlDialect::PostgreSql))->analyze('CREATE TABLE users (id INTEGER, CONSTRAINT self_ref FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE DEFERRABLE)')->tables[0];
+        $table = Resolved::of((new Semantics(PostgreSqlDialect::PostgreSql))->analyze('CREATE TABLE users (id INTEGER, CONSTRAINT self_ref FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE DEFERRABLE)', []))->declarations[0];
         self::assertSame('self_ref', $table->constraints[0]->name);
         self::assertSame(['id'], $table->constraints[0]->columns);
         self::assertStringContainsString('DEFERRABLE', \SqlSemantics\Statement\Writer::render($table->constraints[0]->source));
@@ -60,7 +60,8 @@ final class ConstraintReaderTest extends TestCase
 
     public function testReferencesPreservesCompositeForeignKeyOrder(): void
     {
-        $table = (new SchemaFacade(PostgreSqlDialect::PostgreSql))->analyze('CREATE TABLE users (id INTEGER, parent_id INTEGER, FOREIGN KEY (id, parent_id) REFERENCES other.users (parent_id, id))')->tables[0];
+        $semantics = new Semantics(PostgreSqlDialect::PostgreSql);
+        $table = Resolved::of($semantics->analyze('CREATE TABLE users (id INTEGER, parent_id INTEGER, FOREIGN KEY (id, parent_id) REFERENCES other.users (parent_id, id))', [$semantics->analyze('CREATE TABLE other.users (id INTEGER, parent_id INTEGER)')]))->declarations[0];
         self::assertSame(['other', 'users'], $table->constraints[0]->referencedTable);
         self::assertSame(['parent_id', 'id'], $table->constraints[0]->referencedColumns);
     }

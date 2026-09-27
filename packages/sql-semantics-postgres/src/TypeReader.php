@@ -8,13 +8,12 @@ use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
 use SqlSemantics\Core\Ast\Numbers;
 use SqlSemantics\Core\Ast\Tree;
-use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\SemanticException;
-use SqlSemantics\Core\Type\Builtin;
-use SqlSemantics\Core\Type\IntervalFields;
-use SqlSemantics\Core\Type\TypeDeclaration;
-use SqlSemantics\Core\Type\TypeDescriptor;
-use SqlSemantics\Core\Type\TypeName;
+use SqlSemantics\Statement\Declaration\Builtin;
+use SqlSemantics\Statement\Declaration\IntervalFields;
+use SqlSemantics\Statement\Declaration\TypeDeclaration;
+use SqlSemantics\Statement\Declaration\TypeDescriptor;
+use SqlSemantics\Statement\Declaration\TypeName;
 
 /**
  * Reads a type name by the grammar production that built it: keyword types by their tokens, generic names by the catalog.
@@ -58,22 +57,22 @@ final class TypeReader
     ];
 
     /**
-     * Retains the language identity used in semantic output.
-     */
-    public function __construct(private readonly Dialect $dialect)
-    {
-    }
-
-    /**
      * Reads one Typename; a set-returning type is not a column type.
      *
-     * @throws SemanticException When the declaration is outside the modeled surface or its modifiers are invalid
+     * A declaration the database rejects, such as a SETOF column or a type
+     * modifier that is not a constant, is invalid rather than unsupported, so
+     * it is an error and never an unreadable declaration.
+     *
+     * @throws SemanticException When the declaration is outside the modeled surface or invalid
      */
     public function read(Node $node): TypeDeclaration
     {
+        if (strtoupper($node->tokens()[0]->text ?? '') === 'SETOF') {
+            throw new SemanticException('invalid-column-type', 'A column cannot be declared SETOF: ' . Tree::text($node), $node);
+        }
         $simple = Tree::outer($node, ['SimpleTypename'])[0] ?? null;
         $inner = $simple === null ? null : (Tree::significant($simple)[0] ?? null);
-        if (strtoupper($node->tokens()[0]->text ?? '') === 'SETOF' || !$inner instanceof Node) {
+        if (!$inner instanceof Node) {
             Tree::unsupported($node, 'column type');
         }
         $facts = ['length' => null, 'precision' => null, 'scale' => null, 'fields' => null, 'autoIncrement' => false];
@@ -87,7 +86,7 @@ final class TypeReader
             'GenericType' => $this->generic($inner, $facts),
             default => Tree::unsupported($node, 'column type'),
         };
-        $type = new TypeDescriptor($this->dialect, $name, $facts['length'], $facts['precision'], $facts['scale'], arrayDimensions: $this->dimensions($node), intervalFields: $facts['fields']);
+        $type = new TypeDescriptor($name, $facts['length'], $facts['precision'], $facts['scale'], arrayDimensions: $this->dimensions($node), intervalFields: $facts['fields']);
 
         return new TypeDeclaration($type, autoIncrement: $facts['autoIncrement'], notNull: $facts['autoIncrement']);
     }
@@ -281,9 +280,13 @@ final class TypeReader
         }
         $values = [];
         foreach ($expressions as $index => $expression) {
-            $value = Numbers::integer($expression->tokens());
-            if ($value === null) {
+            $tokens = $expression->tokens();
+            $value = Numbers::integer($tokens);
+            if ($value === null && count($tokens) === 1 && $tokens[0]->name === 'SCONST') {
                 Tree::unsupported($expression, 'type modifier');
+            }
+            if ($value === null) {
+                throw new SemanticException('invalid-type-modifier', 'Type modifiers must be constants: ' . Tree::text($source), $source);
             }
             if ($value < 0 && $index === 0) {
                 throw new SemanticException('invalid-type-modifier', 'Invalid type modifier: ' . Tree::text($source), $source);

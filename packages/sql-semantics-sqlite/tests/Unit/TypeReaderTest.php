@@ -7,23 +7,23 @@ namespace Tests\Unit;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Sqlite\SqliteParser;
-use SqlSemantics\Core\Type\Affinity;
-use SqlSemantics\Core\Type\Builtin;
-use SqlSemantics\Core\Type\Nullability;
-use SqlSemantics\Core\Type\TypeName;
-use SqlSemantics\Facade\Schema;
+use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\TypeReader;
+use SqlSemantics\Statement\Declaration\Affinity;
+use SqlSemantics\Statement\Declaration\Builtin;
+use SqlSemantics\Statement\Declaration\Nullability;
+use SqlSemantics\Statement\Declaration\TypeName;
+use Tests\Contract\Resolved;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\SemanticException::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(Schema::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\ColumnDefinition::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\TableDefinition::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\ConstraintKind::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\TableConstraint::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(Semantics::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\ColumnDefinition::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TableDefinition::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\ConstraintKind::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TableConstraint::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(Nullability::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Type\TypeDescriptor::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TypeDescriptor::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\DialectParser::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\TokenGroups::class)]
@@ -39,16 +39,23 @@ use SqlSemantics\Platform\Sqlite\TypeReader;
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\Sqlite\SchemaRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(Dialect::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(TypeReader::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\Numbers::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(Builtin::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(TypeName::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TypeDeclaration::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(Affinity::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\IntervalFields::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\Invariant::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
 final class TypeReaderTest extends TestCase
 {
     /**
-     * @param array{length?: int, precision?: int, scale?: int, unsigned?: bool, zerofill?: bool, binaryCollation?: bool, characterSet?: string, members?: int, autoIncrement?: bool, arrayDimensions?: int, intervalFields?: \SqlSemantics\Core\Type\IntervalFields, nullability?: Nullability} $facts
+     * @param array{length?: int, precision?: int, scale?: int, unsigned?: bool, zerofill?: bool, binaryCollation?: bool, characterSet?: string, members?: int, autoIncrement?: bool, arrayDimensions?: int, intervalFields?: \SqlSemantics\Statement\Declaration\IntervalFields, nullability?: Nullability} $facts
      */
     #[DataProvider('providerDeclarations')]
     public function testReadKeepsTheDeclaredNameAndItsAffinity(string $declaration, Builtin|TypeName $name, Affinity $affinity, array $facts = []): void
     {
-        $type = (new Schema(Dialect::Sqlite))->analyze('CREATE TABLE t (c ' . $declaration . ')')->tables[0]->columns[0]->type;
+        $type = Resolved::of((new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (c ' . $declaration . ')', []))->declarations[0]->columns[0]->type;
         self::assertTrue($type->is($name));
         self::assertSame($affinity, $type->affinity);
         self::assertSame($facts['length'] ?? null, $type->length);
@@ -58,7 +65,7 @@ final class TypeReaderTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string, Builtin|TypeName, Affinity, 3?: array{length?: int, precision?: int, scale?: int, unsigned?: bool, zerofill?: bool, binaryCollation?: bool, characterSet?: string, members?: int, autoIncrement?: bool, arrayDimensions?: int, intervalFields?: \SqlSemantics\Core\Type\IntervalFields, nullability?: Nullability}}>
+     * @return iterable<string, array{string, Builtin|TypeName, Affinity, 3?: array{length?: int, precision?: int, scale?: int, unsigned?: bool, zerofill?: bool, binaryCollation?: bool, characterSet?: string, members?: int, autoIncrement?: bool, arrayDimensions?: int, intervalFields?: \SqlSemantics\Statement\Declaration\IntervalFields, nullability?: Nullability}}>
      */
     public static function providerDeclarations(): iterable
     {
@@ -81,7 +88,7 @@ final class TypeReaderTest extends TestCase
     #[DataProvider('providerAffinities')]
     public function testAffinityUsesTheDocumentedPrecedence(string $spelling, Affinity $expected): void
     {
-        self::assertSame($expected, (new TypeReader(Dialect::Sqlite))->affinity($spelling));
+        self::assertSame($expected, (new TypeReader())->affinity($spelling));
     }
 
     /**
@@ -113,12 +120,12 @@ final class TypeReaderTest extends TestCase
     {
         $tree = (new SqliteParser())->parse('CREATE TABLE t (c ' . $declaration . ')');
         self::assertSame($expected, TypeReader::rowidAlias($tree->find('columnname')[0]));
-        self::assertSame($expected ? Nullability::NotNull : Nullability::MaybeNull, (new Schema(Dialect::Sqlite))->analyze('CREATE TABLE t (c ' . $declaration . ')')->tables[0]->columns[0]->nullability);
+        self::assertSame($expected ? Nullability::NotNull : Nullability::MaybeNull, Resolved::of((new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (c ' . $declaration . ')', []))->declarations[0]->columns[0]->nullability);
     }
 
     public function testModifiersKeepIntegerArgumentsInStandardSlotsOnly(): void
     {
-        $reader = new TypeReader(Dialect::Sqlite);
+        $reader = new TypeReader();
         self::assertSame([20, null, null], $reader->modifiers(Builtin::VarChar, [20]));
         self::assertSame([null, 10, 2], $reader->modifiers(Builtin::Numeric, [10, 2]));
         self::assertSame([null, 3, null], $reader->modifiers(Builtin::DateTime, [3]));
@@ -130,7 +137,7 @@ final class TypeReaderTest extends TestCase
 
     public function testStrictRecognizesTheTableOption(): void
     {
-        $reader = new TypeReader(Dialect::Sqlite);
+        $reader = new TypeReader();
         self::assertTrue($reader->strict((new SqliteParser())->parse('CREATE TABLE t (c ANY) STRICT')));
         self::assertFalse($reader->strict((new SqliteParser())->parse('CREATE TABLE t (c ANY) WITHOUT ROWID')));
     }

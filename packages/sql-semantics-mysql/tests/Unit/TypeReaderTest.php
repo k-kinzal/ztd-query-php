@@ -10,20 +10,20 @@ use SqlParser\Lexer\Token;
 use SqlParser\MySql\MySqlParser;
 use SqlParser\Parser\Node;
 use SqlSemantics\Core\SemanticException;
-use SqlSemantics\Core\Type\Builtin;
-use SqlSemantics\Facade\Schema;
+use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\TypeReader;
+use SqlSemantics\Statement\Declaration\Builtin;
+use Tests\Contract\Resolved;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(SemanticException::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(Schema::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\ColumnDefinition::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\TableDefinition::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\ConstraintKind::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\TableConstraint::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Type\Nullability::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Type\TypeDescriptor::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(Semantics::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\ColumnDefinition::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TableDefinition::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\ConstraintKind::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TableConstraint::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\Nullability::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TypeDescriptor::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\DialectParser::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\TokenGroups::class)]
@@ -39,16 +39,23 @@ use SqlSemantics\Platform\MySql\TypeReader;
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\SchemaRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(Dialect::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(TypeReader::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\Numbers::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(Builtin::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TypeName::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TypeDeclaration::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\Affinity::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\IntervalFields::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\Invariant::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
 final class TypeReaderTest extends TestCase
 {
     /**
-     * @param array{length?: int, precision?: int, scale?: int, unsigned?: bool, zerofill?: bool, binaryCollation?: bool, characterSet?: string, members?: int, autoIncrement?: bool, arrayDimensions?: int, intervalFields?: \SqlSemantics\Core\Type\IntervalFields, nullability?: \SqlSemantics\Core\Type\Nullability} $facts
+     * @param array{length?: int, precision?: int, scale?: int, unsigned?: bool, zerofill?: bool, binaryCollation?: bool, characterSet?: string, members?: int, autoIncrement?: bool, arrayDimensions?: int, intervalFields?: \SqlSemantics\Statement\Declaration\IntervalFields, nullability?: \SqlSemantics\Statement\Declaration\Nullability} $facts
      */
     #[DataProvider('providerDeclarations')]
     public function testReadSeparatesTheTypeIdentityFromItsIndependentFacts(string $declaration, Builtin $name, array $facts, ?string $version = null): void
     {
-        $column = (new Schema(Dialect::MySql, grammarVersion: $version))->analyze('CREATE TABLE t (c ' . $declaration . ')')->tables[0]->columns[0];
+        $column = Resolved::of((new Semantics(Dialect::MySql, grammarVersion: $version))->analyze('CREATE TABLE t (c ' . $declaration . ')', []))->declarations[0]->columns[0];
         $type = $column->type;
         self::assertSame($name, $type->name);
         self::assertSame($facts['length'] ?? null, $type->length);
@@ -64,7 +71,7 @@ final class TypeReaderTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string, Builtin, array{length?: int, precision?: int, scale?: int, unsigned?: bool, zerofill?: bool, binaryCollation?: bool, characterSet?: string, members?: int, autoIncrement?: bool, arrayDimensions?: int, intervalFields?: \SqlSemantics\Core\Type\IntervalFields, nullability?: \SqlSemantics\Core\Type\Nullability}, 3?: string}>
+     * @return iterable<string, array{string, Builtin, array{length?: int, precision?: int, scale?: int, unsigned?: bool, zerofill?: bool, binaryCollation?: bool, characterSet?: string, members?: int, autoIncrement?: bool, arrayDimensions?: int, intervalFields?: \SqlSemantics\Statement\Declaration\IntervalFields, nullability?: \SqlSemantics\Statement\Declaration\Nullability}, 3?: string}>
      */
     public static function providerDeclarations(): iterable
     {
@@ -109,10 +116,10 @@ final class TypeReaderTest extends TestCase
 
     public function testReadDeclaresSerialAsANonnullableUniqueGeneratedColumn(): void
     {
-        $table = (new Schema(Dialect::MySql))->analyze('CREATE TABLE t (id SERIAL, note TEXT)')->tables[0];
-        self::assertSame(\SqlSemantics\Core\Type\Nullability::NotNull, $table->columns[0]->nullability);
+        $table = Resolved::of((new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (id SERIAL, note TEXT)', []))->declarations[0];
+        self::assertSame(\SqlSemantics\Statement\Declaration\Nullability::NotNull, $table->columns[0]->nullability);
         self::assertTrue($table->columns[0]->autoIncrement);
-        self::assertSame([\SqlSemantics\Core\Schema\ConstraintKind::Unique], array_column($table->constraints, 'kind'));
+        self::assertSame([\SqlSemantics\Statement\Declaration\ConstraintKind::Unique], array_column($table->constraints, 'kind'));
         self::assertSame(['id'], $table->constraints[0]->columns);
         self::assertTrue($table->constraints[0]->inline);
     }
@@ -121,12 +128,12 @@ final class TypeReaderTest extends TestCase
     {
         $this->expectException(SemanticException::class);
         $this->expectExceptionMessage('Invalid type argument');
-        (new Schema(Dialect::MySql))->analyze('CREATE TABLE t (c VARCHAR(70000000000000000000000))');
+        Resolved::of((new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (c VARCHAR(70000000000000000000000))', []));
     }
 
     public function testKindFollowsTheLexerTokenRatherThanTheSpelling(): void
     {
-        $reader = new TypeReader(Dialect::MySql);
+        $reader = new TypeReader();
         $node = new Node('type', 0, []);
         self::assertSame(Builtin::TinyInt, $reader->kind([new Token(1, 'TINYINT_SYM', 'INT1', 0)], $node));
         self::assertSame(Builtin::VarChar, $reader->kind([new Token(1, 'NCHAR_SYM', 'NCHAR', 0), new Token(2, 'VARYING', 'VARYING', 6)], $node));
@@ -136,28 +143,28 @@ final class TypeReaderTest extends TestCase
     public function testKindRejectsATokenOutsideTheTypeVocabulary(): void
     {
         $this->expectException(SemanticException::class);
-        (new TypeReader(Dialect::MySql))->kind([new Token(1, 'IDENT', 'custom', 0)], new Node('type', 0, []));
+        (new TypeReader())->kind([new Token(1, 'IDENT', 'custom', 0)], new Node('type', 0, []));
     }
 
     public function testLeadingStopsAtArgumentsAndAttributes(): void
     {
         $tokens = (new MySqlParser())->parse('CREATE TABLE t (c NATIONAL CHAR VARYING(3) BINARY)')->find('type')[0]->tokens();
-        self::assertSame(['NATIONAL', 'CHAR', 'VARYING'], array_map(static fn (Token $token): string => $token->text, (new TypeReader(Dialect::MySql))->leading($tokens)));
+        self::assertSame(['NATIONAL', 'CHAR', 'VARYING'], array_map(static fn (Token $token): string => $token->text, (new TypeReader())->leading($tokens)));
         $tokens = (new MySqlParser())->parse('CREATE TABLE t (c CHAR CHARACTER SET utf8mb4)')->find('type')[0]->tokens();
-        self::assertSame(['CHAR'], array_map(static fn (Token $token): string => $token->text, (new TypeReader(Dialect::MySql))->leading($tokens)));
+        self::assertSame(['CHAR'], array_map(static fn (Token $token): string => $token->text, (new TypeReader())->leading($tokens)));
     }
 
     public function testAttributesReadEveryFactAfterTheTypeName(): void
     {
         $tokens = (new MySqlParser())->parse('CREATE TABLE t (c VARCHAR(10) CHARACTER SET Latin1 BINARY)')->find('type')[0]->tokens();
-        self::assertSame(['unsigned' => false, 'zerofill' => false, 'binary' => true, 'octets' => false, 'characterSet' => 'latin1'], (new TypeReader(Dialect::MySql))->attributes(array_slice($tokens, 1)));
+        self::assertSame(['unsigned' => false, 'zerofill' => false, 'binary' => true, 'octets' => false, 'characterSet' => 'latin1'], (new TypeReader())->attributes(array_slice($tokens, 1)));
         $tokens = (new MySqlParser())->parse('CREATE TABLE t (c DECIMAL(10,2) ZEROFILL)')->find('type')[0]->tokens();
-        self::assertSame(['unsigned' => true, 'zerofill' => true, 'binary' => false, 'octets' => false, 'characterSet' => null], (new TypeReader(Dialect::MySql))->attributes(array_slice($tokens, 1)));
+        self::assertSame(['unsigned' => true, 'zerofill' => true, 'binary' => false, 'octets' => false, 'characterSet' => null], (new TypeReader())->attributes(array_slice($tokens, 1)));
     }
 
     public function testArgumentsAssignLengthOrPrecisionAndScaleByKind(): void
     {
-        $reader = new TypeReader(Dialect::MySql);
+        $reader = new TypeReader();
         self::assertSame([Builtin::VarChar, 10, null, null], $reader->arguments(Builtin::VarChar, [10]));
         self::assertSame([Builtin::Numeric, null, 10, 2], $reader->arguments(Builtin::Numeric, [10, 2]));
         self::assertSame([Builtin::DoublePrecision, null, 30, null], $reader->arguments(Builtin::Real, [30]));
@@ -169,8 +176,8 @@ final class TypeReaderTest extends TestCase
     public function testIntegerRejectsOverflowingArguments(): void
     {
         $node = new Node('type', 0, []);
-        self::assertSame(255, (new TypeReader(Dialect::MySql))->integer([new Token(1, 'NUM', '255', 0)], $node));
+        self::assertSame(255, (new TypeReader())->integer([new Token(1, 'NUM', '255', 0)], $node));
         $this->expectException(SemanticException::class);
-        (new TypeReader(Dialect::MySql))->integer([new Token(1, 'DECIMAL_NUM', '99999999999999999999999', 0)], $node);
+        (new TypeReader())->integer([new Token(1, 'DECIMAL_NUM', '99999999999999999999999', 0)], $node);
     }
 }

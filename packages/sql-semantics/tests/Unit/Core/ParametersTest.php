@@ -17,7 +17,7 @@ final class ParametersTest extends TestCase
     public function testSyntaxNamesTheLexerSyntaxOfEachChoice(): void
     {
         self::assertSame(ParameterSyntax::Native, Parameters::Native->syntax());
-        self::assertSame(ParameterSyntax::Pdo, Parameters::Pdo->syntax());
+        self::assertSame(ParameterSyntax::Named, Parameters::Named->syntax());
         self::assertCount(2, Parameters::cases());
     }
 }

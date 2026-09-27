@@ -7,22 +7,30 @@ namespace Tests\Unit\Core\Policy;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Parser\Node;
 use SqlSemantics\Core\Dialect;
-use SqlSemantics\Core\Type\Builtin;
-use SqlSemantics\Core\Type\Nullability;
-use SqlSemantics\Core\Type\TypeDeclaration;
-use SqlSemantics\Core\Type\TypeDescriptor;
-use SqlSemantics\Facade\Schema as SchemaFacade;
+use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
+use SqlSemantics\Statement\Declaration\Builtin;
+use SqlSemantics\Statement\Declaration\Nullability;
+use SqlSemantics\Statement\Declaration\TypeDeclaration;
+use SqlSemantics\Statement\Declaration\TypeDescriptor;
+use Tests\Contract\Resolved;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\SemanticException::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(SchemaFacade::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\ColumnDefinition::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\TableDefinition::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\ConstraintKind::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\TableConstraint::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(Semantics::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\ColumnDefinition::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TableDefinition::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\ConstraintKind::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TableConstraint::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(Nullability::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(TypeDescriptor::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(Builtin::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TypeName::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(TypeDeclaration::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\Numbers::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\Invariant::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\MySql\TypeReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\TypeReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\Sqlite\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\DialectParser::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\TokenGroups::class)]
@@ -49,9 +57,10 @@ final class TypeRulesTest extends TestCase
 {
     public function testReadHonorsAnInjectedPolicy(): void
     {
-        $declaration = new TypeDeclaration(new TypeDescriptor(PostgreSqlDialect::PostgreSql, Builtin::Integer), autoIncrement: true);
+        $declaration = new TypeDeclaration(new TypeDescriptor(Builtin::Integer), autoIncrement: true);
         $types = self::createStub(\SqlSemantics\Core\Policy\TypeRules::class);
         $types->method('read')->willReturn($declaration);
+        $types->method('supports')->willReturn(true);
         $platform = self::createStub(\SqlSemantics\Core\Platform::class);
         $platform->method('types')->willReturn($types);
         $dialect = self::createStub(Dialect::class);
@@ -63,10 +72,10 @@ final class TypeRulesTest extends TestCase
     {
         $accept = static fn (\SqlSemantics\Core\Policy\TypeRules $rules): \SqlSemantics\Core\Policy\TypeRules => $rules;
         self::assertSame(PostgreSqlDialect::PostgreSql->platform()->types()::class, $accept(PostgreSqlDialect::PostgreSql->platform()->types())::class);
-        $schema = (new SchemaFacade(PostgreSqlDialect::PostgreSql))->analyze('CREATE TABLE items (value DECIMAL(10, 2))');
-        self::assertSame(Builtin::Numeric, $schema->tables[0]->columns[0]->type->name);
-        self::assertSame(10, $schema->tables[0]->columns[0]->type->precision);
-        self::assertSame(2, $schema->tables[0]->columns[0]->type->scale);
+        $schema = Resolved::of((new Semantics(PostgreSqlDialect::PostgreSql))->analyze('CREATE TABLE items (value DECIMAL(10, 2))', []));
+        self::assertSame(Builtin::Numeric, $schema->declarations[0]->columns[0]->type->name);
+        self::assertSame(10, $schema->declarations[0]->columns[0]->type->precision);
+        self::assertSame(2, $schema->declarations[0]->columns[0]->type->scale);
     }
     public function testSupportsDistinguishesDialectTypeVocabularies(): void
     {

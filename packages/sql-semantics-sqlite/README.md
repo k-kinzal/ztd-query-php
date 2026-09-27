@@ -5,7 +5,7 @@
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
-SQL Semantics for SQLite adds SQLite to [SQL Semantics](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics): the typed statement models of the official SQLite grammars, the SQLite rules for reading declarations, and the SQLite builder that composes values under stable names. Installing it also installs the shared SQL Semantics runtime, and `Dialect::Sqlite` selects SQLite in the runtime's `Semantics` and `Schema`. No database connection is needed.
+SQL Semantics for SQLite adds SQLite to [SQL Semantics](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics): the typed statement models of the official SQLite grammars, the SQLite rules for reading declarations, and the SQLite builder that composes values under stable names. Installing it also installs the shared SQL Semantics runtime, and `Dialect::Sqlite` selects SQLite in the runtime's `Semantics`. No database connection is needed.
 
 ## Requirements
 
@@ -13,7 +13,7 @@ SQL Semantics for SQLite adds SQLite to [SQL Semantics](https://github.com/k-kin
 
 ## Support Syntax
 
-The following grammar versions are supported. Pass the version tag as the second argument of `Semantics` or the third argument of `Schema`; omitting it uses the default.
+The following grammar versions are supported. Pass the version tag as the second argument of `Semantics`; omitting it uses the default.
 
 | Version | Version tag | Default |
 |---------|-------------|---------|
@@ -36,7 +36,7 @@ $statement = (new Semantics(Dialect::Sqlite))->analyze("INSERT OR REPLACE INTO u
 $statement->toString(); // "INSERT OR REPLACE INTO users( id , name ) VALUES( 1 , 'Alice' )"
 ```
 
-See the [SQL Semantics documentation](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics) for statement models, traversal, composition, and schema state.
+See the [SQL Semantics documentation](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics) for statement models, traversal, dependencies, and composition.
 
 ## License
 

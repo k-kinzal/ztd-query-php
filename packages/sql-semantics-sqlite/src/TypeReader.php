@@ -8,12 +8,11 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Core\Ast\Numbers;
 use SqlSemantics\Core\Ast\TokenGroups;
 use SqlSemantics\Core\Ast\Tree;
-use SqlSemantics\Core\Dialect;
-use SqlSemantics\Core\Type\Affinity;
-use SqlSemantics\Core\Type\Builtin;
-use SqlSemantics\Core\Type\TypeDeclaration;
-use SqlSemantics\Core\Type\TypeDescriptor;
-use SqlSemantics\Core\Type\TypeName;
+use SqlSemantics\Statement\Declaration\Affinity;
+use SqlSemantics\Statement\Declaration\Builtin;
+use SqlSemantics\Statement\Declaration\TypeDeclaration;
+use SqlSemantics\Statement\Declaration\TypeDescriptor;
+use SqlSemantics\Statement\Declaration\TypeName;
 
 /**
  * Reads a declared type name into its conventional identity and its storage affinity.
@@ -60,13 +59,6 @@ final class TypeReader
     ];
 
     /**
-     * Retains the language identity used in semantic output.
-     */
-    public function __construct(private readonly Dialect $dialect)
-    {
-    }
-
-    /**
      * Reads a declared type; a column without one holds values of any storage class.
      */
     public function read(Node $node, ?Node $table): TypeDeclaration
@@ -80,7 +72,7 @@ final class TypeReader
             $names[] = (new NameRules())->name($token);
         }
         if ($names === []) {
-            return new TypeDeclaration(new TypeDescriptor($this->dialect, Builtin::Dynamic, affinity: Affinity::Blob));
+            return new TypeDeclaration(new TypeDescriptor(Builtin::Dynamic, affinity: Affinity::Blob));
         }
         $spelling = strtoupper(implode(' ', $names));
         $name = self::NAMES[$spelling] ?? new TypeName($names);
@@ -91,7 +83,7 @@ final class TypeReader
         $arguments = array_map(Numbers::integer(...), Numbers::arguments(TokenGroups::parentheses($tokens)[0] ?? []));
         [$length, $precision, $scale] = $this->modifiers($name, $arguments);
 
-        return new TypeDeclaration(new TypeDescriptor($this->dialect, $name, $length, $precision, $scale, affinity: $affinity));
+        return new TypeDeclaration(new TypeDescriptor($name, $length, $precision, $scale, affinity: $affinity));
     }
 
     /**

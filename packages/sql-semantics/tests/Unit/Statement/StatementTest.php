@@ -27,9 +27,21 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\SqlSemantics\Platform\MySql\Platform::class)]
 #[UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
 #[UsesClass(\SqlSemantics\Platform\Sqlite\Platform::class)]
+#[UsesClass(\SqlSemantics\Statement\Resolution::class)]
+#[UsesClass(\SqlSemantics\Statement\Declaration\Invariant::class)]
 #[Medium]
 final class StatementTest extends TestCase
 {
+    public function testWithCommandDiscardsTheResolutionAndWithCommentsKeepsIt(): void
+    {
+        $command = new \SqlSemantics\Statement\Model\Sqlite\Value\CmdWithCommitEndTransOpt_ccca6149('COMMIT', new \SqlSemantics\Statement\Model\Sqlite\Value\TransOptWith_6ac05548());
+        $resolution = new \SqlSemantics\Statement\Resolution();
+        $statement = new \SqlSemantics\Statement\Statement($command, new \SqlSemantics\Statement\Comments(), $resolution);
+        self::assertSame($resolution, $statement->resolution);
+        self::assertNull($statement->withCommand($command)->resolution);
+        self::assertSame($resolution, $statement->withComments(new \SqlSemantics\Statement\Comments())->resolution);
+    }
+
     #[RunInSeparateProcess]
     #[PreserveGlobalState(false)]
     public function testWithCommandConstructsAndUpdatesWithoutLoadingTheSqlParser(): void

@@ -6,10 +6,9 @@ namespace SqlSemantics\Platform\Sqlite;
 
 use SqlParser\Parser\Node;
 use SqlSemantics\Core\Analysis\ValueReader;
-use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\Policy\TypeRules as Contract;
-use SqlSemantics\Core\Type\Builtin;
-use SqlSemantics\Core\Type\TypeDeclaration;
+use SqlSemantics\Statement\Declaration\Builtin;
+use SqlSemantics\Statement\Declaration\TypeDeclaration;
 
 /**
  * Sqlite TypeRules implementation.
@@ -40,18 +39,11 @@ final class TypeRules implements Contract
     ];
 
     /**
-     * Retains the language identity used in semantic output.
-     */
-    public function __construct(private readonly Dialect $dialect)
-    {
-    }
-
-    /**
      * Reads a declared type name, its affinity, and the table options that change it.
      */
     public function read(Node $node, ValueReader $values, ?Node $table = null): TypeDeclaration
     {
-        return (new TypeReader($this->dialect))->read($node, $table);
+        return (new TypeReader())->read($node, $table);
     }
 
     /**

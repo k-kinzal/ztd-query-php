@@ -9,7 +9,6 @@ use SqlParser\Parser\SqlParser;
 use SqlParser\PostgreSql\PostgreSqlParser;
 use SqlSemantics\Core\Analysis\TriviaReader;
 use SqlSemantics\Core\Builder as Composer;
-use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\Language;
 use SqlSemantics\Core\Mode as SessionMode;
 use SqlSemantics\Core\Parameters;
@@ -23,13 +22,6 @@ use SqlSemantics\Core\Policy;
  */
 final class Platform implements Contract
 {
-    /**
-     * Retains the public language identity in all semantic types.
-     */
-    public function __construct(private readonly Dialect $dialect)
-    {
-    }
-
     /**
      * Configures the selected grammar release and parameter syntax; this database has no session mode.
      *
@@ -83,7 +75,6 @@ final class Platform implements Contract
     {
         return new Policy\SyntaxRules([
             'autoIncrement' => [],
-            'dropTableName' => ['any_name'],
             'generationStorage' => ['ColConstraintElem'],
             'generationClause' => [],
             'columnName' => ['ColId'],
@@ -95,6 +86,26 @@ final class Platform implements Contract
             'tableName' => ['qualified_name'],
             'tableConstraint' => ['TableConstraint'],
         ]);
+    }
+
+    /**
+     * Names the positions where the grammar writes table names, and the forms that declare, drop, or merely name tables.
+     */
+    public function relations(): Policy\RelationRules
+    {
+        return new Policy\RelationRules(
+            nameSymbols: ['qualified_name', 'relation_expr', 'relation_expr_opt_alias', 'insert_target', 'qualified_name_list', 'relation_expr_list'],
+            declarations: [
+                ['rule' => 'CreateStmt', 'name' => 'qualified_name', 'conditional' => 'IF_P'],
+                ['rule' => 'CreateAsStmt', 'name' => 'create_as_target', 'conditional' => 'IF_P'],
+            ],
+            drops: [
+                ['rule' => 'DropStmt', 'requires' => ['object_type_any_name'], 'type' => ['object_type_any_name', ['TABLE']], 'names' => 'any_name_list', 'list' => ['any_name_list', ['any_name_list', ',', 'any_name']], 'conditional' => 'IF_P'],
+            ],
+            commonTableExpressions: [['rule' => 'common_table_expr', 'name' => 'name']],
+            ignored: [['rule' => 'ViewStmt', 'name' => 'qualified_name']],
+            parts: ['create_as_target' => ['qualified_name opt_column_list table_access_method_clause OptWith OnCommitOption OptTableSpace' => [0]]],
+        );
     }
 
     /**
@@ -110,7 +121,7 @@ final class Platform implements Contract
      */
     public function types(): Policy\TypeRules
     {
-        return new TypeRules($this->dialect);
+        return new TypeRules();
     }
 
     /**

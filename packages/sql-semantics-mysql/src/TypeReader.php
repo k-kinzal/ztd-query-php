@@ -10,11 +10,10 @@ use SqlSemantics\Core\Analysis\ValueReader;
 use SqlSemantics\Core\Ast\Numbers;
 use SqlSemantics\Core\Ast\TokenGroups;
 use SqlSemantics\Core\Ast\Tree;
-use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\SemanticException;
-use SqlSemantics\Core\Type\Builtin;
-use SqlSemantics\Core\Type\TypeDeclaration;
-use SqlSemantics\Core\Type\TypeDescriptor;
+use SqlSemantics\Statement\Declaration\Builtin;
+use SqlSemantics\Statement\Declaration\TypeDeclaration;
+use SqlSemantics\Statement\Declaration\TypeDescriptor;
 
 /**
  * Reads a type declaration by the lexer's type keyword tokens, so every synonym the lexer knows is covered.
@@ -86,13 +85,6 @@ final class TypeReader
     ];
 
     /**
-     * Retains the language identity used in semantic output.
-     */
-    public function __construct(private readonly Dialect $dialect)
-    {
-    }
-
-    /**
      * Reads one type declaration; SERIAL declares a nonnullable, automatically generated, unique BIGINT UNSIGNED.
      *
      * @throws SemanticException When the declaration is outside the lexer's type vocabulary or its arguments are invalid
@@ -104,7 +96,7 @@ final class TypeReader
             Tree::unsupported($node, 'type declaration');
         }
         if ($tokens[0]->name === 'SERIAL_SYM') {
-            return new TypeDeclaration(new TypeDescriptor($this->dialect, Builtin::BigInt, unsigned: true), autoIncrement: true, notNull: true, unique: true);
+            return new TypeDeclaration(new TypeDescriptor(Builtin::BigInt, unsigned: true), autoIncrement: true, notNull: true, unique: true);
         }
         $leading = $this->leading($tokens);
         $kind = $this->kind($leading, $node);
@@ -127,7 +119,7 @@ final class TypeReader
         }
         $character = $kind->isCharacter();
 
-        return new TypeDeclaration(new TypeDescriptor($this->dialect, $kind, $length, $precision, $scale, $kind->isNumeric() && $facts['unsigned'], $kind->isNumeric() && $facts['zerofill'], $character && $facts['binary'], $character ? $facts['characterSet'] : null, $members));
+        return new TypeDeclaration(new TypeDescriptor($kind, $length, $precision, $scale, $kind->isNumeric() && $facts['unsigned'], $kind->isNumeric() && $facts['zerofill'], $character && $facts['binary'], $character ? $facts['characterSet'] : null, $members));
     }
 
     /**
