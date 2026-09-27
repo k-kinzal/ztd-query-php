@@ -42,7 +42,7 @@ final class Reference
      * @param bool $conditional Whether the statement only declares or drops the table if that is possible
      * @param list<Element> $values Every value that writes the name, in writing order, the value first; empty when the value alone writes it
      *
-     * @throws InvalidArgumentException When the values are not a list of values starting with the value
+     * @throws InvalidArgumentException When the values are not a list of values starting with the value, or an undeclared table or a common table expression has a declaration
      */
     public function __construct(
         public readonly Element $value,
@@ -54,6 +54,7 @@ final class Reference
         array $values = [],
     ) {
         Declaration\Invariant::names($name);
+        Declaration\Invariant::ensure(!in_array($kind, [ReferenceKind::Undeclared, ReferenceKind::CommonTableExpression], true) || ($declaration === null && $table === null), 'A reference to an undeclared table or a common table expression has no declaration.');
         Declaration\Invariant::members($values, Element::class);
         Declaration\Invariant::ensure($values === [] || $values[0] === $value, 'The values that write a name start with the value of the reference.');
         $this->values = $values === [] ? [$value] : $values;

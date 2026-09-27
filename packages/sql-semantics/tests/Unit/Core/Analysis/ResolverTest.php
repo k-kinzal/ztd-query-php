@@ -14,7 +14,9 @@ use SqlSemantics\Core\Analysis\NameSite;
 use SqlSemantics\Core\Analysis\Relations;
 use SqlSemantics\Core\Analysis\Resolver;
 use SqlSemantics\Core\Analysis\Scope;
+use SqlSemantics\Core\Declarations;
 use SqlSemantics\Core\Dialect;
+use SqlSemantics\Core\SearchPath;
 use SqlSemantics\Core\SemanticException;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
@@ -49,6 +51,7 @@ use Tests\Contract\Resolving;
 #[UsesClass(NameSite::class)]
 #[UsesClass(Relations::class)]
 #[UsesClass(Scope::class)]
+#[UsesClass(SearchPath::class)]
 #[UsesClass(\SqlSemantics\Core\Analysis\Scopes::class)]
 #[UsesClass(\SqlSemantics\Core\Policy\WithVisibility::class)]
 #[UsesClass(\SqlSemantics\Core\Analysis\NameSites::class)]
@@ -151,7 +154,7 @@ final class ResolverTest extends TestCase
         yield 'postgresql: the target of MERGE is a table and its source sees the clause' => [PostgreSqlDialect::PostgreSql, 'WITH users AS (SELECT 7 AS id) MERGE INTO users USING users AS s ON users.id = s.id WHEN MATCHED THEN DO NOTHING', 'users:CTE users:Dependency users:CTE'];
         yield 'mysql: an expression name compares as a table name' => [MySqlDialect::MySql, 'WITH B AS (SELECT 1 AS x) SELECT * FROM b', 'B:CTE b:Dependency'];
         yield 'sqlite: an expression name compares as a table name' => [SqliteDialect::Sqlite, 'WITH B AS (SELECT 1 AS x) SELECT * FROM b', 'B:CTE b:CTE'];
-        yield 'mysql: a qualified name is never an expression' => [MySqlDialect::MySql, 'WITH b AS (SELECT 1 AS x) SELECT * FROM app.b', 'b:CTE app.b:Dependency'];
+        yield 'mysql: a qualified name is never an expression' => [MySqlDialect::MySql, 'WITH b AS (SELECT 1 AS x) SELECT * FROM other.b', 'b:CTE other.b:Dependency'];
     }
 
     #[DataProvider('providerScopedStatements')]
@@ -161,7 +164,7 @@ final class ResolverTest extends TestCase
         $dependencies = [
             $semantics->analyze('CREATE TABLE users (id INTEGER, v VARCHAR(20))'),
             $semantics->analyze('CREATE TABLE b (x VARCHAR(20))'),
-            $semantics->analyze('CREATE TABLE ' . ($dialect === SqliteDialect::Sqlite ? 'main' : 'app') . '.b (x VARCHAR(20))'),
+            $semantics->analyze('CREATE TABLE other.b (x VARCHAR(20))'),
         ];
         $references = Resolved::of($semantics->analyze($sql, $dependencies))->references;
         $kinds = array_map(static fn (Reference $reference): string => implode('.', $reference->name) . ':' . ($reference->kind === ReferenceKind::CommonTableExpression ? 'CTE' : $reference->kind->name), $references);
@@ -321,6 +324,44 @@ final class ResolverTest extends TestCase
         self::assertSame(['main', '.users'], array_map(Writer::render(...), $qualified->values));
         self::assertSame($qualified->value, $qualified->values[0]);
         self::assertSame($qualified->values, array_values(array_filter(Traversal::find($query->command, Element::class), static fn (Element $value): bool => in_array($value, $qualified->values, true))));
+    }
+
+    #[TestWith([MySqlDialect::MySql, 'app', 'app'])]
+    #[TestWith([PostgreSqlDialect::PostgreSql, 'app', 'app'])]
+    #[TestWith([SqliteDialect::Sqlite, 'main', 'main'])]
+    public function testResolveReadsAnUnqualifiedNameInTheSearchPath(Dialect $dialect, string $schema, string $expected): void
+    {
+        $semantics = new Semantics($dialect, searchPath: new SearchPath($schema));
+        $users = $semantics->analyze('CREATE TABLE users (id INTEGER)');
+        $query = $semantics->analyze('SELECT * FROM users, ' . $schema . '.users', [$users]);
+        self::assertSame([$expected, $expected], array_map(static fn (Reference $reference): ?string => $reference->table?->schema, Resolved::of($query)->tables()));
+        self::assertSame([$users, $users], array_map(static fn (Reference $reference): ?\SqlSemantics\Statement\Statement => $reference->declaration, Resolved::of($query)->tables()));
+    }
+
+    public function testResolveReadsAnUnqualifiedNameInTheFirstSchemaOfThePathThatHasIt(): void
+    {
+        $semantics = new Semantics(PostgreSqlDialect::PostgreSql, searchPath: new SearchPath('app', 'public'));
+        $public = $semantics->analyze('CREATE TABLE public.users (id INTEGER)');
+        $app = $semantics->analyze('CREATE TABLE users (id INTEGER)', [$public]);
+        self::assertSame('app', Resolved::of($app)->declarations[0]->schema);
+        $query = $semantics->analyze('SELECT * FROM users, public.users', [$public, $app]);
+        self::assertSame([$app, $public], array_map(static fn (Reference $reference): ?\SqlSemantics\Statement\Statement => $reference->declaration, Resolved::of($query)->tables()));
+    }
+
+    #[TestWith([MySqlDialect::MySql])]
+    #[TestWith([PostgreSqlDialect::PostgreSql])]
+    #[TestWith([SqliteDialect::Sqlite])]
+    public function testResolveNamesUndeclaredTablesUnderPartialDeclarations(Dialect $dialect): void
+    {
+        $semantics = new Semantics($dialect);
+        $users = $semantics->analyze('CREATE TABLE users (id INTEGER)');
+        $query = $semantics->analyze('WITH recent AS (SELECT 1) SELECT * FROM users JOIN audit_log ON 1 = 1 JOIN recent ON 1 = 1', [$users], Declarations::Partial);
+        $kinds = array_map(static fn (Reference $reference): string => implode('.', $reference->name) . ':' . $reference->kind->name, Resolved::of($query)->references);
+        self::assertSame(['recent:CommonTableExpression', 'users:Dependency', 'audit_log:Undeclared', 'recent:CommonTableExpression'], $kinds);
+        self::assertNull(Resolved::of($query)->references[2]->table);
+        self::assertSame(ReferenceKind::Drop, Resolved::of($semantics->analyze('DROP TABLE audit_log', [$users], Declarations::Partial))->references[0]->kind);
+        $this->expectException(SemanticException::class);
+        $semantics->analyze('SELECT * FROM audit_log', [$users]);
     }
 
     public function testDeclarePutsANewTableInForceAndRefersToAConditionalDuplicate(): void

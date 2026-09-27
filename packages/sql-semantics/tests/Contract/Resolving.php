@@ -39,10 +39,10 @@ final class Resolving
         $tree = (new DialectParser($language))->parse($sql);
 
         return [
-            new Resolver($language, new SchemaReader(new Identifiers($dialect), $platform->defaultSchema(), $language->values())),
+            new Resolver($language, new SchemaReader(new Identifiers($dialect), $platform->searchPath()[0], $language->values()), $platform->searchPath()),
             $tree,
             $language->values()->statement($tree)->command,
-            new Relations($platform->names(), $platform->defaultSchema()),
+            new Relations($platform->names(), $platform->searchPath()),
         ];
     }
 

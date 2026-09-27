@@ -65,9 +65,14 @@ final class PlatformTest extends TestCase
         self::assertSame('SELECT 1', $parser->parse('SELECT 1')->toString());
     }
 
-    public function testDefaultSchemaUsesTheLanguageNamespace(): void
+    public function testSearchPathDefaultsToTheServersSchemas(): void
     {
-        self::assertSame('main', Dialect::Sqlite->platform()->defaultSchema());
+        self::assertSame(['main'], Dialect::Sqlite->platform()->searchPath());
+    }
+
+    public function testSearchPathStartsWithMainAndListsAttachedDatabases(): void
+    {
+        self::assertSame(['main', 'aux'], Dialect::Sqlite->platform()->searchPath(new \SqlSemantics\Core\SearchPath('main', 'aux')));
     }
 
     public function testStatementNamesIdentifyTheParserRoot(): void

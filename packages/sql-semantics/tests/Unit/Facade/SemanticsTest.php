@@ -8,20 +8,25 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Core\Declarations;
 use SqlSemantics\Core\Parameters;
+use SqlSemantics\Core\SearchPath;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
 use SqlSemantics\Platform\MySql\Mode;
 use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
+use SqlSemantics\Statement\Reference;
+use SqlSemantics\Statement\ReferenceKind;
 use Tests\Contract\Resolved;
 
 #[CoversClass(Semantics::class)]
 #[UsesClass(Mode::class)]
+#[UsesClass(SearchPath::class)]
 #[UsesClass(\SqlSemantics\Core\Language::class)]
 #[UsesClass(\SqlSemantics\Core\Analysis\Analyzer::class)]
 #[UsesClass(\SqlSemantics\Core\Analysis\Resolver::class)]
 #[UsesClass(\SqlSemantics\Statement\Resolution::class)]
-#[UsesClass(\SqlSemantics\Statement\Reference::class)]
+#[UsesClass(Reference::class)]
 #[UsesClass(\SqlSemantics\Core\Analysis\ValueReader::class)]
 #[UsesClass(\SqlSemantics\Core\Analysis\Vocabulary::class)]
 #[UsesClass(\SqlSemantics\Core\Analysis\TriviaReader::class)]
@@ -73,6 +78,22 @@ final class SemanticsTest extends TestCase
         (new Semantics(MySqlDialect::MySql))->analyze($sql);
     }
 
+    public function testSearchPathAnswersTheSchemasOfTheSessionOrTheServersDefault(): void
+    {
+        self::assertSame([''], (new Semantics(MySqlDialect::MySql))->searchPath());
+        self::assertSame(['app'], (new Semantics(MySqlDialect::MySql, searchPath: new SearchPath('app')))->searchPath());
+        self::assertSame(['main'], (new Semantics(SqliteDialect::Sqlite))->searchPath());
+    }
+
+    public function testAnalyzeReadsUnqualifiedNamesInTheCurrentDatabaseAndNamesUndeclaredTablesOnRequest(): void
+    {
+        $semantics = new Semantics(MySqlDialect::MySql, searchPath: new SearchPath('app'));
+        $users = $semantics->analyze('CREATE TABLE users (id INT)');
+        $query = $semantics->analyze('SELECT * FROM app.users JOIN audit_log', [$users], Declarations::Partial);
+        self::assertSame([ReferenceKind::Dependency, ReferenceKind::Undeclared], array_map(static fn (Reference $reference): ReferenceKind => $reference->kind, $query->resolution->references ?? []));
+        self::assertSame(ReferenceKind::Undeclared, $semantics->analyzeAll('SELECT * FROM audit_log;', [$users], Declarations::Partial)[0]->resolution?->references[0]->kind);
+    }
+
     public function testAnalyzeAllGivesOneStatementPerScriptStatement(): void
     {
         $semantics = new Semantics(MySqlDialect::MySql);
@@ -109,7 +130,7 @@ final class SemanticsTest extends TestCase
         $statements = $semantics->analyzeAll('CREATE TABLE t (a INTEGER); INSERT INTO t VALUES (1); DROP TABLE t', []);
         self::assertCount(3, $statements);
         self::assertSame($statements[0], $statements[1]->resolution?->references[0]->declaration);
-        self::assertSame(\SqlSemantics\Statement\ReferenceKind::Drop, $statements[2]->resolution?->references[0]->kind);
+        self::assertSame(ReferenceKind::Drop, $statements[2]->resolution?->references[0]->kind);
         self::assertNull($semantics->analyzeAll('SELECT 1; SELECT 2')[1]->resolution);
     }
 

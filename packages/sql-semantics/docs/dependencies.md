@@ -28,7 +28,7 @@ The dependencies are applied in order. A `CREATE TABLE` declares a table with it
 
 A declaration whose columns come from another relation, such as `CREATE TABLE ... LIKE`, `CREATE TABLE ... AS SELECT`, or a partition of another table, declares its name but no readable table: its reference is a `Declaration` with a null `table`, and later references to it resolve with a null `table` too. Views, indexes, and other objects that are not tables are neither declared nor referenced. Computing the columns such statements would produce needs query evaluation and is left to the application, which has the statement model to do it from.
 
-A dependency that was analyzed without dependencies is resolved from its own SQL when it is used, so a plain `analyze('CREATE TABLE ...')` can be passed as a dependency. `analyzeAll()` with dependencies resolves each statement of a script against the dependencies and the statements before it, which is how a script of declarations is read.
+A dependency that was analyzed without dependencies is resolved from its own SQL, against the dependencies before it, when it is used, so a plain `analyze('CREATE TABLE ...')` can be passed as a dependency, and its foreign keys refer to the tables declared before it. `analyzeAll()` with dependencies resolves each statement of a script against the dependencies and the statements before it, which is how a script of declarations is read.
 
 ## Types
 
@@ -63,10 +63,40 @@ Every table name a statement writes is a `Statement\Reference`: the name value a
 | `Declaration` | A table the statement itself declares, or names again in its own constraints |
 | `CommonTableExpression` | A common table expression the statement defines and the name can see; see [common table expressions](#common-table-expressions) |
 | `Drop` | A table the statement drops; `declaration` is where it was declared |
+| `Undeclared` | A table no dependency declares, under [partial declarations](#partial-declarations); nothing is known of its columns |
 
-A name that resolves to none of these is a `SemanticException` with reason `unknown-table`: the dependency that would declare it was not given. Names are compared as the dialect compares relation names, and an unqualified name is read in the dialect's default schema, so in MySQL `db.users` and `users` are different tables.
+A name that resolves to none of these is a `SemanticException` with reason `unknown-table`: the dependency that would declare it was not given. Names are compared as the dialect compares relation names, and an unqualified name is read in the schemas of the [search path](#search-path).
 
 The references are listed in writing order. Table names are found where each grammar writes them: in FROM and JOIN clauses, INSERT, UPDATE, DELETE, and MERGE targets, TRUNCATE, ALTER TABLE, CREATE INDEX, foreign key references, and the sources of `CREATE TABLE ... LIKE` and `... AS SELECT`. Aliases and column names are not resolved, and a name written inside a stored program body is not read.
+
+## Search path
+
+A server reads a table name without a schema in the schemas of its session: MySQL in the current database, PostgreSQL in the schemas of `search_path`, and SQLite in `main` and then the attached databases. Pass them to `Semantics` as a `Core\SearchPath`, as the server stores their names. An unqualified name refers to the table of the first schema that has one, and an unqualified declaration creates its table in the first schema:
+
+```php
+use SqlSemantics\Core\SearchPath;
+
+$semantics = new Semantics(Dialect::MySql, searchPath: new SearchPath('app'));
+$users = $semantics->analyze('CREATE TABLE users (id INT PRIMARY KEY)');
+$query = $semantics->analyze('SELECT * FROM users JOIN app.users AS again USING (id)', [$users]);
+
+count($query->resolution->tables()); // 2: users and app.users are the same table
+```
+
+MySQL has one current database, so its search path has one schema; without one, an unqualified name is read in an unnamed database of its own, and `app.users` is a different table. PostgreSQL searches `public` by default, and SQLite `main`, which a SQLite search path starts with. `Semantics::searchPath()` answers the schemas in use.
+
+## Partial declarations
+
+The dependencies usually describe only some of the tables of a database. Analyzed with `Core\Declarations::Partial`, a name no dependency declares is not an error: it is a reference of kind `Undeclared`, with no declaration and no table, and every other name resolves as before.
+
+```php
+use SqlSemantics\Core\Declarations;
+
+$query = $semantics->analyze('SELECT * FROM users JOIN audit_log USING (id)', [$users], Declarations::Partial);
+// users is a Dependency with its declared table, audit_log is Undeclared
+```
+
+Under partial declarations, dropping an undeclared table is a `Drop` without a declaration. Declarations that conflict with a dependency are errors either way.
 
 ## Common table expressions
 

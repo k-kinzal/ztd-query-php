@@ -14,6 +14,7 @@ use SqlSemantics\Core\Mode as SessionMode;
 use SqlSemantics\Core\Parameters;
 use SqlSemantics\Core\Platform as Contract;
 use SqlSemantics\Core\Policy;
+use SqlSemantics\Core\SearchPath as SessionSearchPath;
 
 /**
  * Assembles PostgreSql semantic behavior from independent core contracts.
@@ -53,11 +54,11 @@ final class Platform implements Contract
     }
 
     /**
-     * Supplies the default declaration namespace.
+     * Reads unqualified names in the schemas of the `search_path`, by default `public`.
      */
-    public function defaultSchema(): string
+    public function searchPath(?SessionSearchPath $path = null): array
     {
-        return 'public';
+        return $path === null ? ['public'] : $path->schemas;
     }
 
     /**

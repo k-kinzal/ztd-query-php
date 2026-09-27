@@ -31,7 +31,7 @@ final class AnalyzerTest extends TestCase
 {
     public function testAnalyzeDoesNotNeedTableDeclarations(): void
     {
-        $analyzer = new Analyzer(new Language(SqliteDialect::Sqlite));
+        $analyzer = new Analyzer(new Language(SqliteDialect::Sqlite), ['main']);
         $statement = $analyzer->analyze('DROP TABLE no_such_table');
         self::assertSame('DROP TABLE no_such_table', $statement->toString());
         self::assertNotSame($statement, $analyzer->analyze('DROP TABLE no_such_table'));
@@ -40,20 +40,38 @@ final class AnalyzerTest extends TestCase
     public function testAnalyzeRejectsInvalidSqlWithoutAnIncompleteStatement(): void
     {
         $this->expectException(\SqlSemantics\Core\AnalysisException::class);
-        (new Analyzer(new Language(SqliteDialect::Sqlite)))->analyze('SELECT FROM');
+        (new Analyzer(new Language(SqliteDialect::Sqlite), ['main']))->analyze('SELECT FROM');
     }
 
     public function testAnalyzeAllGivesOneStatementPerScriptStatement(): void
     {
-        $statements = (new Analyzer(new Language(SqliteDialect::Sqlite)))->analyzeAll("SELECT 1; SELECT ';' -- done");
+        $statements = (new Analyzer(new Language(SqliteDialect::Sqlite), ['main']))->analyzeAll("SELECT 1; SELECT ';' -- done");
         self::assertCount(2, $statements);
         self::assertSame('SELECT 1 ;', $statements[0]->toString());
         self::assertSame("SELECT ';' -- done", $statements[1]->toString());
     }
 
+    public function testAnalyzeResolvesAnUnresolvedDependencyAgainstTheDependenciesBeforeIt(): void
+    {
+        $analyzer = new Analyzer(new Language(SqliteDialect::Sqlite), ['main']);
+        $users = $analyzer->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY)');
+        $orders = $analyzer->analyze('CREATE TABLE orders (id INTEGER, user_id INTEGER REFERENCES users (id))');
+        $query = $analyzer->analyze('SELECT * FROM orders', [$users, $orders]);
+        self::assertSame($orders, $query->resolution?->references[0]->declaration);
+        self::assertSame([$users, $orders], $query->resolution->dependencies);
+    }
+
+    public function testAnalyzeAllPassesPartialDeclarationsToEveryStatement(): void
+    {
+        $statements = (new Analyzer(new Language(SqliteDialect::Sqlite), ['main']))->analyzeAll('SELECT * FROM audit; DROP TABLE audit', [], \SqlSemantics\Core\Declarations::Partial);
+        self::assertSame(\SqlSemantics\Statement\ReferenceKind::Undeclared, $statements[0]->resolution?->references[0]->kind);
+        self::assertSame(\SqlSemantics\Statement\ReferenceKind::Drop, $statements[1]->resolution?->references[0]->kind);
+        self::assertNull($statements[1]->resolution->references[0]->declaration);
+    }
+
     public function testSplitReportsSyntaxErrorsAsAnalysisErrors(): void
     {
         $this->expectException(\SqlSemantics\Core\AnalysisException::class);
-        (new Analyzer(new Language(SqliteDialect::Sqlite)))->split('SELECT 1; SELECT FROM');
+        (new Analyzer(new Language(SqliteDialect::Sqlite), ['main']))->split('SELECT 1; SELECT FROM');
     }
 }

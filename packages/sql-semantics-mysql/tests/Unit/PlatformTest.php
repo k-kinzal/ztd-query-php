@@ -66,9 +66,14 @@ final class PlatformTest extends TestCase
         self::assertSame('SELECT 1', $parser->parse('SELECT 1')->toString());
     }
 
-    public function testDefaultSchemaUsesTheLanguageNamespace(): void
+    public function testSearchPathDefaultsToTheServersSchemas(): void
     {
-        self::assertSame('', Dialect::MySql->platform()->defaultSchema());
+        self::assertSame([''], Dialect::MySql->platform()->searchPath());
+    }
+
+    public function testSearchPathIsTheOneCurrentDatabase(): void
+    {
+        self::assertSame(['app'], Dialect::MySql->platform()->searchPath(new \SqlSemantics\Core\SearchPath('app')));
     }
 
     public function testStatementNamesIdentifyTheParserRoot(): void

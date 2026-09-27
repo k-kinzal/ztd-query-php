@@ -83,7 +83,7 @@ $statement->command;    // the typed model of the statement
 $statement->toString(); // 'WITH changed AS( UPDATE accounts SET balance = balance + 10 WHERE id = 7 RETURNING id , balance ) SELECT id , balance FROM changed ;'
 ```
 
-A statement means something against the statements before it. Pass those as its dependencies, and every table name resolves to a table one of them declares, to a common table expression, or to a table the statement declares or drops itself; a name no dependency declares is an error. Without dependencies, a statement is structured only.
+A statement means something against the statements before it. Pass those as its dependencies, and every table name resolves to a table one of them declares, to a common table expression visible where it is written, or to a table the statement declares or drops itself; a name without a schema is read in the session's search path, such as MySQL's current database, and a name no dependency declares is an error unless the declarations are partial. Without dependencies, a statement is structured only.
 
 ```php
 use SqlSemantics\Facade\Semantics;

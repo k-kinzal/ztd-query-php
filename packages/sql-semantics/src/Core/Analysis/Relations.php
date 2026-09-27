@@ -13,8 +13,9 @@ use SqlSemantics\Statement\Statement;
 /**
  * The tables in force while a statement is resolved.
  *
- * Tables are compared under the dialect's relation name policy, and a
- * name without a schema belongs to the default schema.
+ * Tables are compared under the dialect's relation name policy. A name
+ * without a schema refers to the table of the first schema of the search
+ * path that has one, and is declared in the first schema of the path.
  *
  * @visibility SqlSemantics
  */
@@ -27,8 +28,10 @@ final class Relations
 
     /**
      * Starts with no table in force.
+     *
+     * @param non-empty-list<string> $path The schemas an unqualified name is read in, in order
      */
-    public function __construct(private readonly NameRules $names, private readonly string $defaultSchema)
+    public function __construct(private readonly NameRules $names, private readonly array $path)
     {
     }
 
@@ -37,11 +40,14 @@ final class Relations
      */
     public function apply(Reference $reference, Statement $dependency): void
     {
-        [$schema, $name] = $this->qualified($reference->name);
         if ($reference->kind === ReferenceKind::Declaration) {
+            [$schema, $name] = $this->qualified($reference->name);
             $this->declare($schema, $name, $reference->table, $dependency);
         } elseif ($reference->kind === ReferenceKind::Drop) {
-            $this->drop($schema, $name);
+            $found = $this->find($reference->name);
+            if ($found !== null) {
+                $this->drop($found[0], $found[1]);
+            }
         }
     }
 
@@ -78,7 +84,28 @@ final class Relations
     }
 
     /**
-     * Qualifies a name with the default schema, keeping its last two parts.
+     * Finds the table in force a name refers to: a qualified name in its schema, an unqualified one in the first schema of the search path that has it.
+     *
+     * @param non-empty-list<string> $name
+     * @return array{string, string, TableDefinition|null, Statement|null}|null The schema and name the table is in force under, its definition and its owner
+     */
+    public function find(array $name): ?array
+    {
+        $parts = array_slice($name, -2);
+        $table = $parts[count($parts) - 1];
+        foreach (count($parts) === 2 ? [$parts[0]] : $this->path as $schema) {
+            foreach ($this->tables as [$knownSchema, $knownName, $definition, $owner]) {
+                if ($this->same($knownSchema, $knownName, $schema, $table)) {
+                    return [$knownSchema, $knownName, $definition, $owner];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Qualifies a name with the schema an unqualified declaration creates its table in, keeping its last two parts.
      *
      * @param non-empty-list<string> $name
      * @return array{string, string}
@@ -87,7 +114,7 @@ final class Relations
     {
         $parts = array_slice($name, -2);
 
-        return count($parts) === 2 ? [$parts[0], $parts[1]] : [$this->defaultSchema, $parts[0]];
+        return count($parts) === 2 ? [$parts[0], $parts[1]] : [$this->path[0], $parts[0]];
     }
 
     /**

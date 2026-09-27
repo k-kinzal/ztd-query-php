@@ -7,10 +7,12 @@ namespace SqlSemantics\Facade;
 use InvalidArgumentException;
 use SqlSemantics\Core\Analysis\Analyzer;
 use SqlSemantics\Core\Builder;
+use SqlSemantics\Core\Declarations;
 use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\Language;
 use SqlSemantics\Core\Mode;
 use SqlSemantics\Core\Parameters;
+use SqlSemantics\Core\SearchPath;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -20,8 +22,9 @@ use SqlSemantics\Statement\Statement;
  * server reads them: with the grammar of one release, under the session
  * settings given as the mode, and with the selected parameter markers. A
  * statement analyzed with its dependencies, the declarations that came
- * before it, also resolves every table name it writes; a name no dependency
- * declares is an error.
+ * before it, also resolves every table name it writes, reading a name
+ * without a schema in the schemas of the session's search path; a name no
+ * dependency declares is an error unless the declarations are partial.
  *
  * @visibility public
  * @example Reconstructing SQL with the SQLite database package
@@ -42,19 +45,26 @@ final class Semantics
     private readonly Analyzer $analyzer;
 
     /**
+     * @var non-empty-list<string>
+     */
+    private readonly array $searchPath;
+
+    /**
      * Selects the dialect and optionally one of its shipped grammar releases, a mode, and a parameter syntax.
      *
      * @param Dialect $dialect The database
      * @param string|null $grammarVersion A release tag the dialect ships, or null for its default
      * @param Mode|null $mode The session settings SQL is read under, or null for the server's defaults
      * @param Parameters $parameters Which parameter markers are read; the named syntax adds `:name`
+     * @param SearchPath|null $searchPath The schemas the session reads an unqualified table name in, such as MySQL's current database, or null for the server's default
      *
-     * @throws InvalidArgumentException When the mode does not belong to the dialect
+     * @throws InvalidArgumentException When the mode does not belong to the dialect, or the database cannot search the path
      */
-    public function __construct(Dialect $dialect, ?string $grammarVersion = null, ?Mode $mode = null, Parameters $parameters = Parameters::Native)
+    public function __construct(Dialect $dialect, ?string $grammarVersion = null, ?Mode $mode = null, Parameters $parameters = Parameters::Native, ?SearchPath $searchPath = null)
     {
         $this->language = new Language($dialect, $grammarVersion, $mode, $parameters);
-        $this->analyzer = new Analyzer($this->language);
+        $this->searchPath = $dialect->platform()->searchPath($searchPath);
+        $this->analyzer = new Analyzer($this->language, $this->searchPath);
     }
 
     /**
@@ -66,6 +76,16 @@ final class Semantics
     }
 
     /**
+     * Answers the schemas an unqualified table name is read in, in order; an unqualified declaration creates its table in the first.
+     *
+     * @return non-empty-list<string>
+     */
+    public function searchPath(): array
+    {
+        return $this->searchPath;
+    }
+
+    /**
      * Builds an immutable statement from the SQL of one statement, resolved against its dependencies when they are given.
      *
      * Without dependencies the statement is structured only. With them, even
@@ -73,16 +93,18 @@ final class Semantics
      * and every table name it writes must be a common table expression it
      * defines, a table a dependency declares, or a table it declares or
      * drops itself. Dependencies are applied in order, so a later DROP TABLE
-     * removes an earlier declaration.
+     * removes an earlier declaration. With partial declarations, a name no
+     * dependency declares is an undeclared table instead of an error.
      *
      * @param list<Statement>|null $dependencies The declarations the statement is read against, in order
+     * @param Declarations $declarations Whether the dependencies declare every table of the database, or only some
      *
      * @throws \SqlSemantics\Core\AnalysisException When SQL is not one statement of the selected language
-     * @throws \SqlSemantics\Core\SemanticException When a table name resolves to nothing or a declaration conflicts with a dependency
+     * @throws \SqlSemantics\Core\SemanticException When a table name resolves to nothing under complete declarations or a declaration conflicts with a dependency
      */
-    public function analyze(string $sql, ?array $dependencies = null): Statement
+    public function analyze(string $sql, ?array $dependencies = null, Declarations $declarations = Declarations::Complete): Statement
     {
-        return $this->analyzer->analyze($sql, $dependencies);
+        return $this->analyzer->analyze($sql, $dependencies, $declarations);
     }
 
     /**
@@ -91,11 +113,11 @@ final class Semantics
      * @param list<Statement>|null $dependencies
      * @return list<Statement>
      * @throws \SqlSemantics\Core\AnalysisException When a statement is not in the selected language
-     * @throws \SqlSemantics\Core\SemanticException When a table name resolves to nothing or a declaration conflicts
+     * @throws \SqlSemantics\Core\SemanticException When a table name resolves to nothing under complete declarations or a declaration conflicts
      */
-    public function analyzeAll(string $sql, ?array $dependencies = null): array
+    public function analyzeAll(string $sql, ?array $dependencies = null, Declarations $declarations = Declarations::Complete): array
     {
-        return $this->analyzer->analyzeAll($sql, $dependencies);
+        return $this->analyzer->analyzeAll($sql, $dependencies, $declarations);
     }
 
     /**

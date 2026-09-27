@@ -15,6 +15,7 @@ use SqlSemantics\Core\Mode as SessionMode;
 use SqlSemantics\Core\Parameters;
 use SqlSemantics\Core\Platform as Contract;
 use SqlSemantics\Core\Policy;
+use SqlSemantics\Core\SearchPath as SessionSearchPath;
 
 /**
  * Assembles MySql semantic behavior from independent core contracts.
@@ -54,11 +55,20 @@ final class Platform implements Contract
     }
 
     /**
-     * Supplies the default declaration namespace.
+     * Reads unqualified names in the current database, the one schema of the path; without one, in an unnamed database of their own.
+     *
+     * @throws InvalidArgumentException When the path has more than one schema, as MySQL has one current database
      */
-    public function defaultSchema(): string
+    public function searchPath(?SessionSearchPath $path = null): array
     {
-        return '';
+        if ($path === null) {
+            return [''];
+        }
+        if (count($path->schemas) !== 1) {
+            throw new InvalidArgumentException('MySQL reads unqualified names in its one current database, ' . count($path->schemas) . ' schemas given.');
+        }
+
+        return $path->schemas;
     }
 
     /**
