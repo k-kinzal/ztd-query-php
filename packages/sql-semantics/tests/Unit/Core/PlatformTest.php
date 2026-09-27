@@ -7,18 +7,18 @@ namespace Tests\Unit\Core;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Lexer\Token;
 use SqlSemantics\Core\Dialect;
-use SqlSemantics\Core\Type\Nullability;
-use SqlSemantics\Core\Type\TypeDescriptor;
-use SqlSemantics\Facade\Schema as SchemaFacade;
+use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
+use SqlSemantics\Statement\Declaration\Nullability;
+use SqlSemantics\Statement\Declaration\TypeDescriptor;
+use Tests\Contract\Resolved;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\SemanticException::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(SchemaFacade::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\ColumnDefinition::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\TableDefinition::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\ConstraintKind::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\TableConstraint::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(Semantics::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\ColumnDefinition::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TableDefinition::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\ConstraintKind::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TableConstraint::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(Nullability::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(TypeDescriptor::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\TypeReader::class)]
@@ -43,6 +43,7 @@ use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\NameRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\SchemaRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Language::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Policy\RelationRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Composition\Composition::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Composition\Operands::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Analysis\LeafReader::class)]
@@ -100,8 +101,13 @@ final class PlatformTest extends TestCase
     {
         $accept = static fn (\SqlSemantics\Core\Platform $rules): \SqlSemantics\Core\Platform => $rules;
         self::assertSame(PostgreSqlDialect::PostgreSql->platform()::class, $accept(PostgreSqlDialect::PostgreSql->platform())::class);
-        $schema = (new SchemaFacade(PostgreSqlDialect::PostgreSql))->analyze('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
-        self::assertCount(2, $schema->tables[0]->columns);
+        $schema = Resolved::of((new Semantics(PostgreSqlDialect::PostgreSql))->analyze('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)', []));
+        self::assertCount(2, $schema->declarations[0]->columns);
+    }
+    public function testRelationsNameTheTableSymbolsOfTheGrammar(): void
+    {
+        self::assertContains('qualified_name', PostgreSqlDialect::PostgreSql->platform()->relations()->nameSymbols);
+        self::assertNotEmpty(PostgreSqlDialect::PostgreSql->platform()->relations()->declarations);
     }
     public function testBuilderComposesValuesOfTheLanguage(): void
     {

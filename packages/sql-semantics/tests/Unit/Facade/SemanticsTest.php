@@ -13,11 +13,15 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
 use SqlSemantics\Platform\MySql\Mode;
 use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
+use Tests\Contract\Resolved;
 
 #[CoversClass(Semantics::class)]
 #[UsesClass(Mode::class)]
 #[UsesClass(\SqlSemantics\Core\Language::class)]
 #[UsesClass(\SqlSemantics\Core\Analysis\Analyzer::class)]
+#[UsesClass(\SqlSemantics\Core\Analysis\Resolver::class)]
+#[UsesClass(\SqlSemantics\Statement\Resolution::class)]
+#[UsesClass(\SqlSemantics\Statement\Reference::class)]
 #[UsesClass(\SqlSemantics\Core\Analysis\ValueReader::class)]
 #[UsesClass(\SqlSemantics\Core\Analysis\Vocabulary::class)]
 #[UsesClass(\SqlSemantics\Core\Analysis\TriviaReader::class)]
@@ -47,10 +51,10 @@ final class SemanticsTest extends TestCase
     public function testLanguageAnswersTheResolvedReleaseModeAndParameterSyntax(): void
     {
         $mode = Mode::fromString('NO_BACKSLASH_ESCAPES');
-        $semantics = new Semantics(MySqlDialect::MySql, 'mysql-8.0.44', $mode, Parameters::Pdo);
+        $semantics = new Semantics(MySqlDialect::MySql, 'mysql-8.0.44', $mode, Parameters::Named);
         self::assertSame('mysql-8.0.44', $semantics->language()->version);
         self::assertSame($mode, $semantics->language()->mode);
-        self::assertSame(Parameters::Pdo, $semantics->language()->parameters);
+        self::assertSame(Parameters::Named, $semantics->language()->parameters);
     }
 
     public function testAnalyzeReadsUnderTheMode(): void
@@ -61,10 +65,10 @@ final class SemanticsTest extends TestCase
         (new Semantics(MySqlDialect::MySql))->analyze($sql);
     }
 
-    public function testAnalyzeReadsPdoParametersOnRequest(): void
+    public function testAnalyzeReadsNamedPlaceholdersOnRequest(): void
     {
         $sql = 'SELECT id FROM users WHERE id = :id AND status = ?';
-        self::assertSame($sql, (new Semantics(MySqlDialect::MySql, parameters: Parameters::Pdo))->analyze($sql)->toString());
+        self::assertSame($sql, (new Semantics(MySqlDialect::MySql, parameters: Parameters::Named))->analyze($sql)->toString());
         $this->expectException(\SqlSemantics\Core\AnalysisException::class);
         (new Semantics(MySqlDialect::MySql))->analyze($sql);
     }
@@ -84,6 +88,29 @@ final class SemanticsTest extends TestCase
         $semantics = new Semantics(SqliteDialect::Sqlite);
         self::assertSame(["SELECT ';' -- ;\n;", ' SELECT 2'], $semantics->split("SELECT ';' -- ;\n; SELECT 2"));
         self::assertSame([], $semantics->split('   '));
+    }
+
+    public function testAnalyzeResolvesAgainstDependenciesAndStructuresOnlyWithoutThem(): void
+    {
+        $semantics = new Semantics(SqliteDialect::Sqlite);
+        $users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+        self::assertNull($users->resolution);
+        $query = $semantics->analyze('SELECT name FROM users WHERE id = 1', [$users]);
+        self::assertSame('users', Resolved::of($query)->tables()[0]->table?->name);
+        self::assertSame($users, Resolved::of($query)->tables()[0]->declaration);
+        self::assertNull($query->withCommand($query->command)->resolution);
+        $this->expectException(\SqlSemantics\Core\SemanticException::class);
+        $semantics->analyze('SELECT name FROM users', []);
+    }
+
+    public function testAnalyzeAllResolvesEachStatementAgainstTheOnesBeforeIt(): void
+    {
+        $semantics = new Semantics(SqliteDialect::Sqlite);
+        $statements = $semantics->analyzeAll('CREATE TABLE t (a INTEGER); INSERT INTO t VALUES (1); DROP TABLE t', []);
+        self::assertCount(3, $statements);
+        self::assertSame($statements[0], $statements[1]->resolution?->references[0]->declaration);
+        self::assertSame(\SqlSemantics\Statement\ReferenceKind::Drop, $statements[2]->resolution?->references[0]->kind);
+        self::assertNull($semantics->analyzeAll('SELECT 1; SELECT 2')[1]->resolution);
     }
 
     public function testBuilderComposesValuesOfTheLanguage(): void

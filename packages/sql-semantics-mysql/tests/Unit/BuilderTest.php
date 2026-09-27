@@ -115,12 +115,15 @@ final class BuilderTest extends TestCase
         Composed::assertExpressionRoundTrips($semantics, $semantics->builder()->binary("\xff"));
     }
 
-    public function testParameterIsTheQuestionMarkWhateverThePosition(): void
+    public function testParameterIsTheQuestionMarkOrANamedPlaceholder(): void
     {
         self::assertSame('?', Writer::render((new Semantics(Dialect::MySql))->builder()->parameter(3)));
-        self::assertSame('?', Writer::render((new Semantics(Dialect::MySql, parameters: Parameters::Pdo))->builder()->parameter()));
+        $named = new Semantics(Dialect::MySql, parameters: Parameters::Named);
+        self::assertSame('?', Writer::render($named->builder()->parameter()));
+        self::assertSame(':user_id', Writer::render($named->builder()->parameter('user_id')));
+        Composed::assertExpressionRoundTrips($named, $named->builder()->parameter('user_id'));
         $this->expectException(CompositionException::class);
-        (new Semantics(Dialect::MySql))->builder()->parameter(0);
+        (new Semantics(Dialect::MySql))->builder()->parameter('user_id');
     }
 
     #[TestWith(['mysql-8.4.7'])]

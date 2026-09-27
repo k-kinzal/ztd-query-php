@@ -12,7 +12,7 @@ $statement = $semantics->analyze('SELECT id, name FROM users WHERE id = ? ORDER 
 $statement->toString(); // 'SELECT id , name FROM users WHERE id = ? ORDER BY name LIMIT 10'
 ```
 
-A syntax error throws `SqlSemantics\Core\AnalysisException`.
+A syntax error throws `SqlSemantics\Core\AnalysisException`. A statement analyzed with the statements it depends on also resolves its table names; see [dependencies](dependencies.md).
 
 ## The language
 
@@ -20,7 +20,7 @@ A syntax error throws `SqlSemantics\Core\AnalysisException`.
 
 A mode is the session settings of a database that change how it reads text. MySQL's `sql_mode` is one: under `ANSI_QUOTES` the server reads `"x"` as an identifier, under `NO_BACKSLASH_ESCAPES` a backslash is an ordinary character, `PIPES_AS_CONCAT` makes `||` concatenation, and `HIGH_NOT_PRECEDENCE` changes what `NOT a = b` means. Pass the value the session reports as `SqlSemantics\Platform\MySql\Mode::fromString('ANSI_QUOTES,NO_BACKSLASH_ESCAPES')`; the statement is then tokenized, parsed, and written as that session would read it. PostgreSQL and SQLite have no mode.
 
-A parameter syntax says which markers are bound parameters. The server's own are `?` for MySQL, `$1` for PostgreSQL, and `?`, `?1`, `:name`, `@name`, and `$name` for SQLite. PHP's PDO rewrites `:name`, and `?` for PostgreSQL, before the server sees them, so a statement written for PDO is read with `SqlParser\Lexer\Parameters::Pdo`, which keeps those markers as parameters in the model.
+A parameter syntax says which markers are bound parameters. The server's own are `?` for MySQL, `$1` for PostgreSQL, and `?`, `?1`, `:name`, `@name`, and `$name` for SQLite. The named placeholder `:name` is the other common way an application binds a parameter, and MySQL and PostgreSQL reject it; `SqlSemantics\Core\Parameters::Named` reads it as a parameter in every dialect, as a dialect extension, and keeps it in the model.
 
 ## Statement boundaries
 

@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\Policy\TypeRules as Contract;
-use SqlSemantics\Core\Type\TypeDescriptor;
+use SqlSemantics\Statement\Declaration\TypeDescriptor;
 
 /**
  * PostgreSql TypeRules implementation.
@@ -16,13 +15,6 @@ use SqlSemantics\Core\Type\TypeDescriptor;
  */
 final class TypeRules implements Contract
 {
-    /**
-     * Retains the language identity used in semantic output.
-     */
-    public function __construct(private readonly Dialect $dialect)
-    {
-    }
-
     /**
      * Reads a declared type, including table-dependent storage rules and modifiers.
      */
@@ -47,7 +39,7 @@ final class TypeRules implements Contract
         }
         $name = implode(' ', $words);
         $canonical = $this->canonical(strtoupper($name)) ?? $name;
-        return new TypeDescriptor($this->dialect, $canonical, $modifiers);
+        return new TypeDescriptor($canonical, $modifiers);
     }
 
     /**

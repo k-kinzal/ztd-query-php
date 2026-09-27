@@ -6,18 +6,17 @@ namespace Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 use SqlParser\Lexer\Token;
-use SqlSemantics\Core\Type\Nullability;
-use SqlSemantics\Core\Type\TypeDescriptor;
-use SqlSemantics\Facade\Schema as SchemaFacade;
+use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\PostgreSql\Dialect;
+use SqlSemantics\Statement\Declaration\Nullability;
+use SqlSemantics\Statement\Declaration\TypeDescriptor;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\SemanticException::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(SchemaFacade::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\ColumnDefinition::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\TableDefinition::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\ConstraintKind::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\TableConstraint::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(Semantics::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\ColumnDefinition::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TableDefinition::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\ConstraintKind::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TableConstraint::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(Nullability::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(TypeDescriptor::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\TypeReader::class)]
@@ -37,6 +36,13 @@ use SqlSemantics\Platform\PostgreSql\Dialect;
 #[\PHPUnit\Framework\Attributes\Medium]
 final class NameRulesTest extends TestCase
 {
+    public function testDecodeReadsQuotedAndBareSpellings(): void
+    {
+        $rules = Dialect::PostgreSql->platform()->names();
+        self::assertSame('a"b', $rules->decode('"a""b"'));
+        self::assertSame('mixed', $rules->decode('Mixed'));
+    }
+
     public function testNameDecodesEscapedQuotes(): void
     {
         self::assertSame('a"b', (new \SqlSemantics\Platform\PostgreSql\NameRules())->name(new Token(1, 'ID', '"a""b"', 0)));

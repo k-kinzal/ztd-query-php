@@ -7,6 +7,7 @@ namespace SqlSemantics\Core;
 use InvalidArgumentException;
 use SqlParser\Parser\SqlParser;
 use SqlSemantics\Core\Policy\NameRules;
+use SqlSemantics\Core\Policy\RelationRules;
 use SqlSemantics\Core\Policy\SchemaRules;
 use SqlSemantics\Core\Policy\TypeRules;
 
@@ -67,4 +68,9 @@ interface Platform
      * Supplies declaration syntax and constraint semantics.
      */
     public function schema(): SchemaRules;
+
+    /**
+     * Supplies where the grammar writes table names and which of them declare, drop, or name tables.
+     */
+    public function relations(): RelationRules;
 }

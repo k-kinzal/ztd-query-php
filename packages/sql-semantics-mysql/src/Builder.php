@@ -140,15 +140,11 @@ final class Builder extends Composition
     }
 
     /**
-     * The `?` marker; MySQL does not number its parameters.
+     * The `?` marker, which MySQL does not number, or the named placeholder under the named parameter syntax.
      */
-    public function parameter(int $position = 1): ExprForm
+    public function parameter(int|string $marker = 1): ExprForm
     {
-        if ($position < 1) {
-            throw new CompositionException('A parameter position counts from one.');
-        }
-
-        return $this->literal('?');
+        return $this->literal($this->marker($marker, '?'));
     }
 
     /**

@@ -35,19 +35,19 @@ use SqlParser\MySql\SqlMode;
 #[Small]
 final class OperatorScannerTest extends TestCase
 {
-    public function testScanReadsPdoNamedParametersOnlyUnderThePdoSyntax(): void
+    public function testScanReadsNamedParametersOnlyUnderTheNamedSyntax(): void
     {
         $scanner = new OperatorScanner();
         $keywords = new KeywordTable(['=' => 'EQ'], []);
         $scan = static fn (string $sql, ParameterSyntax $parameters): Scan => new Scan(new Cursor($sql), $keywords, new SqlMode(), MySqlVersion::resolve(), $parameters);
 
-        $named = $scanner->scan($scan(':user_id = 1', ParameterSyntax::Pdo));
+        $named = $scanner->scan($scan(':user_id = 1', ParameterSyntax::Named));
         self::assertSame('PARAM_MARKER', $named->name);
         self::assertSame(':user_id', $named->text);
-        self::assertSame('SET_VAR', $scanner->scan($scan(':= 1', ParameterSyntax::Pdo))->name);
-        self::assertSame(':', $scanner->scan($scan(':: 1', ParameterSyntax::Pdo))->name);
-        self::assertSame(':', $scanner->scan($scan(': id', ParameterSyntax::Pdo))->name);
-        self::assertSame('PARAM_MARKER', $scanner->scan($scan('? ', ParameterSyntax::Pdo))->name);
+        self::assertSame('SET_VAR', $scanner->scan($scan(':= 1', ParameterSyntax::Named))->name);
+        self::assertSame(':', $scanner->scan($scan(':: 1', ParameterSyntax::Named))->name);
+        self::assertSame(':', $scanner->scan($scan(': id', ParameterSyntax::Named))->name);
+        self::assertSame('PARAM_MARKER', $scanner->scan($scan('? ', ParameterSyntax::Named))->name);
         self::assertSame(':', $scanner->scan($scan(':user_id = 1', ParameterSyntax::Native))->name);
     }
 

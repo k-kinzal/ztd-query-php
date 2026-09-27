@@ -6,9 +6,9 @@ namespace SqlSemantics\Core\Policy;
 
 use SqlParser\Parser\Node;
 use SqlSemantics\Core\Ast\Identifiers;
-use SqlSemantics\Core\Schema\ColumnDefinition;
-use SqlSemantics\Core\Schema\TableConstraint;
-use SqlSemantics\Core\Schema\TableDefinition;
+use SqlSemantics\Statement\Declaration\ColumnDefinition;
+use SqlSemantics\Statement\Declaration\TableConstraint;
+use SqlSemantics\Statement\Declaration\TableDefinition;
 
 /**
  * Supplies declaration syntax and constraint behavior.

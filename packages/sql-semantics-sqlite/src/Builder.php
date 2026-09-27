@@ -10,7 +10,6 @@ use Override;
 use SqlSemantics\Core\Composition\Composition;
 use SqlSemantics\Core\Composition\Operands;
 use SqlSemantics\Core\CompositionException;
-use SqlSemantics\Core\Parameters;
 use SqlSemantics\Statement\Element;
 use SqlSemantics\Statement\Model\Sqlite\Contract\Contracts;
 use SqlSemantics\Statement\Model\Sqlite\Role\ExprForm;
@@ -143,15 +142,11 @@ final class Builder extends Composition
     }
 
     /**
-     * The numbered `?n` marker, or `?` under the PDO parameter syntax.
+     * The numbered `?n` marker, or the named placeholder `:name`, which SQLite reads itself.
      */
-    public function parameter(int $position = 1): ExprForm
+    public function parameter(int|string $marker = 1): ExprForm
     {
-        if ($position < 1) {
-            throw new CompositionException('A parameter position counts from one.');
-        }
-
-        return $this->term($this->language->parameters === Parameters::Pdo ? '?' : '?' . $position);
+        return $this->term($this->marker($marker, is_int($marker) ? '?' . $marker : ''));
     }
 
     /**

@@ -10,14 +10,15 @@ use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\SemanticException;
-use SqlSemantics\Core\Type\Nullability;
-use SqlSemantics\Facade\Schema as SchemaFacade;
+use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
 use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
+use SqlSemantics\Statement\Declaration\Nullability;
+use Tests\Contract\Resolved;
 
 #[CoversClass(\SqlSemantics\Core\Ast\SchemaReader::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(SchemaFacade::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(Semantics::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\DialectParser::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\ColumnReader::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\ConstraintReader::class)]
@@ -25,12 +26,11 @@ use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 #[CoversClass(\SqlSemantics\Core\Ast\TokenGroups::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\Tree::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\TypeReader::class)]
-#[CoversClass(\SqlSemantics\Core\Schema::class)]
-#[CoversClass(\SqlSemantics\Core\Schema\ColumnDefinition::class)]
-#[CoversClass(\SqlSemantics\Core\Schema\TableConstraint::class)]
-#[CoversClass(\SqlSemantics\Core\Schema\TableDefinition::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\ColumnDefinition::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\TableConstraint::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\TableDefinition::class)]
 #[CoversClass(SemanticException::class)]
-#[CoversClass(\SqlSemantics\Core\Type\TypeDescriptor::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\TypeDescriptor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Policy\SyntaxRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\TypeRules::class)]
@@ -52,8 +52,8 @@ final class SchemaReaderTest extends TestCase
     #[TestWith([SqliteDialect::Sqlite])]
     public function testReadDeclaredKeysDefaultsAndChecks(Dialect $dialect): void
     {
-        $schema = (new SchemaFacade($dialect))->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL DEFAULT 1, UNIQUE(score), FOREIGN KEY (parent_id) REFERENCES users(id), CHECK (score > 0))');
-        $table = $schema->tables[0];
+        $schema = Resolved::of((new Semantics($dialect))->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL DEFAULT 1, UNIQUE(score), FOREIGN KEY (parent_id) REFERENCES users(id), CHECK (score > 0))', []));
+        $table = $schema->declarations[0];
         self::assertSame(['id', 'parent_id', 'score'], array_column($table->columns, 'name'));
         self::assertSame(Nullability::NotNull, $table->columns[0]->nullability);
         self::assertNotNull($table->columns[2]->defaultExpression);
@@ -66,41 +66,43 @@ final class SchemaReaderTest extends TestCase
 
     public function testTableRejectsDuplicateDeclarations(): void
     {
-        $builder = new SchemaFacade(PostgreSqlDialect::PostgreSql);
+        $builder = new Semantics(PostgreSqlDialect::PostgreSql);
         $sql = 'CREATE TABLE users (id INTEGER)';
         $this->expectException(SemanticException::class);
         $this->expectExceptionMessage('Duplicate table');
-        $builder->analyze($sql, $sql);
+        $builder->analyze($sql, [$builder->analyze($sql)]);
     }
 
     public function testPrimaryKeysRejectsMissingColumn(): void
     {
         $this->expectException(SemanticException::class);
         $this->expectExceptionMessage('unknown column');
-        (new SchemaFacade(PostgreSqlDialect::PostgreSql))->analyze('CREATE TABLE users (id INTEGER, PRIMARY KEY (missing))');
+        Resolved::of((new Semantics(PostgreSqlDialect::PostgreSql))->analyze('CREATE TABLE users (id INTEGER, PRIMARY KEY (missing))', []));
     }
 
     public function testColumnNodesPreservesSqliteDeclarationOrder(): void
     {
-        $table = (new SchemaFacade(SqliteDialect::Sqlite))->analyze('CREATE TABLE users (z INTEGER, a TEXT, m REAL)')->tables[0];
+        $table = Resolved::of((new Semantics(SqliteDialect::Sqlite))->analyze('CREATE TABLE users (z INTEGER, a TEXT, m REAL)', []))->declarations[0];
         self::assertSame(['z', 'a', 'm'], array_column($table->columns, 'name'));
     }
 
     public function testPrimaryNotNullRespectsSqliteDescException(): void
     {
-        $table = (new SchemaFacade(SqliteDialect::Sqlite))->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY DESC)')->tables[0];
+        $table = Resolved::of((new Semantics(SqliteDialect::Sqlite))->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY DESC)', []))->declarations[0];
         self::assertSame(Nullability::MaybeNull, $table->columns[0]->nullability);
     }
 
-    public function testValidateRejectsCreateAsSelect(): void
+    public function testValidateLeavesCreateAsSelectWithoutAReadableTable(): void
     {
-        $this->expectException(SemanticException::class);
-        (new SchemaFacade(SqliteDialect::Sqlite))->analyze('CREATE TABLE users AS SELECT 1 AS id');
+        $resolution = Resolved::of((new Semantics(SqliteDialect::Sqlite))->analyze('CREATE TABLE users AS SELECT 1 AS id', []));
+        self::assertSame([], $resolution->declarations);
+        self::assertSame(\SqlSemantics\Statement\ReferenceKind::Declaration, $resolution->references[0]->kind);
+        self::assertNull($resolution->references[0]->table);
     }
 
     public function testPrimaryKeysResolvesCaseInsensitiveSqliteConstraintColumns(): void
     {
-        $table = (new SchemaFacade(SqliteDialect::Sqlite))->analyze('CREATE TABLE users (id INTEGER, PRIMARY KEY (ID))')->tables[0];
+        $table = Resolved::of((new Semantics(SqliteDialect::Sqlite))->analyze('CREATE TABLE users (id INTEGER, PRIMARY KEY (ID))', []))->declarations[0];
         self::assertSame(Nullability::NotNull, $table->columns[0]->nullability);
     }
 }

@@ -72,14 +72,14 @@ $parser = new MySqlParser('mysql-8.4.7', SqlMode::fromString('ANSI_QUOTES,NO_BAC
 $parser->tokenize('SELECT "x"')[1]->name;        // 'IDENT_QUOTED'
 ```
 
-A statement written for PDO is not in the server's language: PDO rewrites `:name`, and `?` for PostgreSQL, before the server sees them. The MySQL and PostgreSQL parsers read those markers as parameters under `ParameterSyntax::Pdo`; SQLite reads them natively.
+A named placeholder such as `:id` is not in the languages of MySQL and PostgreSQL, which read only their own markers. Their parsers read `:name` as a parameter under `ParameterSyntax::Named`, as a dialect extension; SQLite reads it natively.
 
 ```php
 use SqlParser\Lexer\ParameterSyntax;
 use SqlParser\PostgreSql\PostgreSqlParser;
 
-$parser = new PostgreSqlParser(parameters: ParameterSyntax::Pdo);
-$parser->parse('SELECT id FROM users WHERE id = :id OR id = ?');
+$parser = new PostgreSqlParser(parameters: ParameterSyntax::Named);
+$parser->parse('SELECT id FROM users WHERE id = :id');
 ```
 
 ## License

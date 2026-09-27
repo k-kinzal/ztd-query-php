@@ -7,16 +7,17 @@ namespace SqlSemantics\Core;
 use SqlParser\Lexer\ParameterSyntax;
 
 /**
- * Which parameter markers SQL is read with: the server's own, or the ones PDO rewrites for it.
+ * Which parameter markers SQL is read with: the server's own, or those and the named placeholder.
  *
- * A server has its own markers, such as `?` or `$1`. PHP's PDO rewrites
- * `:name`, and `?` where the server lacks it, before the text reaches the
- * server, so a statement written for PDO is not in the server's language
- * until those markers are read as parameters too.
+ * A server has its own markers, such as `?` or `$1`. A named placeholder,
+ * `:name`, is the other common way an application binds a parameter, and a
+ * server that has no such marker rejects it. Reading it is a dialect
+ * extension: the statement is read as the server would read it once the
+ * placeholder is bound.
  *
  * @visibility public
- * @example Selecting the markers PDO rewrites
- *     \SqlSemantics\Core\Parameters::Pdo->syntax()->name // => 'Pdo'
+ * @example Selecting the named placeholder
+ *     \SqlSemantics\Core\Parameters::Named->syntax()->name // => 'Named'
  */
 enum Parameters
 {
@@ -26,9 +27,9 @@ enum Parameters
     case Native;
 
     /**
-     * The server's markers, PDO's `:name`, and PDO's `?` where the server lacks it.
+     * The server's markers and the named placeholder `:name`.
      */
-    case Pdo;
+    case Named;
 
     /**
      * Answers the lexer syntax the markers are read with.
@@ -37,7 +38,7 @@ enum Parameters
     {
         return match ($this) {
             self::Native => ParameterSyntax::Native,
-            self::Pdo => ParameterSyntax::Pdo,
+            self::Named => ParameterSyntax::Named,
         };
     }
 }

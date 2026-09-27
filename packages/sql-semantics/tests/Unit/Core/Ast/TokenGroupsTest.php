@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\SemanticException;
 use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
+use Tests\Contract\Resolved;
 
 #[CoversClass(\SqlSemantics\Core\Ast\TokenGroups::class)]
 #[UsesClass(\SqlSemantics\Core\Ast\DialectParser::class)]
@@ -19,12 +20,11 @@ use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 #[UsesClass(\SqlSemantics\Core\Ast\SchemaReader::class)]
 #[UsesClass(\SqlSemantics\Core\Ast\Tree::class)]
 #[UsesClass(\SqlSemantics\Core\Ast\TypeReader::class)]
-#[UsesClass(\SqlSemantics\Core\Schema::class)]
-#[UsesClass(\SqlSemantics\Core\Schema\ColumnDefinition::class)]
-#[UsesClass(\SqlSemantics\Core\Schema\TableConstraint::class)]
-#[UsesClass(\SqlSemantics\Core\Schema\TableDefinition::class)]
+#[UsesClass(\SqlSemantics\Statement\Declaration\ColumnDefinition::class)]
+#[UsesClass(\SqlSemantics\Statement\Declaration\TableConstraint::class)]
+#[UsesClass(\SqlSemantics\Statement\Declaration\TableDefinition::class)]
 #[UsesClass(SemanticException::class)]
-#[UsesClass(\SqlSemantics\Core\Type\TypeDescriptor::class)]
+#[UsesClass(\SqlSemantics\Statement\Declaration\TypeDescriptor::class)]
 #[UsesClass(\SqlSemantics\Core\Policy\SyntaxRules::class)]
 #[UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
 #[UsesClass(\SqlSemantics\Platform\PostgreSql\TypeRules::class)]
@@ -58,8 +58,8 @@ final class TokenGroupsTest extends TestCase
     }
     public function testKeyNamesSeparatesPrefixLengthsAndSortDirections(): void
     {
-        $state = (new \SqlSemantics\Facade\Schema(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (id INT, label VARCHAR(30), UNIQUE KEY idx (label(10) DESC, id ASC))');
-        self::assertSame(['label', 'id'], $state->tables[0]->constraints[0]->columns);
+        $state = Resolved::of((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (id INT, label VARCHAR(30), UNIQUE KEY idx (label(10) DESC, id ASC))', []));
+        self::assertSame(['label', 'id'], $state->declarations[0]->constraints[0]->columns);
     }
     public function testConstraintHeaderSeparatesQuotedNames(): void
     {

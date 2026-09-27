@@ -10,7 +10,6 @@ use Override;
 use SqlSemantics\Core\Composition\Composition;
 use SqlSemantics\Core\Composition\Operands;
 use SqlSemantics\Core\CompositionException;
-use SqlSemantics\Core\Parameters;
 use SqlSemantics\Statement\Element;
 use SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts;
 use SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm;
@@ -132,15 +131,11 @@ final class Builder extends Composition
     }
 
     /**
-     * The numbered `$n` marker, or `?` under the PDO parameter syntax.
+     * The numbered `$n` marker, or the named placeholder under the named parameter syntax.
      */
-    public function parameter(int $position = 1): AExprForm
+    public function parameter(int|string $marker = 1): AExprForm
     {
-        if ($position < 1) {
-            throw new CompositionException('A parameter position counts from one.');
-        }
-        $marker = $this->language->parameters === Parameters::Pdo ? '?' : '$' . $position;
-        $value = $this->form('c_expr', ['PARAM', 'opt_indirection'], [$marker, $this->form('opt_indirection', [], [])]);
+        $value = $this->form('c_expr', ['PARAM', 'opt_indirection'], [$this->marker($marker, is_int($marker) ? '$' . $marker : ''), $this->form('opt_indirection', [], [])]);
         assert($value instanceof AExprForm);
 
         return $value;

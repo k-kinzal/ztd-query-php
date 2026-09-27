@@ -19,15 +19,15 @@ final class ParameterSyntaxTest extends TestCase
         self::assertSame('Native', ParameterSyntax::Native->name);
     }
 
-    public function testNamedLengthReadsAPdoNameAsPdoDoes(): void
+    public function testNamedLengthReadsANamedPlaceholder(): void
     {
-        self::assertSame(3, ParameterSyntax::Pdo->namedLength('SELECT :id, 1', 7));
-        self::assertSame(8, ParameterSyntax::Pdo->namedLength(':user_1x)', 0));
-        self::assertSame(0, ParameterSyntax::Pdo->namedLength(':=', 0));
-        self::assertSame(0, ParameterSyntax::Pdo->namedLength(':', 0));
-        self::assertSame(0, ParameterSyntax::Pdo->namedLength(': id', 0));
-        self::assertSame(0, ParameterSyntax::Pdo->namedLength('x::int', 2));
-        self::assertSame(0, ParameterSyntax::Pdo->namedLength('x::int', 1));
+        self::assertSame(3, ParameterSyntax::Named->namedLength('SELECT :id, 1', 7));
+        self::assertSame(8, ParameterSyntax::Named->namedLength(':user_1x)', 0));
+        self::assertSame(0, ParameterSyntax::Named->namedLength(':=', 0));
+        self::assertSame(0, ParameterSyntax::Named->namedLength(':', 0));
+        self::assertSame(0, ParameterSyntax::Named->namedLength(': id', 0));
+        self::assertSame(0, ParameterSyntax::Named->namedLength('x::int', 2));
+        self::assertSame(0, ParameterSyntax::Named->namedLength('x::int', 1));
     }
 
     public function testNamedLengthIsZeroForTheNativeSyntax(): void

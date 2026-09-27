@@ -25,7 +25,7 @@ Writer::render($condition); // "`select` = 'C:\path' AND NOT( a OR b )"
 | `identifier($name)` | A name in the role that column, table, and alias names share |
 | `column(...$parts)`, `table(...$parts)` | A reference, qualified by the names before the last |
 | `string($value)`, `integer($value)`, `float($value)`, `boolean($value)`, `null()`, `binary($bytes)` | A literal holding exactly the PHP value |
-| `parameter($position)` | A bound parameter marker, numbered where the language numbers them |
+| `parameter($marker)` | A bound parameter marker: numbered where the language numbers them, or the named placeholder `:name` where the language reads it |
 | `and`, `or`, `not`, `compare($left, $operator, $right)`, `parenthesized` | Conditions; `compare` takes `=`, `<>`, `!=`, `<`, `<=`, `>`, `>=` and a dialect's own spellings such as MySQL's `<=>` |
 | `unionAll($left, $right)` | The rows of both queries |
 | `cte($name, $query, $columns)`, `with($ctes, $query)` | Common table expressions and the query they precede |

@@ -8,18 +8,18 @@ use PHPUnit\Framework\TestCase;
 use SqlParser\Lexer\Token;
 use SqlSemantics\Core\Language;
 use SqlSemantics\Core\Parameters;
-use SqlSemantics\Core\Type\Nullability;
-use SqlSemantics\Core\Type\TypeDescriptor;
-use SqlSemantics\Facade\Schema as SchemaFacade;
+use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Statement\Declaration\Nullability;
+use SqlSemantics\Statement\Declaration\TypeDescriptor;
+use Tests\Contract\Resolved;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\SemanticException::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(SchemaFacade::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\ColumnDefinition::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\TableDefinition::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\ConstraintKind::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\TableConstraint::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(Semantics::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\ColumnDefinition::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TableDefinition::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\ConstraintKind::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TableConstraint::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(Nullability::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(TypeDescriptor::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\TypeReader::class)]
@@ -48,7 +48,7 @@ use SqlSemantics\Platform\MySql\Dialect;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Statement\Statement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Statement\Writer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Statement\Element::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Facade\Semantics::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(Semantics::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Analysis\Analyzer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\AnalysisException::class)]
 final class PlatformTest extends TestCase
@@ -79,8 +79,8 @@ final class PlatformTest extends TestCase
 
     public function testSchemaKeepsDeclarations(): void
     {
-        $schema = (new SchemaFacade(Dialect::MySql))->analyze('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
-        self::assertCount(2, $schema->tables[0]->columns);
+        $schema = Resolved::of((new Semantics(Dialect::MySql))->analyze('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)', []));
+        self::assertCount(2, $schema->declarations[0]->columns);
     }
 
     public function testSyntaxRecognizesTheCreateTableDeclaration(): void
@@ -94,9 +94,9 @@ final class PlatformTest extends TestCase
         self::assertSame('integer', Dialect::MySql->platform()->types()->canonical('INTEGER'));
     }
 
-    public function testParserReadsPdoParameterMarkersOnRequest(): void
+    public function testParserReadsNamedPlaceholdersOnRequest(): void
     {
-        self::assertSame('PARAM_MARKER', Dialect::MySql->platform()->parser(null, null, Parameters::Pdo)->tokenize('SELECT :id')[1]->name);
+        self::assertSame('PARAM_MARKER', Dialect::MySql->platform()->parser(null, null, Parameters::Named)->tokenize('SELECT :id')[1]->name);
     }
 
     public function testParserReadsUnderTheSessionMode(): void
@@ -106,6 +106,15 @@ final class PlatformTest extends TestCase
         self::assertSame('TEXT_STRING', Dialect::MySql->platform()->parser()->tokenize('SELECT "x"')[1]->name);
     }
 
+
+    public function testRelationsNameTheTablePositionsOfTheGrammar(): void
+    {
+        $rules = Dialect::MySql->platform()->relations();
+        self::assertNotEmpty($rules->nameSymbols);
+        self::assertNotEmpty($rules->declarations);
+        self::assertNotEmpty($rules->drops);
+        self::assertNotEmpty($rules->commonTableExpressions);
+    }
 
     public function testBuilderComposesThisDatabasesValues(): void
     {
@@ -134,7 +143,7 @@ final class PlatformTest extends TestCase
     #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'SELECT `select`.id, @@global.sql_mode FROM db.`from`'])]
     public function testAnalyzeRoundTripsCompleteStatements(Dialect $dialect, string $sql): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics($dialect))->analyze($sql);
+        $statement = (new Semantics($dialect))->analyze($sql);
         $formatter = new \SqlFormatter\Facade\Formatter($dialect->platform()->parser(), new \SqlFormatter\Core\FormatOptions(\SqlFormatter\Core\Style::Compact));
         self::assertSame($formatter->format($sql), $formatter->format($statement->toString()));
     }
@@ -150,7 +159,7 @@ final class PlatformTest extends TestCase
     #[\PHPUnit\Framework\Attributes\TestWith(['mysql-9.1.0'])]
     public function testAnalyzeWithEveryGrammarRelease(string $version): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(Dialect::MySql, $version))->analyze('DELETE FROM absent_table WHERE id = 1');
+        $statement = (new Semantics(Dialect::MySql, $version))->analyze('DELETE FROM absent_table WHERE id = 1');
         self::assertSame('DELETE FROM absent_table WHERE id = 1', $statement->toString());
     }
 
@@ -158,7 +167,7 @@ final class PlatformTest extends TestCase
     #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.7.44', 'ALTER DEFINER = \'text\' EVENT SQL_AFTER_GTIDS .some_name RENAME TO ACTION'])]
     public function testAnalyzePreservesKeywordNamesBeforeDots(string $version, string $sql): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(Dialect::MySql, $version))->analyze($sql);
+        $statement = (new Semantics(Dialect::MySql, $version))->analyze($sql);
         $formatter = new \SqlFormatter\Facade\Formatter(Dialect::MySql->platform()->parser($version), new \SqlFormatter\Core\FormatOptions(\SqlFormatter\Core\Style::Compact));
         self::assertSame($formatter->format($sql), $formatter->format($statement->toString()));
     }
@@ -173,7 +182,7 @@ final class PlatformTest extends TestCase
         $constraints = \SqlFaker\Generation\Plan\GenerationPlan::fromRule($root)->requiringNonEmpty();
         $plan = (new \SqlFaker\Generation\Choice\BytePlanCompiler())->compile($input, $provider->planner(), $constraints);
         $sql = $provider->generate($plan);
-        $statement = (new \SqlSemantics\Facade\Semantics(Dialect::MySql, $version))->analyze($sql);
+        $statement = (new Semantics(Dialect::MySql, $version))->analyze($sql);
         $formatter = new \SqlFormatter\Facade\Formatter(Dialect::MySql->platform()->parser($version), new \SqlFormatter\Core\FormatOptions(\SqlFormatter\Core\Style::Compact));
         self::assertSame($formatter->format($sql), $formatter->format($statement->toString()));
     }

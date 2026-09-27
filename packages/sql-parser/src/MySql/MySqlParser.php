@@ -42,8 +42,8 @@ use SqlParser\Table\TableFile;
  *     $parser->version() // => 'mysql-5.7.44'
  * @example Rejecting an unsupported release
  *     new \SqlParser\MySql\MySqlParser('mysql-4.1.0') // throws \RuntimeException: Unsupported
- * @example Reading a statement written for PDO
- *     $parser = new \SqlParser\MySql\MySqlParser(parameters: \SqlParser\Lexer\ParameterSyntax::Pdo);
+ * @example Reading a named placeholder
+ *     $parser = new \SqlParser\MySql\MySqlParser(parameters: \SqlParser\Lexer\ParameterSyntax::Named);
  *     $parser->tokenize('SELECT id FROM users WHERE id = :id')[7]->name // => 'PARAM_MARKER'
  */
 final class MySqlParser implements SqlParser
