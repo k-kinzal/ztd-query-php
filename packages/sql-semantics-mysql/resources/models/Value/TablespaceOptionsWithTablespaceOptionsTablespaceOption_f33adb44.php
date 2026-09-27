@@ -42,6 +42,26 @@ final class TablespaceOptionsWithTablespaceOptionsTablespaceOption_f33adb44 impl
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tablespaceOptions, $this->tablespaceOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tablespaceOptions, \SqlSemantics\Statement\Model\MySql\Role\TablespaceOptionsForm::class, $replace), $this->replacement($this->tablespaceOption, \SqlSemantics\Statement\Model\MySql\Role\TablespaceOptionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new tablespaceOptions, preserving every other field.
      */
     public function withTablespaceOptions(\SqlSemantics\Statement\Model\MySql\Role\TablespaceOptionsForm $tablespaceOptions): self

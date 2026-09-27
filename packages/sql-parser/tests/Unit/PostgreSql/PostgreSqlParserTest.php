@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlParser\Lexer\LexicalException;
+use SqlParser\Lexer\ParameterSyntax;
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\SyntaxException;
 use SqlParser\PostgreSql\PostgreSqlParser;
@@ -17,6 +18,7 @@ use SqlParser\PostgreSql\PostgreSqlVersion;
 
 #[CoversClass(PostgreSqlParser::class)]
 #[UsesClass(PostgreSqlVersion::class)]
+#[UsesClass(ParameterSyntax::class)]
 #[UsesClass(SyntaxException::class)]
 #[UsesClass(LexicalException::class)]
 #[UsesClass(Token::class)]
@@ -72,6 +74,18 @@ final class PostgreSqlParserTest extends TestCase
         $this->expectException(LexicalException::class);
 
         (new PostgreSqlParser())->tokenize("SELECT 'abc");
+    }
+
+    public function testParseReadsNamedParametersUnderTheNamedSyntax(): void
+    {
+        $sql = "UPDATE users SET name = :name, tags = tags ? 'x' WHERE id = :id AND created < \$1::date";
+
+        self::assertSame($sql, (new PostgreSqlParser(parameters: ParameterSyntax::Named))->parse($sql)->toString());
+        self::assertSame(3, count(array_filter((new PostgreSqlParser(parameters: ParameterSyntax::Named))->tokenize($sql), static fn (Token $token): bool => $token->name === 'PARAM')));
+
+        $this->expectException(SyntaxException::class);
+
+        (new PostgreSqlParser())->parse($sql);
     }
 
     public function testParse(): void

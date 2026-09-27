@@ -12,7 +12,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ReplaceWithReplaceReplaceLockOptionInsert2InsertFieldSpec_d77d1c9e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class ReplaceWithReplaceReplaceLockOptionInsert2InsertFieldSpec_d77d1c9e implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ExplanableCommandForm, \SqlSemantics\Statement\Model\MySql\Role\ReplaceForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class ReplaceWithReplaceReplaceLockOptionInsert2InsertFieldSpec_d77d1c9e implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ExplanableCommandForm, \SqlSemantics\Statement\Model\MySql\Role\ReplaceForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
     use \SqlSemantics\Statement\Assertion;
 
@@ -43,6 +43,26 @@ final class ReplaceWithReplaceReplaceLockOptionInsert2InsertFieldSpec_d77d1c9e i
         $this->insert2->write($writer);
         $writer->comments($this->comments, 3);
         $this->insertFieldSpec->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->replaceLockOption, $this->insert2, $this->insertFieldSpec];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->replaceLockOption, \SqlSemantics\Statement\Model\MySql\Role\ReplaceLockOptionForm::class, $replace), $this->replacement($this->insert2, \SqlSemantics\Statement\Model\MySql\Role\Insert2Form::class, $replace), $this->replacement($this->insertFieldSpec, \SqlSemantics\Statement\Model\MySql\Role\InsertFieldSpecForm::class, $replace), $this->comments);
     }
 
     /**

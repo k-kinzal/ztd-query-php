@@ -58,6 +58,26 @@ final class ShowColumnsStmtWithShowOptShowCmdTypeColumnsFromOrInTableIdentOptDbO
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optShowCmdType, $this->fromOrIn, $this->tableIdent, $this->optDb, $this->optWildOrWhere];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optShowCmdType, \SqlSemantics\Statement\Model\MySql\Role\OptShowCmdTypeForm::class, $replace), $this->columns, $this->replacement($this->fromOrIn, \SqlSemantics\Statement\Model\MySql\Role\FromOrInForm::class, $replace), $this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->optDb, \SqlSemantics\Statement\Model\MySql\Role\OptDbForm::class, $replace), $this->replacement($this->optWildOrWhere, \SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optShowCmdType, preserving every other field.
      */
     public function withOptShowCmdType(\SqlSemantics\Statement\Model\MySql\Role\OptShowCmdTypeForm $optShowCmdType): self

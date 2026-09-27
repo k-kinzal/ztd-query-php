@@ -46,6 +46,26 @@ final class QueryExpressionBodyWithQueryExpressionBodyUnionSymUnionOptionQueryEx
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->queryExpressionBody, $this->unionOption, $this->queryExpressionBody2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->queryExpressionBody, \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm::class, $replace), $this->replacement($this->unionOption, \SqlSemantics\Statement\Model\MySql\Role\UnionOptionForm::class, $replace), $this->replacement($this->queryExpressionBody2, \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new queryExpressionBody, preserving every other field.
      */
     public function withQueryExpressionBody(\SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm $queryExpressionBody): self

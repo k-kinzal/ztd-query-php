@@ -38,6 +38,26 @@ final class DropTypeNameWithOptProceduralLanguage_c990e515 implements \SqlSemant
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optProcedural];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optProcedural, \SqlSemantics\Statement\Model\PostgreSql\Role\OptProceduralForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optProcedural, preserving every other field.
      */
     public function withOptProcedural(\SqlSemantics\Statement\Model\PostgreSql\Role\OptProceduralForm $optProcedural): self

@@ -38,6 +38,26 @@ final class GrantPrivilegesWithAllOptPrivileges_5a8f6ab3 implements \SqlSemantic
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optPrivileges];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optPrivileges, \SqlSemantics\Statement\Model\MySql\Role\OptPrivilegesForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optPrivileges, preserving every other field.
      */
     public function withOptPrivileges(\SqlSemantics\Statement\Model\MySql\Role\OptPrivilegesForm $optPrivileges): self

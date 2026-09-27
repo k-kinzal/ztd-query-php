@@ -58,6 +58,26 @@ final class CmdWithWithInsertCmdIntoXfullnameIdlistOptSelectUpsert_8f9aafcd impl
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->with, $this->insertCmd, $this->xfullname, $this->idlistOpt, $this->select, $this->upsert];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->with, \SqlSemantics\Statement\Model\Sqlite\Role\WithForm::class, $replace), $this->replacement($this->insertCmd, \SqlSemantics\Statement\Model\Sqlite\Role\InsertCmdForm::class, $replace), $this->replacement($this->xfullname, \SqlSemantics\Statement\Model\Sqlite\Role\XfullnameForm::class, $replace), $this->replacement($this->idlistOpt, \SqlSemantics\Statement\Model\Sqlite\Role\IdlistOptForm::class, $replace), $this->replacement($this->select, \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm::class, $replace), $this->replacement($this->upsert, \SqlSemantics\Statement\Model\Sqlite\Role\UpsertForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new with, preserving every other field.
      */
     public function withWith(\SqlSemantics\Statement\Model\Sqlite\Role\WithForm $with): self

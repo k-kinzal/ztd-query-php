@@ -46,6 +46,26 @@ final class JoinedTableWithTableRefJoinTableRefJoinQual_1ebb717e implements \Sql
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableRef, $this->tableRef2, $this->joinQual];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableRef, \SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm::class, $replace), $this->replacement($this->tableRef2, \SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm::class, $replace), $this->replacement($this->joinQual, \SqlSemantics\Statement\Model\PostgreSql\Role\JoinQualForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new tableRef, preserving every other field.
      */
     public function withTableRef(\SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm $tableRef): self

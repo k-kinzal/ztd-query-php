@@ -44,6 +44,26 @@ final class ThreadIdListWithThreadIdListOptCommaRealUlongNum_d6a4389c implements
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->threadIdList, $this->optComma, $this->realUlongNum];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->threadIdList, \SqlSemantics\Statement\Model\MySql\Role\ThreadIdListForm::class, $replace), $this->replacement($this->optComma, \SqlSemantics\Statement\Model\MySql\Role\OptCommaForm::class, $replace), $this->replacement($this->realUlongNum, \SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new threadIdList, preserving every other field.
      */
     public function withThreadIdList(\SqlSemantics\Statement\Model\MySql\Role\ThreadIdListForm $threadIdList): self

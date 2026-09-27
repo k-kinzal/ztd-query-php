@@ -70,6 +70,26 @@ final class CreateIndexStmtWithCreateOptUniqueIndexSymIdentOptIndexTypeClauseOnS
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optUnique, $this->ident, $this->optIndexTypeClause, $this->tableIdent, $this->keyListWithExpression, $this->optIndexOptions, $this->optIndexLockAndAlgorithm];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optUnique, \SqlSemantics\Statement\Model\MySql\Role\OptUniqueForm::class, $replace), $this->replacement($this->ident, \SqlSemantics\Statement\Model\MySql\Role\IdentForm::class, $replace), $this->replacement($this->optIndexTypeClause, \SqlSemantics\Statement\Model\MySql\Role\OptIndexTypeClauseForm::class, $replace), $this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->keyListWithExpression, \SqlSemantics\Statement\Model\MySql\Role\KeyListWithExpressionForm::class, $replace), $this->replacement($this->optIndexOptions, \SqlSemantics\Statement\Model\MySql\Role\OptIndexOptionsForm::class, $replace), $this->replacement($this->optIndexLockAndAlgorithm, \SqlSemantics\Statement\Model\MySql\Role\OptIndexLockAndAlgorithmForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optUnique, preserving every other field.
      */
     public function withOptUnique(\SqlSemantics\Statement\Model\MySql\Role\OptUniqueForm $optUnique): self

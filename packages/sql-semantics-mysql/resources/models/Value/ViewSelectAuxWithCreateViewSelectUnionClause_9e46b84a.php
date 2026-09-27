@@ -40,6 +40,26 @@ final class ViewSelectAuxWithCreateViewSelectUnionClause_9e46b84a implements \Sq
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->createViewSelect, $this->unionClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->createViewSelect, \SqlSemantics\Statement\Model\MySql\Role\CreateViewSelectForm::class, $replace), $this->replacement($this->unionClause, \SqlSemantics\Statement\Model\MySql\Role\UnionClauseForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new createViewSelect, preserving every other field.
      */
     public function withCreateViewSelect(\SqlSemantics\Statement\Model\MySql\Role\CreateViewSelectForm $createViewSelect): self

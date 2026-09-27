@@ -40,6 +40,26 @@ final class QueryExpressionOptionListWithQueryExpressionOptionListQueryExpressio
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->queryExpressionOptionList, $this->queryExpressionOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->queryExpressionOptionList, \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionOptionListForm::class, $replace), $this->replacement($this->queryExpressionOption, \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionOptionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new queryExpressionOptionList, preserving every other field.
      */
     public function withQueryExpressionOptionList(\SqlSemantics\Statement\Model\MySql\Role\QueryExpressionOptionListForm $queryExpressionOptionList): self

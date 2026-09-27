@@ -27,7 +27,7 @@ final class BoolPriWithBoolPriCompOpAllOrAnySubselect_ff3558ec implements \SqlSe
         public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($boolPri), 'The boolPri must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($boolPri, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 8,  'mysql-5.7.44' => 9,));
+        $this->assertOperandBindingStrength($boolPri, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 8,  'mysql-5.7.44' => 9,), \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_RULES, 'bool_pri');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($compOp), 'The compOp must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($allOrAny), 'The allOrAny must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($subselect), 'The subselect must be a generated immutable SQL value.');
@@ -50,6 +50,26 @@ final class BoolPriWithBoolPriCompOpAllOrAnySubselect_ff3558ec implements \SqlSe
         $this->subselect->write($writer);
         $writer->comments($this->comments, 5);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->boolPri, $this->compOp, $this->allOrAny, $this->subselect];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->boolPri, \SqlSemantics\Statement\Model\MySql\Role\BoolPriForm::class, $replace), $this->replacement($this->compOp, \SqlSemantics\Statement\Model\MySql\Role\CompOpForm::class, $replace), $this->replacement($this->allOrAny, \SqlSemantics\Statement\Model\MySql\Role\AllOrAnyForm::class, $replace), $this->replacement($this->subselect, \SqlSemantics\Statement\Model\MySql\Role\SubselectForm::class, $replace), $this->comments);
     }
 
     /**

@@ -50,6 +50,26 @@ final class CmdWithPragmaNmDbnmEqNmnum_e6b5c848 implements \SqlSemantics\Stateme
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->nm, $this->dbnm, $this->nmnum];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->nm, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace), $this->replacement($this->dbnm, \SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm::class, $replace), $this->eq, $this->replacement($this->nmnum, \SqlSemantics\Statement\Model\Sqlite\Role\NmnumForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new nm, preserving every other field.
      */
     public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self

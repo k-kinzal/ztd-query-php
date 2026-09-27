@@ -44,6 +44,26 @@ final class CmdWithDropTableIfexistsFullname_cdf29e83 implements \SqlSemantics\S
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->ifexists, $this->fullname];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->ifexists, \SqlSemantics\Statement\Model\Sqlite\Role\IfexistsForm::class, $replace), $this->replacement($this->fullname, \SqlSemantics\Statement\Model\Sqlite\Role\FullnameForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new ifexists, preserving every other field.
      */
     public function withIfexists(\SqlSemantics\Statement\Model\Sqlite\Role\IfexistsForm $ifexists): self

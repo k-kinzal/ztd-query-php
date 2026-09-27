@@ -24,7 +24,7 @@ function lexicalPatterns(string $dialect): array
     if ($dialect === 'MySql') {
         return [
             'IDENT' => '[A-Za-z_0-9$\x80-\xFF]+', 'IDENT_QUOTED' => "{$backtick}|{$double}",
-            'UDF_RETURNS_SYM' => 'RETURNS',
+            'UDF_RETURNS_SYM' => 'RETURNS', 'NOT2_SYM' => '!|NOT', 'OR2_SYM' => '\|\||OR',
             'GRAMMAR_SELECTOR_EXPR' => '', 'GRAMMAR_SELECTOR_PART' => '', 'GRAMMAR_SELECTOR_GCOL' => '',
             'GRAMMAR_SELECTOR_CTE' => '', 'GRAMMAR_SELECTOR_DERIVED_EXPR' => '',
             'NUM' => '[0-9]+', 'LONG_NUM' => '[0-9]+', 'ULONGLONG_NUM' => '[0-9]+',
@@ -32,9 +32,9 @@ function lexicalPatterns(string $dialect): array
             'FLOAT_NUM' => '(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)[eE][+-]?[0-9]+',
             'HEX_NUM' => "0[xX][0-9A-Fa-f]+|[xX]'(?:[0-9A-Fa-f]{2})*'",
             'BIN_NUM' => "0[bB][01]+|[bB]'[01]*'",
-            'TEXT_STRING' => $escaped . '|"(?:[^"\\\\]|\\\\[\s\S]|"")*"',
+            'TEXT_STRING' => $escaped . '|"(?:[^"\\\\]|\\\\[\s\S]|"")*"|' . $single . '|' . $double,
             'NCHAR_STRING' => '[nN]' . $escaped, 'DOLLAR_QUOTED_STRING_SYM' => $dollar,
-            'PARAM_MARKER' => '\?', 'LEX_HOSTNAME' => '[A-Za-z_0-9.$\x80-\xFF]+',
+            'PARAM_MARKER' => '\?|:[A-Za-z0-9_]+', 'LEX_HOSTNAME' => '[A-Za-z_0-9.$\x80-\xFF]+',
             'UNDERSCORE_CHARSET' => '_[A-Za-z_0-9]+',
             'WITH_ROLLUP_SYM' => 'WITH\s+ROLLUP', 'WITH_CUBE_SYM' => 'WITH\s+CUBE',
         ];
@@ -50,7 +50,7 @@ function lexicalPatterns(string $dialect): array
             'USCONST' => "[uU]&{$single}(?:{$continuation}{$single})*",
             'BCONST' => "[bB]'[^']*'(?:{$continuation}'[^']*')*",
             'XCONST' => "[xX]'[^']*'(?:{$continuation}'[^']*')*",
-            'PARAM' => '\$[0-9]+', 'Op' => '(?!.*(?:--|/\*))[+*/<>=\x7E!@#%^&|`?\x2D]+',
+            'PARAM' => '\$[0-9]+|\?|:[A-Za-z0-9_]+', 'Op' => '(?!.*(?:--|/\*))[+*/<>=\x7E!@#%^&|`?\x2D]+',
             'NOT_LA' => 'NOT', 'NULLS_LA' => 'NULLS', 'WITH_LA' => 'WITH', 'WITHOUT_LA' => 'WITHOUT', 'FORMAT_LA' => 'FORMAT',
         ];
     }

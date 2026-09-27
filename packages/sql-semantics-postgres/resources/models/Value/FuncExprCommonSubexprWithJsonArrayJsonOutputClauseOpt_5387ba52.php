@@ -42,6 +42,26 @@ final class FuncExprCommonSubexprWithJsonArrayJsonOutputClauseOpt_5387ba52 imple
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->jsonOutputClauseOpt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->jsonOutputClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonOutputClauseOptForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new jsonOutputClauseOpt, preserving every other field.
      */
     public function withJsonOutputClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonOutputClauseOptForm $jsonOutputClauseOpt): self

@@ -40,6 +40,26 @@ final class CreateTableOptionsSpaceSeparatedWithCreateTableOptionsSpaceSeparated
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->createTableOptionsSpaceSeparated, $this->createTableOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->createTableOptionsSpaceSeparated, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsSpaceSeparatedForm::class, $replace), $this->replacement($this->createTableOption, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new createTableOptionsSpaceSeparated, preserving every other field.
      */
     public function withCreateTableOptionsSpaceSeparated(\SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsSpaceSeparatedForm $createTableOptionsSpaceSeparated): self

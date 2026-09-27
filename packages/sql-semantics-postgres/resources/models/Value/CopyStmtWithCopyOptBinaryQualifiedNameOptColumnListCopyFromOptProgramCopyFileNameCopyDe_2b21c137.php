@@ -74,6 +74,26 @@ final class CopyStmtWithCopyOptBinaryQualifiedNameOptColumnListCopyFromOptProgra
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optBinary, $this->qualifiedName, $this->optColumnList, $this->copyFrom, $this->optProgram, $this->copyFileName, $this->copyDelimiter, $this->optWith, $this->copyOptions, $this->where];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optBinary, \SqlSemantics\Statement\Model\PostgreSql\Role\OptBinaryForm::class, $replace), $this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->optColumnList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnListForm::class, $replace), $this->replacement($this->copyFrom, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyFromForm::class, $replace), $this->replacement($this->optProgram, \SqlSemantics\Statement\Model\PostgreSql\Role\OptProgramForm::class, $replace), $this->replacement($this->copyFileName, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyFileNameForm::class, $replace), $this->replacement($this->copyDelimiter, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyDelimiterForm::class, $replace), $this->replacement($this->optWith, \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm::class, $replace), $this->replacement($this->copyOptions, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyOptionsForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\PostgreSql\Role\WhereClauseForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optBinary, preserving every other field.
      */
     public function withOptBinary(\SqlSemantics\Statement\Model\PostgreSql\Role\OptBinaryForm $optBinary): self

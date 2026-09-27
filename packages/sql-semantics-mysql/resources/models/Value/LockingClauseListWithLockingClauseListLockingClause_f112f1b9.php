@@ -40,6 +40,26 @@ final class LockingClauseListWithLockingClauseListLockingClause_f112f1b9 impleme
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->lockingClauseList, $this->lockingClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->lockingClauseList, \SqlSemantics\Statement\Model\MySql\Role\LockingClauseListForm::class, $replace), $this->replacement($this->lockingClause, \SqlSemantics\Statement\Model\MySql\Role\LockingClauseForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new lockingClauseList, preserving every other field.
      */
     public function withLockingClauseList(\SqlSemantics\Statement\Model\MySql\Role\LockingClauseListForm $lockingClauseList): self

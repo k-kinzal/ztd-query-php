@@ -42,6 +42,26 @@ final class TableListWithTableListTableName_8f8b1905 implements \SqlSemantics\St
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableList, $this->tableName];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableList, \SqlSemantics\Statement\Model\MySql\Role\TableListForm::class, $replace), $this->replacement($this->tableName, \SqlSemantics\Statement\Model\MySql\Role\TableNameForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new tableList, preserving every other field.
      */
     public function withTableList(\SqlSemantics\Statement\Model\MySql\Role\TableListForm $tableList): self

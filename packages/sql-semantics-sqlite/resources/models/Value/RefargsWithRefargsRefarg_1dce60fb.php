@@ -40,6 +40,26 @@ final class RefargsWithRefargsRefarg_1dce60fb implements \SqlSemantics\Statement
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->refargs, $this->refarg];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->refargs, \SqlSemantics\Statement\Model\Sqlite\Role\RefargsForm::class, $replace), $this->replacement($this->refarg, \SqlSemantics\Statement\Model\Sqlite\Role\RefargForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new refargs, preserving every other field.
      */
     public function withRefargs(\SqlSemantics\Statement\Model\Sqlite\Role\RefargsForm $refargs): self

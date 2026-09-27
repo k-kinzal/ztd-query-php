@@ -40,6 +40,26 @@ final class CreateExtensionOptListWithCreateExtensionOptListCreateExtensionOptIt
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->createExtensionOptList, $this->createExtensionOptItem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->createExtensionOptList, \SqlSemantics\Statement\Model\PostgreSql\Role\CreateExtensionOptListForm::class, $replace), $this->replacement($this->createExtensionOptItem, \SqlSemantics\Statement\Model\PostgreSql\Role\CreateExtensionOptItemForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new createExtensionOptList, preserving every other field.
      */
     public function withCreateExtensionOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\CreateExtensionOptListForm $createExtensionOptList): self

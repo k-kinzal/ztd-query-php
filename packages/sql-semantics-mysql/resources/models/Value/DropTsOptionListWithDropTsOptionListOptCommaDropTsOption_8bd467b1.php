@@ -44,6 +44,26 @@ final class DropTsOptionListWithDropTsOptionListOptCommaDropTsOption_8bd467b1 im
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->dropTsOptionList, $this->optComma, $this->dropTsOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->dropTsOptionList, \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionListForm::class, $replace), $this->replacement($this->optComma, \SqlSemantics\Statement\Model\MySql\Role\OptCommaForm::class, $replace), $this->replacement($this->dropTsOption, \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new dropTsOptionList, preserving every other field.
      */
     public function withDropTsOptionList(\SqlSemantics\Statement\Model\MySql\Role\DropTsOptionListForm $dropTsOptionList): self

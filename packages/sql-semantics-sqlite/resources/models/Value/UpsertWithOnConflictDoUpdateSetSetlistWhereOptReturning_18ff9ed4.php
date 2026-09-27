@@ -54,6 +54,26 @@ final class UpsertWithOnConflictDoUpdateSetSetlistWhereOptReturning_18ff9ed4 imp
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->setlist, $this->where, $this->returning];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->setlist, \SqlSemantics\Statement\Model\Sqlite\Role\SetlistForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm::class, $replace), $this->replacement($this->returning, \SqlSemantics\Statement\Model\Sqlite\Role\ReturningForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new setlist, preserving every other field.
      */
     public function withSetlist(\SqlSemantics\Statement\Model\Sqlite\Role\SetlistForm $setlist): self

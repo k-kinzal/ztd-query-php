@@ -56,6 +56,26 @@ final class CreateStatsStmtWithCreateStatisticsOptQualifiedNameOptNameListOnStat
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optQualifiedName, $this->optNameList, $this->statsParams, $this->fromList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optQualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\OptQualifiedNameForm::class, $replace), $this->replacement($this->optNameList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptNameListForm::class, $replace), $this->replacement($this->statsParams, \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamsForm::class, $replace), $this->replacement($this->fromList, \SqlSemantics\Statement\Model\PostgreSql\Role\FromListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optQualifiedName, preserving every other field.
      */
     public function withOptQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\OptQualifiedNameForm $optQualifiedName): self

@@ -26,10 +26,10 @@ final class ExprWithExprEqNeExpr_49d16f16 implements \SqlSemantics\Statement\Mod
         public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 4,));
+        $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 4,), \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_RULES, 'expr');
         $this->assertMatchesPattern($eqNe, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['EQ|NE'], 'The eqNe must be a complete EQ|NE lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr2), 'The expr2 must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($expr2, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 5,));
+        $this->assertOperandBindingStrength($expr2, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 5,), \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_RULES, 'expr');
     }
 
     /**
@@ -43,6 +43,26 @@ final class ExprWithExprEqNeExpr_49d16f16 implements \SqlSemantics\Statement\Mod
         $writer->append($this->eqNe);
         $writer->comments($this->comments, 2);
         $this->expr2->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->expr, $this->expr2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->expr, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm::class, $replace), $this->eqNe, $this->replacement($this->expr2, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm::class, $replace), $this->comments);
     }
 
     /**

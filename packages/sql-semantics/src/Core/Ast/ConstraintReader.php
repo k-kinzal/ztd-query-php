@@ -6,8 +6,9 @@ namespace SqlSemantics\Core\Ast;
 
 use SqlParser\Parser\Node;
 use SqlSemantics\Core\Analysis\ValueReader;
-use SqlSemantics\Core\Schema\ConstraintKind;
-use SqlSemantics\Core\Schema\TableConstraint;
+use SqlSemantics\Core\Language;
+use SqlSemantics\Statement\Declaration\ConstraintKind;
+use SqlSemantics\Statement\Declaration\TableConstraint;
 
 /**
  * Extracts integrity declarations while preserving the complete original constraint.
@@ -22,7 +23,7 @@ final class ConstraintReader
      */
     public function __construct(public readonly Identifiers $identifiers, ?ValueReader $values = null)
     {
-        $this->values = $values ?? $identifiers->dialect->platform()->values((new DialectParser($identifiers->dialect))->version());
+        $this->values = $values ?? $identifiers->dialect->platform()->values((new Language($identifiers->dialect))->version);
     }
 
     /**

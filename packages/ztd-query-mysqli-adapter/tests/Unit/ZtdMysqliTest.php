@@ -26,16 +26,14 @@ use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqliException;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqliStatement;
 use ZtdQuery\Config\ZtdConfig;
-use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\MySql\MySqlSessionFactory;
+use ZtdQuery\Platform;
+use ZtdQuery\Platform\MySql\MySqlPlatform;
 use ZtdQuery\Platform\MySql\MySqlTransactionStatementParser;
-use ZtdQuery\Platform\SessionFactory;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
-use ZtdQuery\Session;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Sql\TransactionStatement;
 
@@ -53,17 +51,21 @@ use ZtdQuery\Sql\TransactionStatement;
 #[UsesClass(MysqliResultColumnExtractor::class)]
 final class ZtdMysqliTest extends TestCase
 {
-    public function testQueryUsesTheProvidedFactoryAndConfiguration(): void
+    public function testQueryUsesTheInjectedPlatform(): void
     {
         $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $config = new ZtdConfig();
-            $factory = self::createMock(SessionFactory::class);
-            $factory->expects(self::once())->method('create')
-                ->with(self::isInstanceOf(MysqliConnection::class), self::identicalTo($config))
-                ->willReturnCallback((new MySqlSessionFactory())->create(...));
-            $ztd = new ZtdMysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port, null, $config, $factory);
+            $platform = self::createMock(Platform::class);
+            $dialect = new MySqlPlatform();
+            $platform->expects(self::once())->method('reflectSchema')
+                ->with(self::isInstanceOf(MysqliConnection::class))
+                ->willReturnCallback($dialect->reflectSchema(...));
+            $platform->method('reflectViews')->willReturnCallback($dialect->reflectViews(...));
+            $platform->expects(self::once())->method('createRewriter')->willReturnCallback($dialect->createRewriter(...));
+            $platform->method('resultColumnTypeResolver')->willReturn($dialect->resultColumnTypeResolver());
+            $ztd = new ZtdMysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port, null, $config, $platform);
             self::assertSame(mysqli_get_client_info(), $ztd->client_info);
             $result = $ztd->query('SELECT 42 AS id');
             self::assertInstanceOf(mysqli_result::class, $result);
@@ -102,7 +104,7 @@ final class ZtdMysqliTest extends TestCase
         }
     }
 
-    public function testFromMysqliPassesTheConnectionAndConfigurationToItsFactory(): void
+    public function testFromMysqliUsesTheInjectedPlatform(): void
     {
         $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
@@ -111,10 +113,8 @@ final class ZtdMysqliTest extends TestCase
             $connection->set_charset('utf8mb4');
             $config = ZtdConfig::default();
             $rewriter = self::createStub(SqlRewriter::class);
-            $factory = self::createMock(SessionFactory::class);
-            $factory->expects(self::once())->method('create')->with(self::isInstanceOf(MysqliConnection::class), self::identicalTo($config))
-                ->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $resolved): Session => new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $resolved, $native));
-            $ztd = ZtdMysqli::fromMysqli($connection, $config, $factory);
+            $platform = \Tests\Fake\QueryExecutorBuilder::platform($rewriter);
+            $ztd = ZtdMysqli::fromMysqli($connection, $config, $platform);
             self::assertTrue($ztd->isZtdEnabled());
             $connection->close();
         } finally {
@@ -224,9 +224,8 @@ final class ZtdMysqliTest extends TestCase
             $store = new ShadowStore();
             $rewriter = self::createStub(SqlRewriter::class);
             $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
-            $factory = self::createStub(SessionFactory::class);
-            $factory->method('create')->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $config): Session => new Session($rewriter, $store, new ResultSelectRunner(), $config, $native));
-            $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+            $platform = \Tests\Fake\QueryExecutorBuilder::platform($rewriter, $store);
+            $ztd = ZtdMysqli::fromMysqli($connection, null, $platform);
             $rewriter->method('rewrite')->willThrowException(new UnsupportedSqlException('DROP DATABASE forbidden', 'Unsupported'));
             try {
                 $ztd->prepare('DROP DATABASE forbidden');
@@ -253,9 +252,8 @@ final class ZtdMysqliTest extends TestCase
             $store = new ShadowStore();
             $rewriter = self::createStub(SqlRewriter::class);
             $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
-            $factory = self::createStub(SessionFactory::class);
-            $factory->method('create')->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $config): Session => new Session($rewriter, $store, new ResultSelectRunner(), $config, $native));
-            $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+            $platform = \Tests\Fake\QueryExecutorBuilder::platform($rewriter, $store);
+            $ztd = ZtdMysqli::fromMysqli($connection, null, $platform);
             $rewriter->method('rewrite')->willReturn(new RewritePlan('SELECT missing_column', QueryKind::READ));
             mysqli_report(MYSQLI_REPORT_OFF);
             try {
@@ -300,9 +298,8 @@ final class ZtdMysqliTest extends TestCase
             $store = new ShadowStore();
             $rewriter = self::createStub(SqlRewriter::class);
             $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
-            $factory = self::createStub(SessionFactory::class);
-            $factory->method('create')->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $config): Session => new Session($rewriter, $store, new ResultSelectRunner(), $config, $native));
-            $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+            $platform = \Tests\Fake\QueryExecutorBuilder::platform($rewriter, $store);
+            $ztd = ZtdMysqli::fromMysqli($connection, null, $platform);
             $connection->query('CREATE TEMPORARY TABLE duplicate_keys (id INT PRIMARY KEY)');
             $connection->query('INSERT INTO duplicate_keys VALUES (1)');
             $rewriter->method('rewrite')->willReturn(new RewritePlan('INSERT INTO duplicate_keys VALUES (1)', QueryKind::READ));
@@ -329,9 +326,8 @@ final class ZtdMysqliTest extends TestCase
             $store = new ShadowStore();
             $rewriter = self::createStub(SqlRewriter::class);
             $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
-            $factory = self::createStub(SessionFactory::class);
-            $factory->method('create')->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $config): Session => new Session($rewriter, $store, new ResultSelectRunner(), $config, $native));
-            $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+            $platform = \Tests\Fake\QueryExecutorBuilder::platform($rewriter, $store);
+            $ztd = ZtdMysqli::fromMysqli($connection, null, $platform);
             $rewriter->method('rewrite')->willReturn(new RewritePlan('DO 1', QueryKind::READ));
             self::assertTrue($ztd->query('DO 1'));
             $connection->close();
@@ -389,9 +385,8 @@ final class ZtdMysqliTest extends TestCase
             $store = new ShadowStore();
             $rewriter = self::createStub(SqlRewriter::class);
             $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
-            $factory = self::createStub(SessionFactory::class);
-            $factory->method('create')->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $config): Session => new Session($rewriter, $store, new ResultSelectRunner(), $config, $native));
-            $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+            $platform = \Tests\Fake\QueryExecutorBuilder::platform($rewriter, $store);
+            $ztd = ZtdMysqli::fromMysqli($connection, null, $platform);
             $store->set('items', [['id' => 1]]);
             self::assertTrue($ztd->begin_transaction(MYSQLI_TRANS_START_READ_WRITE, 'scope'));
             $store->insert('items', [['id' => 2]]);
@@ -433,9 +428,8 @@ final class ZtdMysqliTest extends TestCase
             $store = new ShadowStore();
             $rewriter = self::createStub(SqlRewriter::class);
             $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
-            $factory = self::createStub(SessionFactory::class);
-            $factory->method('create')->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $config): Session => new Session($rewriter, $store, new ResultSelectRunner(), $config, $native));
-            $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+            $platform = \Tests\Fake\QueryExecutorBuilder::platform($rewriter, $store);
+            $ztd = ZtdMysqli::fromMysqli($connection, null, $platform);
             $store->set('items', [['id' => 1]]);
             $ztd->begin_transaction();
             $store->insert('items', [['id' => 2]]);
@@ -458,9 +452,8 @@ final class ZtdMysqliTest extends TestCase
             $store = new ShadowStore();
             $rewriter = self::createStub(SqlRewriter::class);
             $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
-            $factory = self::createStub(SessionFactory::class);
-            $factory->method('create')->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $config): Session => new Session($rewriter, $store, new ResultSelectRunner(), $config, $native));
-            $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+            $platform = \Tests\Fake\QueryExecutorBuilder::platform($rewriter, $store);
+            $ztd = ZtdMysqli::fromMysqli($connection, null, $platform);
             $store->set('items', [['id' => 1]]);
             $ztd->begin_transaction();
             $store->insert('items', [['id' => 2]]);
@@ -482,9 +475,8 @@ final class ZtdMysqliTest extends TestCase
             $store = new ShadowStore();
             $rewriter = self::createStub(SqlRewriter::class);
             $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
-            $factory = self::createStub(SessionFactory::class);
-            $factory->method('create')->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $config): Session => new Session($rewriter, $store, new ResultSelectRunner(), $config, $native));
-            $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+            $platform = \Tests\Fake\QueryExecutorBuilder::platform($rewriter, $store);
+            $ztd = ZtdMysqli::fromMysqli($connection, null, $platform);
             $store->set('items', [['id' => 1]]);
             self::assertTrue($ztd->autocommit(false));
             $store->insert('items', [['id' => 2]]);
@@ -511,9 +503,8 @@ final class ZtdMysqliTest extends TestCase
             $store = new ShadowStore();
             $rewriter = self::createStub(SqlRewriter::class);
             $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
-            $factory = self::createStub(SessionFactory::class);
-            $factory->method('create')->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $config): Session => new Session($rewriter, $store, new ResultSelectRunner(), $config, $native));
-            $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+            $platform = \Tests\Fake\QueryExecutorBuilder::platform($rewriter, $store);
+            $ztd = ZtdMysqli::fromMysqli($connection, null, $platform);
             $store->set('items', [['id' => 1]]);
             self::assertTrue($ztd->real_query('BEGIN'));
             $store->insert('items', [['id' => 2]]);
@@ -535,9 +526,8 @@ final class ZtdMysqliTest extends TestCase
             $store = new ShadowStore();
             $rewriter = self::createStub(SqlRewriter::class);
             $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
-            $factory = self::createStub(SessionFactory::class);
-            $factory->method('create')->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $config): Session => new Session($rewriter, $store, new ResultSelectRunner(), $config, $native));
-            $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+            $platform = \Tests\Fake\QueryExecutorBuilder::platform($rewriter, $store);
+            $ztd = ZtdMysqli::fromMysqli($connection, null, $platform);
             $store->set('items', [['id' => 1]]);
             $ztd->begin_transaction();
             self::assertTrue($ztd->savepoint('scope'));
@@ -560,16 +550,15 @@ final class ZtdMysqliTest extends TestCase
             $store = new ShadowStore();
             $rewriter = self::createStub(SqlRewriter::class);
             $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
-            $session = new Session($rewriter, $store, new ResultSelectRunner(), new ZtdConfig(), new MysqliConnection($connection));
-            $factory = self::createStub(SessionFactory::class);
-            $factory->method('create')->willReturn($session);
-            $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+            $executor = \Tests\Fake\QueryExecutorBuilder::create($rewriter, $store, new ResultSelectRunner(), new ZtdConfig(), new MysqliConnection($connection));
+            $platform = \Tests\Fake\QueryExecutorBuilder::platform($rewriter, $store);
+            $ztd = ZtdMysqli::fromMysqli($connection, null, $platform);
             $store->set('items', [['id' => 1]]);
             $ztd->begin_transaction();
             $ztd->savepoint('scope');
             $store->insert('items', [['id' => 2]]);
             self::assertTrue($ztd->release_savepoint('scope'));
-            $session->applyTransactionStatement(TransactionStatement::rollbackTo('scope'));
+            $executor->session()->applyTransactionStatement(TransactionStatement::rollbackTo('scope'));
             self::assertSame([['id' => 1], ['id' => 2]], $store->get('items'));
             $this->expectException(mysqli_sql_exception::class);
             try {
@@ -1062,9 +1051,8 @@ final class ZtdMysqliTest extends TestCase
             $connection->close();
             $connection = new mysqli();
             $rewriter = self::createStub(SqlRewriter::class);
-            $factory = self::createStub(SessionFactory::class);
-            $factory->method('create')->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $config): Session => new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $native));
-            $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+            $platform = \Tests\Fake\QueryExecutorBuilder::platform($rewriter);
+            $ztd = ZtdMysqli::fromMysqli($connection, null, $platform);
             self::assertTrue($ztd->real_connect($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port));
             $ztd->disableZtd();
             $result = $ztd->query('SELECT DATABASE() AS name');
@@ -1182,10 +1170,9 @@ final class ZtdMysqliTest extends TestCase
         $endpoint = $container->getData(Endpoint::class);
         try {
             $connection = new mysqli();
-            $factory = self::createStub(SessionFactory::class);
             $rewriter = self::createStub(SqlRewriter::class);
-            $factory->method('create')->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $config): Session => new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $native));
-            $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+            $platform = \Tests\Fake\QueryExecutorBuilder::platform($rewriter);
+            $ztd = ZtdMysqli::fromMysqli($connection, null, $platform);
             self::assertTrue($ztd->connect($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port));
             $result = $connection->query('SELECT DATABASE() AS name');
             self::assertInstanceOf(mysqli_result::class, $result);

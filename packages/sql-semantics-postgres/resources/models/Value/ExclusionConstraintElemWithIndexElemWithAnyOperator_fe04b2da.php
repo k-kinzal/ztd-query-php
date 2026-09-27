@@ -42,6 +42,26 @@ final class ExclusionConstraintElemWithIndexElemWithAnyOperator_fe04b2da impleme
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->indexElem, $this->anyOperator];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->indexElem, \SqlSemantics\Statement\Model\PostgreSql\Role\IndexElemForm::class, $replace), $this->replacement($this->anyOperator, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyOperatorForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new indexElem, preserving every other field.
      */
     public function withIndexElem(\SqlSemantics\Statement\Model\PostgreSql\Role\IndexElemForm $indexElem): self

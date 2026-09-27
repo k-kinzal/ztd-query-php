@@ -42,6 +42,26 @@ final class AttrsWithAttrsAttrName_372ebb47 implements \SqlSemantics\Statement\M
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->attrs, $this->attrName];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->attrs, \SqlSemantics\Statement\Model\PostgreSql\Role\AttrsForm::class, $replace), $this->replacement($this->attrName, \SqlSemantics\Statement\Model\PostgreSql\Role\AttrNameForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new attrs, preserving every other field.
      */
     public function withAttrs(\SqlSemantics\Statement\Model\PostgreSql\Role\AttrsForm $attrs): self

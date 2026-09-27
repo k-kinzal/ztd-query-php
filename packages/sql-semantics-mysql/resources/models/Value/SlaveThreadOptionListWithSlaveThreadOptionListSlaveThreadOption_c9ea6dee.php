@@ -42,6 +42,26 @@ final class SlaveThreadOptionListWithSlaveThreadOptionListSlaveThreadOption_c9ea
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->slaveThreadOptionList, $this->slaveThreadOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->slaveThreadOptionList, \SqlSemantics\Statement\Model\MySql\Role\SlaveThreadOptionListForm::class, $replace), $this->replacement($this->slaveThreadOption, \SqlSemantics\Statement\Model\MySql\Role\SlaveThreadOptionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new slaveThreadOptionList, preserving every other field.
      */
     public function withSlaveThreadOptionList(\SqlSemantics\Statement\Model\MySql\Role\SlaveThreadOptionListForm $slaveThreadOptionList): self

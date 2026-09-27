@@ -52,6 +52,26 @@ final class AlterUserStmtWithAlterUserCommandUserFuncIdentifiedByRandomPasswordO
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->alterUserCommand, $this->userFunc, $this->identifiedByRandomPassword, $this->optReplacePassword, $this->optRetainCurrentPassword];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->alterUserCommand, \SqlSemantics\Statement\Model\MySql\Role\AlterUserCommandForm::class, $replace), $this->replacement($this->userFunc, \SqlSemantics\Statement\Model\MySql\Role\UserFuncForm::class, $replace), $this->replacement($this->identifiedByRandomPassword, \SqlSemantics\Statement\Model\MySql\Role\IdentifiedByRandomPasswordForm::class, $replace), $this->replacement($this->optReplacePassword, \SqlSemantics\Statement\Model\MySql\Role\OptReplacePasswordForm::class, $replace), $this->replacement($this->optRetainCurrentPassword, \SqlSemantics\Statement\Model\MySql\Role\OptRetainCurrentPasswordForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new alterUserCommand, preserving every other field.
      */
     public function withAlterUserCommand(\SqlSemantics\Statement\Model\MySql\Role\AlterUserCommandForm $alterUserCommand): self

@@ -38,6 +38,26 @@ final class SubqueryOpWithNotLaLike_00af0b2d implements \SqlSemantics\Statement\
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [];
+    }
+
+    /**
+     * This form holds no values to replace.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return $this;
+    }
+
+    /**
      * Returns a copy with a new notLa, preserving every other field.
      */
     public function withNotLa(string $notLa): self

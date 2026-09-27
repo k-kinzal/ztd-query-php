@@ -26,10 +26,10 @@ final class ExprWithExprAndExpr_7c66b353 implements \SqlSemantics\Statement\Mode
         public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 6,  'mysql-5.7.44' => 7,  'mysql-8.0.44' => 12,  'mysql-8.1.0' => 12,  'mysql-8.2.0' => 12,  'mysql-8.3.0' => 12,  'mysql-8.4.7' => 12,  'mysql-9.0.1' => 12,  'mysql-9.1.0' => 12,));
+        $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 6,  'mysql-5.7.44' => 7,  'mysql-8.0.44' => 12,  'mysql-8.1.0' => 12,  'mysql-8.2.0' => 12,  'mysql-8.3.0' => 12,  'mysql-8.4.7' => 12,  'mysql-9.0.1' => 12,  'mysql-9.1.0' => 12,), \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_RULES, 'expr');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($and), 'The and must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr2), 'The expr2 must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($expr2, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 7,  'mysql-5.7.44' => 8,  'mysql-8.0.44' => 13,  'mysql-8.1.0' => 13,  'mysql-8.2.0' => 13,  'mysql-8.3.0' => 13,  'mysql-8.4.7' => 13,  'mysql-9.0.1' => 13,  'mysql-9.1.0' => 13,));
+        $this->assertOperandBindingStrength($expr2, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 7,  'mysql-5.7.44' => 8,  'mysql-8.0.44' => 13,  'mysql-8.1.0' => 13,  'mysql-8.2.0' => 13,  'mysql-8.3.0' => 13,  'mysql-8.4.7' => 13,  'mysql-9.0.1' => 13,  'mysql-9.1.0' => 13,), \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_RULES, 'expr');
     }
 
     /**
@@ -43,6 +43,26 @@ final class ExprWithExprAndExpr_7c66b353 implements \SqlSemantics\Statement\Mode
         $this->and->write($writer);
         $writer->comments($this->comments, 2);
         $this->expr2->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->expr, $this->and, $this->expr2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->replacement($this->and, \SqlSemantics\Statement\Model\MySql\Role\AndForm::class, $replace), $this->replacement($this->expr2, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->comments);
     }
 
     /**

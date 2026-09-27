@@ -44,6 +44,26 @@ final class ViewSelectAuxWithCreateViewSelectParenUnionOpt_a7302c97 implements \
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->createViewSelectParen, $this->unionOpt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->createViewSelectParen, \SqlSemantics\Statement\Model\MySql\Role\CreateViewSelectParenForm::class, $replace), $this->replacement($this->unionOpt, \SqlSemantics\Statement\Model\MySql\Role\UnionOptForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new createViewSelectParen, preserving every other field.
      */
     public function withCreateViewSelectParen(\SqlSemantics\Statement\Model\MySql\Role\CreateViewSelectParenForm $createViewSelectParen): self

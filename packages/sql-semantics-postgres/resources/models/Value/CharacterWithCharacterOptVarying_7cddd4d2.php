@@ -38,6 +38,26 @@ final class CharacterWithCharacterOptVarying_7cddd4d2 implements \SqlSemantics\S
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optVarying];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optVarying, \SqlSemantics\Statement\Model\PostgreSql\Role\OptVaryingForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optVarying, preserving every other field.
      */
     public function withOptVarying(\SqlSemantics\Statement\Model\PostgreSql\Role\OptVaryingForm $optVarying): self

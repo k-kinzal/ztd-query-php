@@ -52,6 +52,26 @@ final class CmdWithAttachDatabaseKwOptExprAsExprKeyOpt_87608024 implements \SqlS
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->databaseKwOpt, $this->expr, $this->expr2, $this->keyOpt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->databaseKwOpt, \SqlSemantics\Statement\Model\Sqlite\Role\DatabaseKwOptForm::class, $replace), $this->replacement($this->expr, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm::class, $replace), $this->replacement($this->expr2, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm::class, $replace), $this->replacement($this->keyOpt, \SqlSemantics\Statement\Model\Sqlite\Role\KeyOptForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new databaseKwOpt, preserving every other field.
      */
     public function withDatabaseKwOpt(\SqlSemantics\Statement\Model\Sqlite\Role\DatabaseKwOptForm $databaseKwOpt): self

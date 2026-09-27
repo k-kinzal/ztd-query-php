@@ -46,6 +46,26 @@ final class ShowParamWithOptFullTablesOptDbWildAndWhere_7eff897e implements \Sql
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optFull, $this->optDb, $this->wildAndWhere];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optFull, \SqlSemantics\Statement\Model\MySql\Role\OptFullForm::class, $replace), $this->replacement($this->optDb, \SqlSemantics\Statement\Model\MySql\Role\OptDbForm::class, $replace), $this->replacement($this->wildAndWhere, \SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optFull, preserving every other field.
      */
     public function withOptFull(\SqlSemantics\Statement\Model\MySql\Role\OptFullForm $optFull): self

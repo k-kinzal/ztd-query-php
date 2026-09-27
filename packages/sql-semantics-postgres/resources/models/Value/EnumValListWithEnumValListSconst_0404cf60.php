@@ -42,6 +42,26 @@ final class EnumValListWithEnumValListSconst_0404cf60 implements \SqlSemantics\S
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->enumValList, $this->sconst];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->enumValList, \SqlSemantics\Statement\Model\PostgreSql\Role\EnumValListForm::class, $replace), $this->replacement($this->sconst, \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new enumValList, preserving every other field.
      */
     public function withEnumValList(\SqlSemantics\Statement\Model\PostgreSql\Role\EnumValListForm $enumValList): self

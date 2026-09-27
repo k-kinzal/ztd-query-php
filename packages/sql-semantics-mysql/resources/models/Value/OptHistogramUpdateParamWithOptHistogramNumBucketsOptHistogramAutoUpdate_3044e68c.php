@@ -40,6 +40,26 @@ final class OptHistogramUpdateParamWithOptHistogramNumBucketsOptHistogramAutoUpd
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optHistogramNumBuckets, $this->optHistogramAutoUpdate];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optHistogramNumBuckets, \SqlSemantics\Statement\Model\MySql\Role\OptHistogramNumBucketsForm::class, $replace), $this->replacement($this->optHistogramAutoUpdate, \SqlSemantics\Statement\Model\MySql\Role\OptHistogramAutoUpdateForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optHistogramNumBuckets, preserving every other field.
      */
     public function withOptHistogramNumBuckets(\SqlSemantics\Statement\Model\MySql\Role\OptHistogramNumBucketsForm $optHistogramNumBuckets): self

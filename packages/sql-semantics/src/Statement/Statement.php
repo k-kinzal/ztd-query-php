@@ -11,7 +11,9 @@ namespace SqlSemantics\Statement;
  * fields, finite options are enums, and forwarding grammar rules are removed.
  * No source string, parser node, token, or construction map is retained.
  * Comments written before the command or after it belong to the statement,
- * so they survive when the command is replaced.
+ * so they survive when the command is replaced. A statement analyzed with
+ * dependencies also carries its resolution: what it declares and what every
+ * table name in it resolves to. Replacing the command discards it.
  *
  * @visibility public
  * @example Reconstructing a statement from its values
@@ -39,15 +41,16 @@ final class Statement
      * Supplies the complete command value and the comments written around it.
      *
      * @param Comments $comments Comments at position BEFORE precede the command; those at AFTER follow it
+     * @param Resolution|null $resolution What the statement means against its dependencies, when it was analyzed with them
      */
-    public function __construct(public readonly Command $command, public readonly Comments $comments = new Comments())
+    public function __construct(public readonly Command $command, public readonly Comments $comments = new Comments(), public readonly ?Resolution $resolution = null)
     {
         $this->assertImmutableValueGraph($command);
         $this->assert(array_diff($comments->positions(), [self::BEFORE, self::AFTER]) === [], 'Statement comments are written before or after the command.');
     }
 
     /**
-     * Returns a statement containing the replacement command, preserving this statement.
+     * Returns a statement containing the replacement command and the same comments, without a resolution.
      */
     public function withCommand(Command $command): self
     {
@@ -55,11 +58,11 @@ final class Statement
     }
 
     /**
-     * Returns a statement with other comments around the same command.
+     * Returns a statement with other comments around the same command and resolution.
      */
     public function withComments(Comments $comments): self
     {
-        return new self($this->command, $comments);
+        return new self($this->command, $comments, $this->resolution);
     }
 
     /**

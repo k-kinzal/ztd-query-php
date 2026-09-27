@@ -40,6 +40,26 @@ final class KeyActionsWithKeyUpdateKeyDelete_94d4aa8f implements \SqlSemantics\S
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->keyUpdate, $this->keyDelete];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->keyUpdate, \SqlSemantics\Statement\Model\PostgreSql\Role\KeyUpdateForm::class, $replace), $this->replacement($this->keyDelete, \SqlSemantics\Statement\Model\PostgreSql\Role\KeyDeleteForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new keyUpdate, preserving every other field.
      */
     public function withKeyUpdate(\SqlSemantics\Statement\Model\PostgreSql\Role\KeyUpdateForm $keyUpdate): self

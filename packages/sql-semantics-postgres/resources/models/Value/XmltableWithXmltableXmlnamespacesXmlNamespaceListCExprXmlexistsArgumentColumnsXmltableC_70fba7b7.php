@@ -64,6 +64,26 @@ final class XmltableWithXmltableXmlnamespacesXmlNamespaceListCExprXmlexistsArgum
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->xmlNamespaceList, $this->cExpr, $this->xmlexistsArgument, $this->xmltableColumnList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->xmlNamespaceList, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlNamespaceListForm::class, $replace), $this->replacement($this->cExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm::class, $replace), $this->replacement($this->xmlexistsArgument, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlexistsArgumentForm::class, $replace), $this->replacement($this->xmltableColumnList, \SqlSemantics\Statement\Model\PostgreSql\Role\XmltableColumnListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new xmlNamespaceList, preserving every other field.
      */
     public function withXmlNamespaceList(\SqlSemantics\Statement\Model\PostgreSql\Role\XmlNamespaceListForm $xmlNamespaceList): self

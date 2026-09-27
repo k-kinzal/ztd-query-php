@@ -42,6 +42,26 @@ final class CopyOptItemWithEscapeOptAsSconst_f30082ad implements \SqlSemantics\S
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optAs, $this->sconst];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optAs, \SqlSemantics\Statement\Model\PostgreSql\Role\OptAsForm::class, $replace), $this->replacement($this->sconst, \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optAs, preserving every other field.
      */
     public function withOptAs(\SqlSemantics\Statement\Model\PostgreSql\Role\OptAsForm $optAs): self

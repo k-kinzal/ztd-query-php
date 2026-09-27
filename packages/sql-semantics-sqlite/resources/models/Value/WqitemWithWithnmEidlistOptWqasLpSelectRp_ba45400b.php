@@ -52,6 +52,26 @@ final class WqitemWithWithnmEidlistOptWqasLpSelectRp_ba45400b implements \SqlSem
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->withnm, $this->eidlistOpt, $this->wqas, $this->select];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->withnm, \SqlSemantics\Statement\Model\Sqlite\Role\WithnmForm::class, $replace), $this->replacement($this->eidlistOpt, \SqlSemantics\Statement\Model\Sqlite\Role\EidlistOptForm::class, $replace), $this->replacement($this->wqas, \SqlSemantics\Statement\Model\Sqlite\Role\WqasForm::class, $replace), $this->replacement($this->select, \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new withnm, preserving every other field.
      */
     public function withWithnm(\SqlSemantics\Statement\Model\Sqlite\Role\WithnmForm $withnm): self

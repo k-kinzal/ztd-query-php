@@ -42,6 +42,26 @@ final class ReloptionListWithReloptionListReloptionElem_499dc88f implements \Sql
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->reloptionList, $this->reloptionElem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->reloptionList, \SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionListForm::class, $replace), $this->replacement($this->reloptionElem, \SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionElemForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new reloptionList, preserving every other field.
      */
     public function withReloptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionListForm $reloptionList): self

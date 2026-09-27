@@ -50,6 +50,26 @@ final class CmdWithAlterTableFullnameDropKwcolumnOptNm_73d19d46 implements \SqlS
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->fullname, $this->kwcolumnOpt, $this->nm];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->fullname, \SqlSemantics\Statement\Model\Sqlite\Role\FullnameForm::class, $replace), $this->replacement($this->kwcolumnOpt, \SqlSemantics\Statement\Model\Sqlite\Role\KwcolumnOptForm::class, $replace), $this->replacement($this->nm, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new fullname, preserving every other field.
      */
     public function withFullname(\SqlSemantics\Statement\Model\Sqlite\Role\FullnameForm $fullname): self

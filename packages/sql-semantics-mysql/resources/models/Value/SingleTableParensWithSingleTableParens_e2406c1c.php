@@ -40,6 +40,26 @@ final class SingleTableParensWithSingleTableParens_e2406c1c implements \SqlSeman
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->singleTableParens];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->singleTableParens, \SqlSemantics\Statement\Model\MySql\Role\SingleTableParensForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new singleTableParens, preserving every other field.
      */
     public function withSingleTableParens(\SqlSemantics\Statement\Model\MySql\Role\SingleTableParensForm $singleTableParens): self

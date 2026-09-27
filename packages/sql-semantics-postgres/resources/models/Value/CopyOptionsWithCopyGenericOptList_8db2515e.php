@@ -40,6 +40,26 @@ final class CopyOptionsWithCopyGenericOptList_8db2515e implements \SqlSemantics\
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->copyGenericOptList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->copyGenericOptList, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new copyGenericOptList, preserving every other field.
      */
     public function withCopyGenericOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptListForm $copyGenericOptList): self

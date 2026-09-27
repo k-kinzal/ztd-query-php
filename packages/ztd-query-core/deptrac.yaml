@@ -15,14 +15,10 @@ deptrac:
       collectors:
         - type: directory
           value: src/[^/]+\.php
-        - type: directory
-          value: src/Platform/SessionFactory.php$
         - type: classLike
           value: ^ZtdQuery\\[^\\]+$
         - type: directory
           value: src/Compatibility/.*
-        - type: classLike
-          value: ^ZtdQuery\\Platform\\SessionFactory$
     - name: Simulation
       collectors:
         - type: directory
@@ -39,13 +35,8 @@ deptrac:
           value: src/Connection/.*
         - type: classLike
           value: ^ZtdQuery\\Connection\\
-        - type: bool
-          must:
-            - type: directory
-              value: src/Platform/.*
-          must_not:
-            - type: directory
-              value: src/Platform/SessionFactory.php$
+        - type: directory
+          value: src/Platform/.*
     - name: Schema
       collectors:
         - type: directory

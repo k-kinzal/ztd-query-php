@@ -54,6 +54,26 @@ final class SumExprWithGroupConcatSymOptDistinctExprListOptGorderClauseOptGconca
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optDistinct, $this->exprList, $this->optGorderClause, $this->optGconcatSeparator];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optDistinct, \SqlSemantics\Statement\Model\MySql\Role\OptDistinctForm::class, $replace), $this->replacement($this->exprList, \SqlSemantics\Statement\Model\MySql\Role\ExprListForm::class, $replace), $this->replacement($this->optGorderClause, \SqlSemantics\Statement\Model\MySql\Role\OptGorderClauseForm::class, $replace), $this->replacement($this->optGconcatSeparator, \SqlSemantics\Statement\Model\MySql\Role\OptGconcatSeparatorForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optDistinct, preserving every other field.
      */
     public function withOptDistinct(\SqlSemantics\Statement\Model\MySql\Role\OptDistinctForm $optDistinct): self

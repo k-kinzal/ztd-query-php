@@ -42,6 +42,26 @@ final class XmltableColumnListWithXmltableColumnListXmltableColumnEl_27a55e42 im
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->xmltableColumnList, $this->xmltableColumnEl];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->xmltableColumnList, \SqlSemantics\Statement\Model\PostgreSql\Role\XmltableColumnListForm::class, $replace), $this->replacement($this->xmltableColumnEl, \SqlSemantics\Statement\Model\PostgreSql\Role\XmltableColumnElForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new xmltableColumnList, preserving every other field.
      */
     public function withXmltableColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\XmltableColumnListForm $xmltableColumnList): self

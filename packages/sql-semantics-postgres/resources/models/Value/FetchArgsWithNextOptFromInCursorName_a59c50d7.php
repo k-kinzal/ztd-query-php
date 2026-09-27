@@ -42,6 +42,26 @@ final class FetchArgsWithNextOptFromInCursorName_a59c50d7 implements \SqlSemanti
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optFromIn, $this->cursorName];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optFromIn, \SqlSemantics\Statement\Model\PostgreSql\Role\OptFromInForm::class, $replace), $this->replacement($this->cursorName, \SqlSemantics\Statement\Model\PostgreSql\Role\CursorNameForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optFromIn, preserving every other field.
      */
     public function withOptFromIn(\SqlSemantics\Statement\Model\PostgreSql\Role\OptFromInForm $optFromIn): self

@@ -40,6 +40,26 @@ final class OptExplainOptionsWithOptExplainFormatOptExplainInto_9c6320d6 impleme
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optExplainFormat, $this->optExplainInto];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optExplainFormat, \SqlSemantics\Statement\Model\MySql\Role\OptExplainFormatForm::class, $replace), $this->replacement($this->optExplainInto, \SqlSemantics\Statement\Model\MySql\Role\OptExplainIntoForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optExplainFormat, preserving every other field.
      */
     public function withOptExplainFormat(\SqlSemantics\Statement\Model\MySql\Role\OptExplainFormatForm $optExplainFormat): self

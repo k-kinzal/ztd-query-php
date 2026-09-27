@@ -44,6 +44,26 @@ final class AlterListItemWithAddColumnColumnDefOptPlace_4b1261e2 implements \Sql
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->addColumn, $this->columnDef, $this->optPlace];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->addColumn, \SqlSemantics\Statement\Model\MySql\Role\AddColumnForm::class, $replace), $this->replacement($this->columnDef, \SqlSemantics\Statement\Model\MySql\Role\ColumnDefForm::class, $replace), $this->replacement($this->optPlace, \SqlSemantics\Statement\Model\MySql\Role\OptPlaceForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new addColumn, preserving every other field.
      */
     public function withAddColumn(\SqlSemantics\Statement\Model\MySql\Role\AddColumnForm $addColumn): self

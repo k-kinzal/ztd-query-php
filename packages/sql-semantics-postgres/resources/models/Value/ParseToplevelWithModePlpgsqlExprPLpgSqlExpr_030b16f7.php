@@ -40,6 +40,26 @@ final class ParseToplevelWithModePlpgsqlExprPLpgSqlExpr_030b16f7 implements \Sql
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->pLpgSqlExpr];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->modePlpgsqlExpr, $this->replacement($this->pLpgSqlExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\PLpgSqlExprForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new modePlpgsqlExpr, preserving every other field.
      */
     public function withModePlpgsqlExpr(string $modePlpgsqlExpr): self

@@ -12,7 +12,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DropWithDropOptTemporaryTableOrTablesIfExistsTableListOptRestrict_b4ee2bcf $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class DropWithDropOptTemporaryTableOrTablesIfExistsTableListOptRestrict_b4ee2bcf implements \SqlSemantics\Statement\Model\MySql\Role\DropForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class DropWithDropOptTemporaryTableOrTablesIfExistsTableListOptRestrict_b4ee2bcf implements \SqlSemantics\Statement\Model\MySql\Role\DropForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
     use \SqlSemantics\Statement\Assertion;
 
@@ -51,6 +51,26 @@ final class DropWithDropOptTemporaryTableOrTablesIfExistsTableListOptRestrict_b4
         $this->tableList->write($writer);
         $writer->comments($this->comments, 5);
         $this->optRestrict->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optTemporary, $this->tableOrTables, $this->ifExists, $this->tableList, $this->optRestrict];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optTemporary, \SqlSemantics\Statement\Model\MySql\Role\OptTemporaryForm::class, $replace), $this->replacement($this->tableOrTables, \SqlSemantics\Statement\Model\MySql\Role\TableOrTablesForm::class, $replace), $this->replacement($this->ifExists, \SqlSemantics\Statement\Model\MySql\Role\IfExistsForm::class, $replace), $this->replacement($this->tableList, \SqlSemantics\Statement\Model\MySql\Role\TableListForm::class, $replace), $this->replacement($this->optRestrict, \SqlSemantics\Statement\Model\MySql\Role\OptRestrictForm::class, $replace), $this->comments);
     }
 
     /**

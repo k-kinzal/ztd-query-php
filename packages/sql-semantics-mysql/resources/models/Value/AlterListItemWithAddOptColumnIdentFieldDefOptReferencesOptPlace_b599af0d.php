@@ -54,6 +54,26 @@ final class AlterListItemWithAddOptColumnIdentFieldDefOptReferencesOptPlace_b599
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optColumn, $this->ident, $this->fieldDef, $this->optReferences, $this->optPlace];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optColumn, \SqlSemantics\Statement\Model\MySql\Role\OptColumnForm::class, $replace), $this->replacement($this->ident, \SqlSemantics\Statement\Model\MySql\Role\IdentForm::class, $replace), $this->replacement($this->fieldDef, \SqlSemantics\Statement\Model\MySql\Role\FieldDefForm::class, $replace), $this->replacement($this->optReferences, \SqlSemantics\Statement\Model\MySql\Role\OptReferencesForm::class, $replace), $this->replacement($this->optPlace, \SqlSemantics\Statement\Model\MySql\Role\OptPlaceForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optColumn, preserving every other field.
      */
     public function withOptColumn(\SqlSemantics\Statement\Model\MySql\Role\OptColumnForm $optColumn): self

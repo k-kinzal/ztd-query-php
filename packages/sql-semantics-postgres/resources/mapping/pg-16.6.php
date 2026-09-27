@@ -3,12 +3,16 @@
 declare(strict_types=1);
 
 /** Generated construction recipes; never retained by a Statement. */
-return new \SqlSemantics\Core\Analysis\ValueReader(array (
+return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   'parse_toplevel' =>
   array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'stmtmulti',
+      ),
     ),
     1 =>
     array (
@@ -17,6 +21,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MODE_TYPE_NAME',
+        1 => 'Typename',
       ),
     ),
     2 =>
@@ -27,6 +36,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'MODE_PLPGSQL_EXPR',
+        1 => 'PLpgSQL_Expr',
+      ),
     ),
     3 =>
     array (
@@ -35,6 +49,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MODE_PLPGSQL_ASSIGN1',
+        1 => 'PLAssignStmt',
       ),
     ),
     4 =>
@@ -45,6 +64,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'MODE_PLPGSQL_ASSIGN2',
+        1 => 'PLAssignStmt',
+      ),
     ),
     5 =>
     array (
@@ -53,6 +77,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MODE_PLPGSQL_ASSIGN3',
+        1 => 'PLAssignStmt',
       ),
     ),
   ),
@@ -66,10 +95,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'stmtmulti',
+        1 => ';',
+        2 => 'toplevel_stmt',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'toplevel_stmt',
+      ),
     ),
   ),
   'toplevel_stmt' =>
@@ -77,10 +116,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'stmt',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'TransactionStmtLegacy',
+      ),
     ),
   ),
   'stmt' =>
@@ -88,503 +135,1002 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterEventTrigStmt',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterCollationStmt',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterDatabaseStmt',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterDatabaseSetStmt',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterDefaultPrivilegesStmt',
+      ),
     ),
     5 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterDomainStmt',
+      ),
     ),
     6 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterEnumStmt',
+      ),
     ),
     7 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterExtensionStmt',
+      ),
     ),
     8 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterExtensionContentsStmt',
+      ),
     ),
     9 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterFdwStmt',
+      ),
     ),
     10 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterForeignServerStmt',
+      ),
     ),
     11 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterFunctionStmt',
+      ),
     ),
     12 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterGroupStmt',
+      ),
     ),
     13 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterObjectDependsStmt',
+      ),
     ),
     14 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterObjectSchemaStmt',
+      ),
     ),
     15 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterOwnerStmt',
+      ),
     ),
     16 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterOperatorStmt',
+      ),
     ),
     17 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterTypeStmt',
+      ),
     ),
     18 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterPolicyStmt',
+      ),
     ),
     19 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterSeqStmt',
+      ),
     ),
     20 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterSystemStmt',
+      ),
     ),
     21 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterTableStmt',
+      ),
     ),
     22 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterTblSpcStmt',
+      ),
     ),
     23 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterCompositeTypeStmt',
+      ),
     ),
     24 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterPublicationStmt',
+      ),
     ),
     25 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterRoleSetStmt',
+      ),
     ),
     26 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterRoleStmt',
+      ),
     ),
     27 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterSubscriptionStmt',
+      ),
     ),
     28 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterStatsStmt',
+      ),
     ),
     29 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterTSConfigurationStmt',
+      ),
     ),
     30 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterTSDictionaryStmt',
+      ),
     ),
     31 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterUserMappingStmt',
+      ),
     ),
     32 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AnalyzeStmt',
+      ),
     ),
     33 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CallStmt',
+      ),
     ),
     34 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CheckPointStmt',
+      ),
     ),
     35 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ClosePortalStmt',
+      ),
     ),
     36 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ClusterStmt',
+      ),
     ),
     37 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CommentStmt',
+      ),
     ),
     38 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ConstraintsSetStmt',
+      ),
     ),
     39 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CopyStmt',
+      ),
     ),
     40 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateAmStmt',
+      ),
     ),
     41 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateAsStmt',
+      ),
     ),
     42 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateAssertionStmt',
+      ),
     ),
     43 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateCastStmt',
+      ),
     ),
     44 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateConversionStmt',
+      ),
     ),
     45 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateDomainStmt',
+      ),
     ),
     46 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateExtensionStmt',
+      ),
     ),
     47 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateFdwStmt',
+      ),
     ),
     48 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateForeignServerStmt',
+      ),
     ),
     49 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateForeignTableStmt',
+      ),
     ),
     50 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateFunctionStmt',
+      ),
     ),
     51 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateGroupStmt',
+      ),
     ),
     52 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateMatViewStmt',
+      ),
     ),
     53 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateOpClassStmt',
+      ),
     ),
     54 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateOpFamilyStmt',
+      ),
     ),
     55 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreatePublicationStmt',
+      ),
     ),
     56 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterOpFamilyStmt',
+      ),
     ),
     57 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreatePolicyStmt',
+      ),
     ),
     58 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreatePLangStmt',
+      ),
     ),
     59 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateSchemaStmt',
+      ),
     ),
     60 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateSeqStmt',
+      ),
     ),
     61 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateStmt',
+      ),
     ),
     62 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateSubscriptionStmt',
+      ),
     ),
     63 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateStatsStmt',
+      ),
     ),
     64 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateTableSpaceStmt',
+      ),
     ),
     65 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateTransformStmt',
+      ),
     ),
     66 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateTrigStmt',
+      ),
     ),
     67 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateEventTrigStmt',
+      ),
     ),
     68 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateRoleStmt',
+      ),
     ),
     69 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateUserStmt',
+      ),
     ),
     70 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateUserMappingStmt',
+      ),
     ),
     71 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreatedbStmt',
+      ),
     ),
     72 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'DeallocateStmt',
+      ),
     ),
     73 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'DeclareCursorStmt',
+      ),
     ),
     74 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'DefineStmt',
+      ),
     ),
     75 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'DeleteStmt',
+      ),
     ),
     76 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'DiscardStmt',
+      ),
     ),
     77 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'DoStmt',
+      ),
     ),
     78 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'DropCastStmt',
+      ),
     ),
     79 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'DropOpClassStmt',
+      ),
     ),
     80 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'DropOpFamilyStmt',
+      ),
     ),
     81 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'DropOwnedStmt',
+      ),
     ),
     82 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'DropStmt',
+      ),
     ),
     83 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'DropSubscriptionStmt',
+      ),
     ),
     84 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'DropTableSpaceStmt',
+      ),
     ),
     85 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'DropTransformStmt',
+      ),
     ),
     86 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'DropRoleStmt',
+      ),
     ),
     87 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'DropUserMappingStmt',
+      ),
     ),
     88 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'DropdbStmt',
+      ),
     ),
     89 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ExecuteStmt',
+      ),
     ),
     90 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ExplainStmt',
+      ),
     ),
     91 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'FetchStmt',
+      ),
     ),
     92 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'GrantStmt',
+      ),
     ),
     93 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'GrantRoleStmt',
+      ),
     ),
     94 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ImportForeignSchemaStmt',
+      ),
     ),
     95 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'IndexStmt',
+      ),
     ),
     96 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'InsertStmt',
+      ),
     ),
     97 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ListenStmt',
+      ),
     ),
     98 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'RefreshMatViewStmt',
+      ),
     ),
     99 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'LoadStmt',
+      ),
     ),
     100 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'LockStmt',
+      ),
     ),
     101 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'MergeStmt',
+      ),
     ),
     102 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'NotifyStmt',
+      ),
     ),
     103 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'PrepareStmt',
+      ),
     ),
     104 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ReassignOwnedStmt',
+      ),
     ),
     105 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ReindexStmt',
+      ),
     ),
     106 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'RemoveAggrStmt',
+      ),
     ),
     107 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'RemoveFuncStmt',
+      ),
     ),
     108 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'RemoveOperStmt',
+      ),
     ),
     109 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'RenameStmt',
+      ),
     ),
     110 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'RevokeStmt',
+      ),
     ),
     111 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'RevokeRoleStmt',
+      ),
     ),
     112 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'RuleStmt',
+      ),
     ),
     113 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'SecLabelStmt',
+      ),
     ),
     114 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'SelectStmt',
+      ),
     ),
     115 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'TransactionStmt',
+      ),
     ),
     116 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'TruncateStmt',
+      ),
     ),
     117 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'UnlistenStmt',
+      ),
     ),
     118 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'UpdateStmt',
+      ),
     ),
     119 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'VacuumStmt',
+      ),
     ),
     120 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'VariableResetStmt',
+      ),
     ),
     121 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'VariableSetStmt',
+      ),
     ),
     122 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'VariableShowStmt',
+      ),
     ),
     123 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ViewStmt',
+      ),
     ),
     124 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\StmtWith_8a688707',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -594,11 +1140,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ColId',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptSingleNameWith_afdf616e',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -608,11 +1161,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'any_name',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptQualifiedNameWith_42362771',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -622,10 +1182,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptConcurrentlyChoice_4a7359c2::UseConcurrently_9dfc74d3',
+      'symbols' =>
+      array (
+        0 => 'CONCURRENTLY',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptConcurrentlyChoice_4a7359c2::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'opt_drop_behavior' =>
@@ -633,14 +1200,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptDropBehaviorChoice_363c0a99::UseCascade_86844e57',
+      'symbols' =>
+      array (
+        0 => 'CASCADE',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptDropBehaviorChoice_363c0a99::UseRestrict_bd7a04e6',
+      'symbols' =>
+      array (
+        0 => 'RESTRICT',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptDropBehaviorChoice_363c0a99::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'CallStmt' =>
@@ -651,6 +1229,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CALL',
+        1 => 'func_application',
       ),
     ),
   ),
@@ -665,6 +1248,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'ROLE',
+        2 => 'RoleId',
+        3 => 'opt_with',
+        4 => 'OptRoleList',
+      ),
     ),
   ),
   'opt_with' =>
@@ -675,6 +1266,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'WITH',
+      ),
     ),
     1 =>
     array (
@@ -683,11 +1278,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'WITH_LA',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptWithWith_79674fb7',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -702,11 +1304,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'OptRoleList',
+        1 => 'CreateOptRoleElem',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptRoleListWith_7da809e6',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -721,11 +1331,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'AlterOptRoleList',
+        1 => 'AlterOptRoleElem',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterOptRoleListWith_bb80a79a',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -739,12 +1357,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD',
+        1 => 'Sconst',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterOptRoleElemWithPasswordNullP_eeade994',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD',
+        1 => 'NULL_P',
       ),
     ),
     2 =>
@@ -754,6 +1382,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ENCRYPTED',
+        1 => 'PASSWORD',
+        2 => 'Sconst',
+      ),
     ),
     3 =>
     array (
@@ -762,12 +1396,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNENCRYPTED',
+        1 => 'PASSWORD',
+        2 => 'Sconst',
+      ),
     ),
     4 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterOptRoleElemWithInherit_b61328cb',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'INHERIT',
       ),
     ),
     5 =>
@@ -777,6 +1421,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'CONNECTION',
+        1 => 'LIMIT',
+        2 => 'SignedIconst',
+      ),
     ),
     6 =>
     array (
@@ -784,6 +1434,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'VALID',
+        1 => 'UNTIL',
+        2 => 'Sconst',
       ),
     ),
     7 =>
@@ -793,6 +1449,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'USER',
+        1 => 'role_list',
+      ),
     ),
     8 =>
     array (
@@ -801,6 +1462,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'IDENT',
+      ),
     ),
   ),
   'CreateOptRoleElem' =>
@@ -808,6 +1473,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AlterOptRoleElem',
+      ),
     ),
     1 =>
     array (
@@ -815,6 +1484,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SYSID',
+        1 => 'Iconst',
       ),
     ),
     2 =>
@@ -824,6 +1498,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ADMIN',
+        1 => 'role_list',
+      ),
     ),
     3 =>
     array (
@@ -831,6 +1510,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ROLE',
+        1 => 'role_list',
       ),
     ),
     4 =>
@@ -840,6 +1524,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'IN_P',
+        1 => 'ROLE',
+        2 => 'role_list',
+      ),
     ),
     5 =>
     array (
@@ -847,6 +1537,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'IN_P',
+        1 => 'GROUP_P',
+        2 => 'role_list',
       ),
     ),
   ),
@@ -861,6 +1557,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'USER',
+        2 => 'RoleId',
+        3 => 'opt_with',
+        4 => 'OptRoleList',
+      ),
     ),
   ),
   'AlterRoleStmt' =>
@@ -874,6 +1578,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'ROLE',
+        2 => 'RoleSpec',
+        3 => 'opt_with',
+        4 => 'AlterOptRoleList',
+      ),
     ),
     1 =>
     array (
@@ -883,6 +1595,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
         2 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'USER',
+        2 => 'RoleSpec',
+        3 => 'opt_with',
+        4 => 'AlterOptRoleList',
       ),
     ),
   ),
@@ -894,6 +1614,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -901,6 +1624,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'IN_P',
+        1 => 'DATABASE',
+        2 => 'name',
       ),
     ),
   ),
@@ -915,6 +1644,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'ROLE',
+        2 => 'RoleSpec',
+        3 => 'opt_in_database',
+        4 => 'SetResetClause',
+      ),
     ),
     1 =>
     array (
@@ -923,6 +1660,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'ROLE',
+        2 => 'ALL',
+        3 => 'opt_in_database',
+        4 => 'SetResetClause',
       ),
     ),
     2 =>
@@ -934,6 +1679,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'USER',
+        2 => 'RoleSpec',
+        3 => 'opt_in_database',
+        4 => 'SetResetClause',
+      ),
     ),
     3 =>
     array (
@@ -942,6 +1695,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'USER',
+        2 => 'ALL',
+        3 => 'opt_in_database',
+        4 => 'SetResetClause',
       ),
     ),
   ),
@@ -954,6 +1715,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'ROLE',
+        2 => 'role_list',
+      ),
     ),
     1 =>
     array (
@@ -961,6 +1728,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'ROLE',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'role_list',
       ),
     ),
     2 =>
@@ -970,6 +1745,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'USER',
+        2 => 'role_list',
+      ),
     ),
     3 =>
     array (
@@ -977,6 +1758,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'USER',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'role_list',
       ),
     ),
     4 =>
@@ -986,6 +1775,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'GROUP_P',
+        2 => 'role_list',
+      ),
     ),
     5 =>
     array (
@@ -993,6 +1788,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'GROUP_P',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'role_list',
       ),
     ),
   ),
@@ -1007,6 +1810,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'GROUP_P',
+        2 => 'RoleId',
+        3 => 'opt_with',
+        4 => 'OptRoleList',
+      ),
     ),
   ),
   'AlterGroupStmt' =>
@@ -1020,6 +1831,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'GROUP_P',
+        2 => 'RoleSpec',
+        3 => 'add_drop',
+        4 => 'USER',
+        5 => 'role_list',
+      ),
     ),
   ),
   'add_drop' =>
@@ -1027,10 +1847,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\AddDropChoice_dbf8c77a::UseAdd_0ecba137',
+      'symbols' =>
+      array (
+        0 => 'ADD_P',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\AddDropChoice_dbf8c77a::UseDrop_f3062ed5',
+      'symbols' =>
+      array (
+        0 => 'DROP',
+      ),
     ),
   ),
   'CreateSchemaStmt' =>
@@ -1044,6 +1872,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 4,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'SCHEMA',
+        2 => 'opt_single_name',
+        3 => 'AUTHORIZATION',
+        4 => 'RoleSpec',
+        5 => 'OptSchemaEltList',
+      ),
     ),
     1 =>
     array (
@@ -1052,6 +1889,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'SCHEMA',
+        2 => 'ColId',
+        3 => 'OptSchemaEltList',
       ),
     ),
     2 =>
@@ -1063,6 +1907,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 7,
         2 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'SCHEMA',
+        2 => 'IF_P',
+        3 => 'NOT',
+        4 => 'EXISTS',
+        5 => 'opt_single_name',
+        6 => 'AUTHORIZATION',
+        7 => 'RoleSpec',
+        8 => 'OptSchemaEltList',
+      ),
     ),
     3 =>
     array (
@@ -1071,6 +1927,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 5,
         1 => 6,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'SCHEMA',
+        2 => 'IF_P',
+        3 => 'NOT',
+        4 => 'EXISTS',
+        5 => 'ColId',
+        6 => 'OptSchemaEltList',
       ),
     ),
   ),
@@ -1084,11 +1950,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'OptSchemaEltList',
+        1 => 'schema_stmt',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptSchemaEltListWith_c52a89f5',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -1098,26 +1972,50 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateStmt',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'IndexStmt',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateSeqStmt',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateTrigStmt',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'GrantStmt',
+      ),
     ),
     5 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ViewStmt',
+      ),
     ),
   ),
   'VariableSetStmt' =>
@@ -1129,6 +2027,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'SET',
+        1 => 'set_rest',
+      ),
     ),
     1 =>
     array (
@@ -1137,6 +2040,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'SET',
+        1 => 'LOCAL',
+        2 => 'set_rest',
+      ),
     ),
     2 =>
     array (
@@ -1144,6 +2053,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SET',
+        1 => 'SESSION',
+        2 => 'set_rest',
       ),
     ),
   ),
@@ -1156,6 +2071,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'TRANSACTION',
+        1 => 'transaction_mode_list',
+      ),
     ),
     1 =>
     array (
@@ -1164,10 +2084,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'SESSION',
+        1 => 'CHARACTERISTICS',
+        2 => 'AS',
+        3 => 'TRANSACTION',
+        4 => 'transaction_mode_list',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'set_rest_more',
+      ),
     ),
   ),
   'generic_set' =>
@@ -1180,6 +2112,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'var_name',
+        1 => 'TO',
+        2 => 'var_list',
+      ),
     ),
     1 =>
     array (
@@ -1189,6 +2127,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'var_name',
+        1 => '=',
+        2 => 'var_list',
+      ),
     ),
     2 =>
     array (
@@ -1196,6 +2140,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'var_name',
+        1 => 'TO',
+        2 => 'DEFAULT',
       ),
     ),
     3 =>
@@ -1205,6 +2155,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'var_name',
+        1 => '=',
+        2 => 'DEFAULT',
+      ),
     ),
   ),
   'set_rest_more' =>
@@ -1212,6 +2168,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'generic_set',
+      ),
     ),
     1 =>
     array (
@@ -1219,6 +2179,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'var_name',
+        1 => 'FROM',
+        2 => 'CURRENT_P',
       ),
     ),
     2 =>
@@ -1228,6 +2194,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'TIME',
+        1 => 'ZONE',
+        2 => 'zone_value',
+      ),
     ),
     3 =>
     array (
@@ -1235,6 +2207,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CATALOG_P',
+        1 => 'Sconst',
       ),
     ),
     4 =>
@@ -1244,6 +2221,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'SCHEMA',
+        1 => 'Sconst',
+      ),
     ),
     5 =>
     array (
@@ -1251,6 +2233,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NAMES',
+        1 => 'opt_encoding',
       ),
     ),
     6 =>
@@ -1260,6 +2247,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ROLE',
+        1 => 'NonReservedWord_or_Sconst',
+      ),
     ),
     7 =>
     array (
@@ -1268,12 +2260,24 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'SESSION',
+        1 => 'AUTHORIZATION',
+        2 => 'NonReservedWord_or_Sconst',
+      ),
     ),
     8 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\SetRestMoreWithSessionAuthorizationDefault_8a13d3c4',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'SESSION',
+        1 => 'AUTHORIZATION',
+        2 => 'DEFAULT',
       ),
     ),
     9 =>
@@ -1283,6 +2287,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'XML_P',
+        1 => 'OPTION',
+        2 => 'document_or_content',
+      ),
     ),
     10 =>
     array (
@@ -1291,6 +2301,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'TRANSACTION',
+        1 => 'SNAPSHOT',
+        2 => 'Sconst',
+      ),
     ),
   ),
   'var_name' =>
@@ -1298,6 +2314,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ColId',
+      ),
     ),
     1 =>
     array (
@@ -1307,6 +2327,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'var_name',
+        1 => '.',
+        2 => 'ColId',
+      ),
     ),
   ),
   'var_list' =>
@@ -1314,6 +2340,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'var_value',
+      ),
     ),
     1 =>
     array (
@@ -1323,6 +2353,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'var_list',
+        1 => ',',
+        2 => 'var_value',
+      ),
     ),
   ),
   'var_value' =>
@@ -1330,10 +2366,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'opt_boolean_or_string',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'NumericOnly',
+      ),
     ),
   ),
   'iso_level' =>
@@ -1341,18 +2385,37 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\IsoLevelChoice_5c144ac4::UseReadUncommitted_4875265c',
+      'symbols' =>
+      array (
+        0 => 'READ',
+        1 => 'UNCOMMITTED',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\IsoLevelChoice_5c144ac4::UseReadCommitted_c09d6186',
+      'symbols' =>
+      array (
+        0 => 'READ',
+        1 => 'COMMITTED',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\IsoLevelChoice_5c144ac4::UseRepeatableRead_f5f5acc3',
+      'symbols' =>
+      array (
+        0 => 'REPEATABLE',
+        1 => 'READ',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\IsoLevelChoice_5c144ac4::UseSerializable_7dc421f3',
+      'symbols' =>
+      array (
+        0 => 'SERIALIZABLE',
+      ),
     ),
   ),
   'opt_boolean_or_string' =>
@@ -1363,12 +2426,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'TRUE_P',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptBooleanOrStringWithFalseP_8e8f338e',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'FALSE_P',
       ),
     ),
     2 =>
@@ -1377,10 +2448,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'ON',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'NonReservedWord_or_Sconst',
+      ),
     ),
   ),
   'zone_value' =>
@@ -1388,6 +2467,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Sconst',
+      ),
     ),
     1 =>
     array (
@@ -1395,6 +2478,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'IDENT',
       ),
     ),
     2 =>
@@ -1406,6 +2493,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ConstInterval',
+        1 => 'Sconst',
+        2 => 'opt_interval',
+      ),
     ),
     3 =>
     array (
@@ -1416,16 +2509,32 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ConstInterval',
+        1 => '(',
+        2 => 'Iconst',
+        3 => ')',
+        4 => 'Sconst',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'NumericOnly',
+      ),
     ),
     5 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ZoneValueWithDefault_5f514bf7',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT',
       ),
     ),
     6 =>
@@ -1434,6 +2543,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'LOCAL',
+      ),
     ),
   ),
   'opt_encoding' =>
@@ -1441,6 +2554,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Sconst',
+      ),
     ),
     1 =>
     array (
@@ -1448,11 +2565,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptEncodingWith_600d5104',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -1462,10 +2586,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'NonReservedWord',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Sconst',
+      ),
     ),
   ),
   'VariableResetStmt' =>
@@ -1477,6 +2609,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'RESET',
+        1 => 'reset_rest',
+      ),
     ),
   ),
   'reset_rest' =>
@@ -1484,12 +2621,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'generic_reset',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ResetRestWithTimeZone_64dd0092',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'TIME',
+        1 => 'ZONE',
       ),
     ),
     2 =>
@@ -1498,12 +2644,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'TRANSACTION',
+        1 => 'ISOLATION',
+        2 => 'LEVEL',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ResetRestWithSessionAuthorization_03864c21',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'SESSION',
+        1 => 'AUTHORIZATION',
       ),
     ),
   ),
@@ -1512,12 +2669,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'var_name',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\GenericResetWithAll_71287e60',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALL',
       ),
     ),
   ),
@@ -1530,10 +2695,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'SET',
+        1 => 'set_rest',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'VariableResetStmt',
+      ),
     ),
   ),
   'FunctionSetResetClause' =>
@@ -1545,10 +2719,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'SET',
+        1 => 'set_rest_more',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'VariableResetStmt',
+      ),
     ),
   ),
   'VariableShowStmt' =>
@@ -1560,12 +2743,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'var_name',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\VariableShowStmtWithShowTimeZone_46a23039',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'TIME',
+        2 => 'ZONE',
       ),
     ),
     2 =>
@@ -1574,6 +2768,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'TRANSACTION',
+        2 => 'ISOLATION',
+        3 => 'LEVEL',
+      ),
     ),
     3 =>
     array (
@@ -1581,12 +2782,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'SESSION',
+        2 => 'AUTHORIZATION',
+      ),
     ),
     4 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\VariableShowStmtWithShowAll_b5ef7798',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'ALL',
       ),
     ),
   ),
@@ -1600,6 +2812,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'SET',
+        1 => 'CONSTRAINTS',
+        2 => 'constraints_set_list',
+        3 => 'constraints_set_mode',
+      ),
     ),
   ),
   'constraints_set_list' =>
@@ -1610,10 +2829,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'ALL',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'qualified_name_list',
+      ),
     ),
   ),
   'constraints_set_mode' =>
@@ -1621,10 +2848,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ConstraintsSetModeChoice_7b6791b1::UseDeferred_3e43ac1f',
+      'symbols' =>
+      array (
+        0 => 'DEFERRED',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ConstraintsSetModeChoice_7b6791b1::UseImmediate_def178df',
+      'symbols' =>
+      array (
+        0 => 'IMMEDIATE',
+      ),
     ),
   ),
   'CheckPointStmt' =>
@@ -1632,6 +2867,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\CheckPointStmtChoice_7d4f30f0::UseCheckpoint_0de32428',
+      'symbols' =>
+      array (
+        0 => 'CHECKPOINT',
+      ),
     ),
   ),
   'DiscardStmt' =>
@@ -1639,22 +2878,47 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\DiscardStmtChoice_20d90c23::UseDiscardAll_98f36323',
+      'symbols' =>
+      array (
+        0 => 'DISCARD',
+        1 => 'ALL',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\DiscardStmtChoice_20d90c23::UseDiscardTemp_39aa9482',
+      'symbols' =>
+      array (
+        0 => 'DISCARD',
+        1 => 'TEMP',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\DiscardStmtChoice_20d90c23::UseDiscardTemporary_a2c62d1b',
+      'symbols' =>
+      array (
+        0 => 'DISCARD',
+        1 => 'TEMPORARY',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\DiscardStmtChoice_20d90c23::UseDiscardPlans_7cd065ac',
+      'symbols' =>
+      array (
+        0 => 'DISCARD',
+        1 => 'PLANS',
+      ),
     ),
     4 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\DiscardStmtChoice_20d90c23::UseDiscardSequences_f74d5000',
+      'symbols' =>
+      array (
+        0 => 'DISCARD',
+        1 => 'SEQUENCES',
+      ),
     ),
   ),
   'AlterTableStmt' =>
@@ -1667,6 +2931,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TABLE',
+        2 => 'relation_expr',
+        3 => 'alter_table_cmds',
+      ),
     ),
     1 =>
     array (
@@ -1675,6 +2946,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TABLE',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'relation_expr',
+        5 => 'alter_table_cmds',
       ),
     ),
     2 =>
@@ -1685,6 +2965,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TABLE',
+        2 => 'relation_expr',
+        3 => 'partition_cmd',
+      ),
     ),
     3 =>
     array (
@@ -1693,6 +2980,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TABLE',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'relation_expr',
+        5 => 'partition_cmd',
       ),
     ),
     4 =>
@@ -1703,6 +2999,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 5,
         1 => 8,
         2 => 9,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TABLE',
+        2 => 'ALL',
+        3 => 'IN_P',
+        4 => 'TABLESPACE',
+        5 => 'name',
+        6 => 'SET',
+        7 => 'TABLESPACE',
+        8 => 'name',
+        9 => 'opt_nowait',
       ),
     ),
     5 =>
@@ -1715,6 +3024,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 11,
         3 => 12,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TABLE',
+        2 => 'ALL',
+        3 => 'IN_P',
+        4 => 'TABLESPACE',
+        5 => 'name',
+        6 => 'OWNED',
+        7 => 'BY',
+        8 => 'role_list',
+        9 => 'SET',
+        10 => 'TABLESPACE',
+        11 => 'name',
+        12 => 'opt_nowait',
+      ),
     ),
     6 =>
     array (
@@ -1723,6 +3048,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'INDEX',
+        2 => 'qualified_name',
+        3 => 'alter_table_cmds',
       ),
     ),
     7 =>
@@ -1733,6 +3065,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'INDEX',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'qualified_name',
+        5 => 'alter_table_cmds',
+      ),
     ),
     8 =>
     array (
@@ -1741,6 +3082,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'INDEX',
+        2 => 'qualified_name',
+        3 => 'index_partition_cmd',
       ),
     ),
     9 =>
@@ -1751,6 +3099,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 5,
         1 => 8,
         2 => 9,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'INDEX',
+        2 => 'ALL',
+        3 => 'IN_P',
+        4 => 'TABLESPACE',
+        5 => 'name',
+        6 => 'SET',
+        7 => 'TABLESPACE',
+        8 => 'name',
+        9 => 'opt_nowait',
       ),
     ),
     10 =>
@@ -1763,6 +3124,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 11,
         3 => 12,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'INDEX',
+        2 => 'ALL',
+        3 => 'IN_P',
+        4 => 'TABLESPACE',
+        5 => 'name',
+        6 => 'OWNED',
+        7 => 'BY',
+        8 => 'role_list',
+        9 => 'SET',
+        10 => 'TABLESPACE',
+        11 => 'name',
+        12 => 'opt_nowait',
+      ),
     ),
     11 =>
     array (
@@ -1771,6 +3148,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SEQUENCE',
+        2 => 'qualified_name',
+        3 => 'alter_table_cmds',
       ),
     ),
     12 =>
@@ -1781,6 +3165,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SEQUENCE',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'qualified_name',
+        5 => 'alter_table_cmds',
+      ),
     ),
     13 =>
     array (
@@ -1789,6 +3182,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'VIEW',
+        2 => 'qualified_name',
+        3 => 'alter_table_cmds',
       ),
     ),
     14 =>
@@ -1799,6 +3199,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'VIEW',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'qualified_name',
+        5 => 'alter_table_cmds',
+      ),
     ),
     15 =>
     array (
@@ -1807,6 +3216,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'MATERIALIZED',
+        2 => 'VIEW',
+        3 => 'qualified_name',
+        4 => 'alter_table_cmds',
       ),
     ),
     16 =>
@@ -1817,6 +3234,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 5,
         1 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'MATERIALIZED',
+        2 => 'VIEW',
+        3 => 'IF_P',
+        4 => 'EXISTS',
+        5 => 'qualified_name',
+        6 => 'alter_table_cmds',
+      ),
     ),
     17 =>
     array (
@@ -1826,6 +3253,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 6,
         1 => 9,
         2 => 10,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'MATERIALIZED',
+        2 => 'VIEW',
+        3 => 'ALL',
+        4 => 'IN_P',
+        5 => 'TABLESPACE',
+        6 => 'name',
+        7 => 'SET',
+        8 => 'TABLESPACE',
+        9 => 'name',
+        10 => 'opt_nowait',
       ),
     ),
     18 =>
@@ -1838,6 +3279,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 12,
         3 => 13,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'MATERIALIZED',
+        2 => 'VIEW',
+        3 => 'ALL',
+        4 => 'IN_P',
+        5 => 'TABLESPACE',
+        6 => 'name',
+        7 => 'OWNED',
+        8 => 'BY',
+        9 => 'role_list',
+        10 => 'SET',
+        11 => 'TABLESPACE',
+        12 => 'name',
+        13 => 'opt_nowait',
+      ),
     ),
     19 =>
     array (
@@ -1846,6 +3304,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'FOREIGN',
+        2 => 'TABLE',
+        3 => 'relation_expr',
+        4 => 'alter_table_cmds',
       ),
     ),
     20 =>
@@ -1856,6 +3322,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 5,
         1 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'FOREIGN',
+        2 => 'TABLE',
+        3 => 'IF_P',
+        4 => 'EXISTS',
+        5 => 'relation_expr',
+        6 => 'alter_table_cmds',
+      ),
     ),
   ),
   'alter_table_cmds' =>
@@ -1863,6 +3339,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_table_cmd',
+      ),
     ),
     1 =>
     array (
@@ -1871,6 +3351,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'alter_table_cmds',
+        1 => ',',
+        2 => 'alter_table_cmd',
       ),
     ),
   ),
@@ -1884,6 +3370,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ATTACH',
+        1 => 'PARTITION',
+        2 => 'qualified_name',
+        3 => 'PartitionBoundSpec',
+      ),
     ),
     1 =>
     array (
@@ -1893,6 +3386,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'DETACH',
+        1 => 'PARTITION',
+        2 => 'qualified_name',
+        3 => 'opt_concurrently',
+      ),
     ),
     2 =>
     array (
@@ -1900,6 +3400,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DETACH',
+        1 => 'PARTITION',
+        2 => 'qualified_name',
+        3 => 'FINALIZE',
       ),
     ),
   ),
@@ -1912,6 +3419,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ATTACH',
+        1 => 'PARTITION',
+        2 => 'qualified_name',
+      ),
     ),
   ),
   'alter_table_cmd' =>
@@ -1923,6 +3436,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ADD_P',
+        1 => 'columnDef',
+      ),
     ),
     1 =>
     array (
@@ -1930,6 +3448,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ADD_P',
+        1 => 'IF_P',
+        2 => 'NOT',
+        3 => 'EXISTS',
+        4 => 'columnDef',
       ),
     ),
     2 =>
@@ -1939,6 +3465,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ADD_P',
+        1 => 'COLUMN',
+        2 => 'columnDef',
+      ),
     ),
     3 =>
     array (
@@ -1946,6 +3478,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ADD_P',
+        1 => 'COLUMN',
+        2 => 'IF_P',
+        3 => 'NOT',
+        4 => 'EXISTS',
+        5 => 'columnDef',
       ),
     ),
     4 =>
@@ -1957,6 +3498,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'opt_column',
+        2 => 'ColId',
+        3 => 'alter_column_default',
+      ),
     ),
     5 =>
     array (
@@ -1965,6 +3513,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'opt_column',
+        2 => 'ColId',
+        3 => 'DROP',
+        4 => 'NOT',
+        5 => 'NULL_P',
       ),
     ),
     6 =>
@@ -1975,6 +3532,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'opt_column',
+        2 => 'ColId',
+        3 => 'SET',
+        4 => 'NOT',
+        5 => 'NULL_P',
+      ),
     ),
     7 =>
     array (
@@ -1984,6 +3550,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'opt_column',
+        2 => 'ColId',
+        3 => 'DROP',
+        4 => 'EXPRESSION',
+      ),
     ),
     8 =>
     array (
@@ -1992,6 +3566,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'opt_column',
+        2 => 'ColId',
+        3 => 'DROP',
+        4 => 'EXPRESSION',
+        5 => 'IF_P',
+        6 => 'EXISTS',
       ),
     ),
     9 =>
@@ -2003,6 +3587,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'opt_column',
+        2 => 'ColId',
+        3 => 'SET',
+        4 => 'STATISTICS',
+        5 => 'SignedIconst',
+      ),
     ),
     10 =>
     array (
@@ -2012,6 +3605,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
         2 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'opt_column',
+        2 => 'Iconst',
+        3 => 'SET',
+        4 => 'STATISTICS',
+        5 => 'SignedIconst',
       ),
     ),
     11 =>
@@ -2023,6 +3625,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'opt_column',
+        2 => 'ColId',
+        3 => 'SET',
+        4 => 'reloptions',
+      ),
     ),
     12 =>
     array (
@@ -2032,6 +3642,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
         2 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'opt_column',
+        2 => 'ColId',
+        3 => 'RESET',
+        4 => 'reloptions',
       ),
     ),
     13 =>
@@ -2043,6 +3661,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'opt_column',
+        2 => 'ColId',
+        3 => 'SET',
+        4 => 'column_storage',
+      ),
     ),
     14 =>
     array (
@@ -2052,6 +3678,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
         2 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'opt_column',
+        2 => 'ColId',
+        3 => 'SET',
+        4 => 'column_compression',
       ),
     ),
     15 =>
@@ -2064,6 +3698,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 5,
         3 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'opt_column',
+        2 => 'ColId',
+        3 => 'ADD_P',
+        4 => 'GENERATED',
+        5 => 'generated_when',
+        6 => 'AS',
+        7 => 'IDENTITY_P',
+        8 => 'OptParenthesizedSeqOptList',
+      ),
     ),
     16 =>
     array (
@@ -2074,6 +3720,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'opt_column',
+        2 => 'ColId',
+        3 => 'alter_identity_column_option_list',
+      ),
     ),
     17 =>
     array (
@@ -2083,6 +3736,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'opt_column',
+        2 => 'ColId',
+        3 => 'DROP',
+        4 => 'IDENTITY_P',
+      ),
     ),
     18 =>
     array (
@@ -2091,6 +3752,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'opt_column',
+        2 => 'ColId',
+        3 => 'DROP',
+        4 => 'IDENTITY_P',
+        5 => 'IF_P',
+        6 => 'EXISTS',
       ),
     ),
     19 =>
@@ -2102,6 +3773,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 4,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'opt_column',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'ColId',
+        5 => 'opt_drop_behavior',
+      ),
     ),
     20 =>
     array (
@@ -2111,6 +3791,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
         2 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'opt_column',
+        2 => 'ColId',
+        3 => 'opt_drop_behavior',
       ),
     ),
     21 =>
@@ -2125,6 +3812,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         4 => 6,
         5 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'opt_column',
+        2 => 'ColId',
+        3 => 'opt_set_data',
+        4 => 'TYPE_P',
+        5 => 'Typename',
+        6 => 'opt_collate_clause',
+        7 => 'alter_using',
+      ),
     ),
     22 =>
     array (
@@ -2135,6 +3833,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'opt_column',
+        2 => 'ColId',
+        3 => 'alter_generic_options',
+      ),
     ),
     23 =>
     array (
@@ -2142,6 +3847,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ADD_P',
+        1 => 'TableConstraint',
       ),
     ),
     24 =>
@@ -2152,6 +3862,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'CONSTRAINT',
+        2 => 'name',
+        3 => 'ConstraintAttributeSpec',
+      ),
     ),
     25 =>
     array (
@@ -2159,6 +3876,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'VALIDATE',
+        1 => 'CONSTRAINT',
+        2 => 'name',
       ),
     ),
     26 =>
@@ -2169,6 +3892,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'CONSTRAINT',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'name',
+        5 => 'opt_drop_behavior',
+      ),
     ),
     27 =>
     array (
@@ -2178,12 +3910,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'CONSTRAINT',
+        2 => 'name',
+        3 => 'opt_drop_behavior',
+      ),
     ),
     28 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterTableCmdWithSetWithoutOids_bf25bdfe',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'SET',
+        1 => 'WITHOUT',
+        2 => 'OIDS',
       ),
     ),
     29 =>
@@ -2193,12 +3938,24 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'CLUSTER',
+        1 => 'ON',
+        2 => 'name',
+      ),
     ),
     30 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterTableCmdWithSetWithoutCluster_b4892383',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'SET',
+        1 => 'WITHOUT',
+        2 => 'CLUSTER',
       ),
     ),
     31 =>
@@ -2207,12 +3964,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'SET',
+        1 => 'LOGGED',
+      ),
     ),
     32 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterTableCmdWithSetUnlogged_6d19a82f',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'SET',
+        1 => 'UNLOGGED',
       ),
     ),
     33 =>
@@ -2222,6 +3989,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ENABLE_P',
+        1 => 'TRIGGER',
+        2 => 'name',
+      ),
     ),
     34 =>
     array (
@@ -2229,6 +4002,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ENABLE_P',
+        1 => 'ALWAYS',
+        2 => 'TRIGGER',
+        3 => 'name',
       ),
     ),
     35 =>
@@ -2238,6 +4018,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ENABLE_P',
+        1 => 'REPLICA',
+        2 => 'TRIGGER',
+        3 => 'name',
+      ),
     ),
     36 =>
     array (
@@ -2245,12 +4032,24 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'ENABLE_P',
+        1 => 'TRIGGER',
+        2 => 'ALL',
+      ),
     ),
     37 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterTableCmdWithEnablePTriggerUser_f8551120',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'ENABLE_P',
+        1 => 'TRIGGER',
+        2 => 'USER',
       ),
     ),
     38 =>
@@ -2260,6 +4059,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'DISABLE_P',
+        1 => 'TRIGGER',
+        2 => 'name',
+      ),
     ),
     39 =>
     array (
@@ -2267,12 +4072,24 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'DISABLE_P',
+        1 => 'TRIGGER',
+        2 => 'ALL',
+      ),
     ),
     40 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterTableCmdWithDisablePTriggerUser_bdad3916',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'DISABLE_P',
+        1 => 'TRIGGER',
+        2 => 'USER',
       ),
     ),
     41 =>
@@ -2282,6 +4099,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ENABLE_P',
+        1 => 'RULE',
+        2 => 'name',
+      ),
     ),
     42 =>
     array (
@@ -2289,6 +4112,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ENABLE_P',
+        1 => 'ALWAYS',
+        2 => 'RULE',
+        3 => 'name',
       ),
     ),
     43 =>
@@ -2298,6 +4128,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ENABLE_P',
+        1 => 'REPLICA',
+        2 => 'RULE',
+        3 => 'name',
+      ),
     ),
     44 =>
     array (
@@ -2305,6 +4142,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DISABLE_P',
+        1 => 'RULE',
+        2 => 'name',
       ),
     ),
     45 =>
@@ -2314,6 +4157,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'INHERIT',
+        1 => 'qualified_name',
+      ),
     ),
     46 =>
     array (
@@ -2321,6 +4169,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NO',
+        1 => 'INHERIT',
+        2 => 'qualified_name',
       ),
     ),
     47 =>
@@ -2330,12 +4184,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'OF',
+        1 => 'any_name',
+      ),
     ),
     48 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterTableCmdWithNotOf_ea955649',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'NOT',
+        1 => 'OF',
       ),
     ),
     49 =>
@@ -2345,6 +4209,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'OWNER',
+        1 => 'TO',
+        2 => 'RoleSpec',
+      ),
     ),
     50 =>
     array (
@@ -2352,6 +4222,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SET',
+        1 => 'ACCESS',
+        2 => 'METHOD',
+        3 => 'name',
       ),
     ),
     51 =>
@@ -2361,6 +4238,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'SET',
+        1 => 'TABLESPACE',
+        2 => 'name',
+      ),
     ),
     52 =>
     array (
@@ -2368,6 +4251,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SET',
+        1 => 'reloptions',
       ),
     ),
     53 =>
@@ -2377,6 +4265,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'RESET',
+        1 => 'reloptions',
+      ),
     ),
     54 =>
     array (
@@ -2385,12 +4278,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'REPLICA',
+        1 => 'IDENTITY_P',
+        2 => 'replica_identity',
+      ),
     ),
     55 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterTableCmdWithEnablePRowLevelSecurity_3dee8c09',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'ENABLE_P',
+        1 => 'ROW',
+        2 => 'LEVEL',
+        3 => 'SECURITY',
       ),
     ),
     56 =>
@@ -2399,12 +4305,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'DISABLE_P',
+        1 => 'ROW',
+        2 => 'LEVEL',
+        3 => 'SECURITY',
+      ),
     ),
     57 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterTableCmdWithForceRowLevelSecurity_dd155e61',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'FORCE',
+        1 => 'ROW',
+        2 => 'LEVEL',
+        3 => 'SECURITY',
       ),
     ),
     58 =>
@@ -2413,10 +4333,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'NO',
+        1 => 'FORCE',
+        2 => 'ROW',
+        3 => 'LEVEL',
+        4 => 'SECURITY',
+      ),
     ),
     59 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_generic_options',
+      ),
     ),
   ),
   'alter_column_default' =>
@@ -2428,12 +4360,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'SET',
+        1 => 'DEFAULT',
+        2 => 'a_expr',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterColumnDefaultWithDropDefault_44d9bb70',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'DEFAULT',
       ),
     ),
   ),
@@ -2446,11 +4389,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'COLLATE',
+        1 => 'any_name',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptCollateClauseWith_c5ceb5f6',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -2464,11 +4415,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'USING',
+        1 => 'a_expr',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterUsingWith_724dbb25',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -2481,12 +4440,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'NOTHING',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ReplicaIdentityWithFull_7921b8bd',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'FULL',
       ),
     ),
     2 =>
@@ -2495,6 +4462,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT',
+      ),
     ),
     3 =>
     array (
@@ -2502,6 +4473,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'USING',
+        1 => 'INDEX',
+        2 => 'name',
       ),
     ),
   ),
@@ -2514,6 +4491,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'reloption_list',
+        2 => ')',
+      ),
     ),
   ),
   'opt_reloptions' =>
@@ -2525,11 +4508,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'reloptions',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptReloptionsWith_526b405b',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -2539,6 +4530,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'reloption_elem',
+      ),
     ),
     1 =>
     array (
@@ -2547,6 +4542,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'reloption_list',
+        1 => ',',
+        2 => 'reloption_elem',
       ),
     ),
   ),
@@ -2560,10 +4561,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColLabel',
+        1 => '=',
+        2 => 'def_arg',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ColLabel',
+      ),
     ),
     2 =>
     array (
@@ -2574,6 +4585,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColLabel',
+        1 => '.',
+        2 => 'ColLabel',
+        3 => '=',
+        4 => 'def_arg',
+      ),
     ),
     3 =>
     array (
@@ -2583,6 +4602,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColLabel',
+        1 => '.',
+        2 => 'ColLabel',
+      ),
     ),
   ),
   'alter_identity_column_option_list' =>
@@ -2590,6 +4615,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_identity_column_option',
+      ),
     ),
     1 =>
     array (
@@ -2598,6 +4627,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'alter_identity_column_option_list',
+        1 => 'alter_identity_column_option',
       ),
     ),
   ),
@@ -2609,6 +4643,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'RESTART',
+      ),
     ),
     1 =>
     array (
@@ -2618,6 +4656,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'RESTART',
+        1 => 'opt_with',
+        2 => 'NumericOnly',
+      ),
     ),
     2 =>
     array (
@@ -2626,6 +4670,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'SET',
+        1 => 'SeqOptElem',
+      ),
     ),
     3 =>
     array (
@@ -2633,6 +4682,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SET',
+        1 => 'GENERATED',
+        2 => 'generated_when',
       ),
     ),
   ),
@@ -2645,6 +4700,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'FOR',
+        1 => 'VALUES',
+        2 => 'WITH',
+        3 => '(',
+        4 => 'hash_partbound',
+        5 => ')',
+      ),
     ),
     1 =>
     array (
@@ -2652,6 +4716,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FOR',
+        1 => 'VALUES',
+        2 => 'IN_P',
+        3 => '(',
+        4 => 'expr_list',
+        5 => ')',
       ),
     ),
     2 =>
@@ -2662,12 +4735,29 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'FOR',
+        1 => 'VALUES',
+        2 => 'FROM',
+        3 => '(',
+        4 => 'expr_list',
+        5 => ')',
+        6 => 'TO',
+        7 => '(',
+        8 => 'expr_list',
+        9 => ')',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\PartitionBoundSpecWithDefault_535d455e',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT',
       ),
     ),
   ),
@@ -2681,6 +4771,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'NonReservedWord',
+        1 => 'Iconst',
+      ),
     ),
   ),
   'hash_partbound' =>
@@ -2688,6 +4783,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'hash_partbound_elem',
+      ),
     ),
     1 =>
     array (
@@ -2696,6 +4795,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'hash_partbound',
+        1 => ',',
+        2 => 'hash_partbound_elem',
       ),
     ),
   ),
@@ -2709,6 +4814,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TYPE_P',
+        2 => 'any_name',
+        3 => 'alter_type_cmds',
+      ),
     ),
   ),
   'alter_type_cmds' =>
@@ -2716,6 +4828,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_type_cmd',
+      ),
     ),
     1 =>
     array (
@@ -2724,6 +4840,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'alter_type_cmds',
+        1 => ',',
+        2 => 'alter_type_cmd',
       ),
     ),
   ),
@@ -2737,6 +4859,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ADD_P',
+        1 => 'ATTRIBUTE',
+        2 => 'TableFuncElement',
+        3 => 'opt_drop_behavior',
+      ),
     ),
     1 =>
     array (
@@ -2746,6 +4875,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'ATTRIBUTE',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'ColId',
+        5 => 'opt_drop_behavior',
+      ),
     ),
     2 =>
     array (
@@ -2754,6 +4892,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'ATTRIBUTE',
+        2 => 'ColId',
+        3 => 'opt_drop_behavior',
       ),
     ),
     3 =>
@@ -2767,6 +4912,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 6,
         4 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'ATTRIBUTE',
+        2 => 'ColId',
+        3 => 'opt_set_data',
+        4 => 'TYPE_P',
+        5 => 'Typename',
+        6 => 'opt_collate_clause',
+        7 => 'opt_drop_behavior',
+      ),
     ),
   ),
   'ClosePortalStmt' =>
@@ -2778,12 +4934,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'CLOSE',
+        1 => 'cursor_name',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ClosePortalStmtWithCloseAll_225281a3',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'CLOSE',
+        1 => 'ALL',
       ),
     ),
   ),
@@ -2805,6 +4971,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         8 => 9,
         9 => 10,
       ),
+      'symbols' =>
+      array (
+        0 => 'COPY',
+        1 => 'opt_binary',
+        2 => 'qualified_name',
+        3 => 'opt_column_list',
+        4 => 'copy_from',
+        5 => 'opt_program',
+        6 => 'copy_file_name',
+        7 => 'copy_delimiter',
+        8 => 'opt_with',
+        9 => 'copy_options',
+        10 => 'where_clause',
+      ),
     ),
     1 =>
     array (
@@ -2817,6 +4997,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 7,
         4 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'COPY',
+        1 => '(',
+        2 => 'PreparableStmt',
+        3 => ')',
+        4 => 'TO',
+        5 => 'opt_program',
+        6 => 'copy_file_name',
+        7 => 'opt_with',
+        8 => 'copy_options',
+      ),
     ),
   ),
   'copy_from' =>
@@ -2824,10 +5016,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\CopyFromChoice_ee84a5ce::UseFrom_f4383c66',
+      'symbols' =>
+      array (
+        0 => 'FROM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\CopyFromChoice_ee84a5ce::UseTo_c3bd7d9e',
+      'symbols' =>
+      array (
+        0 => 'TO',
+      ),
     ),
   ),
   'opt_program' =>
@@ -2835,10 +5035,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptProgramChoice_3cf2307a::UseProgram_cec695ee',
+      'symbols' =>
+      array (
+        0 => 'PROGRAM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptProgramChoice_3cf2307a::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'copy_file_name' =>
@@ -2846,12 +5053,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Sconst',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CopyFileNameWithStdin_d572615b',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'STDIN',
       ),
     ),
     2 =>
@@ -2860,6 +5075,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'STDOUT',
+      ),
     ),
   ),
   'copy_options' =>
@@ -2867,6 +5086,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'copy_opt_list',
+      ),
     ),
     1 =>
     array (
@@ -2874,6 +5097,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'copy_generic_opt_list',
+        2 => ')',
       ),
     ),
   ),
@@ -2887,11 +5116,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'copy_opt_list',
+        1 => 'copy_opt_item',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CopyOptListWith_3d1c118a',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -2904,12 +5141,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'BINARY',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CopyOptItemWithFreeze_a19b65dd',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'FREEZE',
       ),
     ),
     2 =>
@@ -2920,6 +5165,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'DELIMITER',
+        1 => 'opt_as',
+        2 => 'Sconst',
+      ),
     ),
     3 =>
     array (
@@ -2929,6 +5180,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'NULL_P',
+        1 => 'opt_as',
+        2 => 'Sconst',
+      ),
     ),
     4 =>
     array (
@@ -2936,12 +5193,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'CSV',
+      ),
     ),
     5 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CopyOptItemWithHeaderP_414a5c7c',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'HEADER_P',
       ),
     ),
     6 =>
@@ -2952,6 +5217,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'QUOTE',
+        1 => 'opt_as',
+        2 => 'Sconst',
+      ),
     ),
     7 =>
     array (
@@ -2961,6 +5232,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ESCAPE',
+        1 => 'opt_as',
+        2 => 'Sconst',
+      ),
     ),
     8 =>
     array (
@@ -2969,12 +5246,24 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'FORCE',
+        1 => 'QUOTE',
+        2 => 'columnList',
+      ),
     ),
     9 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CopyOptItemWithForceQuote_c02d4161',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'FORCE',
+        1 => 'QUOTE',
+        2 => '*',
       ),
     ),
     10 =>
@@ -2984,6 +5273,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'FORCE',
+        1 => 'NOT',
+        2 => 'NULL_P',
+        3 => 'columnList',
+      ),
     ),
     11 =>
     array (
@@ -2991,6 +5287,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FORCE',
+        1 => 'NULL_P',
+        2 => 'columnList',
       ),
     ),
     12 =>
@@ -3000,6 +5302,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ENCODING',
+        1 => 'Sconst',
+      ),
     ),
   ),
   'opt_binary' =>
@@ -3007,10 +5314,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptBinaryChoice_0456aee3::UseBinary_4c77b56b',
+      'symbols' =>
+      array (
+        0 => 'BINARY',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptBinaryChoice_0456aee3::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'copy_delimiter' =>
@@ -3023,11 +5337,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_using',
+        1 => 'DELIMITERS',
+        2 => 'Sconst',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CopyDelimiterWith_e191e6ff',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -3037,10 +5360,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptUsingChoice_3a99c2c8::UseUsing_b93f01e8',
+      'symbols' =>
+      array (
+        0 => 'USING',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptUsingChoice_3a99c2c8::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'copy_generic_opt_list' =>
@@ -3048,6 +5378,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'copy_generic_opt_elem',
+      ),
     ),
     1 =>
     array (
@@ -3056,6 +5390,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'copy_generic_opt_list',
+        1 => ',',
+        2 => 'copy_generic_opt_elem',
       ),
     ),
   ),
@@ -3069,6 +5409,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColLabel',
+        1 => 'copy_generic_opt_arg',
+      ),
     ),
   ),
   'copy_generic_opt_arg' =>
@@ -3076,16 +5421,28 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'opt_boolean_or_string',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'NumericOnly',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CopyGenericOptArgWith_69946486',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => '*',
       ),
     ),
     3 =>
@@ -3095,11 +5452,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'copy_generic_opt_arg_list',
+        2 => ')',
+      ),
     ),
     4 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CopyGenericOptArgWith_3cd83e9c',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -3109,6 +5475,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'copy_generic_opt_arg_list_item',
+      ),
     ),
     1 =>
     array (
@@ -3118,6 +5488,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'copy_generic_opt_arg_list',
+        1 => ',',
+        2 => 'copy_generic_opt_arg_list_item',
+      ),
     ),
   ),
   'copy_generic_opt_arg_list_item' =>
@@ -3125,6 +5501,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'opt_boolean_or_string',
+      ),
     ),
   ),
   'CreateStmt' =>
@@ -3144,6 +5524,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         7 => 11,
         8 => 12,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'OptTemp',
+        2 => 'TABLE',
+        3 => 'qualified_name',
+        4 => '(',
+        5 => 'OptTableElementList',
+        6 => ')',
+        7 => 'OptInherit',
+        8 => 'OptPartitionSpec',
+        9 => 'table_access_method_clause',
+        10 => 'OptWith',
+        11 => 'OnCommitOption',
+        12 => 'OptTableSpace',
+      ),
     ),
     1 =>
     array (
@@ -3159,6 +5555,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         6 => 13,
         7 => 14,
         8 => 15,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'OptTemp',
+        2 => 'TABLE',
+        3 => 'IF_P',
+        4 => 'NOT',
+        5 => 'EXISTS',
+        6 => 'qualified_name',
+        7 => '(',
+        8 => 'OptTableElementList',
+        9 => ')',
+        10 => 'OptInherit',
+        11 => 'OptPartitionSpec',
+        12 => 'table_access_method_clause',
+        13 => 'OptWith',
+        14 => 'OnCommitOption',
+        15 => 'OptTableSpace',
       ),
     ),
     2 =>
@@ -3176,6 +5591,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         7 => 10,
         8 => 11,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'OptTemp',
+        2 => 'TABLE',
+        3 => 'qualified_name',
+        4 => 'OF',
+        5 => 'any_name',
+        6 => 'OptTypedTableElementList',
+        7 => 'OptPartitionSpec',
+        8 => 'table_access_method_clause',
+        9 => 'OptWith',
+        10 => 'OnCommitOption',
+        11 => 'OptTableSpace',
+      ),
     ),
     3 =>
     array (
@@ -3191,6 +5621,24 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         6 => 12,
         7 => 13,
         8 => 14,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'OptTemp',
+        2 => 'TABLE',
+        3 => 'IF_P',
+        4 => 'NOT',
+        5 => 'EXISTS',
+        6 => 'qualified_name',
+        7 => 'OF',
+        8 => 'any_name',
+        9 => 'OptTypedTableElementList',
+        10 => 'OptPartitionSpec',
+        11 => 'table_access_method_clause',
+        12 => 'OptWith',
+        13 => 'OnCommitOption',
+        14 => 'OptTableSpace',
       ),
     ),
     4 =>
@@ -3209,6 +5657,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         8 => 12,
         9 => 13,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'OptTemp',
+        2 => 'TABLE',
+        3 => 'qualified_name',
+        4 => 'PARTITION',
+        5 => 'OF',
+        6 => 'qualified_name',
+        7 => 'OptTypedTableElementList',
+        8 => 'PartitionBoundSpec',
+        9 => 'OptPartitionSpec',
+        10 => 'table_access_method_clause',
+        11 => 'OptWith',
+        12 => 'OnCommitOption',
+        13 => 'OptTableSpace',
+      ),
     ),
     5 =>
     array (
@@ -3226,6 +5691,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         8 => 15,
         9 => 16,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'OptTemp',
+        2 => 'TABLE',
+        3 => 'IF_P',
+        4 => 'NOT',
+        5 => 'EXISTS',
+        6 => 'qualified_name',
+        7 => 'PARTITION',
+        8 => 'OF',
+        9 => 'qualified_name',
+        10 => 'OptTypedTableElementList',
+        11 => 'PartitionBoundSpec',
+        12 => 'OptPartitionSpec',
+        13 => 'table_access_method_clause',
+        14 => 'OptWith',
+        15 => 'OnCommitOption',
+        16 => 'OptTableSpace',
+      ),
     ),
   ),
   'OptTemp' =>
@@ -3233,34 +5718,69 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTempChoice_b0b20125::UseTemporary_cb28e366',
+      'symbols' =>
+      array (
+        0 => 'TEMPORARY',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTempChoice_b0b20125::UseTemp_b969079f',
+      'symbols' =>
+      array (
+        0 => 'TEMP',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTempChoice_b0b20125::UseLocalTemporary_ca17e118',
+      'symbols' =>
+      array (
+        0 => 'LOCAL',
+        1 => 'TEMPORARY',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTempChoice_b0b20125::UseLocalTemp_512b8059',
+      'symbols' =>
+      array (
+        0 => 'LOCAL',
+        1 => 'TEMP',
+      ),
     ),
     4 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTempChoice_b0b20125::UseGlobalTemporary_b3333bdf',
+      'symbols' =>
+      array (
+        0 => 'GLOBAL',
+        1 => 'TEMPORARY',
+      ),
     ),
     5 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTempChoice_b0b20125::UseGlobalTemp_3a5bdb76',
+      'symbols' =>
+      array (
+        0 => 'GLOBAL',
+        1 => 'TEMP',
+      ),
     ),
     6 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTempChoice_b0b20125::UseUnlogged_2f428180',
+      'symbols' =>
+      array (
+        0 => 'UNLOGGED',
+      ),
     ),
     7 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTempChoice_b0b20125::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'OptTableElementList' =>
@@ -3268,11 +5788,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'TableElementList',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptTableElementListWith_66968f95',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -3286,11 +5813,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'TypedTableElementList',
+        2 => ')',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptTypedTableElementListWith_0ef4d21a',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -3300,6 +5836,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'TableElement',
+      ),
     ),
     1 =>
     array (
@@ -3309,6 +5849,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'TableElementList',
+        1 => ',',
+        2 => 'TableElement',
+      ),
     ),
   ),
   'TypedTableElementList' =>
@@ -3316,6 +5862,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'TypedTableElement',
+      ),
     ),
     1 =>
     array (
@@ -3325,6 +5875,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'TypedTableElementList',
+        1 => ',',
+        2 => 'TypedTableElement',
+      ),
     ),
   ),
   'TableElement' =>
@@ -3332,14 +5888,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'columnDef',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'TableLikeClause',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'TableConstraint',
+      ),
     ),
   ),
   'TypedTableElement' =>
@@ -3347,10 +5915,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'columnOptions',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'TableConstraint',
+      ),
     ),
   ),
   'columnDef' =>
@@ -3367,6 +5943,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         4 => 4,
         5 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColId',
+        1 => 'Typename',
+        2 => 'opt_column_storage',
+        3 => 'opt_column_compression',
+        4 => 'create_generic_options',
+        5 => 'ColQualList',
+      ),
     ),
   ),
   'columnOptions' =>
@@ -3379,6 +5964,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColId',
+        1 => 'ColQualList',
+      ),
     ),
     1 =>
     array (
@@ -3387,6 +5977,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ColId',
+        1 => 'WITH',
+        2 => 'OPTIONS',
+        3 => 'ColQualList',
       ),
     ),
   ),
@@ -3399,12 +5996,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMPRESSION',
+        1 => 'ColId',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ColumnCompressionWithCompressionDefault_4e99dd29',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'COMPRESSION',
+        1 => 'DEFAULT',
       ),
     ),
   ),
@@ -3413,11 +6020,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'column_compression',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptColumnCompressionWith_3eacb745',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -3431,12 +6045,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'STORAGE',
+        1 => 'ColId',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ColumnStorageWithStorageDefault_ea22ad60',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'STORAGE',
+        1 => 'DEFAULT',
       ),
     ),
   ),
@@ -3445,11 +6069,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'column_storage',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptColumnStorageWith_52dec9b6',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -3464,11 +6095,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColQualList',
+        1 => 'ColConstraint',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ColQualListWith_8ec580a8',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -3483,14 +6122,28 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'CONSTRAINT',
+        1 => 'name',
+        2 => 'ColConstraintElem',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ColConstraintElem',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ConstraintAttr',
+      ),
     ),
     3 =>
     array (
@@ -3498,6 +6151,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COLLATE',
+        1 => 'any_name',
       ),
     ),
   ),
@@ -3509,12 +6167,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'NOT',
+        1 => 'NULL_P',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ColConstraintElemWithNullP_a0746611',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'NULL_P',
       ),
     ),
     2 =>
@@ -3526,6 +6193,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNIQUE',
+        1 => 'opt_unique_null_treatment',
+        2 => 'opt_definition',
+        3 => 'OptConsTableSpace',
+      ),
     ),
     3 =>
     array (
@@ -3534,6 +6208,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PRIMARY',
+        1 => 'KEY',
+        2 => 'opt_definition',
+        3 => 'OptConsTableSpace',
       ),
     ),
     4 =>
@@ -3544,6 +6225,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'CHECK',
+        1 => '(',
+        2 => 'a_expr',
+        3 => ')',
+        4 => 'opt_no_inherit',
+      ),
     ),
     5 =>
     array (
@@ -3551,6 +6240,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT',
+        1 => 'b_expr',
       ),
     ),
     6 =>
@@ -3561,6 +6255,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'GENERATED',
+        1 => 'generated_when',
+        2 => 'AS',
+        3 => 'IDENTITY_P',
+        4 => 'OptParenthesizedSeqOptList',
+      ),
     ),
     7 =>
     array (
@@ -3569,6 +6271,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'GENERATED',
+        1 => 'generated_when',
+        2 => 'AS',
+        3 => '(',
+        4 => 'a_expr',
+        5 => ')',
+        6 => 'STORED',
       ),
     ),
     8 =>
@@ -3581,6 +6293,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'REFERENCES',
+        1 => 'qualified_name',
+        2 => 'opt_column_list',
+        3 => 'key_match',
+        4 => 'key_actions',
+      ),
     ),
   ),
   'opt_unique_null_treatment' =>
@@ -3588,14 +6308,28 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptUniqueNullTreatmentChoice_0d0ecb2d::UseNullsDistinct_ce5246e0',
+      'symbols' =>
+      array (
+        0 => 'NULLS_P',
+        1 => 'DISTINCT',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptUniqueNullTreatmentChoice_0d0ecb2d::UseNullsNotDistinct_c96cba04',
+      'symbols' =>
+      array (
+        0 => 'NULLS_P',
+        1 => 'NOT',
+        2 => 'DISTINCT',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptUniqueNullTreatmentChoice_0d0ecb2d::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'generated_when' =>
@@ -3603,10 +6337,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\GeneratedWhenChoice_24e63c65::UseAlways_5b07e351',
+      'symbols' =>
+      array (
+        0 => 'ALWAYS',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\GeneratedWhenChoice_24e63c65::UseByDefault_5e7070fe',
+      'symbols' =>
+      array (
+        0 => 'BY',
+        1 => 'DEFAULT',
+      ),
     ),
   ),
   'ConstraintAttr' =>
@@ -3614,18 +6357,37 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ConstraintAttrChoice_689d0bfa::UseDeferrable_98c41ab5',
+      'symbols' =>
+      array (
+        0 => 'DEFERRABLE',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ConstraintAttrChoice_689d0bfa::UseNotDeferrable_22785b31',
+      'symbols' =>
+      array (
+        0 => 'NOT',
+        1 => 'DEFERRABLE',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ConstraintAttrChoice_689d0bfa::UseInitiallyDeferred_6e9191be',
+      'symbols' =>
+      array (
+        0 => 'INITIALLY',
+        1 => 'DEFERRED',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ConstraintAttrChoice_689d0bfa::UseInitiallyImmediate_0e67cf0a',
+      'symbols' =>
+      array (
+        0 => 'INITIALLY',
+        1 => 'IMMEDIATE',
+      ),
     ),
   ),
   'TableLikeClause' =>
@@ -3637,6 +6399,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LIKE',
+        1 => 'qualified_name',
+        2 => 'TableLikeOptionList',
       ),
     ),
   ),
@@ -3650,6 +6418,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'TableLikeOptionList',
+        1 => 'INCLUDING',
+        2 => 'TableLikeOption',
+      ),
     ),
     1 =>
     array (
@@ -3659,11 +6433,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'TableLikeOptionList',
+        1 => 'EXCLUDING',
+        2 => 'TableLikeOption',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\TableLikeOptionListWith_9376f9e6',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -3673,42 +6456,82 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\TableLikeOptionChoice_ae5f17d5::UseComments_19b247a2',
+      'symbols' =>
+      array (
+        0 => 'COMMENTS',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\TableLikeOptionChoice_ae5f17d5::UseCompression_ac458527',
+      'symbols' =>
+      array (
+        0 => 'COMPRESSION',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\TableLikeOptionChoice_ae5f17d5::UseConstraints_7ceec0f9',
+      'symbols' =>
+      array (
+        0 => 'CONSTRAINTS',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\TableLikeOptionChoice_ae5f17d5::UseDefaults_92d31979',
+      'symbols' =>
+      array (
+        0 => 'DEFAULTS',
+      ),
     ),
     4 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\TableLikeOptionChoice_ae5f17d5::UseIdentity_82ec80d7',
+      'symbols' =>
+      array (
+        0 => 'IDENTITY_P',
+      ),
     ),
     5 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\TableLikeOptionChoice_ae5f17d5::UseGenerated_4dc3e64f',
+      'symbols' =>
+      array (
+        0 => 'GENERATED',
+      ),
     ),
     6 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\TableLikeOptionChoice_ae5f17d5::UseIndexes_019e4e72',
+      'symbols' =>
+      array (
+        0 => 'INDEXES',
+      ),
     ),
     7 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\TableLikeOptionChoice_ae5f17d5::UseStatistics_3397886a',
+      'symbols' =>
+      array (
+        0 => 'STATISTICS',
+      ),
     ),
     8 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\TableLikeOptionChoice_ae5f17d5::UseStorage_b2f6362f',
+      'symbols' =>
+      array (
+        0 => 'STORAGE',
+      ),
     ),
     9 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\TableLikeOptionChoice_ae5f17d5::UseAll_b5c7aed7',
+      'symbols' =>
+      array (
+        0 => 'ALL',
+      ),
     ),
   ),
   'TableConstraint' =>
@@ -3721,10 +6544,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'CONSTRAINT',
+        1 => 'name',
+        2 => 'ConstraintElem',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ConstraintElem',
+      ),
     ),
   ),
   'ConstraintElem' =>
@@ -3736,6 +6569,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CHECK',
+        1 => '(',
+        2 => 'a_expr',
+        3 => ')',
+        4 => 'ConstraintAttributeSpec',
       ),
     ),
     1 =>
@@ -3750,6 +6591,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         4 => 7,
         5 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNIQUE',
+        1 => 'opt_unique_null_treatment',
+        2 => '(',
+        3 => 'columnList',
+        4 => ')',
+        5 => 'opt_c_include',
+        6 => 'opt_definition',
+        7 => 'OptConsTableSpace',
+        8 => 'ConstraintAttributeSpec',
+      ),
     ),
     2 =>
     array (
@@ -3758,6 +6611,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'UNIQUE',
+        1 => 'ExistingIndex',
+        2 => 'ConstraintAttributeSpec',
       ),
     ),
     3 =>
@@ -3771,6 +6630,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 7,
         4 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'PRIMARY',
+        1 => 'KEY',
+        2 => '(',
+        3 => 'columnList',
+        4 => ')',
+        5 => 'opt_c_include',
+        6 => 'opt_definition',
+        7 => 'OptConsTableSpace',
+        8 => 'ConstraintAttributeSpec',
+      ),
     ),
     4 =>
     array (
@@ -3779,6 +6650,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PRIMARY',
+        1 => 'KEY',
+        2 => 'ExistingIndex',
+        3 => 'ConstraintAttributeSpec',
       ),
     ),
     5 =>
@@ -3794,6 +6672,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         5 => 8,
         6 => 9,
       ),
+      'symbols' =>
+      array (
+        0 => 'EXCLUDE',
+        1 => 'access_method_clause',
+        2 => '(',
+        3 => 'ExclusionConstraintList',
+        4 => ')',
+        5 => 'opt_c_include',
+        6 => 'opt_definition',
+        7 => 'OptConsTableSpace',
+        8 => 'OptWhereClause',
+        9 => 'ConstraintAttributeSpec',
+      ),
     ),
     6 =>
     array (
@@ -3807,6 +6698,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         4 => 9,
         5 => 10,
       ),
+      'symbols' =>
+      array (
+        0 => 'FOREIGN',
+        1 => 'KEY',
+        2 => '(',
+        3 => 'columnList',
+        4 => ')',
+        5 => 'REFERENCES',
+        6 => 'qualified_name',
+        7 => 'opt_column_list',
+        8 => 'key_match',
+        9 => 'key_actions',
+        10 => 'ConstraintAttributeSpec',
+      ),
     ),
   ),
   'opt_no_inherit' =>
@@ -3814,10 +6719,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptNoInheritChoice_a9bf54b3::UseNoInherit_df0c4b0a',
+      'symbols' =>
+      array (
+        0 => 'NO',
+        1 => 'INHERIT',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptNoInheritChoice_a9bf54b3::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'opt_column_list' =>
@@ -3829,11 +6742,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'columnList',
+        2 => ')',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptColumnListWith_26e1cd95',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -3843,6 +6765,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'columnElem',
+      ),
     ),
     1 =>
     array (
@@ -3852,6 +6778,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'columnList',
+        1 => ',',
+        2 => 'columnElem',
+      ),
     ),
   ),
   'columnElem' =>
@@ -3859,6 +6791,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ColId',
+      ),
     ),
   ),
   'opt_c_include' =>
@@ -3870,11 +6806,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'INCLUDE',
+        1 => '(',
+        2 => 'columnList',
+        3 => ')',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptCIncludeWith_74455e65',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -3884,18 +6830,36 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\KeyMatchChoice_a44ae14e::UseMatchFull_a1c2aa11',
+      'symbols' =>
+      array (
+        0 => 'MATCH',
+        1 => 'FULL',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\KeyMatchChoice_a44ae14e::UseMatchPartial_b0d05904',
+      'symbols' =>
+      array (
+        0 => 'MATCH',
+        1 => 'PARTIAL',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\KeyMatchChoice_a44ae14e::UseMatchSimple_cdbeceec',
+      'symbols' =>
+      array (
+        0 => 'MATCH',
+        1 => 'SIMPLE',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\KeyMatchChoice_a44ae14e::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'ExclusionConstraintList' =>
@@ -3903,6 +6867,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ExclusionConstraintElem',
+      ),
     ),
     1 =>
     array (
@@ -3911,6 +6879,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ExclusionConstraintList',
+        1 => ',',
+        2 => 'ExclusionConstraintElem',
       ),
     ),
   ),
@@ -3924,6 +6898,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'index_elem',
+        1 => 'WITH',
+        2 => 'any_operator',
+      ),
     ),
     1 =>
     array (
@@ -3932,6 +6912,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'index_elem',
+        1 => 'WITH',
+        2 => 'OPERATOR',
+        3 => '(',
+        4 => 'any_operator',
+        5 => ')',
       ),
     ),
   ),
@@ -3944,11 +6933,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'WHERE',
+        1 => '(',
+        2 => 'a_expr',
+        3 => ')',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptWhereClauseWith_d2bfea1d',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -3958,10 +6957,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'key_update',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'key_delete',
+      ),
     ),
     2 =>
     array (
@@ -3970,6 +6977,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'key_update',
+        1 => 'key_delete',
       ),
     ),
     3 =>
@@ -3980,11 +6992,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'key_delete',
+        1 => 'key_update',
+      ),
     ),
     4 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\KeyActionsWith_4292d7cb',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -3998,6 +7018,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ON',
+        1 => 'UPDATE',
+        2 => 'key_action',
+      ),
     ),
   ),
   'key_delete' =>
@@ -4009,6 +7035,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ON',
+        1 => 'DELETE_P',
+        2 => 'key_action',
+      ),
     ),
   ),
   'key_action' =>
@@ -4019,6 +7051,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'NO',
+        1 => 'ACTION',
+      ),
     ),
     1 =>
     array (
@@ -4026,12 +7063,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'RESTRICT',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\KeyActionWithCascade_e1265288',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'CASCADE',
       ),
     ),
     3 =>
@@ -4041,6 +7086,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'SET',
+        1 => 'NULL_P',
+        2 => 'opt_column_list',
+      ),
     ),
     4 =>
     array (
@@ -4048,6 +7099,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SET',
+        1 => 'DEFAULT',
+        2 => 'opt_column_list',
       ),
     ),
   ),
@@ -4060,11 +7117,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'INHERITS',
+        1 => '(',
+        2 => 'qualified_name_list',
+        3 => ')',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptInheritWith_24c1e848',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -4074,11 +7141,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'PartitionSpec',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptPartitionSpecWith_f66e70c5',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -4093,6 +7167,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'PARTITION',
+        1 => 'BY',
+        2 => 'ColId',
+        3 => '(',
+        4 => 'part_params',
+        5 => ')',
+      ),
     ),
   ),
   'part_params' =>
@@ -4100,6 +7183,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'part_elem',
+      ),
     ),
     1 =>
     array (
@@ -4108,6 +7195,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'part_params',
+        1 => ',',
+        2 => 'part_elem',
       ),
     ),
   ),
@@ -4122,6 +7215,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColId',
+        1 => 'opt_collate',
+        2 => 'opt_qualified_name',
+      ),
     ),
     1 =>
     array (
@@ -4132,6 +7231,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'func_expr_windowless',
+        1 => 'opt_collate',
+        2 => 'opt_qualified_name',
+      ),
     ),
     2 =>
     array (
@@ -4141,6 +7246,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
         2 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'a_expr',
+        2 => ')',
+        3 => 'opt_collate',
+        4 => 'opt_qualified_name',
       ),
     ),
   ),
@@ -4153,11 +7266,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'USING',
+        1 => 'name',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\TableAccessMethodClauseWith_ee9da8f0',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -4171,6 +7292,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'reloptions',
+      ),
     ),
     1 =>
     array (
@@ -4178,11 +7304,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'WITHOUT',
+        1 => 'OIDS',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptWithWith_4f72ecbe',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -4192,18 +7326,41 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OnCommitOptionChoice_11bb0e86::UseOnCommitDrop_069170d2',
+      'symbols' =>
+      array (
+        0 => 'ON',
+        1 => 'COMMIT',
+        2 => 'DROP',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OnCommitOptionChoice_11bb0e86::UseOnCommitDeleteRows_7340235c',
+      'symbols' =>
+      array (
+        0 => 'ON',
+        1 => 'COMMIT',
+        2 => 'DELETE_P',
+        3 => 'ROWS',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OnCommitOptionChoice_11bb0e86::UseOnCommitPreserveRows_1e96391a',
+      'symbols' =>
+      array (
+        0 => 'ON',
+        1 => 'COMMIT',
+        2 => 'PRESERVE',
+        3 => 'ROWS',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OnCommitOptionChoice_11bb0e86::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'OptTableSpace' =>
@@ -4215,11 +7372,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'TABLESPACE',
+        1 => 'name',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptTableSpaceWith_b442f14f',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -4233,11 +7398,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'USING',
+        1 => 'INDEX',
+        2 => 'TABLESPACE',
+        3 => 'name',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptConsTableSpaceWith_bcec7980',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -4250,6 +7425,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'USING',
+        1 => 'INDEX',
+        2 => 'name',
       ),
     ),
   ),
@@ -4265,6 +7446,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 5,
         3 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'STATISTICS',
+        2 => 'opt_qualified_name',
+        3 => 'opt_name_list',
+        4 => 'ON',
+        5 => 'stats_params',
+        6 => 'FROM',
+        7 => 'from_list',
+      ),
     ),
     1 =>
     array (
@@ -4276,6 +7468,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 8,
         3 => 10,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'STATISTICS',
+        2 => 'IF_P',
+        3 => 'NOT',
+        4 => 'EXISTS',
+        5 => 'any_name',
+        6 => 'opt_name_list',
+        7 => 'ON',
+        8 => 'stats_params',
+        9 => 'FROM',
+        10 => 'from_list',
+      ),
     ),
   ),
   'stats_params' =>
@@ -4283,6 +7489,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'stats_param',
+      ),
     ),
     1 =>
     array (
@@ -4292,6 +7502,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'stats_params',
+        1 => ',',
+        2 => 'stats_param',
+      ),
     ),
   ),
   'stats_param' =>
@@ -4299,10 +7515,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ColId',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'func_expr_windowless',
+      ),
     ),
     2 =>
     array (
@@ -4310,6 +7534,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'a_expr',
+        2 => ')',
       ),
     ),
   ),
@@ -4323,6 +7553,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'STATISTICS',
+        2 => 'any_name',
+        3 => 'SET',
+        4 => 'STATISTICS',
+        5 => 'SignedIconst',
+      ),
     ),
     1 =>
     array (
@@ -4331,6 +7570,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
         1 => 7,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'STATISTICS',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'any_name',
+        5 => 'SET',
+        6 => 'STATISTICS',
+        7 => 'SignedIconst',
       ),
     ),
   ),
@@ -4346,6 +7596,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 5,
         3 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'OptTemp',
+        2 => 'TABLE',
+        3 => 'create_as_target',
+        4 => 'AS',
+        5 => 'SelectStmt',
+        6 => 'opt_with_data',
+      ),
     ),
     1 =>
     array (
@@ -4356,6 +7616,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 6,
         2 => 8,
         3 => 9,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'OptTemp',
+        2 => 'TABLE',
+        3 => 'IF_P',
+        4 => 'NOT',
+        5 => 'EXISTS',
+        6 => 'create_as_target',
+        7 => 'AS',
+        8 => 'SelectStmt',
+        9 => 'opt_with_data',
       ),
     ),
   ),
@@ -4373,6 +7646,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         4 => 4,
         5 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'qualified_name',
+        1 => 'opt_column_list',
+        2 => 'table_access_method_clause',
+        3 => 'OptWith',
+        4 => 'OnCommitOption',
+        5 => 'OptTableSpace',
+      ),
     ),
   ),
   'opt_with_data' =>
@@ -4380,14 +7662,28 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptWithDataChoice_383fd7df::UseWithData_69d57edc',
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'DATA_P',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptWithDataChoice_383fd7df::UseWithNoData_a6c81ee5',
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'NO',
+        2 => 'DATA_P',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptWithDataChoice_383fd7df::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'CreateMatViewStmt' =>
@@ -4402,6 +7698,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 6,
         3 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'OptNoLog',
+        2 => 'MATERIALIZED',
+        3 => 'VIEW',
+        4 => 'create_mv_target',
+        5 => 'AS',
+        6 => 'SelectStmt',
+        7 => 'opt_with_data',
+      ),
     ),
     1 =>
     array (
@@ -4412,6 +7719,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 7,
         2 => 9,
         3 => 10,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'OptNoLog',
+        2 => 'MATERIALIZED',
+        3 => 'VIEW',
+        4 => 'IF_P',
+        5 => 'NOT',
+        6 => 'EXISTS',
+        7 => 'create_mv_target',
+        8 => 'AS',
+        9 => 'SelectStmt',
+        10 => 'opt_with_data',
       ),
     ),
   ),
@@ -4428,6 +7749,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 3,
         4 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'qualified_name',
+        1 => 'opt_column_list',
+        2 => 'table_access_method_clause',
+        3 => 'opt_reloptions',
+        4 => 'OptTableSpace',
+      ),
     ),
   ),
   'OptNoLog' =>
@@ -4435,10 +7764,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptNoLogChoice_25b3bca3::UseUnlogged_2f428180',
+      'symbols' =>
+      array (
+        0 => 'UNLOGGED',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptNoLogChoice_25b3bca3::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'RefreshMatViewStmt' =>
@@ -4451,6 +7787,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 4,
         2 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REFRESH',
+        1 => 'MATERIALIZED',
+        2 => 'VIEW',
+        3 => 'opt_concurrently',
+        4 => 'qualified_name',
+        5 => 'opt_with_data',
       ),
     ),
   ),
@@ -4465,6 +7810,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'OptTemp',
+        2 => 'SEQUENCE',
+        3 => 'qualified_name',
+        4 => 'OptSeqOptList',
+      ),
     ),
     1 =>
     array (
@@ -4474,6 +7827,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 6,
         2 => 7,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'OptTemp',
+        2 => 'SEQUENCE',
+        3 => 'IF_P',
+        4 => 'NOT',
+        5 => 'EXISTS',
+        6 => 'qualified_name',
+        7 => 'OptSeqOptList',
       ),
     ),
   ),
@@ -4487,6 +7851,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SEQUENCE',
+        2 => 'qualified_name',
+        3 => 'SeqOptList',
+      ),
     ),
     1 =>
     array (
@@ -4496,6 +7867,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SEQUENCE',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'qualified_name',
+        5 => 'SeqOptList',
+      ),
     ),
   ),
   'OptSeqOptList' =>
@@ -4503,11 +7883,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'SeqOptList',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptSeqOptListWith_e3f830a1',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -4521,11 +7908,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'SeqOptList',
+        2 => ')',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptParenthesizedSeqOptListWith_99568c60',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -4535,6 +7931,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'SeqOptElem',
+      ),
     ),
     1 =>
     array (
@@ -4543,6 +7943,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SeqOptList',
+        1 => 'SeqOptElem',
       ),
     ),
   ),
@@ -4555,6 +7960,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'AS',
+        1 => 'SimpleTypename',
+      ),
     ),
     1 =>
     array (
@@ -4563,6 +7973,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'CACHE',
+        1 => 'NumericOnly',
+      ),
     ),
     2 =>
     array (
@@ -4570,12 +7985,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'CYCLE',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\SeqOptElemWithNoCycle_a9265c37',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'NO',
+        1 => 'CYCLE',
       ),
     ),
     4 =>
@@ -4586,12 +8010,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'INCREMENT',
+        1 => 'opt_by',
+        2 => 'NumericOnly',
+      ),
     ),
     5 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\SeqOptElemWithLogged_6d08ab7c',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'LOGGED',
       ),
     ),
     6 =>
@@ -4601,6 +8035,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'MAXVALUE',
+        1 => 'NumericOnly',
+      ),
     ),
     7 =>
     array (
@@ -4609,6 +8048,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'MINVALUE',
+        1 => 'NumericOnly',
+      ),
     ),
     8 =>
     array (
@@ -4616,12 +8060,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'NO',
+        1 => 'MAXVALUE',
+      ),
     ),
     9 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\SeqOptElemWithNoMinvalue_b475c7da',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'NO',
+        1 => 'MINVALUE',
       ),
     ),
     10 =>
@@ -4631,6 +8085,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'OWNED',
+        1 => 'BY',
+        2 => 'any_name',
+      ),
     ),
     11 =>
     array (
@@ -4638,6 +8098,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SEQUENCE',
+        1 => 'NAME_P',
+        2 => 'any_name',
       ),
     ),
     12 =>
@@ -4648,12 +8114,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'START',
+        1 => 'opt_with',
+        2 => 'NumericOnly',
+      ),
     ),
     13 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\SeqOptElemWithRestart_5cee348c',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'RESTART',
       ),
     ),
     14 =>
@@ -4664,12 +8140,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'RESTART',
+        1 => 'opt_with',
+        2 => 'NumericOnly',
+      ),
     ),
     15 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\SeqOptElemWithUnlogged_088154fa',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'UNLOGGED',
       ),
     ),
   ),
@@ -4678,10 +8164,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptByChoice_06218032::UseBy_60547bd9',
+      'symbols' =>
+      array (
+        0 => 'BY',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptByChoice_06218032::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'NumericOnly' =>
@@ -4693,6 +8186,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FCONST',
+      ),
     ),
     1 =>
     array (
@@ -4700,6 +8197,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '+',
+        1 => 'FCONST',
       ),
     ),
     2 =>
@@ -4709,10 +8211,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '-',
+        1 => 'FCONST',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'SignedIconst',
+      ),
     ),
   ),
   'NumericOnly_list' =>
@@ -4720,6 +8231,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'NumericOnly',
+      ),
     ),
     1 =>
     array (
@@ -4728,6 +8243,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NumericOnly_list',
+        1 => ',',
+        2 => 'NumericOnly',
       ),
     ),
   ),
@@ -4743,6 +8264,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'opt_or_replace',
+        2 => 'opt_trusted',
+        3 => 'opt_procedural',
+        4 => 'LANGUAGE',
+        5 => 'name',
+      ),
     ),
     1 =>
     array (
@@ -4757,6 +8287,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         5 => 8,
         6 => 9,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'opt_or_replace',
+        2 => 'opt_trusted',
+        3 => 'opt_procedural',
+        4 => 'LANGUAGE',
+        5 => 'name',
+        6 => 'HANDLER',
+        7 => 'handler_name',
+        8 => 'opt_inline_handler',
+        9 => 'opt_validator',
+      ),
     ),
   ),
   'opt_trusted' =>
@@ -4764,10 +8307,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTrustedChoice_82d8a949::UseTrusted_9af71de5',
+      'symbols' =>
+      array (
+        0 => 'TRUSTED',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTrustedChoice_82d8a949::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'handler_name' =>
@@ -4775,6 +8325,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'name',
+      ),
     ),
     1 =>
     array (
@@ -4783,6 +8337,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'name',
+        1 => 'attrs',
       ),
     ),
   ),
@@ -4795,11 +8354,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'INLINE_P',
+        1 => 'handler_name',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptInlineHandlerWith_d53b7950',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -4813,12 +8380,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'VALIDATOR',
+        1 => 'handler_name',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ValidatorClauseWithNoValidator_5dd1c8ec',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'NO',
+        1 => 'VALIDATOR',
       ),
     ),
   ),
@@ -4827,11 +8404,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'validator_clause',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptValidatorWith_bb772fed',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -4841,10 +8425,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptProceduralChoice_0d9fa677::UseProcedural_7f850480',
+      'symbols' =>
+      array (
+        0 => 'PROCEDURAL',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptProceduralChoice_0d9fa677::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'CreateTableSpaceStmt' =>
@@ -4859,6 +8450,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 5,
         3 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'TABLESPACE',
+        2 => 'name',
+        3 => 'OptTableSpaceOwner',
+        4 => 'LOCATION',
+        5 => 'Sconst',
+        6 => 'opt_reloptions',
+      ),
     ),
   ),
   'OptTableSpaceOwner' =>
@@ -4870,11 +8471,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'OWNER',
+        1 => 'RoleSpec',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptTableSpaceOwnerWith_5bd2146a',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -4888,6 +8497,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'TABLESPACE',
+        2 => 'name',
+      ),
     ),
     1 =>
     array (
@@ -4895,6 +8510,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'TABLESPACE',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'name',
       ),
     ),
   ),
@@ -4909,6 +8532,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'EXTENSION',
+        2 => 'name',
+        3 => 'opt_with',
+        4 => 'create_extension_opt_list',
+      ),
     ),
     1 =>
     array (
@@ -4918,6 +8549,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 5,
         1 => 6,
         2 => 7,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'EXTENSION',
+        2 => 'IF_P',
+        3 => 'NOT',
+        4 => 'EXISTS',
+        5 => 'name',
+        6 => 'opt_with',
+        7 => 'create_extension_opt_list',
       ),
     ),
   ),
@@ -4931,11 +8573,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'create_extension_opt_list',
+        1 => 'create_extension_opt_item',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CreateExtensionOptListWith_b8493c71',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -4949,6 +8599,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'SCHEMA',
+        1 => 'name',
+      ),
     ),
     1 =>
     array (
@@ -4956,6 +8611,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'VERSION_P',
+        1 => 'NonReservedWord_or_Sconst',
       ),
     ),
     2 =>
@@ -4965,12 +8625,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'FROM',
+        1 => 'NonReservedWord_or_Sconst',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CreateExtensionOptItemWithCascade_ac66b313',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'CASCADE',
       ),
     ),
   ),
@@ -4984,6 +8653,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'EXTENSION',
+        2 => 'name',
+        3 => 'UPDATE',
+        4 => 'alter_extension_opt_list',
+      ),
     ),
   ),
   'alter_extension_opt_list' =>
@@ -4996,11 +8673,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'alter_extension_opt_list',
+        1 => 'alter_extension_opt_item',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterExtensionOptListWith_6e8d39ca',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -5013,6 +8698,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TO',
+        1 => 'NonReservedWord_or_Sconst',
       ),
     ),
   ),
@@ -5028,6 +8718,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 4,
         3 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'EXTENSION',
+        2 => 'name',
+        3 => 'add_drop',
+        4 => 'object_type_name',
+        5 => 'name',
+      ),
     ),
     1 =>
     array (
@@ -5039,6 +8738,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 4,
         3 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'EXTENSION',
+        2 => 'name',
+        3 => 'add_drop',
+        4 => 'object_type_any_name',
+        5 => 'any_name',
+      ),
     ),
     2 =>
     array (
@@ -5048,6 +8756,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
         2 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'EXTENSION',
+        2 => 'name',
+        3 => 'add_drop',
+        4 => 'AGGREGATE',
+        5 => 'aggregate_with_argtypes',
       ),
     ),
     3 =>
@@ -5060,6 +8777,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 6,
         3 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'EXTENSION',
+        2 => 'name',
+        3 => 'add_drop',
+        4 => 'CAST',
+        5 => '(',
+        6 => 'Typename',
+        7 => 'AS',
+        8 => 'Typename',
+        9 => ')',
+      ),
     ),
     4 =>
     array (
@@ -5069,6 +8799,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
         2 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'EXTENSION',
+        2 => 'name',
+        3 => 'add_drop',
+        4 => 'DOMAIN_P',
+        5 => 'Typename',
       ),
     ),
     5 =>
@@ -5080,6 +8819,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'EXTENSION',
+        2 => 'name',
+        3 => 'add_drop',
+        4 => 'FUNCTION',
+        5 => 'function_with_argtypes',
+      ),
     ),
     6 =>
     array (
@@ -5089,6 +8837,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
         2 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'EXTENSION',
+        2 => 'name',
+        3 => 'add_drop',
+        4 => 'OPERATOR',
+        5 => 'operator_with_argtypes',
       ),
     ),
     7 =>
@@ -5101,6 +8858,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 6,
         3 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'EXTENSION',
+        2 => 'name',
+        3 => 'add_drop',
+        4 => 'OPERATOR',
+        5 => 'CLASS',
+        6 => 'any_name',
+        7 => 'USING',
+        8 => 'name',
+      ),
     ),
     8 =>
     array (
@@ -5112,6 +8881,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 6,
         3 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'EXTENSION',
+        2 => 'name',
+        3 => 'add_drop',
+        4 => 'OPERATOR',
+        5 => 'FAMILY',
+        6 => 'any_name',
+        7 => 'USING',
+        8 => 'name',
+      ),
     ),
     9 =>
     array (
@@ -5122,6 +8903,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'EXTENSION',
+        2 => 'name',
+        3 => 'add_drop',
+        4 => 'PROCEDURE',
+        5 => 'function_with_argtypes',
+      ),
     ),
     10 =>
     array (
@@ -5131,6 +8921,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
         2 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'EXTENSION',
+        2 => 'name',
+        3 => 'add_drop',
+        4 => 'ROUTINE',
+        5 => 'function_with_argtypes',
       ),
     ),
     11 =>
@@ -5143,6 +8942,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 6,
         3 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'EXTENSION',
+        2 => 'name',
+        3 => 'add_drop',
+        4 => 'TRANSFORM',
+        5 => 'FOR',
+        6 => 'Typename',
+        7 => 'LANGUAGE',
+        8 => 'name',
+      ),
     ),
     12 =>
     array (
@@ -5152,6 +8963,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
         2 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'EXTENSION',
+        2 => 'name',
+        3 => 'add_drop',
+        4 => 'TYPE_P',
+        5 => 'Typename',
       ),
     ),
   ),
@@ -5166,6 +8986,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'FOREIGN',
+        2 => 'DATA_P',
+        3 => 'WRAPPER',
+        4 => 'name',
+        5 => 'opt_fdw_options',
+        6 => 'create_generic_options',
+      ),
     ),
   ),
   'fdw_option' =>
@@ -5177,12 +9007,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'HANDLER',
+        1 => 'handler_name',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FdwOptionWithNoHandler_e43b8932',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'NO',
+        1 => 'HANDLER',
       ),
     ),
     2 =>
@@ -5192,12 +9032,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'VALIDATOR',
+        1 => 'handler_name',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FdwOptionWithNoValidator_d672bd95',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'NO',
+        1 => 'VALIDATOR',
       ),
     ),
   ),
@@ -5206,6 +9056,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'fdw_option',
+      ),
     ),
     1 =>
     array (
@@ -5215,6 +9069,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'fdw_options',
+        1 => 'fdw_option',
+      ),
     ),
   ),
   'opt_fdw_options' =>
@@ -5222,11 +9081,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'fdw_options',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptFdwOptionsWith_f0a07232',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -5242,6 +9108,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'FOREIGN',
+        2 => 'DATA_P',
+        3 => 'WRAPPER',
+        4 => 'name',
+        5 => 'opt_fdw_options',
+        6 => 'alter_generic_options',
+      ),
     ),
     1 =>
     array (
@@ -5250,6 +9126,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'FOREIGN',
+        2 => 'DATA_P',
+        3 => 'WRAPPER',
+        4 => 'name',
+        5 => 'fdw_options',
       ),
     ),
   ),
@@ -5262,11 +9147,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'OPTIONS',
+        1 => '(',
+        2 => 'generic_option_list',
+        3 => ')',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CreateGenericOptionsWith_ac764cc7',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -5276,6 +9171,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'generic_option_elem',
+      ),
     ),
     1 =>
     array (
@@ -5284,6 +9183,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'generic_option_list',
+        1 => ',',
+        2 => 'generic_option_elem',
       ),
     ),
   ),
@@ -5296,6 +9201,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'OPTIONS',
+        1 => '(',
+        2 => 'alter_generic_option_list',
+        3 => ')',
+      ),
     ),
   ),
   'alter_generic_option_list' =>
@@ -5303,6 +9215,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_generic_option_elem',
+      ),
     ),
     1 =>
     array (
@@ -5312,6 +9228,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'alter_generic_option_list',
+        1 => ',',
+        2 => 'alter_generic_option_elem',
+      ),
     ),
   ),
   'alter_generic_option_elem' =>
@@ -5319,6 +9241,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'generic_option_elem',
+      ),
     ),
     1 =>
     array (
@@ -5326,6 +9252,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SET',
+        1 => 'generic_option_elem',
       ),
     ),
     2 =>
@@ -5335,6 +9266,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ADD_P',
+        1 => 'generic_option_elem',
+      ),
     ),
     3 =>
     array (
@@ -5342,6 +9278,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'generic_option_name',
       ),
     ),
   ),
@@ -5355,6 +9296,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'generic_option_name',
+        1 => 'generic_option_arg',
+      ),
     ),
   ),
   'generic_option_name' =>
@@ -5362,6 +9308,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ColLabel',
+      ),
     ),
   ),
   'generic_option_arg' =>
@@ -5369,6 +9319,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Sconst',
+      ),
     ),
   ),
   'CreateForeignServerStmt' =>
@@ -5384,6 +9338,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 8,
         4 => 9,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'SERVER',
+        2 => 'name',
+        3 => 'opt_type',
+        4 => 'opt_foreign_server_version',
+        5 => 'FOREIGN',
+        6 => 'DATA_P',
+        7 => 'WRAPPER',
+        8 => 'name',
+        9 => 'create_generic_options',
+      ),
     ),
     1 =>
     array (
@@ -5396,6 +9363,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 11,
         4 => 12,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'SERVER',
+        2 => 'IF_P',
+        3 => 'NOT',
+        4 => 'EXISTS',
+        5 => 'name',
+        6 => 'opt_type',
+        7 => 'opt_foreign_server_version',
+        8 => 'FOREIGN',
+        9 => 'DATA_P',
+        10 => 'WRAPPER',
+        11 => 'name',
+        12 => 'create_generic_options',
+      ),
     ),
   ),
   'opt_type' =>
@@ -5407,11 +9390,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'TYPE_P',
+        1 => 'Sconst',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptTypeWith_7688fdb5',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -5425,12 +9416,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'VERSION_P',
+        1 => 'Sconst',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ForeignServerVersionWithVersionPNullP_a7046fd8',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'VERSION_P',
+        1 => 'NULL_P',
       ),
     ),
   ),
@@ -5439,11 +9440,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'foreign_server_version',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptForeignServerVersionWith_c9f8556e',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -5459,6 +9467,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SERVER',
+        2 => 'name',
+        3 => 'foreign_server_version',
+        4 => 'alter_generic_options',
+      ),
     ),
     1 =>
     array (
@@ -5468,6 +9484,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SERVER',
+        2 => 'name',
+        3 => 'foreign_server_version',
+      ),
     ),
     2 =>
     array (
@@ -5476,6 +9499,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SERVER',
+        2 => 'name',
+        3 => 'alter_generic_options',
       ),
     ),
   ),
@@ -5492,6 +9522,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 9,
         4 => 10,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'FOREIGN',
+        2 => 'TABLE',
+        3 => 'qualified_name',
+        4 => '(',
+        5 => 'OptTableElementList',
+        6 => ')',
+        7 => 'OptInherit',
+        8 => 'SERVER',
+        9 => 'name',
+        10 => 'create_generic_options',
+      ),
     ),
     1 =>
     array (
@@ -5503,6 +9547,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 10,
         3 => 12,
         4 => 13,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'FOREIGN',
+        2 => 'TABLE',
+        3 => 'IF_P',
+        4 => 'NOT',
+        5 => 'EXISTS',
+        6 => 'qualified_name',
+        7 => '(',
+        8 => 'OptTableElementList',
+        9 => ')',
+        10 => 'OptInherit',
+        11 => 'SERVER',
+        12 => 'name',
+        13 => 'create_generic_options',
       ),
     ),
     2 =>
@@ -5517,6 +9578,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         4 => 10,
         5 => 11,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'FOREIGN',
+        2 => 'TABLE',
+        3 => 'qualified_name',
+        4 => 'PARTITION',
+        5 => 'OF',
+        6 => 'qualified_name',
+        7 => 'OptTypedTableElementList',
+        8 => 'PartitionBoundSpec',
+        9 => 'SERVER',
+        10 => 'name',
+        11 => 'create_generic_options',
+      ),
     ),
     3 =>
     array (
@@ -5529,6 +9605,24 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 11,
         4 => 13,
         5 => 14,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'FOREIGN',
+        2 => 'TABLE',
+        3 => 'IF_P',
+        4 => 'NOT',
+        5 => 'EXISTS',
+        6 => 'qualified_name',
+        7 => 'PARTITION',
+        8 => 'OF',
+        9 => 'qualified_name',
+        10 => 'OptTypedTableElementList',
+        11 => 'PartitionBoundSpec',
+        12 => 'SERVER',
+        13 => 'name',
+        14 => 'create_generic_options',
       ),
     ),
   ),
@@ -5545,6 +9639,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 9,
         4 => 10,
       ),
+      'symbols' =>
+      array (
+        0 => 'IMPORT_P',
+        1 => 'FOREIGN',
+        2 => 'SCHEMA',
+        3 => 'name',
+        4 => 'import_qualification',
+        5 => 'FROM',
+        6 => 'SERVER',
+        7 => 'name',
+        8 => 'INTO',
+        9 => 'name',
+        10 => 'create_generic_options',
+      ),
     ),
   ),
   'import_qualification_type' =>
@@ -5552,10 +9660,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ImportQualificationTypeChoice_ce31e011::UseLimitTo_e0a14a57',
+      'symbols' =>
+      array (
+        0 => 'LIMIT',
+        1 => 'TO',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ImportQualificationTypeChoice_ce31e011::UseExcept_c7329b0e',
+      'symbols' =>
+      array (
+        0 => 'EXCEPT',
+      ),
     ),
   ),
   'import_qualification' =>
@@ -5568,11 +9685,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'import_qualification_type',
+        1 => '(',
+        2 => 'relation_expr_list',
+        3 => ')',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ImportQualificationWith_48da17a1',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -5588,6 +9715,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 6,
         2 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'USER',
+        2 => 'MAPPING',
+        3 => 'FOR',
+        4 => 'auth_ident',
+        5 => 'SERVER',
+        6 => 'name',
+        7 => 'create_generic_options',
+      ),
     ),
     1 =>
     array (
@@ -5598,6 +9736,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 9,
         2 => 10,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'USER',
+        2 => 'MAPPING',
+        3 => 'IF_P',
+        4 => 'NOT',
+        5 => 'EXISTS',
+        6 => 'FOR',
+        7 => 'auth_ident',
+        8 => 'SERVER',
+        9 => 'name',
+        10 => 'create_generic_options',
+      ),
     ),
   ),
   'auth_ident' =>
@@ -5605,12 +9757,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'RoleSpec',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AuthIdentWithUser_96ee87eb',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'USER',
       ),
     ),
   ),
@@ -5624,6 +9784,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'USER',
+        2 => 'MAPPING',
+        3 => 'FOR',
+        4 => 'auth_ident',
+        5 => 'SERVER',
+        6 => 'name',
+      ),
     ),
     1 =>
     array (
@@ -5632,6 +9802,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 6,
         1 => 8,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'USER',
+        2 => 'MAPPING',
+        3 => 'IF_P',
+        4 => 'EXISTS',
+        5 => 'FOR',
+        6 => 'auth_ident',
+        7 => 'SERVER',
+        8 => 'name',
       ),
     ),
   ),
@@ -5645,6 +9827,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 6,
         2 => 7,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'USER',
+        2 => 'MAPPING',
+        3 => 'FOR',
+        4 => 'auth_ident',
+        5 => 'SERVER',
+        6 => 'name',
+        7 => 'alter_generic_options',
       ),
     ),
   ),
@@ -5663,6 +9856,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         5 => 8,
         6 => 9,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'POLICY',
+        2 => 'name',
+        3 => 'ON',
+        4 => 'qualified_name',
+        5 => 'RowSecurityDefaultPermissive',
+        6 => 'RowSecurityDefaultForCmd',
+        7 => 'RowSecurityDefaultToRole',
+        8 => 'RowSecurityOptionalExpr',
+        9 => 'RowSecurityOptionalWithCheck',
+      ),
     ),
   ),
   'AlterPolicyStmt' =>
@@ -5678,6 +9884,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 6,
         4 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'POLICY',
+        2 => 'name',
+        3 => 'ON',
+        4 => 'qualified_name',
+        5 => 'RowSecurityOptionalToRole',
+        6 => 'RowSecurityOptionalExpr',
+        7 => 'RowSecurityOptionalWithCheck',
+      ),
     ),
   ),
   'RowSecurityOptionalExpr' =>
@@ -5689,11 +9906,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'USING',
+        1 => '(',
+        2 => 'a_expr',
+        3 => ')',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\RowSecurityOptionalExprWith_1b1c2063',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -5707,11 +9934,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'CHECK',
+        2 => '(',
+        3 => 'a_expr',
+        4 => ')',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\RowSecurityOptionalWithCheckWith_47ec8f56',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -5725,11 +9963,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'TO',
+        1 => 'role_list',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\RowSecurityDefaultToRoleWith_3b35af95',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -5743,11 +9989,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'TO',
+        1 => 'role_list',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\RowSecurityOptionalToRoleWith_8a05ed95',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -5761,11 +10015,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'AS',
+        1 => 'IDENT',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\RowSecurityDefaultPermissiveWith_8dd95f15',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -5779,11 +10041,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'FOR',
+        1 => 'row_security_cmd',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\RowSecurityDefaultForCmdWith_e06bfdff',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -5793,22 +10063,42 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\RowSecurityCmdChoice_270fdcf8::UseAll_b5c7aed7',
+      'symbols' =>
+      array (
+        0 => 'ALL',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\RowSecurityCmdChoice_270fdcf8::UseSelect_6e426169',
+      'symbols' =>
+      array (
+        0 => 'SELECT',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\RowSecurityCmdChoice_270fdcf8::UseInsert_014413c2',
+      'symbols' =>
+      array (
+        0 => 'INSERT',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\RowSecurityCmdChoice_270fdcf8::UseUpdate_6cb78ab1',
+      'symbols' =>
+      array (
+        0 => 'UPDATE',
+      ),
     ),
     4 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\RowSecurityCmdChoice_270fdcf8::UseDelete_65daeb37',
+      'symbols' =>
+      array (
+        0 => 'DELETE_P',
+      ),
     ),
   ),
   'CreateAmStmt' =>
@@ -5822,6 +10112,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'ACCESS',
+        2 => 'METHOD',
+        3 => 'name',
+        4 => 'TYPE_P',
+        5 => 'am_type',
+        6 => 'HANDLER',
+        7 => 'handler_name',
+      ),
     ),
   ),
   'am_type' =>
@@ -5829,10 +10130,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\AmTypeChoice_c1346246::UseIndex_ea69fe17',
+      'symbols' =>
+      array (
+        0 => 'INDEX',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\AmTypeChoice_c1346246::UseTable_52ca2fea',
+      'symbols' =>
+      array (
+        0 => 'TABLE',
+      ),
     ),
   ),
   'CreateTrigStmt' =>
@@ -5854,6 +10163,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         9 => 13,
         10 => 15,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'opt_or_replace',
+        2 => 'TRIGGER',
+        3 => 'name',
+        4 => 'TriggerActionTime',
+        5 => 'TriggerEvents',
+        6 => 'ON',
+        7 => 'qualified_name',
+        8 => 'TriggerReferencing',
+        9 => 'TriggerForSpec',
+        10 => 'TriggerWhen',
+        11 => 'EXECUTE',
+        12 => 'FUNCTION_or_PROCEDURE',
+        13 => 'func_name',
+        14 => '(',
+        15 => 'TriggerFuncArgs',
+        16 => ')',
+      ),
     ),
     1 =>
     array (
@@ -5871,6 +10200,30 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         8 => 17,
         9 => 19,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'opt_or_replace',
+        2 => 'CONSTRAINT',
+        3 => 'TRIGGER',
+        4 => 'name',
+        5 => 'AFTER',
+        6 => 'TriggerEvents',
+        7 => 'ON',
+        8 => 'qualified_name',
+        9 => 'OptConstrFromTable',
+        10 => 'ConstraintAttributeSpec',
+        11 => 'FOR',
+        12 => 'EACH',
+        13 => 'ROW',
+        14 => 'TriggerWhen',
+        15 => 'EXECUTE',
+        16 => 'FUNCTION_or_PROCEDURE',
+        17 => 'func_name',
+        18 => '(',
+        19 => 'TriggerFuncArgs',
+        20 => ')',
+      ),
     ),
   ),
   'TriggerActionTime' =>
@@ -5878,14 +10231,27 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\TriggerActionTimeChoice_3379afcd::UseBefore_c341c7fe',
+      'symbols' =>
+      array (
+        0 => 'BEFORE',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\TriggerActionTimeChoice_3379afcd::UseAfter_94c3f141',
+      'symbols' =>
+      array (
+        0 => 'AFTER',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\TriggerActionTimeChoice_3379afcd::UseInsteadOf_f5f6493c',
+      'symbols' =>
+      array (
+        0 => 'INSTEAD',
+        1 => 'OF',
+      ),
     ),
   ),
   'TriggerEvents' =>
@@ -5893,6 +10259,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'TriggerOneEvent',
+      ),
     ),
     1 =>
     array (
@@ -5901,6 +10271,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TriggerEvents',
+        1 => 'OR',
+        2 => 'TriggerOneEvent',
       ),
     ),
   ),
@@ -5912,6 +10288,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'INSERT',
+      ),
     ),
     1 =>
     array (
@@ -5919,12 +10299,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'DELETE_P',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\TriggerOneEventWithUpdate_5b5a2b70',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'UPDATE',
       ),
     ),
     3 =>
@@ -5934,12 +10322,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'UPDATE',
+        1 => 'OF',
+        2 => 'columnList',
+      ),
     ),
     4 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\TriggerOneEventWithTruncate_c97b9a89',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'TRUNCATE',
       ),
     ),
   ),
@@ -5952,11 +10350,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'REFERENCING',
+        1 => 'TriggerTransitions',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\TriggerReferencingWith_9d6296a4',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -5966,6 +10372,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'TriggerTransition',
+      ),
     ),
     1 =>
     array (
@@ -5974,6 +10384,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TriggerTransitions',
+        1 => 'TriggerTransition',
       ),
     ),
   ),
@@ -5989,6 +10404,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 2,
         3 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'TransitionOldOrNew',
+        1 => 'TransitionRowOrTable',
+        2 => 'opt_as',
+        3 => 'TransitionRelName',
+      ),
     ),
   ),
   'TransitionOldOrNew' =>
@@ -5996,10 +10418,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\TransitionOldOrNewChoice_b047a4fd::UseNew_a253ff09',
+      'symbols' =>
+      array (
+        0 => 'NEW',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\TransitionOldOrNewChoice_b047a4fd::UseOld_099d90cb',
+      'symbols' =>
+      array (
+        0 => 'OLD',
+      ),
     ),
   ),
   'TransitionRowOrTable' =>
@@ -6007,10 +10437,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\TransitionRowOrTableChoice_c9f03bb4::UseTable_52ca2fea',
+      'symbols' =>
+      array (
+        0 => 'TABLE',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\TransitionRowOrTableChoice_c9f03bb4::UseRow_55a734d3',
+      'symbols' =>
+      array (
+        0 => 'ROW',
+      ),
     ),
   ),
   'TransitionRelName' =>
@@ -6018,6 +10456,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ColId',
+      ),
     ),
   ),
   'TriggerForSpec' =>
@@ -6030,11 +10472,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'FOR',
+        1 => 'TriggerForOptEach',
+        2 => 'TriggerForType',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\TriggerForSpecWith_d3e20c76',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -6044,10 +10495,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\TriggerForOptEachChoice_93351bd6::UseEach_d31708c5',
+      'symbols' =>
+      array (
+        0 => 'EACH',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\TriggerForOptEachChoice_93351bd6::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'TriggerForType' =>
@@ -6055,10 +10513,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\TriggerForTypeChoice_a502e2aa::UseRow_55a734d3',
+      'symbols' =>
+      array (
+        0 => 'ROW',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\TriggerForTypeChoice_a502e2aa::UseStatement_170b1d0e',
+      'symbols' =>
+      array (
+        0 => 'STATEMENT',
+      ),
     ),
   ),
   'TriggerWhen' =>
@@ -6070,11 +10536,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'WHEN',
+        1 => '(',
+        2 => 'a_expr',
+        3 => ')',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\TriggerWhenWith_d1bcc81a',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -6084,10 +10560,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\FunctionOrProcedureChoice_1a5a29e5::UseFunction_9d1aae1b',
+      'symbols' =>
+      array (
+        0 => 'FUNCTION',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\FunctionOrProcedureChoice_1a5a29e5::UseProcedure_26996b4a',
+      'symbols' =>
+      array (
+        0 => 'PROCEDURE',
+      ),
     ),
   ),
   'TriggerFuncArgs' =>
@@ -6095,6 +10579,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'TriggerFuncArg',
+      ),
     ),
     1 =>
     array (
@@ -6104,11 +10592,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'TriggerFuncArgs',
+        1 => ',',
+        2 => 'TriggerFuncArg',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\TriggerFuncArgsWith_45de5c52',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -6118,6 +10615,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Iconst',
+      ),
     ),
     1 =>
     array (
@@ -6126,14 +10627,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FCONST',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Sconst',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ColLabel',
+      ),
     ),
   ),
   'OptConstrFromTable' =>
@@ -6145,11 +10658,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'FROM',
+        1 => 'qualified_name',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptConstrFromTableWith_fa56352c',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -6162,6 +10683,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -6171,6 +10695,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ConstraintAttributeSpec',
+        1 => 'ConstraintAttributeElem',
+      ),
     ),
   ),
   'ConstraintAttributeElem' =>
@@ -6178,26 +10707,55 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ConstraintAttributeElemChoice_cee1f633::UseNotDeferrable_22785b31',
+      'symbols' =>
+      array (
+        0 => 'NOT',
+        1 => 'DEFERRABLE',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ConstraintAttributeElemChoice_cee1f633::UseDeferrable_98c41ab5',
+      'symbols' =>
+      array (
+        0 => 'DEFERRABLE',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ConstraintAttributeElemChoice_cee1f633::UseInitiallyImmediate_0e67cf0a',
+      'symbols' =>
+      array (
+        0 => 'INITIALLY',
+        1 => 'IMMEDIATE',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ConstraintAttributeElemChoice_cee1f633::UseInitiallyDeferred_6e9191be',
+      'symbols' =>
+      array (
+        0 => 'INITIALLY',
+        1 => 'DEFERRED',
+      ),
     ),
     4 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ConstraintAttributeElemChoice_cee1f633::UseNotValid_68501e38',
+      'symbols' =>
+      array (
+        0 => 'NOT',
+        1 => 'VALID',
+      ),
     ),
     5 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ConstraintAttributeElemChoice_cee1f633::UseNoInherit_df0c4b0a',
+      'symbols' =>
+      array (
+        0 => 'NO',
+        1 => 'INHERIT',
+      ),
     ),
   ),
   'CreateEventTrigStmt' =>
@@ -6212,6 +10770,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 7,
         3 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'EVENT',
+        2 => 'TRIGGER',
+        3 => 'name',
+        4 => 'ON',
+        5 => 'ColLabel',
+        6 => 'EXECUTE',
+        7 => 'FUNCTION_or_PROCEDURE',
+        8 => 'func_name',
+        9 => '(',
+        10 => ')',
+      ),
     ),
     1 =>
     array (
@@ -6224,6 +10796,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 9,
         4 => 10,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'EVENT',
+        2 => 'TRIGGER',
+        3 => 'name',
+        4 => 'ON',
+        5 => 'ColLabel',
+        6 => 'WHEN',
+        7 => 'event_trigger_when_list',
+        8 => 'EXECUTE',
+        9 => 'FUNCTION_or_PROCEDURE',
+        10 => 'func_name',
+        11 => '(',
+        12 => ')',
+      ),
     ),
   ),
   'event_trigger_when_list' =>
@@ -6231,6 +10819,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'event_trigger_when_item',
+      ),
     ),
     1 =>
     array (
@@ -6239,6 +10831,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'event_trigger_when_list',
+        1 => 'AND',
+        2 => 'event_trigger_when_item',
       ),
     ),
   ),
@@ -6252,6 +10850,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColId',
+        1 => 'IN_P',
+        2 => '(',
+        3 => 'event_trigger_value_list',
+        4 => ')',
+      ),
     ),
   ),
   'event_trigger_value_list' =>
@@ -6263,6 +10869,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SCONST',
+      ),
     ),
     1 =>
     array (
@@ -6271,6 +10881,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'event_trigger_value_list',
+        1 => ',',
+        2 => 'SCONST',
       ),
     ),
   ),
@@ -6284,6 +10900,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'EVENT',
+        2 => 'TRIGGER',
+        3 => 'name',
+        4 => 'enable_trigger',
+      ),
     ),
   ),
   'enable_trigger' =>
@@ -6291,18 +10915,36 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\EnableTriggerChoice_7edfcc1b::UseEnable_18912667',
+      'symbols' =>
+      array (
+        0 => 'ENABLE_P',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\EnableTriggerChoice_7edfcc1b::UseEnableReplica_398d2df6',
+      'symbols' =>
+      array (
+        0 => 'ENABLE_P',
+        1 => 'REPLICA',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\EnableTriggerChoice_7edfcc1b::UseEnableAlways_00792993',
+      'symbols' =>
+      array (
+        0 => 'ENABLE_P',
+        1 => 'ALWAYS',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\EnableTriggerChoice_7edfcc1b::UseDisable_0fb87bd2',
+      'symbols' =>
+      array (
+        0 => 'DISABLE_P',
+      ),
     ),
   ),
   'CreateAssertionStmt' =>
@@ -6315,6 +10957,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
         2 => 7,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'ASSERTION',
+        2 => 'any_name',
+        3 => 'CHECK',
+        4 => '(',
+        5 => 'a_expr',
+        6 => ')',
+        7 => 'ConstraintAttributeSpec',
       ),
     ),
   ),
@@ -6330,6 +10983,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 4,
         3 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'opt_or_replace',
+        2 => 'AGGREGATE',
+        3 => 'func_name',
+        4 => 'aggr_args',
+        5 => 'definition',
+      ),
     ),
     1 =>
     array (
@@ -6340,6 +11002,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'opt_or_replace',
+        2 => 'AGGREGATE',
+        3 => 'func_name',
+        4 => 'old_aggr_definition',
+      ),
     ),
     2 =>
     array (
@@ -6348,6 +11018,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'OPERATOR',
+        2 => 'any_operator',
+        3 => 'definition',
       ),
     ),
     3 =>
@@ -6358,6 +11035,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'TYPE_P',
+        2 => 'any_name',
+        3 => 'definition',
+      ),
     ),
     4 =>
     array (
@@ -6365,6 +11049,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'TYPE_P',
+        2 => 'any_name',
       ),
     ),
     5 =>
@@ -6375,6 +11065,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'TYPE_P',
+        2 => 'any_name',
+        3 => 'AS',
+        4 => '(',
+        5 => 'OptTableFuncElementList',
+        6 => ')',
+      ),
     ),
     6 =>
     array (
@@ -6383,6 +11083,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 6,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'TYPE_P',
+        2 => 'any_name',
+        3 => 'AS',
+        4 => 'ENUM_P',
+        5 => '(',
+        6 => 'opt_enum_val_list',
+        7 => ')',
       ),
     ),
     7 =>
@@ -6393,6 +11104,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'TYPE_P',
+        2 => 'any_name',
+        3 => 'AS',
+        4 => 'RANGE',
+        5 => 'definition',
+      ),
     ),
     8 =>
     array (
@@ -6401,6 +11121,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'TEXT_P',
+        2 => 'SEARCH',
+        3 => 'PARSER',
+        4 => 'any_name',
+        5 => 'definition',
       ),
     ),
     9 =>
@@ -6411,6 +11140,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'TEXT_P',
+        2 => 'SEARCH',
+        3 => 'DICTIONARY',
+        4 => 'any_name',
+        5 => 'definition',
+      ),
     ),
     10 =>
     array (
@@ -6419,6 +11157,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'TEXT_P',
+        2 => 'SEARCH',
+        3 => 'TEMPLATE',
+        4 => 'any_name',
+        5 => 'definition',
       ),
     ),
     11 =>
@@ -6429,6 +11176,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'TEXT_P',
+        2 => 'SEARCH',
+        3 => 'CONFIGURATION',
+        4 => 'any_name',
+        5 => 'definition',
+      ),
     ),
     12 =>
     array (
@@ -6437,6 +11193,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'COLLATION',
+        2 => 'any_name',
+        3 => 'definition',
       ),
     ),
     13 =>
@@ -6447,6 +11210,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 5,
         1 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'COLLATION',
+        2 => 'IF_P',
+        3 => 'NOT',
+        4 => 'EXISTS',
+        5 => 'any_name',
+        6 => 'definition',
+      ),
     ),
     14 =>
     array (
@@ -6456,6 +11229,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'COLLATION',
+        2 => 'any_name',
+        3 => 'FROM',
+        4 => 'any_name',
+      ),
     ),
     15 =>
     array (
@@ -6464,6 +11245,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 5,
         1 => 7,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'COLLATION',
+        2 => 'IF_P',
+        3 => 'NOT',
+        4 => 'EXISTS',
+        5 => 'any_name',
+        6 => 'FROM',
+        7 => 'any_name',
       ),
     ),
   ),
@@ -6476,6 +11268,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'def_list',
+        2 => ')',
+      ),
     ),
   ),
   'def_list' =>
@@ -6483,6 +11281,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'def_elem',
+      ),
     ),
     1 =>
     array (
@@ -6491,6 +11293,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'def_list',
+        1 => ',',
+        2 => 'def_elem',
       ),
     ),
   ),
@@ -6504,10 +11312,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColLabel',
+        1 => '=',
+        2 => 'def_arg',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ColLabel',
+      ),
     ),
   ),
   'def_arg' =>
@@ -6515,28 +11333,52 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'func_type',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'reserved_keyword',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'qual_all_Op',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'NumericOnly',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Sconst',
+      ),
     ),
     5 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\DefArgWithNone_163bd8ce',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'NONE',
       ),
     ),
   ),
@@ -6549,6 +11391,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'old_aggr_list',
+        2 => ')',
+      ),
     ),
   ),
   'old_aggr_list' =>
@@ -6556,6 +11404,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'old_aggr_elem',
+      ),
     ),
     1 =>
     array (
@@ -6564,6 +11416,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'old_aggr_list',
+        1 => ',',
+        2 => 'old_aggr_elem',
       ),
     ),
   ),
@@ -6577,6 +11435,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'IDENT',
+        1 => '=',
+        2 => 'def_arg',
+      ),
     ),
   ),
   'opt_enum_val_list' =>
@@ -6584,11 +11448,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'enum_val_list',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptEnumValListWith_bf7b10b1',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -6598,6 +11469,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Sconst',
+      ),
     ),
     1 =>
     array (
@@ -6606,6 +11481,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'enum_val_list',
+        1 => ',',
+        2 => 'Sconst',
       ),
     ),
   ),
@@ -6620,6 +11501,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TYPE_P',
+        2 => 'any_name',
+        3 => 'ADD_P',
+        4 => 'VALUE_P',
+        5 => 'opt_if_not_exists',
+        6 => 'Sconst',
+      ),
     ),
     1 =>
     array (
@@ -6630,6 +11521,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 6,
         3 => 8,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TYPE_P',
+        2 => 'any_name',
+        3 => 'ADD_P',
+        4 => 'VALUE_P',
+        5 => 'opt_if_not_exists',
+        6 => 'Sconst',
+        7 => 'BEFORE',
+        8 => 'Sconst',
       ),
     ),
     2 =>
@@ -6642,6 +11545,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 6,
         3 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TYPE_P',
+        2 => 'any_name',
+        3 => 'ADD_P',
+        4 => 'VALUE_P',
+        5 => 'opt_if_not_exists',
+        6 => 'Sconst',
+        7 => 'AFTER',
+        8 => 'Sconst',
+      ),
     ),
     3 =>
     array (
@@ -6652,6 +11567,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TYPE_P',
+        2 => 'any_name',
+        3 => 'RENAME',
+        4 => 'VALUE_P',
+        5 => 'Sconst',
+        6 => 'TO',
+        7 => 'Sconst',
+      ),
     ),
   ),
   'opt_if_not_exists' =>
@@ -6659,10 +11585,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptIfNotExistsChoice_90bda5f0::UseIfNotExists_addd9a5c',
+      'symbols' =>
+      array (
+        0 => 'IF_P',
+        1 => 'NOT',
+        2 => 'EXISTS',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptIfNotExistsChoice_90bda5f0::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'CreateOpClassStmt' =>
@@ -6679,6 +11614,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         4 => 10,
         5 => 12,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'OPERATOR',
+        2 => 'CLASS',
+        3 => 'any_name',
+        4 => 'opt_default',
+        5 => 'FOR',
+        6 => 'TYPE_P',
+        7 => 'Typename',
+        8 => 'USING',
+        9 => 'name',
+        10 => 'opt_opfamily',
+        11 => 'AS',
+        12 => 'opclass_item_list',
+      ),
     ),
   ),
   'opclass_item_list' =>
@@ -6686,6 +11637,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'opclass_item',
+      ),
     ),
     1 =>
     array (
@@ -6694,6 +11649,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'opclass_item_list',
+        1 => ',',
+        2 => 'opclass_item',
       ),
     ),
   ),
@@ -6709,6 +11670,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'OPERATOR',
+        1 => 'Iconst',
+        2 => 'any_operator',
+        3 => 'opclass_purpose',
+        4 => 'opt_recheck',
+      ),
     ),
     1 =>
     array (
@@ -6720,6 +11689,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'OPERATOR',
+        1 => 'Iconst',
+        2 => 'operator_with_argtypes',
+        3 => 'opclass_purpose',
+        4 => 'opt_recheck',
+      ),
     ),
     2 =>
     array (
@@ -6728,6 +11705,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FUNCTION',
+        1 => 'Iconst',
+        2 => 'function_with_argtypes',
       ),
     ),
     3 =>
@@ -6739,6 +11722,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'FUNCTION',
+        1 => 'Iconst',
+        2 => '(',
+        3 => 'type_list',
+        4 => ')',
+        5 => 'function_with_argtypes',
+      ),
     ),
     4 =>
     array (
@@ -6747,6 +11739,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'STORAGE',
+        1 => 'Typename',
+      ),
     ),
   ),
   'opt_default' =>
@@ -6754,10 +11751,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptDefaultChoice_9b27c235::UseDefault_89dbf710',
+      'symbols' =>
+      array (
+        0 => 'DEFAULT',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptDefaultChoice_9b27c235::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'opt_opfamily' =>
@@ -6769,11 +11773,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'FAMILY',
+        1 => 'any_name',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptOpfamilyWith_0ff241a0',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -6786,6 +11798,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'FOR',
+        1 => 'SEARCH',
+      ),
     ),
     1 =>
     array (
@@ -6794,11 +11811,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'FOR',
+        1 => 'ORDER',
+        2 => 'BY',
+        3 => 'any_name',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OpclassPurposeWith_3a597cf5',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -6808,10 +11835,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptRecheckChoice_5bcfed7f::UseRecheck_b24e2a65',
+      'symbols' =>
+      array (
+        0 => 'RECHECK',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptRecheckChoice_5bcfed7f::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'CreateOpFamilyStmt' =>
@@ -6823,6 +11857,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'OPERATOR',
+        2 => 'FAMILY',
+        3 => 'any_name',
+        4 => 'USING',
+        5 => 'name',
       ),
     ),
   ),
@@ -6837,6 +11880,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'OPERATOR',
+        2 => 'FAMILY',
+        3 => 'any_name',
+        4 => 'USING',
+        5 => 'name',
+        6 => 'ADD_P',
+        7 => 'opclass_item_list',
+      ),
     ),
     1 =>
     array (
@@ -6847,6 +11901,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'OPERATOR',
+        2 => 'FAMILY',
+        3 => 'any_name',
+        4 => 'USING',
+        5 => 'name',
+        6 => 'DROP',
+        7 => 'opclass_drop_list',
+      ),
     ),
   ),
   'opclass_drop_list' =>
@@ -6854,6 +11919,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'opclass_drop',
+      ),
     ),
     1 =>
     array (
@@ -6862,6 +11931,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'opclass_drop_list',
+        1 => ',',
+        2 => 'opclass_drop',
       ),
     ),
   ),
@@ -6875,6 +11950,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'OPERATOR',
+        1 => 'Iconst',
+        2 => '(',
+        3 => 'type_list',
+        4 => ')',
+      ),
     ),
     1 =>
     array (
@@ -6883,6 +11966,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FUNCTION',
+        1 => 'Iconst',
+        2 => '(',
+        3 => 'type_list',
+        4 => ')',
       ),
     ),
   ),
@@ -6897,6 +11988,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'OPERATOR',
+        2 => 'CLASS',
+        3 => 'any_name',
+        4 => 'USING',
+        5 => 'name',
+        6 => 'opt_drop_behavior',
+      ),
     ),
     1 =>
     array (
@@ -6906,6 +12007,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 5,
         1 => 7,
         2 => 8,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'OPERATOR',
+        2 => 'CLASS',
+        3 => 'IF_P',
+        4 => 'EXISTS',
+        5 => 'any_name',
+        6 => 'USING',
+        7 => 'name',
+        8 => 'opt_drop_behavior',
       ),
     ),
   ),
@@ -6920,6 +12033,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'OPERATOR',
+        2 => 'FAMILY',
+        3 => 'any_name',
+        4 => 'USING',
+        5 => 'name',
+        6 => 'opt_drop_behavior',
+      ),
     ),
     1 =>
     array (
@@ -6929,6 +12052,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 5,
         1 => 7,
         2 => 8,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'OPERATOR',
+        2 => 'FAMILY',
+        3 => 'IF_P',
+        4 => 'EXISTS',
+        5 => 'any_name',
+        6 => 'USING',
+        7 => 'name',
+        8 => 'opt_drop_behavior',
       ),
     ),
   ),
@@ -6942,6 +12077,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'OWNED',
+        2 => 'BY',
+        3 => 'role_list',
+        4 => 'opt_drop_behavior',
+      ),
     ),
   ),
   'ReassignOwnedStmt' =>
@@ -6953,6 +12096,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REASSIGN',
+        1 => 'OWNED',
+        2 => 'BY',
+        3 => 'role_list',
+        4 => 'TO',
+        5 => 'RoleSpec',
       ),
     ),
   ),
@@ -6967,6 +12119,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 4,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'object_type_any_name',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'any_name_list',
+        5 => 'opt_drop_behavior',
+      ),
     ),
     1 =>
     array (
@@ -6976,6 +12137,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
         2 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'object_type_any_name',
+        2 => 'any_name_list',
+        3 => 'opt_drop_behavior',
       ),
     ),
     2 =>
@@ -6987,6 +12155,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 4,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'drop_type_name',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'name_list',
+        5 => 'opt_drop_behavior',
+      ),
     ),
     3 =>
     array (
@@ -6996,6 +12173,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
         2 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'drop_type_name',
+        2 => 'name_list',
+        3 => 'opt_drop_behavior',
       ),
     ),
     4 =>
@@ -7008,6 +12192,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 4,
         3 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'object_type_name_on_any_name',
+        2 => 'name',
+        3 => 'ON',
+        4 => 'any_name',
+        5 => 'opt_drop_behavior',
+      ),
     ),
     5 =>
     array (
@@ -7019,6 +12212,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 6,
         3 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'object_type_name_on_any_name',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'name',
+        5 => 'ON',
+        6 => 'any_name',
+        7 => 'opt_drop_behavior',
+      ),
     ),
     6 =>
     array (
@@ -7027,6 +12231,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'TYPE_P',
+        2 => 'type_name_list',
+        3 => 'opt_drop_behavior',
       ),
     ),
     7 =>
@@ -7037,6 +12248,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'TYPE_P',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'type_name_list',
+        5 => 'opt_drop_behavior',
+      ),
     ),
     8 =>
     array (
@@ -7045,6 +12265,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'DOMAIN_P',
+        2 => 'type_name_list',
+        3 => 'opt_drop_behavior',
       ),
     ),
     9 =>
@@ -7055,6 +12282,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'DOMAIN_P',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'type_name_list',
+        5 => 'opt_drop_behavior',
+      ),
     ),
     10 =>
     array (
@@ -7063,6 +12299,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'INDEX',
+        2 => 'CONCURRENTLY',
+        3 => 'any_name_list',
+        4 => 'opt_drop_behavior',
       ),
     ),
     11 =>
@@ -7073,6 +12317,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 5,
         1 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'INDEX',
+        2 => 'CONCURRENTLY',
+        3 => 'IF_P',
+        4 => 'EXISTS',
+        5 => 'any_name_list',
+        6 => 'opt_drop_behavior',
+      ),
     ),
   ),
   'object_type_any_name' =>
@@ -7080,54 +12334,116 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeAnyNameChoice_642ba9ee::UseTable_52ca2fea',
+      'symbols' =>
+      array (
+        0 => 'TABLE',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeAnyNameChoice_642ba9ee::UseSequence_88b109d9',
+      'symbols' =>
+      array (
+        0 => 'SEQUENCE',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeAnyNameChoice_642ba9ee::UseView_28baebc3',
+      'symbols' =>
+      array (
+        0 => 'VIEW',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeAnyNameChoice_642ba9ee::UseMaterializedView_34cab606',
+      'symbols' =>
+      array (
+        0 => 'MATERIALIZED',
+        1 => 'VIEW',
+      ),
     ),
     4 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeAnyNameChoice_642ba9ee::UseIndex_ea69fe17',
+      'symbols' =>
+      array (
+        0 => 'INDEX',
+      ),
     ),
     5 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeAnyNameChoice_642ba9ee::UseForeignTable_d7a3be14',
+      'symbols' =>
+      array (
+        0 => 'FOREIGN',
+        1 => 'TABLE',
+      ),
     ),
     6 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeAnyNameChoice_642ba9ee::UseCollation_bdcd3285',
+      'symbols' =>
+      array (
+        0 => 'COLLATION',
+      ),
     ),
     7 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeAnyNameChoice_642ba9ee::UseConversion_b27cc9f8',
+      'symbols' =>
+      array (
+        0 => 'CONVERSION_P',
+      ),
     ),
     8 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeAnyNameChoice_642ba9ee::UseStatistics_3397886a',
+      'symbols' =>
+      array (
+        0 => 'STATISTICS',
+      ),
     ),
     9 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeAnyNameChoice_642ba9ee::UseTextSearchParser_6233ed1b',
+      'symbols' =>
+      array (
+        0 => 'TEXT_P',
+        1 => 'SEARCH',
+        2 => 'PARSER',
+      ),
     ),
     10 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeAnyNameChoice_642ba9ee::UseTextSearchDictionary_2d6ab235',
+      'symbols' =>
+      array (
+        0 => 'TEXT_P',
+        1 => 'SEARCH',
+        2 => 'DICTIONARY',
+      ),
     ),
     11 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeAnyNameChoice_642ba9ee::UseTextSearchTemplate_a7fa8ac4',
+      'symbols' =>
+      array (
+        0 => 'TEXT_P',
+        1 => 'SEARCH',
+        2 => 'TEMPLATE',
+      ),
     ),
     12 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeAnyNameChoice_642ba9ee::UseTextSearchConfiguration_6937f1ce',
+      'symbols' =>
+      array (
+        0 => 'TEXT_P',
+        1 => 'SEARCH',
+        2 => 'CONFIGURATION',
+      ),
     ),
   ),
   'object_type_name' =>
@@ -7135,12 +12451,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'drop_type_name',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ObjectTypeNameWithDatabase_06a048b0',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'DATABASE',
       ),
     ),
     2 =>
@@ -7149,6 +12473,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'ROLE',
+      ),
     ),
     3 =>
     array (
@@ -7156,12 +12484,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'SUBSCRIPTION',
+      ),
     ),
     4 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ObjectTypeNameWithTablespace_ab904ce4',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'TABLESPACE',
       ),
     ),
   ),
@@ -7173,12 +12509,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'ACCESS',
+        1 => 'METHOD',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\DropTypeNameWithEventTrigger_c1474155',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'EVENT',
+        1 => 'TRIGGER',
       ),
     ),
     2 =>
@@ -7187,12 +12533,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'EXTENSION',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\DropTypeNameWithForeignDataPWrapper_1e25df7f',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'FOREIGN',
+        1 => 'DATA_P',
+        2 => 'WRAPPER',
       ),
     ),
     4 =>
@@ -7202,12 +12558,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_procedural',
+        1 => 'LANGUAGE',
+      ),
     ),
     5 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\DropTypeNameWithPublication_3d35c43b',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'PUBLICATION',
       ),
     ),
     6 =>
@@ -7216,12 +12581,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'SCHEMA',
+      ),
     ),
     7 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\DropTypeNameWithServer_c2263eb9',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'SERVER',
       ),
     ),
   ),
@@ -7230,14 +12603,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeNameOnAnyNameChoice_d9ecb5f0::UsePolicy_f062025b',
+      'symbols' =>
+      array (
+        0 => 'POLICY',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeNameOnAnyNameChoice_d9ecb5f0::UseRule_44d0ee0f',
+      'symbols' =>
+      array (
+        0 => 'RULE',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeNameOnAnyNameChoice_d9ecb5f0::UseTrigger_f3bbca3a',
+      'symbols' =>
+      array (
+        0 => 'TRIGGER',
+      ),
     ),
   ),
   'any_name_list' =>
@@ -7245,6 +12630,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'any_name',
+      ),
     ),
     1 =>
     array (
@@ -7254,6 +12643,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'any_name_list',
+        1 => ',',
+        2 => 'any_name',
+      ),
     ),
   ),
   'any_name' =>
@@ -7261,6 +12656,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ColId',
+      ),
     ),
     1 =>
     array (
@@ -7269,6 +12668,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ColId',
+        1 => 'attrs',
       ),
     ),
   ),
@@ -7281,6 +12685,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '.',
+        1 => 'attr_name',
+      ),
     ),
     1 =>
     array (
@@ -7290,6 +12699,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'attrs',
+        1 => '.',
+        2 => 'attr_name',
+      ),
     ),
   ),
   'type_name_list' =>
@@ -7297,6 +12712,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Typename',
+      ),
     ),
     1 =>
     array (
@@ -7305,6 +12724,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'type_name_list',
+        1 => ',',
+        2 => 'Typename',
       ),
     ),
   ),
@@ -7320,6 +12745,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'TRUNCATE',
+        1 => 'opt_table',
+        2 => 'relation_expr_list',
+        3 => 'opt_restart_seqs',
+        4 => 'opt_drop_behavior',
+      ),
     ),
   ),
   'opt_restart_seqs' =>
@@ -7327,14 +12760,27 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptRestartSeqsChoice_13a0e4ad::UseContinueIdentity_54c311f3',
+      'symbols' =>
+      array (
+        0 => 'CONTINUE_P',
+        1 => 'IDENTITY_P',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptRestartSeqsChoice_13a0e4ad::UseRestartIdentity_de8be940',
+      'symbols' =>
+      array (
+        0 => 'RESTART',
+        1 => 'IDENTITY_P',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptRestartSeqsChoice_13a0e4ad::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'CommentStmt' =>
@@ -7348,6 +12794,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT',
+        1 => 'ON',
+        2 => 'object_type_any_name',
+        3 => 'any_name',
+        4 => 'IS',
+        5 => 'comment_text',
+      ),
     ),
     1 =>
     array (
@@ -7356,6 +12811,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT',
+        1 => 'ON',
+        2 => 'COLUMN',
+        3 => 'any_name',
+        4 => 'IS',
+        5 => 'comment_text',
       ),
     ),
     2 =>
@@ -7367,6 +12831,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT',
+        1 => 'ON',
+        2 => 'object_type_name',
+        3 => 'name',
+        4 => 'IS',
+        5 => 'comment_text',
+      ),
     ),
     3 =>
     array (
@@ -7375,6 +12848,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT',
+        1 => 'ON',
+        2 => 'TYPE_P',
+        3 => 'Typename',
+        4 => 'IS',
+        5 => 'comment_text',
       ),
     ),
     4 =>
@@ -7385,6 +12867,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT',
+        1 => 'ON',
+        2 => 'DOMAIN_P',
+        3 => 'Typename',
+        4 => 'IS',
+        5 => 'comment_text',
+      ),
     ),
     5 =>
     array (
@@ -7393,6 +12884,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT',
+        1 => 'ON',
+        2 => 'AGGREGATE',
+        3 => 'aggregate_with_argtypes',
+        4 => 'IS',
+        5 => 'comment_text',
       ),
     ),
     6 =>
@@ -7403,6 +12903,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT',
+        1 => 'ON',
+        2 => 'FUNCTION',
+        3 => 'function_with_argtypes',
+        4 => 'IS',
+        5 => 'comment_text',
+      ),
     ),
     7 =>
     array (
@@ -7411,6 +12920,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT',
+        1 => 'ON',
+        2 => 'OPERATOR',
+        3 => 'operator_with_argtypes',
+        4 => 'IS',
+        5 => 'comment_text',
       ),
     ),
     8 =>
@@ -7422,6 +12940,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT',
+        1 => 'ON',
+        2 => 'CONSTRAINT',
+        3 => 'name',
+        4 => 'ON',
+        5 => 'any_name',
+        6 => 'IS',
+        7 => 'comment_text',
+      ),
     ),
     9 =>
     array (
@@ -7431,6 +12960,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 6,
         2 => 8,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT',
+        1 => 'ON',
+        2 => 'CONSTRAINT',
+        3 => 'name',
+        4 => 'ON',
+        5 => 'DOMAIN_P',
+        6 => 'any_name',
+        7 => 'IS',
+        8 => 'comment_text',
       ),
     ),
     10 =>
@@ -7443,6 +12984,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 5,
         3 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT',
+        1 => 'ON',
+        2 => 'object_type_name_on_any_name',
+        3 => 'name',
+        4 => 'ON',
+        5 => 'any_name',
+        6 => 'IS',
+        7 => 'comment_text',
+      ),
     ),
     11 =>
     array (
@@ -7452,6 +13004,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT',
+        1 => 'ON',
+        2 => 'PROCEDURE',
+        3 => 'function_with_argtypes',
+        4 => 'IS',
+        5 => 'comment_text',
+      ),
     ),
     12 =>
     array (
@@ -7460,6 +13021,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT',
+        1 => 'ON',
+        2 => 'ROUTINE',
+        3 => 'function_with_argtypes',
+        4 => 'IS',
+        5 => 'comment_text',
       ),
     ),
     13 =>
@@ -7471,6 +13041,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 6,
         2 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT',
+        1 => 'ON',
+        2 => 'TRANSFORM',
+        3 => 'FOR',
+        4 => 'Typename',
+        5 => 'LANGUAGE',
+        6 => 'name',
+        7 => 'IS',
+        8 => 'comment_text',
+      ),
     ),
     14 =>
     array (
@@ -7480,6 +13062,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 6,
         2 => 8,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT',
+        1 => 'ON',
+        2 => 'OPERATOR',
+        3 => 'CLASS',
+        4 => 'any_name',
+        5 => 'USING',
+        6 => 'name',
+        7 => 'IS',
+        8 => 'comment_text',
       ),
     ),
     15 =>
@@ -7491,6 +13085,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 6,
         2 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT',
+        1 => 'ON',
+        2 => 'OPERATOR',
+        3 => 'FAMILY',
+        4 => 'any_name',
+        5 => 'USING',
+        6 => 'name',
+        7 => 'IS',
+        8 => 'comment_text',
+      ),
     ),
     16 =>
     array (
@@ -7499,6 +13105,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
         1 => 6,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT',
+        1 => 'ON',
+        2 => 'LARGE_P',
+        3 => 'OBJECT_P',
+        4 => 'NumericOnly',
+        5 => 'IS',
+        6 => 'comment_text',
       ),
     ),
     17 =>
@@ -7510,6 +13126,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 6,
         2 => 9,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT',
+        1 => 'ON',
+        2 => 'CAST',
+        3 => '(',
+        4 => 'Typename',
+        5 => 'AS',
+        6 => 'Typename',
+        7 => ')',
+        8 => 'IS',
+        9 => 'comment_text',
+      ),
     ),
   ),
   'comment_text' =>
@@ -7517,12 +13146,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Sconst',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CommentTextWithNullP_ad71b312',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'NULL_P',
       ),
     ),
   ),
@@ -7538,6 +13175,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 5,
         3 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'SECURITY',
+        1 => 'LABEL',
+        2 => 'opt_provider',
+        3 => 'ON',
+        4 => 'object_type_any_name',
+        5 => 'any_name',
+        6 => 'IS',
+        7 => 'security_label',
+      ),
     ),
     1 =>
     array (
@@ -7547,6 +13195,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
         2 => 7,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SECURITY',
+        1 => 'LABEL',
+        2 => 'opt_provider',
+        3 => 'ON',
+        4 => 'COLUMN',
+        5 => 'any_name',
+        6 => 'IS',
+        7 => 'security_label',
       ),
     ),
     2 =>
@@ -7559,6 +13218,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 5,
         3 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'SECURITY',
+        1 => 'LABEL',
+        2 => 'opt_provider',
+        3 => 'ON',
+        4 => 'object_type_name',
+        5 => 'name',
+        6 => 'IS',
+        7 => 'security_label',
+      ),
     ),
     3 =>
     array (
@@ -7568,6 +13238,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
         2 => 7,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SECURITY',
+        1 => 'LABEL',
+        2 => 'opt_provider',
+        3 => 'ON',
+        4 => 'TYPE_P',
+        5 => 'Typename',
+        6 => 'IS',
+        7 => 'security_label',
       ),
     ),
     4 =>
@@ -7579,6 +13260,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'SECURITY',
+        1 => 'LABEL',
+        2 => 'opt_provider',
+        3 => 'ON',
+        4 => 'DOMAIN_P',
+        5 => 'Typename',
+        6 => 'IS',
+        7 => 'security_label',
+      ),
     ),
     5 =>
     array (
@@ -7588,6 +13280,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
         2 => 7,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SECURITY',
+        1 => 'LABEL',
+        2 => 'opt_provider',
+        3 => 'ON',
+        4 => 'AGGREGATE',
+        5 => 'aggregate_with_argtypes',
+        6 => 'IS',
+        7 => 'security_label',
       ),
     ),
     6 =>
@@ -7599,6 +13302,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'SECURITY',
+        1 => 'LABEL',
+        2 => 'opt_provider',
+        3 => 'ON',
+        4 => 'FUNCTION',
+        5 => 'function_with_argtypes',
+        6 => 'IS',
+        7 => 'security_label',
+      ),
     ),
     7 =>
     array (
@@ -7608,6 +13322,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 6,
         2 => 8,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SECURITY',
+        1 => 'LABEL',
+        2 => 'opt_provider',
+        3 => 'ON',
+        4 => 'LARGE_P',
+        5 => 'OBJECT_P',
+        6 => 'NumericOnly',
+        7 => 'IS',
+        8 => 'security_label',
       ),
     ),
     8 =>
@@ -7619,6 +13345,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'SECURITY',
+        1 => 'LABEL',
+        2 => 'opt_provider',
+        3 => 'ON',
+        4 => 'PROCEDURE',
+        5 => 'function_with_argtypes',
+        6 => 'IS',
+        7 => 'security_label',
+      ),
     ),
     9 =>
     array (
@@ -7628,6 +13365,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
         2 => 7,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SECURITY',
+        1 => 'LABEL',
+        2 => 'opt_provider',
+        3 => 'ON',
+        4 => 'ROUTINE',
+        5 => 'function_with_argtypes',
+        6 => 'IS',
+        7 => 'security_label',
       ),
     ),
   ),
@@ -7640,11 +13388,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'FOR',
+        1 => 'NonReservedWord_or_Sconst',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptProviderWith_71f3b57a',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -7654,12 +13410,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Sconst',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\SecurityLabelWithNullP_95e9ab2a',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'NULL_P',
       ),
     ),
   ),
@@ -7672,6 +13436,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'FETCH',
+        1 => 'fetch_args',
+      ),
     ),
     1 =>
     array (
@@ -7680,6 +13449,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'MOVE',
+        1 => 'fetch_args',
+      ),
     ),
   ),
   'fetch_args' =>
@@ -7687,6 +13461,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'cursor_name',
+      ),
     ),
     1 =>
     array (
@@ -7695,6 +13473,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'from_in',
+        1 => 'cursor_name',
       ),
     ),
     2 =>
@@ -7705,6 +13488,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'NEXT',
+        1 => 'opt_from_in',
+        2 => 'cursor_name',
+      ),
     ),
     3 =>
     array (
@@ -7713,6 +13502,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PRIOR',
+        1 => 'opt_from_in',
+        2 => 'cursor_name',
       ),
     ),
     4 =>
@@ -7723,6 +13518,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'FIRST_P',
+        1 => 'opt_from_in',
+        2 => 'cursor_name',
+      ),
     ),
     5 =>
     array (
@@ -7731,6 +13532,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LAST_P',
+        1 => 'opt_from_in',
+        2 => 'cursor_name',
       ),
     ),
     6 =>
@@ -7742,6 +13549,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ABSOLUTE_P',
+        1 => 'SignedIconst',
+        2 => 'opt_from_in',
+        3 => 'cursor_name',
+      ),
     ),
     7 =>
     array (
@@ -7751,6 +13565,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
         2 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RELATIVE_P',
+        1 => 'SignedIconst',
+        2 => 'opt_from_in',
+        3 => 'cursor_name',
       ),
     ),
     8 =>
@@ -7762,6 +13583,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'SignedIconst',
+        1 => 'opt_from_in',
+        2 => 'cursor_name',
+      ),
     ),
     9 =>
     array (
@@ -7771,6 +13598,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALL',
+        1 => 'opt_from_in',
+        2 => 'cursor_name',
+      ),
     ),
     10 =>
     array (
@@ -7779,6 +13612,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FORWARD',
+        1 => 'opt_from_in',
+        2 => 'cursor_name',
       ),
     ),
     11 =>
@@ -7790,6 +13629,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'FORWARD',
+        1 => 'SignedIconst',
+        2 => 'opt_from_in',
+        3 => 'cursor_name',
+      ),
     ),
     12 =>
     array (
@@ -7799,6 +13645,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'FORWARD',
+        1 => 'ALL',
+        2 => 'opt_from_in',
+        3 => 'cursor_name',
+      ),
     ),
     13 =>
     array (
@@ -7807,6 +13660,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BACKWARD',
+        1 => 'opt_from_in',
+        2 => 'cursor_name',
       ),
     ),
     14 =>
@@ -7818,6 +13677,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'BACKWARD',
+        1 => 'SignedIconst',
+        2 => 'opt_from_in',
+        3 => 'cursor_name',
+      ),
     ),
     15 =>
     array (
@@ -7827,6 +13693,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'BACKWARD',
+        1 => 'ALL',
+        2 => 'opt_from_in',
+        3 => 'cursor_name',
+      ),
     ),
   ),
   'from_in' =>
@@ -7834,10 +13707,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\FromInChoice_6f91678a::UseFrom_f4383c66',
+      'symbols' =>
+      array (
+        0 => 'FROM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\FromInChoice_6f91678a::UseIn_fed1d872',
+      'symbols' =>
+      array (
+        0 => 'IN_P',
+      ),
     ),
   ),
   'opt_from_in' =>
@@ -7845,11 +13726,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'from_in',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptFromInWith_a3ee399b',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -7867,6 +13755,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 6,
         4 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'GRANT',
+        1 => 'privileges',
+        2 => 'ON',
+        3 => 'privilege_target',
+        4 => 'TO',
+        5 => 'grantee_list',
+        6 => 'opt_grant_grant_option',
+        7 => 'opt_granted_by',
+      ),
     ),
   ),
   'RevokeStmt' =>
@@ -7882,6 +13781,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 6,
         4 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'REVOKE',
+        1 => 'privileges',
+        2 => 'ON',
+        3 => 'privilege_target',
+        4 => 'FROM',
+        5 => 'grantee_list',
+        6 => 'opt_granted_by',
+        7 => 'opt_drop_behavior',
+      ),
     ),
     1 =>
     array (
@@ -7894,6 +13804,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 9,
         4 => 10,
       ),
+      'symbols' =>
+      array (
+        0 => 'REVOKE',
+        1 => 'GRANT',
+        2 => 'OPTION',
+        3 => 'FOR',
+        4 => 'privileges',
+        5 => 'ON',
+        6 => 'privilege_target',
+        7 => 'FROM',
+        8 => 'grantee_list',
+        9 => 'opt_granted_by',
+        10 => 'opt_drop_behavior',
+      ),
     ),
   ),
   'privileges' =>
@@ -7901,6 +13825,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'privilege_list',
+      ),
     ),
     1 =>
     array (
@@ -7908,12 +13836,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'ALL',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\PrivilegesWithAllPrivileges_1bb916b2',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALL',
+        1 => 'PRIVILEGES',
       ),
     ),
     3 =>
@@ -7923,6 +13860,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALL',
+        1 => '(',
+        2 => 'columnList',
+        3 => ')',
+      ),
     ),
     4 =>
     array (
@@ -7931,6 +13875,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALL',
+        1 => 'PRIVILEGES',
+        2 => '(',
+        3 => 'columnList',
+        4 => ')',
+      ),
     ),
   ),
   'privilege_list' =>
@@ -7938,6 +13890,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'privilege',
+      ),
     ),
     1 =>
     array (
@@ -7946,6 +13902,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'privilege_list',
+        1 => ',',
+        2 => 'privilege',
       ),
     ),
   ),
@@ -7958,6 +13920,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'SELECT',
+        1 => 'opt_column_list',
+      ),
     ),
     1 =>
     array (
@@ -7965,6 +13932,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REFERENCES',
+        1 => 'opt_column_list',
       ),
     ),
     2 =>
@@ -7974,12 +13946,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'opt_column_list',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\PrivilegeWithAlterSystemP_64209866',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SYSTEM_P',
       ),
     ),
     4 =>
@@ -7990,6 +13972,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColId',
+        1 => 'opt_column_list',
+      ),
     ),
   ),
   'parameter_name_list' =>
@@ -7997,6 +13984,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'parameter_name',
+      ),
     ),
     1 =>
     array (
@@ -8006,6 +13997,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'parameter_name_list',
+        1 => ',',
+        2 => 'parameter_name',
+      ),
     ),
   ),
   'parameter_name' =>
@@ -8013,6 +14010,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ColId',
+      ),
     ),
     1 =>
     array (
@@ -8022,6 +14023,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'parameter_name',
+        1 => '.',
+        2 => 'ColId',
+      ),
     ),
   ),
   'privilege_target' =>
@@ -8029,6 +14036,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'qualified_name_list',
+      ),
     ),
     1 =>
     array (
@@ -8036,6 +14047,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TABLE',
+        1 => 'qualified_name_list',
       ),
     ),
     2 =>
@@ -8045,6 +14061,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'SEQUENCE',
+        1 => 'qualified_name_list',
+      ),
     ),
     3 =>
     array (
@@ -8052,6 +14073,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FOREIGN',
+        1 => 'DATA_P',
+        2 => 'WRAPPER',
+        3 => 'name_list',
       ),
     ),
     4 =>
@@ -8061,6 +14089,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'FOREIGN',
+        1 => 'SERVER',
+        2 => 'name_list',
+      ),
     ),
     5 =>
     array (
@@ -8068,6 +14102,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FUNCTION',
+        1 => 'function_with_argtypes_list',
       ),
     ),
     6 =>
@@ -8077,6 +14116,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'PROCEDURE',
+        1 => 'function_with_argtypes_list',
+      ),
     ),
     7 =>
     array (
@@ -8084,6 +14128,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ROUTINE',
+        1 => 'function_with_argtypes_list',
       ),
     ),
     8 =>
@@ -8093,6 +14142,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'DATABASE',
+        1 => 'name_list',
+      ),
     ),
     9 =>
     array (
@@ -8100,6 +14154,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DOMAIN_P',
+        1 => 'any_name_list',
       ),
     ),
     10 =>
@@ -8109,6 +14168,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'LANGUAGE',
+        1 => 'name_list',
+      ),
     ),
     11 =>
     array (
@@ -8116,6 +14180,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LARGE_P',
+        1 => 'OBJECT_P',
+        2 => 'NumericOnly_list',
       ),
     ),
     12 =>
@@ -8125,6 +14195,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'PARAMETER',
+        1 => 'parameter_name_list',
+      ),
     ),
     13 =>
     array (
@@ -8132,6 +14207,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SCHEMA',
+        1 => 'name_list',
       ),
     ),
     14 =>
@@ -8141,6 +14221,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'TABLESPACE',
+        1 => 'name_list',
+      ),
     ),
     15 =>
     array (
@@ -8148,6 +14233,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TYPE_P',
+        1 => 'any_name_list',
       ),
     ),
     16 =>
@@ -8157,6 +14247,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALL',
+        1 => 'TABLES',
+        2 => 'IN_P',
+        3 => 'SCHEMA',
+        4 => 'name_list',
+      ),
     ),
     17 =>
     array (
@@ -8164,6 +14262,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALL',
+        1 => 'SEQUENCES',
+        2 => 'IN_P',
+        3 => 'SCHEMA',
+        4 => 'name_list',
       ),
     ),
     18 =>
@@ -8173,6 +14279,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALL',
+        1 => 'FUNCTIONS',
+        2 => 'IN_P',
+        3 => 'SCHEMA',
+        4 => 'name_list',
+      ),
     ),
     19 =>
     array (
@@ -8180,6 +14294,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALL',
+        1 => 'PROCEDURES',
+        2 => 'IN_P',
+        3 => 'SCHEMA',
+        4 => 'name_list',
       ),
     ),
     20 =>
@@ -8189,6 +14311,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALL',
+        1 => 'ROUTINES',
+        2 => 'IN_P',
+        3 => 'SCHEMA',
+        4 => 'name_list',
+      ),
     ),
   ),
   'grantee_list' =>
@@ -8196,6 +14326,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'grantee',
+      ),
     ),
     1 =>
     array (
@@ -8205,6 +14339,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'grantee_list',
+        1 => ',',
+        2 => 'grantee',
+      ),
     ),
   ),
   'grantee' =>
@@ -8212,6 +14352,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'RoleSpec',
+      ),
     ),
     1 =>
     array (
@@ -8220,6 +14364,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'GROUP_P',
+        1 => 'RoleSpec',
+      ),
     ),
   ),
   'opt_grant_grant_option' =>
@@ -8227,10 +14376,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptGrantGrantOptionChoice_8c0f9578::UseWithGrantOption_79cfb8cf',
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'GRANT',
+        2 => 'OPTION',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptGrantGrantOptionChoice_8c0f9578::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'GrantRoleStmt' =>
@@ -8244,6 +14402,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'GRANT',
+        1 => 'privilege_list',
+        2 => 'TO',
+        3 => 'role_list',
+        4 => 'opt_granted_by',
+      ),
     ),
     1 =>
     array (
@@ -8254,6 +14420,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 5,
         3 => 6,
+      ),
+      'symbols' =>
+      array (
+        0 => 'GRANT',
+        1 => 'privilege_list',
+        2 => 'TO',
+        3 => 'role_list',
+        4 => 'WITH',
+        5 => 'grant_role_opt_list',
+        6 => 'opt_granted_by',
       ),
     ),
   ),
@@ -8269,6 +14445,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 4,
         3 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'REVOKE',
+        1 => 'privilege_list',
+        2 => 'FROM',
+        3 => 'role_list',
+        4 => 'opt_granted_by',
+        5 => 'opt_drop_behavior',
+      ),
     ),
     1 =>
     array (
@@ -8280,6 +14465,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 6,
         3 => 7,
         4 => 8,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REVOKE',
+        1 => 'ColId',
+        2 => 'OPTION',
+        3 => 'FOR',
+        4 => 'privilege_list',
+        5 => 'FROM',
+        6 => 'role_list',
+        7 => 'opt_granted_by',
+        8 => 'opt_drop_behavior',
       ),
     ),
   ),
@@ -8293,10 +14490,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'grant_role_opt_list',
+        1 => ',',
+        2 => 'grant_role_opt',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'grant_role_opt',
+      ),
     ),
   ),
   'grant_role_opt' =>
@@ -8309,6 +14516,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColLabel',
+        1 => 'grant_role_opt_value',
+      ),
     ),
   ),
   'grant_role_opt_value' =>
@@ -8316,14 +14528,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\GrantRoleOptValueChoice_43334013::UseOption_3e57b132',
+      'symbols' =>
+      array (
+        0 => 'OPTION',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\GrantRoleOptValueChoice_43334013::UseTrue_dfe88090',
+      'symbols' =>
+      array (
+        0 => 'TRUE_P',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\GrantRoleOptValueChoice_43334013::UseFalse_4e523a5a',
+      'symbols' =>
+      array (
+        0 => 'FALSE_P',
+      ),
     ),
   ),
   'opt_granted_by' =>
@@ -8335,11 +14559,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'GRANTED',
+        1 => 'BY',
+        2 => 'RoleSpec',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptGrantedByWith_1873d2a1',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -8354,6 +14587,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'DEFAULT',
+        2 => 'PRIVILEGES',
+        3 => 'DefACLOptionList',
+        4 => 'DefACLAction',
+      ),
     ),
   ),
   'DefACLOptionList' =>
@@ -8366,11 +14607,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'DefACLOptionList',
+        1 => 'DefACLOption',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\DefAclOptionListWith_e8813121',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -8384,6 +14633,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'IN_P',
+        1 => 'SCHEMA',
+        2 => 'name_list',
+      ),
     ),
     1 =>
     array (
@@ -8392,6 +14647,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'FOR',
+        1 => 'ROLE',
+        2 => 'role_list',
+      ),
     ),
     2 =>
     array (
@@ -8399,6 +14660,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FOR',
+        1 => 'USER',
+        2 => 'role_list',
       ),
     ),
   ),
@@ -8414,6 +14681,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 5,
         3 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'GRANT',
+        1 => 'privileges',
+        2 => 'ON',
+        3 => 'defacl_privilege_target',
+        4 => 'TO',
+        5 => 'grantee_list',
+        6 => 'opt_grant_grant_option',
+      ),
     ),
     1 =>
     array (
@@ -8424,6 +14701,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 5,
         3 => 6,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REVOKE',
+        1 => 'privileges',
+        2 => 'ON',
+        3 => 'defacl_privilege_target',
+        4 => 'FROM',
+        5 => 'grantee_list',
+        6 => 'opt_drop_behavior',
       ),
     ),
     2 =>
@@ -8436,6 +14723,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 8,
         3 => 9,
       ),
+      'symbols' =>
+      array (
+        0 => 'REVOKE',
+        1 => 'GRANT',
+        2 => 'OPTION',
+        3 => 'FOR',
+        4 => 'privileges',
+        5 => 'ON',
+        6 => 'defacl_privilege_target',
+        7 => 'FROM',
+        8 => 'grantee_list',
+        9 => 'opt_drop_behavior',
+      ),
     ),
   ),
   'defacl_privilege_target' =>
@@ -8443,26 +14743,50 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\DefaclPrivilegeTargetChoice_d6644681::UseTables_51f6ddbd',
+      'symbols' =>
+      array (
+        0 => 'TABLES',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\DefaclPrivilegeTargetChoice_d6644681::UseFunctions_30007559',
+      'symbols' =>
+      array (
+        0 => 'FUNCTIONS',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\DefaclPrivilegeTargetChoice_d6644681::UseRoutines_a01ea2b8',
+      'symbols' =>
+      array (
+        0 => 'ROUTINES',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\DefaclPrivilegeTargetChoice_d6644681::UseSequences_8f0d3709',
+      'symbols' =>
+      array (
+        0 => 'SEQUENCES',
+      ),
     ),
     4 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\DefaclPrivilegeTargetChoice_d6644681::UseTypes_ab20f00b',
+      'symbols' =>
+      array (
+        0 => 'TYPES_P',
+      ),
     ),
     5 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\DefaclPrivilegeTargetChoice_d6644681::UseSchemas_36e36853',
+      'symbols' =>
+      array (
+        0 => 'SCHEMAS',
+      ),
     ),
   ),
   'IndexStmt' =>
@@ -8484,6 +14808,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         9 => 14,
         10 => 15,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'opt_unique',
+        2 => 'INDEX',
+        3 => 'opt_concurrently',
+        4 => 'opt_single_name',
+        5 => 'ON',
+        6 => 'relation_expr',
+        7 => 'access_method_clause',
+        8 => '(',
+        9 => 'index_params',
+        10 => ')',
+        11 => 'opt_include',
+        12 => 'opt_unique_null_treatment',
+        13 => 'opt_reloptions',
+        14 => 'OptTableSpace',
+        15 => 'where_clause',
+      ),
     ),
     1 =>
     array (
@@ -8502,6 +14845,28 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         9 => 17,
         10 => 18,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'opt_unique',
+        2 => 'INDEX',
+        3 => 'opt_concurrently',
+        4 => 'IF_P',
+        5 => 'NOT',
+        6 => 'EXISTS',
+        7 => 'name',
+        8 => 'ON',
+        9 => 'relation_expr',
+        10 => 'access_method_clause',
+        11 => '(',
+        12 => 'index_params',
+        13 => ')',
+        14 => 'opt_include',
+        15 => 'opt_unique_null_treatment',
+        16 => 'opt_reloptions',
+        17 => 'OptTableSpace',
+        18 => 'where_clause',
+      ),
     ),
   ),
   'opt_unique' =>
@@ -8509,10 +14874,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptUniqueChoice_996fc274::UseUnique_64636a12',
+      'symbols' =>
+      array (
+        0 => 'UNIQUE',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptUniqueChoice_996fc274::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'access_method_clause' =>
@@ -8524,11 +14896,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'USING',
+        1 => 'name',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AccessMethodClauseWith_c1ddb2a1',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -8538,6 +14918,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'index_elem',
+      ),
     ),
     1 =>
     array (
@@ -8546,6 +14930,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'index_params',
+        1 => ',',
+        2 => 'index_elem',
       ),
     ),
   ),
@@ -8561,6 +14951,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 2,
         3 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_collate',
+        1 => 'opt_qualified_name',
+        2 => 'opt_asc_desc',
+        3 => 'opt_nulls_order',
+      ),
     ),
     1 =>
     array (
@@ -8572,6 +14969,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 2,
         3 => 3,
         4 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'opt_collate',
+        1 => 'any_name',
+        2 => 'reloptions',
+        3 => 'opt_asc_desc',
+        4 => 'opt_nulls_order',
       ),
     ),
   ),
@@ -8585,6 +14990,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColId',
+        1 => 'index_elem_options',
+      ),
     ),
     1 =>
     array (
@@ -8594,6 +15004,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'func_expr_windowless',
+        1 => 'index_elem_options',
+      ),
     ),
     2 =>
     array (
@@ -8602,6 +15017,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'a_expr',
+        2 => ')',
+        3 => 'index_elem_options',
       ),
     ),
   ),
@@ -8614,11 +15036,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'INCLUDE',
+        1 => '(',
+        2 => 'index_including_params',
+        3 => ')',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptIncludeWith_50363a2b',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -8628,6 +15060,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'index_elem',
+      ),
     ),
     1 =>
     array (
@@ -8636,6 +15072,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'index_including_params',
+        1 => ',',
+        2 => 'index_elem',
       ),
     ),
   ),
@@ -8648,11 +15090,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'COLLATE',
+        1 => 'any_name',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptCollateWith_884f47b8',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -8662,14 +15112,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptAscDescChoice_01affc0e::UseAsc_323b087e',
+      'symbols' =>
+      array (
+        0 => 'ASC',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptAscDescChoice_01affc0e::UseDesc_984da4fe',
+      'symbols' =>
+      array (
+        0 => 'DESC',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptAscDescChoice_01affc0e::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'opt_nulls_order' =>
@@ -8681,6 +15142,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NULLS_LA',
+        1 => 'FIRST_P',
+      ),
     ),
     1 =>
     array (
@@ -8689,11 +15155,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NULLS_LA',
+        1 => 'LAST_P',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptNullsOrderWith_71658401',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -8712,6 +15186,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         4 => 7,
         5 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'opt_or_replace',
+        2 => 'FUNCTION',
+        3 => 'func_name',
+        4 => 'func_args_with_defaults',
+        5 => 'RETURNS',
+        6 => 'func_return',
+        7 => 'opt_createfunc_opt_list',
+        8 => 'opt_routine_body',
+      ),
     ),
     1 =>
     array (
@@ -8725,6 +15211,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         4 => 10,
         5 => 11,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'opt_or_replace',
+        2 => 'FUNCTION',
+        3 => 'func_name',
+        4 => 'func_args_with_defaults',
+        5 => 'RETURNS',
+        6 => 'TABLE',
+        7 => '(',
+        8 => 'table_func_column_list',
+        9 => ')',
+        10 => 'opt_createfunc_opt_list',
+        11 => 'opt_routine_body',
+      ),
     ),
     2 =>
     array (
@@ -8736,6 +15237,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 4,
         3 => 5,
         4 => 6,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'opt_or_replace',
+        2 => 'FUNCTION',
+        3 => 'func_name',
+        4 => 'func_args_with_defaults',
+        5 => 'opt_createfunc_opt_list',
+        6 => 'opt_routine_body',
       ),
     ),
     3 =>
@@ -8749,6 +15260,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 5,
         4 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'opt_or_replace',
+        2 => 'PROCEDURE',
+        3 => 'func_name',
+        4 => 'func_args_with_defaults',
+        5 => 'opt_createfunc_opt_list',
+        6 => 'opt_routine_body',
+      ),
     ),
   ),
   'opt_or_replace' =>
@@ -8756,10 +15277,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptOrReplaceChoice_082b2602::UseOrReplace_85db5453',
+      'symbols' =>
+      array (
+        0 => 'OR',
+        1 => 'REPLACE',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptOrReplaceChoice_082b2602::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'func_args' =>
@@ -8771,12 +15300,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'func_args_list',
+        2 => ')',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncArgsWith_dd049f18',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => ')',
       ),
     ),
   ),
@@ -8785,6 +15325,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'func_arg',
+      ),
     ),
     1 =>
     array (
@@ -8794,6 +15338,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'func_args_list',
+        1 => ',',
+        2 => 'func_arg',
+      ),
     ),
   ),
   'function_with_argtypes_list' =>
@@ -8801,6 +15351,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'function_with_argtypes',
+      ),
     ),
     1 =>
     array (
@@ -8809,6 +15363,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'function_with_argtypes_list',
+        1 => ',',
+        2 => 'function_with_argtypes',
       ),
     ),
   ),
@@ -8822,14 +15382,27 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'func_name',
+        1 => 'func_args',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'type_func_name_keyword',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ColId',
+      ),
     ),
     3 =>
     array (
@@ -8838,6 +15411,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ColId',
+        1 => 'indirection',
       ),
     ),
   ),
@@ -8850,12 +15428,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'func_args_with_defaults_list',
+        2 => ')',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncArgsWithDefaultsWith_7c9390c8',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => ')',
       ),
     ),
   ),
@@ -8864,6 +15453,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'func_arg_with_default',
+      ),
     ),
     1 =>
     array (
@@ -8872,6 +15465,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'func_args_with_defaults_list',
+        1 => ',',
+        2 => 'func_arg_with_default',
       ),
     ),
   ),
@@ -8886,6 +15485,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'arg_class',
+        1 => 'param_name',
+        2 => 'func_type',
+      ),
     ),
     1 =>
     array (
@@ -8896,6 +15501,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'param_name',
+        1 => 'arg_class',
+        2 => 'func_type',
+      ),
     ),
     2 =>
     array (
@@ -8904,6 +15515,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'param_name',
+        1 => 'func_type',
       ),
     ),
     3 =>
@@ -8914,10 +15530,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'arg_class',
+        1 => 'func_type',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'func_type',
+      ),
     ),
   ),
   'arg_class' =>
@@ -8925,22 +15550,43 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ArgClassChoice_bbfc47df::UseIn_fed1d872',
+      'symbols' =>
+      array (
+        0 => 'IN_P',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ArgClassChoice_bbfc47df::UseOut_c57929ed',
+      'symbols' =>
+      array (
+        0 => 'OUT_P',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ArgClassChoice_bbfc47df::UseInout_abf58a7f',
+      'symbols' =>
+      array (
+        0 => 'INOUT',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ArgClassChoice_bbfc47df::UseInOut_54d95fb2',
+      'symbols' =>
+      array (
+        0 => 'IN_P',
+        1 => 'OUT_P',
+      ),
     ),
     4 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ArgClassChoice_bbfc47df::UseVariadic_32c5e89d',
+      'symbols' =>
+      array (
+        0 => 'VARIADIC',
+      ),
     ),
   ),
   'param_name' =>
@@ -8948,6 +15594,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'type_function_name',
+      ),
     ),
   ),
   'func_return' =>
@@ -8955,6 +15605,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'func_type',
+      ),
     ),
   ),
   'func_type' =>
@@ -8962,6 +15616,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Typename',
+      ),
     ),
     1 =>
     array (
@@ -8970,6 +15628,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'type_function_name',
+        1 => 'attrs',
+        2 => '%',
+        3 => 'TYPE_P',
       ),
     ),
     2 =>
@@ -8980,6 +15645,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'SETOF',
+        1 => 'type_function_name',
+        2 => 'attrs',
+        3 => '%',
+        4 => 'TYPE_P',
+      ),
     ),
   ),
   'func_arg_with_default' =>
@@ -8987,6 +15660,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'func_arg',
+      ),
     ),
     1 =>
     array (
@@ -8995,6 +15672,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'func_arg',
+        1 => 'DEFAULT',
+        2 => 'a_expr',
       ),
     ),
     2 =>
@@ -9005,6 +15688,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'func_arg',
+        1 => '=',
+        2 => 'a_expr',
+      ),
     ),
   ),
   'aggr_arg' =>
@@ -9012,6 +15701,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'func_arg',
+      ),
     ),
   ),
   'aggr_args' =>
@@ -9022,6 +15715,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => '*',
+        2 => ')',
+      ),
     ),
     1 =>
     array (
@@ -9030,6 +15729,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'aggr_args_list',
+        2 => ')',
+      ),
     ),
     2 =>
     array (
@@ -9037,6 +15742,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'ORDER',
+        2 => 'BY',
+        3 => 'aggr_args_list',
+        4 => ')',
       ),
     ),
     3 =>
@@ -9047,6 +15760,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'aggr_args_list',
+        2 => 'ORDER',
+        3 => 'BY',
+        4 => 'aggr_args_list',
+        5 => ')',
+      ),
     ),
   ),
   'aggr_args_list' =>
@@ -9054,6 +15776,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'aggr_arg',
+      ),
     ),
     1 =>
     array (
@@ -9062,6 +15788,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'aggr_args_list',
+        1 => ',',
+        2 => 'aggr_arg',
       ),
     ),
   ),
@@ -9075,6 +15807,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'func_name',
+        1 => 'aggr_args',
+      ),
     ),
   ),
   'aggregate_with_argtypes_list' =>
@@ -9082,6 +15819,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'aggregate_with_argtypes',
+      ),
     ),
     1 =>
     array (
@@ -9091,6 +15832,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'aggregate_with_argtypes_list',
+        1 => ',',
+        2 => 'aggregate_with_argtypes',
+      ),
     ),
   ),
   'opt_createfunc_opt_list' =>
@@ -9098,11 +15845,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'createfunc_opt_list',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptCreatefuncOptListWith_53977557',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -9112,6 +15866,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'createfunc_opt_item',
+      ),
     ),
     1 =>
     array (
@@ -9120,6 +15878,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'createfunc_opt_list',
+        1 => 'createfunc_opt_item',
       ),
     ),
   ),
@@ -9131,12 +15894,27 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'CALLED',
+        1 => 'ON',
+        2 => 'NULL_P',
+        3 => 'INPUT_P',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CommonFuncOptItemWithReturnsNullPOnNullPInputP_b7f9dcce',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'RETURNS',
+        1 => 'NULL_P',
+        2 => 'ON',
+        3 => 'NULL_P',
+        4 => 'INPUT_P',
       ),
     ),
     2 =>
@@ -9145,12 +15923,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'STRICT_P',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CommonFuncOptItemWithImmutable_ac884cc6',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'IMMUTABLE',
       ),
     ),
     4 =>
@@ -9159,12 +15945,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'STABLE',
+      ),
     ),
     5 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CommonFuncOptItemWithVolatile_35414434',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'VOLATILE',
       ),
     ),
     6 =>
@@ -9173,12 +15967,24 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'EXTERNAL',
+        1 => 'SECURITY',
+        2 => 'DEFINER',
+      ),
     ),
     7 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CommonFuncOptItemWithExternalSecurityInvoker_93784106',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'EXTERNAL',
+        1 => 'SECURITY',
+        2 => 'INVOKER',
       ),
     ),
     8 =>
@@ -9187,12 +15993,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'SECURITY',
+        1 => 'DEFINER',
+      ),
     ),
     9 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CommonFuncOptItemWithSecurityInvoker_1efb42d4',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'SECURITY',
+        1 => 'INVOKER',
       ),
     ),
     10 =>
@@ -9201,12 +16017,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'LEAKPROOF',
+      ),
     ),
     11 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CommonFuncOptItemWithNotLeakproof_ff8f85e2',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'NOT',
+        1 => 'LEAKPROOF',
       ),
     ),
     12 =>
@@ -9216,6 +16041,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'COST',
+        1 => 'NumericOnly',
+      ),
     ),
     13 =>
     array (
@@ -9223,6 +16053,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ROWS',
+        1 => 'NumericOnly',
       ),
     ),
     14 =>
@@ -9232,10 +16067,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'SUPPORT',
+        1 => 'any_name',
+      ),
     ),
     15 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'FunctionSetResetClause',
+      ),
     ),
     16 =>
     array (
@@ -9243,6 +16087,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PARALLEL',
+        1 => 'ColId',
       ),
     ),
   ),
@@ -9255,6 +16104,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'AS',
+        1 => 'func_as',
+      ),
     ),
     1 =>
     array (
@@ -9262,6 +16116,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LANGUAGE',
+        1 => 'NonReservedWord_or_Sconst',
       ),
     ),
     2 =>
@@ -9271,6 +16130,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'TRANSFORM',
+        1 => 'transform_type_list',
+      ),
     ),
     3 =>
     array (
@@ -9278,10 +16142,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'WINDOW',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'common_func_opt_item',
+      ),
     ),
   ),
   'func_as' =>
@@ -9289,6 +16161,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Sconst',
+      ),
     ),
     1 =>
     array (
@@ -9297,6 +16173,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'Sconst',
+        1 => ',',
+        2 => 'Sconst',
       ),
     ),
   ),
@@ -9309,6 +16191,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'RETURN',
+        1 => 'a_expr',
+      ),
     ),
   ),
   'opt_routine_body' =>
@@ -9316,6 +16203,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ReturnStmt',
+      ),
     ),
     1 =>
     array (
@@ -9324,11 +16215,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'BEGIN_P',
+        1 => 'ATOMIC',
+        2 => 'routine_body_stmt_list',
+        3 => 'END_P',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptRoutineBodyWith_5dee1689',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -9343,11 +16244,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'routine_body_stmt_list',
+        1 => 'routine_body_stmt',
+        2 => ';',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\RoutineBodyStmtListWith_42c3a8cb',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -9357,10 +16267,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'stmt',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ReturnStmt',
+      ),
     ),
   ),
   'transform_type_list' =>
@@ -9372,6 +16290,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'FOR',
+        1 => 'TYPE_P',
+        2 => 'Typename',
+      ),
     ),
     1 =>
     array (
@@ -9380,6 +16304,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'transform_type_list',
+        1 => ',',
+        2 => 'FOR',
+        3 => 'TYPE_P',
+        4 => 'Typename',
       ),
     ),
   ),
@@ -9392,11 +16324,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'definition',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptDefinitionWith_e8012ff5',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -9411,6 +16351,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'param_name',
+        1 => 'func_type',
+      ),
     ),
   ),
   'table_func_column_list' =>
@@ -9418,6 +16363,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'table_func_column',
+      ),
     ),
     1 =>
     array (
@@ -9426,6 +16375,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'table_func_column_list',
+        1 => ',',
+        2 => 'table_func_column',
       ),
     ),
   ),
@@ -9440,6 +16395,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'FUNCTION',
+        2 => 'function_with_argtypes',
+        3 => 'alterfunc_opt_list',
+        4 => 'opt_restrict',
+      ),
     ),
     1 =>
     array (
@@ -9449,6 +16412,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
         2 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'PROCEDURE',
+        2 => 'function_with_argtypes',
+        3 => 'alterfunc_opt_list',
+        4 => 'opt_restrict',
       ),
     ),
     2 =>
@@ -9460,6 +16431,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'ROUTINE',
+        2 => 'function_with_argtypes',
+        3 => 'alterfunc_opt_list',
+        4 => 'opt_restrict',
+      ),
     ),
   ),
   'alterfunc_opt_list' =>
@@ -9467,6 +16446,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'common_func_opt_item',
+      ),
     ),
     1 =>
     array (
@@ -9476,6 +16459,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'alterfunc_opt_list',
+        1 => 'common_func_opt_item',
+      ),
     ),
   ),
   'opt_restrict' =>
@@ -9483,10 +16471,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptRestrictChoice_f6061861::UseRestrict_bd7a04e6',
+      'symbols' =>
+      array (
+        0 => 'RESTRICT',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptRestrictChoice_f6061861::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'RemoveFuncStmt' =>
@@ -9499,6 +16494,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'FUNCTION',
+        2 => 'function_with_argtypes_list',
+        3 => 'opt_drop_behavior',
+      ),
     ),
     1 =>
     array (
@@ -9507,6 +16509,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'FUNCTION',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'function_with_argtypes_list',
+        5 => 'opt_drop_behavior',
       ),
     ),
     2 =>
@@ -9517,6 +16528,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'PROCEDURE',
+        2 => 'function_with_argtypes_list',
+        3 => 'opt_drop_behavior',
+      ),
     ),
     3 =>
     array (
@@ -9525,6 +16543,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'PROCEDURE',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'function_with_argtypes_list',
+        5 => 'opt_drop_behavior',
       ),
     ),
     4 =>
@@ -9535,6 +16562,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'ROUTINE',
+        2 => 'function_with_argtypes_list',
+        3 => 'opt_drop_behavior',
+      ),
     ),
     5 =>
     array (
@@ -9543,6 +16577,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'ROUTINE',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'function_with_argtypes_list',
+        5 => 'opt_drop_behavior',
       ),
     ),
   ),
@@ -9556,6 +16599,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'AGGREGATE',
+        2 => 'aggregate_with_argtypes_list',
+        3 => 'opt_drop_behavior',
+      ),
     ),
     1 =>
     array (
@@ -9564,6 +16614,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'AGGREGATE',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'aggregate_with_argtypes_list',
+        5 => 'opt_drop_behavior',
       ),
     ),
   ),
@@ -9577,6 +16636,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'OPERATOR',
+        2 => 'operator_with_argtypes_list',
+        3 => 'opt_drop_behavior',
+      ),
     ),
     1 =>
     array (
@@ -9585,6 +16651,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'OPERATOR',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'operator_with_argtypes_list',
+        5 => 'opt_drop_behavior',
       ),
     ),
   ),
@@ -9597,6 +16672,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'Typename',
+        2 => ')',
+      ),
     ),
     1 =>
     array (
@@ -9606,6 +16687,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'Typename',
+        2 => ',',
+        3 => 'Typename',
+        4 => ')',
+      ),
     ),
     2 =>
     array (
@@ -9613,6 +16702,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'NONE',
+        2 => ',',
+        3 => 'Typename',
+        4 => ')',
       ),
     ),
     3 =>
@@ -9622,6 +16719,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'Typename',
+        2 => ',',
+        3 => 'NONE',
+        4 => ')',
+      ),
     ),
   ),
   'any_operator' =>
@@ -9629,6 +16734,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'all_Op',
+      ),
     ),
     1 =>
     array (
@@ -9638,6 +16747,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColId',
+        1 => '.',
+        2 => 'any_operator',
+      ),
     ),
   ),
   'operator_with_argtypes_list' =>
@@ -9645,6 +16760,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'operator_with_argtypes',
+      ),
     ),
     1 =>
     array (
@@ -9653,6 +16772,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'operator_with_argtypes_list',
+        1 => ',',
+        2 => 'operator_with_argtypes',
       ),
     ),
   ),
@@ -9666,6 +16791,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'any_operator',
+        1 => 'oper_argtypes',
+      ),
     ),
   ),
   'DoStmt' =>
@@ -9677,6 +16807,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'DO',
+        1 => 'dostmt_opt_list',
+      ),
     ),
   ),
   'dostmt_opt_list' =>
@@ -9684,6 +16819,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'dostmt_opt_item',
+      ),
     ),
     1 =>
     array (
@@ -9693,6 +16832,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'dostmt_opt_list',
+        1 => 'dostmt_opt_item',
+      ),
     ),
   ),
   'dostmt_opt_item' =>
@@ -9700,6 +16844,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Sconst',
+      ),
     ),
     1 =>
     array (
@@ -9707,6 +16855,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LANGUAGE',
+        1 => 'NonReservedWord_or_Sconst',
       ),
     ),
   ),
@@ -9722,6 +16875,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 9,
         3 => 10,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'CAST',
+        2 => '(',
+        3 => 'Typename',
+        4 => 'AS',
+        5 => 'Typename',
+        6 => ')',
+        7 => 'WITH',
+        8 => 'FUNCTION',
+        9 => 'function_with_argtypes',
+        10 => 'cast_context',
+      ),
     ),
     1 =>
     array (
@@ -9731,6 +16898,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 5,
         2 => 9,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'CAST',
+        2 => '(',
+        3 => 'Typename',
+        4 => 'AS',
+        5 => 'Typename',
+        6 => ')',
+        7 => 'WITHOUT',
+        8 => 'FUNCTION',
+        9 => 'cast_context',
       ),
     ),
     2 =>
@@ -9742,6 +16922,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 9,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'CAST',
+        2 => '(',
+        3 => 'Typename',
+        4 => 'AS',
+        5 => 'Typename',
+        6 => ')',
+        7 => 'WITH',
+        8 => 'INOUT',
+        9 => 'cast_context',
+      ),
     ),
   ),
   'cast_context' =>
@@ -9749,14 +16942,27 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\CastContextChoice_9f137eb3::UseAsImplicit_e8ee33a8',
+      'symbols' =>
+      array (
+        0 => 'AS',
+        1 => 'IMPLICIT_P',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\CastContextChoice_9f137eb3::UseAsAssignment_77a043aa',
+      'symbols' =>
+      array (
+        0 => 'AS',
+        1 => 'ASSIGNMENT',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\CastContextChoice_9f137eb3::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'DropCastStmt' =>
@@ -9771,6 +16977,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 6,
         3 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'CAST',
+        2 => 'opt_if_exists',
+        3 => '(',
+        4 => 'Typename',
+        5 => 'AS',
+        6 => 'Typename',
+        7 => ')',
+        8 => 'opt_drop_behavior',
+      ),
     ),
   ),
   'opt_if_exists' =>
@@ -9778,10 +16996,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptIfExistsChoice_1b8cb991::UseIfExists_82cdccc7',
+      'symbols' =>
+      array (
+        0 => 'IF_P',
+        1 => 'EXISTS',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptIfExistsChoice_1b8cb991::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'CreateTransformStmt' =>
@@ -9796,6 +17022,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 6,
         3 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'opt_or_replace',
+        2 => 'TRANSFORM',
+        3 => 'FOR',
+        4 => 'Typename',
+        5 => 'LANGUAGE',
+        6 => 'name',
+        7 => '(',
+        8 => 'transform_element_list',
+        9 => ')',
+      ),
     ),
   ),
   'transform_element_list' =>
@@ -9808,6 +17047,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 10,
       ),
+      'symbols' =>
+      array (
+        0 => 'FROM',
+        1 => 'SQL_P',
+        2 => 'WITH',
+        3 => 'FUNCTION',
+        4 => 'function_with_argtypes',
+        5 => ',',
+        6 => 'TO',
+        7 => 'SQL_P',
+        8 => 'WITH',
+        9 => 'FUNCTION',
+        10 => 'function_with_argtypes',
+      ),
     ),
     1 =>
     array (
@@ -9817,6 +17070,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 10,
       ),
+      'symbols' =>
+      array (
+        0 => 'TO',
+        1 => 'SQL_P',
+        2 => 'WITH',
+        3 => 'FUNCTION',
+        4 => 'function_with_argtypes',
+        5 => ',',
+        6 => 'FROM',
+        7 => 'SQL_P',
+        8 => 'WITH',
+        9 => 'FUNCTION',
+        10 => 'function_with_argtypes',
+      ),
     ),
     2 =>
     array (
@@ -9825,6 +17092,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'FROM',
+        1 => 'SQL_P',
+        2 => 'WITH',
+        3 => 'FUNCTION',
+        4 => 'function_with_argtypes',
+      ),
     ),
     3 =>
     array (
@@ -9832,6 +17107,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TO',
+        1 => 'SQL_P',
+        2 => 'WITH',
+        3 => 'FUNCTION',
+        4 => 'function_with_argtypes',
       ),
     ),
   ),
@@ -9847,6 +17130,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 6,
         3 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'TRANSFORM',
+        2 => 'opt_if_exists',
+        3 => 'FOR',
+        4 => 'Typename',
+        5 => 'LANGUAGE',
+        6 => 'name',
+        7 => 'opt_drop_behavior',
+      ),
     ),
   ),
   'ReindexStmt' =>
@@ -9861,6 +17155,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'REINDEX',
+        1 => 'opt_reindex_option_list',
+        2 => 'reindex_target_relation',
+        3 => 'opt_concurrently',
+        4 => 'qualified_name',
+      ),
     ),
     1 =>
     array (
@@ -9870,6 +17172,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
         2 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REINDEX',
+        1 => 'opt_reindex_option_list',
+        2 => 'SCHEMA',
+        3 => 'opt_concurrently',
+        4 => 'name',
       ),
     ),
     2 =>
@@ -9882,6 +17192,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'REINDEX',
+        1 => 'opt_reindex_option_list',
+        2 => 'reindex_target_all',
+        3 => 'opt_concurrently',
+        4 => 'opt_single_name',
+      ),
     ),
   ),
   'reindex_target_relation' =>
@@ -9889,10 +17207,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ReindexTargetRelationChoice_c1346246::UseIndex_ea69fe17',
+      'symbols' =>
+      array (
+        0 => 'INDEX',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ReindexTargetRelationChoice_c1346246::UseTable_52ca2fea',
+      'symbols' =>
+      array (
+        0 => 'TABLE',
+      ),
     ),
   ),
   'reindex_target_all' =>
@@ -9900,10 +17226,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ReindexTargetAllChoice_538716a6::UseSystem_d621c1a7',
+      'symbols' =>
+      array (
+        0 => 'SYSTEM_P',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ReindexTargetAllChoice_538716a6::UseDatabase_8e663907',
+      'symbols' =>
+      array (
+        0 => 'DATABASE',
+      ),
     ),
   ),
   'opt_reindex_option_list' =>
@@ -9915,11 +17249,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'utility_option_list',
+        2 => ')',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptReindexOptionListWith_750093e8',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -9934,6 +17277,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TABLESPACE',
+        2 => 'name',
+        3 => 'SET',
+        4 => 'reloptions',
+      ),
     ),
     1 =>
     array (
@@ -9942,6 +17293,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TABLESPACE',
+        2 => 'name',
+        3 => 'RESET',
+        4 => 'reloptions',
       ),
     ),
   ),
@@ -9955,6 +17314,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'AGGREGATE',
+        2 => 'aggregate_with_argtypes',
+        3 => 'RENAME',
+        4 => 'TO',
+        5 => 'name',
+      ),
     ),
     1 =>
     array (
@@ -9963,6 +17331,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'COLLATION',
+        2 => 'any_name',
+        3 => 'RENAME',
+        4 => 'TO',
+        5 => 'name',
       ),
     ),
     2 =>
@@ -9973,6 +17350,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'CONVERSION_P',
+        2 => 'any_name',
+        3 => 'RENAME',
+        4 => 'TO',
+        5 => 'name',
+      ),
     ),
     3 =>
     array (
@@ -9982,6 +17368,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'DATABASE',
+        2 => 'name',
+        3 => 'RENAME',
+        4 => 'TO',
+        5 => 'name',
+      ),
     ),
     4 =>
     array (
@@ -9990,6 +17385,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'DOMAIN_P',
+        2 => 'any_name',
+        3 => 'RENAME',
+        4 => 'TO',
+        5 => 'name',
       ),
     ),
     5 =>
@@ -10001,6 +17405,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'DOMAIN_P',
+        2 => 'any_name',
+        3 => 'RENAME',
+        4 => 'CONSTRAINT',
+        5 => 'name',
+        6 => 'TO',
+        7 => 'name',
+      ),
     ),
     6 =>
     array (
@@ -10009,6 +17424,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
         1 => 7,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'FOREIGN',
+        2 => 'DATA_P',
+        3 => 'WRAPPER',
+        4 => 'name',
+        5 => 'RENAME',
+        6 => 'TO',
+        7 => 'name',
       ),
     ),
     7 =>
@@ -10019,6 +17445,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'FUNCTION',
+        2 => 'function_with_argtypes',
+        3 => 'RENAME',
+        4 => 'TO',
+        5 => 'name',
+      ),
     ),
     8 =>
     array (
@@ -10027,6 +17462,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'GROUP_P',
+        2 => 'RoleId',
+        3 => 'RENAME',
+        4 => 'TO',
+        5 => 'RoleId',
       ),
     ),
     9 =>
@@ -10038,6 +17482,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'opt_procedural',
+        2 => 'LANGUAGE',
+        3 => 'name',
+        4 => 'RENAME',
+        5 => 'TO',
+        6 => 'name',
+      ),
     ),
     10 =>
     array (
@@ -10047,6 +17501,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 5,
         2 => 8,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'OPERATOR',
+        2 => 'CLASS',
+        3 => 'any_name',
+        4 => 'USING',
+        5 => 'name',
+        6 => 'RENAME',
+        7 => 'TO',
+        8 => 'name',
       ),
     ),
     11 =>
@@ -10058,6 +17524,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'OPERATOR',
+        2 => 'FAMILY',
+        3 => 'any_name',
+        4 => 'USING',
+        5 => 'name',
+        6 => 'RENAME',
+        7 => 'TO',
+        8 => 'name',
+      ),
     ),
     12 =>
     array (
@@ -10067,6 +17545,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
         2 => 7,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'POLICY',
+        2 => 'name',
+        3 => 'ON',
+        4 => 'qualified_name',
+        5 => 'RENAME',
+        6 => 'TO',
+        7 => 'name',
       ),
     ),
     13 =>
@@ -10078,6 +17567,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 6,
         2 => 9,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'POLICY',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'name',
+        5 => 'ON',
+        6 => 'qualified_name',
+        7 => 'RENAME',
+        8 => 'TO',
+        9 => 'name',
+      ),
     ),
     14 =>
     array (
@@ -10086,6 +17588,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'PROCEDURE',
+        2 => 'function_with_argtypes',
+        3 => 'RENAME',
+        4 => 'TO',
+        5 => 'name',
       ),
     ),
     15 =>
@@ -10096,6 +17607,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'PUBLICATION',
+        2 => 'name',
+        3 => 'RENAME',
+        4 => 'TO',
+        5 => 'name',
+      ),
     ),
     16 =>
     array (
@@ -10104,6 +17624,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'ROUTINE',
+        2 => 'function_with_argtypes',
+        3 => 'RENAME',
+        4 => 'TO',
+        5 => 'name',
       ),
     ),
     17 =>
@@ -10114,6 +17643,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SCHEMA',
+        2 => 'name',
+        3 => 'RENAME',
+        4 => 'TO',
+        5 => 'name',
+      ),
     ),
     18 =>
     array (
@@ -10122,6 +17660,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SERVER',
+        2 => 'name',
+        3 => 'RENAME',
+        4 => 'TO',
+        5 => 'name',
       ),
     ),
     19 =>
@@ -10132,6 +17679,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SUBSCRIPTION',
+        2 => 'name',
+        3 => 'RENAME',
+        4 => 'TO',
+        5 => 'name',
+      ),
     ),
     20 =>
     array (
@@ -10140,6 +17696,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TABLE',
+        2 => 'relation_expr',
+        3 => 'RENAME',
+        4 => 'TO',
+        5 => 'name',
       ),
     ),
     21 =>
@@ -10150,6 +17715,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TABLE',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'relation_expr',
+        5 => 'RENAME',
+        6 => 'TO',
+        7 => 'name',
+      ),
     ),
     22 =>
     array (
@@ -10158,6 +17734,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SEQUENCE',
+        2 => 'qualified_name',
+        3 => 'RENAME',
+        4 => 'TO',
+        5 => 'name',
       ),
     ),
     23 =>
@@ -10168,6 +17753,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SEQUENCE',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'qualified_name',
+        5 => 'RENAME',
+        6 => 'TO',
+        7 => 'name',
+      ),
     ),
     24 =>
     array (
@@ -10176,6 +17772,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'VIEW',
+        2 => 'qualified_name',
+        3 => 'RENAME',
+        4 => 'TO',
+        5 => 'name',
       ),
     ),
     25 =>
@@ -10186,6 +17791,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'VIEW',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'qualified_name',
+        5 => 'RENAME',
+        6 => 'TO',
+        7 => 'name',
+      ),
     ),
     26 =>
     array (
@@ -10194,6 +17810,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
         1 => 6,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'MATERIALIZED',
+        2 => 'VIEW',
+        3 => 'qualified_name',
+        4 => 'RENAME',
+        5 => 'TO',
+        6 => 'name',
       ),
     ),
     27 =>
@@ -10204,6 +17830,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 5,
         1 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'MATERIALIZED',
+        2 => 'VIEW',
+        3 => 'IF_P',
+        4 => 'EXISTS',
+        5 => 'qualified_name',
+        6 => 'RENAME',
+        7 => 'TO',
+        8 => 'name',
+      ),
     ),
     28 =>
     array (
@@ -10212,6 +17850,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'INDEX',
+        2 => 'qualified_name',
+        3 => 'RENAME',
+        4 => 'TO',
+        5 => 'name',
       ),
     ),
     29 =>
@@ -10222,6 +17869,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'INDEX',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'qualified_name',
+        5 => 'RENAME',
+        6 => 'TO',
+        7 => 'name',
+      ),
     ),
     30 =>
     array (
@@ -10231,6 +17889,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'FOREIGN',
+        2 => 'TABLE',
+        3 => 'relation_expr',
+        4 => 'RENAME',
+        5 => 'TO',
+        6 => 'name',
+      ),
     ),
     31 =>
     array (
@@ -10239,6 +17907,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 5,
         1 => 8,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'FOREIGN',
+        2 => 'TABLE',
+        3 => 'IF_P',
+        4 => 'EXISTS',
+        5 => 'relation_expr',
+        6 => 'RENAME',
+        7 => 'TO',
+        8 => 'name',
       ),
     ),
     32 =>
@@ -10251,6 +17931,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 5,
         3 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TABLE',
+        2 => 'relation_expr',
+        3 => 'RENAME',
+        4 => 'opt_column',
+        5 => 'name',
+        6 => 'TO',
+        7 => 'name',
+      ),
     ),
     33 =>
     array (
@@ -10261,6 +17952,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 6,
         2 => 7,
         3 => 9,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TABLE',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'relation_expr',
+        5 => 'RENAME',
+        6 => 'opt_column',
+        7 => 'name',
+        8 => 'TO',
+        9 => 'name',
       ),
     ),
     34 =>
@@ -10273,6 +17977,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 5,
         3 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'VIEW',
+        2 => 'qualified_name',
+        3 => 'RENAME',
+        4 => 'opt_column',
+        5 => 'name',
+        6 => 'TO',
+        7 => 'name',
+      ),
     ),
     35 =>
     array (
@@ -10283,6 +17998,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 6,
         2 => 7,
         3 => 9,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'VIEW',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'qualified_name',
+        5 => 'RENAME',
+        6 => 'opt_column',
+        7 => 'name',
+        8 => 'TO',
+        9 => 'name',
       ),
     ),
     36 =>
@@ -10295,6 +18023,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 6,
         3 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'MATERIALIZED',
+        2 => 'VIEW',
+        3 => 'qualified_name',
+        4 => 'RENAME',
+        5 => 'opt_column',
+        6 => 'name',
+        7 => 'TO',
+        8 => 'name',
+      ),
     ),
     37 =>
     array (
@@ -10306,6 +18046,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 8,
         3 => 10,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'MATERIALIZED',
+        2 => 'VIEW',
+        3 => 'IF_P',
+        4 => 'EXISTS',
+        5 => 'qualified_name',
+        6 => 'RENAME',
+        7 => 'opt_column',
+        8 => 'name',
+        9 => 'TO',
+        10 => 'name',
+      ),
     ),
     38 =>
     array (
@@ -10316,6 +18070,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TABLE',
+        2 => 'relation_expr',
+        3 => 'RENAME',
+        4 => 'CONSTRAINT',
+        5 => 'name',
+        6 => 'TO',
+        7 => 'name',
+      ),
     ),
     39 =>
     array (
@@ -10325,6 +18090,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 7,
         2 => 9,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TABLE',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'relation_expr',
+        5 => 'RENAME',
+        6 => 'CONSTRAINT',
+        7 => 'name',
+        8 => 'TO',
+        9 => 'name',
       ),
     ),
     40 =>
@@ -10337,6 +18115,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 6,
         3 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'FOREIGN',
+        2 => 'TABLE',
+        3 => 'relation_expr',
+        4 => 'RENAME',
+        5 => 'opt_column',
+        6 => 'name',
+        7 => 'TO',
+        8 => 'name',
+      ),
     ),
     41 =>
     array (
@@ -10348,6 +18138,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 8,
         3 => 10,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'FOREIGN',
+        2 => 'TABLE',
+        3 => 'IF_P',
+        4 => 'EXISTS',
+        5 => 'relation_expr',
+        6 => 'RENAME',
+        7 => 'opt_column',
+        8 => 'name',
+        9 => 'TO',
+        10 => 'name',
+      ),
     ),
     42 =>
     array (
@@ -10357,6 +18161,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
         2 => 7,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'RULE',
+        2 => 'name',
+        3 => 'ON',
+        4 => 'qualified_name',
+        5 => 'RENAME',
+        6 => 'TO',
+        7 => 'name',
       ),
     ),
     43 =>
@@ -10368,6 +18183,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 4,
         2 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TRIGGER',
+        2 => 'name',
+        3 => 'ON',
+        4 => 'qualified_name',
+        5 => 'RENAME',
+        6 => 'TO',
+        7 => 'name',
+      ),
     ),
     44 =>
     array (
@@ -10376,6 +18202,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
         1 => 6,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'EVENT',
+        2 => 'TRIGGER',
+        3 => 'name',
+        4 => 'RENAME',
+        5 => 'TO',
+        6 => 'name',
       ),
     ),
     45 =>
@@ -10386,6 +18222,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'ROLE',
+        2 => 'RoleId',
+        3 => 'RENAME',
+        4 => 'TO',
+        5 => 'RoleId',
+      ),
     ),
     46 =>
     array (
@@ -10394,6 +18239,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'USER',
+        2 => 'RoleId',
+        3 => 'RENAME',
+        4 => 'TO',
+        5 => 'RoleId',
       ),
     ),
     47 =>
@@ -10404,6 +18258,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TABLESPACE',
+        2 => 'name',
+        3 => 'RENAME',
+        4 => 'TO',
+        5 => 'name',
+      ),
     ),
     48 =>
     array (
@@ -10412,6 +18275,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'STATISTICS',
+        2 => 'any_name',
+        3 => 'RENAME',
+        4 => 'TO',
+        5 => 'name',
       ),
     ),
     49 =>
@@ -10422,6 +18294,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TEXT_P',
+        2 => 'SEARCH',
+        3 => 'PARSER',
+        4 => 'any_name',
+        5 => 'RENAME',
+        6 => 'TO',
+        7 => 'name',
+      ),
     ),
     50 =>
     array (
@@ -10430,6 +18313,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
         1 => 7,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TEXT_P',
+        2 => 'SEARCH',
+        3 => 'DICTIONARY',
+        4 => 'any_name',
+        5 => 'RENAME',
+        6 => 'TO',
+        7 => 'name',
       ),
     ),
     51 =>
@@ -10440,6 +18334,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TEXT_P',
+        2 => 'SEARCH',
+        3 => 'TEMPLATE',
+        4 => 'any_name',
+        5 => 'RENAME',
+        6 => 'TO',
+        7 => 'name',
+      ),
     ),
     52 =>
     array (
@@ -10449,6 +18354,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TEXT_P',
+        2 => 'SEARCH',
+        3 => 'CONFIGURATION',
+        4 => 'any_name',
+        5 => 'RENAME',
+        6 => 'TO',
+        7 => 'name',
+      ),
     ),
     53 =>
     array (
@@ -10457,6 +18373,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TYPE_P',
+        2 => 'any_name',
+        3 => 'RENAME',
+        4 => 'TO',
+        5 => 'name',
       ),
     ),
     54 =>
@@ -10469,6 +18394,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 7,
         3 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TYPE_P',
+        2 => 'any_name',
+        3 => 'RENAME',
+        4 => 'ATTRIBUTE',
+        5 => 'name',
+        6 => 'TO',
+        7 => 'name',
+        8 => 'opt_drop_behavior',
+      ),
     ),
   ),
   'opt_column' =>
@@ -10476,10 +18413,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptColumnChoice_fdd7f72c::UseColumn_83a8e21d',
+      'symbols' =>
+      array (
+        0 => 'COLUMN',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptColumnChoice_fdd7f72c::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'opt_set_data' =>
@@ -10487,10 +18431,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptSetDataChoice_517d0e1a::UseSetData_beb58ddc',
+      'symbols' =>
+      array (
+        0 => 'SET',
+        1 => 'DATA_P',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptSetDataChoice_517d0e1a::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'AlterObjectDependsStmt' =>
@@ -10504,6 +18456,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'FUNCTION',
+        2 => 'function_with_argtypes',
+        3 => 'opt_no',
+        4 => 'DEPENDS',
+        5 => 'ON',
+        6 => 'EXTENSION',
+        7 => 'name',
+      ),
     ),
     1 =>
     array (
@@ -10514,6 +18477,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'PROCEDURE',
+        2 => 'function_with_argtypes',
+        3 => 'opt_no',
+        4 => 'DEPENDS',
+        5 => 'ON',
+        6 => 'EXTENSION',
+        7 => 'name',
+      ),
     ),
     2 =>
     array (
@@ -10523,6 +18497,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
         2 => 7,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'ROUTINE',
+        2 => 'function_with_argtypes',
+        3 => 'opt_no',
+        4 => 'DEPENDS',
+        5 => 'ON',
+        6 => 'EXTENSION',
+        7 => 'name',
       ),
     ),
     3 =>
@@ -10535,6 +18520,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 5,
         3 => 9,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TRIGGER',
+        2 => 'name',
+        3 => 'ON',
+        4 => 'qualified_name',
+        5 => 'opt_no',
+        6 => 'DEPENDS',
+        7 => 'ON',
+        8 => 'EXTENSION',
+        9 => 'name',
+      ),
     ),
     4 =>
     array (
@@ -10544,6 +18542,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 4,
         2 => 8,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'MATERIALIZED',
+        2 => 'VIEW',
+        3 => 'qualified_name',
+        4 => 'opt_no',
+        5 => 'DEPENDS',
+        6 => 'ON',
+        7 => 'EXTENSION',
+        8 => 'name',
       ),
     ),
     5 =>
@@ -10555,6 +18565,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'INDEX',
+        2 => 'qualified_name',
+        3 => 'opt_no',
+        4 => 'DEPENDS',
+        5 => 'ON',
+        6 => 'EXTENSION',
+        7 => 'name',
+      ),
     ),
   ),
   'opt_no' =>
@@ -10562,10 +18583,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptNoChoice_80c072d8::UseNo_23794d91',
+      'symbols' =>
+      array (
+        0 => 'NO',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptNoChoice_80c072d8::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'AlterObjectSchemaStmt' =>
@@ -10578,6 +18606,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'AGGREGATE',
+        2 => 'aggregate_with_argtypes',
+        3 => 'SET',
+        4 => 'SCHEMA',
+        5 => 'name',
+      ),
     ),
     1 =>
     array (
@@ -10586,6 +18623,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'COLLATION',
+        2 => 'any_name',
+        3 => 'SET',
+        4 => 'SCHEMA',
+        5 => 'name',
       ),
     ),
     2 =>
@@ -10596,6 +18642,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'CONVERSION_P',
+        2 => 'any_name',
+        3 => 'SET',
+        4 => 'SCHEMA',
+        5 => 'name',
+      ),
     ),
     3 =>
     array (
@@ -10604,6 +18659,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'DOMAIN_P',
+        2 => 'any_name',
+        3 => 'SET',
+        4 => 'SCHEMA',
+        5 => 'name',
       ),
     ),
     4 =>
@@ -10614,6 +18678,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'EXTENSION',
+        2 => 'name',
+        3 => 'SET',
+        4 => 'SCHEMA',
+        5 => 'name',
+      ),
     ),
     5 =>
     array (
@@ -10623,6 +18696,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'FUNCTION',
+        2 => 'function_with_argtypes',
+        3 => 'SET',
+        4 => 'SCHEMA',
+        5 => 'name',
+      ),
     ),
     6 =>
     array (
@@ -10631,6 +18713,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'OPERATOR',
+        2 => 'operator_with_argtypes',
+        3 => 'SET',
+        4 => 'SCHEMA',
+        5 => 'name',
       ),
     ),
     7 =>
@@ -10642,6 +18733,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'OPERATOR',
+        2 => 'CLASS',
+        3 => 'any_name',
+        4 => 'USING',
+        5 => 'name',
+        6 => 'SET',
+        7 => 'SCHEMA',
+        8 => 'name',
+      ),
     ),
     8 =>
     array (
@@ -10652,6 +18755,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'OPERATOR',
+        2 => 'FAMILY',
+        3 => 'any_name',
+        4 => 'USING',
+        5 => 'name',
+        6 => 'SET',
+        7 => 'SCHEMA',
+        8 => 'name',
+      ),
     ),
     9 =>
     array (
@@ -10660,6 +18775,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'PROCEDURE',
+        2 => 'function_with_argtypes',
+        3 => 'SET',
+        4 => 'SCHEMA',
+        5 => 'name',
       ),
     ),
     10 =>
@@ -10670,6 +18794,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'ROUTINE',
+        2 => 'function_with_argtypes',
+        3 => 'SET',
+        4 => 'SCHEMA',
+        5 => 'name',
+      ),
     ),
     11 =>
     array (
@@ -10678,6 +18811,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TABLE',
+        2 => 'relation_expr',
+        3 => 'SET',
+        4 => 'SCHEMA',
+        5 => 'name',
       ),
     ),
     12 =>
@@ -10688,6 +18830,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TABLE',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'relation_expr',
+        5 => 'SET',
+        6 => 'SCHEMA',
+        7 => 'name',
+      ),
     ),
     13 =>
     array (
@@ -10696,6 +18849,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'STATISTICS',
+        2 => 'any_name',
+        3 => 'SET',
+        4 => 'SCHEMA',
+        5 => 'name',
       ),
     ),
     14 =>
@@ -10706,6 +18868,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TEXT_P',
+        2 => 'SEARCH',
+        3 => 'PARSER',
+        4 => 'any_name',
+        5 => 'SET',
+        6 => 'SCHEMA',
+        7 => 'name',
+      ),
     ),
     15 =>
     array (
@@ -10714,6 +18887,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
         1 => 7,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TEXT_P',
+        2 => 'SEARCH',
+        3 => 'DICTIONARY',
+        4 => 'any_name',
+        5 => 'SET',
+        6 => 'SCHEMA',
+        7 => 'name',
       ),
     ),
     16 =>
@@ -10724,6 +18908,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TEXT_P',
+        2 => 'SEARCH',
+        3 => 'TEMPLATE',
+        4 => 'any_name',
+        5 => 'SET',
+        6 => 'SCHEMA',
+        7 => 'name',
+      ),
     ),
     17 =>
     array (
@@ -10732,6 +18927,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
         1 => 7,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TEXT_P',
+        2 => 'SEARCH',
+        3 => 'CONFIGURATION',
+        4 => 'any_name',
+        5 => 'SET',
+        6 => 'SCHEMA',
+        7 => 'name',
       ),
     ),
     18 =>
@@ -10742,6 +18948,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SEQUENCE',
+        2 => 'qualified_name',
+        3 => 'SET',
+        4 => 'SCHEMA',
+        5 => 'name',
+      ),
     ),
     19 =>
     array (
@@ -10750,6 +18965,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
         1 => 7,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SEQUENCE',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'qualified_name',
+        5 => 'SET',
+        6 => 'SCHEMA',
+        7 => 'name',
       ),
     ),
     20 =>
@@ -10760,6 +18986,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'VIEW',
+        2 => 'qualified_name',
+        3 => 'SET',
+        4 => 'SCHEMA',
+        5 => 'name',
+      ),
     ),
     21 =>
     array (
@@ -10768,6 +19003,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
         1 => 7,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'VIEW',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'qualified_name',
+        5 => 'SET',
+        6 => 'SCHEMA',
+        7 => 'name',
       ),
     ),
     22 =>
@@ -10778,6 +19024,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'MATERIALIZED',
+        2 => 'VIEW',
+        3 => 'qualified_name',
+        4 => 'SET',
+        5 => 'SCHEMA',
+        6 => 'name',
+      ),
     ),
     23 =>
     array (
@@ -10786,6 +19042,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 5,
         1 => 8,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'MATERIALIZED',
+        2 => 'VIEW',
+        3 => 'IF_P',
+        4 => 'EXISTS',
+        5 => 'qualified_name',
+        6 => 'SET',
+        7 => 'SCHEMA',
+        8 => 'name',
       ),
     ),
     24 =>
@@ -10796,6 +19064,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'FOREIGN',
+        2 => 'TABLE',
+        3 => 'relation_expr',
+        4 => 'SET',
+        5 => 'SCHEMA',
+        6 => 'name',
+      ),
     ),
     25 =>
     array (
@@ -10805,6 +19083,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 5,
         1 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'FOREIGN',
+        2 => 'TABLE',
+        3 => 'IF_P',
+        4 => 'EXISTS',
+        5 => 'relation_expr',
+        6 => 'SET',
+        7 => 'SCHEMA',
+        8 => 'name',
+      ),
     ),
     26 =>
     array (
@@ -10813,6 +19103,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TYPE_P',
+        2 => 'any_name',
+        3 => 'SET',
+        4 => 'SCHEMA',
+        5 => 'name',
       ),
     ),
   ),
@@ -10826,6 +19125,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'OPERATOR',
+        2 => 'operator_with_argtypes',
+        3 => 'SET',
+        4 => '(',
+        5 => 'operator_def_list',
+        6 => ')',
+      ),
     ),
   ),
   'operator_def_list' =>
@@ -10833,6 +19142,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'operator_def_elem',
+      ),
     ),
     1 =>
     array (
@@ -10841,6 +19154,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'operator_def_list',
+        1 => ',',
+        2 => 'operator_def_elem',
       ),
     ),
   ),
@@ -10853,6 +19172,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColLabel',
+        1 => '=',
+        2 => 'NONE',
+      ),
     ),
     1 =>
     array (
@@ -10862,6 +19187,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColLabel',
+        1 => '=',
+        2 => 'operator_def_arg',
+      ),
     ),
   ),
   'operator_def_arg' =>
@@ -10869,22 +19200,42 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'func_type',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'reserved_keyword',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'qual_all_Op',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'NumericOnly',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Sconst',
+      ),
     ),
   ),
   'AlterTypeStmt' =>
@@ -10896,6 +19247,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TYPE_P',
+        2 => 'any_name',
+        3 => 'SET',
+        4 => '(',
+        5 => 'operator_def_list',
+        6 => ')',
       ),
     ),
   ),
@@ -10909,6 +19270,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'AGGREGATE',
+        2 => 'aggregate_with_argtypes',
+        3 => 'OWNER',
+        4 => 'TO',
+        5 => 'RoleSpec',
+      ),
     ),
     1 =>
     array (
@@ -10917,6 +19287,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'COLLATION',
+        2 => 'any_name',
+        3 => 'OWNER',
+        4 => 'TO',
+        5 => 'RoleSpec',
       ),
     ),
     2 =>
@@ -10927,6 +19306,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'CONVERSION_P',
+        2 => 'any_name',
+        3 => 'OWNER',
+        4 => 'TO',
+        5 => 'RoleSpec',
+      ),
     ),
     3 =>
     array (
@@ -10935,6 +19323,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'DATABASE',
+        2 => 'name',
+        3 => 'OWNER',
+        4 => 'TO',
+        5 => 'RoleSpec',
       ),
     ),
     4 =>
@@ -10945,6 +19342,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'DOMAIN_P',
+        2 => 'any_name',
+        3 => 'OWNER',
+        4 => 'TO',
+        5 => 'RoleSpec',
+      ),
     ),
     5 =>
     array (
@@ -10953,6 +19359,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'FUNCTION',
+        2 => 'function_with_argtypes',
+        3 => 'OWNER',
+        4 => 'TO',
+        5 => 'RoleSpec',
       ),
     ),
     6 =>
@@ -10964,6 +19379,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'opt_procedural',
+        2 => 'LANGUAGE',
+        3 => 'name',
+        4 => 'OWNER',
+        5 => 'TO',
+        6 => 'RoleSpec',
+      ),
     ),
     7 =>
     array (
@@ -10973,6 +19398,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'LARGE_P',
+        2 => 'OBJECT_P',
+        3 => 'NumericOnly',
+        4 => 'OWNER',
+        5 => 'TO',
+        6 => 'RoleSpec',
+      ),
     ),
     8 =>
     array (
@@ -10981,6 +19416,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'OPERATOR',
+        2 => 'operator_with_argtypes',
+        3 => 'OWNER',
+        4 => 'TO',
+        5 => 'RoleSpec',
       ),
     ),
     9 =>
@@ -10992,6 +19436,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'OPERATOR',
+        2 => 'CLASS',
+        3 => 'any_name',
+        4 => 'USING',
+        5 => 'name',
+        6 => 'OWNER',
+        7 => 'TO',
+        8 => 'RoleSpec',
+      ),
     ),
     10 =>
     array (
@@ -11002,6 +19458,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'OPERATOR',
+        2 => 'FAMILY',
+        3 => 'any_name',
+        4 => 'USING',
+        5 => 'name',
+        6 => 'OWNER',
+        7 => 'TO',
+        8 => 'RoleSpec',
+      ),
     ),
     11 =>
     array (
@@ -11010,6 +19478,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'PROCEDURE',
+        2 => 'function_with_argtypes',
+        3 => 'OWNER',
+        4 => 'TO',
+        5 => 'RoleSpec',
       ),
     ),
     12 =>
@@ -11020,6 +19497,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'ROUTINE',
+        2 => 'function_with_argtypes',
+        3 => 'OWNER',
+        4 => 'TO',
+        5 => 'RoleSpec',
+      ),
     ),
     13 =>
     array (
@@ -11028,6 +19514,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SCHEMA',
+        2 => 'name',
+        3 => 'OWNER',
+        4 => 'TO',
+        5 => 'RoleSpec',
       ),
     ),
     14 =>
@@ -11038,6 +19533,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TYPE_P',
+        2 => 'any_name',
+        3 => 'OWNER',
+        4 => 'TO',
+        5 => 'RoleSpec',
+      ),
     ),
     15 =>
     array (
@@ -11046,6 +19550,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TABLESPACE',
+        2 => 'name',
+        3 => 'OWNER',
+        4 => 'TO',
+        5 => 'RoleSpec',
       ),
     ),
     16 =>
@@ -11056,6 +19569,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'STATISTICS',
+        2 => 'any_name',
+        3 => 'OWNER',
+        4 => 'TO',
+        5 => 'RoleSpec',
+      ),
     ),
     17 =>
     array (
@@ -11064,6 +19586,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
         1 => 7,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TEXT_P',
+        2 => 'SEARCH',
+        3 => 'DICTIONARY',
+        4 => 'any_name',
+        5 => 'OWNER',
+        6 => 'TO',
+        7 => 'RoleSpec',
       ),
     ),
     18 =>
@@ -11074,6 +19607,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TEXT_P',
+        2 => 'SEARCH',
+        3 => 'CONFIGURATION',
+        4 => 'any_name',
+        5 => 'OWNER',
+        6 => 'TO',
+        7 => 'RoleSpec',
+      ),
     ),
     19 =>
     array (
@@ -11082,6 +19626,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
         1 => 7,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'FOREIGN',
+        2 => 'DATA_P',
+        3 => 'WRAPPER',
+        4 => 'name',
+        5 => 'OWNER',
+        6 => 'TO',
+        7 => 'RoleSpec',
       ),
     ),
     20 =>
@@ -11092,6 +19647,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SERVER',
+        2 => 'name',
+        3 => 'OWNER',
+        4 => 'TO',
+        5 => 'RoleSpec',
+      ),
     ),
     21 =>
     array (
@@ -11100,6 +19664,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
         1 => 6,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'EVENT',
+        2 => 'TRIGGER',
+        3 => 'name',
+        4 => 'OWNER',
+        5 => 'TO',
+        6 => 'RoleSpec',
       ),
     ),
     22 =>
@@ -11110,6 +19684,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'PUBLICATION',
+        2 => 'name',
+        3 => 'OWNER',
+        4 => 'TO',
+        5 => 'RoleSpec',
+      ),
     ),
     23 =>
     array (
@@ -11118,6 +19701,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SUBSCRIPTION',
+        2 => 'name',
+        3 => 'OWNER',
+        4 => 'TO',
+        5 => 'RoleSpec',
       ),
     ),
   ),
@@ -11131,6 +19723,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'PUBLICATION',
+        2 => 'name',
+        3 => 'opt_definition',
+      ),
     ),
     1 =>
     array (
@@ -11139,6 +19738,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 6,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'PUBLICATION',
+        2 => 'name',
+        3 => 'FOR',
+        4 => 'ALL',
+        5 => 'TABLES',
+        6 => 'opt_definition',
       ),
     ),
     2 =>
@@ -11149,6 +19758,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
         2 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'PUBLICATION',
+        2 => 'name',
+        3 => 'FOR',
+        4 => 'pub_obj_list',
+        5 => 'opt_definition',
       ),
     ),
   ),
@@ -11163,6 +19781,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'TABLE',
+        1 => 'relation_expr',
+        2 => 'opt_column_list',
+        3 => 'OptWhereClause',
+      ),
     ),
     1 =>
     array (
@@ -11171,12 +19796,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'TABLES',
+        1 => 'IN_P',
+        2 => 'SCHEMA',
+        3 => 'ColId',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\PublicationObjSpecWithTablesInPSchemaCurrentSchema_9520e987',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'TABLES',
+        1 => 'IN_P',
+        2 => 'SCHEMA',
+        3 => 'CURRENT_SCHEMA',
       ),
     ),
     3 =>
@@ -11187,6 +19826,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ColId',
+        1 => 'opt_column_list',
+        2 => 'OptWhereClause',
       ),
     ),
     4 =>
@@ -11199,6 +19844,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 2,
         3 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColId',
+        1 => 'indirection',
+        2 => 'opt_column_list',
+        3 => 'OptWhereClause',
+      ),
     ),
     5 =>
     array (
@@ -11209,12 +19861,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'extended_relation_expr',
+        1 => 'opt_column_list',
+        2 => 'OptWhereClause',
+      ),
     ),
     6 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\PublicationObjSpecWithCurrentSchema_f09400c6',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_SCHEMA',
       ),
     ),
   ),
@@ -11223,6 +19885,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'PublicationObjSpec',
+      ),
     ),
     1 =>
     array (
@@ -11231,6 +19897,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'pub_obj_list',
+        1 => ',',
+        2 => 'PublicationObjSpec',
       ),
     ),
   ),
@@ -11244,6 +19916,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'PUBLICATION',
+        2 => 'name',
+        3 => 'SET',
+        4 => 'definition',
+      ),
     ),
     1 =>
     array (
@@ -11252,6 +19932,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'PUBLICATION',
+        2 => 'name',
+        3 => 'ADD_P',
+        4 => 'pub_obj_list',
       ),
     ),
     2 =>
@@ -11262,6 +19950,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'PUBLICATION',
+        2 => 'name',
+        3 => 'SET',
+        4 => 'pub_obj_list',
+      ),
     ),
     3 =>
     array (
@@ -11270,6 +19966,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'PUBLICATION',
+        2 => 'name',
+        3 => 'DROP',
+        4 => 'pub_obj_list',
       ),
     ),
   ),
@@ -11285,6 +19989,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 6,
         3 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'SUBSCRIPTION',
+        2 => 'name',
+        3 => 'CONNECTION',
+        4 => 'Sconst',
+        5 => 'PUBLICATION',
+        6 => 'name_list',
+        7 => 'opt_definition',
+      ),
     ),
   ),
   'AlterSubscriptionStmt' =>
@@ -11297,6 +20012,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SUBSCRIPTION',
+        2 => 'name',
+        3 => 'SET',
+        4 => 'definition',
+      ),
     ),
     1 =>
     array (
@@ -11306,6 +20029,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SUBSCRIPTION',
+        2 => 'name',
+        3 => 'CONNECTION',
+        4 => 'Sconst',
+      ),
     ),
     2 =>
     array (
@@ -11314,6 +20045,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SUBSCRIPTION',
+        2 => 'name',
+        3 => 'REFRESH',
+        4 => 'PUBLICATION',
+        5 => 'opt_definition',
       ),
     ),
     3 =>
@@ -11325,6 +20065,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SUBSCRIPTION',
+        2 => 'name',
+        3 => 'ADD_P',
+        4 => 'PUBLICATION',
+        5 => 'name_list',
+        6 => 'opt_definition',
+      ),
     ),
     4 =>
     array (
@@ -11334,6 +20084,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
         2 => 6,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SUBSCRIPTION',
+        2 => 'name',
+        3 => 'DROP',
+        4 => 'PUBLICATION',
+        5 => 'name_list',
+        6 => 'opt_definition',
       ),
     ),
     5 =>
@@ -11345,6 +20105,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SUBSCRIPTION',
+        2 => 'name',
+        3 => 'SET',
+        4 => 'PUBLICATION',
+        5 => 'name_list',
+        6 => 'opt_definition',
+      ),
     ),
     6 =>
     array (
@@ -11352,6 +20122,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SUBSCRIPTION',
+        2 => 'name',
+        3 => 'ENABLE_P',
       ),
     ),
     7 =>
@@ -11361,6 +20138,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SUBSCRIPTION',
+        2 => 'name',
+        3 => 'DISABLE_P',
+      ),
     ),
     8 =>
     array (
@@ -11369,6 +20153,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SUBSCRIPTION',
+        2 => 'name',
+        3 => 'SKIP',
+        4 => 'definition',
       ),
     ),
   ),
@@ -11382,6 +20174,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'SUBSCRIPTION',
+        2 => 'name',
+        3 => 'opt_drop_behavior',
+      ),
     ),
     1 =>
     array (
@@ -11390,6 +20189,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'SUBSCRIPTION',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'name',
+        5 => 'opt_drop_behavior',
       ),
     ),
   ),
@@ -11408,6 +20216,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         5 => 11,
         6 => 12,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'opt_or_replace',
+        2 => 'RULE',
+        3 => 'name',
+        4 => 'AS',
+        5 => 'ON',
+        6 => 'event',
+        7 => 'TO',
+        8 => 'qualified_name',
+        9 => 'where_clause',
+        10 => 'DO',
+        11 => 'opt_instead',
+        12 => 'RuleActionList',
+      ),
     ),
   ),
   'RuleActionList' =>
@@ -11418,10 +20242,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'NOTHING',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'RuleActionStmt',
+      ),
     ),
     2 =>
     array (
@@ -11429,6 +20261,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'RuleActionMulti',
+        2 => ')',
       ),
     ),
   ),
@@ -11442,10 +20280,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'RuleActionMulti',
+        1 => ';',
+        2 => 'RuleActionStmtOrEmpty',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'RuleActionStmtOrEmpty',
+      ),
     ),
   ),
   'RuleActionStmt' =>
@@ -11453,22 +20301,42 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'SelectStmt',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'InsertStmt',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'UpdateStmt',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'DeleteStmt',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'NotifyStmt',
+      ),
     ),
   ),
   'RuleActionStmtOrEmpty' =>
@@ -11476,11 +20344,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'RuleActionStmt',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\RuleActionStmtOrEmptyWith_bfb86d92',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -11490,18 +20365,34 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\EventChoice_17a6544e::UseSelect_6e426169',
+      'symbols' =>
+      array (
+        0 => 'SELECT',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\EventChoice_17a6544e::UseUpdate_6cb78ab1',
+      'symbols' =>
+      array (
+        0 => 'UPDATE',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\EventChoice_17a6544e::UseDelete_65daeb37',
+      'symbols' =>
+      array (
+        0 => 'DELETE_P',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\EventChoice_17a6544e::UseInsert_014413c2',
+      'symbols' =>
+      array (
+        0 => 'INSERT',
+      ),
     ),
   ),
   'opt_instead' =>
@@ -11509,14 +20400,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptInsteadChoice_20ad6366::UseInstead_d1303b11',
+      'symbols' =>
+      array (
+        0 => 'INSTEAD',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptInsteadChoice_20ad6366::UseAlso_af96e366',
+      'symbols' =>
+      array (
+        0 => 'ALSO',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptInsteadChoice_20ad6366::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'NotifyStmt' =>
@@ -11529,6 +20431,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'NOTIFY',
+        1 => 'ColId',
+        2 => 'notify_payload',
+      ),
     ),
   ),
   'notify_payload' =>
@@ -11540,11 +20448,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => ',',
+        1 => 'Sconst',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\NotifyPayloadWith_98684aa9',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -11558,6 +20474,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'LISTEN',
+        1 => 'ColId',
+      ),
     ),
   ),
   'UnlistenStmt' =>
@@ -11569,12 +20490,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNLISTEN',
+        1 => 'ColId',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\UnlistenStmtWithUnlisten_23007d79',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'UNLISTEN',
+        1 => '*',
       ),
     ),
   ),
@@ -11588,6 +20519,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ABORT_P',
+        1 => 'opt_transaction',
+        2 => 'opt_transaction_chain',
+      ),
     ),
     1 =>
     array (
@@ -11595,6 +20532,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'START',
+        1 => 'TRANSACTION',
+        2 => 'transaction_mode_list_or_empty',
       ),
     ),
     2 =>
@@ -11605,6 +20548,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMMIT',
+        1 => 'opt_transaction',
+        2 => 'opt_transaction_chain',
+      ),
     ),
     3 =>
     array (
@@ -11614,6 +20563,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ROLLBACK',
+        1 => 'opt_transaction',
+        2 => 'opt_transaction_chain',
+      ),
     ),
     4 =>
     array (
@@ -11621,6 +20576,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SAVEPOINT',
+        1 => 'ColId',
       ),
     ),
     5 =>
@@ -11630,6 +20590,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'RELEASE',
+        1 => 'SAVEPOINT',
+        2 => 'ColId',
+      ),
     ),
     6 =>
     array (
@@ -11637,6 +20603,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RELEASE',
+        1 => 'ColId',
       ),
     ),
     7 =>
@@ -11647,6 +20618,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ROLLBACK',
+        1 => 'opt_transaction',
+        2 => 'TO',
+        3 => 'SAVEPOINT',
+        4 => 'ColId',
+      ),
     ),
     8 =>
     array (
@@ -11656,6 +20635,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ROLLBACK',
+        1 => 'opt_transaction',
+        2 => 'TO',
+        3 => 'ColId',
+      ),
     ),
     9 =>
     array (
@@ -11663,6 +20649,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PREPARE',
+        1 => 'TRANSACTION',
+        2 => 'Sconst',
       ),
     ),
     10 =>
@@ -11672,6 +20664,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMMIT',
+        1 => 'PREPARED',
+        2 => 'Sconst',
+      ),
     ),
     11 =>
     array (
@@ -11679,6 +20677,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ROLLBACK',
+        1 => 'PREPARED',
+        2 => 'Sconst',
       ),
     ),
   ),
@@ -11692,6 +20696,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'BEGIN_P',
+        1 => 'opt_transaction',
+        2 => 'transaction_mode_list_or_empty',
+      ),
     ),
     1 =>
     array (
@@ -11701,6 +20711,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'END_P',
+        1 => 'opt_transaction',
+        2 => 'opt_transaction_chain',
+      ),
     ),
   ),
   'opt_transaction' =>
@@ -11708,14 +20724,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTransactionChoice_5bbee6ba::UseWork_00b82880',
+      'symbols' =>
+      array (
+        0 => 'WORK',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTransactionChoice_5bbee6ba::UseTransaction_8dadb567',
+      'symbols' =>
+      array (
+        0 => 'TRANSACTION',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTransactionChoice_5bbee6ba::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'transaction_mode_item' =>
@@ -11727,12 +20754,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ISOLATION',
+        1 => 'LEVEL',
+        2 => 'iso_level',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\TransactionModeItemWithReadOnly_699f67d7',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'READ',
+        1 => 'ONLY',
       ),
     ),
     2 =>
@@ -11741,12 +20779,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'READ',
+        1 => 'WRITE',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\TransactionModeItemWithDeferrable_f83461f0',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEFERRABLE',
       ),
     ),
     4 =>
@@ -11755,6 +20802,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'NOT',
+        1 => 'DEFERRABLE',
+      ),
     ),
   ),
   'transaction_mode_list' =>
@@ -11762,6 +20814,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'transaction_mode_item',
+      ),
     ),
     1 =>
     array (
@@ -11770,6 +20826,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'transaction_mode_list',
+        1 => ',',
+        2 => 'transaction_mode_item',
       ),
     ),
     2 =>
@@ -11780,6 +20842,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'transaction_mode_list',
+        1 => 'transaction_mode_item',
+      ),
     ),
   ),
   'transaction_mode_list_or_empty' =>
@@ -11787,11 +20854,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'transaction_mode_list',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\TransactionModeListOrEmptyWith_684755fe',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -11801,14 +20875,28 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTransactionChainChoice_5a5e0f39::UseAndChain_ca6c40ba',
+      'symbols' =>
+      array (
+        0 => 'AND',
+        1 => 'CHAIN',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTransactionChainChoice_5a5e0f39::UseAndNoChain_0b393eac',
+      'symbols' =>
+      array (
+        0 => 'AND',
+        1 => 'NO',
+        2 => 'CHAIN',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTransactionChainChoice_5a5e0f39::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'ViewStmt' =>
@@ -11825,6 +20913,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         4 => 7,
         5 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'OptTemp',
+        2 => 'VIEW',
+        3 => 'qualified_name',
+        4 => 'opt_column_list',
+        5 => 'opt_reloptions',
+        6 => 'AS',
+        7 => 'SelectStmt',
+        8 => 'opt_check_option',
+      ),
     ),
     1 =>
     array (
@@ -11837,6 +20937,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 7,
         4 => 9,
         5 => 10,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'OR',
+        2 => 'REPLACE',
+        3 => 'OptTemp',
+        4 => 'VIEW',
+        5 => 'qualified_name',
+        6 => 'opt_column_list',
+        7 => 'opt_reloptions',
+        8 => 'AS',
+        9 => 'SelectStmt',
+        10 => 'opt_check_option',
       ),
     ),
     2 =>
@@ -11851,6 +20965,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         4 => 10,
         5 => 11,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'OptTemp',
+        2 => 'RECURSIVE',
+        3 => 'VIEW',
+        4 => 'qualified_name',
+        5 => '(',
+        6 => 'columnList',
+        7 => ')',
+        8 => 'opt_reloptions',
+        9 => 'AS',
+        10 => 'SelectStmt',
+        11 => 'opt_check_option',
+      ),
     ),
     3 =>
     array (
@@ -11864,6 +20993,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         4 => 12,
         5 => 13,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'OR',
+        2 => 'REPLACE',
+        3 => 'OptTemp',
+        4 => 'RECURSIVE',
+        5 => 'VIEW',
+        6 => 'qualified_name',
+        7 => '(',
+        8 => 'columnList',
+        9 => ')',
+        10 => 'opt_reloptions',
+        11 => 'AS',
+        12 => 'SelectStmt',
+        13 => 'opt_check_option',
+      ),
     ),
   ),
   'opt_check_option' =>
@@ -11871,18 +21017,41 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptCheckOptionChoice_083d96a6::UseWithCheckOption_e6c3e346',
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'CHECK',
+        2 => 'OPTION',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptCheckOptionChoice_083d96a6::UseWithCascadedCheckOption_715d83ad',
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'CASCADED',
+        2 => 'CHECK',
+        3 => 'OPTION',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptCheckOptionChoice_083d96a6::UseWithLocalCheckOption_f2637ad1',
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'LOCAL',
+        2 => 'CHECK',
+        3 => 'OPTION',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptCheckOptionChoice_083d96a6::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'LoadStmt' =>
@@ -11893,6 +21062,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LOAD',
+        1 => 'file_name',
       ),
     ),
   ),
@@ -11907,6 +21081,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'DATABASE',
+        2 => 'name',
+        3 => 'opt_with',
+        4 => 'createdb_opt_list',
+      ),
     ),
   ),
   'createdb_opt_list' =>
@@ -11914,11 +21096,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'createdb_opt_items',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CreatedbOptListWith_1eefd561',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -11928,6 +21117,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'createdb_opt_item',
+      ),
     ),
     1 =>
     array (
@@ -11936,6 +21129,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'createdb_opt_items',
+        1 => 'createdb_opt_item',
       ),
     ),
   ),
@@ -11950,6 +21148,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'createdb_opt_name',
+        1 => 'opt_equal',
+        2 => 'NumericOnly',
+      ),
     ),
     1 =>
     array (
@@ -11960,6 +21164,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'createdb_opt_name',
+        1 => 'opt_equal',
+        2 => 'opt_boolean_or_string',
+      ),
     ),
     2 =>
     array (
@@ -11968,6 +21178,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'createdb_opt_name',
+        1 => 'opt_equal',
+        2 => 'DEFAULT',
       ),
     ),
   ),
@@ -11980,12 +21196,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'IDENT',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CreatedbOptNameWithConnectionLimit_e15ff200',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'CONNECTION',
+        1 => 'LIMIT',
       ),
     ),
     2 =>
@@ -11994,12 +21219,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'ENCODING',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CreatedbOptNameWithLocation_75121301',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'LOCATION',
       ),
     ),
     4 =>
@@ -12008,12 +21241,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'OWNER',
+      ),
     ),
     5 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CreatedbOptNameWithTablespace_a173d734',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'TABLESPACE',
       ),
     ),
     6 =>
@@ -12022,6 +21263,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'TEMPLATE',
+      ),
     ),
   ),
   'opt_equal' =>
@@ -12029,10 +21274,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptEqualChoice_59643604::Use_380918b9',
+      'symbols' =>
+      array (
+        0 => '=',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptEqualChoice_59643604::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'AlterDatabaseStmt' =>
@@ -12045,6 +21297,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'DATABASE',
+        2 => 'name',
+        3 => 'WITH',
+        4 => 'createdb_opt_list',
+      ),
     ),
     1 =>
     array (
@@ -12053,6 +21313,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'DATABASE',
+        2 => 'name',
+        3 => 'createdb_opt_list',
       ),
     ),
     2 =>
@@ -12063,6 +21330,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'DATABASE',
+        2 => 'name',
+        3 => 'SET',
+        4 => 'TABLESPACE',
+        5 => 'name',
+      ),
     ),
     3 =>
     array (
@@ -12070,6 +21346,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'DATABASE',
+        2 => 'name',
+        3 => 'REFRESH',
+        4 => 'COLLATION',
+        5 => 'VERSION_P',
       ),
     ),
   ),
@@ -12083,6 +21368,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'DATABASE',
+        2 => 'name',
+        3 => 'SetResetClause',
+      ),
     ),
   ),
   'DropdbStmt' =>
@@ -12094,6 +21386,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'DATABASE',
+        2 => 'name',
+      ),
     ),
     1 =>
     array (
@@ -12101,6 +21399,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'DATABASE',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'name',
       ),
     ),
     2 =>
@@ -12112,6 +21418,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'DATABASE',
+        2 => 'name',
+        3 => 'opt_with',
+        4 => '(',
+        5 => 'drop_option_list',
+        6 => ')',
+      ),
     ),
     3 =>
     array (
@@ -12122,6 +21438,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'DATABASE',
+        2 => 'IF_P',
+        3 => 'EXISTS',
+        4 => 'name',
+        5 => 'opt_with',
+        6 => '(',
+        7 => 'drop_option_list',
+        8 => ')',
+      ),
     ),
   ),
   'drop_option_list' =>
@@ -12129,6 +21457,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'drop_option',
+      ),
     ),
     1 =>
     array (
@@ -12138,6 +21470,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'drop_option_list',
+        1 => ',',
+        2 => 'drop_option',
+      ),
     ),
   ),
   'drop_option' =>
@@ -12145,6 +21483,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\DropOptionChoice_f35e6712::UseForce_bd16a503',
+      'symbols' =>
+      array (
+        0 => 'FORCE',
+      ),
     ),
   ),
   'AlterCollationStmt' =>
@@ -12155,6 +21497,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'COLLATION',
+        2 => 'any_name',
+        3 => 'REFRESH',
+        4 => 'VERSION_P',
       ),
     ),
   ),
@@ -12167,6 +21517,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SYSTEM_P',
+        2 => 'SET',
+        3 => 'generic_set',
+      ),
     ),
     1 =>
     array (
@@ -12174,6 +21531,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SYSTEM_P',
+        2 => 'RESET',
+        3 => 'generic_reset',
       ),
     ),
   ),
@@ -12189,6 +21553,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 4,
         3 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'DOMAIN_P',
+        2 => 'any_name',
+        3 => 'opt_as',
+        4 => 'Typename',
+        5 => 'ColQualList',
+      ),
     ),
   ),
   'AlterDomainStmt' =>
@@ -12201,6 +21574,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'DOMAIN_P',
+        2 => 'any_name',
+        3 => 'alter_column_default',
+      ),
     ),
     1 =>
     array (
@@ -12208,6 +21588,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'DOMAIN_P',
+        2 => 'any_name',
+        3 => 'DROP',
+        4 => 'NOT',
+        5 => 'NULL_P',
       ),
     ),
     2 =>
@@ -12217,6 +21606,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'DOMAIN_P',
+        2 => 'any_name',
+        3 => 'SET',
+        4 => 'NOT',
+        5 => 'NULL_P',
+      ),
     ),
     3 =>
     array (
@@ -12225,6 +21623,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'DOMAIN_P',
+        2 => 'any_name',
+        3 => 'ADD_P',
+        4 => 'TableConstraint',
       ),
     ),
     4 =>
@@ -12236,6 +21642,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'DOMAIN_P',
+        2 => 'any_name',
+        3 => 'DROP',
+        4 => 'CONSTRAINT',
+        5 => 'name',
+        6 => 'opt_drop_behavior',
+      ),
     ),
     5 =>
     array (
@@ -12246,6 +21662,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 7,
         2 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'DOMAIN_P',
+        2 => 'any_name',
+        3 => 'DROP',
+        4 => 'CONSTRAINT',
+        5 => 'IF_P',
+        6 => 'EXISTS',
+        7 => 'name',
+        8 => 'opt_drop_behavior',
+      ),
     ),
     6 =>
     array (
@@ -12255,6 +21683,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'DOMAIN_P',
+        2 => 'any_name',
+        3 => 'VALIDATE',
+        4 => 'CONSTRAINT',
+        5 => 'name',
+      ),
     ),
   ),
   'opt_as' =>
@@ -12262,10 +21699,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptAsChoice_04d18f63::UseAs_de148153',
+      'symbols' =>
+      array (
+        0 => 'AS',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptAsChoice_04d18f63::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'AlterTSDictionaryStmt' =>
@@ -12277,6 +21721,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TEXT_P',
+        2 => 'SEARCH',
+        3 => 'DICTIONARY',
+        4 => 'any_name',
+        5 => 'definition',
       ),
     ),
   ),
@@ -12292,6 +21745,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 9,
         3 => 10,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TEXT_P',
+        2 => 'SEARCH',
+        3 => 'CONFIGURATION',
+        4 => 'any_name',
+        5 => 'ADD_P',
+        6 => 'MAPPING',
+        7 => 'FOR',
+        8 => 'name_list',
+        9 => 'any_with',
+        10 => 'any_name_list',
+      ),
     ),
     1 =>
     array (
@@ -12303,6 +21770,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 9,
         3 => 10,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TEXT_P',
+        2 => 'SEARCH',
+        3 => 'CONFIGURATION',
+        4 => 'any_name',
+        5 => 'ALTER',
+        6 => 'MAPPING',
+        7 => 'FOR',
+        8 => 'name_list',
+        9 => 'any_with',
+        10 => 'any_name_list',
+      ),
     ),
     2 =>
     array (
@@ -12313,6 +21794,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 8,
         2 => 9,
         3 => 10,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TEXT_P',
+        2 => 'SEARCH',
+        3 => 'CONFIGURATION',
+        4 => 'any_name',
+        5 => 'ALTER',
+        6 => 'MAPPING',
+        7 => 'REPLACE',
+        8 => 'any_name',
+        9 => 'any_with',
+        10 => 'any_name',
       ),
     ),
     3 =>
@@ -12326,6 +21821,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 11,
         4 => 12,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TEXT_P',
+        2 => 'SEARCH',
+        3 => 'CONFIGURATION',
+        4 => 'any_name',
+        5 => 'ALTER',
+        6 => 'MAPPING',
+        7 => 'FOR',
+        8 => 'name_list',
+        9 => 'REPLACE',
+        10 => 'any_name',
+        11 => 'any_with',
+        12 => 'any_name',
+      ),
     ),
     4 =>
     array (
@@ -12335,6 +21846,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TEXT_P',
+        2 => 'SEARCH',
+        3 => 'CONFIGURATION',
+        4 => 'any_name',
+        5 => 'DROP',
+        6 => 'MAPPING',
+        7 => 'FOR',
+        8 => 'name_list',
+      ),
     ),
     5 =>
     array (
@@ -12343,6 +21866,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
         1 => 10,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TEXT_P',
+        2 => 'SEARCH',
+        3 => 'CONFIGURATION',
+        4 => 'any_name',
+        5 => 'DROP',
+        6 => 'MAPPING',
+        7 => 'IF_P',
+        8 => 'EXISTS',
+        9 => 'FOR',
+        10 => 'name_list',
       ),
     ),
   ),
@@ -12354,6 +21891,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'WITH',
+      ),
     ),
     1 =>
     array (
@@ -12361,6 +21902,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'WITH_LA',
       ),
     ),
   ),
@@ -12377,6 +21922,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 7,
         4 => 9,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'opt_default',
+        2 => 'CONVERSION_P',
+        3 => 'any_name',
+        4 => 'FOR',
+        5 => 'Sconst',
+        6 => 'TO',
+        7 => 'Sconst',
+        8 => 'FROM',
+        9 => 'any_name',
+      ),
     ),
   ),
   'ClusterStmt' =>
@@ -12390,6 +21948,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'CLUSTER',
+        1 => 'opt_verbose',
+        2 => 'qualified_name',
+        3 => 'cluster_index_specification',
+      ),
     ),
     1 =>
     array (
@@ -12400,6 +21965,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 4,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'CLUSTER',
+        1 => '(',
+        2 => 'utility_option_list',
+        3 => ')',
+        4 => 'qualified_name',
+        5 => 'cluster_index_specification',
+      ),
     ),
     2 =>
     array (
@@ -12407,6 +21981,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CLUSTER',
+        1 => 'opt_verbose',
       ),
     ),
     3 =>
@@ -12417,6 +21996,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
         2 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CLUSTER',
+        1 => 'opt_verbose',
+        2 => 'name',
+        3 => 'ON',
+        4 => 'qualified_name',
       ),
     ),
   ),
@@ -12429,11 +22016,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'USING',
+        1 => 'name',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ClusterIndexSpecificationWith_b0b3778f',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -12451,6 +22046,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 4,
         4 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'VACUUM',
+        1 => 'opt_full',
+        2 => 'opt_freeze',
+        3 => 'opt_verbose',
+        4 => 'opt_analyze',
+        5 => 'opt_vacuum_relation_list',
+      ),
     ),
     1 =>
     array (
@@ -12459,6 +22063,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'VACUUM',
+        1 => '(',
+        2 => 'utility_option_list',
+        3 => ')',
+        4 => 'opt_vacuum_relation_list',
       ),
     ),
   ),
@@ -12473,6 +22085,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'analyze_keyword',
+        1 => 'opt_verbose',
+        2 => 'opt_vacuum_relation_list',
+      ),
     ),
     1 =>
     array (
@@ -12483,6 +22101,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'analyze_keyword',
+        1 => '(',
+        2 => 'utility_option_list',
+        3 => ')',
+        4 => 'opt_vacuum_relation_list',
+      ),
     ),
   ),
   'utility_option_list' =>
@@ -12490,6 +22116,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'utility_option_elem',
+      ),
     ),
     1 =>
     array (
@@ -12499,6 +22129,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'utility_option_list',
+        1 => ',',
+        2 => 'utility_option_elem',
+      ),
     ),
   ),
   'analyze_keyword' =>
@@ -12506,10 +22142,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\AnalyzeKeywordChoice_a15c2959::UseAnalyze_217acdbe',
+      'symbols' =>
+      array (
+        0 => 'ANALYZE',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\AnalyzeKeywordChoice_a15c2959::UseAnalyse_4b9a3f4b',
+      'symbols' =>
+      array (
+        0 => 'ANALYSE',
+      ),
     ),
   ),
   'utility_option_elem' =>
@@ -12522,6 +22166,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'utility_option_name',
+        1 => 'utility_option_arg',
+      ),
     ),
   ),
   'utility_option_name' =>
@@ -12529,10 +22178,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'NonReservedWord',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'analyze_keyword',
+      ),
     ),
     2 =>
     array (
@@ -12541,6 +22198,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FORMAT_LA',
+      ),
     ),
   ),
   'utility_option_arg' =>
@@ -12548,15 +22209,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'opt_boolean_or_string',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'NumericOnly',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\UtilityOptionArgWith_1f684922',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -12566,11 +22238,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'analyze_keyword',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptAnalyzeWith_e374f685',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -12580,10 +22259,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptVerboseChoice_63b17bc8::UseVerbose_8bc0e7e8',
+      'symbols' =>
+      array (
+        0 => 'VERBOSE',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptVerboseChoice_63b17bc8::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'opt_full' =>
@@ -12591,10 +22277,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptFullChoice_c24ed550::UseFull_cb6839ca',
+      'symbols' =>
+      array (
+        0 => 'FULL',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptFullChoice_c24ed550::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'opt_freeze' =>
@@ -12602,10 +22295,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptFreezeChoice_3182323b::UseFreeze_ce204cf4',
+      'symbols' =>
+      array (
+        0 => 'FREEZE',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptFreezeChoice_3182323b::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'opt_name_list' =>
@@ -12617,11 +22317,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'name_list',
+        2 => ')',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptNameListWith_c932aafd',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -12636,6 +22345,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'qualified_name',
+        1 => 'opt_name_list',
+      ),
     ),
   ),
   'vacuum_relation_list' =>
@@ -12643,6 +22357,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'vacuum_relation',
+      ),
     ),
     1 =>
     array (
@@ -12652,6 +22370,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'vacuum_relation_list',
+        1 => ',',
+        2 => 'vacuum_relation',
+      ),
     ),
   ),
   'opt_vacuum_relation_list' =>
@@ -12659,11 +22383,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'vacuum_relation_list',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptVacuumRelationListWith_818aca75',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -12677,6 +22408,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'EXPLAIN',
+        1 => 'ExplainableStmt',
+      ),
     ),
     1 =>
     array (
@@ -12687,6 +22423,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'EXPLAIN',
+        1 => 'analyze_keyword',
+        2 => 'opt_verbose',
+        3 => 'ExplainableStmt',
+      ),
     ),
     2 =>
     array (
@@ -12694,6 +22437,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'EXPLAIN',
+        1 => 'VERBOSE',
+        2 => 'ExplainableStmt',
       ),
     ),
     3 =>
@@ -12704,6 +22453,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'EXPLAIN',
+        1 => '(',
+        2 => 'utility_option_list',
+        3 => ')',
+        4 => 'ExplainableStmt',
+      ),
     ),
   ),
   'ExplainableStmt' =>
@@ -12711,42 +22468,82 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'SelectStmt',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'InsertStmt',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'UpdateStmt',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'DeleteStmt',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'MergeStmt',
+      ),
     ),
     5 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'DeclareCursorStmt',
+      ),
     ),
     6 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateAsStmt',
+      ),
     ),
     7 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CreateMatViewStmt',
+      ),
     ),
     8 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'RefreshMatViewStmt',
+      ),
     ),
     9 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ExecuteStmt',
+      ),
     ),
   ),
   'PrepareStmt' =>
@@ -12760,6 +22557,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'PREPARE',
+        1 => 'name',
+        2 => 'prep_type_clause',
+        3 => 'AS',
+        4 => 'PreparableStmt',
+      ),
     ),
   ),
   'prep_type_clause' =>
@@ -12771,11 +22576,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'type_list',
+        2 => ')',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\PrepTypeClauseWith_2f269bd3',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -12785,22 +22599,42 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'SelectStmt',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'InsertStmt',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'UpdateStmt',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'DeleteStmt',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'MergeStmt',
+      ),
     ),
   ),
   'ExecuteStmt' =>
@@ -12812,6 +22646,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'EXECUTE',
+        1 => 'name',
+        2 => 'execute_param_clause',
       ),
     ),
     1 =>
@@ -12825,6 +22665,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 7,
         4 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'OptTemp',
+        2 => 'TABLE',
+        3 => 'create_as_target',
+        4 => 'AS',
+        5 => 'EXECUTE',
+        6 => 'name',
+        7 => 'execute_param_clause',
+        8 => 'opt_with_data',
+      ),
     ),
     2 =>
     array (
@@ -12837,6 +22689,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 10,
         4 => 11,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'OptTemp',
+        2 => 'TABLE',
+        3 => 'IF_P',
+        4 => 'NOT',
+        5 => 'EXISTS',
+        6 => 'create_as_target',
+        7 => 'AS',
+        8 => 'EXECUTE',
+        9 => 'name',
+        10 => 'execute_param_clause',
+        11 => 'opt_with_data',
+      ),
     ),
   ),
   'execute_param_clause' =>
@@ -12848,11 +22715,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'expr_list',
+        2 => ')',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ExecuteParamClauseWith_e6966037',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -12866,6 +22742,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'DEALLOCATE',
+        1 => 'name',
+      ),
     ),
     1 =>
     array (
@@ -12874,6 +22755,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'DEALLOCATE',
+        1 => 'PREPARE',
+        2 => 'name',
+      ),
     ),
     2 =>
     array (
@@ -12881,12 +22768,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'DEALLOCATE',
+        1 => 'ALL',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\DeallocateStmtWithDeallocatePrepareAll_24afe11d',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEALLOCATE',
+        1 => 'PREPARE',
+        2 => 'ALL',
       ),
     ),
   ),
@@ -12903,6 +22801,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 5,
         4 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_with_clause',
+        1 => 'INSERT',
+        2 => 'INTO',
+        3 => 'insert_target',
+        4 => 'insert_rest',
+        5 => 'opt_on_conflict',
+        6 => 'returning_clause',
+      ),
     ),
   ),
   'insert_target' =>
@@ -12910,6 +22818,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'qualified_name',
+      ),
     ),
     1 =>
     array (
@@ -12919,6 +22831,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'qualified_name',
+        1 => 'AS',
+        2 => 'ColId',
+      ),
     ),
   ),
   'insert_rest' =>
@@ -12926,6 +22844,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'SelectStmt',
+      ),
     ),
     1 =>
     array (
@@ -12935,6 +22857,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'OVERRIDING',
+        1 => 'override_kind',
+        2 => 'VALUE_P',
+        3 => 'SelectStmt',
+      ),
     ),
     2 =>
     array (
@@ -12943,6 +22872,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'insert_column_list',
+        2 => ')',
+        3 => 'SelectStmt',
       ),
     ),
     3 =>
@@ -12954,12 +22890,27 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 4,
         2 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'insert_column_list',
+        2 => ')',
+        3 => 'OVERRIDING',
+        4 => 'override_kind',
+        5 => 'VALUE_P',
+        6 => 'SelectStmt',
+      ),
     ),
     4 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\InsertRestWithDefaultValues_f2c98f0b',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT',
+        1 => 'VALUES',
       ),
     ),
   ),
@@ -12968,10 +22919,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OverrideKindChoice_4585efbf::UseUser_92b7b421',
+      'symbols' =>
+      array (
+        0 => 'USER',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OverrideKindChoice_4585efbf::UseSystem_d621c1a7',
+      'symbols' =>
+      array (
+        0 => 'SYSTEM_P',
+      ),
     ),
   ),
   'insert_column_list' =>
@@ -12979,6 +22938,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'insert_column_item',
+      ),
     ),
     1 =>
     array (
@@ -12987,6 +22950,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'insert_column_list',
+        1 => ',',
+        2 => 'insert_column_item',
       ),
     ),
   ),
@@ -12999,6 +22968,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ColId',
+        1 => 'opt_indirection',
       ),
     ),
   ),
@@ -13013,6 +22987,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 6,
         2 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ON',
+        1 => 'CONFLICT',
+        2 => 'opt_conf_expr',
+        3 => 'DO',
+        4 => 'UPDATE',
+        5 => 'SET',
+        6 => 'set_clause_list',
+        7 => 'where_clause',
+      ),
     ),
     1 =>
     array (
@@ -13021,11 +23006,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ON',
+        1 => 'CONFLICT',
+        2 => 'opt_conf_expr',
+        3 => 'DO',
+        4 => 'NOTHING',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptOnConflictWith_518f038b',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -13040,6 +23036,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'index_params',
+        2 => ')',
+        3 => 'where_clause',
+      ),
     ),
     1 =>
     array (
@@ -13048,11 +23051,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ON',
+        1 => 'CONSTRAINT',
+        2 => 'name',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptConfExprWith_c205faf3',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -13066,11 +23078,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'RETURNING',
+        1 => 'target_list',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ReturningClauseWith_0a0d5dad',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -13088,6 +23108,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 5,
         4 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_with_clause',
+        1 => 'DELETE_P',
+        2 => 'FROM',
+        3 => 'relation_expr_opt_alias',
+        4 => 'using_clause',
+        5 => 'where_or_current_clause',
+        6 => 'returning_clause',
+      ),
     ),
   ),
   'using_clause' =>
@@ -13099,11 +23129,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'USING',
+        1 => 'from_list',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\UsingClauseWith_5da998df',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -13120,6 +23158,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'LOCK_P',
+        1 => 'opt_table',
+        2 => 'relation_expr_list',
+        3 => 'opt_lock',
+        4 => 'opt_nowait',
+      ),
     ),
   ),
   'opt_lock' =>
@@ -13131,11 +23177,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'IN_P',
+        1 => 'lock_type',
+        2 => 'MODE',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptLockWith_67e732e1',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -13145,34 +23200,74 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\LockTypeChoice_6416f568::UseAccessShare_cc70673c',
+      'symbols' =>
+      array (
+        0 => 'ACCESS',
+        1 => 'SHARE',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\LockTypeChoice_6416f568::UseRowShare_17281c4d',
+      'symbols' =>
+      array (
+        0 => 'ROW',
+        1 => 'SHARE',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\LockTypeChoice_6416f568::UseRowExclusive_feeed0b9',
+      'symbols' =>
+      array (
+        0 => 'ROW',
+        1 => 'EXCLUSIVE',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\LockTypeChoice_6416f568::UseShareUpdateExclusive_ce321719',
+      'symbols' =>
+      array (
+        0 => 'SHARE',
+        1 => 'UPDATE',
+        2 => 'EXCLUSIVE',
+      ),
     ),
     4 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\LockTypeChoice_6416f568::UseShare_0b060acf',
+      'symbols' =>
+      array (
+        0 => 'SHARE',
+      ),
     ),
     5 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\LockTypeChoice_6416f568::UseShareRowExclusive_d55194c9',
+      'symbols' =>
+      array (
+        0 => 'SHARE',
+        1 => 'ROW',
+        2 => 'EXCLUSIVE',
+      ),
     ),
     6 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\LockTypeChoice_6416f568::UseExclusive_a6632be9',
+      'symbols' =>
+      array (
+        0 => 'EXCLUSIVE',
+      ),
     ),
     7 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\LockTypeChoice_6416f568::UseAccessExclusive_1951bd42',
+      'symbols' =>
+      array (
+        0 => 'ACCESS',
+        1 => 'EXCLUSIVE',
+      ),
     ),
   ),
   'opt_nowait' =>
@@ -13180,10 +23275,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptNowaitChoice_eaedce94::UseNowait_3fa8f87a',
+      'symbols' =>
+      array (
+        0 => 'NOWAIT',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptNowaitChoice_eaedce94::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'opt_nowait_or_skip' =>
@@ -13191,14 +23293,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptNowaitOrSkipChoice_d5682479::UseNowait_3fa8f87a',
+      'symbols' =>
+      array (
+        0 => 'NOWAIT',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptNowaitOrSkipChoice_d5682479::UseSkipLocked_5ad391e2',
+      'symbols' =>
+      array (
+        0 => 'SKIP',
+        1 => 'LOCKED',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptNowaitOrSkipChoice_d5682479::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'UpdateStmt' =>
@@ -13215,6 +23329,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         4 => 6,
         5 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_with_clause',
+        1 => 'UPDATE',
+        2 => 'relation_expr_opt_alias',
+        3 => 'SET',
+        4 => 'set_clause_list',
+        5 => 'from_clause',
+        6 => 'where_or_current_clause',
+        7 => 'returning_clause',
+      ),
     ),
   ),
   'set_clause_list' =>
@@ -13222,6 +23347,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'set_clause',
+      ),
     ),
     1 =>
     array (
@@ -13230,6 +23359,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'set_clause_list',
+        1 => ',',
+        2 => 'set_clause',
       ),
     ),
   ),
@@ -13243,6 +23378,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'set_target',
+        1 => '=',
+        2 => 'a_expr',
+      ),
     ),
     1 =>
     array (
@@ -13251,6 +23392,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'set_target_list',
+        2 => ')',
+        3 => '=',
+        4 => 'a_expr',
       ),
     ),
   ),
@@ -13264,6 +23413,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColId',
+        1 => 'opt_indirection',
+      ),
     ),
   ),
   'set_target_list' =>
@@ -13271,6 +23425,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'set_target',
+      ),
     ),
     1 =>
     array (
@@ -13279,6 +23437,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'set_target_list',
+        1 => ',',
+        2 => 'set_target',
       ),
     ),
   ),
@@ -13295,6 +23459,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 7,
         4 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_with_clause',
+        1 => 'MERGE',
+        2 => 'INTO',
+        3 => 'relation_expr_opt_alias',
+        4 => 'USING',
+        5 => 'table_ref',
+        6 => 'ON',
+        7 => 'a_expr',
+        8 => 'merge_when_list',
+      ),
     ),
   ),
   'merge_when_list' =>
@@ -13302,6 +23478,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'merge_when_clause',
+      ),
     ),
     1 =>
     array (
@@ -13310,6 +23490,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'merge_when_list',
+        1 => 'merge_when_clause',
       ),
     ),
   ),
@@ -13323,6 +23508,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'WHEN',
+        1 => 'MATCHED',
+        2 => 'opt_merge_when_condition',
+        3 => 'THEN',
+        4 => 'merge_update',
+      ),
     ),
     1 =>
     array (
@@ -13331,6 +23524,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'WHEN',
+        1 => 'MATCHED',
+        2 => 'opt_merge_when_condition',
+        3 => 'THEN',
+        4 => 'merge_delete',
       ),
     ),
     2 =>
@@ -13341,6 +23542,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'WHEN',
+        1 => 'NOT',
+        2 => 'MATCHED',
+        3 => 'opt_merge_when_condition',
+        4 => 'THEN',
+        5 => 'merge_insert',
+      ),
     ),
     3 =>
     array (
@@ -13349,6 +23559,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'WHEN',
+        1 => 'MATCHED',
+        2 => 'opt_merge_when_condition',
+        3 => 'THEN',
+        4 => 'DO',
+        5 => 'NOTHING',
+      ),
     ),
     4 =>
     array (
@@ -13356,6 +23575,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'WHEN',
+        1 => 'NOT',
+        2 => 'MATCHED',
+        3 => 'opt_merge_when_condition',
+        4 => 'THEN',
+        5 => 'DO',
+        6 => 'NOTHING',
       ),
     ),
   ),
@@ -13368,11 +23597,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'AND',
+        1 => 'a_expr',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptMergeWhenConditionWith_687c6b40',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -13386,6 +23623,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'UPDATE',
+        1 => 'SET',
+        2 => 'set_clause_list',
+      ),
     ),
   ),
   'merge_delete' =>
@@ -13393,6 +23636,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\MergeDeleteChoice_469f4992::UseDelete_65daeb37',
+      'symbols' =>
+      array (
+        0 => 'DELETE_P',
+      ),
     ),
   ),
   'merge_insert' =>
@@ -13404,6 +23651,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'INSERT',
+        1 => 'merge_values_clause',
+      ),
     ),
     1 =>
     array (
@@ -13413,6 +23665,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'INSERT',
+        1 => 'OVERRIDING',
+        2 => 'override_kind',
+        3 => 'VALUE_P',
+        4 => 'merge_values_clause',
+      ),
     ),
     2 =>
     array (
@@ -13421,6 +23681,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INSERT',
+        1 => '(',
+        2 => 'insert_column_list',
+        3 => ')',
+        4 => 'merge_values_clause',
       ),
     ),
     3 =>
@@ -13432,12 +23700,29 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'INSERT',
+        1 => '(',
+        2 => 'insert_column_list',
+        3 => ')',
+        4 => 'OVERRIDING',
+        5 => 'override_kind',
+        6 => 'VALUE_P',
+        7 => 'merge_values_clause',
+      ),
     ),
     4 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\MergeInsertWithInsertDefaultValues_1f4459f2',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'INSERT',
+        1 => 'DEFAULT',
+        2 => 'VALUES',
       ),
     ),
   ),
@@ -13449,6 +23734,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'VALUES',
+        1 => '(',
+        2 => 'expr_list',
+        3 => ')',
       ),
     ),
   ),
@@ -13464,6 +23756,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 4,
         3 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'DECLARE',
+        1 => 'cursor_name',
+        2 => 'cursor_options',
+        3 => 'CURSOR',
+        4 => 'opt_hold',
+        5 => 'FOR',
+        6 => 'SelectStmt',
+      ),
     ),
   ),
   'cursor_name' =>
@@ -13471,6 +23773,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'name',
+      ),
     ),
   ),
   'cursor_options' =>
@@ -13481,6 +23787,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -13488,6 +23797,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'cursor_options',
+        1 => 'NO',
+        2 => 'SCROLL',
       ),
     ),
     2 =>
@@ -13497,6 +23812,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'cursor_options',
+        1 => 'SCROLL',
+      ),
     ),
     3 =>
     array (
@@ -13504,6 +23824,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'cursor_options',
+        1 => 'BINARY',
       ),
     ),
     4 =>
@@ -13513,6 +23838,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'cursor_options',
+        1 => 'ASENSITIVE',
+      ),
     ),
     5 =>
     array (
@@ -13521,6 +23851,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'cursor_options',
+        1 => 'INSENSITIVE',
+      ),
     ),
   ),
   'opt_hold' =>
@@ -13528,14 +23863,27 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptHoldChoice_ac55cac7::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptHoldChoice_ac55cac7::UseWithHold_e4211cce',
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'HOLD',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptHoldChoice_ac55cac7::UseWithoutHold_ced48b84',
+      'symbols' =>
+      array (
+        0 => 'WITHOUT',
+        1 => 'HOLD',
+      ),
     ),
   ),
   'SelectStmt' =>
@@ -13543,10 +23891,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'select_no_parens',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'select_with_parens',
+      ),
     ),
   ),
   'select_with_parens' =>
@@ -13558,6 +23914,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'select_no_parens',
+        2 => ')',
+      ),
     ),
     1 =>
     array (
@@ -13566,6 +23928,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'select_with_parens',
+        2 => ')',
+      ),
     ),
   ),
   'select_no_parens' =>
@@ -13573,6 +23941,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'simple_select',
+      ),
     ),
     1 =>
     array (
@@ -13581,6 +23953,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'select_clause',
+        1 => 'sort_clause',
       ),
     ),
     2 =>
@@ -13593,6 +23970,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 2,
         3 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'select_clause',
+        1 => 'opt_sort_clause',
+        2 => 'for_locking_clause',
+        3 => 'opt_select_limit',
+      ),
     ),
     3 =>
     array (
@@ -13604,6 +23988,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 2,
         3 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'select_clause',
+        1 => 'opt_sort_clause',
+        2 => 'select_limit',
+        3 => 'opt_for_locking_clause',
+      ),
     ),
     4 =>
     array (
@@ -13612,6 +24003,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'with_clause',
+        1 => 'select_clause',
       ),
     ),
     5 =>
@@ -13622,6 +24018,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'with_clause',
+        1 => 'select_clause',
+        2 => 'sort_clause',
       ),
     ),
     6 =>
@@ -13635,6 +24037,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 3,
         4 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'with_clause',
+        1 => 'select_clause',
+        2 => 'opt_sort_clause',
+        3 => 'for_locking_clause',
+        4 => 'opt_select_limit',
+      ),
     ),
     7 =>
     array (
@@ -13647,6 +24057,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 3,
         4 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'with_clause',
+        1 => 'select_clause',
+        2 => 'opt_sort_clause',
+        3 => 'select_limit',
+        4 => 'opt_for_locking_clause',
+      ),
     ),
   ),
   'select_clause' =>
@@ -13654,10 +24072,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'simple_select',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'select_with_parens',
+      ),
     ),
   ),
   'simple_select' =>
@@ -13676,6 +24102,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         6 => 7,
         7 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'SELECT',
+        1 => 'opt_all_clause',
+        2 => 'opt_target_list',
+        3 => 'into_clause',
+        4 => 'from_clause',
+        5 => 'where_clause',
+        6 => 'group_clause',
+        7 => 'having_clause',
+        8 => 'window_clause',
+      ),
     ),
     1 =>
     array (
@@ -13691,10 +24129,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         6 => 7,
         7 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'SELECT',
+        1 => 'distinct_clause',
+        2 => 'target_list',
+        3 => 'into_clause',
+        4 => 'from_clause',
+        5 => 'where_clause',
+        6 => 'group_clause',
+        7 => 'having_clause',
+        8 => 'window_clause',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'values_clause',
+      ),
     ),
     3 =>
     array (
@@ -13702,6 +24156,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TABLE',
+        1 => 'relation_expr',
       ),
     ),
     4 =>
@@ -13713,6 +24172,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'select_clause',
+        1 => 'UNION',
+        2 => 'set_quantifier',
+        3 => 'select_clause',
+      ),
     ),
     5 =>
     array (
@@ -13723,6 +24189,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'select_clause',
+        1 => 'INTERSECT',
+        2 => 'set_quantifier',
+        3 => 'select_clause',
+      ),
     ),
     6 =>
     array (
@@ -13732,6 +24205,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
         2 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'select_clause',
+        1 => 'EXCEPT',
+        2 => 'set_quantifier',
+        3 => 'select_clause',
       ),
     ),
   ),
@@ -13744,6 +24224,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'cte_list',
+      ),
     ),
     1 =>
     array (
@@ -13753,6 +24238,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'WITH_LA',
+        1 => 'cte_list',
+      ),
     ),
     2 =>
     array (
@@ -13761,6 +24251,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'RECURSIVE',
+        2 => 'cte_list',
+      ),
     ),
   ),
   'cte_list' =>
@@ -13768,6 +24264,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'common_table_expr',
+      ),
     ),
     1 =>
     array (
@@ -13776,6 +24276,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'cte_list',
+        1 => ',',
+        2 => 'common_table_expr',
       ),
     ),
   ),
@@ -13793,6 +24299,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         4 => 7,
         5 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'name',
+        1 => 'opt_name_list',
+        2 => 'AS',
+        3 => 'opt_materialized',
+        4 => '(',
+        5 => 'PreparableStmt',
+        6 => ')',
+        7 => 'opt_search_clause',
+        8 => 'opt_cycle_clause',
+      ),
     ),
   ),
   'opt_materialized' =>
@@ -13800,14 +24318,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptMaterializedChoice_1497b49e::UseMaterialized_c35fe965',
+      'symbols' =>
+      array (
+        0 => 'MATERIALIZED',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptMaterializedChoice_1497b49e::UseNotMaterialized_d36e094c',
+      'symbols' =>
+      array (
+        0 => 'NOT',
+        1 => 'MATERIALIZED',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptMaterializedChoice_1497b49e::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'opt_search_clause' =>
@@ -13820,6 +24350,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'SEARCH',
+        1 => 'DEPTH',
+        2 => 'FIRST_P',
+        3 => 'BY',
+        4 => 'columnList',
+        5 => 'SET',
+        6 => 'ColId',
+      ),
     ),
     1 =>
     array (
@@ -13829,11 +24369,24 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'SEARCH',
+        1 => 'BREADTH',
+        2 => 'FIRST_P',
+        3 => 'BY',
+        4 => 'columnList',
+        5 => 'SET',
+        6 => 'ColId',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptSearchClauseWith_7c91a888',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -13851,6 +24404,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 7,
         4 => 9,
       ),
+      'symbols' =>
+      array (
+        0 => 'CYCLE',
+        1 => 'columnList',
+        2 => 'SET',
+        3 => 'ColId',
+        4 => 'TO',
+        5 => 'AexprConst',
+        6 => 'DEFAULT',
+        7 => 'AexprConst',
+        8 => 'USING',
+        9 => 'ColId',
+      ),
     ),
     1 =>
     array (
@@ -13861,11 +24427,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'CYCLE',
+        1 => 'columnList',
+        2 => 'SET',
+        3 => 'ColId',
+        4 => 'USING',
+        5 => 'ColId',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptCycleClauseWith_cb6b836f',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -13875,11 +24453,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'with_clause',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptWithClauseWith_af4f1023',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -13893,11 +24478,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'INTO',
+        1 => 'OptTempTableName',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\IntoClauseWith_377ba3b1',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -13912,6 +24505,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'TEMPORARY',
+        1 => 'opt_table',
+        2 => 'qualified_name',
+      ),
     ),
     1 =>
     array (
@@ -13920,6 +24519,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TEMP',
+        1 => 'opt_table',
+        2 => 'qualified_name',
       ),
     ),
     2 =>
@@ -13930,6 +24535,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'LOCAL',
+        1 => 'TEMPORARY',
+        2 => 'opt_table',
+        3 => 'qualified_name',
+      ),
     ),
     3 =>
     array (
@@ -13938,6 +24550,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LOCAL',
+        1 => 'TEMP',
+        2 => 'opt_table',
+        3 => 'qualified_name',
       ),
     ),
     4 =>
@@ -13948,6 +24567,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'GLOBAL',
+        1 => 'TEMPORARY',
+        2 => 'opt_table',
+        3 => 'qualified_name',
+      ),
     ),
     5 =>
     array (
@@ -13956,6 +24582,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'GLOBAL',
+        1 => 'TEMP',
+        2 => 'opt_table',
+        3 => 'qualified_name',
       ),
     ),
     6 =>
@@ -13966,6 +24599,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNLOGGED',
+        1 => 'opt_table',
+        2 => 'qualified_name',
+      ),
     ),
     7 =>
     array (
@@ -13974,10 +24613,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'TABLE',
+        1 => 'qualified_name',
+      ),
     ),
     8 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'qualified_name',
+      ),
     ),
   ),
   'opt_table' =>
@@ -13985,10 +24633,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTableChoice_0f61e253::UseTable_52ca2fea',
+      'symbols' =>
+      array (
+        0 => 'TABLE',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTableChoice_0f61e253::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'set_quantifier' =>
@@ -13996,14 +24651,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\SetQuantifierChoice_eed7b961::UseAll_b5c7aed7',
+      'symbols' =>
+      array (
+        0 => 'ALL',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\SetQuantifierChoice_eed7b961::UseDistinct_d879f806',
+      'symbols' =>
+      array (
+        0 => 'DISTINCT',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\SetQuantifierChoice_eed7b961::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'distinct_clause' =>
@@ -14014,6 +24680,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'DISTINCT',
+      ),
     ),
     1 =>
     array (
@@ -14022,6 +24692,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'DISTINCT',
+        1 => 'ON',
+        2 => '(',
+        3 => 'expr_list',
+        4 => ')',
+      ),
     ),
   ),
   'opt_all_clause' =>
@@ -14029,10 +24707,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptAllClauseChoice_8cbadc94::UseAll_b5c7aed7',
+      'symbols' =>
+      array (
+        0 => 'ALL',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptAllClauseChoice_8cbadc94::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'opt_distinct_clause' =>
@@ -14040,10 +24725,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'distinct_clause',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'opt_all_clause',
+      ),
     ),
   ),
   'opt_sort_clause' =>
@@ -14051,11 +24744,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sort_clause',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptSortClauseWith_6868a212',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -14069,6 +24769,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ORDER',
+        1 => 'BY',
+        2 => 'sortby_list',
+      ),
     ),
   ),
   'sortby_list' =>
@@ -14076,6 +24782,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sortby',
+      ),
     ),
     1 =>
     array (
@@ -14084,6 +24794,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'sortby_list',
+        1 => ',',
+        2 => 'sortby',
       ),
     ),
   ),
@@ -14098,6 +24814,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'USING',
+        2 => 'qual_all_Op',
+        3 => 'opt_nulls_order',
+      ),
     ),
     1 =>
     array (
@@ -14107,6 +24830,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'opt_asc_desc',
+        2 => 'opt_nulls_order',
       ),
     ),
   ),
@@ -14120,6 +24849,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'limit_clause',
+        1 => 'offset_clause',
+      ),
     ),
     1 =>
     array (
@@ -14129,14 +24863,27 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'offset_clause',
+        1 => 'limit_clause',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'limit_clause',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'offset_clause',
+      ),
     ),
   ),
   'opt_select_limit' =>
@@ -14144,11 +24891,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'select_limit',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptSelectLimitWith_c7d1a72b',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -14162,6 +24916,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'LIMIT',
+        1 => 'select_limit_value',
+      ),
     ),
     1 =>
     array (
@@ -14170,6 +24929,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LIMIT',
+        1 => 'select_limit_value',
+        2 => ',',
+        3 => 'select_offset_value',
       ),
     ),
     2 =>
@@ -14181,6 +24947,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'FETCH',
+        1 => 'first_or_next',
+        2 => 'select_fetch_first_value',
+        3 => 'row_or_rows',
+        4 => 'ONLY',
+      ),
     ),
     3 =>
     array (
@@ -14191,6 +24965,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'FETCH',
+        1 => 'first_or_next',
+        2 => 'select_fetch_first_value',
+        3 => 'row_or_rows',
+        4 => 'WITH',
+        5 => 'TIES',
+      ),
     ),
     4 =>
     array (
@@ -14200,6 +24983,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'FETCH',
+        1 => 'first_or_next',
+        2 => 'row_or_rows',
+        3 => 'ONLY',
+      ),
     ),
     5 =>
     array (
@@ -14208,6 +24998,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FETCH',
+        1 => 'first_or_next',
+        2 => 'row_or_rows',
+        3 => 'WITH',
+        4 => 'TIES',
       ),
     ),
   ),
@@ -14220,6 +25018,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'OFFSET',
+        1 => 'select_offset_value',
+      ),
     ),
     1 =>
     array (
@@ -14229,6 +25032,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'OFFSET',
+        1 => 'select_fetch_first_value',
+        2 => 'row_or_rows',
+      ),
     ),
   ),
   'select_limit_value' =>
@@ -14236,12 +25045,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\SelectLimitValueWithAll_bf326c3e',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALL',
       ),
     ),
   ),
@@ -14250,6 +25067,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+      ),
     ),
   ),
   'select_fetch_first_value' =>
@@ -14257,6 +25078,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'c_expr',
+      ),
     ),
     1 =>
     array (
@@ -14264,6 +25089,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '+',
+        1 => 'I_or_F_const',
       ),
     ),
     2 =>
@@ -14273,6 +25103,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '-',
+        1 => 'I_or_F_const',
+      ),
     ),
   ),
   'I_or_F_const' =>
@@ -14280,6 +25115,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Iconst',
+      ),
     ),
     1 =>
     array (
@@ -14288,6 +25127,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FCONST',
+      ),
     ),
   ),
   'row_or_rows' =>
@@ -14295,10 +25138,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\RowOrRowsChoice_055fd737::UseRow_55a734d3',
+      'symbols' =>
+      array (
+        0 => 'ROW',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\RowOrRowsChoice_055fd737::UseRows_6d2b98cb',
+      'symbols' =>
+      array (
+        0 => 'ROWS',
+      ),
     ),
   ),
   'first_or_next' =>
@@ -14306,10 +25157,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\FirstOrNextChoice_95f48b47::UseFirst_267d3b81',
+      'symbols' =>
+      array (
+        0 => 'FIRST_P',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\FirstOrNextChoice_95f48b47::UseNext_7a66eabf',
+      'symbols' =>
+      array (
+        0 => 'NEXT',
+      ),
     ),
   ),
   'group_clause' =>
@@ -14322,11 +25181,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'GROUP_P',
+        1 => 'BY',
+        2 => 'set_quantifier',
+        3 => 'group_by_list',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\GroupClauseWith_ddf43617',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -14336,6 +25205,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'group_by_item',
+      ),
     ),
     1 =>
     array (
@@ -14345,6 +25218,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'group_by_list',
+        1 => ',',
+        2 => 'group_by_item',
+      ),
     ),
   ),
   'group_by_item' =>
@@ -14352,22 +25231,42 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'empty_grouping_set',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'cube_clause',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'rollup_clause',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'grouping_sets_clause',
+      ),
     ),
   ),
   'empty_grouping_set' =>
@@ -14375,6 +25274,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\EmptyGroupingSetChoice_aa65a62c::Use_e779214a',
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => ')',
+      ),
     ),
   ),
   'rollup_clause' =>
@@ -14385,6 +25289,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ROLLUP',
+        1 => '(',
+        2 => 'expr_list',
+        3 => ')',
       ),
     ),
   ),
@@ -14397,6 +25308,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'CUBE',
+        1 => '(',
+        2 => 'expr_list',
+        3 => ')',
+      ),
     ),
   ),
   'grouping_sets_clause' =>
@@ -14407,6 +25325,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'GROUPING',
+        1 => 'SETS',
+        2 => '(',
+        3 => 'group_by_list',
+        4 => ')',
       ),
     ),
   ),
@@ -14419,11 +25345,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'HAVING',
+        1 => 'a_expr',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\HavingClauseWith_5cf9b656',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -14433,12 +25367,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'for_locking_items',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ForLockingClauseWithForReadOnly_0e79b9ff',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'FOR',
+        1 => 'READ',
+        2 => 'ONLY',
       ),
     ),
   ),
@@ -14447,11 +25391,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'for_locking_clause',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptForLockingClauseWith_959e0f31',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -14461,6 +25412,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'for_locking_item',
+      ),
     ),
     1 =>
     array (
@@ -14469,6 +25424,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'for_locking_items',
+        1 => 'for_locking_item',
       ),
     ),
   ),
@@ -14483,6 +25443,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'for_locking_strength',
+        1 => 'locked_rels_list',
+        2 => 'opt_nowait_or_skip',
+      ),
     ),
   ),
   'for_locking_strength' =>
@@ -14490,18 +25456,41 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ForLockingStrengthChoice_851c5b82::UseForUpdate_fc448151',
+      'symbols' =>
+      array (
+        0 => 'FOR',
+        1 => 'UPDATE',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ForLockingStrengthChoice_851c5b82::UseForNoKeyUpdate_e4938495',
+      'symbols' =>
+      array (
+        0 => 'FOR',
+        1 => 'NO',
+        2 => 'KEY',
+        3 => 'UPDATE',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ForLockingStrengthChoice_851c5b82::UseForShare_e27bfdcd',
+      'symbols' =>
+      array (
+        0 => 'FOR',
+        1 => 'SHARE',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ForLockingStrengthChoice_851c5b82::UseForKeyShare_a54d6181',
+      'symbols' =>
+      array (
+        0 => 'FOR',
+        1 => 'KEY',
+        2 => 'SHARE',
+      ),
     ),
   ),
   'locked_rels_list' =>
@@ -14513,11 +25502,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'OF',
+        1 => 'qualified_name_list',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\LockedRelsListWith_98f5c2ee',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -14531,6 +25528,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'VALUES',
+        1 => '(',
+        2 => 'expr_list',
+        3 => ')',
+      ),
     ),
     1 =>
     array (
@@ -14539,6 +25543,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'values_clause',
+        1 => ',',
+        2 => '(',
+        3 => 'expr_list',
+        4 => ')',
       ),
     ),
   ),
@@ -14551,11 +25563,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'FROM',
+        1 => 'from_list',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FromClauseWith_4a34372f',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -14565,6 +25585,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'table_ref',
+      ),
     ),
     1 =>
     array (
@@ -14573,6 +25597,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'from_list',
+        1 => ',',
+        2 => 'table_ref',
       ),
     ),
   ),
@@ -14586,6 +25616,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'relation_expr',
+        1 => 'opt_alias_clause',
+      ),
     ),
     1 =>
     array (
@@ -14596,6 +25631,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'relation_expr',
+        1 => 'opt_alias_clause',
+        2 => 'tablesample_clause',
+      ),
     ),
     2 =>
     array (
@@ -14604,6 +25645,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'func_table',
+        1 => 'func_alias_clause',
       ),
     ),
     3 =>
@@ -14614,6 +25660,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'LATERAL_P',
+        1 => 'func_table',
+        2 => 'func_alias_clause',
+      ),
     ),
     4 =>
     array (
@@ -14622,6 +25674,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'xmltable',
+        1 => 'opt_alias_clause',
       ),
     ),
     5 =>
@@ -14632,6 +25689,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'LATERAL_P',
+        1 => 'xmltable',
+        2 => 'opt_alias_clause',
+      ),
     ),
     6 =>
     array (
@@ -14640,6 +25703,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'select_with_parens',
+        1 => 'opt_alias_clause',
       ),
     ),
     7 =>
@@ -14650,10 +25718,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'LATERAL_P',
+        1 => 'select_with_parens',
+        2 => 'opt_alias_clause',
+      ),
     ),
     8 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'joined_table',
+      ),
     ),
     9 =>
     array (
@@ -14662,6 +25740,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'joined_table',
+        2 => ')',
+        3 => 'alias_clause',
       ),
     ),
   ),
@@ -14674,6 +25759,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'joined_table',
+        2 => ')',
+      ),
     ),
     1 =>
     array (
@@ -14682,6 +25773,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'table_ref',
+        1 => 'CROSS',
+        2 => 'JOIN',
+        3 => 'table_ref',
       ),
     ),
     2 =>
@@ -14694,6 +25792,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'table_ref',
+        1 => 'join_type',
+        2 => 'JOIN',
+        3 => 'table_ref',
+        4 => 'join_qual',
+      ),
     ),
     3 =>
     array (
@@ -14703,6 +25809,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
         2 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'table_ref',
+        1 => 'JOIN',
+        2 => 'table_ref',
+        3 => 'join_qual',
       ),
     ),
     4 =>
@@ -14714,6 +25827,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'table_ref',
+        1 => 'NATURAL',
+        2 => 'join_type',
+        3 => 'JOIN',
+        4 => 'table_ref',
+      ),
     ),
     5 =>
     array (
@@ -14722,6 +25843,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'table_ref',
+        1 => 'NATURAL',
+        2 => 'JOIN',
+        3 => 'table_ref',
       ),
     ),
   ),
@@ -14735,6 +25863,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'AS',
+        1 => 'ColId',
+        2 => '(',
+        3 => 'name_list',
+        4 => ')',
+      ),
     ),
     1 =>
     array (
@@ -14742,6 +25878,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'AS',
+        1 => 'ColId',
       ),
     ),
     2 =>
@@ -14752,10 +25893,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColId',
+        1 => '(',
+        2 => 'name_list',
+        3 => ')',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ColId',
+      ),
     ),
   ),
   'opt_alias_clause' =>
@@ -14763,11 +25915,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alias_clause',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptAliasClauseWith_405b93c5',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -14781,11 +25940,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'AS',
+        1 => 'ColId',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptAliasClauseForJoinUsingWith_5522de82',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -14795,6 +25962,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alias_clause',
+      ),
     ),
     1 =>
     array (
@@ -14802,6 +25973,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'AS',
+        1 => '(',
+        2 => 'TableFuncElementList',
+        3 => ')',
       ),
     ),
     2 =>
@@ -14812,6 +25990,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'AS',
+        1 => 'ColId',
+        2 => '(',
+        3 => 'TableFuncElementList',
+        4 => ')',
+      ),
     ),
     3 =>
     array (
@@ -14821,11 +26007,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColId',
+        1 => '(',
+        2 => 'TableFuncElementList',
+        3 => ')',
+      ),
     ),
     4 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncAliasClauseWith_ff13a885',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -14839,6 +26035,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'FULL',
+        1 => 'opt_outer',
+      ),
     ),
     1 =>
     array (
@@ -14846,6 +26047,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LEFT',
+        1 => 'opt_outer',
       ),
     ),
     2 =>
@@ -14855,12 +26061,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'RIGHT',
+        1 => 'opt_outer',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JoinTypeWithInnerP_9251324d',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'INNER_P',
       ),
     ),
   ),
@@ -14869,10 +26084,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptOuterChoice_8faa37a5::UseOuter_2c635ca0',
+      'symbols' =>
+      array (
+        0 => 'OUTER_P',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptOuterChoice_8faa37a5::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'join_qual' =>
@@ -14885,6 +26107,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'USING',
+        1 => '(',
+        2 => 'name_list',
+        3 => ')',
+        4 => 'opt_alias_clause_for_join_using',
+      ),
     ),
     1 =>
     array (
@@ -14893,6 +26123,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ON',
+        1 => 'a_expr',
+      ),
     ),
   ),
   'relation_expr' =>
@@ -14900,10 +26135,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'qualified_name',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'extended_relation_expr',
+      ),
     ),
   ),
   'extended_relation_expr' =>
@@ -14915,6 +26158,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'qualified_name',
+        1 => '*',
+      ),
     ),
     1 =>
     array (
@@ -14922,6 +26170,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ONLY',
+        1 => 'qualified_name',
       ),
     ),
     2 =>
@@ -14931,6 +26184,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ONLY',
+        1 => '(',
+        2 => 'qualified_name',
+        3 => ')',
+      ),
     ),
   ),
   'relation_expr_list' =>
@@ -14938,6 +26198,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'relation_expr',
+      ),
     ),
     1 =>
     array (
@@ -14947,6 +26211,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'relation_expr_list',
+        1 => ',',
+        2 => 'relation_expr',
+      ),
     ),
   ),
   'relation_expr_opt_alias' =>
@@ -14954,6 +26224,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'relation_expr',
+      ),
     ),
     1 =>
     array (
@@ -14963,6 +26237,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'relation_expr',
+        1 => 'ColId',
+      ),
     ),
     2 =>
     array (
@@ -14971,6 +26250,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'relation_expr',
+        1 => 'AS',
+        2 => 'ColId',
       ),
     ),
   ),
@@ -14985,6 +26270,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'TABLESAMPLE',
+        1 => 'func_name',
+        2 => '(',
+        3 => 'expr_list',
+        4 => ')',
+        5 => 'opt_repeatable_clause',
+      ),
     ),
   ),
   'opt_repeatable_clause' =>
@@ -14996,11 +26290,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'REPEATABLE',
+        1 => '(',
+        2 => 'a_expr',
+        3 => ')',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptRepeatableClauseWith_3d9976e8',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -15015,6 +26319,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'func_expr_windowless',
+        1 => 'opt_ordinality',
+      ),
     ),
     1 =>
     array (
@@ -15023,6 +26332,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ROWS',
+        1 => 'FROM',
+        2 => '(',
+        3 => 'rowsfrom_list',
+        4 => ')',
+        5 => 'opt_ordinality',
       ),
     ),
   ),
@@ -15036,6 +26354,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'func_expr_windowless',
+        1 => 'opt_col_def_list',
+      ),
     ),
   ),
   'rowsfrom_list' =>
@@ -15043,6 +26366,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'rowsfrom_item',
+      ),
     ),
     1 =>
     array (
@@ -15051,6 +26378,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'rowsfrom_list',
+        1 => ',',
+        2 => 'rowsfrom_item',
       ),
     ),
   ),
@@ -15063,11 +26396,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'AS',
+        1 => '(',
+        2 => 'TableFuncElementList',
+        3 => ')',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptColDefListWith_6f80e5fb',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -15081,11 +26424,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'WITH_LA',
+        1 => 'ORDINALITY',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptOrdinalityWith_0f7e0851',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -15099,11 +26450,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'WHERE',
+        1 => 'a_expr',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\WhereClauseWith_6f332f84',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -15117,6 +26476,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'WHERE',
+        1 => 'a_expr',
+      ),
     ),
     1 =>
     array (
@@ -15125,11 +26489,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'WHERE',
+        1 => 'CURRENT_P',
+        2 => 'OF',
+        3 => 'cursor_name',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\WhereOrCurrentClauseWith_0446e662',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -15139,11 +26513,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'TableFuncElementList',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptTableFuncElementListWith_360a9166',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -15153,6 +26534,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'TableFuncElement',
+      ),
     ),
     1 =>
     array (
@@ -15161,6 +26546,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TableFuncElementList',
+        1 => ',',
+        2 => 'TableFuncElement',
       ),
     ),
   ),
@@ -15175,6 +26566,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColId',
+        1 => 'Typename',
+        2 => 'opt_collate_clause',
+      ),
     ),
   ),
   'xmltable' =>
@@ -15188,6 +26585,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'XMLTABLE',
+        1 => '(',
+        2 => 'c_expr',
+        3 => 'xmlexists_argument',
+        4 => 'COLUMNS',
+        5 => 'xmltable_column_list',
+        6 => ')',
+      ),
     ),
     1 =>
     array (
@@ -15199,6 +26606,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 8,
         3 => 10,
       ),
+      'symbols' =>
+      array (
+        0 => 'XMLTABLE',
+        1 => '(',
+        2 => 'XMLNAMESPACES',
+        3 => '(',
+        4 => 'xml_namespace_list',
+        5 => ')',
+        6 => ',',
+        7 => 'c_expr',
+        8 => 'xmlexists_argument',
+        9 => 'COLUMNS',
+        10 => 'xmltable_column_list',
+        11 => ')',
+      ),
     ),
   ),
   'xmltable_column_list' =>
@@ -15206,6 +26628,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'xmltable_column_el',
+      ),
     ),
     1 =>
     array (
@@ -15214,6 +26640,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'xmltable_column_list',
+        1 => ',',
+        2 => 'xmltable_column_el',
       ),
     ),
   ),
@@ -15227,6 +26659,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColId',
+        1 => 'Typename',
+      ),
     ),
     1 =>
     array (
@@ -15237,6 +26674,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColId',
+        1 => 'Typename',
+        2 => 'xmltable_column_option_list',
+      ),
     ),
     2 =>
     array (
@@ -15245,6 +26688,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColId',
+        1 => 'FOR',
+        2 => 'ORDINALITY',
+      ),
     ),
   ),
   'xmltable_column_option_list' =>
@@ -15252,6 +26701,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'xmltable_column_option_el',
+      ),
     ),
     1 =>
     array (
@@ -15260,6 +26713,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'xmltable_column_option_list',
+        1 => 'xmltable_column_option_el',
       ),
     ),
   ),
@@ -15273,6 +26731,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'IDENT',
+        1 => 'b_expr',
+      ),
     ),
     1 =>
     array (
@@ -15281,12 +26744,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT',
+        1 => 'b_expr',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\XmltableColumnOptionElWithNotNullP_c531f8f2',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'NOT',
+        1 => 'NULL_P',
       ),
     ),
     3 =>
@@ -15295,6 +26768,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'NULL_P',
+      ),
     ),
   ),
   'xml_namespace_list' =>
@@ -15302,6 +26779,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'xml_namespace_el',
+      ),
     ),
     1 =>
     array (
@@ -15310,6 +26791,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'xml_namespace_list',
+        1 => ',',
+        2 => 'xml_namespace_el',
       ),
     ),
   ),
@@ -15323,6 +26810,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'b_expr',
+        1 => 'AS',
+        2 => 'ColLabel',
+      ),
     ),
     1 =>
     array (
@@ -15330,6 +26823,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT',
+        1 => 'b_expr',
       ),
     ),
   ),
@@ -15343,6 +26841,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'SimpleTypename',
+        1 => 'opt_array_bounds',
+      ),
     ),
     1 =>
     array (
@@ -15351,6 +26854,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SETOF',
+        1 => 'SimpleTypename',
+        2 => 'opt_array_bounds',
       ),
     ),
     2 =>
@@ -15361,6 +26870,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'SimpleTypename',
+        1 => 'ARRAY',
+        2 => '[',
+        3 => 'Iconst',
+        4 => ']',
+      ),
     ),
     3 =>
     array (
@@ -15370,6 +26887,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'SETOF',
+        1 => 'SimpleTypename',
+        2 => 'ARRAY',
+        3 => '[',
+        4 => 'Iconst',
+        5 => ']',
+      ),
     ),
     4 =>
     array (
@@ -15378,6 +26904,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SimpleTypename',
+        1 => 'ARRAY',
+      ),
     ),
     5 =>
     array (
@@ -15385,6 +26916,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SETOF',
+        1 => 'SimpleTypename',
+        2 => 'ARRAY',
       ),
     ),
   ),
@@ -15397,6 +26934,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_array_bounds',
+        1 => '[',
+        2 => ']',
+      ),
     ),
     1 =>
     array (
@@ -15406,11 +26949,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_array_bounds',
+        1 => '[',
+        2 => 'Iconst',
+        3 => ']',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptArrayBoundsWith_2ee03e91',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -15420,22 +26973,42 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'GenericType',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Numeric',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Bit',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Character',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ConstDatetime',
+      ),
     ),
     5 =>
     array (
@@ -15444,6 +27017,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ConstInterval',
+        1 => 'opt_interval',
       ),
     ),
     6 =>
@@ -15454,6 +27032,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ConstInterval',
+        1 => '(',
+        2 => 'Iconst',
+        3 => ')',
+      ),
     ),
   ),
   'ConstTypename' =>
@@ -15461,18 +27046,34 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Numeric',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ConstBit',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ConstCharacter',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ConstDatetime',
+      ),
     ),
   ),
   'GenericType' =>
@@ -15485,6 +27086,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'type_function_name',
+        1 => 'opt_type_modifiers',
+      ),
     ),
     1 =>
     array (
@@ -15494,6 +27100,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'type_function_name',
+        1 => 'attrs',
+        2 => 'opt_type_modifiers',
       ),
     ),
   ),
@@ -15506,11 +27118,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'expr_list',
+        2 => ')',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptTypeModifiersWith_7a0ceda5',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -15523,12 +27144,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'INT_P',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\NumericWithInteger_dc86a3b7',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'INTEGER',
       ),
     ),
     2 =>
@@ -15537,6 +27166,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'SMALLINT',
+      ),
     ),
     3 =>
     array (
@@ -15544,12 +27177,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'BIGINT',
+      ),
     ),
     4 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\NumericWithReal_2c008b52',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'REAL',
       ),
     ),
     5 =>
@@ -15559,12 +27200,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'FLOAT_P',
+        1 => 'opt_float',
+      ),
     ),
     6 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\NumericWithDoublePPrecision_9a72dccb',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'DOUBLE_P',
+        1 => 'PRECISION',
       ),
     ),
     7 =>
@@ -15574,6 +27225,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'DECIMAL_P',
+        1 => 'opt_type_modifiers',
+      ),
     ),
     8 =>
     array (
@@ -15581,6 +27237,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEC',
+        1 => 'opt_type_modifiers',
       ),
     ),
     9 =>
@@ -15590,12 +27251,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'NUMERIC',
+        1 => 'opt_type_modifiers',
+      ),
     ),
     10 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\NumericWithBooleanP_0b93dfea',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'BOOLEAN_P',
       ),
     ),
   ),
@@ -15608,11 +27278,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'Iconst',
+        2 => ')',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptFloatWith_283580d0',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -15622,10 +27301,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'BitWithLength',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'BitWithoutLength',
+      ),
     ),
   ),
   'ConstBit' =>
@@ -15633,10 +27320,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'BitWithLength',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'BitWithoutLength',
+      ),
     ),
   ),
   'BitWithLength' =>
@@ -15649,6 +27344,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'BIT',
+        1 => 'opt_varying',
+        2 => '(',
+        3 => 'expr_list',
+        4 => ')',
+      ),
     ),
   ),
   'BitWithoutLength' =>
@@ -15660,6 +27363,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'BIT',
+        1 => 'opt_varying',
+      ),
     ),
   ),
   'Character' =>
@@ -15667,10 +27375,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CharacterWithLength',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CharacterWithoutLength',
+      ),
     ),
   ),
   'ConstCharacter' =>
@@ -15678,10 +27394,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CharacterWithLength',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'CharacterWithoutLength',
+      ),
     ),
   ),
   'CharacterWithLength' =>
@@ -15694,6 +27418,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'character',
+        1 => '(',
+        2 => 'Iconst',
+        3 => ')',
+      ),
     ),
   ),
   'CharacterWithoutLength' =>
@@ -15701,6 +27432,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'character',
+      ),
     ),
   ),
   'character' =>
@@ -15712,6 +27447,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'CHARACTER',
+        1 => 'opt_varying',
+      ),
     ),
     1 =>
     array (
@@ -15720,12 +27460,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'CHAR_P',
+        1 => 'opt_varying',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CharacterWithVarchar_8aee5cad',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'VARCHAR',
       ),
     ),
     3 =>
@@ -15735,6 +27484,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'NATIONAL',
+        1 => 'CHARACTER',
+        2 => 'opt_varying',
+      ),
     ),
     4 =>
     array (
@@ -15742,6 +27497,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NATIONAL',
+        1 => 'CHAR_P',
+        2 => 'opt_varying',
       ),
     ),
     5 =>
@@ -15751,6 +27512,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'NCHAR',
+        1 => 'opt_varying',
+      ),
     ),
   ),
   'opt_varying' =>
@@ -15758,10 +27524,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptVaryingChoice_bf277273::UseVarying_4f7f9ba8',
+      'symbols' =>
+      array (
+        0 => 'VARYING',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptVaryingChoice_bf277273::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'ConstDatetime' =>
@@ -15774,6 +27547,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'TIMESTAMP',
+        1 => '(',
+        2 => 'Iconst',
+        3 => ')',
+        4 => 'opt_timezone',
+      ),
     ),
     1 =>
     array (
@@ -15781,6 +27562,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TIMESTAMP',
+        1 => 'opt_timezone',
       ),
     ),
     2 =>
@@ -15791,6 +27577,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'TIME',
+        1 => '(',
+        2 => 'Iconst',
+        3 => ')',
+        4 => 'opt_timezone',
+      ),
     ),
     3 =>
     array (
@@ -15799,6 +27593,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'TIME',
+        1 => 'opt_timezone',
+      ),
     ),
   ),
   'ConstInterval' =>
@@ -15806,6 +27605,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ConstIntervalChoice_16997a9a::UseInterval_8ed24e3a',
+      'symbols' =>
+      array (
+        0 => 'INTERVAL',
+      ),
     ),
   ),
   'opt_timezone' =>
@@ -15817,6 +27620,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'WITH_LA',
+        1 => 'TIME',
+        2 => 'ZONE',
+      ),
     ),
     1 =>
     array (
@@ -15825,11 +27634,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'WITHOUT_LA',
+        1 => 'TIME',
+        2 => 'ZONE',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptTimezoneWith_0fc73491',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -15842,12 +27660,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'YEAR_P',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptIntervalWithMonthP_aca6a6d1',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'MONTH_P',
       ),
     ),
     2 =>
@@ -15856,12 +27682,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'DAY_P',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptIntervalWithHourP_4a237253',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'HOUR_P',
       ),
     ),
     4 =>
@@ -15870,16 +27704,30 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'MINUTE_P',
+      ),
     ),
     5 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'interval_second',
+      ),
     ),
     6 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptIntervalWithYearPToMonthP_39462602',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'YEAR_P',
+        1 => 'TO',
+        2 => 'MONTH_P',
       ),
     ),
     7 =>
@@ -15888,12 +27736,24 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'DAY_P',
+        1 => 'TO',
+        2 => 'HOUR_P',
+      ),
     ),
     8 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptIntervalWithDayPToMinuteP_99655d74',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'DAY_P',
+        1 => 'TO',
+        2 => 'MINUTE_P',
       ),
     ),
     9 =>
@@ -15903,12 +27763,24 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'DAY_P',
+        1 => 'TO',
+        2 => 'interval_second',
+      ),
     ),
     10 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptIntervalWithHourPToMinuteP_d0256c91',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'HOUR_P',
+        1 => 'TO',
+        2 => 'MINUTE_P',
       ),
     ),
     11 =>
@@ -15918,6 +27790,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'HOUR_P',
+        1 => 'TO',
+        2 => 'interval_second',
+      ),
     ),
     12 =>
     array (
@@ -15926,11 +27804,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'MINUTE_P',
+        1 => 'TO',
+        2 => 'interval_second',
+      ),
     ),
     13 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptIntervalWith_7bfb5ec3',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -15943,6 +27830,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'SECOND_P',
+      ),
     ),
     1 =>
     array (
@@ -15951,6 +27842,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'SECOND_P',
+        1 => '(',
+        2 => 'Iconst',
+        3 => ')',
+      ),
     ),
   ),
   'a_expr' =>
@@ -15958,6 +27856,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'c_expr',
+      ),
     ),
     1 =>
     array (
@@ -15968,6 +27870,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'TYPECAST',
+        2 => 'Typename',
+      ),
     ),
     2 =>
     array (
@@ -15976,6 +27884,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'COLLATE',
+        2 => 'any_name',
       ),
     ),
     3 =>
@@ -15986,6 +27900,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'AT',
+        2 => 'TIME',
+        3 => 'ZONE',
+        4 => 'a_expr',
+      ),
     ),
     4 =>
     array (
@@ -15994,6 +27916,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '+',
+        1 => 'a_expr',
+      ),
     ),
     5 =>
     array (
@@ -16001,6 +27928,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '-',
+        1 => 'a_expr',
       ),
     ),
     6 =>
@@ -16011,6 +27943,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => '+',
+        2 => 'a_expr',
+      ),
     ),
     7 =>
     array (
@@ -16019,6 +27957,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => '-',
+        2 => 'a_expr',
       ),
     ),
     8 =>
@@ -16029,6 +27973,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => '*',
+        2 => 'a_expr',
+      ),
     ),
     9 =>
     array (
@@ -16037,6 +27987,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => '/',
+        2 => 'a_expr',
       ),
     ),
     10 =>
@@ -16047,6 +28003,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => '%',
+        2 => 'a_expr',
+      ),
     ),
     11 =>
     array (
@@ -16055,6 +28017,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => '^',
+        2 => 'a_expr',
       ),
     ),
     12 =>
@@ -16065,6 +28033,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => '<',
+        2 => 'a_expr',
+      ),
     ),
     13 =>
     array (
@@ -16074,6 +28048,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => '>',
+        2 => 'a_expr',
+      ),
     ),
     14 =>
     array (
@@ -16082,6 +28062,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => '=',
+        2 => 'a_expr',
       ),
     ),
     15 =>
@@ -16093,6 +28079,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'LESS_EQUALS',
+        2 => 'a_expr',
+      ),
     ),
     16 =>
     array (
@@ -16102,6 +28094,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'GREATER_EQUALS',
+        2 => 'a_expr',
       ),
     ),
     17 =>
@@ -16113,6 +28111,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'NOT_EQUALS',
+        2 => 'a_expr',
+      ),
     ),
     18 =>
     array (
@@ -16123,6 +28127,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'qual_Op',
+        2 => 'a_expr',
+      ),
     ),
     19 =>
     array (
@@ -16131,6 +28141,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'qual_Op',
+        1 => 'a_expr',
       ),
     ),
     20 =>
@@ -16141,6 +28156,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'AND',
+        2 => 'a_expr',
+      ),
     ),
     21 =>
     array (
@@ -16150,6 +28171,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'OR',
+        2 => 'a_expr',
+      ),
     ),
     22 =>
     array (
@@ -16157,6 +28184,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NOT',
+        1 => 'a_expr',
       ),
     ),
     23 =>
@@ -16167,6 +28199,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'NOT_LA',
+        1 => 'a_expr',
+      ),
     ),
     24 =>
     array (
@@ -16175,6 +28212,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'LIKE',
+        2 => 'a_expr',
       ),
     ),
     25 =>
@@ -16186,6 +28229,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'LIKE',
+        2 => 'a_expr',
+        3 => 'ESCAPE',
+        4 => 'a_expr',
+      ),
     ),
     26 =>
     array (
@@ -16195,6 +28246,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'NOT_LA',
+        2 => 'LIKE',
+        3 => 'a_expr',
       ),
     ),
     27 =>
@@ -16207,6 +28265,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'NOT_LA',
+        2 => 'LIKE',
+        3 => 'a_expr',
+        4 => 'ESCAPE',
+        5 => 'a_expr',
+      ),
     ),
     28 =>
     array (
@@ -16215,6 +28282,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'ILIKE',
+        2 => 'a_expr',
       ),
     ),
     29 =>
@@ -16226,6 +28299,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'ILIKE',
+        2 => 'a_expr',
+        3 => 'ESCAPE',
+        4 => 'a_expr',
+      ),
     ),
     30 =>
     array (
@@ -16235,6 +28316,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'NOT_LA',
+        2 => 'ILIKE',
+        3 => 'a_expr',
       ),
     ),
     31 =>
@@ -16247,6 +28335,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'NOT_LA',
+        2 => 'ILIKE',
+        3 => 'a_expr',
+        4 => 'ESCAPE',
+        5 => 'a_expr',
+      ),
     ),
     32 =>
     array (
@@ -16255,6 +28352,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'SIMILAR',
+        2 => 'TO',
+        3 => 'a_expr',
       ),
     ),
     33 =>
@@ -16266,6 +28370,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'SIMILAR',
+        2 => 'TO',
+        3 => 'a_expr',
+        4 => 'ESCAPE',
+        5 => 'a_expr',
+      ),
     ),
     34 =>
     array (
@@ -16275,6 +28388,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'NOT_LA',
+        2 => 'SIMILAR',
+        3 => 'TO',
+        4 => 'a_expr',
       ),
     ),
     35 =>
@@ -16287,6 +28408,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 4,
         3 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'NOT_LA',
+        2 => 'SIMILAR',
+        3 => 'TO',
+        4 => 'a_expr',
+        5 => 'ESCAPE',
+        6 => 'a_expr',
+      ),
     ),
     36 =>
     array (
@@ -16294,6 +28425,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'IS',
+        2 => 'NULL_P',
       ),
     ),
     37 =>
@@ -16303,6 +28440,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'ISNULL',
+      ),
     ),
     38 =>
     array (
@@ -16311,6 +28453,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'IS',
+        2 => 'NOT',
+        3 => 'NULL_P',
+      ),
     ),
     39 =>
     array (
@@ -16318,6 +28467,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'NOTNULL',
       ),
     ),
     40 =>
@@ -16328,6 +28482,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'row',
+        1 => 'OVERLAPS',
+        2 => 'row',
+      ),
     ),
     41 =>
     array (
@@ -16335,6 +28495,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'IS',
+        2 => 'TRUE_P',
       ),
     ),
     42 =>
@@ -16344,6 +28510,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'IS',
+        2 => 'NOT',
+        3 => 'TRUE_P',
+      ),
     ),
     43 =>
     array (
@@ -16351,6 +28524,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'IS',
+        2 => 'FALSE_P',
       ),
     ),
     44 =>
@@ -16360,6 +28539,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'IS',
+        2 => 'NOT',
+        3 => 'FALSE_P',
+      ),
     ),
     45 =>
     array (
@@ -16368,6 +28554,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'IS',
+        2 => 'UNKNOWN',
+      ),
     ),
     46 =>
     array (
@@ -16375,6 +28567,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'IS',
+        2 => 'NOT',
+        3 => 'UNKNOWN',
       ),
     ),
     47 =>
@@ -16385,6 +28584,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'IS',
+        2 => 'DISTINCT',
+        3 => 'FROM',
+        4 => 'a_expr',
+      ),
     ),
     48 =>
     array (
@@ -16393,6 +28600,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'IS',
+        2 => 'NOT',
+        3 => 'DISTINCT',
+        4 => 'FROM',
+        5 => 'a_expr',
       ),
     ),
     49 =>
@@ -16404,6 +28620,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
         3 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'BETWEEN',
+        2 => 'opt_asymmetric',
+        3 => 'b_expr',
+        4 => 'AND',
+        5 => 'a_expr',
       ),
     ),
     50 =>
@@ -16417,6 +28642,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 4,
         4 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'NOT_LA',
+        2 => 'BETWEEN',
+        3 => 'opt_asymmetric',
+        4 => 'b_expr',
+        5 => 'AND',
+        6 => 'a_expr',
+      ),
     ),
     51 =>
     array (
@@ -16426,6 +28661,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 3,
         2 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'BETWEEN',
+        2 => 'SYMMETRIC',
+        3 => 'b_expr',
+        4 => 'AND',
+        5 => 'a_expr',
       ),
     ),
     52 =>
@@ -16438,6 +28682,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 4,
         3 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'NOT_LA',
+        2 => 'BETWEEN',
+        3 => 'SYMMETRIC',
+        4 => 'b_expr',
+        5 => 'AND',
+        6 => 'a_expr',
+      ),
     ),
     53 =>
     array (
@@ -16446,6 +28700,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'IN_P',
+        2 => 'in_expr',
       ),
     ),
     54 =>
@@ -16456,6 +28716,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'NOT_LA',
+        2 => 'IN_P',
+        3 => 'in_expr',
       ),
     ),
     55 =>
@@ -16468,6 +28735,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 2,
         3 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'subquery_Op',
+        2 => 'sub_type',
+        3 => 'select_with_parens',
+      ),
     ),
     56 =>
     array (
@@ -16479,6 +28753,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 2,
         3 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'subquery_Op',
+        2 => 'sub_type',
+        3 => '(',
+        4 => 'a_expr',
+        5 => ')',
+      ),
     ),
     57 =>
     array (
@@ -16488,6 +28771,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNIQUE',
+        1 => 'opt_unique_null_treatment',
+        2 => 'select_with_parens',
+      ),
     ),
     58 =>
     array (
@@ -16495,6 +28784,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'IS',
+        2 => 'DOCUMENT_P',
       ),
     ),
     59 =>
@@ -16504,6 +28799,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'IS',
+        2 => 'NOT',
+        3 => 'DOCUMENT_P',
+      ),
     ),
     60 =>
     array (
@@ -16511,6 +28813,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'IS',
+        2 => 'NORMALIZED',
       ),
     ),
     61 =>
@@ -16521,6 +28829,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'IS',
+        2 => 'unicode_normal_form',
+        3 => 'NORMALIZED',
+      ),
     ),
     62 =>
     array (
@@ -16528,6 +28843,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'IS',
+        2 => 'NOT',
+        3 => 'NORMALIZED',
       ),
     ),
     63 =>
@@ -16537,6 +28859,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'IS',
+        2 => 'NOT',
+        3 => 'unicode_normal_form',
+        4 => 'NORMALIZED',
       ),
     ),
     64 =>
@@ -16548,6 +28878,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'IS',
+        2 => 'json_predicate_type_constraint',
+        3 => 'json_key_uniqueness_constraint_opt',
+      ),
     ),
     65 =>
     array (
@@ -16558,12 +28895,24 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'IS',
+        2 => 'NOT',
+        3 => 'json_predicate_type_constraint',
+        4 => 'json_key_uniqueness_constraint_opt',
+      ),
     ),
     66 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithDefault_1ae0a344',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT',
       ),
     ),
   ),
@@ -16572,6 +28921,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'c_expr',
+      ),
     ),
     1 =>
     array (
@@ -16582,6 +28935,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'b_expr',
+        1 => 'TYPECAST',
+        2 => 'Typename',
+      ),
     ),
     2 =>
     array (
@@ -16590,6 +28949,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '+',
+        1 => 'b_expr',
+      ),
     ),
     3 =>
     array (
@@ -16597,6 +28961,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '-',
+        1 => 'b_expr',
       ),
     ),
     4 =>
@@ -16607,6 +28976,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'b_expr',
+        1 => '+',
+        2 => 'b_expr',
+      ),
     ),
     5 =>
     array (
@@ -16615,6 +28990,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'b_expr',
+        1 => '-',
+        2 => 'b_expr',
       ),
     ),
     6 =>
@@ -16625,6 +29006,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'b_expr',
+        1 => '*',
+        2 => 'b_expr',
+      ),
     ),
     7 =>
     array (
@@ -16633,6 +29020,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'b_expr',
+        1 => '/',
+        2 => 'b_expr',
       ),
     ),
     8 =>
@@ -16643,6 +29036,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'b_expr',
+        1 => '%',
+        2 => 'b_expr',
+      ),
     ),
     9 =>
     array (
@@ -16651,6 +29050,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'b_expr',
+        1 => '^',
+        2 => 'b_expr',
       ),
     ),
     10 =>
@@ -16661,6 +29066,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'b_expr',
+        1 => '<',
+        2 => 'b_expr',
+      ),
     ),
     11 =>
     array (
@@ -16670,6 +29081,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'b_expr',
+        1 => '>',
+        2 => 'b_expr',
+      ),
     ),
     12 =>
     array (
@@ -16678,6 +29095,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'b_expr',
+        1 => '=',
+        2 => 'b_expr',
       ),
     ),
     13 =>
@@ -16689,6 +29112,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'b_expr',
+        1 => 'LESS_EQUALS',
+        2 => 'b_expr',
+      ),
     ),
     14 =>
     array (
@@ -16698,6 +29127,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'b_expr',
+        1 => 'GREATER_EQUALS',
+        2 => 'b_expr',
       ),
     ),
     15 =>
@@ -16709,6 +29144,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'b_expr',
+        1 => 'NOT_EQUALS',
+        2 => 'b_expr',
+      ),
     ),
     16 =>
     array (
@@ -16719,6 +29160,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'b_expr',
+        1 => 'qual_Op',
+        2 => 'b_expr',
+      ),
     ),
     17 =>
     array (
@@ -16727,6 +29174,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'qual_Op',
+        1 => 'b_expr',
       ),
     ),
     18 =>
@@ -16737,6 +29189,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'b_expr',
+        1 => 'IS',
+        2 => 'DISTINCT',
+        3 => 'FROM',
+        4 => 'b_expr',
+      ),
     ),
     19 =>
     array (
@@ -16746,6 +29206,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'b_expr',
+        1 => 'IS',
+        2 => 'NOT',
+        3 => 'DISTINCT',
+        4 => 'FROM',
+        5 => 'b_expr',
+      ),
     ),
     20 =>
     array (
@@ -16753,6 +29222,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'b_expr',
+        1 => 'IS',
+        2 => 'DOCUMENT_P',
       ),
     ),
     21 =>
@@ -16762,6 +29237,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'b_expr',
+        1 => 'IS',
+        2 => 'NOT',
+        3 => 'DOCUMENT_P',
+      ),
     ),
   ),
   'c_expr' =>
@@ -16769,10 +29251,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'columnref',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'AexprConst',
+      ),
     ),
     2 =>
     array (
@@ -16781,6 +29271,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PARAM',
+        1 => 'opt_indirection',
       ),
     ),
     3 =>
@@ -16791,18 +29286,37 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'a_expr',
+        2 => ')',
+        3 => 'opt_indirection',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'case_expr',
+      ),
     ),
     5 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'func_expr',
+      ),
     ),
     6 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'select_with_parens',
+      ),
     ),
     7 =>
     array (
@@ -16812,6 +29326,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'select_with_parens',
+        1 => 'indirection',
+      ),
     ),
     8 =>
     array (
@@ -16819,6 +29338,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'EXISTS',
+        1 => 'select_with_parens',
       ),
     ),
     9 =>
@@ -16828,6 +29352,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ARRAY',
+        1 => 'select_with_parens',
+      ),
     ),
     10 =>
     array (
@@ -16836,14 +29365,27 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ARRAY',
+        1 => 'array_expr',
+      ),
     ),
     11 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'explicit_row',
+      ),
     ),
     12 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'implicit_row',
+      ),
     ),
     13 =>
     array (
@@ -16851,6 +29393,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'GROUPING',
+        1 => '(',
+        2 => 'expr_list',
+        3 => ')',
       ),
     ),
   ),
@@ -16863,6 +29412,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'func_name',
+        1 => '(',
+        2 => ')',
+      ),
     ),
     1 =>
     array (
@@ -16873,6 +29428,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'func_name',
+        1 => '(',
+        2 => 'func_arg_list',
+        3 => 'opt_sort_clause',
+        4 => ')',
+      ),
     ),
     2 =>
     array (
@@ -16882,6 +29445,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 3,
         2 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'func_name',
+        1 => '(',
+        2 => 'VARIADIC',
+        3 => 'func_arg_expr',
+        4 => 'opt_sort_clause',
+        5 => ')',
       ),
     ),
     3 =>
@@ -16894,6 +29466,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 5,
         3 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'func_name',
+        1 => '(',
+        2 => 'func_arg_list',
+        3 => ',',
+        4 => 'VARIADIC',
+        5 => 'func_arg_expr',
+        6 => 'opt_sort_clause',
+        7 => ')',
+      ),
     ),
     4 =>
     array (
@@ -16903,6 +29486,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 3,
         2 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'func_name',
+        1 => '(',
+        2 => 'ALL',
+        3 => 'func_arg_list',
+        4 => 'opt_sort_clause',
+        5 => ')',
       ),
     ),
     5 =>
@@ -16914,6 +29506,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'func_name',
+        1 => '(',
+        2 => 'DISTINCT',
+        3 => 'func_arg_list',
+        4 => 'opt_sort_clause',
+        5 => ')',
+      ),
     ),
     6 =>
     array (
@@ -16921,6 +29522,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'func_name',
+        1 => '(',
+        2 => '*',
+        3 => ')',
       ),
     ),
   ),
@@ -16936,6 +29544,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 2,
         3 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'func_application',
+        1 => 'within_group_clause',
+        2 => 'filter_clause',
+        3 => 'over_clause',
+      ),
     ),
     1 =>
     array (
@@ -16946,10 +29561,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'json_aggregate_func',
+        1 => 'filter_clause',
+        2 => 'over_clause',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'func_expr_common_subexpr',
+      ),
     ),
   ),
   'func_expr_windowless' =>
@@ -16957,14 +29582,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'func_application',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'func_expr_common_subexpr',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'json_aggregate_func',
+      ),
     ),
   ),
   'func_expr_common_subexpr' =>
@@ -16976,6 +29613,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'COLLATION',
+        1 => 'FOR',
+        2 => '(',
+        3 => 'a_expr',
+        4 => ')',
+      ),
     ),
     1 =>
     array (
@@ -16983,12 +29628,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_DATE',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncExprCommonSubexprWithCurrentTime_a755f9a1',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_TIME',
       ),
     ),
     3 =>
@@ -16998,12 +29651,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_TIME',
+        1 => '(',
+        2 => 'Iconst',
+        3 => ')',
+      ),
     ),
     4 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncExprCommonSubexprWithCurrentTimestamp_bd260d2c',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_TIMESTAMP',
       ),
     ),
     5 =>
@@ -17013,12 +29677,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_TIMESTAMP',
+        1 => '(',
+        2 => 'Iconst',
+        3 => ')',
+      ),
     ),
     6 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncExprCommonSubexprWithLocaltime_d9f5a8fc',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'LOCALTIME',
       ),
     ),
     7 =>
@@ -17028,12 +29703,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'LOCALTIME',
+        1 => '(',
+        2 => 'Iconst',
+        3 => ')',
+      ),
     ),
     8 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncExprCommonSubexprWithLocaltimestamp_9be85384',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'LOCALTIMESTAMP',
       ),
     ),
     9 =>
@@ -17043,12 +29729,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'LOCALTIMESTAMP',
+        1 => '(',
+        2 => 'Iconst',
+        3 => ')',
+      ),
     ),
     10 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncExprCommonSubexprWithCurrentRole_60fe56c0',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_ROLE',
       ),
     ),
     11 =>
@@ -17057,12 +29754,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_USER',
+      ),
     ),
     12 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncExprCommonSubexprWithSessionUser_503f5fa1',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'SESSION_USER',
       ),
     ),
     13 =>
@@ -17071,12 +29776,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'SYSTEM_USER',
+      ),
     ),
     14 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncExprCommonSubexprWithUser_2c1d28e9',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'USER',
       ),
     ),
     15 =>
@@ -17085,12 +29798,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_CATALOG',
+      ),
     ),
     16 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncExprCommonSubexprWithCurrentSchema_f5b6d68a',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_SCHEMA',
       ),
     ),
     17 =>
@@ -17101,6 +29822,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'CAST',
+        1 => '(',
+        2 => 'a_expr',
+        3 => 'AS',
+        4 => 'Typename',
+        5 => ')',
+      ),
     ),
     18 =>
     array (
@@ -17109,6 +29839,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'EXTRACT',
+        1 => '(',
+        2 => 'extract_list',
+        3 => ')',
+      ),
     ),
     19 =>
     array (
@@ -17116,6 +29853,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NORMALIZE',
+        1 => '(',
+        2 => 'a_expr',
+        3 => ')',
       ),
     ),
     20 =>
@@ -17126,6 +29870,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'NORMALIZE',
+        1 => '(',
+        2 => 'a_expr',
+        3 => ',',
+        4 => 'unicode_normal_form',
+        5 => ')',
+      ),
     ),
     21 =>
     array (
@@ -17133,6 +29886,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'OVERLAY',
+        1 => '(',
+        2 => 'overlay_list',
+        3 => ')',
       ),
     ),
     22 =>
@@ -17142,6 +29902,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'OVERLAY',
+        1 => '(',
+        2 => 'func_arg_list_opt',
+        3 => ')',
+      ),
     ),
     23 =>
     array (
@@ -17149,6 +29916,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'POSITION',
+        1 => '(',
+        2 => 'position_list',
+        3 => ')',
       ),
     ),
     24 =>
@@ -17158,6 +29932,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'SUBSTRING',
+        1 => '(',
+        2 => 'substr_list',
+        3 => ')',
+      ),
     ),
     25 =>
     array (
@@ -17165,6 +29946,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SUBSTRING',
+        1 => '(',
+        2 => 'func_arg_list_opt',
+        3 => ')',
       ),
     ),
     26 =>
@@ -17175,6 +29963,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'TREAT',
+        1 => '(',
+        2 => 'a_expr',
+        3 => 'AS',
+        4 => 'Typename',
+        5 => ')',
+      ),
     ),
     27 =>
     array (
@@ -17182,6 +29979,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TRIM',
+        1 => '(',
+        2 => 'BOTH',
+        3 => 'trim_list',
+        4 => ')',
       ),
     ),
     28 =>
@@ -17191,6 +29996,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'TRIM',
+        1 => '(',
+        2 => 'LEADING',
+        3 => 'trim_list',
+        4 => ')',
+      ),
     ),
     29 =>
     array (
@@ -17199,6 +30012,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'TRIM',
+        1 => '(',
+        2 => 'TRAILING',
+        3 => 'trim_list',
+        4 => ')',
+      ),
     ),
     30 =>
     array (
@@ -17206,6 +30027,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TRIM',
+        1 => '(',
+        2 => 'trim_list',
+        3 => ')',
       ),
     ),
     31 =>
@@ -17216,6 +30044,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'NULLIF',
+        1 => '(',
+        2 => 'a_expr',
+        3 => ',',
+        4 => 'a_expr',
+        5 => ')',
+      ),
     ),
     32 =>
     array (
@@ -17223,6 +30060,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COALESCE',
+        1 => '(',
+        2 => 'expr_list',
+        3 => ')',
       ),
     ),
     33 =>
@@ -17232,6 +30076,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'GREATEST',
+        1 => '(',
+        2 => 'expr_list',
+        3 => ')',
+      ),
     ),
     34 =>
     array (
@@ -17239,6 +30090,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LEAST',
+        1 => '(',
+        2 => 'expr_list',
+        3 => ')',
       ),
     ),
     35 =>
@@ -17248,6 +30106,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'XMLCONCAT',
+        1 => '(',
+        2 => 'expr_list',
+        3 => ')',
+      ),
     ),
     36 =>
     array (
@@ -17255,6 +30120,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'XMLELEMENT',
+        1 => '(',
+        2 => 'NAME_P',
+        3 => 'ColLabel',
+        4 => ')',
       ),
     ),
     37 =>
@@ -17265,6 +30138,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'XMLELEMENT',
+        1 => '(',
+        2 => 'NAME_P',
+        3 => 'ColLabel',
+        4 => ',',
+        5 => 'xml_attributes',
+        6 => ')',
+      ),
     ),
     38 =>
     array (
@@ -17273,6 +30156,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'XMLELEMENT',
+        1 => '(',
+        2 => 'NAME_P',
+        3 => 'ColLabel',
+        4 => ',',
+        5 => 'expr_list',
+        6 => ')',
       ),
     ),
     39 =>
@@ -17284,6 +30177,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'XMLELEMENT',
+        1 => '(',
+        2 => 'NAME_P',
+        3 => 'ColLabel',
+        4 => ',',
+        5 => 'xml_attributes',
+        6 => ',',
+        7 => 'expr_list',
+        8 => ')',
+      ),
     ),
     40 =>
     array (
@@ -17293,6 +30198,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'XMLEXISTS',
+        1 => '(',
+        2 => 'c_expr',
+        3 => 'xmlexists_argument',
+        4 => ')',
+      ),
     ),
     41 =>
     array (
@@ -17300,6 +30213,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'XMLFOREST',
+        1 => '(',
+        2 => 'xml_attribute_list',
+        3 => ')',
       ),
     ),
     42 =>
@@ -17311,6 +30231,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'XMLPARSE',
+        1 => '(',
+        2 => 'document_or_content',
+        3 => 'a_expr',
+        4 => 'xml_whitespace_option',
+        5 => ')',
+      ),
     ),
     43 =>
     array (
@@ -17318,6 +30247,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'XMLPI',
+        1 => '(',
+        2 => 'NAME_P',
+        3 => 'ColLabel',
+        4 => ')',
       ),
     ),
     44 =>
@@ -17328,6 +30265,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'XMLPI',
+        1 => '(',
+        2 => 'NAME_P',
+        3 => 'ColLabel',
+        4 => ',',
+        5 => 'a_expr',
+        6 => ')',
+      ),
     ),
     45 =>
     array (
@@ -17337,6 +30284,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
         2 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'XMLROOT',
+        1 => '(',
+        2 => 'a_expr',
+        3 => ',',
+        4 => 'xml_root_version',
+        5 => 'opt_xml_root_standalone',
+        6 => ')',
       ),
     ),
     46 =>
@@ -17349,6 +30306,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 5,
         3 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'XMLSERIALIZE',
+        1 => '(',
+        2 => 'document_or_content',
+        3 => 'a_expr',
+        4 => 'AS',
+        5 => 'SimpleTypename',
+        6 => 'xml_indent_option',
+        7 => ')',
+      ),
     ),
     47 =>
     array (
@@ -17356,6 +30324,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'JSON_OBJECT',
+        1 => '(',
+        2 => 'func_arg_list',
+        3 => ')',
       ),
     ),
     48 =>
@@ -17368,6 +30343,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 4,
         3 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'JSON_OBJECT',
+        1 => '(',
+        2 => 'json_name_and_value_list',
+        3 => 'json_object_constructor_null_clause_opt',
+        4 => 'json_key_uniqueness_constraint_opt',
+        5 => 'json_output_clause_opt',
+        6 => ')',
+      ),
     ),
     49 =>
     array (
@@ -17375,6 +30360,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'JSON_OBJECT',
+        1 => '(',
+        2 => 'json_output_clause_opt',
+        3 => ')',
       ),
     ),
     50 =>
@@ -17386,6 +30378,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'JSON_ARRAY',
+        1 => '(',
+        2 => 'json_value_expr_list',
+        3 => 'json_array_constructor_null_clause_opt',
+        4 => 'json_output_clause_opt',
+        5 => ')',
+      ),
     ),
     51 =>
     array (
@@ -17396,6 +30397,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'JSON_ARRAY',
+        1 => '(',
+        2 => 'select_no_parens',
+        3 => 'json_format_clause_opt',
+        4 => 'json_output_clause_opt',
+        5 => ')',
+      ),
     ),
     52 =>
     array (
@@ -17403,6 +30413,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'JSON_ARRAY',
+        1 => '(',
+        2 => 'json_output_clause_opt',
+        3 => ')',
       ),
     ),
   ),
@@ -17415,12 +30432,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'VERSION_P',
+        1 => 'a_expr',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\XmlRootVersionWithVersionPNoValueP_bbdf6136',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'VERSION_P',
+        1 => 'NO',
+        2 => 'VALUE_P',
       ),
     ),
   ),
@@ -17429,18 +30457,40 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptXmlRootStandaloneChoice_ae61114a::UseStandaloneYes_756500b8',
+      'symbols' =>
+      array (
+        0 => ',',
+        1 => 'STANDALONE_P',
+        2 => 'YES_P',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptXmlRootStandaloneChoice_ae61114a::UseStandaloneNo_8bb18c62',
+      'symbols' =>
+      array (
+        0 => ',',
+        1 => 'STANDALONE_P',
+        2 => 'NO',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptXmlRootStandaloneChoice_ae61114a::UseStandaloneNoValue_9d3ce50a',
+      'symbols' =>
+      array (
+        0 => ',',
+        1 => 'STANDALONE_P',
+        2 => 'NO',
+        3 => 'VALUE_P',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptXmlRootStandaloneChoice_ae61114a::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'xml_attributes' =>
@@ -17452,6 +30502,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'XMLATTRIBUTES',
+        1 => '(',
+        2 => 'xml_attribute_list',
+        3 => ')',
+      ),
     ),
   ),
   'xml_attribute_list' =>
@@ -17459,6 +30516,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'xml_attribute_el',
+      ),
     ),
     1 =>
     array (
@@ -17467,6 +30528,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'xml_attribute_list',
+        1 => ',',
+        2 => 'xml_attribute_el',
       ),
     ),
   ),
@@ -17480,10 +30547,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'AS',
+        2 => 'ColLabel',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+      ),
     ),
   ),
   'document_or_content' =>
@@ -17491,10 +30568,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\DocumentOrContentChoice_228de055::UseDocument_e52e1d57',
+      'symbols' =>
+      array (
+        0 => 'DOCUMENT_P',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\DocumentOrContentChoice_228de055::UseContent_65f23e22',
+      'symbols' =>
+      array (
+        0 => 'CONTENT_P',
+      ),
     ),
   ),
   'xml_indent_option' =>
@@ -17502,14 +30587,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\XmlIndentOptionChoice_1826aa4a::UseIndent_653b14cc',
+      'symbols' =>
+      array (
+        0 => 'INDENT',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\XmlIndentOptionChoice_1826aa4a::UseNoIndent_bba261cc',
+      'symbols' =>
+      array (
+        0 => 'NO',
+        1 => 'INDENT',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\XmlIndentOptionChoice_1826aa4a::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'xml_whitespace_option' =>
@@ -17517,14 +30614,27 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\XmlWhitespaceOptionChoice_a283f890::UsePreserveWhitespace_972b353f',
+      'symbols' =>
+      array (
+        0 => 'PRESERVE',
+        1 => 'WHITESPACE_P',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\XmlWhitespaceOptionChoice_a283f890::UseStripWhitespace_2d305f5f',
+      'symbols' =>
+      array (
+        0 => 'STRIP_P',
+        1 => 'WHITESPACE_P',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\XmlWhitespaceOptionChoice_a283f890::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'xmlexists_argument' =>
@@ -17536,6 +30646,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'PASSING',
+        1 => 'c_expr',
+      ),
     ),
     1 =>
     array (
@@ -17545,6 +30660,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'PASSING',
+        1 => 'c_expr',
+        2 => 'xml_passing_mech',
+      ),
     ),
     2 =>
     array (
@@ -17553,6 +30674,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PASSING',
+        1 => 'xml_passing_mech',
+        2 => 'c_expr',
       ),
     ),
     3 =>
@@ -17564,6 +30691,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'PASSING',
+        1 => 'xml_passing_mech',
+        2 => 'c_expr',
+        3 => 'xml_passing_mech',
+      ),
     ),
   ),
   'xml_passing_mech' =>
@@ -17571,10 +30705,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\XmlPassingMechChoice_daa2bf9d::UseByRef_75d359f3',
+      'symbols' =>
+      array (
+        0 => 'BY',
+        1 => 'REF_P',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\XmlPassingMechChoice_daa2bf9d::UseByValue_3a3bc76a',
+      'symbols' =>
+      array (
+        0 => 'BY',
+        1 => 'VALUE_P',
+      ),
     ),
   ),
   'within_group_clause' =>
@@ -17586,11 +30730,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'WITHIN',
+        1 => 'GROUP_P',
+        2 => '(',
+        3 => 'sort_clause',
+        4 => ')',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\WithinGroupClauseWith_4e577a11',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -17604,11 +30759,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'FILTER',
+        1 => '(',
+        2 => 'WHERE',
+        3 => 'a_expr',
+        4 => ')',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FilterClauseWith_1e66a295',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -17622,11 +30788,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'WINDOW',
+        1 => 'window_definition_list',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\WindowClauseWith_d47c0550',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -17636,6 +30810,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'window_definition',
+      ),
     ),
     1 =>
     array (
@@ -17644,6 +30822,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'window_definition_list',
+        1 => ',',
+        2 => 'window_definition',
       ),
     ),
   ),
@@ -17657,6 +30841,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColId',
+        1 => 'AS',
+        2 => 'window_specification',
+      ),
     ),
   ),
   'over_clause' =>
@@ -17668,6 +30858,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'OVER',
+        1 => 'window_specification',
+      ),
     ),
     1 =>
     array (
@@ -17676,11 +30871,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'OVER',
+        1 => 'ColId',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OverClauseWith_643f4c20',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -17697,6 +30900,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'opt_existing_window_name',
+        2 => 'opt_partition_clause',
+        3 => 'opt_sort_clause',
+        4 => 'opt_frame_clause',
+        5 => ')',
+      ),
     ),
   ),
   'opt_existing_window_name' =>
@@ -17704,11 +30916,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ColId',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptExistingWindowNameWith_57667184',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -17722,11 +30941,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'PARTITION',
+        1 => 'BY',
+        2 => 'expr_list',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptPartitionClauseWith_0b054f34',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -17741,6 +30969,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'RANGE',
+        1 => 'frame_extent',
+        2 => 'opt_window_exclusion_clause',
+      ),
     ),
     1 =>
     array (
@@ -17749,6 +30983,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ROWS',
+        1 => 'frame_extent',
+        2 => 'opt_window_exclusion_clause',
       ),
     ),
     2 =>
@@ -17759,11 +30999,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'GROUPS',
+        1 => 'frame_extent',
+        2 => 'opt_window_exclusion_clause',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptFrameClauseWith_05f1539a',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -17773,6 +31022,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'frame_bound',
+      ),
     ),
     1 =>
     array (
@@ -17781,6 +31034,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BETWEEN',
+        1 => 'frame_bound',
+        2 => 'AND',
+        3 => 'frame_bound',
       ),
     ),
   ),
@@ -17792,6 +31052,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'UNBOUNDED',
+        1 => 'PRECEDING',
+      ),
     ),
     1 =>
     array (
@@ -17799,12 +31064,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'UNBOUNDED',
+        1 => 'FOLLOWING',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FrameBoundWithCurrentPRow_fbcacd47',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_P',
+        1 => 'ROW',
       ),
     ),
     3 =>
@@ -17814,6 +31089,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'PRECEDING',
+      ),
     ),
     4 =>
     array (
@@ -17822,6 +31102,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'FOLLOWING',
+      ),
     ),
   ),
   'opt_window_exclusion_clause' =>
@@ -17829,22 +31114,47 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptWindowExclusionClauseChoice_422b3afa::UseExcludeCurrentRow_b1f83261',
+      'symbols' =>
+      array (
+        0 => 'EXCLUDE',
+        1 => 'CURRENT_P',
+        2 => 'ROW',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptWindowExclusionClauseChoice_422b3afa::UseExcludeGroup_1e1e3216',
+      'symbols' =>
+      array (
+        0 => 'EXCLUDE',
+        1 => 'GROUP_P',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptWindowExclusionClauseChoice_422b3afa::UseExcludeTies_a062fa84',
+      'symbols' =>
+      array (
+        0 => 'EXCLUDE',
+        1 => 'TIES',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptWindowExclusionClauseChoice_422b3afa::UseExcludeNoOthers_b122de28',
+      'symbols' =>
+      array (
+        0 => 'EXCLUDE',
+        1 => 'NO',
+        2 => 'OTHERS',
+      ),
     ),
     4 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptWindowExclusionClauseChoice_422b3afa::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'row' =>
@@ -17856,12 +31166,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ROW',
+        1 => '(',
+        2 => 'expr_list',
+        3 => ')',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\RowWithRow_0255f9ed',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'ROW',
+        1 => '(',
+        2 => ')',
       ),
     ),
     2 =>
@@ -17871,6 +31194,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'expr_list',
+        2 => ',',
+        3 => 'a_expr',
+        4 => ')',
       ),
     ),
   ),
@@ -17883,12 +31214,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ROW',
+        1 => '(',
+        2 => 'expr_list',
+        3 => ')',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ExplicitRowWithRow_9c974db2',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'ROW',
+        1 => '(',
+        2 => ')',
       ),
     ),
   ),
@@ -17902,6 +31246,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'expr_list',
+        2 => ',',
+        3 => 'a_expr',
+        4 => ')',
+      ),
     ),
   ),
   'sub_type' =>
@@ -17909,14 +31261,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\SubTypeChoice_c192bfcd::UseAny_618c7950',
+      'symbols' =>
+      array (
+        0 => 'ANY',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\SubTypeChoice_c192bfcd::UseSome_8f473535',
+      'symbols' =>
+      array (
+        0 => 'SOME',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\SubTypeChoice_c192bfcd::UseAll_b5c7aed7',
+      'symbols' =>
+      array (
+        0 => 'ALL',
+      ),
     ),
   ),
   'all_Op' =>
@@ -17928,10 +31292,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'Op',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'MathOp',
+      ),
     ),
   ),
   'MathOp' =>
@@ -17942,12 +31314,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => '+',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\MathOpWith_82fea7f8',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => '-',
       ),
     ),
     2 =>
@@ -17956,12 +31336,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => '*',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\MathOpWith_a5e59535',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => '/',
       ),
     ),
     4 =>
@@ -17970,12 +31358,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => '%',
+      ),
     ),
     5 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\MathOpWith_c74acbf8',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => '^',
       ),
     ),
     6 =>
@@ -17984,6 +31380,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => '<',
+      ),
     ),
     7 =>
     array (
@@ -17991,12 +31391,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => '>',
+      ),
     ),
     8 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\MathOpWith_18604753',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => '=',
       ),
     ),
     9 =>
@@ -18006,6 +31414,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LESS_EQUALS',
+      ),
     ),
     10 =>
     array (
@@ -18014,6 +31426,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'GREATER_EQUALS',
+      ),
     ),
     11 =>
     array (
@@ -18021,6 +31437,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NOT_EQUALS',
       ),
     ),
   ),
@@ -18033,6 +31453,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'Op',
+      ),
     ),
     1 =>
     array (
@@ -18041,6 +31465,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'OPERATOR',
+        1 => '(',
+        2 => 'any_operator',
+        3 => ')',
+      ),
     ),
   ),
   'qual_all_Op' =>
@@ -18048,6 +31479,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'all_Op',
+      ),
     ),
     1 =>
     array (
@@ -18056,6 +31491,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'OPERATOR',
+        1 => '(',
+        2 => 'any_operator',
+        3 => ')',
+      ),
     ),
   ),
   'subquery_Op' =>
@@ -18063,6 +31505,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'all_Op',
+      ),
     ),
     1 =>
     array (
@@ -18071,12 +31517,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'OPERATOR',
+        1 => '(',
+        2 => 'any_operator',
+        3 => ')',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\SubqueryOpWithLike_98c4d8bf',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'LIKE',
       ),
     ),
     3 =>
@@ -18086,12 +31543,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NOT_LA',
+        1 => 'LIKE',
+      ),
     ),
     4 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\SubqueryOpWithIlike_aa9eca9f',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'ILIKE',
       ),
     ),
     5 =>
@@ -18101,6 +31567,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NOT_LA',
+        1 => 'ILIKE',
+      ),
     ),
   ),
   'expr_list' =>
@@ -18108,6 +31579,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+      ),
     ),
     1 =>
     array (
@@ -18117,6 +31592,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'expr_list',
+        1 => ',',
+        2 => 'a_expr',
+      ),
     ),
   ),
   'func_arg_list' =>
@@ -18124,6 +31605,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'func_arg_expr',
+      ),
     ),
     1 =>
     array (
@@ -18133,6 +31618,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'func_arg_list',
+        1 => ',',
+        2 => 'func_arg_expr',
+      ),
     ),
   ),
   'func_arg_expr' =>
@@ -18140,6 +31631,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+      ),
     ),
     1 =>
     array (
@@ -18149,6 +31644,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'param_name',
+        1 => 'COLON_EQUALS',
+        2 => 'a_expr',
       ),
     ),
     2 =>
@@ -18160,6 +31661,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'param_name',
+        1 => 'EQUALS_GREATER',
+        2 => 'a_expr',
+      ),
     ),
   ),
   'func_arg_list_opt' =>
@@ -18167,11 +31674,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'func_arg_list',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncArgListOptWith_d977c53e',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -18181,6 +31695,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Typename',
+      ),
     ),
     1 =>
     array (
@@ -18189,6 +31707,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'type_list',
+        1 => ',',
+        2 => 'Typename',
       ),
     ),
   ),
@@ -18201,6 +31725,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '[',
+        1 => 'expr_list',
+        2 => ']',
+      ),
     ),
     1 =>
     array (
@@ -18209,12 +31739,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '[',
+        1 => 'array_expr_list',
+        2 => ']',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ArrayExprWith_2e235700',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => '[',
+        1 => ']',
       ),
     ),
   ),
@@ -18223,6 +31764,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'array_expr',
+      ),
     ),
     1 =>
     array (
@@ -18231,6 +31776,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'array_expr_list',
+        1 => ',',
+        2 => 'array_expr',
       ),
     ),
   ),
@@ -18244,6 +31795,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'extract_arg',
+        1 => 'FROM',
+        2 => 'a_expr',
+      ),
     ),
   ),
   'extract_arg' =>
@@ -18255,12 +31812,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'IDENT',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ExtractArgWithYearP_ed4f407b',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'YEAR_P',
       ),
     ),
     2 =>
@@ -18269,12 +31834,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'MONTH_P',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ExtractArgWithDayP_0c8a30a6',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'DAY_P',
       ),
     ),
     4 =>
@@ -18283,12 +31856,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'HOUR_P',
+      ),
     ),
     5 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ExtractArgWithMinuteP_a658e35f',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'MINUTE_P',
       ),
     ),
     6 =>
@@ -18297,10 +31878,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'SECOND_P',
+      ),
     ),
     7 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Sconst',
+      ),
     ),
   ),
   'unicode_normal_form' =>
@@ -18308,18 +31897,34 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\UnicodeNormalFormChoice_6019cded::UseNfc_13a717cf',
+      'symbols' =>
+      array (
+        0 => 'NFC',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\UnicodeNormalFormChoice_6019cded::UseNfd_8088da21',
+      'symbols' =>
+      array (
+        0 => 'NFD',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\UnicodeNormalFormChoice_6019cded::UseNfkc_c035b71d',
+      'symbols' =>
+      array (
+        0 => 'NFKC',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\UnicodeNormalFormChoice_6019cded::UseNfkd_94435b21',
+      'symbols' =>
+      array (
+        0 => 'NFKD',
+      ),
     ),
   ),
   'overlay_list' =>
@@ -18334,6 +31939,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 4,
         3 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'PLACING',
+        2 => 'a_expr',
+        3 => 'FROM',
+        4 => 'a_expr',
+        5 => 'FOR',
+        6 => 'a_expr',
+      ),
     ),
     1 =>
     array (
@@ -18343,6 +31958,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
         2 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'PLACING',
+        2 => 'a_expr',
+        3 => 'FROM',
+        4 => 'a_expr',
       ),
     ),
   ),
@@ -18355,6 +31978,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'b_expr',
+        1 => 'IN_P',
+        2 => 'b_expr',
       ),
     ),
   ),
@@ -18369,6 +31998,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'FROM',
+        2 => 'a_expr',
+        3 => 'FOR',
+        4 => 'a_expr',
+      ),
     ),
     1 =>
     array (
@@ -18379,6 +32016,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'FOR',
+        2 => 'a_expr',
+        3 => 'FROM',
+        4 => 'a_expr',
+      ),
     ),
     2 =>
     array (
@@ -18387,6 +32032,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'FROM',
+        2 => 'a_expr',
       ),
     ),
     3 =>
@@ -18397,6 +32048,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'FOR',
+        2 => 'a_expr',
+      ),
     ),
     4 =>
     array (
@@ -18406,6 +32063,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
         2 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'SIMILAR',
+        2 => 'a_expr',
+        3 => 'ESCAPE',
+        4 => 'a_expr',
       ),
     ),
   ),
@@ -18419,6 +32084,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'FROM',
+        2 => 'expr_list',
+      ),
     ),
     1 =>
     array (
@@ -18427,10 +32098,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'FROM',
+        1 => 'expr_list',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'expr_list',
+      ),
     ),
   ),
   'in_expr' =>
@@ -18438,6 +32118,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'select_with_parens',
+      ),
     ),
     1 =>
     array (
@@ -18445,6 +32129,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'expr_list',
+        2 => ')',
       ),
     ),
   ),
@@ -18459,6 +32149,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'CASE',
+        1 => 'case_arg',
+        2 => 'when_clause_list',
+        3 => 'case_default',
+        4 => 'END_P',
+      ),
     ),
   ),
   'when_clause_list' =>
@@ -18466,6 +32164,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'when_clause',
+      ),
     ),
     1 =>
     array (
@@ -18474,6 +32176,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'when_clause_list',
+        1 => 'when_clause',
       ),
     ),
   ),
@@ -18487,6 +32194,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'WHEN',
+        1 => 'a_expr',
+        2 => 'THEN',
+        3 => 'a_expr',
+      ),
     ),
   ),
   'case_default' =>
@@ -18498,11 +32212,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ELSE',
+        1 => 'a_expr',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CaseDefaultWith_b07ca2a9',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -18512,11 +32234,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CaseArgWith_e4f0de9f',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -18526,6 +32255,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ColId',
+      ),
     ),
     1 =>
     array (
@@ -18534,6 +32267,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ColId',
+        1 => 'indirection',
       ),
     ),
   ),
@@ -18546,12 +32284,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '.',
+        1 => 'attr_name',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\IndirectionElWith_e8f99172',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => '.',
+        1 => '*',
       ),
     ),
     2 =>
@@ -18560,6 +32308,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '[',
+        1 => 'a_expr',
+        2 => ']',
       ),
     ),
     3 =>
@@ -18570,6 +32324,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => '[',
+        1 => 'opt_slice_bound',
+        2 => ':',
+        3 => 'opt_slice_bound',
+        4 => ']',
+      ),
     ),
   ),
   'opt_slice_bound' =>
@@ -18577,11 +32339,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptSliceBoundWith_e604cea1',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -18591,6 +32360,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'indirection_el',
+      ),
     ),
     1 =>
     array (
@@ -18599,6 +32372,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'indirection',
+        1 => 'indirection_el',
       ),
     ),
   ),
@@ -18610,6 +32388,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -18619,6 +32400,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_indirection',
+        1 => 'indirection_el',
+      ),
     ),
   ),
   'opt_asymmetric' =>
@@ -18626,10 +32412,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptAsymmetricChoice_3083f0b0::UseAsymmetric_6c5c4a91',
+      'symbols' =>
+      array (
+        0 => 'ASYMMETRIC',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptAsymmetricChoice_3083f0b0::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'json_value_expr' =>
@@ -18641,6 +32434,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'json_format_clause_opt',
       ),
     ),
   ),
@@ -18654,11 +32452,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'FORMAT_LA',
+        1 => 'JSON',
+        2 => 'json_encoding_clause_opt',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonFormatClauseOptWith_b5dab6cd',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -18672,11 +32479,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ENCODING',
+        1 => 'name',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonEncodingClauseOptWith_10dd57aa',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -18691,11 +32506,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'RETURNING',
+        1 => 'Typename',
+        2 => 'json_format_clause_opt',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonOutputClauseOptWith_29f5c990',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -18705,22 +32529,46 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonPredicateTypeConstraintChoice_cc5959aa::UseJson_db1a21a0',
+      'symbols' =>
+      array (
+        0 => 'JSON',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonPredicateTypeConstraintChoice_cc5959aa::UseJsonValue_266abe8a',
+      'symbols' =>
+      array (
+        0 => 'JSON',
+        1 => 'VALUE_P',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonPredicateTypeConstraintChoice_cc5959aa::UseJsonArray_0ddea76c',
+      'symbols' =>
+      array (
+        0 => 'JSON',
+        1 => 'ARRAY',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonPredicateTypeConstraintChoice_cc5959aa::UseJsonObject_4717633b',
+      'symbols' =>
+      array (
+        0 => 'JSON',
+        1 => 'OBJECT_P',
+      ),
     ),
     4 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonPredicateTypeConstraintChoice_cc5959aa::UseJsonScalar_d5e6f909',
+      'symbols' =>
+      array (
+        0 => 'JSON',
+        1 => 'SCALAR',
+      ),
     ),
   ),
   'json_key_uniqueness_constraint_opt' =>
@@ -18728,22 +32576,47 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonKeyUniquenessConstraintOptChoice_5ec10130::UseWithUniqueKeys_39674647',
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'UNIQUE',
+        2 => 'KEYS',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonKeyUniquenessConstraintOptChoice_5ec10130::UseWithUnique_bddb0509',
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'UNIQUE',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonKeyUniquenessConstraintOptChoice_5ec10130::UseWithoutUniqueKeys_6e781d3e',
+      'symbols' =>
+      array (
+        0 => 'WITHOUT',
+        1 => 'UNIQUE',
+        2 => 'KEYS',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonKeyUniquenessConstraintOptChoice_5ec10130::UseWithoutUnique_b7aceef4',
+      'symbols' =>
+      array (
+        0 => 'WITHOUT',
+        1 => 'UNIQUE',
+      ),
     ),
     4 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonKeyUniquenessConstraintOptChoice_5ec10130::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'json_name_and_value_list' =>
@@ -18751,6 +32624,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'json_name_and_value',
+      ),
     ),
     1 =>
     array (
@@ -18759,6 +32636,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'json_name_and_value_list',
+        1 => ',',
+        2 => 'json_name_and_value',
       ),
     ),
   ),
@@ -18772,6 +32655,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'c_expr',
+        1 => 'VALUE_P',
+        2 => 'json_value_expr',
+      ),
     ),
     1 =>
     array (
@@ -18781,6 +32670,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => ':',
+        2 => 'json_value_expr',
+      ),
     ),
   ),
   'json_object_constructor_null_clause_opt' =>
@@ -18788,14 +32683,29 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonObjectConstructorNullClauseOptChoice_5faad07a::UseNullOnNull_4df71739',
+      'symbols' =>
+      array (
+        0 => 'NULL_P',
+        1 => 'ON',
+        2 => 'NULL_P',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonObjectConstructorNullClauseOptChoice_5faad07a::UseAbsentOnNull_5247be9f',
+      'symbols' =>
+      array (
+        0 => 'ABSENT',
+        1 => 'ON',
+        2 => 'NULL_P',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonObjectConstructorNullClauseOptChoice_5faad07a::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'json_array_constructor_null_clause_opt' =>
@@ -18803,14 +32713,29 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonArrayConstructorNullClauseOptChoice_5faad07a::UseNullOnNull_4df71739',
+      'symbols' =>
+      array (
+        0 => 'NULL_P',
+        1 => 'ON',
+        2 => 'NULL_P',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonArrayConstructorNullClauseOptChoice_5faad07a::UseAbsentOnNull_5247be9f',
+      'symbols' =>
+      array (
+        0 => 'ABSENT',
+        1 => 'ON',
+        2 => 'NULL_P',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonArrayConstructorNullClauseOptChoice_5faad07a::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'json_value_expr_list' =>
@@ -18818,6 +32743,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'json_value_expr',
+      ),
     ),
     1 =>
     array (
@@ -18826,6 +32755,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'json_value_expr_list',
+        1 => ',',
+        2 => 'json_value_expr',
       ),
     ),
   ),
@@ -18841,6 +32776,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 4,
         3 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'JSON_OBJECTAGG',
+        1 => '(',
+        2 => 'json_name_and_value',
+        3 => 'json_object_constructor_null_clause_opt',
+        4 => 'json_key_uniqueness_constraint_opt',
+        5 => 'json_output_clause_opt',
+        6 => ')',
+      ),
     ),
     1 =>
     array (
@@ -18851,6 +32796,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
         3 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'JSON_ARRAYAGG',
+        1 => '(',
+        2 => 'json_value_expr',
+        3 => 'json_array_aggregate_order_by_clause_opt',
+        4 => 'json_array_constructor_null_clause_opt',
+        5 => 'json_output_clause_opt',
+        6 => ')',
       ),
     ),
   ),
@@ -18863,11 +32818,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ORDER',
+        1 => 'BY',
+        2 => 'sortby_list',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonArrayAggregateOrderByClauseOptWith_3bea0359',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -18877,11 +32841,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'target_list',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptTargetListWith_c474d86a',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -18891,6 +32862,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'target_el',
+      ),
     ),
     1 =>
     array (
@@ -18899,6 +32874,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'target_list',
+        1 => ',',
+        2 => 'target_el',
       ),
     ),
   ),
@@ -18912,6 +32893,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'AS',
+        2 => 'ColLabel',
+      ),
     ),
     1 =>
     array (
@@ -18921,16 +32908,29 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+        1 => 'BareColLabel',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'a_expr',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\TargetElWith_c87cdb77',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => '*',
       ),
     ),
   ),
@@ -18939,6 +32939,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'qualified_name',
+      ),
     ),
     1 =>
     array (
@@ -18948,6 +32952,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'qualified_name_list',
+        1 => ',',
+        2 => 'qualified_name',
+      ),
     ),
   ),
   'qualified_name' =>
@@ -18955,6 +32965,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ColId',
+      ),
     ),
     1 =>
     array (
@@ -18964,6 +32978,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColId',
+        1 => 'indirection',
+      ),
     ),
   ),
   'name_list' =>
@@ -18971,6 +32990,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'name',
+      ),
     ),
     1 =>
     array (
@@ -18980,6 +33003,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'name_list',
+        1 => ',',
+        2 => 'name',
+      ),
     ),
   ),
   'name' =>
@@ -18987,6 +33016,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ColId',
+      ),
     ),
   ),
   'attr_name' =>
@@ -18994,6 +33027,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ColLabel',
+      ),
     ),
   ),
   'file_name' =>
@@ -19001,6 +33038,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Sconst',
+      ),
     ),
   ),
   'func_name' =>
@@ -19008,6 +33049,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'type_function_name',
+      ),
     ),
     1 =>
     array (
@@ -19017,6 +33062,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ColId',
+        1 => 'indirection',
+      ),
     ),
   ),
   'AexprConst' =>
@@ -19024,6 +33074,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Iconst',
+      ),
     ),
     1 =>
     array (
@@ -19032,10 +33086,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FCONST',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Sconst',
+      ),
     ),
     3 =>
     array (
@@ -19043,6 +33105,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BCONST',
       ),
     ),
     4 =>
@@ -19052,6 +33118,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'XCONST',
+      ),
     ),
     5 =>
     array (
@@ -19060,6 +33130,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'func_name',
+        1 => 'Sconst',
       ),
     ),
     6 =>
@@ -19072,6 +33147,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'func_name',
+        1 => '(',
+        2 => 'func_arg_list',
+        3 => 'opt_sort_clause',
+        4 => ')',
+        5 => 'Sconst',
+      ),
     ),
     7 =>
     array (
@@ -19080,6 +33164,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ConstTypename',
+        1 => 'Sconst',
       ),
     ),
     8 =>
@@ -19091,6 +33180,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ConstInterval',
+        1 => 'Sconst',
+        2 => 'opt_interval',
+      ),
     ),
     9 =>
     array (
@@ -19101,12 +33196,24 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ConstInterval',
+        1 => '(',
+        2 => 'Iconst',
+        3 => ')',
+        4 => 'Sconst',
+      ),
     ),
     10 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AexprConstWithTrueP_a5d405c1',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'TRUE_P',
       ),
     ),
     11 =>
@@ -19115,12 +33222,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'FALSE_P',
+      ),
     ),
     12 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AexprConstWithNullP_1d90b8b7',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'NULL_P',
       ),
     ),
   ),
@@ -19133,6 +33248,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ICONST',
+      ),
     ),
   ),
   'Sconst' =>
@@ -19144,6 +33263,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SCONST',
+      ),
     ),
   ),
   'SignedIconst' =>
@@ -19151,6 +33274,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'Iconst',
+      ),
     ),
     1 =>
     array (
@@ -19158,6 +33285,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '+',
+        1 => 'Iconst',
       ),
     ),
     2 =>
@@ -19167,6 +33299,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '-',
+        1 => 'Iconst',
+      ),
     ),
   ),
   'RoleId' =>
@@ -19174,6 +33311,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'RoleSpec',
+      ),
     ),
   ),
   'RoleSpec' =>
@@ -19181,12 +33322,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'NonReservedWord',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\RoleSpecWithCurrentRole_a65c9dfd',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_ROLE',
       ),
     ),
     2 =>
@@ -19195,12 +33344,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_USER',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\RoleSpecWithSessionUser_b060e195',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'SESSION_USER',
       ),
     ),
   ),
@@ -19209,6 +33366,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'RoleSpec',
+      ),
     ),
     1 =>
     array (
@@ -19217,6 +33378,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'role_list',
+        1 => ',',
+        2 => 'RoleSpec',
       ),
     ),
   ),
@@ -19238,6 +33405,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         8 => 8,
         9 => 9,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_distinct_clause',
+        1 => 'opt_target_list',
+        2 => 'from_clause',
+        3 => 'where_clause',
+        4 => 'group_clause',
+        5 => 'having_clause',
+        6 => 'window_clause',
+        7 => 'opt_sort_clause',
+        8 => 'opt_select_limit',
+        9 => 'opt_for_locking_clause',
+      ),
     ),
   ),
   'PLAssignStmt' =>
@@ -19252,6 +33432,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 2,
         3 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'plassign_target',
+        1 => 'opt_indirection',
+        2 => 'plassign_equals',
+        3 => 'PLpgSQL_Expr',
+      ),
     ),
   ),
   'plassign_target' =>
@@ -19259,6 +33446,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ColId',
+      ),
     ),
     1 =>
     array (
@@ -19266,6 +33457,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PARAM',
       ),
     ),
   ),
@@ -19278,12 +33473,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'COLON_EQUALS',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\PlassignEqualsWith_769ce1f8',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => '=',
       ),
     ),
   ),
@@ -19296,14 +33499,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'IDENT',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'unreserved_keyword',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'col_name_keyword',
+      ),
     ),
   ),
   'type_function_name' =>
@@ -19315,14 +33530,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'IDENT',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'unreserved_keyword',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'type_func_name_keyword',
+      ),
     ),
   ),
   'NonReservedWord' =>
@@ -19334,18 +33561,34 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'IDENT',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'unreserved_keyword',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'col_name_keyword',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'type_func_name_keyword',
+      ),
     ),
   ),
   'ColLabel' =>
@@ -19357,22 +33600,42 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'IDENT',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'unreserved_keyword',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'col_name_keyword',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'type_func_name_keyword',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'reserved_keyword',
+      ),
     ),
   ),
   'BareColLabel' =>
@@ -19384,10 +33647,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'IDENT',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'bare_label_keyword',
+      ),
     ),
   ),
   'unreserved_keyword' =>
@@ -19399,6 +33670,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ABORT_P',
+      ),
     ),
     1 =>
     array (
@@ -19406,6 +33681,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ABSENT',
       ),
     ),
     2 =>
@@ -19415,6 +33694,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ABSOLUTE_P',
+      ),
     ),
     3 =>
     array (
@@ -19422,6 +33705,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ACCESS',
       ),
     ),
     4 =>
@@ -19431,6 +33718,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ACTION',
+      ),
     ),
     5 =>
     array (
@@ -19438,6 +33729,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ADD_P',
       ),
     ),
     6 =>
@@ -19447,6 +33742,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ADMIN',
+      ),
     ),
     7 =>
     array (
@@ -19454,6 +33753,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'AFTER',
       ),
     ),
     8 =>
@@ -19463,6 +33766,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'AGGREGATE',
+      ),
     ),
     9 =>
     array (
@@ -19470,6 +33777,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALSO',
       ),
     ),
     10 =>
@@ -19479,6 +33790,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+      ),
     ),
     11 =>
     array (
@@ -19486,6 +33801,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALWAYS',
       ),
     ),
     12 =>
@@ -19495,6 +33814,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ASENSITIVE',
+      ),
     ),
     13 =>
     array (
@@ -19502,6 +33825,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ASSERTION',
       ),
     ),
     14 =>
@@ -19511,6 +33838,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ASSIGNMENT',
+      ),
     ),
     15 =>
     array (
@@ -19518,6 +33849,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'AT',
       ),
     ),
     16 =>
@@ -19527,6 +33862,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ATOMIC',
+      ),
     ),
     17 =>
     array (
@@ -19534,6 +33873,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ATTACH',
       ),
     ),
     18 =>
@@ -19543,6 +33886,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ATTRIBUTE',
+      ),
     ),
     19 =>
     array (
@@ -19550,6 +33897,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BACKWARD',
       ),
     ),
     20 =>
@@ -19559,6 +33910,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'BEFORE',
+      ),
     ),
     21 =>
     array (
@@ -19566,6 +33921,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BEGIN_P',
       ),
     ),
     22 =>
@@ -19575,6 +33934,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'BREADTH',
+      ),
     ),
     23 =>
     array (
@@ -19582,6 +33945,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BY',
       ),
     ),
     24 =>
@@ -19591,6 +33958,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CACHE',
+      ),
     ),
     25 =>
     array (
@@ -19598,6 +33969,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CALL',
       ),
     ),
     26 =>
@@ -19607,6 +33982,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CALLED',
+      ),
     ),
     27 =>
     array (
@@ -19614,6 +33993,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CASCADE',
       ),
     ),
     28 =>
@@ -19623,6 +34006,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CASCADED',
+      ),
     ),
     29 =>
     array (
@@ -19630,6 +34017,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CATALOG_P',
       ),
     ),
     30 =>
@@ -19639,6 +34030,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CHAIN',
+      ),
     ),
     31 =>
     array (
@@ -19646,6 +34041,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CHARACTERISTICS',
       ),
     ),
     32 =>
@@ -19655,6 +34054,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CHECKPOINT',
+      ),
     ),
     33 =>
     array (
@@ -19662,6 +34065,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CLASS',
       ),
     ),
     34 =>
@@ -19671,6 +34078,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CLOSE',
+      ),
     ),
     35 =>
     array (
@@ -19678,6 +34089,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CLUSTER',
       ),
     ),
     36 =>
@@ -19687,6 +34102,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'COLUMNS',
+      ),
     ),
     37 =>
     array (
@@ -19694,6 +34113,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT',
       ),
     ),
     38 =>
@@ -19703,6 +34126,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMMENTS',
+      ),
     ),
     39 =>
     array (
@@ -19710,6 +34137,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COMMIT',
       ),
     ),
     40 =>
@@ -19719,6 +34150,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMMITTED',
+      ),
     ),
     41 =>
     array (
@@ -19726,6 +34161,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COMPRESSION',
       ),
     ),
     42 =>
@@ -19735,6 +34174,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CONFIGURATION',
+      ),
     ),
     43 =>
     array (
@@ -19742,6 +34185,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CONFLICT',
       ),
     ),
     44 =>
@@ -19751,6 +34198,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CONNECTION',
+      ),
     ),
     45 =>
     array (
@@ -19758,6 +34209,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CONSTRAINTS',
       ),
     ),
     46 =>
@@ -19767,6 +34222,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CONTENT_P',
+      ),
     ),
     47 =>
     array (
@@ -19774,6 +34233,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CONTINUE_P',
       ),
     ),
     48 =>
@@ -19783,6 +34246,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CONVERSION_P',
+      ),
     ),
     49 =>
     array (
@@ -19790,6 +34257,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COPY',
       ),
     ),
     50 =>
@@ -19799,6 +34270,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'COST',
+      ),
     ),
     51 =>
     array (
@@ -19806,6 +34281,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CSV',
       ),
     ),
     52 =>
@@ -19815,6 +34294,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CUBE',
+      ),
     ),
     53 =>
     array (
@@ -19822,6 +34305,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_P',
       ),
     ),
     54 =>
@@ -19831,6 +34318,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CURSOR',
+      ),
     ),
     55 =>
     array (
@@ -19838,6 +34329,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CYCLE',
       ),
     ),
     56 =>
@@ -19847,6 +34342,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DATA_P',
+      ),
     ),
     57 =>
     array (
@@ -19854,6 +34353,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DATABASE',
       ),
     ),
     58 =>
@@ -19863,6 +34366,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DAY_P',
+      ),
     ),
     59 =>
     array (
@@ -19870,6 +34377,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEALLOCATE',
       ),
     ),
     60 =>
@@ -19879,6 +34390,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DECLARE',
+      ),
     ),
     61 =>
     array (
@@ -19886,6 +34401,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULTS',
       ),
     ),
     62 =>
@@ -19895,6 +34414,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DEFERRED',
+      ),
     ),
     63 =>
     array (
@@ -19902,6 +34425,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEFINER',
       ),
     ),
     64 =>
@@ -19911,6 +34438,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DELETE_P',
+      ),
     ),
     65 =>
     array (
@@ -19918,6 +34449,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DELIMITER',
       ),
     ),
     66 =>
@@ -19927,6 +34462,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DELIMITERS',
+      ),
     ),
     67 =>
     array (
@@ -19934,6 +34473,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEPENDS',
       ),
     ),
     68 =>
@@ -19943,6 +34486,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DEPTH',
+      ),
     ),
     69 =>
     array (
@@ -19950,6 +34497,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DETACH',
       ),
     ),
     70 =>
@@ -19959,6 +34510,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DICTIONARY',
+      ),
     ),
     71 =>
     array (
@@ -19966,6 +34521,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DISABLE_P',
       ),
     ),
     72 =>
@@ -19975,6 +34534,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DISCARD',
+      ),
     ),
     73 =>
     array (
@@ -19982,6 +34545,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DOCUMENT_P',
       ),
     ),
     74 =>
@@ -19991,6 +34558,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DOMAIN_P',
+      ),
     ),
     75 =>
     array (
@@ -19998,6 +34569,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DOUBLE_P',
       ),
     ),
     76 =>
@@ -20007,6 +34582,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+      ),
     ),
     77 =>
     array (
@@ -20014,6 +34593,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'EACH',
       ),
     ),
     78 =>
@@ -20023,6 +34606,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ENABLE_P',
+      ),
     ),
     79 =>
     array (
@@ -20030,6 +34617,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ENCODING',
       ),
     ),
     80 =>
@@ -20039,6 +34630,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ENCRYPTED',
+      ),
     ),
     81 =>
     array (
@@ -20046,6 +34641,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ENUM_P',
       ),
     ),
     82 =>
@@ -20055,6 +34654,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ESCAPE',
+      ),
     ),
     83 =>
     array (
@@ -20062,6 +34665,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'EVENT',
       ),
     ),
     84 =>
@@ -20071,6 +34678,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'EXCLUDE',
+      ),
     ),
     85 =>
     array (
@@ -20078,6 +34689,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'EXCLUDING',
       ),
     ),
     86 =>
@@ -20087,6 +34702,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'EXCLUSIVE',
+      ),
     ),
     87 =>
     array (
@@ -20094,6 +34713,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'EXECUTE',
       ),
     ),
     88 =>
@@ -20103,6 +34726,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'EXPLAIN',
+      ),
     ),
     89 =>
     array (
@@ -20110,6 +34737,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'EXPRESSION',
       ),
     ),
     90 =>
@@ -20119,6 +34750,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'EXTENSION',
+      ),
     ),
     91 =>
     array (
@@ -20126,6 +34761,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'EXTERNAL',
       ),
     ),
     92 =>
@@ -20135,6 +34774,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FAMILY',
+      ),
     ),
     93 =>
     array (
@@ -20142,6 +34785,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FILTER',
       ),
     ),
     94 =>
@@ -20151,6 +34798,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FINALIZE',
+      ),
     ),
     95 =>
     array (
@@ -20158,6 +34809,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FIRST_P',
       ),
     ),
     96 =>
@@ -20167,6 +34822,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FOLLOWING',
+      ),
     ),
     97 =>
     array (
@@ -20174,6 +34833,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FORCE',
       ),
     ),
     98 =>
@@ -20183,6 +34846,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FORMAT',
+      ),
     ),
     99 =>
     array (
@@ -20190,6 +34857,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FORWARD',
       ),
     ),
     100 =>
@@ -20199,6 +34870,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FUNCTION',
+      ),
     ),
     101 =>
     array (
@@ -20206,6 +34881,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FUNCTIONS',
       ),
     ),
     102 =>
@@ -20215,6 +34894,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'GENERATED',
+      ),
     ),
     103 =>
     array (
@@ -20222,6 +34905,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'GLOBAL',
       ),
     ),
     104 =>
@@ -20231,6 +34918,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'GRANTED',
+      ),
     ),
     105 =>
     array (
@@ -20238,6 +34929,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'GROUPS',
       ),
     ),
     106 =>
@@ -20247,6 +34942,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'HANDLER',
+      ),
     ),
     107 =>
     array (
@@ -20254,6 +34953,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'HEADER_P',
       ),
     ),
     108 =>
@@ -20263,6 +34966,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'HOLD',
+      ),
     ),
     109 =>
     array (
@@ -20270,6 +34977,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'HOUR_P',
       ),
     ),
     110 =>
@@ -20279,6 +34990,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'IDENTITY_P',
+      ),
     ),
     111 =>
     array (
@@ -20286,6 +35001,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'IF_P',
       ),
     ),
     112 =>
@@ -20295,6 +35014,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'IMMEDIATE',
+      ),
     ),
     113 =>
     array (
@@ -20302,6 +35025,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'IMMUTABLE',
       ),
     ),
     114 =>
@@ -20311,6 +35038,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'IMPLICIT_P',
+      ),
     ),
     115 =>
     array (
@@ -20318,6 +35049,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'IMPORT_P',
       ),
     ),
     116 =>
@@ -20327,6 +35062,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INCLUDE',
+      ),
     ),
     117 =>
     array (
@@ -20334,6 +35073,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INCLUDING',
       ),
     ),
     118 =>
@@ -20343,6 +35086,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INCREMENT',
+      ),
     ),
     119 =>
     array (
@@ -20350,6 +35097,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INDENT',
       ),
     ),
     120 =>
@@ -20359,6 +35110,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INDEX',
+      ),
     ),
     121 =>
     array (
@@ -20366,6 +35121,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INDEXES',
       ),
     ),
     122 =>
@@ -20375,6 +35134,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INHERIT',
+      ),
     ),
     123 =>
     array (
@@ -20382,6 +35145,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INHERITS',
       ),
     ),
     124 =>
@@ -20391,6 +35158,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INLINE_P',
+      ),
     ),
     125 =>
     array (
@@ -20398,6 +35169,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INPUT_P',
       ),
     ),
     126 =>
@@ -20407,6 +35182,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INSENSITIVE',
+      ),
     ),
     127 =>
     array (
@@ -20414,6 +35193,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INSERT',
       ),
     ),
     128 =>
@@ -20423,6 +35206,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INSTEAD',
+      ),
     ),
     129 =>
     array (
@@ -20430,6 +35217,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INVOKER',
       ),
     ),
     130 =>
@@ -20439,6 +35230,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ISOLATION',
+      ),
     ),
     131 =>
     array (
@@ -20446,6 +35241,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'JSON',
       ),
     ),
     132 =>
@@ -20455,6 +35254,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'KEY',
+      ),
     ),
     133 =>
     array (
@@ -20462,6 +35265,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'KEYS',
       ),
     ),
     134 =>
@@ -20471,6 +35278,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LABEL',
+      ),
     ),
     135 =>
     array (
@@ -20478,6 +35289,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LANGUAGE',
       ),
     ),
     136 =>
@@ -20487,6 +35302,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LARGE_P',
+      ),
     ),
     137 =>
     array (
@@ -20494,6 +35313,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LAST_P',
       ),
     ),
     138 =>
@@ -20503,6 +35326,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LEAKPROOF',
+      ),
     ),
     139 =>
     array (
@@ -20510,6 +35337,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LEVEL',
       ),
     ),
     140 =>
@@ -20519,6 +35350,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LISTEN',
+      ),
     ),
     141 =>
     array (
@@ -20526,6 +35361,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LOAD',
       ),
     ),
     142 =>
@@ -20535,6 +35374,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LOCAL',
+      ),
     ),
     143 =>
     array (
@@ -20542,6 +35385,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LOCATION',
       ),
     ),
     144 =>
@@ -20551,6 +35398,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LOCK_P',
+      ),
     ),
     145 =>
     array (
@@ -20558,6 +35409,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LOCKED',
       ),
     ),
     146 =>
@@ -20567,6 +35422,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LOGGED',
+      ),
     ),
     147 =>
     array (
@@ -20574,6 +35433,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MAPPING',
       ),
     ),
     148 =>
@@ -20583,6 +35446,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MATCH',
+      ),
     ),
     149 =>
     array (
@@ -20590,6 +35457,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MATCHED',
       ),
     ),
     150 =>
@@ -20599,6 +35470,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MATERIALIZED',
+      ),
     ),
     151 =>
     array (
@@ -20606,6 +35481,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MAXVALUE',
       ),
     ),
     152 =>
@@ -20615,6 +35494,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MERGE',
+      ),
     ),
     153 =>
     array (
@@ -20622,6 +35505,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'METHOD',
       ),
     ),
     154 =>
@@ -20631,6 +35518,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MINUTE_P',
+      ),
     ),
     155 =>
     array (
@@ -20638,6 +35529,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MINVALUE',
       ),
     ),
     156 =>
@@ -20647,6 +35542,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MODE',
+      ),
     ),
     157 =>
     array (
@@ -20654,6 +35553,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MONTH_P',
       ),
     ),
     158 =>
@@ -20663,6 +35566,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MOVE',
+      ),
     ),
     159 =>
     array (
@@ -20670,6 +35577,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NAME_P',
       ),
     ),
     160 =>
@@ -20679,6 +35590,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NAMES',
+      ),
     ),
     161 =>
     array (
@@ -20686,6 +35601,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NEW',
       ),
     ),
     162 =>
@@ -20695,6 +35614,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NEXT',
+      ),
     ),
     163 =>
     array (
@@ -20702,6 +35625,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NFC',
       ),
     ),
     164 =>
@@ -20711,6 +35638,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NFD',
+      ),
     ),
     165 =>
     array (
@@ -20718,6 +35649,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NFKC',
       ),
     ),
     166 =>
@@ -20727,6 +35662,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NFKD',
+      ),
     ),
     167 =>
     array (
@@ -20734,6 +35673,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NO',
       ),
     ),
     168 =>
@@ -20743,6 +35686,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NORMALIZED',
+      ),
     ),
     169 =>
     array (
@@ -20750,6 +35697,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NOTHING',
       ),
     ),
     170 =>
@@ -20759,6 +35710,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NOTIFY',
+      ),
     ),
     171 =>
     array (
@@ -20766,6 +35721,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NOWAIT',
       ),
     ),
     172 =>
@@ -20775,6 +35734,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NULLS_P',
+      ),
     ),
     173 =>
     array (
@@ -20782,6 +35745,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'OBJECT_P',
       ),
     ),
     174 =>
@@ -20791,6 +35758,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'OF',
+      ),
     ),
     175 =>
     array (
@@ -20798,6 +35769,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'OFF',
       ),
     ),
     176 =>
@@ -20807,6 +35782,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'OIDS',
+      ),
     ),
     177 =>
     array (
@@ -20814,6 +35793,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'OLD',
       ),
     ),
     178 =>
@@ -20823,6 +35806,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'OPERATOR',
+      ),
     ),
     179 =>
     array (
@@ -20830,6 +35817,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'OPTION',
       ),
     ),
     180 =>
@@ -20839,6 +35830,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'OPTIONS',
+      ),
     ),
     181 =>
     array (
@@ -20846,6 +35841,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ORDINALITY',
       ),
     ),
     182 =>
@@ -20855,6 +35854,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'OTHERS',
+      ),
     ),
     183 =>
     array (
@@ -20862,6 +35865,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'OVER',
       ),
     ),
     184 =>
@@ -20871,6 +35878,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'OVERRIDING',
+      ),
     ),
     185 =>
     array (
@@ -20878,6 +35889,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'OWNED',
       ),
     ),
     186 =>
@@ -20887,6 +35902,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'OWNER',
+      ),
     ),
     187 =>
     array (
@@ -20894,6 +35913,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PARALLEL',
       ),
     ),
     188 =>
@@ -20903,6 +35926,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PARAMETER',
+      ),
     ),
     189 =>
     array (
@@ -20910,6 +35937,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PARSER',
       ),
     ),
     190 =>
@@ -20919,6 +35950,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PARTIAL',
+      ),
     ),
     191 =>
     array (
@@ -20926,6 +35961,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PARTITION',
       ),
     ),
     192 =>
@@ -20935,6 +35974,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PASSING',
+      ),
     ),
     193 =>
     array (
@@ -20942,6 +35985,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD',
       ),
     ),
     194 =>
@@ -20951,6 +35998,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PLANS',
+      ),
     ),
     195 =>
     array (
@@ -20958,6 +36009,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'POLICY',
       ),
     ),
     196 =>
@@ -20967,6 +36022,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PRECEDING',
+      ),
     ),
     197 =>
     array (
@@ -20974,6 +36033,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PREPARE',
       ),
     ),
     198 =>
@@ -20983,6 +36046,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PREPARED',
+      ),
     ),
     199 =>
     array (
@@ -20990,6 +36057,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PRESERVE',
       ),
     ),
     200 =>
@@ -20999,6 +36070,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PRIOR',
+      ),
     ),
     201 =>
     array (
@@ -21006,6 +36081,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PRIVILEGES',
       ),
     ),
     202 =>
@@ -21015,6 +36094,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PROCEDURAL',
+      ),
     ),
     203 =>
     array (
@@ -21022,6 +36105,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PROCEDURE',
       ),
     ),
     204 =>
@@ -21031,6 +36118,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PROCEDURES',
+      ),
     ),
     205 =>
     array (
@@ -21038,6 +36129,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PROGRAM',
       ),
     ),
     206 =>
@@ -21047,6 +36142,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PUBLICATION',
+      ),
     ),
     207 =>
     array (
@@ -21054,6 +36153,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'QUOTE',
       ),
     ),
     208 =>
@@ -21063,6 +36166,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'RANGE',
+      ),
     ),
     209 =>
     array (
@@ -21070,6 +36177,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'READ',
       ),
     ),
     210 =>
@@ -21079,6 +36190,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'REASSIGN',
+      ),
     ),
     211 =>
     array (
@@ -21086,6 +36201,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RECHECK',
       ),
     ),
     212 =>
@@ -21095,6 +36214,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'RECURSIVE',
+      ),
     ),
     213 =>
     array (
@@ -21102,6 +36225,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REF_P',
       ),
     ),
     214 =>
@@ -21111,6 +36238,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'REFERENCING',
+      ),
     ),
     215 =>
     array (
@@ -21118,6 +36249,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REFRESH',
       ),
     ),
     216 =>
@@ -21127,6 +36262,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'REINDEX',
+      ),
     ),
     217 =>
     array (
@@ -21134,6 +36273,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RELATIVE_P',
       ),
     ),
     218 =>
@@ -21143,6 +36286,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'RELEASE',
+      ),
     ),
     219 =>
     array (
@@ -21150,6 +36297,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RENAME',
       ),
     ),
     220 =>
@@ -21159,6 +36310,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'REPEATABLE',
+      ),
     ),
     221 =>
     array (
@@ -21166,6 +36321,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REPLACE',
       ),
     ),
     222 =>
@@ -21175,6 +36334,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'REPLICA',
+      ),
     ),
     223 =>
     array (
@@ -21182,6 +36345,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RESET',
       ),
     ),
     224 =>
@@ -21191,6 +36358,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'RESTART',
+      ),
     ),
     225 =>
     array (
@@ -21198,6 +36369,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RESTRICT',
       ),
     ),
     226 =>
@@ -21207,6 +36382,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'RETURN',
+      ),
     ),
     227 =>
     array (
@@ -21214,6 +36393,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RETURNS',
       ),
     ),
     228 =>
@@ -21223,6 +36406,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'REVOKE',
+      ),
     ),
     229 =>
     array (
@@ -21230,6 +36417,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ROLE',
       ),
     ),
     230 =>
@@ -21239,6 +36430,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ROLLBACK',
+      ),
     ),
     231 =>
     array (
@@ -21246,6 +36441,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ROLLUP',
       ),
     ),
     232 =>
@@ -21255,6 +36454,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ROUTINE',
+      ),
     ),
     233 =>
     array (
@@ -21262,6 +36465,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ROUTINES',
       ),
     ),
     234 =>
@@ -21271,6 +36478,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ROWS',
+      ),
     ),
     235 =>
     array (
@@ -21278,6 +36489,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RULE',
       ),
     ),
     236 =>
@@ -21287,6 +36502,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SAVEPOINT',
+      ),
     ),
     237 =>
     array (
@@ -21294,6 +36513,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SCALAR',
       ),
     ),
     238 =>
@@ -21303,6 +36526,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SCHEMA',
+      ),
     ),
     239 =>
     array (
@@ -21310,6 +36537,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SCHEMAS',
       ),
     ),
     240 =>
@@ -21319,6 +36550,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SCROLL',
+      ),
     ),
     241 =>
     array (
@@ -21326,6 +36561,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SEARCH',
       ),
     ),
     242 =>
@@ -21335,6 +36574,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SECOND_P',
+      ),
     ),
     243 =>
     array (
@@ -21342,6 +36585,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SECURITY',
       ),
     ),
     244 =>
@@ -21351,6 +36598,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SEQUENCE',
+      ),
     ),
     245 =>
     array (
@@ -21358,6 +36609,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SEQUENCES',
       ),
     ),
     246 =>
@@ -21367,6 +36622,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SERIALIZABLE',
+      ),
     ),
     247 =>
     array (
@@ -21374,6 +36633,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SERVER',
       ),
     ),
     248 =>
@@ -21383,6 +36646,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SESSION',
+      ),
     ),
     249 =>
     array (
@@ -21390,6 +36657,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SET',
       ),
     ),
     250 =>
@@ -21399,6 +36670,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SETS',
+      ),
     ),
     251 =>
     array (
@@ -21406,6 +36681,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SHARE',
       ),
     ),
     252 =>
@@ -21415,6 +36694,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+      ),
     ),
     253 =>
     array (
@@ -21422,6 +36705,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SIMPLE',
       ),
     ),
     254 =>
@@ -21431,6 +36718,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SKIP',
+      ),
     ),
     255 =>
     array (
@@ -21438,6 +36729,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SNAPSHOT',
       ),
     ),
     256 =>
@@ -21447,6 +36742,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SQL_P',
+      ),
     ),
     257 =>
     array (
@@ -21454,6 +36753,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'STABLE',
       ),
     ),
     258 =>
@@ -21463,6 +36766,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'STANDALONE_P',
+      ),
     ),
     259 =>
     array (
@@ -21470,6 +36777,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'START',
       ),
     ),
     260 =>
@@ -21479,6 +36790,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'STATEMENT',
+      ),
     ),
     261 =>
     array (
@@ -21486,6 +36801,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'STATISTICS',
       ),
     ),
     262 =>
@@ -21495,6 +36814,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'STDIN',
+      ),
     ),
     263 =>
     array (
@@ -21502,6 +36825,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'STDOUT',
       ),
     ),
     264 =>
@@ -21511,6 +36838,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'STORAGE',
+      ),
     ),
     265 =>
     array (
@@ -21518,6 +36849,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'STORED',
       ),
     ),
     266 =>
@@ -21527,6 +36862,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'STRICT_P',
+      ),
     ),
     267 =>
     array (
@@ -21534,6 +36873,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'STRIP_P',
       ),
     ),
     268 =>
@@ -21543,6 +36886,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SUBSCRIPTION',
+      ),
     ),
     269 =>
     array (
@@ -21550,6 +36897,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SUPPORT',
       ),
     ),
     270 =>
@@ -21559,6 +36910,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SYSID',
+      ),
     ),
     271 =>
     array (
@@ -21566,6 +36921,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SYSTEM_P',
       ),
     ),
     272 =>
@@ -21575,6 +36934,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TABLES',
+      ),
     ),
     273 =>
     array (
@@ -21582,6 +36945,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TABLESPACE',
       ),
     ),
     274 =>
@@ -21591,6 +36958,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TEMP',
+      ),
     ),
     275 =>
     array (
@@ -21598,6 +36969,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TEMPLATE',
       ),
     ),
     276 =>
@@ -21607,6 +36982,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TEMPORARY',
+      ),
     ),
     277 =>
     array (
@@ -21614,6 +36993,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TEXT_P',
       ),
     ),
     278 =>
@@ -21623,6 +37006,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TIES',
+      ),
     ),
     279 =>
     array (
@@ -21630,6 +37017,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TRANSACTION',
       ),
     ),
     280 =>
@@ -21639,6 +37030,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TRANSFORM',
+      ),
     ),
     281 =>
     array (
@@ -21646,6 +37041,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TRIGGER',
       ),
     ),
     282 =>
@@ -21655,6 +37054,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TRUNCATE',
+      ),
     ),
     283 =>
     array (
@@ -21662,6 +37065,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TRUSTED',
       ),
     ),
     284 =>
@@ -21671,6 +37078,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TYPE_P',
+      ),
     ),
     285 =>
     array (
@@ -21678,6 +37089,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TYPES_P',
       ),
     ),
     286 =>
@@ -21687,6 +37102,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'UESCAPE',
+      ),
     ),
     287 =>
     array (
@@ -21694,6 +37113,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'UNBOUNDED',
       ),
     ),
     288 =>
@@ -21703,6 +37126,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNCOMMITTED',
+      ),
     ),
     289 =>
     array (
@@ -21710,6 +37137,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'UNENCRYPTED',
       ),
     ),
     290 =>
@@ -21719,6 +37150,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNKNOWN',
+      ),
     ),
     291 =>
     array (
@@ -21726,6 +37161,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'UNLISTEN',
       ),
     ),
     292 =>
@@ -21735,6 +37174,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNLOGGED',
+      ),
     ),
     293 =>
     array (
@@ -21742,6 +37185,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'UNTIL',
       ),
     ),
     294 =>
@@ -21751,6 +37198,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'UPDATE',
+      ),
     ),
     295 =>
     array (
@@ -21758,6 +37209,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'VACUUM',
       ),
     ),
     296 =>
@@ -21767,6 +37222,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'VALID',
+      ),
     ),
     297 =>
     array (
@@ -21774,6 +37233,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'VALIDATE',
       ),
     ),
     298 =>
@@ -21783,6 +37246,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'VALIDATOR',
+      ),
     ),
     299 =>
     array (
@@ -21790,6 +37257,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'VALUE_P',
       ),
     ),
     300 =>
@@ -21799,6 +37270,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'VARYING',
+      ),
     ),
     301 =>
     array (
@@ -21806,6 +37281,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'VERSION_P',
       ),
     ),
     302 =>
@@ -21815,6 +37294,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'VIEW',
+      ),
     ),
     303 =>
     array (
@@ -21822,6 +37305,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'VIEWS',
       ),
     ),
     304 =>
@@ -21831,6 +37318,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'VOLATILE',
+      ),
     ),
     305 =>
     array (
@@ -21838,6 +37329,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'WHITESPACE_P',
       ),
     ),
     306 =>
@@ -21847,6 +37342,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'WITHIN',
+      ),
     ),
     307 =>
     array (
@@ -21854,6 +37353,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'WITHOUT',
       ),
     ),
     308 =>
@@ -21863,6 +37366,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'WORK',
+      ),
     ),
     309 =>
     array (
@@ -21870,6 +37377,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'WRAPPER',
       ),
     ),
     310 =>
@@ -21879,6 +37390,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'WRITE',
+      ),
     ),
     311 =>
     array (
@@ -21886,6 +37401,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'XML_P',
       ),
     ),
     312 =>
@@ -21895,6 +37414,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'YEAR_P',
+      ),
     ),
     313 =>
     array (
@@ -21903,6 +37426,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'YES_P',
+      ),
     ),
     314 =>
     array (
@@ -21910,6 +37437,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ZONE',
       ),
     ),
   ),
@@ -21922,6 +37453,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'BETWEEN',
+      ),
     ),
     1 =>
     array (
@@ -21929,6 +37464,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BIGINT',
       ),
     ),
     2 =>
@@ -21938,6 +37477,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'BIT',
+      ),
     ),
     3 =>
     array (
@@ -21945,6 +37488,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BOOLEAN_P',
       ),
     ),
     4 =>
@@ -21954,6 +37501,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CHAR_P',
+      ),
     ),
     5 =>
     array (
@@ -21961,6 +37512,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CHARACTER',
       ),
     ),
     6 =>
@@ -21970,6 +37525,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'COALESCE',
+      ),
     ),
     7 =>
     array (
@@ -21977,6 +37536,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEC',
       ),
     ),
     8 =>
@@ -21986,6 +37549,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DECIMAL_P',
+      ),
     ),
     9 =>
     array (
@@ -21993,6 +37560,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'EXISTS',
       ),
     ),
     10 =>
@@ -22002,6 +37573,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'EXTRACT',
+      ),
     ),
     11 =>
     array (
@@ -22009,6 +37584,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FLOAT_P',
       ),
     ),
     12 =>
@@ -22018,6 +37597,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'GREATEST',
+      ),
     ),
     13 =>
     array (
@@ -22025,6 +37608,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'GROUPING',
       ),
     ),
     14 =>
@@ -22034,6 +37621,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INOUT',
+      ),
     ),
     15 =>
     array (
@@ -22041,6 +37632,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INT_P',
       ),
     ),
     16 =>
@@ -22050,6 +37645,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INTEGER',
+      ),
     ),
     17 =>
     array (
@@ -22057,6 +37656,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INTERVAL',
       ),
     ),
     18 =>
@@ -22066,6 +37669,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'JSON_ARRAY',
+      ),
     ),
     19 =>
     array (
@@ -22073,6 +37680,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'JSON_ARRAYAGG',
       ),
     ),
     20 =>
@@ -22082,6 +37693,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'JSON_OBJECT',
+      ),
     ),
     21 =>
     array (
@@ -22089,6 +37704,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'JSON_OBJECTAGG',
       ),
     ),
     22 =>
@@ -22098,6 +37717,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LEAST',
+      ),
     ),
     23 =>
     array (
@@ -22105,6 +37728,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NATIONAL',
       ),
     ),
     24 =>
@@ -22114,6 +37741,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NCHAR',
+      ),
     ),
     25 =>
     array (
@@ -22121,6 +37752,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NONE',
       ),
     ),
     26 =>
@@ -22130,6 +37765,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NORMALIZE',
+      ),
     ),
     27 =>
     array (
@@ -22137,6 +37776,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NULLIF',
       ),
     ),
     28 =>
@@ -22146,6 +37789,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NUMERIC',
+      ),
     ),
     29 =>
     array (
@@ -22153,6 +37800,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'OUT_P',
       ),
     ),
     30 =>
@@ -22162,6 +37813,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'OVERLAY',
+      ),
     ),
     31 =>
     array (
@@ -22169,6 +37824,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'POSITION',
       ),
     ),
     32 =>
@@ -22178,6 +37837,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PRECISION',
+      ),
     ),
     33 =>
     array (
@@ -22185,6 +37848,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REAL',
       ),
     ),
     34 =>
@@ -22194,6 +37861,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ROW',
+      ),
     ),
     35 =>
     array (
@@ -22201,6 +37872,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SETOF',
       ),
     ),
     36 =>
@@ -22210,6 +37885,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SMALLINT',
+      ),
     ),
     37 =>
     array (
@@ -22217,6 +37896,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SUBSTRING',
       ),
     ),
     38 =>
@@ -22226,6 +37909,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TIME',
+      ),
     ),
     39 =>
     array (
@@ -22233,6 +37920,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TIMESTAMP',
       ),
     ),
     40 =>
@@ -22242,6 +37933,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TREAT',
+      ),
     ),
     41 =>
     array (
@@ -22249,6 +37944,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TRIM',
       ),
     ),
     42 =>
@@ -22258,6 +37957,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'VALUES',
+      ),
     ),
     43 =>
     array (
@@ -22265,6 +37968,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'VARCHAR',
       ),
     ),
     44 =>
@@ -22274,6 +37981,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'XMLATTRIBUTES',
+      ),
     ),
     45 =>
     array (
@@ -22281,6 +37992,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'XMLCONCAT',
       ),
     ),
     46 =>
@@ -22290,6 +38005,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'XMLELEMENT',
+      ),
     ),
     47 =>
     array (
@@ -22297,6 +38016,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'XMLEXISTS',
       ),
     ),
     48 =>
@@ -22306,6 +38029,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'XMLFOREST',
+      ),
     ),
     49 =>
     array (
@@ -22313,6 +38040,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'XMLNAMESPACES',
       ),
     ),
     50 =>
@@ -22322,6 +38053,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'XMLPARSE',
+      ),
     ),
     51 =>
     array (
@@ -22329,6 +38064,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'XMLPI',
       ),
     ),
     52 =>
@@ -22338,6 +38077,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'XMLROOT',
+      ),
     ),
     53 =>
     array (
@@ -22346,6 +38089,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'XMLSERIALIZE',
+      ),
     ),
     54 =>
     array (
@@ -22353,6 +38100,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'XMLTABLE',
       ),
     ),
   ),
@@ -22365,6 +38116,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'AUTHORIZATION',
+      ),
     ),
     1 =>
     array (
@@ -22372,6 +38127,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BINARY',
       ),
     ),
     2 =>
@@ -22381,6 +38140,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'COLLATION',
+      ),
     ),
     3 =>
     array (
@@ -22388,6 +38151,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CONCURRENTLY',
       ),
     ),
     4 =>
@@ -22397,6 +38164,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CROSS',
+      ),
     ),
     5 =>
     array (
@@ -22404,6 +38175,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_SCHEMA',
       ),
     ),
     6 =>
@@ -22413,6 +38188,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FREEZE',
+      ),
     ),
     7 =>
     array (
@@ -22420,6 +38199,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FULL',
       ),
     ),
     8 =>
@@ -22429,6 +38212,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ILIKE',
+      ),
     ),
     9 =>
     array (
@@ -22436,6 +38223,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INNER_P',
       ),
     ),
     10 =>
@@ -22445,6 +38236,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'IS',
+      ),
     ),
     11 =>
     array (
@@ -22452,6 +38247,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ISNULL',
       ),
     ),
     12 =>
@@ -22461,6 +38260,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'JOIN',
+      ),
     ),
     13 =>
     array (
@@ -22468,6 +38271,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LEFT',
       ),
     ),
     14 =>
@@ -22477,6 +38284,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LIKE',
+      ),
     ),
     15 =>
     array (
@@ -22484,6 +38295,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NATURAL',
       ),
     ),
     16 =>
@@ -22493,6 +38308,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NOTNULL',
+      ),
     ),
     17 =>
     array (
@@ -22500,6 +38319,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'OUTER_P',
       ),
     ),
     18 =>
@@ -22509,6 +38332,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'OVERLAPS',
+      ),
     ),
     19 =>
     array (
@@ -22516,6 +38343,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RIGHT',
       ),
     ),
     20 =>
@@ -22525,6 +38356,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SIMILAR',
+      ),
     ),
     21 =>
     array (
@@ -22533,6 +38368,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TABLESAMPLE',
+      ),
     ),
     22 =>
     array (
@@ -22540,6 +38379,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'VERBOSE',
       ),
     ),
   ),
@@ -22552,6 +38395,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALL',
+      ),
     ),
     1 =>
     array (
@@ -22559,6 +38406,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ANALYSE',
       ),
     ),
     2 =>
@@ -22568,6 +38419,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ANALYZE',
+      ),
     ),
     3 =>
     array (
@@ -22575,6 +38430,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'AND',
       ),
     ),
     4 =>
@@ -22584,6 +38443,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ANY',
+      ),
     ),
     5 =>
     array (
@@ -22591,6 +38454,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ARRAY',
       ),
     ),
     6 =>
@@ -22600,6 +38467,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'AS',
+      ),
     ),
     7 =>
     array (
@@ -22607,6 +38478,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ASC',
       ),
     ),
     8 =>
@@ -22616,6 +38491,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ASYMMETRIC',
+      ),
     ),
     9 =>
     array (
@@ -22623,6 +38502,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BOTH',
       ),
     ),
     10 =>
@@ -22632,6 +38515,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CASE',
+      ),
     ),
     11 =>
     array (
@@ -22639,6 +38526,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CAST',
       ),
     ),
     12 =>
@@ -22648,6 +38539,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CHECK',
+      ),
     ),
     13 =>
     array (
@@ -22655,6 +38550,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COLLATE',
       ),
     ),
     14 =>
@@ -22664,6 +38563,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'COLUMN',
+      ),
     ),
     15 =>
     array (
@@ -22671,6 +38574,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CONSTRAINT',
       ),
     ),
     16 =>
@@ -22680,6 +38587,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+      ),
     ),
     17 =>
     array (
@@ -22687,6 +38598,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_CATALOG',
       ),
     ),
     18 =>
@@ -22696,6 +38611,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_DATE',
+      ),
     ),
     19 =>
     array (
@@ -22703,6 +38622,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_ROLE',
       ),
     ),
     20 =>
@@ -22712,6 +38635,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_TIME',
+      ),
     ),
     21 =>
     array (
@@ -22719,6 +38646,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_TIMESTAMP',
       ),
     ),
     22 =>
@@ -22728,6 +38659,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_USER',
+      ),
     ),
     23 =>
     array (
@@ -22735,6 +38670,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT',
       ),
     ),
     24 =>
@@ -22744,6 +38683,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DEFERRABLE',
+      ),
     ),
     25 =>
     array (
@@ -22751,6 +38694,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DESC',
       ),
     ),
     26 =>
@@ -22760,6 +38707,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DISTINCT',
+      ),
     ),
     27 =>
     array (
@@ -22767,6 +38718,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DO',
       ),
     ),
     28 =>
@@ -22776,6 +38731,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ELSE',
+      ),
     ),
     29 =>
     array (
@@ -22783,6 +38742,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'END_P',
       ),
     ),
     30 =>
@@ -22792,6 +38755,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'EXCEPT',
+      ),
     ),
     31 =>
     array (
@@ -22799,6 +38766,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FALSE_P',
       ),
     ),
     32 =>
@@ -22808,6 +38779,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FETCH',
+      ),
     ),
     33 =>
     array (
@@ -22815,6 +38790,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FOR',
       ),
     ),
     34 =>
@@ -22824,6 +38803,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FOREIGN',
+      ),
     ),
     35 =>
     array (
@@ -22831,6 +38814,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FROM',
       ),
     ),
     36 =>
@@ -22840,6 +38827,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'GRANT',
+      ),
     ),
     37 =>
     array (
@@ -22847,6 +38838,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'GROUP_P',
       ),
     ),
     38 =>
@@ -22856,6 +38851,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'HAVING',
+      ),
     ),
     39 =>
     array (
@@ -22863,6 +38862,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'IN_P',
       ),
     ),
     40 =>
@@ -22872,6 +38875,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INITIALLY',
+      ),
     ),
     41 =>
     array (
@@ -22879,6 +38886,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INTERSECT',
       ),
     ),
     42 =>
@@ -22888,6 +38899,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INTO',
+      ),
     ),
     43 =>
     array (
@@ -22895,6 +38910,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LATERAL_P',
       ),
     ),
     44 =>
@@ -22904,6 +38923,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LEADING',
+      ),
     ),
     45 =>
     array (
@@ -22911,6 +38934,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LIMIT',
       ),
     ),
     46 =>
@@ -22920,6 +38947,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LOCALTIME',
+      ),
     ),
     47 =>
     array (
@@ -22927,6 +38958,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LOCALTIMESTAMP',
       ),
     ),
     48 =>
@@ -22936,6 +38971,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NOT',
+      ),
     ),
     49 =>
     array (
@@ -22943,6 +38982,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NULL_P',
       ),
     ),
     50 =>
@@ -22952,6 +38995,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'OFFSET',
+      ),
     ),
     51 =>
     array (
@@ -22959,6 +39006,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ON',
       ),
     ),
     52 =>
@@ -22968,6 +39019,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ONLY',
+      ),
     ),
     53 =>
     array (
@@ -22975,6 +39030,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'OR',
       ),
     ),
     54 =>
@@ -22984,6 +39043,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ORDER',
+      ),
     ),
     55 =>
     array (
@@ -22991,6 +39054,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PLACING',
       ),
     ),
     56 =>
@@ -23000,6 +39067,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PRIMARY',
+      ),
     ),
     57 =>
     array (
@@ -23007,6 +39078,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REFERENCES',
       ),
     ),
     58 =>
@@ -23016,6 +39091,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'RETURNING',
+      ),
     ),
     59 =>
     array (
@@ -23023,6 +39102,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SELECT',
       ),
     ),
     60 =>
@@ -23032,6 +39115,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SESSION_USER',
+      ),
     ),
     61 =>
     array (
@@ -23039,6 +39126,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SOME',
       ),
     ),
     62 =>
@@ -23048,6 +39139,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SYMMETRIC',
+      ),
     ),
     63 =>
     array (
@@ -23055,6 +39150,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SYSTEM_USER',
       ),
     ),
     64 =>
@@ -23064,6 +39163,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TABLE',
+      ),
     ),
     65 =>
     array (
@@ -23071,6 +39174,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'THEN',
       ),
     ),
     66 =>
@@ -23080,6 +39187,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TO',
+      ),
     ),
     67 =>
     array (
@@ -23087,6 +39198,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TRAILING',
       ),
     ),
     68 =>
@@ -23096,6 +39211,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TRUE_P',
+      ),
     ),
     69 =>
     array (
@@ -23103,6 +39222,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'UNION',
       ),
     ),
     70 =>
@@ -23112,6 +39235,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNIQUE',
+      ),
     ),
     71 =>
     array (
@@ -23119,6 +39246,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'USER',
       ),
     ),
     72 =>
@@ -23128,6 +39259,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'USING',
+      ),
     ),
     73 =>
     array (
@@ -23135,6 +39270,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'VARIADIC',
       ),
     ),
     74 =>
@@ -23144,6 +39283,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'WHEN',
+      ),
     ),
     75 =>
     array (
@@ -23151,6 +39294,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'WHERE',
       ),
     ),
     76 =>
@@ -23160,6 +39307,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'WINDOW',
+      ),
     ),
     77 =>
     array (
@@ -23167,6 +39318,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'WITH',
       ),
     ),
   ),
@@ -23179,6 +39334,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ABORT_P',
+      ),
     ),
     1 =>
     array (
@@ -23186,6 +39345,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ABSENT',
       ),
     ),
     2 =>
@@ -23195,6 +39358,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ABSOLUTE_P',
+      ),
     ),
     3 =>
     array (
@@ -23202,6 +39369,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ACCESS',
       ),
     ),
     4 =>
@@ -23211,6 +39382,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ACTION',
+      ),
     ),
     5 =>
     array (
@@ -23218,6 +39393,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ADD_P',
       ),
     ),
     6 =>
@@ -23227,6 +39406,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ADMIN',
+      ),
     ),
     7 =>
     array (
@@ -23234,6 +39417,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'AFTER',
       ),
     ),
     8 =>
@@ -23243,6 +39430,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'AGGREGATE',
+      ),
     ),
     9 =>
     array (
@@ -23250,6 +39441,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALL',
       ),
     ),
     10 =>
@@ -23259,6 +39454,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALSO',
+      ),
     ),
     11 =>
     array (
@@ -23266,6 +39465,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
       ),
     ),
     12 =>
@@ -23275,6 +39478,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALWAYS',
+      ),
     ),
     13 =>
     array (
@@ -23282,6 +39489,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ANALYSE',
       ),
     ),
     14 =>
@@ -23291,6 +39502,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ANALYZE',
+      ),
     ),
     15 =>
     array (
@@ -23298,6 +39513,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'AND',
       ),
     ),
     16 =>
@@ -23307,6 +39526,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ANY',
+      ),
     ),
     17 =>
     array (
@@ -23314,6 +39537,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ASC',
       ),
     ),
     18 =>
@@ -23323,6 +39550,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ASENSITIVE',
+      ),
     ),
     19 =>
     array (
@@ -23330,6 +39561,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ASSERTION',
       ),
     ),
     20 =>
@@ -23339,6 +39574,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ASSIGNMENT',
+      ),
     ),
     21 =>
     array (
@@ -23346,6 +39585,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ASYMMETRIC',
       ),
     ),
     22 =>
@@ -23355,6 +39598,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'AT',
+      ),
     ),
     23 =>
     array (
@@ -23362,6 +39609,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ATOMIC',
       ),
     ),
     24 =>
@@ -23371,6 +39622,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ATTACH',
+      ),
     ),
     25 =>
     array (
@@ -23378,6 +39633,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ATTRIBUTE',
       ),
     ),
     26 =>
@@ -23387,6 +39646,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'AUTHORIZATION',
+      ),
     ),
     27 =>
     array (
@@ -23394,6 +39657,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BACKWARD',
       ),
     ),
     28 =>
@@ -23403,6 +39670,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'BEFORE',
+      ),
     ),
     29 =>
     array (
@@ -23410,6 +39681,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BEGIN_P',
       ),
     ),
     30 =>
@@ -23419,6 +39694,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'BETWEEN',
+      ),
     ),
     31 =>
     array (
@@ -23426,6 +39705,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BIGINT',
       ),
     ),
     32 =>
@@ -23435,6 +39718,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'BINARY',
+      ),
     ),
     33 =>
     array (
@@ -23442,6 +39729,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BIT',
       ),
     ),
     34 =>
@@ -23451,6 +39742,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'BOOLEAN_P',
+      ),
     ),
     35 =>
     array (
@@ -23458,6 +39753,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BOTH',
       ),
     ),
     36 =>
@@ -23467,6 +39766,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'BREADTH',
+      ),
     ),
     37 =>
     array (
@@ -23474,6 +39777,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BY',
       ),
     ),
     38 =>
@@ -23483,6 +39790,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CACHE',
+      ),
     ),
     39 =>
     array (
@@ -23490,6 +39801,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CALL',
       ),
     ),
     40 =>
@@ -23499,6 +39814,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CALLED',
+      ),
     ),
     41 =>
     array (
@@ -23506,6 +39825,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CASCADE',
       ),
     ),
     42 =>
@@ -23515,6 +39838,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CASCADED',
+      ),
     ),
     43 =>
     array (
@@ -23522,6 +39849,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CASE',
       ),
     ),
     44 =>
@@ -23531,6 +39862,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CAST',
+      ),
     ),
     45 =>
     array (
@@ -23538,6 +39873,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CATALOG_P',
       ),
     ),
     46 =>
@@ -23547,6 +39886,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CHAIN',
+      ),
     ),
     47 =>
     array (
@@ -23554,6 +39897,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CHARACTERISTICS',
       ),
     ),
     48 =>
@@ -23563,6 +39910,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CHECK',
+      ),
     ),
     49 =>
     array (
@@ -23570,6 +39921,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CHECKPOINT',
       ),
     ),
     50 =>
@@ -23579,6 +39934,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CLASS',
+      ),
     ),
     51 =>
     array (
@@ -23586,6 +39945,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CLOSE',
       ),
     ),
     52 =>
@@ -23595,6 +39958,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CLUSTER',
+      ),
     ),
     53 =>
     array (
@@ -23602,6 +39969,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COALESCE',
       ),
     ),
     54 =>
@@ -23611,6 +39982,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'COLLATE',
+      ),
     ),
     55 =>
     array (
@@ -23618,6 +39993,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COLLATION',
       ),
     ),
     56 =>
@@ -23627,6 +40006,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'COLUMN',
+      ),
     ),
     57 =>
     array (
@@ -23634,6 +40017,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COLUMNS',
       ),
     ),
     58 =>
@@ -23643,6 +40030,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT',
+      ),
     ),
     59 =>
     array (
@@ -23650,6 +40041,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COMMENTS',
       ),
     ),
     60 =>
@@ -23659,6 +40054,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMMIT',
+      ),
     ),
     61 =>
     array (
@@ -23666,6 +40065,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COMMITTED',
       ),
     ),
     62 =>
@@ -23675,6 +40078,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMPRESSION',
+      ),
     ),
     63 =>
     array (
@@ -23682,6 +40089,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CONCURRENTLY',
       ),
     ),
     64 =>
@@ -23691,6 +40102,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CONFIGURATION',
+      ),
     ),
     65 =>
     array (
@@ -23698,6 +40113,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CONFLICT',
       ),
     ),
     66 =>
@@ -23707,6 +40126,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CONNECTION',
+      ),
     ),
     67 =>
     array (
@@ -23714,6 +40137,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CONSTRAINT',
       ),
     ),
     68 =>
@@ -23723,6 +40150,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CONSTRAINTS',
+      ),
     ),
     69 =>
     array (
@@ -23730,6 +40161,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CONTENT_P',
       ),
     ),
     70 =>
@@ -23739,6 +40174,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CONTINUE_P',
+      ),
     ),
     71 =>
     array (
@@ -23746,6 +40185,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CONVERSION_P',
       ),
     ),
     72 =>
@@ -23755,6 +40198,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'COPY',
+      ),
     ),
     73 =>
     array (
@@ -23762,6 +40209,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COST',
       ),
     ),
     74 =>
@@ -23771,6 +40222,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CROSS',
+      ),
     ),
     75 =>
     array (
@@ -23778,6 +40233,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CSV',
       ),
     ),
     76 =>
@@ -23787,6 +40246,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CUBE',
+      ),
     ),
     77 =>
     array (
@@ -23794,6 +40257,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_P',
       ),
     ),
     78 =>
@@ -23803,6 +40270,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_CATALOG',
+      ),
     ),
     79 =>
     array (
@@ -23810,6 +40281,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_DATE',
       ),
     ),
     80 =>
@@ -23819,6 +40294,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_ROLE',
+      ),
     ),
     81 =>
     array (
@@ -23826,6 +40305,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_SCHEMA',
       ),
     ),
     82 =>
@@ -23835,6 +40318,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_TIME',
+      ),
     ),
     83 =>
     array (
@@ -23842,6 +40329,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_TIMESTAMP',
       ),
     ),
     84 =>
@@ -23851,6 +40342,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_USER',
+      ),
     ),
     85 =>
     array (
@@ -23858,6 +40353,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CURSOR',
       ),
     ),
     86 =>
@@ -23867,6 +40366,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CYCLE',
+      ),
     ),
     87 =>
     array (
@@ -23874,6 +40377,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DATA_P',
       ),
     ),
     88 =>
@@ -23883,6 +40390,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DATABASE',
+      ),
     ),
     89 =>
     array (
@@ -23890,6 +40401,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEALLOCATE',
       ),
     ),
     90 =>
@@ -23899,6 +40414,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DEC',
+      ),
     ),
     91 =>
     array (
@@ -23906,6 +40425,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DECIMAL_P',
       ),
     ),
     92 =>
@@ -23915,6 +40438,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DECLARE',
+      ),
     ),
     93 =>
     array (
@@ -23922,6 +40449,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT',
       ),
     ),
     94 =>
@@ -23931,6 +40462,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULTS',
+      ),
     ),
     95 =>
     array (
@@ -23938,6 +40473,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEFERRABLE',
       ),
     ),
     96 =>
@@ -23947,6 +40486,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DEFERRED',
+      ),
     ),
     97 =>
     array (
@@ -23954,6 +40497,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEFINER',
       ),
     ),
     98 =>
@@ -23963,6 +40510,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DELETE_P',
+      ),
     ),
     99 =>
     array (
@@ -23970,6 +40521,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DELIMITER',
       ),
     ),
     100 =>
@@ -23979,6 +40534,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DELIMITERS',
+      ),
     ),
     101 =>
     array (
@@ -23986,6 +40545,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEPENDS',
       ),
     ),
     102 =>
@@ -23995,6 +40558,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DEPTH',
+      ),
     ),
     103 =>
     array (
@@ -24002,6 +40569,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DESC',
       ),
     ),
     104 =>
@@ -24011,6 +40582,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DETACH',
+      ),
     ),
     105 =>
     array (
@@ -24018,6 +40593,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DICTIONARY',
       ),
     ),
     106 =>
@@ -24027,6 +40606,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DISABLE_P',
+      ),
     ),
     107 =>
     array (
@@ -24034,6 +40617,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DISCARD',
       ),
     ),
     108 =>
@@ -24043,6 +40630,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DISTINCT',
+      ),
     ),
     109 =>
     array (
@@ -24050,6 +40641,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DO',
       ),
     ),
     110 =>
@@ -24059,6 +40654,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DOCUMENT_P',
+      ),
     ),
     111 =>
     array (
@@ -24066,6 +40665,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DOMAIN_P',
       ),
     ),
     112 =>
@@ -24075,6 +40678,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DOUBLE_P',
+      ),
     ),
     113 =>
     array (
@@ -24082,6 +40689,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
       ),
     ),
     114 =>
@@ -24091,6 +40702,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'EACH',
+      ),
     ),
     115 =>
     array (
@@ -24098,6 +40713,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ELSE',
       ),
     ),
     116 =>
@@ -24107,6 +40726,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ENABLE_P',
+      ),
     ),
     117 =>
     array (
@@ -24114,6 +40737,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ENCODING',
       ),
     ),
     118 =>
@@ -24123,6 +40750,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ENCRYPTED',
+      ),
     ),
     119 =>
     array (
@@ -24130,6 +40761,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'END_P',
       ),
     ),
     120 =>
@@ -24139,6 +40774,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ENUM_P',
+      ),
     ),
     121 =>
     array (
@@ -24146,6 +40785,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ESCAPE',
       ),
     ),
     122 =>
@@ -24155,6 +40798,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'EVENT',
+      ),
     ),
     123 =>
     array (
@@ -24162,6 +40809,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'EXCLUDE',
       ),
     ),
     124 =>
@@ -24171,6 +40822,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'EXCLUDING',
+      ),
     ),
     125 =>
     array (
@@ -24178,6 +40833,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'EXCLUSIVE',
       ),
     ),
     126 =>
@@ -24187,6 +40846,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'EXECUTE',
+      ),
     ),
     127 =>
     array (
@@ -24194,6 +40857,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'EXISTS',
       ),
     ),
     128 =>
@@ -24203,6 +40870,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'EXPLAIN',
+      ),
     ),
     129 =>
     array (
@@ -24210,6 +40881,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'EXPRESSION',
       ),
     ),
     130 =>
@@ -24219,6 +40894,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'EXTENSION',
+      ),
     ),
     131 =>
     array (
@@ -24226,6 +40905,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'EXTERNAL',
       ),
     ),
     132 =>
@@ -24235,6 +40918,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'EXTRACT',
+      ),
     ),
     133 =>
     array (
@@ -24242,6 +40929,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FALSE_P',
       ),
     ),
     134 =>
@@ -24251,6 +40942,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FAMILY',
+      ),
     ),
     135 =>
     array (
@@ -24258,6 +40953,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FINALIZE',
       ),
     ),
     136 =>
@@ -24267,6 +40966,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FIRST_P',
+      ),
     ),
     137 =>
     array (
@@ -24274,6 +40977,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FLOAT_P',
       ),
     ),
     138 =>
@@ -24283,6 +40990,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FOLLOWING',
+      ),
     ),
     139 =>
     array (
@@ -24290,6 +41001,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FORCE',
       ),
     ),
     140 =>
@@ -24299,6 +41014,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FOREIGN',
+      ),
     ),
     141 =>
     array (
@@ -24306,6 +41025,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FORMAT',
       ),
     ),
     142 =>
@@ -24315,6 +41038,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FORWARD',
+      ),
     ),
     143 =>
     array (
@@ -24322,6 +41049,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FREEZE',
       ),
     ),
     144 =>
@@ -24331,6 +41062,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FULL',
+      ),
     ),
     145 =>
     array (
@@ -24338,6 +41073,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FUNCTION',
       ),
     ),
     146 =>
@@ -24347,6 +41086,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FUNCTIONS',
+      ),
     ),
     147 =>
     array (
@@ -24354,6 +41097,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'GENERATED',
       ),
     ),
     148 =>
@@ -24363,6 +41110,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'GLOBAL',
+      ),
     ),
     149 =>
     array (
@@ -24370,6 +41121,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'GRANTED',
       ),
     ),
     150 =>
@@ -24379,6 +41134,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'GREATEST',
+      ),
     ),
     151 =>
     array (
@@ -24386,6 +41145,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'GROUPING',
       ),
     ),
     152 =>
@@ -24395,6 +41158,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'GROUPS',
+      ),
     ),
     153 =>
     array (
@@ -24402,6 +41169,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'HANDLER',
       ),
     ),
     154 =>
@@ -24411,6 +41182,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'HEADER_P',
+      ),
     ),
     155 =>
     array (
@@ -24418,6 +41193,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'HOLD',
       ),
     ),
     156 =>
@@ -24427,6 +41206,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'IDENTITY_P',
+      ),
     ),
     157 =>
     array (
@@ -24434,6 +41217,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'IF_P',
       ),
     ),
     158 =>
@@ -24443,6 +41230,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ILIKE',
+      ),
     ),
     159 =>
     array (
@@ -24450,6 +41241,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'IMMEDIATE',
       ),
     ),
     160 =>
@@ -24459,6 +41254,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'IMMUTABLE',
+      ),
     ),
     161 =>
     array (
@@ -24466,6 +41265,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'IMPLICIT_P',
       ),
     ),
     162 =>
@@ -24475,6 +41278,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'IMPORT_P',
+      ),
     ),
     163 =>
     array (
@@ -24482,6 +41289,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'IN_P',
       ),
     ),
     164 =>
@@ -24491,6 +41302,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INCLUDE',
+      ),
     ),
     165 =>
     array (
@@ -24498,6 +41313,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INCLUDING',
       ),
     ),
     166 =>
@@ -24507,6 +41326,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INCREMENT',
+      ),
     ),
     167 =>
     array (
@@ -24514,6 +41337,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INDENT',
       ),
     ),
     168 =>
@@ -24523,6 +41350,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INDEX',
+      ),
     ),
     169 =>
     array (
@@ -24530,6 +41361,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INDEXES',
       ),
     ),
     170 =>
@@ -24539,6 +41374,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INHERIT',
+      ),
     ),
     171 =>
     array (
@@ -24546,6 +41385,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INHERITS',
       ),
     ),
     172 =>
@@ -24555,6 +41398,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INITIALLY',
+      ),
     ),
     173 =>
     array (
@@ -24562,6 +41409,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INLINE_P',
       ),
     ),
     174 =>
@@ -24571,6 +41422,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INNER_P',
+      ),
     ),
     175 =>
     array (
@@ -24578,6 +41433,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INOUT',
       ),
     ),
     176 =>
@@ -24587,6 +41446,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INPUT_P',
+      ),
     ),
     177 =>
     array (
@@ -24594,6 +41457,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INSENSITIVE',
       ),
     ),
     178 =>
@@ -24603,6 +41470,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INSERT',
+      ),
     ),
     179 =>
     array (
@@ -24610,6 +41481,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INSTEAD',
       ),
     ),
     180 =>
@@ -24619,6 +41494,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INT_P',
+      ),
     ),
     181 =>
     array (
@@ -24626,6 +41505,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INTEGER',
       ),
     ),
     182 =>
@@ -24635,6 +41518,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INTERVAL',
+      ),
     ),
     183 =>
     array (
@@ -24642,6 +41529,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INVOKER',
       ),
     ),
     184 =>
@@ -24651,6 +41542,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'IS',
+      ),
     ),
     185 =>
     array (
@@ -24658,6 +41553,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ISOLATION',
       ),
     ),
     186 =>
@@ -24667,6 +41566,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'JOIN',
+      ),
     ),
     187 =>
     array (
@@ -24674,6 +41577,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'JSON',
       ),
     ),
     188 =>
@@ -24683,6 +41590,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'JSON_ARRAY',
+      ),
     ),
     189 =>
     array (
@@ -24690,6 +41601,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'JSON_ARRAYAGG',
       ),
     ),
     190 =>
@@ -24699,6 +41614,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'JSON_OBJECT',
+      ),
     ),
     191 =>
     array (
@@ -24706,6 +41625,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'JSON_OBJECTAGG',
       ),
     ),
     192 =>
@@ -24715,6 +41638,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'KEY',
+      ),
     ),
     193 =>
     array (
@@ -24722,6 +41649,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'KEYS',
       ),
     ),
     194 =>
@@ -24731,6 +41662,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LABEL',
+      ),
     ),
     195 =>
     array (
@@ -24738,6 +41673,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LANGUAGE',
       ),
     ),
     196 =>
@@ -24747,6 +41686,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LARGE_P',
+      ),
     ),
     197 =>
     array (
@@ -24754,6 +41697,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LAST_P',
       ),
     ),
     198 =>
@@ -24763,6 +41710,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LATERAL_P',
+      ),
     ),
     199 =>
     array (
@@ -24770,6 +41721,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LEADING',
       ),
     ),
     200 =>
@@ -24779,6 +41734,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LEAKPROOF',
+      ),
     ),
     201 =>
     array (
@@ -24786,6 +41745,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LEAST',
       ),
     ),
     202 =>
@@ -24795,6 +41758,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LEFT',
+      ),
     ),
     203 =>
     array (
@@ -24802,6 +41769,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LEVEL',
       ),
     ),
     204 =>
@@ -24811,6 +41782,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LIKE',
+      ),
     ),
     205 =>
     array (
@@ -24818,6 +41793,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LISTEN',
       ),
     ),
     206 =>
@@ -24827,6 +41806,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LOAD',
+      ),
     ),
     207 =>
     array (
@@ -24834,6 +41817,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LOCAL',
       ),
     ),
     208 =>
@@ -24843,6 +41830,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LOCALTIME',
+      ),
     ),
     209 =>
     array (
@@ -24850,6 +41841,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LOCALTIMESTAMP',
       ),
     ),
     210 =>
@@ -24859,6 +41854,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LOCATION',
+      ),
     ),
     211 =>
     array (
@@ -24866,6 +41865,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LOCK_P',
       ),
     ),
     212 =>
@@ -24875,6 +41878,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LOCKED',
+      ),
     ),
     213 =>
     array (
@@ -24882,6 +41889,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LOGGED',
       ),
     ),
     214 =>
@@ -24891,6 +41902,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MAPPING',
+      ),
     ),
     215 =>
     array (
@@ -24898,6 +41913,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MATCH',
       ),
     ),
     216 =>
@@ -24907,6 +41926,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MATCHED',
+      ),
     ),
     217 =>
     array (
@@ -24914,6 +41937,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MATERIALIZED',
       ),
     ),
     218 =>
@@ -24923,6 +41950,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MAXVALUE',
+      ),
     ),
     219 =>
     array (
@@ -24930,6 +41961,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MERGE',
       ),
     ),
     220 =>
@@ -24939,6 +41974,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'METHOD',
+      ),
     ),
     221 =>
     array (
@@ -24946,6 +41985,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MINVALUE',
       ),
     ),
     222 =>
@@ -24955,6 +41998,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MODE',
+      ),
     ),
     223 =>
     array (
@@ -24962,6 +42009,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MOVE',
       ),
     ),
     224 =>
@@ -24971,6 +42022,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NAME_P',
+      ),
     ),
     225 =>
     array (
@@ -24978,6 +42033,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NAMES',
       ),
     ),
     226 =>
@@ -24987,6 +42046,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NATIONAL',
+      ),
     ),
     227 =>
     array (
@@ -24994,6 +42057,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NATURAL',
       ),
     ),
     228 =>
@@ -25003,6 +42070,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NCHAR',
+      ),
     ),
     229 =>
     array (
@@ -25010,6 +42081,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NEW',
       ),
     ),
     230 =>
@@ -25019,6 +42094,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NEXT',
+      ),
     ),
     231 =>
     array (
@@ -25026,6 +42105,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NFC',
       ),
     ),
     232 =>
@@ -25035,6 +42118,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NFD',
+      ),
     ),
     233 =>
     array (
@@ -25042,6 +42129,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NFKC',
       ),
     ),
     234 =>
@@ -25051,6 +42142,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NFKD',
+      ),
     ),
     235 =>
     array (
@@ -25058,6 +42153,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NO',
       ),
     ),
     236 =>
@@ -25067,6 +42166,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NONE',
+      ),
     ),
     237 =>
     array (
@@ -25074,6 +42177,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NORMALIZE',
       ),
     ),
     238 =>
@@ -25083,6 +42190,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NORMALIZED',
+      ),
     ),
     239 =>
     array (
@@ -25090,6 +42201,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NOT',
       ),
     ),
     240 =>
@@ -25099,6 +42214,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NOTHING',
+      ),
     ),
     241 =>
     array (
@@ -25106,6 +42225,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NOTIFY',
       ),
     ),
     242 =>
@@ -25115,6 +42238,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NOWAIT',
+      ),
     ),
     243 =>
     array (
@@ -25122,6 +42249,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NULL_P',
       ),
     ),
     244 =>
@@ -25131,6 +42262,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NULLIF',
+      ),
     ),
     245 =>
     array (
@@ -25138,6 +42273,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NULLS_P',
       ),
     ),
     246 =>
@@ -25147,6 +42286,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NUMERIC',
+      ),
     ),
     247 =>
     array (
@@ -25154,6 +42297,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'OBJECT_P',
       ),
     ),
     248 =>
@@ -25163,6 +42310,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'OF',
+      ),
     ),
     249 =>
     array (
@@ -25170,6 +42321,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'OFF',
       ),
     ),
     250 =>
@@ -25179,6 +42334,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'OIDS',
+      ),
     ),
     251 =>
     array (
@@ -25186,6 +42345,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'OLD',
       ),
     ),
     252 =>
@@ -25195,6 +42358,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ONLY',
+      ),
     ),
     253 =>
     array (
@@ -25202,6 +42369,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'OPERATOR',
       ),
     ),
     254 =>
@@ -25211,6 +42382,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'OPTION',
+      ),
     ),
     255 =>
     array (
@@ -25218,6 +42393,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'OPTIONS',
       ),
     ),
     256 =>
@@ -25227,6 +42406,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'OR',
+      ),
     ),
     257 =>
     array (
@@ -25234,6 +42417,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ORDINALITY',
       ),
     ),
     258 =>
@@ -25243,6 +42430,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'OTHERS',
+      ),
     ),
     259 =>
     array (
@@ -25250,6 +42441,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'OUT_P',
       ),
     ),
     260 =>
@@ -25259,6 +42454,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'OUTER_P',
+      ),
     ),
     261 =>
     array (
@@ -25266,6 +42465,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'OVERLAY',
       ),
     ),
     262 =>
@@ -25275,6 +42478,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'OVERRIDING',
+      ),
     ),
     263 =>
     array (
@@ -25282,6 +42489,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'OWNED',
       ),
     ),
     264 =>
@@ -25291,6 +42502,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'OWNER',
+      ),
     ),
     265 =>
     array (
@@ -25298,6 +42513,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PARALLEL',
       ),
     ),
     266 =>
@@ -25307,6 +42526,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PARAMETER',
+      ),
     ),
     267 =>
     array (
@@ -25314,6 +42537,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PARSER',
       ),
     ),
     268 =>
@@ -25323,6 +42550,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PARTIAL',
+      ),
     ),
     269 =>
     array (
@@ -25330,6 +42561,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PARTITION',
       ),
     ),
     270 =>
@@ -25339,6 +42574,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PASSING',
+      ),
     ),
     271 =>
     array (
@@ -25346,6 +42585,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD',
       ),
     ),
     272 =>
@@ -25355,6 +42598,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PLACING',
+      ),
     ),
     273 =>
     array (
@@ -25362,6 +42609,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PLANS',
       ),
     ),
     274 =>
@@ -25371,6 +42622,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'POLICY',
+      ),
     ),
     275 =>
     array (
@@ -25378,6 +42633,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'POSITION',
       ),
     ),
     276 =>
@@ -25387,6 +42646,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PRECEDING',
+      ),
     ),
     277 =>
     array (
@@ -25394,6 +42657,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PREPARE',
       ),
     ),
     278 =>
@@ -25403,6 +42670,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PREPARED',
+      ),
     ),
     279 =>
     array (
@@ -25410,6 +42681,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PRESERVE',
       ),
     ),
     280 =>
@@ -25419,6 +42694,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PRIMARY',
+      ),
     ),
     281 =>
     array (
@@ -25426,6 +42705,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PRIOR',
       ),
     ),
     282 =>
@@ -25435,6 +42718,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PRIVILEGES',
+      ),
     ),
     283 =>
     array (
@@ -25442,6 +42729,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PROCEDURAL',
       ),
     ),
     284 =>
@@ -25451,6 +42742,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PROCEDURE',
+      ),
     ),
     285 =>
     array (
@@ -25458,6 +42753,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PROCEDURES',
       ),
     ),
     286 =>
@@ -25467,6 +42766,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PROGRAM',
+      ),
     ),
     287 =>
     array (
@@ -25474,6 +42777,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PUBLICATION',
       ),
     ),
     288 =>
@@ -25483,6 +42790,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'QUOTE',
+      ),
     ),
     289 =>
     array (
@@ -25490,6 +42801,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RANGE',
       ),
     ),
     290 =>
@@ -25499,6 +42814,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'READ',
+      ),
     ),
     291 =>
     array (
@@ -25506,6 +42825,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REAL',
       ),
     ),
     292 =>
@@ -25515,6 +42838,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'REASSIGN',
+      ),
     ),
     293 =>
     array (
@@ -25522,6 +42849,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RECHECK',
       ),
     ),
     294 =>
@@ -25531,6 +42862,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'RECURSIVE',
+      ),
     ),
     295 =>
     array (
@@ -25538,6 +42873,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REF_P',
       ),
     ),
     296 =>
@@ -25547,6 +42886,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'REFERENCES',
+      ),
     ),
     297 =>
     array (
@@ -25554,6 +42897,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REFERENCING',
       ),
     ),
     298 =>
@@ -25563,6 +42910,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'REFRESH',
+      ),
     ),
     299 =>
     array (
@@ -25570,6 +42921,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REINDEX',
       ),
     ),
     300 =>
@@ -25579,6 +42934,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'RELATIVE_P',
+      ),
     ),
     301 =>
     array (
@@ -25586,6 +42945,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RELEASE',
       ),
     ),
     302 =>
@@ -25595,6 +42958,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'RENAME',
+      ),
     ),
     303 =>
     array (
@@ -25602,6 +42969,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REPEATABLE',
       ),
     ),
     304 =>
@@ -25611,6 +42982,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'REPLACE',
+      ),
     ),
     305 =>
     array (
@@ -25618,6 +42993,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REPLICA',
       ),
     ),
     306 =>
@@ -25627,6 +43006,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'RESET',
+      ),
     ),
     307 =>
     array (
@@ -25634,6 +43017,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RESTART',
       ),
     ),
     308 =>
@@ -25643,6 +43030,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'RESTRICT',
+      ),
     ),
     309 =>
     array (
@@ -25650,6 +43041,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RETURN',
       ),
     ),
     310 =>
@@ -25659,6 +43054,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'RETURNS',
+      ),
     ),
     311 =>
     array (
@@ -25666,6 +43065,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REVOKE',
       ),
     ),
     312 =>
@@ -25675,6 +43078,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'RIGHT',
+      ),
     ),
     313 =>
     array (
@@ -25682,6 +43089,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ROLE',
       ),
     ),
     314 =>
@@ -25691,6 +43102,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ROLLBACK',
+      ),
     ),
     315 =>
     array (
@@ -25698,6 +43113,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ROLLUP',
       ),
     ),
     316 =>
@@ -25707,6 +43126,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ROUTINE',
+      ),
     ),
     317 =>
     array (
@@ -25714,6 +43137,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ROUTINES',
       ),
     ),
     318 =>
@@ -25723,6 +43150,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ROW',
+      ),
     ),
     319 =>
     array (
@@ -25730,6 +43161,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ROWS',
       ),
     ),
     320 =>
@@ -25739,6 +43174,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'RULE',
+      ),
     ),
     321 =>
     array (
@@ -25746,6 +43185,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SAVEPOINT',
       ),
     ),
     322 =>
@@ -25755,6 +43198,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SCALAR',
+      ),
     ),
     323 =>
     array (
@@ -25762,6 +43209,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SCHEMA',
       ),
     ),
     324 =>
@@ -25771,6 +43222,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SCHEMAS',
+      ),
     ),
     325 =>
     array (
@@ -25778,6 +43233,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SCROLL',
       ),
     ),
     326 =>
@@ -25787,6 +43246,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SEARCH',
+      ),
     ),
     327 =>
     array (
@@ -25794,6 +43257,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SECURITY',
       ),
     ),
     328 =>
@@ -25803,6 +43270,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SELECT',
+      ),
     ),
     329 =>
     array (
@@ -25810,6 +43281,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SEQUENCE',
       ),
     ),
     330 =>
@@ -25819,6 +43294,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SEQUENCES',
+      ),
     ),
     331 =>
     array (
@@ -25826,6 +43305,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SERIALIZABLE',
       ),
     ),
     332 =>
@@ -25835,6 +43318,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SERVER',
+      ),
     ),
     333 =>
     array (
@@ -25842,6 +43329,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SESSION',
       ),
     ),
     334 =>
@@ -25851,6 +43342,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SESSION_USER',
+      ),
     ),
     335 =>
     array (
@@ -25858,6 +43353,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SET',
       ),
     ),
     336 =>
@@ -25867,6 +43366,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SETOF',
+      ),
     ),
     337 =>
     array (
@@ -25874,6 +43377,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SETS',
       ),
     ),
     338 =>
@@ -25883,6 +43390,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHARE',
+      ),
     ),
     339 =>
     array (
@@ -25890,6 +43401,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
       ),
     ),
     340 =>
@@ -25899,6 +43414,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SIMILAR',
+      ),
     ),
     341 =>
     array (
@@ -25906,6 +43425,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SIMPLE',
       ),
     ),
     342 =>
@@ -25915,6 +43438,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SKIP',
+      ),
     ),
     343 =>
     array (
@@ -25922,6 +43449,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SMALLINT',
       ),
     ),
     344 =>
@@ -25931,6 +43462,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SNAPSHOT',
+      ),
     ),
     345 =>
     array (
@@ -25938,6 +43473,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SOME',
       ),
     ),
     346 =>
@@ -25947,6 +43486,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SQL_P',
+      ),
     ),
     347 =>
     array (
@@ -25954,6 +43497,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'STABLE',
       ),
     ),
     348 =>
@@ -25963,6 +43510,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'STANDALONE_P',
+      ),
     ),
     349 =>
     array (
@@ -25970,6 +43521,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'START',
       ),
     ),
     350 =>
@@ -25979,6 +43534,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'STATEMENT',
+      ),
     ),
     351 =>
     array (
@@ -25986,6 +43545,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'STATISTICS',
       ),
     ),
     352 =>
@@ -25995,6 +43558,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'STDIN',
+      ),
     ),
     353 =>
     array (
@@ -26002,6 +43569,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'STDOUT',
       ),
     ),
     354 =>
@@ -26011,6 +43582,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'STORAGE',
+      ),
     ),
     355 =>
     array (
@@ -26018,6 +43593,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'STORED',
       ),
     ),
     356 =>
@@ -26027,6 +43606,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'STRICT_P',
+      ),
     ),
     357 =>
     array (
@@ -26034,6 +43617,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'STRIP_P',
       ),
     ),
     358 =>
@@ -26043,6 +43630,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SUBSCRIPTION',
+      ),
     ),
     359 =>
     array (
@@ -26050,6 +43641,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SUBSTRING',
       ),
     ),
     360 =>
@@ -26059,6 +43654,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SUPPORT',
+      ),
     ),
     361 =>
     array (
@@ -26066,6 +43665,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SYMMETRIC',
       ),
     ),
     362 =>
@@ -26075,6 +43678,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SYSID',
+      ),
     ),
     363 =>
     array (
@@ -26082,6 +43689,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SYSTEM_P',
       ),
     ),
     364 =>
@@ -26091,6 +43702,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SYSTEM_USER',
+      ),
     ),
     365 =>
     array (
@@ -26098,6 +43713,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TABLE',
       ),
     ),
     366 =>
@@ -26107,6 +43726,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TABLES',
+      ),
     ),
     367 =>
     array (
@@ -26114,6 +43737,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TABLESAMPLE',
       ),
     ),
     368 =>
@@ -26123,6 +43750,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TABLESPACE',
+      ),
     ),
     369 =>
     array (
@@ -26130,6 +43761,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TEMP',
       ),
     ),
     370 =>
@@ -26139,6 +43774,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TEMPLATE',
+      ),
     ),
     371 =>
     array (
@@ -26146,6 +43785,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TEMPORARY',
       ),
     ),
     372 =>
@@ -26155,6 +43798,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TEXT_P',
+      ),
     ),
     373 =>
     array (
@@ -26162,6 +43809,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'THEN',
       ),
     ),
     374 =>
@@ -26171,6 +43822,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TIES',
+      ),
     ),
     375 =>
     array (
@@ -26178,6 +43833,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TIME',
       ),
     ),
     376 =>
@@ -26187,6 +43846,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TIMESTAMP',
+      ),
     ),
     377 =>
     array (
@@ -26194,6 +43857,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TRAILING',
       ),
     ),
     378 =>
@@ -26203,6 +43870,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TRANSACTION',
+      ),
     ),
     379 =>
     array (
@@ -26210,6 +43881,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TRANSFORM',
       ),
     ),
     380 =>
@@ -26219,6 +43894,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TREAT',
+      ),
     ),
     381 =>
     array (
@@ -26226,6 +43905,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TRIGGER',
       ),
     ),
     382 =>
@@ -26235,6 +43918,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TRIM',
+      ),
     ),
     383 =>
     array (
@@ -26242,6 +43929,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TRUE_P',
       ),
     ),
     384 =>
@@ -26251,6 +43942,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TRUNCATE',
+      ),
     ),
     385 =>
     array (
@@ -26258,6 +43953,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TRUSTED',
       ),
     ),
     386 =>
@@ -26267,6 +43966,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TYPE_P',
+      ),
     ),
     387 =>
     array (
@@ -26274,6 +43977,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TYPES_P',
       ),
     ),
     388 =>
@@ -26283,6 +43990,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'UESCAPE',
+      ),
     ),
     389 =>
     array (
@@ -26290,6 +44001,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'UNBOUNDED',
       ),
     ),
     390 =>
@@ -26299,6 +44014,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNCOMMITTED',
+      ),
     ),
     391 =>
     array (
@@ -26306,6 +44025,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'UNENCRYPTED',
       ),
     ),
     392 =>
@@ -26315,6 +44038,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNIQUE',
+      ),
     ),
     393 =>
     array (
@@ -26322,6 +44049,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'UNKNOWN',
       ),
     ),
     394 =>
@@ -26331,6 +44062,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNLISTEN',
+      ),
     ),
     395 =>
     array (
@@ -26338,6 +44073,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'UNLOGGED',
       ),
     ),
     396 =>
@@ -26347,6 +44086,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNTIL',
+      ),
     ),
     397 =>
     array (
@@ -26354,6 +44097,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'UPDATE',
       ),
     ),
     398 =>
@@ -26363,6 +44110,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'USER',
+      ),
     ),
     399 =>
     array (
@@ -26370,6 +44121,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'USING',
       ),
     ),
     400 =>
@@ -26379,6 +44134,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'VACUUM',
+      ),
     ),
     401 =>
     array (
@@ -26386,6 +44145,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'VALID',
       ),
     ),
     402 =>
@@ -26395,6 +44158,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'VALIDATE',
+      ),
     ),
     403 =>
     array (
@@ -26402,6 +44169,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'VALIDATOR',
       ),
     ),
     404 =>
@@ -26411,6 +44182,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'VALUE_P',
+      ),
     ),
     405 =>
     array (
@@ -26418,6 +44193,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'VALUES',
       ),
     ),
     406 =>
@@ -26427,6 +44206,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'VARCHAR',
+      ),
     ),
     407 =>
     array (
@@ -26434,6 +44217,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'VARIADIC',
       ),
     ),
     408 =>
@@ -26443,6 +44230,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'VERBOSE',
+      ),
     ),
     409 =>
     array (
@@ -26450,6 +44241,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'VERSION_P',
       ),
     ),
     410 =>
@@ -26459,6 +44254,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'VIEW',
+      ),
     ),
     411 =>
     array (
@@ -26466,6 +44265,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'VIEWS',
       ),
     ),
     412 =>
@@ -26475,6 +44278,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'VOLATILE',
+      ),
     ),
     413 =>
     array (
@@ -26482,6 +44289,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'WHEN',
       ),
     ),
     414 =>
@@ -26491,6 +44302,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'WHITESPACE_P',
+      ),
     ),
     415 =>
     array (
@@ -26498,6 +44313,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'WORK',
       ),
     ),
     416 =>
@@ -26507,6 +44326,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'WRAPPER',
+      ),
     ),
     417 =>
     array (
@@ -26514,6 +44337,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'WRITE',
       ),
     ),
     418 =>
@@ -26523,6 +44350,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'XML_P',
+      ),
     ),
     419 =>
     array (
@@ -26530,6 +44361,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'XMLATTRIBUTES',
       ),
     ),
     420 =>
@@ -26539,6 +44374,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'XMLCONCAT',
+      ),
     ),
     421 =>
     array (
@@ -26546,6 +44385,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'XMLELEMENT',
       ),
     ),
     422 =>
@@ -26555,6 +44398,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'XMLEXISTS',
+      ),
     ),
     423 =>
     array (
@@ -26562,6 +44409,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'XMLFOREST',
       ),
     ),
     424 =>
@@ -26571,6 +44422,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'XMLNAMESPACES',
+      ),
     ),
     425 =>
     array (
@@ -26578,6 +44433,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'XMLPARSE',
       ),
     ),
     426 =>
@@ -26587,6 +44446,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'XMLPI',
+      ),
     ),
     427 =>
     array (
@@ -26594,6 +44457,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'XMLROOT',
       ),
     ),
     428 =>
@@ -26603,6 +44470,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'XMLSERIALIZE',
+      ),
     ),
     429 =>
     array (
@@ -26610,6 +44481,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'XMLTABLE',
       ),
     ),
     430 =>
@@ -26619,6 +44494,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'YES_P',
+      ),
     ),
     431 =>
     array (
@@ -26627,6 +44506,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ZONE',
+      ),
     ),
   ),
+), array (
+), array (
 ));

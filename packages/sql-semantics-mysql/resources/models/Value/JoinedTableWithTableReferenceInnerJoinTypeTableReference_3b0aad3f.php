@@ -44,6 +44,26 @@ final class JoinedTableWithTableReferenceInnerJoinTypeTableReference_3b0aad3f im
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableReference, $this->innerJoinType, $this->tableReference2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableReference, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm::class, $replace), $this->replacement($this->innerJoinType, \SqlSemantics\Statement\Model\MySql\Role\InnerJoinTypeForm::class, $replace), $this->replacement($this->tableReference2, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new tableReference, preserving every other field.
      */
     public function withTableReference(\SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference): self

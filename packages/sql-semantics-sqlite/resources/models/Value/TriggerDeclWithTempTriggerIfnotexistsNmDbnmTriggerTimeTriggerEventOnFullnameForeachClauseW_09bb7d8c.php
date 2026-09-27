@@ -72,6 +72,26 @@ final class TriggerDeclWithTempTriggerIfnotexistsNmDbnmTriggerTimeTriggerEventOn
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->triggerTime, $this->triggerEvent, $this->fullname, $this->foreachClause, $this->whenClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->temp, \SqlSemantics\Statement\Model\Sqlite\Role\TempForm::class, $replace), $this->replacement($this->ifnotexists, \SqlSemantics\Statement\Model\Sqlite\Role\IfnotexistsForm::class, $replace), $this->replacement($this->nm, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace), $this->replacement($this->dbnm, \SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm::class, $replace), $this->replacement($this->triggerTime, \SqlSemantics\Statement\Model\Sqlite\Role\TriggerTimeForm::class, $replace), $this->replacement($this->triggerEvent, \SqlSemantics\Statement\Model\Sqlite\Role\TriggerEventForm::class, $replace), $this->replacement($this->fullname, \SqlSemantics\Statement\Model\Sqlite\Role\FullnameForm::class, $replace), $this->replacement($this->foreachClause, \SqlSemantics\Statement\Model\Sqlite\Role\ForeachClauseForm::class, $replace), $this->replacement($this->whenClause, \SqlSemantics\Statement\Model\Sqlite\Role\WhenClauseForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new temp, preserving every other field.
      */
     public function withTemp(\SqlSemantics\Statement\Model\Sqlite\Role\TempForm $temp): self

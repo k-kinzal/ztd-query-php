@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Fuzz complete pre-state SQL through typed, immutable schema analysis.
+ * Fuzz complete declarations through analysis with dependencies: each must resolve to one readable table.
  * Usage: vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_schema.php fuzz/corpus/pg-schema/
  * SQLFAKER_COVERAGE=0 disables grammar accounting.
  * PG_VERSION selects the PostgreSQL release whose grammar is used (default: 17.2).
@@ -20,13 +20,13 @@ use SqlFormatter\Core\FormatOptions;
 use SqlFormatter\Core\Style;
 use SqlFormatter\Facade\Formatter;
 use SqlParser\PostgreSql\PostgreSqlParser;
-use SqlSemantics\Facade\Schema;
+use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\PostgreSql\Dialect;
 
 $grammarVersion = 'pg-' . (getenv('PG_VERSION') !== false ? getenv('PG_VERSION') : '17.2');
 $coverage = getenv('SQLFAKER_COVERAGE') === '0' ? null : new GrammarCoverage(__DIR__ . '/coverage/pg-schema');
 $provider = new PostgreSqlProvider(Factory::create(), $grammarVersion, $coverage);
-$target = new SchemaTarget(new Schema(Dialect::PostgreSql, grammarVersion: $grammarVersion), new Formatter(new PostgreSqlParser($grammarVersion), new FormatOptions(Style::Compact)), $grammarVersion);
+$target = new SchemaTarget(new Semantics(Dialect::PostgreSql, $grammarVersion), new Formatter(new PostgreSqlParser($grammarVersion), new FormatOptions(Style::Compact)), $grammarVersion);
 $planner = $provider->planner();
 $constraints = GenerationPlan::constrained('CreateStmt', [
     'CreateStmt' => [ProductionPattern::containing('OptTableElementList')],

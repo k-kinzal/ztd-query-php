@@ -27,7 +27,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     services:
       mysql:
-        image: container-registry.oracle.com/mysql/community-server:8.4.7
+        image: container-registry.oracle.com/mysql/community-server:9.1.0
         env:
           MYSQL_ROOT_PASSWORD: toolkit
           MYSQL_ROOT_HOST: '%'

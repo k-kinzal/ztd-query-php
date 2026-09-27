@@ -42,6 +42,26 @@ final class OffsetClauseWithOffsetSelectFetchFirstValueRowOrRows_5d923385 implem
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->selectFetchFirstValue, $this->rowOrRows];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->selectFetchFirstValue, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectFetchFirstValueForm::class, $replace), $this->replacement($this->rowOrRows, \SqlSemantics\Statement\Model\PostgreSql\Role\RowOrRowsForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new selectFetchFirstValue, preserving every other field.
      */
     public function withSelectFetchFirstValue(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectFetchFirstValueForm $selectFetchFirstValue): self

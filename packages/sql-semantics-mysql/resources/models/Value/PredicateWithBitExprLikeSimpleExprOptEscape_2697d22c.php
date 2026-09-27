@@ -26,7 +26,7 @@ final class PredicateWithBitExprLikeSimpleExprOptEscape_2697d22c implements \Sql
         public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($bitExpr), 'The bitExpr must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($bitExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 8,  'mysql-5.7.44' => 9,));
+        $this->assertOperandBindingStrength($bitExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 8,  'mysql-5.7.44' => 9,), \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_RULES, 'bit_expr');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleExpr), 'The simpleExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEscape), 'The optEscape must be a generated immutable SQL value.');
     }
@@ -44,6 +44,26 @@ final class PredicateWithBitExprLikeSimpleExprOptEscape_2697d22c implements \Sql
         $this->simpleExpr->write($writer);
         $writer->comments($this->comments, 3);
         $this->optEscape->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->bitExpr, $this->simpleExpr, $this->optEscape];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->bitExpr, \SqlSemantics\Statement\Model\MySql\Role\BitExprForm::class, $replace), $this->replacement($this->simpleExpr, \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm::class, $replace), $this->replacement($this->optEscape, \SqlSemantics\Statement\Model\MySql\Role\OptEscapeForm::class, $replace), $this->comments);
     }
 
     /**

@@ -86,6 +86,26 @@ final class IndexStmtWithCreateOptUniqueIndexOptConcurrentlyOptSingleNameOnRelat
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optUnique, $this->optConcurrently, $this->optSingleName, $this->relationExpr, $this->accessMethodClause, $this->indexParams, $this->optInclude, $this->optUniqueNullTreatment, $this->optReloptions, $this->optTableSpace, $this->where];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optUnique, \SqlSemantics\Statement\Model\PostgreSql\Role\OptUniqueForm::class, $replace), $this->replacement($this->optConcurrently, \SqlSemantics\Statement\Model\PostgreSql\Role\OptConcurrentlyForm::class, $replace), $this->replacement($this->optSingleName, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSingleNameForm::class, $replace), $this->replacement($this->relationExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm::class, $replace), $this->replacement($this->accessMethodClause, \SqlSemantics\Statement\Model\PostgreSql\Role\AccessMethodClauseForm::class, $replace), $this->replacement($this->indexParams, \SqlSemantics\Statement\Model\PostgreSql\Role\IndexParamsForm::class, $replace), $this->replacement($this->optInclude, \SqlSemantics\Statement\Model\PostgreSql\Role\OptIncludeForm::class, $replace), $this->replacement($this->optUniqueNullTreatment, \SqlSemantics\Statement\Model\PostgreSql\Role\OptUniqueNullTreatmentForm::class, $replace), $this->replacement($this->optReloptions, \SqlSemantics\Statement\Model\PostgreSql\Role\OptReloptionsForm::class, $replace), $this->replacement($this->optTableSpace, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTableSpaceForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\PostgreSql\Role\WhereClauseForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optUnique, preserving every other field.
      */
     public function withOptUnique(\SqlSemantics\Statement\Model\PostgreSql\Role\OptUniqueForm $optUnique): self

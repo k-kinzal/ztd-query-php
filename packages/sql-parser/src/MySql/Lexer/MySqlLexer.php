@@ -7,6 +7,7 @@ namespace SqlParser\MySql\Lexer;
 use SqlParser\Lexer\Cursor;
 use SqlParser\Lexer\Lexeme;
 use SqlParser\Lexer\LexicalException;
+use SqlParser\Lexer\ParameterSyntax;
 use SqlParser\MySql\MySqlVersion;
 use SqlParser\MySql\SqlMode;
 
@@ -31,6 +32,7 @@ final class MySqlLexer
      * @param WordScanner $words Reads words
      * @param OperatorScanner $operators Reads operators
      * @param VariableScanner $variables Reads what follows an at sign
+     * @param ParameterSyntax $parameters Which parameter markers are read
      */
     public function __construct(
         private readonly KeywordTable $keywords,
@@ -42,6 +44,7 @@ final class MySqlLexer
         private readonly WordScanner $words = new WordScanner(),
         private readonly OperatorScanner $operators = new OperatorScanner(),
         private readonly VariableScanner $variables = new VariableScanner(),
+        private readonly ParameterSyntax $parameters = ParameterSyntax::Native,
     ) {
     }
 
@@ -56,7 +59,7 @@ final class MySqlLexer
      */
     public function scan(string $sql): array
     {
-        $scan = new Scan(new Cursor($sql), $this->keywords, $this->mode, $this->version);
+        $scan = new Scan(new Cursor($sql), $this->keywords, $this->mode, $this->version, $this->parameters);
         $lexemes = [];
         while (true) {
             if ($scan->next === LexerState::Start) {

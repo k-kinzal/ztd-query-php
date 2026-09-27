@@ -40,6 +40,26 @@ final class FulltextKeyOptsWithFulltextKeyOptsFulltextKeyOpt_06840da3 implements
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->fulltextKeyOpts, $this->fulltextKeyOpt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->fulltextKeyOpts, \SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptsForm::class, $replace), $this->replacement($this->fulltextKeyOpt, \SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new fulltextKeyOpts, preserving every other field.
      */
     public function withFulltextKeyOpts(\SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptsForm $fulltextKeyOpts): self

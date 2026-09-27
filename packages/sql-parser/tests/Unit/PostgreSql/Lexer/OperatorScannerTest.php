@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 use SqlParser\Lexer\Cursor;
 use SqlParser\Lexer\Lexeme;
 use SqlParser\Lexer\LexicalException;
+use SqlParser\Lexer\ParameterSyntax;
 use SqlParser\PostgreSql\Lexer\KeywordTable;
 use SqlParser\PostgreSql\Lexer\OperatorScanner;
 use SqlParser\PostgreSql\Lexer\Scan;
@@ -21,11 +22,28 @@ use SqlParser\PostgreSql\Lexer\Scan;
 #[UsesClass(LexicalException::class)]
 #[UsesClass(KeywordTable::class)]
 #[UsesClass(Scan::class)]
+#[UsesClass(ParameterSyntax::class)]
 #[UsesClass(\SqlParser\Lexer\SourcePosition::class)]
 #[UsesClass(\SqlParser\Lexer\SourceException::class)]
 #[Small]
 final class OperatorScannerTest extends TestCase
 {
+    public function testScanReadsNamedParametersOnlyUnderTheNamedSyntax(): void
+    {
+        $scanner = new OperatorScanner();
+        $scan = static fn (string $sql, ParameterSyntax $parameters): Scan => new Scan(new Cursor($sql), new KeywordTable([]), $parameters);
+
+        $named = $scanner->scan($scan(':user_id = 1', ParameterSyntax::Named));
+        self::assertSame('PARAM', $named->name);
+        self::assertSame(':user_id', $named->text);
+        self::assertSame('Op', $scanner->scan($scan('? ', ParameterSyntax::Named))->name);
+        self::assertSame('?|', $scanner->scan($scan('?| ', ParameterSyntax::Named))->text);
+        self::assertSame('TYPECAST', $scanner->scan($scan('::int', ParameterSyntax::Named))->name);
+        self::assertSame('COLON_EQUALS', $scanner->scan($scan(':= 1', ParameterSyntax::Named))->name);
+        self::assertSame(':', $scanner->scan($scan(': id', ParameterSyntax::Named))->name);
+        self::assertSame(':', $scanner->scan($scan(':user_id', ParameterSyntax::Native))->name);
+    }
+
     public function testScan(): void
     {
         $scanner = new OperatorScanner();

@@ -66,6 +66,26 @@ final class StartReplicaStmtWithStartSymReplicaOptReplicaThreadOptionListOptRepl
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->replica, $this->optReplicaThreadOptionList, $this->optReplicaUntil, $this->optUserOption, $this->optPasswordOption, $this->optDefaultAuthOption, $this->optPluginDirOption, $this->optChannel];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->replica, \SqlSemantics\Statement\Model\MySql\Role\ReplicaForm::class, $replace), $this->replacement($this->optReplicaThreadOptionList, \SqlSemantics\Statement\Model\MySql\Role\OptReplicaThreadOptionListForm::class, $replace), $this->replacement($this->optReplicaUntil, \SqlSemantics\Statement\Model\MySql\Role\OptReplicaUntilForm::class, $replace), $this->replacement($this->optUserOption, \SqlSemantics\Statement\Model\MySql\Role\OptUserOptionForm::class, $replace), $this->replacement($this->optPasswordOption, \SqlSemantics\Statement\Model\MySql\Role\OptPasswordOptionForm::class, $replace), $this->replacement($this->optDefaultAuthOption, \SqlSemantics\Statement\Model\MySql\Role\OptDefaultAuthOptionForm::class, $replace), $this->replacement($this->optPluginDirOption, \SqlSemantics\Statement\Model\MySql\Role\OptPluginDirOptionForm::class, $replace), $this->replacement($this->optChannel, \SqlSemantics\Statement\Model\MySql\Role\OptChannelForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new replica, preserving every other field.
      */
     public function withReplica(\SqlSemantics\Statement\Model\MySql\Role\ReplicaForm $replica): self

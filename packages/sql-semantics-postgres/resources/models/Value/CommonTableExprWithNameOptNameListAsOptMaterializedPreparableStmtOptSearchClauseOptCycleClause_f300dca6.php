@@ -62,6 +62,26 @@ final class CommonTableExprWithNameOptNameListAsOptMaterializedPreparableStmtOpt
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->name, $this->optNameList, $this->optMaterialized, $this->preparableStmt, $this->optSearchClause, $this->optCycleClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->optNameList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptNameListForm::class, $replace), $this->replacement($this->optMaterialized, \SqlSemantics\Statement\Model\PostgreSql\Role\OptMaterializedForm::class, $replace), $this->replacement($this->preparableStmt, \SqlSemantics\Statement\Model\PostgreSql\Role\PreparableStmtForm::class, $replace), $this->replacement($this->optSearchClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSearchClauseForm::class, $replace), $this->replacement($this->optCycleClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OptCycleClauseForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new name, preserving every other field.
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self

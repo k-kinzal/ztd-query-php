@@ -40,6 +40,26 @@ final class TextLiteralWithTextLiteralTextStringLiteral_95576efb implements \Sql
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->textLiteral, $this->textStringLiteral];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->textLiteral, \SqlSemantics\Statement\Model\MySql\Role\TextLiteralForm::class, $replace), $this->replacement($this->textStringLiteral, \SqlSemantics\Statement\Model\MySql\Role\TextStringLiteralForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new textLiteral, preserving every other field.
      */
     public function withTextLiteral(\SqlSemantics\Statement\Model\MySql\Role\TextLiteralForm $textLiteral): self

@@ -38,6 +38,26 @@ final class ExplainStmtWithExplainExplainableStmt_d11d1498 implements \SqlSemant
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->explainableStmt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->explainableStmt, \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new explainableStmt, preserving every other field.
      */
     public function withExplainableStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm $explainableStmt): self

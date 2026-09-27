@@ -44,6 +44,26 @@ final class TypeWithRealTypeOptPrecisionFieldOptions_53962f7c implements \SqlSem
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->realType, $this->optPrecision, $this->fieldOptions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->realType, \SqlSemantics\Statement\Model\MySql\Role\RealTypeForm::class, $replace), $this->replacement($this->optPrecision, \SqlSemantics\Statement\Model\MySql\Role\OptPrecisionForm::class, $replace), $this->replacement($this->fieldOptions, \SqlSemantics\Statement\Model\MySql\Role\FieldOptionsForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new realType, preserving every other field.
      */
     public function withRealType(\SqlSemantics\Statement\Model\MySql\Role\RealTypeForm $realType): self

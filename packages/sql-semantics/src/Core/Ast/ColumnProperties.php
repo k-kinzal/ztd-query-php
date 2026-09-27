@@ -7,8 +7,8 @@ namespace SqlSemantics\Core\Ast;
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
 use SqlSemantics\Core\Analysis\ValueReader;
-use SqlSemantics\Core\Schema\ColumnGeneration;
-use SqlSemantics\Core\Schema\GenerationKind;
+use SqlSemantics\Statement\Declaration\ColumnGeneration;
+use SqlSemantics\Statement\Declaration\GenerationKind;
 use SqlSemantics\Statement\Element;
 
 /**

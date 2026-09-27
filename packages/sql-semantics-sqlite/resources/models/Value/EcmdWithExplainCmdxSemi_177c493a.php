@@ -44,6 +44,26 @@ final class EcmdWithExplainCmdxSemi_177c493a implements \SqlSemantics\Statement\
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->explain, $this->cmdx];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->explain, \SqlSemantics\Statement\Model\Sqlite\Role\ExplainForm::class, $replace), $this->replacement($this->cmdx, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm::class, $replace), $this->semi, $this->comments);
+    }
+
+    /**
      * Returns a copy with a new explain, preserving every other field.
      */
     public function withExplain(\SqlSemantics\Statement\Model\Sqlite\Role\ExplainForm $explain): self

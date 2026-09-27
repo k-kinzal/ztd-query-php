@@ -42,6 +42,26 @@ final class FuncExprCommonSubexprWithCurrentTimeIconst_85aea7dd implements \SqlS
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->iconst];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->iconst, \SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new iconst, preserving every other field.
      */
     public function withIconst(\SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst): self

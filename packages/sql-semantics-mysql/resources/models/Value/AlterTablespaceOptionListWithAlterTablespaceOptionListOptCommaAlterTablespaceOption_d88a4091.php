@@ -44,6 +44,26 @@ final class AlterTablespaceOptionListWithAlterTablespaceOptionListOptCommaAlterT
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->alterTablespaceOptionList, $this->optComma, $this->alterTablespaceOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->alterTablespaceOptionList, \SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceOptionListForm::class, $replace), $this->replacement($this->optComma, \SqlSemantics\Statement\Model\MySql\Role\OptCommaForm::class, $replace), $this->replacement($this->alterTablespaceOption, \SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceOptionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new alterTablespaceOptionList, preserving every other field.
      */
     public function withAlterTablespaceOptionList(\SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceOptionListForm $alterTablespaceOptionList): self

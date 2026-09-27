@@ -50,6 +50,26 @@ final class PartDefinitionWithPartitionSymPartNameOptPartValuesOptPartOptionsOpt
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->partName, $this->optPartValues, $this->optPartOptions, $this->optSubPartition];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->partName, \SqlSemantics\Statement\Model\MySql\Role\PartNameForm::class, $replace), $this->replacement($this->optPartValues, \SqlSemantics\Statement\Model\MySql\Role\OptPartValuesForm::class, $replace), $this->replacement($this->optPartOptions, \SqlSemantics\Statement\Model\MySql\Role\OptPartOptionsForm::class, $replace), $this->replacement($this->optSubPartition, \SqlSemantics\Statement\Model\MySql\Role\OptSubPartitionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new partName, preserving every other field.
      */
     public function withPartName(\SqlSemantics\Statement\Model\MySql\Role\PartNameForm $partName): self

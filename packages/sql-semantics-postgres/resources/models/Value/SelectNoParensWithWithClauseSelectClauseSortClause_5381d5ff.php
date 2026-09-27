@@ -44,6 +44,26 @@ final class SelectNoParensWithWithClauseSelectClauseSortClause_5381d5ff implemen
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->with, $this->selectClause, $this->orderBy];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->with, \SqlSemantics\Statement\Model\PostgreSql\Role\WithClauseForm::class, $replace), $this->replacement($this->selectClause, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectClauseForm::class, $replace), $this->replacement($this->orderBy, \SqlSemantics\Statement\Model\PostgreSql\Role\SortClauseForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new with, preserving every other field.
      */
     public function withWith(\SqlSemantics\Statement\Model\PostgreSql\Role\WithClauseForm $with): self

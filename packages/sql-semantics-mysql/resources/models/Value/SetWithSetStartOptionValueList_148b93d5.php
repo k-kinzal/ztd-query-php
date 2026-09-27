@@ -38,6 +38,26 @@ final class SetWithSetStartOptionValueList_148b93d5 implements \SqlSemantics\Sta
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->startOptionValueList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->startOptionValueList, \SqlSemantics\Statement\Model\MySql\Role\StartOptionValueListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new startOptionValueList, preserving every other field.
      */
     public function withStartOptionValueList(\SqlSemantics\Statement\Model\MySql\Role\StartOptionValueListForm $startOptionValueList): self

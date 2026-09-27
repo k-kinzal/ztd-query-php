@@ -6,15 +6,16 @@ namespace SqlSemantics\Core\Ast;
 
 use SqlParser\Parser\Node;
 use SqlSemantics\Core\Analysis\ValueReader;
-use SqlSemantics\Core\Schema\ColumnDefinition;
-use SqlSemantics\Core\Schema\ConstraintKind;
-use SqlSemantics\Core\Schema\TableConstraint;
-use SqlSemantics\Core\Schema\TableDefinition;
+use SqlSemantics\Core\Language;
 use SqlSemantics\Core\SemanticException;
-use SqlSemantics\Core\Type\Nullability;
+use SqlSemantics\Statement\Declaration\ColumnDefinition;
+use SqlSemantics\Statement\Declaration\ConstraintKind;
+use SqlSemantics\Statement\Declaration\Nullability;
+use SqlSemantics\Statement\Declaration\TableConstraint;
+use SqlSemantics\Statement\Declaration\TableDefinition;
 
 /**
- * Builds a schema snapshot from CREATE TABLE syntax nodes.
+ * Reads a table declaration from a CREATE TABLE syntax node.
  *
  * @visibility SqlSemantics
  */
@@ -26,43 +27,13 @@ final class SchemaReader
      */
     public function __construct(public readonly Identifiers $identifiers, public readonly string $defaultSchema, ?ValueReader $values = null)
     {
-        $this->values = $values ?? $identifiers->dialect->platform()->values((new DialectParser($identifiers->dialect))->version());
-    }
-
-    /**
-     * @param list<Node> $trees
-     * @return list<TableDefinition>
-     * @throws SemanticException
-     */
-    public function read(array $trees): array
-    {
-        $tables = [];
-        foreach ($trees as $tree) {
-            foreach (StatementList::read($tree, $this->identifiers->dialect) as $statement) {
-                $create = Tree::child($statement, $this->identifiers->dialect->platform()->syntax()->nodes('createTable'));
-                if ($create === null && (new SchemaChanges($this->identifiers, $this->defaultSchema))->drop($statement, $tables)) {
-                    continue;
-                }
-                if ($create === null) {
-                    Tree::unsupported($statement, 'schema statement');
-                }
-                $table = $this->table($this->identifiers->dialect->platform()->schema()->schemaNode($statement, $create));
-                $key = $this->identifiers->dialect->platform()->schema()->tableKey($table);
-                if (isset($tables[$key]) && preg_match('/^CREATE (?:TEMPORARY |TEMP |UNLOGGED )?TABLE IF NOT EXISTS /i', Tree::text($create)) === 1) {
-                    continue;
-                }
-                if (isset($tables[$key])) {
-                    throw new SemanticException('duplicate-table', 'Duplicate table declaration: ' . $table->name, $create);
-                }
-                $tables[$key] = $table;
-            }
-        }
-
-        return array_values($tables);
+        $this->values = $values ?? $identifiers->dialect->platform()->values((new Language($identifiers->dialect))->version);
     }
 
     /**
      * Reads one table and promotes the nullability of primary key columns.
+     *
+     * @throws SemanticException When the declaration uses unsupported syntax or is invalid
      */
     public function table(Node $create): TableDefinition
     {

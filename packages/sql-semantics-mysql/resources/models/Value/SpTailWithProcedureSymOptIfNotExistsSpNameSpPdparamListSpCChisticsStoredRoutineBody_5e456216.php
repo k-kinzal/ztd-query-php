@@ -58,6 +58,26 @@ final class SpTailWithProcedureSymOptIfNotExistsSpNameSpPdparamListSpCChisticsSt
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optIfNotExists, $this->spName, $this->spPdparamList, $this->spCChistics, $this->storedRoutineBody];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optIfNotExists, \SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm::class, $replace), $this->replacement($this->spName, \SqlSemantics\Statement\Model\MySql\Role\SpNameForm::class, $replace), $this->replacement($this->spPdparamList, \SqlSemantics\Statement\Model\MySql\Role\SpPdparamListForm::class, $replace), $this->replacement($this->spCChistics, \SqlSemantics\Statement\Model\MySql\Role\SpCChisticsForm::class, $replace), $this->replacement($this->storedRoutineBody, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optIfNotExists, preserving every other field.
      */
     public function withOptIfNotExists(\SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists): self

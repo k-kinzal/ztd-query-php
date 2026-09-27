@@ -6,6 +6,7 @@ namespace SqlParser\MySql\Lexer;
 
 use SqlParser\Lexer\Cursor;
 use SqlParser\Lexer\Lexeme;
+use SqlParser\Lexer\ParameterSyntax;
 use SqlParser\MySql\MySqlVersion;
 use SqlParser\MySql\SqlMode;
 
@@ -31,12 +32,14 @@ final class Scan
      * @param KeywordTable $keywords Keywords of the release
      * @param SqlMode $mode Mode the text is read under
      * @param MySqlVersion $version Release the text is read for
+     * @param ParameterSyntax $parameters Which parameter markers are read
      */
     public function __construct(
         public readonly Cursor $cursor,
         public readonly KeywordTable $keywords,
         public readonly SqlMode $mode,
         public readonly MySqlVersion $version,
+        public readonly ParameterSyntax $parameters = ParameterSyntax::Native,
     ) {
     }
 

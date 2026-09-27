@@ -50,6 +50,26 @@ final class CreateWithCreateDatabaseOptIfNotExistsIdentOptCreateDatabaseOptions_
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optIfNotExists, $this->ident, $this->optCreateDatabaseOptions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->database, $this->replacement($this->optIfNotExists, \SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm::class, $replace), $this->replacement($this->ident, \SqlSemantics\Statement\Model\MySql\Role\IdentForm::class, $replace), $this->replacement($this->optCreateDatabaseOptions, \SqlSemantics\Statement\Model\MySql\Role\OptCreateDatabaseOptionsForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new database, preserving every other field.
      */
     public function withDatabase(string $database): self

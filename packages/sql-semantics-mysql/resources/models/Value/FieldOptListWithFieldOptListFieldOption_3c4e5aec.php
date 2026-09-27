@@ -40,6 +40,26 @@ final class FieldOptListWithFieldOptListFieldOption_3c4e5aec implements \SqlSema
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->fieldOptList, $this->fieldOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->fieldOptList, \SqlSemantics\Statement\Model\MySql\Role\FieldOptListForm::class, $replace), $this->replacement($this->fieldOption, \SqlSemantics\Statement\Model\MySql\Role\FieldOptionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new fieldOptList, preserving every other field.
      */
     public function withFieldOptList(\SqlSemantics\Statement\Model\MySql\Role\FieldOptListForm $fieldOptList): self

@@ -6,6 +6,7 @@ namespace SqlParser\PostgreSql\Lexer;
 
 use SqlParser\Lexer\Cursor;
 use SqlParser\Lexer\Lexeme;
+use SqlParser\Lexer\ParameterSyntax;
 
 /**
  * The state one PostgreSQL tokenization carries from token to token.
@@ -17,10 +18,12 @@ final class Scan
     /**
      * @param Cursor $cursor Reads the SQL text
      * @param KeywordTable $keywords Keywords of the release
+     * @param ParameterSyntax $parameters Which parameter markers are read
      */
     public function __construct(
         public readonly Cursor $cursor,
         public readonly KeywordTable $keywords,
+        public readonly ParameterSyntax $parameters = ParameterSyntax::Native,
     ) {
     }
 

@@ -42,6 +42,26 @@ final class OptLeadLagInfoWithStableIntegerOptLlDefault_e83cba7b implements \Sql
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->stableInteger, $this->optLlDefault];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->stableInteger, \SqlSemantics\Statement\Model\MySql\Role\StableIntegerForm::class, $replace), $this->replacement($this->optLlDefault, \SqlSemantics\Statement\Model\MySql\Role\OptLlDefaultForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new stableInteger, preserving every other field.
      */
     public function withStableInteger(\SqlSemantics\Statement\Model\MySql\Role\StableIntegerForm $stableInteger): self

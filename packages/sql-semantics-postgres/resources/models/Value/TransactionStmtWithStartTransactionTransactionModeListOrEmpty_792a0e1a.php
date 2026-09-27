@@ -40,6 +40,26 @@ final class TransactionStmtWithStartTransactionTransactionModeListOrEmpty_792a0e
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->transactionModeListOrEmpty];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->transactionModeListOrEmpty, \SqlSemantics\Statement\Model\PostgreSql\Role\TransactionModeListOrEmptyForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new transactionModeListOrEmpty, preserving every other field.
      */
     public function withTransactionModeListOrEmpty(\SqlSemantics\Statement\Model\PostgreSql\Role\TransactionModeListOrEmptyForm $transactionModeListOrEmpty): self

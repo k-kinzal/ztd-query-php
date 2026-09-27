@@ -21,7 +21,7 @@ use ZtdQuery\Adapter\Pdo\ZtdPdoStatement;
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\StatementExecution::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\Bindings::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\BufferedRow::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\DriverSessionFactory::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\DriverPlatform::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\ParameterKind::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\ParameterBinder::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\PreparedQuery::class)]
@@ -41,11 +41,11 @@ final class ZtdPdoTest extends TestCase
         )));
     }
 
-    public function testExplicitPlatformFactoryCreatesAnIsolatedSession(): void
+    public function testExplicitPlatformCreatesAnIsolatedSession(): void
     {
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
-        $pdo = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
+        $pdo = ZtdPdo::fromPdo($native, platform: new \ZtdQuery\Platform\Sqlite\SqlitePlatform());
         self::assertSame(1, $pdo->exec("INSERT INTO users VALUES (1, 'Alice')"));
         $result1 = $pdo->query('SELECT name FROM users');
         self::assertNotFalse($result1);
@@ -73,7 +73,7 @@ final class ZtdPdoTest extends TestCase
 
     public function testAutoDetectionForSqliteDriver(): void
     {
-        (fn () => class_exists('ZtdQuery\\Platform\\Sqlite\\SqliteSessionFactory') || self::markTestSkipped('ztd-query-sqlite package is not installed.'))();
+        (fn () => class_exists('ZtdQuery\\Platform\\Sqlite\\SqlitePlatform') || self::markTestSkipped('ztd-query-sqlite package is not installed.'))();
 
         $pdo = new PDO('sqlite::memory:');
         $ztdPdo = ZtdPdo::fromPdo($pdo);
@@ -333,5 +333,26 @@ final class ZtdPdoTest extends TestCase
             self::assertSame(0, $failure->getCode());
             self::assertInstanceOf(\ZtdQuery\Connection\Exception\DatabaseException::class, $failure->getPrevious());
         }
+    }
+
+    public function testFromPdoReusesAPlatformWithoutSharingVirtualState(): void
+    {
+        $platform = new \ZtdQuery\Platform\Sqlite\SqlitePlatform();
+        $native = new PDO('sqlite::memory:');
+        $first = ZtdPdo::fromPdo($native, platform: $platform);
+        $second = ZtdPdo::fromPdo($native, platform: $platform);
+        $first->exec('CREATE TABLE items (id INTEGER PRIMARY KEY)');
+        $second->exec('CREATE TABLE items (id INTEGER PRIMARY KEY)');
+        $first->exec('INSERT INTO items VALUES (1)');
+        $second->exec('INSERT INTO items VALUES (2)');
+        $firstRows = $first->query('SELECT id FROM items');
+        $secondRows = $second->query('SELECT id FROM items');
+        self::assertNotFalse($firstRows);
+        self::assertNotFalse($secondRows);
+        self::assertSame([1], $firstRows->fetchAll(PDO::FETCH_COLUMN));
+        self::assertSame([2], $secondRows->fetchAll(PDO::FETCH_COLUMN));
+        $physical = $native->query("SELECT name FROM sqlite_master WHERE type = 'table'");
+        self::assertNotFalse($physical);
+        self::assertSame([], $physical->fetchAll());
     }
 }

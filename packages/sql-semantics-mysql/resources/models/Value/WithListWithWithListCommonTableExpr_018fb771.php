@@ -42,6 +42,26 @@ final class WithListWithWithListCommonTableExpr_018fb771 implements \SqlSemantic
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->withList, $this->commonTableExpr];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->withList, \SqlSemantics\Statement\Model\MySql\Role\WithListForm::class, $replace), $this->replacement($this->commonTableExpr, \SqlSemantics\Statement\Model\MySql\Role\CommonTableExprForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new withList, preserving every other field.
      */
     public function withWithList(\SqlSemantics\Statement\Model\MySql\Role\WithListForm $withList): self

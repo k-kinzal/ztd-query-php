@@ -4,28 +4,40 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Core;
 
+use InvalidArgumentException;
 use SqlParser\Parser\SqlParser;
 use SqlSemantics\Core\Policy\NameRules;
-use SqlSemantics\Core\Policy\QueryRules;
+use SqlSemantics\Core\Policy\RelationRules;
 use SqlSemantics\Core\Policy\SchemaRules;
 use SqlSemantics\Core\Policy\TypeRules;
 
 /**
- * The concrete parsing and semantic behavior required by core binding.
+ * The concrete parsing, modeling, and semantic behavior a database package supplies.
  *
  * @visibility SqlSemantics
  */
 interface Platform
 {
     /**
-     * Configures a parser for the requested release.
+     * Configures a parser for the requested release, mode, and parameter syntax.
+     *
+     * @param string|null $version A release tag the package ships, or null for its default
+     * @param Mode|null $mode The session settings text is read under, or null for the server's defaults
+     * @param Parameters $parameters Which parameter markers are read
+     *
+     * @throws InvalidArgumentException When the mode does not belong to this database
      */
-    public function parser(?string $version = null): SqlParser;
+    public function parser(?string $version = null, ?Mode $mode = null, Parameters $parameters = Parameters::Native): SqlParser;
 
     /**
      * Supplies statement construction data for the resolved grammar release.
      */
     public function values(string $version): Analysis\ValueReader;
+
+    /**
+     * Supplies the composer of this database's values for a language.
+     */
+    public function builder(Language $language): Builder;
 
     /**
      * Supplies the unqualified declaration namespace.
@@ -48,7 +60,7 @@ interface Platform
     public function names(): NameRules;
 
     /**
-     * Supplies scalar type semantics.
+     * Supplies declared type semantics.
      */
     public function types(): TypeRules;
 
@@ -58,7 +70,7 @@ interface Platform
     public function schema(): SchemaRules;
 
     /**
-     * Supplies query syntax interpretation.
+     * Supplies where the grammar writes table names and which of them declare, drop, or name tables.
      */
-    public function query(): QueryRules;
+    public function relations(): RelationRules;
 }

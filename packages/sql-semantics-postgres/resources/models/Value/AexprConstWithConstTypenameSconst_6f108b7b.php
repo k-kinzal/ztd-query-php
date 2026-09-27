@@ -40,6 +40,26 @@ final class AexprConstWithConstTypenameSconst_6f108b7b implements \SqlSemantics\
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->constTypename, $this->sconst];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->constTypename, \SqlSemantics\Statement\Model\PostgreSql\Role\ConstTypenameForm::class, $replace), $this->replacement($this->sconst, \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new constTypename, preserving every other field.
      */
     public function withConstTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\ConstTypenameForm $constTypename): self

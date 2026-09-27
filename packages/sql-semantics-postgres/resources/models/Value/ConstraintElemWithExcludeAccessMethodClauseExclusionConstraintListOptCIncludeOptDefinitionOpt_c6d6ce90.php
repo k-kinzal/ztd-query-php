@@ -66,6 +66,26 @@ final class ConstraintElemWithExcludeAccessMethodClauseExclusionConstraintListOp
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->accessMethodClause, $this->exclusionConstraintList, $this->optCInclude, $this->optDefinition, $this->optConsTableSpace, $this->optWhereClause, $this->constraintAttributeSpec];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->accessMethodClause, \SqlSemantics\Statement\Model\PostgreSql\Role\AccessMethodClauseForm::class, $replace), $this->replacement($this->exclusionConstraintList, \SqlSemantics\Statement\Model\PostgreSql\Role\ExclusionConstraintListForm::class, $replace), $this->replacement($this->optCInclude, \SqlSemantics\Statement\Model\PostgreSql\Role\OptCIncludeForm::class, $replace), $this->replacement($this->optDefinition, \SqlSemantics\Statement\Model\PostgreSql\Role\OptDefinitionForm::class, $replace), $this->replacement($this->optConsTableSpace, \SqlSemantics\Statement\Model\PostgreSql\Role\OptConsTableSpaceForm::class, $replace), $this->replacement($this->optWhereClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OptWhereClauseForm::class, $replace), $this->replacement($this->constraintAttributeSpec, \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeSpecForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new accessMethodClause, preserving every other field.
      */
     public function withAccessMethodClause(\SqlSemantics\Statement\Model\PostgreSql\Role\AccessMethodClauseForm $accessMethodClause): self

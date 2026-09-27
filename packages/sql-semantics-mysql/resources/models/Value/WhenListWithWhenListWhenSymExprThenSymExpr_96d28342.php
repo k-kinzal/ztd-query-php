@@ -48,6 +48,26 @@ final class WhenListWithWhenListWhenSymExprThenSymExpr_96d28342 implements \SqlS
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->whenList, $this->expr, $this->expr2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->whenList, \SqlSemantics\Statement\Model\MySql\Role\WhenListForm::class, $replace), $this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->replacement($this->expr2, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new whenList, preserving every other field.
      */
     public function withWhenList(\SqlSemantics\Statement\Model\MySql\Role\WhenListForm $whenList): self

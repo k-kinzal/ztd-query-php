@@ -50,6 +50,26 @@ final class IntoDestinationWithOutfileTextStringFilesystemOptLoadDataCharsetOptF
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->textStringFilesystem, $this->optLoadDataCharset, $this->optFieldTerm, $this->optLineTerm];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->textStringFilesystem, \SqlSemantics\Statement\Model\MySql\Role\TextStringFilesystemForm::class, $replace), $this->replacement($this->optLoadDataCharset, \SqlSemantics\Statement\Model\MySql\Role\OptLoadDataCharsetForm::class, $replace), $this->replacement($this->optFieldTerm, \SqlSemantics\Statement\Model\MySql\Role\OptFieldTermForm::class, $replace), $this->replacement($this->optLineTerm, \SqlSemantics\Statement\Model\MySql\Role\OptLineTermForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new textStringFilesystem, preserving every other field.
      */
     public function withTextStringFilesystem(\SqlSemantics\Statement\Model\MySql\Role\TextStringFilesystemForm $textStringFilesystem): self

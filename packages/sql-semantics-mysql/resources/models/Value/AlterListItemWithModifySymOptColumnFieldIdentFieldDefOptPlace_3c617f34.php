@@ -50,6 +50,26 @@ final class AlterListItemWithModifySymOptColumnFieldIdentFieldDefOptPlace_3c617f
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optColumn, $this->fieldIdent, $this->fieldDef, $this->optPlace];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optColumn, \SqlSemantics\Statement\Model\MySql\Role\OptColumnForm::class, $replace), $this->replacement($this->fieldIdent, \SqlSemantics\Statement\Model\MySql\Role\FieldIdentForm::class, $replace), $this->replacement($this->fieldDef, \SqlSemantics\Statement\Model\MySql\Role\FieldDefForm::class, $replace), $this->replacement($this->optPlace, \SqlSemantics\Statement\Model\MySql\Role\OptPlaceForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optColumn, preserving every other field.
      */
     public function withOptColumn(\SqlSemantics\Statement\Model\MySql\Role\OptColumnForm $optColumn): self

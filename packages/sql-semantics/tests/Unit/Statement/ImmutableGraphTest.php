@@ -36,6 +36,16 @@ final class ImmutableGraphTest extends TestCase
             {
                 $writer->append($this->sql);
             }
+
+            public function children(): array
+            {
+                return [];
+            }
+
+            public function map(callable $replace): static
+            {
+                return $this;
+            }
         };
         self::assertFalse((new ImmutableGraph())->containsOnlyImmutableValues($value));
     }
@@ -52,6 +62,16 @@ final class ImmutableGraphTest extends TestCase
             public function write(Writer $writer): void
             {
                 $writer->append('SELECT');
+            }
+
+            public function children(): array
+            {
+                return [];
+            }
+
+            public function map(callable $replace): static
+            {
+                return $this;
             }
         };
         self::assertFalse((new ImmutableGraph())->containsOnlyImmutableValues($value));

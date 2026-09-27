@@ -40,6 +40,26 @@ final class SpCChisticsWithSpCChisticsSpCChistic_c3cfb408 implements \SqlSemanti
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->spCChistics, $this->spCChistic];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->spCChistics, \SqlSemantics\Statement\Model\MySql\Role\SpCChisticsForm::class, $replace), $this->replacement($this->spCChistic, \SqlSemantics\Statement\Model\MySql\Role\SpCChisticForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new spCChistics, preserving every other field.
      */
     public function withSpCChistics(\SqlSemantics\Statement\Model\MySql\Role\SpCChisticsForm $spCChistics): self

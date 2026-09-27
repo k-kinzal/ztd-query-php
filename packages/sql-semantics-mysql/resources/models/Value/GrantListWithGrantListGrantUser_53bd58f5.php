@@ -42,6 +42,26 @@ final class GrantListWithGrantListGrantUser_53bd58f5 implements \SqlSemantics\St
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->grantList, $this->grantUser];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->grantList, \SqlSemantics\Statement\Model\MySql\Role\GrantListForm::class, $replace), $this->replacement($this->grantUser, \SqlSemantics\Statement\Model\MySql\Role\GrantUserForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new grantList, preserving every other field.
      */
     public function withGrantList(\SqlSemantics\Statement\Model\MySql\Role\GrantListForm $grantList): self

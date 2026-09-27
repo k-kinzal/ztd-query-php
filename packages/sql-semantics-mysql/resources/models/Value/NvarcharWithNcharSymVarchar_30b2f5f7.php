@@ -38,6 +38,26 @@ final class NvarcharWithNcharSymVarchar_30b2f5f7 implements \SqlSemantics\Statem
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [];
+    }
+
+    /**
+     * This form holds no values to replace.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return $this;
+    }
+
+    /**
      * Returns a copy with a new varchar, preserving every other field.
      */
     public function withVarchar(string $varchar): self

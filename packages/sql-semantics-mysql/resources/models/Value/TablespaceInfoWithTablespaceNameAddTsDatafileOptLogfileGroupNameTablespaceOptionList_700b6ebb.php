@@ -50,6 +50,26 @@ final class TablespaceInfoWithTablespaceNameAddTsDatafileOptLogfileGroupNameTabl
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tablespaceName, $this->tsDatafile, $this->optLogfileGroupName, $this->tablespaceOptionList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tablespaceName, \SqlSemantics\Statement\Model\MySql\Role\TablespaceNameForm::class, $replace), $this->replacement($this->tsDatafile, \SqlSemantics\Statement\Model\MySql\Role\TsDatafileForm::class, $replace), $this->replacement($this->optLogfileGroupName, \SqlSemantics\Statement\Model\MySql\Role\OptLogfileGroupNameForm::class, $replace), $this->replacement($this->tablespaceOptionList, \SqlSemantics\Statement\Model\MySql\Role\TablespaceOptionListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new tablespaceName, preserving every other field.
      */
     public function withTablespaceName(\SqlSemantics\Statement\Model\MySql\Role\TablespaceNameForm $tablespaceName): self

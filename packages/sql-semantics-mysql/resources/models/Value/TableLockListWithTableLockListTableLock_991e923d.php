@@ -42,6 +42,26 @@ final class TableLockListWithTableLockListTableLock_991e923d implements \SqlSema
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableLockList, $this->tableLock];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableLockList, \SqlSemantics\Statement\Model\MySql\Role\TableLockListForm::class, $replace), $this->replacement($this->tableLock, \SqlSemantics\Statement\Model\MySql\Role\TableLockForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new tableLockList, preserving every other field.
      */
     public function withTableLockList(\SqlSemantics\Statement\Model\MySql\Role\TableLockListForm $tableLockList): self

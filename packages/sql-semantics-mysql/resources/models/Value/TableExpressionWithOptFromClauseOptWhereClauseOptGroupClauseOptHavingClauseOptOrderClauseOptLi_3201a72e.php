@@ -64,6 +64,26 @@ final class TableExpressionWithOptFromClauseOptWhereClauseOptGroupClauseOptHavin
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optSelectLockType];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->from, \SqlSemantics\Statement\Model\MySql\Role\OptFromClauseForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm::class, $replace), $this->replacement($this->optGroupClause, \SqlSemantics\Statement\Model\MySql\Role\OptGroupClauseForm::class, $replace), $this->replacement($this->optHavingClause, \SqlSemantics\Statement\Model\MySql\Role\OptHavingClauseForm::class, $replace), $this->replacement($this->orderBy, \SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm::class, $replace), $this->replacement($this->optLimitClause, \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm::class, $replace), $this->replacement($this->optProcedureAnalyseClause, \SqlSemantics\Statement\Model\MySql\Role\OptProcedureAnalyseClauseForm::class, $replace), $this->replacement($this->optSelectLockType, \SqlSemantics\Statement\Model\MySql\Role\OptSelectLockTypeForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new from, preserving every other field.
      */
     public function withFrom(\SqlSemantics\Statement\Model\MySql\Role\OptFromClauseForm $from): self
