@@ -29,22 +29,23 @@
 <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../k-kinzal/deriver/index.html">k-kinzal/deriver</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">README.md</span></nav>
 <div class="topbar-tools">
 <input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
-<span class="diff-range" title="Comparing e489d7daf1 to working tree">e489d7daf1 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<span class="diff-range" title="Comparing e489d7daf1e to working tree">e489d7daf1e <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
 <button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
 </div>
 </header>
 <div class="search-results" id="search-results" hidden></div>
 <main class="content" id="content">
-<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between e489d7daf1 and working tree." data-off="This page documents what e489d7daf1 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between e489d7daf1e and working tree." data-off="This page documents what e489d7daf1e had and working tree no longer has. Switch to Diff to read it." hidden></p>
 <div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Deriver</h1><div class="symbol-meta"><span class="source-link">README.md</span></div></div>
-<div class="notice diff-banner" data-diff="added">Added in working tree, compared to e489d7daf1.</div>
+<div class="notice diff-banner" data-diff="added">Added in working tree, compared to e489d7daf1e.</div>
 <section class="readme prose" data-diff="added"><div class="doc-block" data-diff="added"><h2>Deriver</h2>
-</div><div class="doc-block" data-diff="added"><p>Deriver derives PHP values and state from captured source code. It keeps symbolic inputs, partial structures, branch correlations, reference cells, object identities, and exceptional outcomes in the result. Application files are read as data; Deriver does not include them or run their autoloaders.</p>
+</div><div class="doc-block" data-diff="added"><p><a href="https://opensource.org/licenses/MIT"><span class="md-target" title="https://img.shields.io/badge/License-MIT-yellow.svg">License: MIT</span></a> <a href="https://k-kinzal.github.io/ztd-query-php/k-kinzal/deriver/"><span class="md-target" title="https://img.shields.io/badge/docs-deriver-0969da?logo=php&amp;logoColor=white">Docs</span></a> <a href="https://www.php.net/"><span class="md-target" title="https://img.shields.io/badge/PHP-8.1%2B-blue.svg">PHP Version</span></a> <a href="https://deepwiki.com/k-kinzal/ztd-query-php"><span class="md-target" title="https://deepwiki.com/badge.svg">Ask DeepWiki</span></a></p>
+</div><div class="doc-block" data-diff="added"><p>Deriver derives PHP values, state, and dependencies from source code without executing application files or their autoloaders. Queries select return values, evaluated expressions, or storage observations. Results retain symbolic inputs, branch conditions, shared references and objects, and exceptional outcomes. Unsupported operations and exhausted analysis budgets leave explicit unresolved dependencies.</p>
 </div><div class="doc-block" data-diff="added"><h3>Requirements</h3>
-</div><div class="doc-block" data-diff="added"><ul><li>PHP 8.1 or later, with JSON and Tokenizer.</li><li>A 64-bit PHP runtime.</li><li>Source targeting PHP 8.3 semantics. The host PHP version does not select the analysis target.</li></ul>
+</div><div class="doc-block" data-diff="added"><ul><li>PHP 8.1+ with the JSON and Tokenizer extensions</li><li>A 64-bit PHP runtime</li><li>Source targeting PHP 8.3 semantics; the host PHP version does not change the analysis target</li></ul>
 </div><div class="doc-block" data-diff="added"><h3>Installation</h3>
 </div><div class="doc-block" data-diff="added"><pre class="code"><code>composer require k-kinzal/deriver</code></pre>
-</div><div class="doc-block" data-diff="added"><h3>Derive a return value</h3>
+</div><div class="doc-block" data-diff="added"><h3>Usage</h3>
 </div><div class="doc-block" data-diff="added"><pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">Deriver\Analyzer</span>;
 <span class="tok-kw">use</span> <span class="tok-id">Deriver\Project\ProjectInput</span>;
 <span class="tok-kw">use</span> <span class="tok-id">Deriver\Project\SourceFile</span>;
@@ -65,8 +66,7 @@
 
 <span class="tok-com">// $value retains concatenation with the symbolic parameter id.</span>
 <span class="tok-kw">echo</span> <span class="tok-var">$result</span>-&gt;<span class="tok-id">toJson</span>();</code></pre>
-</div><div class="doc-block" data-diff="added"><p>A symbolic parameter is a valid result. A missing source body, unsupported operation, or exhausted budget has a separate frontier explaining the unresolved dependency. Inspect the assessment and exceptional outcomes before treating a normal value as exhaustive.</p>
-</div><div class="doc-block" data-diff="added"><h3>Supply an entry context</h3>
+</div><div class="doc-block" data-diff="added"><p>The default scope keeps parameters symbolic. Supply an entrypoint to derive the value for a specific invocation:</p>
 </div><div class="doc-block" data-diff="added"><pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">Deriver\Project\EntryPoint</span>;
 <span class="tok-kw">use</span> <span class="tok-id">Deriver\Query\QueryScope</span>;
 <span class="tok-kw">use</span> <span class="tok-id">Deriver\Value\Term</span>;
@@ -76,31 +76,11 @@
 ]));
 <span class="tok-var">$result</span> = <span class="tok-var">$session</span>-&gt;<span class="tok-id">derive</span>(<span class="tok-var">$query</span>);
 
-<span class="tok-id">assert</span>(<span class="tok-var">$result</span>-&gt;<span class="tok-id">normalOutcomes</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">values</span>[<span class="tok-str">&#039;return&#039;</span>]-&gt;<span class="tok-id">native</span>() === <span class="tok-str">&#039;user:42&#039;</span>);</code></pre>
-</div><div class="doc-block" data-diff="added"><p>The default scope represents arbitrary valid inputs. A parameter default is evaluated when an explicit invocation omits that argument; it does not replace every symbolic input.</p>
-</div><div class="doc-block" data-diff="added"><h3>Observe evaluated arguments and state</h3>
-</div><div class="doc-block" data-diff="added"><p><code>callsTo()</code> returns source references to already evaluated argument registers and to the invocation point. Use <code>TupleQuery</code> to keep argument combinations correlated, or <code>StateQuery</code> to inspect a local variable or a projection of its object state. Reusing these references does not execute the argument expressions again.</p>
-</div><div class="doc-block" data-diff="added"><pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">Deriver\Query\TupleQuery</span>;
-
-<span class="tok-var">$sites</span> = <span class="tok-var">$session</span>-&gt;<span class="tok-id">callsTo</span>(<span class="tok-str">&#039;observe&#039;</span>);
-<span class="tok-com">// For a source project containing observe($name, $id):</span>
-<span class="tok-com">// $result = $session-&gt;derive(new TupleQuery(</span>
-<span class="tok-com">//     $sites[0]-&gt;beforeInvocation(),</span>
-<span class="tok-com">//     [&#039;name&#039; =&gt; $sites[0]-&gt;arguments[0], &#039;id&#039; =&gt; $sites[0]-&gt;arguments[1]],</span>
-<span class="tok-com">// ));</span></code></pre>
-</div><div class="doc-block" data-diff="added"><h3>Documentation</h3>
-</div><div class="doc-block" data-diff="added"><ul><li><a href="../../../k-kinzal/deriver/doc/docs/api.md.html">Queries and result interpretation</a></li><li><a href="../../../k-kinzal/deriver/doc/docs/algorithm.md.html">Derivation algorithm and concepts</a></li><li><a href="../../../k-kinzal/deriver/doc/docs/design.md.html">Semantic contract</a></li><li><a href="../../../k-kinzal/deriver/doc/docs/capabilities.md.html">Capability manifest</a></li><li><a href="../../../k-kinzal/deriver/doc/docs/acceptance.md.html">Acceptance requirements and verification</a></li><li><a href="../../../k-kinzal/deriver/doc/docs/language.md.html">PHP language semantics</a></li><li><a href="../../../k-kinzal/deriver/doc/docs/models.md.html">Writing call models and providers</a></li><li><a href="../../../k-kinzal/deriver/doc/docs/json.md.html">JSON values, metadata, and confidentiality</a></li><li><a href="../../../k-kinzal/deriver/doc/docs/benchmarks.md.html">Benchmark corpus and measurements</a></li></ul>
-</div><div class="doc-block" data-diff="added"><h3>Development checks</h3>
-</div><div class="doc-block" data-diff="added"><p>The package uses the same php-ai-toolkit checks as the other packages in this repository.</p>
-</div><div class="doc-block" data-diff="added"><pre class="code"><code>composer install
-composer lint
-composer test
-composer test:differential
-composer fuzz:smoke
-composer fuzz:semantic</code></pre>
-</div><div class="doc-block" data-diff="added"><p>Differential tests run generated fixtures in a separate PHP 8.3 process. Set <code>DERIVER_PHP83_BINARY</code> when PHP 8.3 is not the current executable. The analyzer itself never executes these fixtures. Fuzz inputs are also treated exclusively as source data.</p>
+<span class="tok-kw">echo</span> <span class="tok-var">$result</span>-&gt;<span class="tok-id">normalOutcomes</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">values</span>[<span class="tok-str">&#039;return&#039;</span>]-&gt;<span class="tok-id">native</span>(); <span class="tok-com">// user:42</span></code></pre>
+</div><div class="doc-block" data-diff="added"><p>Inspect the result&#039;s assessment, unresolved dependencies, and exceptional outcomes before treating a normal value as exhaustive. A symbolic value can be complete even when its input is unknown.</p>
+</div><div class="doc-block" data-diff="added"><p>Queries, models, and result types are described in the <a href="https://k-kinzal.github.io/ztd-query-php/k-kinzal/deriver/">API documentation</a>.</p>
 </div><div class="doc-block" data-diff="added"><h3>License</h3>
-</div><div class="doc-block" data-diff="added"><p>MIT. See <span class="md-target" title="LICENSE">LICENSE</span>.</p>
+</div><div class="doc-block" data-diff="added"><p>MIT License. See <span class="md-target" title="LICENSE">LICENSE</span> for details.</p>
 </div></section>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
