@@ -1,8 +1,9 @@
 # SQL Fixture
 
+[![Packagist Downloads](https://img.shields.io/packagist/dt/k-kinzal/sql-fixture.svg?label=Packagist)](https://packagist.org/packages/k-kinzal/sql-fixture)
+[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docs](https://img.shields.io/badge/docs-sql--fixture-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-fixture/)
-[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
 SQL Fixture is a [FakerPHP](https://fakerphp.org/) provider that generates fixture rows from table definitions for MySQL, PostgreSQL, and SQLite. It reads the schema from CREATE TABLE statements (`FixtureProvider`), a live PDO connection (`DatabaseFixtureProvider`), or a directory of DDL files (`FileFixtureProvider`), and generates values that match each column's type, length, and constraints. Generated rows can be returned as arrays or hydrated into PHP objects, and related rows can be generated together from a fixture plan.

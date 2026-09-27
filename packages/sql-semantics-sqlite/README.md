@@ -1,8 +1,9 @@
 # SQL Semantics for SQLite
 
+[![Packagist Downloads](https://img.shields.io/packagist/dt/k-kinzal/sql-semantics-sqlite.svg?label=Packagist)](https://packagist.org/packages/k-kinzal/sql-semantics-sqlite)
+[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docs](https://img.shields.io/badge/docs-sql--semantics--sqlite-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-sqlite/)
-[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
 SQL Semantics for SQLite adds SQLite to [SQL Semantics](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics): the typed statement models of the official SQLite grammars, the SQLite rules for reading declarations, and the SQLite builder that composes values under stable names. Installing it also installs the shared SQL Semantics runtime, and `Dialect::Sqlite` selects SQLite in the runtime's `Semantics`. No database connection is needed.
