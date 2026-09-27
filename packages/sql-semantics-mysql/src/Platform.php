@@ -92,6 +92,11 @@ final class Platform implements Contract
 
     /**
      * Names the positions where the grammar writes table names, and the forms that declare, drop, or merely name tables.
+     *
+     * The body of a common table expression names the ones written before it
+     * in its WITH clause, and itself only when the clause is recursive; a
+     * later one is not visible even then. The table an UPDATE or DELETE
+     * writes to is resolved like any other name, so it can be one.
      */
     public function relations(): Policy\RelationRules
     {
@@ -113,6 +118,10 @@ final class Platform implements Contract
                 ['rule' => 'table_to_table', 'pair' => ['table_ident', 'table_ident']],
                 ['rule' => 'alter_list_item', 'requires' => ['RENAME', 'table_ident'], 'name' => 'table_ident'],
             ],
+            withClauses: ['opt_with_clause', 'with_clause'],
+            recursive: 'RECURSIVE_SYM',
+            visibility: Policy\WithVisibility::Preceding,
+            recursiveVisibility: Policy\WithVisibility::PrecedingAndItself,
         );
     }
 

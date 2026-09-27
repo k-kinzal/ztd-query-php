@@ -11,7 +11,7 @@ use SqlSemantics\Statement\ReferenceKind;
 use SqlSemantics\Statement\Statement;
 
 /**
- * The tables in force while a statement is resolved, and the common table expressions it defines.
+ * The tables in force while a statement is resolved.
  *
  * Tables are compared under the dialect's relation name policy, and a
  * name without a schema belongs to the default schema.
@@ -24,11 +24,6 @@ final class Relations
      * @var list<array{string, string, TableDefinition|null, Statement|null}>
      */
     private array $tables = [];
-
-    /**
-     * @var list<string>
-     */
-    private array $common = [];
 
     /**
      * Starts with no table in force.
@@ -101,33 +96,5 @@ final class Relations
     public function same(string $schema, string $name, string $otherSchema, string $otherName): bool
     {
         return $this->names->relationEqual($schema, $otherSchema) && $this->names->relationEqual($name, $otherName);
-    }
-
-    /**
-     * Records a common table expression the statement defines, by its single-part name.
-     *
-     * @param list<string> $name
-     */
-    public function define(array $name): void
-    {
-        if (count($name) === 1) {
-            $this->common[] = $name[0];
-        }
-    }
-
-    /**
-     * Reports whether a name refers to a common table expression the statement defines.
-     *
-     * @param list<string> $name
-     */
-    public function isCommon(array $name): bool
-    {
-        foreach ($this->common as $common) {
-            if (count($name) === 1 && $this->names->equal($common, $name[0])) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

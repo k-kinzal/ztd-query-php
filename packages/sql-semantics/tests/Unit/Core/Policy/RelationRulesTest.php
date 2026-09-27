@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Policy\RelationRules;
+use SqlSemantics\Core\Policy\WithVisibility;
 
 #[CoversClass(RelationRules::class)]
 #[Small]
@@ -24,5 +25,15 @@ final class RelationRulesTest extends TestCase
         self::assertSame([], RelationRules::matching($rules->drops, 'drop', ['DROP', 'table_list']));
         self::assertSame([], RelationRules::matching($rules->drops, 'other', ['DROP', 'table_or_tables', 'table_list']));
         self::assertSame([], $rules->declarations);
+    }
+
+    public function testScopeRulesDefaultToNoWithClauseAndTheStandardVisibility(): void
+    {
+        $rules = new RelationRules(['table_ident']);
+        self::assertSame([], $rules->withClauses);
+        self::assertSame('RECURSIVE', $rules->recursive);
+        self::assertSame(WithVisibility::Preceding, $rules->visibility);
+        self::assertSame(WithVisibility::All, $rules->recursiveVisibility);
+        self::assertSame([], $rules->targets);
     }
 }

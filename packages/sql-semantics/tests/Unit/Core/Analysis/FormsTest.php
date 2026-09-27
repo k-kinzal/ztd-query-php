@@ -42,6 +42,14 @@ use Tests\Contract\Resolving;
 #[Medium]
 final class FormsTest extends TestCase
 {
+    public function testIndexCountsTheRuleSymbolsBeforeAPosition(): void
+    {
+        $forms = new Forms((new Language(MySqlDialect::MySql))->vocabulary());
+        self::assertSame(1, $forms->index(['ident', '.', 'ident'], 2));
+        self::assertSame(0, $forms->index(['ident', '.', 'ident'], 0));
+        self::assertSame(3, $forms->index(['DROP', 'opt_temporary', 'table_or_tables', 'if_exists', 'table_list'], 4));
+    }
+
     public function testPositionFindsTheFirstFreePositionOfASymbol(): void
     {
         $forms = new Forms((new Language(MySqlDialect::MySql))->vocabulary());

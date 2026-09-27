@@ -21,6 +21,9 @@ use Tests\Contract\Resolving;
 
 #[CoversClass(NameSites::class)]
 #[UsesClass(NameSite::class)]
+#[UsesClass(\SqlSemantics\Core\Analysis\Scope::class)]
+#[UsesClass(\SqlSemantics\Core\Analysis\Scopes::class)]
+#[UsesClass(\SqlSemantics\Core\Policy\WithVisibility::class)]
 #[UsesClass(Forms::class)]
 #[UsesClass(Semantics::class)]
 #[UsesClass(Language::class)]
@@ -56,6 +59,13 @@ final class NameSitesTest extends TestCase
         $create = $sites->find((new Semantics(MySqlDialect::MySql))->analyze('CREATE TABLE t (id INT)')->command);
         self::assertSame([ReferenceKind::Declaration], array_map(static fn (NameSite $site): ReferenceKind => $site->kind, $create));
         self::assertSame([], $sites->find((new Semantics(MySqlDialect::MySql))->analyze('CREATE VIEW v AS SELECT 1')->command));
+    }
+
+    public function testFindGivesEverySiteTheScopeOfItsPositionAndListsTargetsInWritingOrder(): void
+    {
+        $found = Resolving::sites(MySqlDialect::MySql)->find((new Semantics(MySqlDialect::MySql))->analyze('WITH a AS (SELECT 1 FROM t), b AS (SELECT 1 FROM a) DELETE FROM b WHERE 1 IN (SELECT 1 FROM c)')->command);
+        self::assertSame(['a', 't', 'b', 'a', 'b', 'c'], array_map(static fn (NameSite $site): string => implode('.', $site->name), $found));
+        self::assertSame([[], [], ['a'], ['a'], ['a', 'b'], ['a', 'b']], array_map(static fn (NameSite $site): array => $site->scope->names, $found));
     }
 
     public function testNamedReadsTheValuesOfAListANameAndAPairSite(): void

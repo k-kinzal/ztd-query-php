@@ -113,15 +113,13 @@ final class Resolver
     }
 
     /**
-     * Resolves a site that defines, drops or refers to a table: to a common table expression, to a table in force, or to nothing.
+     * Resolves a site that defines, drops or refers to a table: to a common table expression visible at the site, to a table in force, or to nothing.
      *
      * @throws SemanticException When the name is not in force, and the site is not a conditional drop
      */
     public function refer(NameSite $site, Relations $relations, Node $tree): Reference
     {
         if ($site->kind === ReferenceKind::CommonTableExpression) {
-            $relations->define($site->name);
-
             return new Reference($site->value, $site->name, ReferenceKind::CommonTableExpression);
         }
         [$schema, $table] = $relations->qualified($site->name);
@@ -133,7 +131,7 @@ final class Resolver
 
             return new Reference($site->value, $site->name, ReferenceKind::Drop, $known[1] ?? null, $known[0] ?? null, $site->conditional);
         }
-        if ($relations->isCommon($site->name)) {
+        if ($site->scope->contains($site->name, $this->language->dialect->platform()->names())) {
             return new Reference($site->value, $site->name, ReferenceKind::CommonTableExpression);
         }
         if ($known === null) {

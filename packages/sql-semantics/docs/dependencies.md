@@ -61,13 +61,36 @@ Every table name a statement writes is a `Statement\Reference`: the name value a
 |------|---------|
 | `Dependency` | A table declared by a dependency; `declaration` is that statement and `table` its declared columns |
 | `Declaration` | A table the statement itself declares, or names again in its own constraints |
-| `CommonTableExpression` | A common table expression the statement defines; a name it shadows resolves to it |
+| `CommonTableExpression` | A common table expression the statement defines and the name can see; see [common table expressions](#common-table-expressions) |
 | `Drop` | A table the statement drops; `declaration` is where it was declared |
 
 A name that resolves to none of these is a `SemanticException` with reason `unknown-table`: the dependency that would declare it was not given. Names are compared as the dialect compares relation names, and an unqualified name is read in the dialect's default schema, so in MySQL `db.users` and `users` are different tables.
 
-Table names are found where each grammar writes them: in FROM and JOIN clauses, INSERT, UPDATE, DELETE, and MERGE targets, TRUNCATE, ALTER TABLE, CREATE INDEX, foreign key references, and the sources of `CREATE TABLE ... LIKE` and `... AS SELECT`. Aliases and column names are not resolved, and a name written inside a stored program body is not read.
+The references are listed in writing order. Table names are found where each grammar writes them: in FROM and JOIN clauses, INSERT, UPDATE, DELETE, and MERGE targets, TRUNCATE, ALTER TABLE, CREATE INDEX, foreign key references, and the sources of `CREATE TABLE ... LIKE` and `... AS SELECT`. Aliases and column names are not resolved, and a name written inside a stored program body is not read.
+
+## Common table expressions
+
+A name resolves to a common table expression only where the server can see it. A WITH clause makes its expressions visible in the query or statement it belongs to, subqueries at any depth included, and not outside it; an inner clause shadows an outer one. Inside the clause, the body of each expression sees the expressions each database allows, and a name it cannot see resolves outside the clause, to an outer expression or to a table:
+
+| Database | Plain WITH | WITH RECURSIVE |
+|----------|------------|----------------|
+| MySQL | The expressions before it | The expressions before it and itself |
+| PostgreSQL | The expressions before it | Every expression of the clause |
+| SQLite | Every expression of the clause | Every expression of the clause |
+
+So in `WITH users AS (SELECT * FROM users WHERE id > 1) SELECT * FROM users`, MySQL and PostgreSQL read the table `users` inside the expression, and SQLite reads the expression itself, which the server reports as a circular reference:
+
+```php
+$semantics = new Semantics(Dialect::PostgreSql);
+$users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY)');
+$query = $semantics->analyze('WITH users AS (SELECT * FROM users WHERE id > 1) SELECT * FROM users', [$users]);
+
+array_map(static fn (Reference $reference): ReferenceKind => $reference->kind, $query->resolution->references);
+// [CommonTableExpression, Dependency, CommonTableExpression]
+```
+
+The table an INSERT, UPDATE, DELETE, or MERGE writes to is always a table in PostgreSQL and SQLite, even when an expression of that name is visible. In MySQL the target of an UPDATE or DELETE is resolved like any other name, so it can be an expression, which the server then rejects as not updatable. A qualified name is never an expression, and expression names are compared as the database compares table names.
 
 ## Verification
 
-Each database package fuzzes declarations: every `CREATE TABLE` sql-faker generates from the grammar must resolve to one readable table, write back the same SQL, and read the same declaration again, unchanged by an unrelated conditional drop before it. Resolution against dependencies is stated by unit tests for every statement kind above in each dialect.
+Each database package fuzzes declarations: every `CREATE TABLE` sql-faker generates from the grammar must resolve to one readable table, write back the same SQL, and read the same declaration again, unchanged by an unrelated conditional drop before it. Resolution against dependencies is stated by unit tests for every statement kind above in each dialect. The visibility of common table expressions was read from MySQL 8.4, PostgreSQL 17, and SQLite 3 running each case against real tables, and the unit tests state those outcomes.

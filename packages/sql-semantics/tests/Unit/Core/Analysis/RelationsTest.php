@@ -117,22 +117,4 @@ final class RelationsTest extends TestCase
         self::assertFalse($relations->same('public', 'users', 'other', 'users'));
         self::assertFalse($relations->same('public', 'users', 'public', 'orders'));
     }
-
-    public function testDefineRecordsSinglePartNamesOnly(): void
-    {
-        $relations = new Relations(MySqlDialect::MySql->platform()->names(), '');
-        $relations->define(['recent']);
-        $relations->define(['app', 'ignored']);
-        self::assertTrue($relations->isCommon(['recent']));
-        self::assertFalse($relations->isCommon(['ignored']));
-    }
-
-    public function testIsCommonComparesUnderTheNamePolicyAndRejectsQualifiedNames(): void
-    {
-        $relations = new Relations(MySqlDialect::MySql->platform()->names(), '');
-        $relations->define(['recent']);
-        self::assertTrue($relations->isCommon(['RECENT']));
-        self::assertFalse($relations->isCommon(['app', 'recent']));
-        self::assertFalse($relations->isCommon(['other']));
-    }
 }
