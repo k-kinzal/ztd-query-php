@@ -30,3 +30,22 @@ $pdo = new PDO($endpoint->dsn(), $endpoint->username, $endpoint->password);
 ```
 
 MySQL containers require `pdo_mysql` to wait for readiness.
+
+## Selecting a release
+
+`MySqlRelease` and `PostgreSqlRelease` resolve a release number to its container. `fromEnvironment()` reads `MYSQL_VERSION` or `PG_VERSION` and falls back to the default release (`8.4.7` and `17.2`), so CI runs the newest release and any other release runs locally by setting the variable:
+
+```php
+use Container\Endpoint;
+use Container\MySqlRelease;
+use Testcontainers\Testcontainers;
+
+$endpoint = Testcontainers::run(MySqlRelease::fromEnvironment())->getData(Endpoint::class);
+```
+
+```console
+$ MYSQL_VERSION=8.0.44 vendor/bin/phpunit
+$ PG_VERSION=16.6 vendor/bin/phpunit
+```
+
+`container($version)` resolves a release given in code, `versions()` lists the releases with a container, and `latest()` names the newest one.

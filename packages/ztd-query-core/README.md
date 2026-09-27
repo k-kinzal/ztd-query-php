@@ -10,7 +10,7 @@ ZTD Query is a Zero Table Dependency testing library for PHP: it runs the SQL of
 ## Requirements
 
 - PHP 8.1+
-- MySQL 8.0.11–9.1, PostgreSQL 16–17, or SQLite 3.x
+- MySQL 8.0–9.1, PostgreSQL 16–17, or SQLite 3.x
 
 ## Installation
 

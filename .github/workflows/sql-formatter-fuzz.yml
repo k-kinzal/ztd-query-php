@@ -13,7 +13,12 @@ on:
       mysql_version:
         description: MySQL release the MySQL targets parse with and, for equivalence, run against
         required: true
-        default: '8.4.7'
+        default: '9.1.0'
+        type: string
+      pg_version:
+        description: PostgreSQL release the PostgreSQL targets parse with and, for equivalence, run against
+        required: true
+        default: '17.2'
         type: string
 
 permissions:
@@ -25,7 +30,8 @@ concurrency:
 
 env:
   COMPOSER_NO_INTERACTION: '1'
-  MYSQL_VERSION: ${{ inputs.mysql_version || '8.4.7' }}
+  MYSQL_VERSION: ${{ inputs.mysql_version || '9.1.0' }}
+  PG_VERSION: ${{ inputs.pg_version || '17.2' }}
   FUZZ_MAX_RUNS: ${{ inputs.max_runs || '10000' }}
 
 jobs:
@@ -211,7 +217,7 @@ jobs:
           restore-keys: sql-formatter-coverage-v1-${{ env.FUZZ_NAME }}-
       - name: Copy the sql-faker seeds into the corpus
         env:
-          SEEDS: ${{ matrix.database == 'mysql' && format('mysql/mysql-{0}', env.MYSQL_VERSION) || matrix.database == 'pg' && 'pg/pg-17.2' || 'sqlite/sqlite-3.47.2' }}
+          SEEDS: ${{ matrix.database == 'mysql' && format('mysql/mysql-{0}', env.MYSQL_VERSION) || matrix.database == 'pg' && format('pg/pg-{0}', env.PG_VERSION) || 'sqlite/sqlite-3.47.2' }}
         run: |
           mkdir -p "fuzz/corpus/$FUZZ_TARGET"
           if [ -d "../sql-faker/seeds/$SEEDS" ]; then

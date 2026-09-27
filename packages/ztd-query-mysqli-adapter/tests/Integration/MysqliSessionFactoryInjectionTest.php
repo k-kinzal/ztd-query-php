@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration;
 
 use Container\Endpoint;
-use Container\MySql80Container;
-use Container\MySql84Container;
+use Container\MySqlRelease;
 use mysqli;
 use mysqli_result;
 use PHPUnit\Framework\Attributes\Large;
@@ -31,7 +30,7 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
 {
     public function testExplicitMySqlSessionFactoryInjectionWorks(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -55,7 +54,7 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
 
     public function testInjectedFactoryInsertIsVisibleViaSelect(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -85,7 +84,7 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
 
     public function testInjectedFactoryDoesNotModifyPhysicalDatabase(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -116,7 +115,7 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
 
     public function testInjectedFactoryPreparedStatementWorks(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -151,7 +150,7 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
 
     public function testInjectedFactoryAffectedRowsTracking(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -175,7 +174,7 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
 
     public function testDefaultFactoryBehaviorMatchesExplicitInjection(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);

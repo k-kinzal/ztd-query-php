@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration\PostgreSql;
 
 use Container\Endpoint;
-use Container\PostgreSql16Container;
+use Container\PostgreSqlRelease;
 use PDO;
 use PDOStatement;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -19,7 +19,7 @@ final class PreparedExecutionTest extends TestCase
 {
     public function testNativePositionsRemainBoundAcrossExpressionsAndMutations(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),

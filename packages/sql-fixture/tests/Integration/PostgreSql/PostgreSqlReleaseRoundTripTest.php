@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Tests\Integration\PostgreSql;
 
 use Container\Endpoint;
+use Container\PostgreSql16Container;
 use Container\PostgreSql17Container;
+use Container\PostgreSqlContainer;
 use Faker\Factory;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -20,19 +22,33 @@ use Testcontainers\Testcontainers;
 final class PostgreSqlReleaseRoundTripTest extends TestCase
 {
     /**
-     * @return iterable<string, array{int}>
+     * @return iterable<string, array{class-string<PostgreSqlContainer>, int}>
      */
-    public static function providerSeeds(): iterable
+    public static function providerReleases(): iterable
     {
-        yield 'seed 1' => [1];
-        yield 'seed 2' => [2];
-        yield 'seed 3' => [3];
+        $selected = getenv('SQL_FIXTURE_PGSQL_VERSION');
+        $containers = [
+            PostgreSql16Container::class,
+            PostgreSql17Container::class,
+        ];
+        foreach ($containers as $container) {
+            $tag = $container::getGrammarVersion();
+            if ($selected !== false && $selected !== '' && $tag !== 'pg-' . $selected) {
+                continue;
+            }
+            foreach ([1, 2, 3] as $seed) {
+                yield $tag . ' seed ' . $seed => [$container, $seed];
+            }
+        }
     }
 
-    #[DataProvider('providerSeeds')]
-    public function testRowGeneratedFromTheReportedSchemaIsAccepted(int $seed): void
+    /**
+     * @param class-string<PostgreSqlContainer> $container
+     */
+    #[DataProvider('providerReleases')]
+    public function testRowGeneratedFromTheReportedSchemaIsAccepted(string $container, int $seed): void
     {
-        $endpoint = Testcontainers::run(PostgreSql17Container::class)->getData(Endpoint::class);
+        $endpoint = Testcontainers::run($container)->getData(Endpoint::class);
         $pdo = new PDO($endpoint->dsn(), $endpoint->username, $endpoint->password, [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_EMULATE_PREPARES => false,
@@ -40,7 +56,7 @@ final class PostgreSqlReleaseRoundTripTest extends TestCase
         $faker = Factory::create();
         $faker->seed($seed);
         $provider = new DatabaseFixtureProvider($faker, $pdo);
-        self::assertSame('pg-17.2', $provider->getVersion());
+        self::assertSame($container::getGrammarVersion(), $provider->getVersion());
 
         $table = 'fixture_' . bin2hex(random_bytes(4));
         $pdo->exec(<<<SQL

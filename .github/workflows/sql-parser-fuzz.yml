@@ -13,7 +13,12 @@ on:
       mysql_version:
         description: MySQL release whose grammar the MySQL target parses with
         required: true
-        default: '8.4.7'
+        default: '9.1.0'
+        type: string
+      pg_version:
+        description: PostgreSQL release whose grammar the PostgreSQL target parses with
+        required: true
+        default: '17.2'
         type: string
 
 permissions:
@@ -25,7 +30,8 @@ concurrency:
 
 env:
   COMPOSER_NO_INTERACTION: '1'
-  MYSQL_VERSION: ${{ inputs.mysql_version || '8.4.7' }}
+  MYSQL_VERSION: ${{ inputs.mysql_version || '9.1.0' }}
+  PG_VERSION: ${{ inputs.pg_version || '17.2' }}
 
 jobs:
   parse:

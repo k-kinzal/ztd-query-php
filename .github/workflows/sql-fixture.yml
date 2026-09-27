@@ -2,6 +2,17 @@ name: CI (sql-fixture)
 
 on:
   workflow_dispatch:
+    inputs:
+      mysql_version:
+        description: MySQL release the server job rounds trips through
+        required: false
+        default: '9.1.0'
+        type: string
+      pg_version:
+        description: PostgreSQL release the server job rounds trips through
+        required: false
+        default: '17.2'
+        type: string
   push:
     branches: [main]
   pull_request:
@@ -34,7 +45,7 @@ jobs:
     name: Test (PHP ${{ matrix.php }})
     services:
       mysql:
-        image: container-registry.oracle.com/mysql/community-server:8.4.7
+        image: container-registry.oracle.com/mysql/community-server:9.1.0
         env:
           MYSQL_ROOT_PASSWORD: toolkit
           MYSQL_ROOT_HOST: '%'
@@ -55,7 +66,8 @@ jobs:
     env:
       SQL_FIXTURE_MYSQL_DSN: mysql:host=127.0.0.1;port=3306;dbname=sql_fixture
       SQL_FIXTURE_PGSQL_DSN: pgsql:host=127.0.0.1;port=5432;dbname=sql_fixture
-      SQL_FIXTURE_MYSQL_VERSION: '8.4.7'
+      SQL_FIXTURE_MYSQL_VERSION: '9.1.0'
+      SQL_FIXTURE_PGSQL_VERSION: '17.2'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
@@ -90,15 +102,26 @@ jobs:
         run: composer test
 
   server:
-    name: Server (MySQL ${{ matrix.mysql }})
+    name: Server (${{ matrix.target.name }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        mysql: ['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0']
+        target:
+          - name: MySQL ${{ inputs.mysql_version || '9.1.0' }}
+            dialect: mysql
+            version: ${{ inputs.mysql_version || '9.1.0' }}
+            filter: MySqlReleaseRoundTripTest
+          - name: PostgreSQL ${{ inputs.pg_version || '17.2' }}
+            dialect: pgsql
+            version: ${{ inputs.pg_version || '17.2' }}
+            filter: PostgreSqlReleaseRoundTripTest
     env:
-      SQL_FIXTURE_MYSQL_VERSION: ${{ matrix.mysql }}
+      SQL_FIXTURE_MYSQL_VERSION: ${{ matrix.target.dialect == 'mysql' && matrix.target.version || '' }}
+      SQL_FIXTURE_PGSQL_VERSION: ${{ matrix.target.dialect == 'pgsql' && matrix.target.version || '' }}
+      MYSQL_VERSION: ${{ matrix.target.dialect == 'mysql' && matrix.target.version || '' }}
+      PG_VERSION: ${{ matrix.target.dialect == 'pgsql' && matrix.target.version || '' }}
     steps:
       - name: Check out the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -116,33 +139,20 @@ jobs:
           composer-options: --prefer-dist
           require-lock-file: true
       - name: Pull the server image before the timed tests
+        env:
+          DIALECT: ${{ matrix.target.dialect }}
         run: |
           php <<'PHP'
           <?php
           require 'vendor/autoload.php';
-          $containers = [
-              Container\MySql56Container::class,
-              Container\MySql57Container::class,
-              Container\MySql80Container::class,
-              Container\MySql81Container::class,
-              Container\MySql82Container::class,
-              Container\MySql83Container::class,
-              Container\MySql84Container::class,
-              Container\MySql90Container::class,
-              Container\MySql91Container::class,
-          ];
-          foreach ($containers as $container) {
-              if ($container::getGrammarVersion() !== 'mysql-' . getenv('SQL_FIXTURE_MYSQL_VERSION')) {
-                  continue;
-              }
-              passthru('docker pull ' . escapeshellarg((new $container())->image()), $status);
-              exit($status);
-          }
-          fwrite(STDERR, "No container is defined for MySQL " . getenv('SQL_FIXTURE_MYSQL_VERSION') . "\n");
-          exit(1);
+          $container = getenv('DIALECT') === 'mysql'
+              ? Container\MySqlRelease::fromEnvironment()
+              : Container\PostgreSqlRelease::fromEnvironment();
+          passthru('docker pull ' . escapeshellarg((new $container())->image()), $status);
+          exit($status);
           PHP
       - name: Round-trip the generated rows through the server
-        run: vendor/bin/phpunit --testsuite integration --filter MySqlReleaseRoundTripTest
+        run: vendor/bin/phpunit --testsuite integration --filter ${{ matrix.target.filter }}
 
   lint:
     name: Lint
