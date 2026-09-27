@@ -13,7 +13,6 @@ use PHPUnit\Framework\TestCase;
  * @covers \Deriver\Internal\Model\ModelPrecedence
  */
 #[CoversClass(\Deriver\Internal\Model\ModelPrecedence::class)]
-#[UsesClass(\Deriver\Api\InvalidInputException::class)]
 #[UsesClass(\Deriver\Model\ModelDescriptor::class)]
 #[UsesClass(\Deriver\Model\Signature\Signature::class)]
 #[Small]

@@ -13,7 +13,6 @@ use PHPUnit\Framework\TestCase;
  * @covers \Deriver\Report\Decode\Scalar
  */
 #[CoversClass(\Deriver\Report\Decode\Scalar::class)]
-#[UsesClass(\Deriver\Api\InvalidInputException::class)]
 #[UsesClass(\Deriver\Report\Decode\Fields::class)]
 #[Small]
 final class ScalarTest extends TestCase

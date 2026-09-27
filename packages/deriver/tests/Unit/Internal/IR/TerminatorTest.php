@@ -12,7 +12,6 @@ use PHPUnit\Framework\TestCase;
 
 #[CoversClass(\Deriver\Internal\IR\Terminator::class)]
 #[UsesClass(\Deriver\Analyzer::class)]
-#[UsesClass(\Deriver\Api\AnalysisSession::class)]
 #[UsesClass(\Deriver\Api\Execution\ResourceLimits::class)]
 #[UsesClass(\Deriver\Api\Execution\SourceLimits::class)]
 #[UsesClass(\Deriver\Api\Project\Configuration::class)]
@@ -82,7 +81,6 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeCheck::class)]
 #[UsesClass(\Deriver\Internal\Solver\Completion::class)]
 #[UsesClass(\Deriver\Internal\Solver\Context::class)]
-#[UsesClass(\Deriver\Internal\Solver\Control\ExceptionChain::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\Handler::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\LoopConvergence::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\ObservationLimit::class)]

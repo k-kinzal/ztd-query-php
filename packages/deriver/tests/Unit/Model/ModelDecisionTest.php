@@ -114,7 +114,6 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Transfer\MemoryStep::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\PureStep::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\ReferenceAssignment::class)]
-#[UsesClass(\Deriver\Internal\Value\Arithmetic::class)]
 #[UsesClass(\Deriver\Internal\Value\Identity::class)]
 #[UsesClass(\Deriver\Internal\Value\PhpSemantics::class)]
 #[UsesClass(\Deriver\Model\Binding\ArgumentBindings::class)]

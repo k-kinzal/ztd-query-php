@@ -12,7 +12,6 @@ use PHPUnit\Framework\TestCase;
 
 #[CoversClass(\Deriver\Internal\IR\CatchTarget::class)]
 #[UsesClass(\Deriver\Analyzer::class)]
-#[UsesClass(\Deriver\Api\AnalysisSession::class)]
 #[UsesClass(\Deriver\Api\Execution\ResourceLimits::class)]
 #[UsesClass(\Deriver\Api\Execution\SourceLimits::class)]
 #[UsesClass(\Deriver\Api\Project\Configuration::class)]
@@ -66,7 +65,6 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\IR\ExceptionRegion::class)]
 #[UsesClass(\Deriver\Internal\IR\Instruction::class)]
 #[UsesClass(\Deriver\Internal\IR\Parameter::class)]
-#[UsesClass(\Deriver\Internal\IR\Program::class)]
 #[UsesClass(\Deriver\Internal\IR\PropertyDeclaration::class)]
 #[UsesClass(\Deriver\Internal\IR\Terminator::class)]
 #[UsesClass(\Deriver\Internal\Memory\Location::class)]
@@ -75,7 +73,6 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Memory\ReferenceConstraint::class)]
 #[UsesClass(\Deriver\Internal\Memory\StorageCapture::class)]
 #[UsesClass(\Deriver\Internal\Model\Extensions::class)]
-#[UsesClass(\Deriver\Internal\Model\ModelBoundary::class)]
 #[UsesClass(\Deriver\Internal\Model\ProviderInputs::class)]
 #[UsesClass(\Deriver\Internal\Model\Registry::class)]
 #[UsesClass(\Deriver\Internal\Model\StateRegistry::class)]

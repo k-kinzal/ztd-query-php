@@ -6,7 +6,6 @@ namespace Tests\Unit\Report;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 
@@ -14,7 +13,6 @@ use stdClass;
  * @covers \Deriver\Report\JsonText
  */
 #[CoversClass(\Deriver\Report\JsonText::class)]
-#[UsesClass(\Deriver\Api\InvalidInputException::class)]
 #[Small]
 final class JsonTextTest extends TestCase
 {

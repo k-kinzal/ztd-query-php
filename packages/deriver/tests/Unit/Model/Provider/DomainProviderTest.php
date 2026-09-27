@@ -6,16 +6,12 @@ namespace Tests\Unit\Model\Provider;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 /**
  * @covers \Deriver\Model\Provider\DomainProvider
  */
 #[CoversClass(\Deriver\Model\Provider\DomainProvider::class)]
-#[UsesClass(\Deriver\Model\Domain\AbstractDomain::class)]
-#[UsesClass(\Deriver\Model\Provider\Provider::class)]
-#[UsesClass(\Deriver\Model\Provider\RefinementModel::class)]
 #[Small]
 final class DomainProviderTest extends TestCase
 {

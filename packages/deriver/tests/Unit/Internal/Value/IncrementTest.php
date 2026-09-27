@@ -17,7 +17,6 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(Increment::class)]
 #[UsesClass(\Deriver\Internal\Value\Arithmetic::class)]
 #[UsesClass(Increment::class)]
-#[UsesClass(\Deriver\Internal\Value\IntegerConversion::class)]
 #[UsesClass(\Deriver\Internal\Value\NumericString::class)]
 #[UsesClass(\Deriver\Internal\Value\PhpSemantics::class)]
 #[UsesClass(Term::class)]

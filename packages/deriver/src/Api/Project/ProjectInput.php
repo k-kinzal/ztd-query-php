@@ -78,7 +78,8 @@ final class ProjectInput
             if (!$file instanceof SplFileInfo || $file->isLink() || !$file->isFile() || strtolower($file->getExtension()) !== 'php') {
                 continue;
             }
-            $relative = substr(self::normalize($file->getPathname()), strlen($root) + 1);
+            $path = self::normalize($file->getPathname());
+            $relative = $root === '' ? ltrim($path, '/') : substr($path, strlen($root) + 1);
             $captured = self::fromFiles([$file->getPathname()]);
             $files[] = new SourceFile($relative, $captured->files[0]->contents);
         }

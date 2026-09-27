@@ -92,7 +92,6 @@ use Tests\Fake\SummaryFixture;
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeCheck::class)]
 #[UsesClass(Completion::class)]
 #[UsesClass(\Deriver\Internal\Solver\Context::class)]
-#[UsesClass(\Deriver\Internal\Solver\Control\ExceptionChain::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\ExceptionMatch::class)]
 #[UsesClass(Handler::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\ObservationLimit::class)]

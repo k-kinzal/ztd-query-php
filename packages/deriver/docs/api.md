@@ -2,7 +2,11 @@
 
 ## Capture a project
 
-`ProjectInput` contains immutable `SourceFile` objects. `ProjectInput::fromFiles()` reads an explicit local file list. `ProjectInput::fromDirectory()` captures PHP files, excluding `vendor`, `.git`, and `build` by default. Neither loader executes PHP or follows symlink directories. Use `new SourceFile($path, $bytes, declarationsOnly: true)` for an external signature file whose callable implementations are unavailable. The snapshot records that distinction and keeps body effects unresolved.
+`ProjectInput` contains immutable `SourceFile` objects. `ProjectInput::fromFiles()` reads an explicit local file list.
+
+`ProjectInput::fromDirectory()` captures PHP files, excluding `vendor`, `.git`, and `build` by default. Directory capture returns paths relative to the selected root, sorted by path; `fromDirectory('.')` captures the current working directory. Exclusions match directory or file names at every level. Neither loader executes PHP, and directory capture skips symbolic links.
+
+Use `new SourceFile($path, $bytes, declarationsOnly: true)` for an external signature file whose callable implementations are unavailable. The snapshot records that distinction and keeps body effects unresolved.
 
 Open a new session after changing source, models, environment inputs, or world assumptions. A snapshot records source hashes, target semantics, and registered extension versions. References belong to the snapshot that produced them; another session with a different snapshot cannot use them.
 

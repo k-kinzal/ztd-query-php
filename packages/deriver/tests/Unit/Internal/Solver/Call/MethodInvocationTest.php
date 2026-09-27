@@ -184,7 +184,6 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Model\Plan\Expression::class)]
 #[UsesClass(\Deriver\Model\Plan\SemanticPlan::class)]
 #[UsesClass(DispatchDecision::class)]
-#[UsesClass(DispatchProvider::class)]
 #[UsesClass(\Deriver\Model\Provider\DispatchRequest::class)]
 #[UsesClass(DispatchTarget::class)]
 #[UsesClass(\Deriver\Model\Signature\Parameter::class)]

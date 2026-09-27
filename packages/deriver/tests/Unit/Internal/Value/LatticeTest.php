@@ -121,7 +121,6 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(Lattice::class)]
 #[UsesClass(\Deriver\Internal\Value\PhpSemantics::class)]
 #[UsesClass(\Deriver\Internal\Value\SecretFingerprint::class)]
-#[UsesClass(\Deriver\Model\Domain\AbstractDomain::class)]
 #[UsesClass(\Deriver\Model\Domain\DomainFact::class)]
 #[UsesClass(\Deriver\Report\JsonText::class)]
 #[UsesClass(\Deriver\Report\QueryEncoding::class)]

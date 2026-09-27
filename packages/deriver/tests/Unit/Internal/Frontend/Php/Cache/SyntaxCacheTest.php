@@ -14,7 +14,6 @@ use PHPUnit\Framework\TestCase;
  */
 #[CoversClass(\Deriver\Internal\Frontend\Php\Cache\SyntaxCache::class)]
 #[UsesClass(\Deriver\Api\Execution\SourceLimits::class)]
-#[UsesClass(\Deriver\Api\InvalidInputException::class)]
 #[UsesClass(\Deriver\Api\Project\ProjectInput::class)]
 #[UsesClass(\Deriver\Api\Project\SourceFile::class)]
 #[UsesClass(\Deriver\Api\Project\TargetProfile::class)]

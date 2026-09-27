@@ -19,7 +19,6 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Model\Provider\EntryPointProvider::class)]
 #[UsesClass(\Deriver\Model\Provider\EnvironmentProvider::class)]
 #[UsesClass(\Deriver\Model\Provider\ObservationProvider::class)]
-#[UsesClass(\Deriver\Model\Provider\Provider::class)]
 #[Small]
 final class DeclarationProviderTest extends TestCase
 {

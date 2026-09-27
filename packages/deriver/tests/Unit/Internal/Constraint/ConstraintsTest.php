@@ -14,6 +14,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 #[CoversClass(Constraints::class)]
 #[UsesClass(\Deriver\Analyzer::class)]
@@ -34,6 +35,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Api\Result\Assessment::class)]
 #[UsesClass(\Deriver\Api\Result\Derivation::class)]
 #[UsesClass(\Deriver\Api\Result\DerivationResult::class)]
+#[UsesClass(\Deriver\Api\Result\Frontier::class)]
 #[UsesClass(\Deriver\Api\Result\Statistics::class)]
 #[UsesClass(\Deriver\Api\Result\StorageSnapshot::class)]
 #[UsesClass(\Deriver\Internal\Api\QueryExecution::class)]
@@ -73,6 +75,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Memory\Memory::class)]
 #[UsesClass(\Deriver\Internal\Memory\StorageCapture::class)]
 #[UsesClass(\Deriver\Internal\Model\Extensions::class)]
+#[UsesClass(\Deriver\Internal\Model\ModelBoundary::class)]
 #[UsesClass(\Deriver\Internal\Model\ProviderInputs::class)]
 #[UsesClass(\Deriver\Internal\Model\Registry::class)]
 #[UsesClass(\Deriver\Internal\Model\StateRegistry::class)]
@@ -112,6 +115,8 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Value\Comparison::class)]
 #[UsesClass(Identity::class)]
 #[UsesClass(\Deriver\Internal\Value\PhpSemantics::class)]
+#[UsesClass(\Deriver\Model\Provider\Provider::class)]
+#[UsesClass(\Deriver\Model\Provider\RefinementModel::class)]
 #[UsesClass(\Deriver\Report\JsonText::class)]
 #[UsesClass(\Deriver\Report\QueryEncoding::class)]
 #[UsesClass(\Deriver\Report\ValueGraph::class)]
@@ -311,5 +316,144 @@ final class ConstraintsTest extends TestCase
         self::assertTrue($constraints->comparison($state, new Term('binary', '<', [Term::parameter('x', 'float'),Term::constant(3)]), true));
         self::assertTrue($constraints->comparison($state, new Term('binary', '<', [Term::parameter('x', 'int'),Term::parameter('y', 'int')]), true));
         self::assertSame([], $state->constraints);
+    }
+
+    public function testRefineSkipsOtherProvidersAndAppliesEveryGuaranteedPredicate(): void
+    {
+        $other = self::createStub(\Deriver\Model\Provider\Provider::class);
+        $other->method('id')->willReturn('other');
+        $other->method('version')->willReturn('1');
+        $x = Term::parameter('x', 'int');
+        $lower = self::createStub(\Deriver\Model\Provider\RefinementModel::class);
+        $lower->method('id')->willReturn('lower');
+        $lower->method('version')->willReturn('1');
+        $lower->method('refine')->willReturn(new Term('binary', '>=', [$x,Term::constant(3)]));
+        $upper = self::createStub(\Deriver\Model\Provider\RefinementModel::class);
+        $upper->method('id')->willReturn('upper');
+        $upper->method('version')->willReturn('1');
+        $upper->method('refine')->willReturn(new Term('binary', '<=', [$x,Term::constant(8)]));
+        $context = \Tests\Fake\SolverFixture::context(configuration: new \Deriver\Api\Project\Configuration(providers:[$other,$lower,$upper]));
+        $state = new State();
+        self::assertTrue((new Constraints($context))->refine($state, Term::parameter('condition', 'bool'), true));
+        $bounds = $state->constraints[(new Identity())->key($x)];
+        self::assertSame(3, $bounds['min']);
+        self::assertSame(8, $bounds['max']);
+        self::assertCount(2, $state->guard);
+        self::assertSame([], $context->frontiers);
+    }
+
+    #[DataProvider('providerRefinementResponses')]
+    public function testRefinePreservesOptionalPredicatesAndImpossibleImplications(?Term $implied, bool $expected, int $guards): void
+    {
+        $provider = self::createStub(\Deriver\Model\Provider\RefinementModel::class);
+        $provider->method('id')->willReturn('refinement');
+        $provider->method('version')->willReturn('1');
+        $provider->method('refine')->willReturn($implied);
+        $context = \Tests\Fake\SolverFixture::context(configuration:new \Deriver\Api\Project\Configuration(providers:[$provider]));
+        $state = new State();
+        self::assertSame($expected, (new Constraints($context))->refine($state, Term::parameter('condition'), false));
+        self::assertCount($guards, $state->guard);
+        self::assertSame([], $context->frontiers);
+    }
+
+    /**
+     * @return iterable<string,array{Term|null,bool,int}>
+     */
+    public static function providerRefinementResponses(): iterable
+    {
+        yield 'not applicable' => [null,true,0];
+        yield 'impossible' => [Term::constant(false),false,0];
+        yield 'guaranteed' => [Term::constant(true),true,0];
+        yield 'failure spelling in a literal' => [Term::constant('MODEL_CONTRACT_VIOLATION'),true,0];
+        yield 'ordinary residual' => [Term::opaque('UNKNOWN_PREDICATE', 'bool'),true,1];
+    }
+
+    public function testRefineForwardsTheObservedPredicateAndPolarity(): void
+    {
+        $predicate = Term::parameter('condition', 'bool');
+        $provider = self::createMock(\Deriver\Model\Provider\RefinementModel::class);
+        $provider->method('id')->willReturn('refinement');
+        $provider->method('version')->willReturn('1');
+        $provider->expects(self::once())->method('refine')->with(self::identicalTo($predicate), false)->willReturn(null);
+        $context = \Tests\Fake\SolverFixture::context(configuration:new \Deriver\Api\Project\Configuration(providers:[$provider]));
+        self::assertTrue((new Constraints($context))->refine(new State(), $predicate, false));
+    }
+
+    public function testRefineRecordsProviderFailureWithoutClaimingAnImpossiblePath(): void
+    {
+        $provider = self::createStub(\Deriver\Model\Provider\RefinementModel::class);
+        $provider->method('id')->willReturn('broken');
+        $provider->method('version')->willReturn('1');
+        $provider->method('refine')->willThrowException(new RuntimeException('provider failed'));
+        $context = \Tests\Fake\SolverFixture::context(configuration:new \Deriver\Api\Project\Configuration(providers:[$provider]));
+        $state = new State();
+        self::assertTrue((new Constraints($context))->refine($state, Term::parameter('condition'), true));
+        self::assertSame([], $state->guard);
+        self::assertCount(1, $context->frontiers);
+        $frontier = array_values($context->frontiers)[0];
+        self::assertSame('MODEL_CONTRACT_VIOLATION', $frontier->code);
+        self::assertSame('refinement-provider', $frontier->operation);
+        self::assertSame('', $frontier->at->snapshotId);
+        self::assertSame('model:refinement', $frontier->at->path);
+        self::assertSame(0, $frontier->at->start);
+        self::assertSame(0, $frontier->at->end);
+    }
+
+    #[DataProvider('providerNonComparisonTerms')]
+    public function testComparisonLeavesIncompleteAndOtherOperationsUnconstrained(Term $predicate): void
+    {
+        $state = new State();
+        self::assertTrue((new Constraints())->comparison($state, $predicate, true));
+        self::assertSame([], $state->constraints);
+    }
+
+    /**
+     * @return iterable<string,array{Term}>
+     */
+    public static function providerNonComparisonTerms(): iterable
+    {
+        $x = Term::parameter('x', 'int');
+        yield 'missing right' => [new Term('binary', '<', [$x])];
+        yield 'missing left' => [new Term('binary', '<', [1 => Term::constant(3)])];
+        yield 'invalid operator' => [new Term('binary', null, [$x,Term::constant(3)])];
+        yield 'other operation' => [new Term('intrinsic', '<', [$x,Term::constant(3)])];
+        yield 'text endpoint' => [new Term('binary', '<', [$x,Term::constant('3')])];
+        yield 'boolean endpoint' => [new Term('binary', '<', [$x,Term::constant(true)])];
+        yield 'symbolic numeric payload' => [new Term('binary', '<', [$x,new Term('opaque', 3)])];
+        yield 'two constants' => [new Term('binary', '<', [Term::constant(2),Term::constant(3)])];
+    }
+
+    public function testAssumeDoesNotTreatEveryUnaryOperationAsLogicalNegation(): void
+    {
+        $value = Term::parameter('x', 'int');
+        $predicate = new Term('unary', '~', [$value]);
+        $state = new State();
+        self::assertTrue((new Constraints())->assume($state, $predicate, false));
+        self::assertSame([(new Identity())->key($predicate) => false], $state->guard);
+    }
+
+    #[DataProvider('providerImpossibleIntegerBounds')]
+    public function testBoundsRejectsStrictComparisonsPastIntegerExtrema(int $number, string $operator): void
+    {
+        $state = new State();
+        self::assertFalse((new Constraints())->bounds($state, Term::parameter('x', 'int'), Term::constant($number), $operator));
+        self::assertSame([], $state->constraints);
+    }
+
+    /**
+     * @return iterable<string,array{int,string}>
+     */
+    public static function providerImpossibleIntegerBounds(): iterable
+    {
+        yield 'above maximum' => [PHP_INT_MAX,'>'];
+        yield 'below minimum' => [PHP_INT_MIN,'<'];
+    }
+
+    public function testComparisonRoundsAFractionalLowerBoundAwayFromTheExcludedInteger(): void
+    {
+        $state = new State();
+        $x = Term::parameter('x', 'int');
+        self::assertTrue((new Constraints())->comparison($state, new Term('binary', '>=', [$x,Term::constant(3.2)]), true));
+        self::assertSame(4.0, $state->constraints[(new Identity())->key($x)]['min']);
     }
 }

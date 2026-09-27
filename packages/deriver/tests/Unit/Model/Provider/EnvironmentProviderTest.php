@@ -13,11 +13,6 @@ use PHPUnit\Framework\TestCase;
  * @covers \Deriver\Model\Provider\EnvironmentProvider
  */
 #[CoversClass(\Deriver\Model\Provider\EnvironmentProvider::class)]
-#[UsesClass(\Deriver\Model\Provider\DeclarationProvider::class)]
-#[UsesClass(\Deriver\Model\Provider\DispatchProvider::class)]
-#[UsesClass(\Deriver\Model\Provider\EntryPointProvider::class)]
-#[UsesClass(\Deriver\Model\Provider\ObservationProvider::class)]
-#[UsesClass(\Deriver\Model\Provider\Provider::class)]
 #[UsesClass(\Deriver\Value\Term::class)]
 #[Small]
 final class EnvironmentProviderTest extends TestCase

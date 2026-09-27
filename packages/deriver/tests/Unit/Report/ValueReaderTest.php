@@ -15,7 +15,6 @@ use stdClass;
  * @covers \Deriver\Report\ValueReader
  */
 #[CoversClass(\Deriver\Report\ValueReader::class)]
-#[UsesClass(\Deriver\Api\InvalidInputException::class)]
 #[UsesClass(\Deriver\Internal\Value\Identity::class)]
 #[UsesClass(\Deriver\Internal\Value\SecretFingerprint::class)]
 #[UsesClass(\Deriver\Report\Decode\Fields::class)]

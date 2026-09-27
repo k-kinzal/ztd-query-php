@@ -52,7 +52,6 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Control\Resources::class)]
 #[UsesClass(\Deriver\Internal\Solver\Havoc::class)]
 #[UsesClass(\Deriver\Internal\Solver\State::class)]
-#[UsesClass(\Deriver\Model\CallModel::class)]
 #[UsesClass(\Deriver\Model\Signature\Parameter::class)]
 #[UsesClass(\Deriver\Standard\FunctionModel::class)]
 #[UsesClass(\Deriver\Standard\Library::class)]

@@ -4,140 +4,202 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Api\Project;
 
-use JsonException;
+use Deriver\Api\InvalidInputException;
+use Deriver\Api\Project\ProjectInput;
+use Deriver\Api\Project\SourceFile;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
-#[CoversClass(\Deriver\Api\Project\ProjectInput::class)]
-#[UsesClass(\Deriver\Analyzer::class)]
-#[UsesClass(\Deriver\Api\Execution\ResourceLimits::class)]
-#[UsesClass(\Deriver\Api\Execution\SourceLimits::class)]
-#[UsesClass(\Deriver\Api\Project\Configuration::class)]
-#[UsesClass(\Deriver\Api\Project\EntryPoint::class)]
-#[UsesClass(\Deriver\Api\Project\ProjectSnapshot::class)]
-#[UsesClass(\Deriver\Api\Project\SourceFile::class)]
-#[UsesClass(\Deriver\Api\Project\TargetProfile::class)]
-#[UsesClass(\Deriver\Api\Query\Budget::class)]
-#[UsesClass(\Deriver\Api\Query\QueryScope::class)]
-#[UsesClass(\Deriver\Api\Query\ReturnQuery::class)]
-#[UsesClass(\Deriver\Api\Reference\ResultRef::class)]
-#[UsesClass(\Deriver\Api\Reference\SourceRef::class)]
-#[UsesClass(\Deriver\Api\Result\Alternative::class)]
-#[UsesClass(\Deriver\Api\Result\Assessment::class)]
-#[UsesClass(\Deriver\Api\Result\Derivation::class)]
-#[UsesClass(\Deriver\Api\Result\DerivationResult::class)]
-#[UsesClass(\Deriver\Api\Result\Statistics::class)]
-#[UsesClass(\Deriver\Api\Result\StorageSnapshot::class)]
-#[UsesClass(\Deriver\Internal\Api\QueryExecution::class)]
-#[UsesClass(\Deriver\Internal\Api\QueryValidation::class)]
-#[UsesClass(\Deriver\Internal\Api\ResultAssessment::class)]
-#[UsesClass(\Deriver\Internal\Api\Session::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\AssignmentLowering::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Cache\GraphCache::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Cache\GraphTemplate::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Cache\SnapshotRebase::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Cache\SyntaxCache::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Cache\SyntaxTree::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\CallableCompiler::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\CallableSource::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Control\DestructuringLowering::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\DeclarationScanner::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\EffectInspection::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\ExpressionLowering::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\GraphBuilder::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Lowering::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\ProjectIndex::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Source\LineMap::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Source\MagicContext::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Source\SyntaxSize::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\StatementLowering::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Traits\Composition::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Validation\AssignmentPatterns::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Validation\ClassScope::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Validation\TargetSyntax::class)]
-#[UsesClass(\Deriver\Internal\IR\BasicBlock::class)]
-#[UsesClass(\Deriver\Internal\IR\CallableIR::class)]
-#[UsesClass(\Deriver\Internal\IR\CallableIdentity::class)]
-#[UsesClass(\Deriver\Internal\IR\Instruction::class)]
-#[UsesClass(\Deriver\Internal\IR\Terminator::class)]
-#[UsesClass(\Deriver\Internal\Memory\Location::class)]
-#[UsesClass(\Deriver\Internal\Memory\Materialization::class)]
-#[UsesClass(\Deriver\Internal\Memory\Memory::class)]
-#[UsesClass(\Deriver\Internal\Memory\ReferenceConstraint::class)]
-#[UsesClass(\Deriver\Internal\Memory\StorageCapture::class)]
-#[UsesClass(\Deriver\Internal\Model\Extensions::class)]
-#[UsesClass(\Deriver\Internal\Model\ProviderInputs::class)]
-#[UsesClass(\Deriver\Internal\Model\Registry::class)]
-#[UsesClass(\Deriver\Internal\Model\StateRegistry::class)]
-#[UsesClass(\Deriver\Internal\Solver\Call\ArgumentBinding::class)]
-#[UsesClass(\Deriver\Internal\Solver\Call\ArgumentOrder::class)]
-#[UsesClass(\Deriver\Internal\Solver\Call\Dispatch::class)]
-#[UsesClass(\Deriver\Internal\Solver\Call\TypeBinding::class)]
-#[UsesClass(\Deriver\Internal\Solver\Call\TypeCheck::class)]
-#[UsesClass(\Deriver\Internal\Solver\Completion::class)]
-#[UsesClass(\Deriver\Internal\Solver\Context::class)]
-#[UsesClass(\Deriver\Internal\Solver\Control\ObservationLimit::class)]
-#[UsesClass(\Deriver\Internal\Solver\Control\Resources::class)]
-#[UsesClass(\Deriver\Internal\Solver\Control\StateJoin::class)]
-#[UsesClass(\Deriver\Internal\Solver\Control\Unwinding::class)]
-#[UsesClass(\Deriver\Internal\Solver\Demand\Cell::class)]
-#[UsesClass(\Deriver\Internal\Solver\Demand\Components::class)]
-#[UsesClass(\Deriver\Internal\Solver\Demand\Discovery::class)]
-#[UsesClass(\Deriver\Internal\Solver\Demand\Key::class)]
-#[UsesClass(\Deriver\Internal\Solver\Demand\Table::class)]
-#[UsesClass(\Deriver\Internal\Solver\Dependencies::class)]
-#[UsesClass(\Deriver\Internal\Solver\InstructionTransfer::class)]
-#[UsesClass(\Deriver\Internal\Solver\Machine::class)]
-#[UsesClass(\Deriver\Internal\Solver\Model\SlotReference::class)]
-#[UsesClass(\Deriver\Internal\Solver\ObservationCollector::class)]
-#[UsesClass(\Deriver\Internal\Solver\Operation\Conversions::class)]
-#[UsesClass(\Deriver\Internal\Solver\Operation\ScalarErrors::class)]
-#[UsesClass(\Deriver\Internal\Solver\State::class)]
-#[UsesClass(\Deriver\Internal\Solver\Summary\CompletionRecord::class)]
-#[UsesClass(\Deriver\Internal\Solver\Summary\Evaluation::class)]
-#[UsesClass(\Deriver\Internal\Solver\Summary\Invocation::class)]
-#[UsesClass(\Deriver\Internal\Solver\Summary\Isolation::class)]
-#[UsesClass(\Deriver\Internal\Solver\Transfer\MemoryStep::class)]
-#[UsesClass(\Deriver\Internal\Solver\Transfer\PureStep::class)]
-#[UsesClass(\Deriver\Internal\Solver\Transfer\ReferenceAssignment::class)]
-#[UsesClass(\Deriver\Internal\Value\Arithmetic::class)]
-#[UsesClass(\Deriver\Internal\Value\Identity::class)]
-#[UsesClass(\Deriver\Internal\Value\PhpSemantics::class)]
-#[UsesClass(\Deriver\Report\JsonText::class)]
-#[UsesClass(\Deriver\Report\QueryEncoding::class)]
-#[UsesClass(\Deriver\Report\ValueGraph::class)]
-#[UsesClass(\Deriver\Value\Term::class)]
+#[CoversClass(ProjectInput::class)]
+#[UsesClass(ProjectInput::class)]
+#[UsesClass(SourceFile::class)]
 #[Small]
 final class ProjectInputTest extends TestCase
 {
-    /**
-     * @throws JsonException If captured metadata cannot be encoded
-     */
-    public function testFromFilesPreservesTheSemanticContract(): void
+    public function testRetainsSourceIdentityAndCallerOrderWithoutExecutingContents(): void
     {
-        $result = \Tests\Fake\Analysis::returns('<?php function target() { $x="before"; $x="after"; return $x . ":done"; }');
-        self::assertSame('after:done', $result->normalOutcomes[0]->values['return']->native());
-        self::assertSame([], $result->frontiers);
-        self::assertSame([], $result->exceptionalOutcomes);
+        $first = new SourceFile('z.php', '<?php throw new RuntimeException("must not execute");');
+        $second = new SourceFile('a.php', '<?php', true);
+        $input = new ProjectInput([$first,$second]);
+        self::assertSame([$first,$second], $input->files);
     }
     public function testFromFilesReadsContentsWithoutLoadingDeclarations(): void
     {
-        $input = \Deriver\Api\Project\ProjectInput::fromFiles([__FILE__]);
+        $input = ProjectInput::fromFiles([__FILE__]);
         self::assertCount(1, $input->files);
         self::assertStringContainsString('class ProjectInputTest', $input->files[0]->contents);
     }
 
     public function testFromDirectoryCapturesRelativePaths(): void
     {
-        $input = \Deriver\Api\Project\ProjectInput::fromDirectory(__DIR__);
-        self::assertContains('ProjectInputTest.php', array_map(static fn (\Deriver\Api\Project\SourceFile $file): string => $file->path, $input->files));
+        $input = ProjectInput::fromDirectory(__DIR__);
+        self::assertContains('ProjectInputTest.php', array_map(static fn (SourceFile $file): string => $file->path, $input->files));
     }
 
     public function testNormalizeCollapsesDotComponents(): void
     {
-        self::assertSame('src/App.php', \Deriver\Api\Project\ProjectInput::normalize('src/./old/../App.php'));
+        self::assertSame('src/App.php', ProjectInput::normalize('src/./old/../App.php'));
     }
 
+
+    #[DataProvider('providerNormalizedPaths')]
+    public function testNormalizeRetainsRootAndUnresolvedParentComponents(string $path, string $expected): void
+    {
+        self::assertSame($expected, ProjectInput::normalize($path));
+    }
+
+    /**
+     * @return iterable<string,array{string,string}>
+     */
+    public static function providerNormalizedPaths(): iterable
+    {
+        yield 'empty' => ['',''];
+        yield 'dot' => ['.',''];
+        yield 'root' => ['/','/'];
+        yield 'repeated slashes' => ['/src//./File.php','/src/File.php'];
+        yield 'windows separators' => ['C:\\src\\old\\..\\File.php','C:/src/File.php'];
+        yield 'relative parent' => ['../src/File.php','../src/File.php'];
+        yield 'repeated parent' => ['../../src','../../src'];
+        yield 'parent after collapse' => ['src/../../other','../other'];
+        yield 'trailing separator' => ['src///','src'];
+        yield 'parent spelling in filename' => ['src/..file.php','src/..file.php'];
+        yield 'relative collapse' => ['src/../File.php','File.php'];
+    }
+
+    /**
+     * @param list<SourceFile> $files Captured source descriptions
+     */
+    #[DataProvider('providerInvalidSourcePaths')]
+    public function testRejectsEmptyAndRepeatedNormalizedSourceIdentities(array $files): void
+    {
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessage('Source paths must be nonempty and unique:');
+        new ProjectInput($files);
+    }
+
+    /**
+     * @return iterable<string,array{list<SourceFile>}>
+     */
+    public static function providerInvalidSourcePaths(): iterable
+    {
+        yield 'empty' => [[new SourceFile('', '')]];
+        yield 'normalized empty' => [[new SourceFile('./', '')]];
+        yield 'repeated' => [[new SourceFile('src/a.php', 'first'),new SourceFile('src/a.php', 'second')]];
+        yield 'separator alias' => [[new SourceFile('src/a.php', 'first'),new SourceFile('src\\a.php', 'second')]];
+        yield 'dot alias' => [[new SourceFile('src/a.php', 'first'),new SourceFile('src/old/../a.php', 'second')]];
+    }
+
+    #[DataProvider('providerUnreadableFiles')]
+    public function testFromFilesRejectsWrappersDirectoriesAndMissingFiles(string $path): void
+    {
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessage('Source must be a readable local file:');
+        ProjectInput::fromFiles([$path]);
+    }
+
+    /**
+     * @return iterable<string,array{string}>
+     */
+    public static function providerUnreadableFiles(): iterable
+    {
+        yield 'wrapper' => ['php://memory'];
+        yield 'readable local wrapper' => ['file://' . __FILE__];
+        yield 'directory' => [__DIR__];
+        yield 'missing' => [__DIR__.'/does-not-exist.php'];
+    }
+
+    #[DataProvider('providerUnreadableDirectories')]
+    public function testFromDirectoryRejectsWrappersFilesAndMissingRoots(string $path): void
+    {
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessage('Source root must be a readable local directory.');
+        ProjectInput::fromDirectory($path);
+    }
+
+    /**
+     * @return iterable<string,array{string}>
+     */
+    public static function providerUnreadableDirectories(): iterable
+    {
+        yield 'wrapper' => ['file://'.__DIR__];
+        yield 'file' => [__FILE__];
+        yield 'missing' => [__DIR__.'/does-not-exist'];
+    }
+
+    public function testFromFilesKeepsCapturedBytesAfterTheFileHasChanged(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'deriver-source-');
+        self::assertIsString($path);
+        $contents = '<?php throw new RuntimeException("source must not execute");';
+        self::assertSame(strlen($contents), file_put_contents($path, $contents));
+        $input = ProjectInput::fromFiles([$path]);
+        self::assertTrue(unlink($path));
+        self::assertCount(1, $input->files);
+        self::assertSame($contents, $input->files[0]->contents);
+        self::assertSame(ProjectInput::normalize($path), $input->files[0]->path);
+        self::assertFalse($input->files[0]->declarationsOnly);
+    }
+
+    public function testFromDirectorySortsPhpFilesAndPrunesExcludedAndLinkedEntries(): void
+    {
+        $root = tempnam(sys_get_temp_dir(), 'deriver-tree-');
+        self::assertIsString($root);
+        self::assertTrue(unlink($root));
+        self::assertTrue(mkdir($root));
+        self::assertTrue(mkdir($root.'/nested'));
+        self::assertTrue(mkdir($root.'/vendor'));
+        self::assertSame(5, file_put_contents($root.'/z.php', '<?php'));
+        self::assertSame(5, file_put_contents($root.'/nested/a.PHP', '<?php'));
+        self::assertSame(5, file_put_contents($root.'/ignored.txt', '<?php'));
+        self::assertSame(5, file_put_contents($root.'/vendor/excluded.php', '<?php'));
+        self::assertTrue(symlink($root.'/nested', $root.'/linked'));
+        self::assertTrue(symlink($root.'/z.php', $root.'/linked.php'));
+        $input = ProjectInput::fromDirectory($root.'/');
+        $custom = ProjectInput::fromDirectory($root, ['nested','z.php']);
+        self::assertTrue(unlink($root.'/linked.php'));
+        self::assertTrue(unlink($root.'/linked'));
+        self::assertTrue(unlink($root.'/z.php'));
+        self::assertTrue(unlink($root.'/nested/a.PHP'));
+        self::assertTrue(unlink($root.'/ignored.txt'));
+        self::assertTrue(unlink($root.'/vendor/excluded.php'));
+        self::assertTrue(rmdir($root.'/nested'));
+        self::assertTrue(rmdir($root.'/vendor'));
+        self::assertTrue(rmdir($root));
+        self::assertSame(['nested/a.PHP','z.php'], array_column($input->files, 'path'));
+        self::assertSame(['<?php','<?php'], array_column($input->files, 'contents'));
+        self::assertSame(['vendor/excluded.php'], array_column($custom->files, 'path'));
+    }
+
+    #[DataProvider('providerCurrentDirectoryRoots')]
+    public function testFromDirectoryPreservesCompleteFileNamesForTheCurrentDirectory(string $directory): void
+    {
+        $previous = getcwd();
+        self::assertIsString($previous);
+        $root = tempnam(sys_get_temp_dir(), 'deriver-relative-');
+        self::assertIsString($root);
+        self::assertTrue(unlink($root));
+        self::assertTrue(mkdir($root));
+        self::assertSame(5, file_put_contents($root.'/first.php', '<?php'));
+        self::assertSame(5, file_put_contents($root.'/second.php', '<?php'));
+        self::assertTrue(chdir($root));
+        $input = ProjectInput::fromDirectory($directory);
+        self::assertTrue(chdir($previous));
+        self::assertTrue(unlink($root.'/first.php'));
+        self::assertTrue(unlink($root.'/second.php'));
+        self::assertTrue(rmdir($root));
+        self::assertSame(['first.php','second.php'], array_column($input->files, 'path'));
+    }
+
+    /**
+     * @return iterable<string,array{string}>
+     */
+    public static function providerCurrentDirectoryRoots(): iterable
+    {
+        yield 'dot' => ['.'];
+        yield 'dot slash' => ['./'];
+        yield 'repeated dot' => ['././'];
+    }
 }

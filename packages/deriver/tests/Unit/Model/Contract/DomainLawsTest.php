@@ -13,7 +13,6 @@ use PHPUnit\Framework\TestCase;
  * @covers \Deriver\Model\Contract\DomainLaws
  */
 #[CoversClass(\Deriver\Model\Contract\DomainLaws::class)]
-#[UsesClass(\Deriver\Model\Domain\AbstractDomain::class)]
 #[UsesClass(\Deriver\Model\Domain\DomainFact::class)]
 #[UsesClass(\Deriver\Value\Term::class)]
 #[Small]

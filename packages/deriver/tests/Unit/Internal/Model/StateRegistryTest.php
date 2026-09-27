@@ -16,7 +16,6 @@ use PHPUnit\Framework\TestCase;
  * @covers \Deriver\Internal\Model\StateRegistry
  */
 #[CoversClass(StateRegistry::class)]
-#[UsesClass(\Deriver\Api\InvalidInputException::class)]
 #[UsesClass(StateRegistry::class)]
 #[UsesClass(\Deriver\Internal\Value\Identity::class)]
 #[UsesClass(\Deriver\Internal\Value\Lattice::class)]

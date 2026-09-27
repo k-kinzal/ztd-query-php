@@ -13,7 +13,6 @@ use PHPUnit\Framework\TestCase;
  * @covers \Deriver\Api\Execution\SourceLimits
  */
 #[CoversClass(\Deriver\Api\Execution\SourceLimits::class)]
-#[UsesClass(\Deriver\Api\InvalidInputException::class)]
 #[UsesClass(\Deriver\Api\Project\ProjectInput::class)]
 #[UsesClass(\Deriver\Api\Project\SourceFile::class)]
 #[Small]

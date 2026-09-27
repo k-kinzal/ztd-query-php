@@ -6,14 +6,12 @@ namespace Tests\Unit\Api\Execution;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 /**
  * @covers \Deriver\Api\Execution\ResourceLimits
  */
 #[CoversClass(\Deriver\Api\Execution\ResourceLimits::class)]
-#[UsesClass(\Deriver\Api\InvalidInputException::class)]
 #[Small]
 final class ResourceLimitsTest extends TestCase
 {

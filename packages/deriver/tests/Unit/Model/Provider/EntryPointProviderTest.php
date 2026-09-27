@@ -14,11 +14,6 @@ use PHPUnit\Framework\TestCase;
  */
 #[CoversClass(\Deriver\Model\Provider\EntryPointProvider::class)]
 #[UsesClass(\Deriver\Api\Project\EntryPoint::class)]
-#[UsesClass(\Deriver\Model\Provider\DeclarationProvider::class)]
-#[UsesClass(\Deriver\Model\Provider\DispatchProvider::class)]
-#[UsesClass(\Deriver\Model\Provider\EnvironmentProvider::class)]
-#[UsesClass(\Deriver\Model\Provider\ObservationProvider::class)]
-#[UsesClass(\Deriver\Model\Provider\Provider::class)]
 #[Small]
 final class EntryPointProviderTest extends TestCase
 {

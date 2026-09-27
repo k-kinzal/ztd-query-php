@@ -12,7 +12,6 @@ use PHPUnit\Framework\TestCase;
 
 #[CoversClass(\Deriver\Value\Projection::class)]
 #[UsesClass(\Deriver\Analyzer::class)]
-#[UsesClass(\Deriver\Api\AnalysisSession::class)]
 #[UsesClass(\Deriver\Api\Execution\ResourceLimits::class)]
 #[UsesClass(\Deriver\Api\Execution\SourceLimits::class)]
 #[UsesClass(\Deriver\Api\Project\Configuration::class)]
@@ -104,7 +103,6 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Transfer\MemoryStep::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\PureStep::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\ReferenceAssignment::class)]
-#[UsesClass(\Deriver\Internal\Value\Arithmetic::class)]
 #[UsesClass(\Deriver\Internal\Value\Identity::class)]
 #[UsesClass(\Deriver\Internal\Value\PhpSemantics::class)]
 #[UsesClass(\Deriver\Report\JsonText::class)]

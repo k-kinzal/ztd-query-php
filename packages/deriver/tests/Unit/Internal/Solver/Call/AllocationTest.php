@@ -167,7 +167,6 @@ use Tests\Fake\SummaryFixture;
 #[UsesClass(\Deriver\Internal\Value\Arrays::class)]
 #[UsesClass(\Deriver\Internal\Value\Identity::class)]
 #[UsesClass(\Deriver\Internal\Value\Increment::class)]
-#[UsesClass(\Deriver\Internal\Value\IntegerConversion::class)]
 #[UsesClass(\Deriver\Internal\Value\Lattice::class)]
 #[UsesClass(\Deriver\Internal\Value\PhpSemantics::class)]
 #[UsesClass(\Deriver\Model\Provider\DispatchDecision::class)]

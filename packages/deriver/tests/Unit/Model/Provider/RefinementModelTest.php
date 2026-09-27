@@ -14,7 +14,6 @@ use PHPUnit\Framework\TestCase;
  */
 #[CoversClass(\Deriver\Model\Provider\RefinementModel::class)]
 #[UsesClass(\Deriver\Model\Provider\DomainProvider::class)]
-#[UsesClass(\Deriver\Model\Provider\Provider::class)]
 #[UsesClass(\Deriver\Value\Term::class)]
 #[Small]
 final class RefinementModelTest extends TestCase
