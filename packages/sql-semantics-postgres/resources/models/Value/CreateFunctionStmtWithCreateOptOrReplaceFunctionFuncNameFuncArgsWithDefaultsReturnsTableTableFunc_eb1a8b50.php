@@ -78,13 +78,15 @@ final class CreateFunctionStmtWithCreateOptOrReplaceFunctionFuncNameFuncArgsWith
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->optOrReplace, \SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm::class, $replace), $this->replacement($this->funcName, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm::class, $replace), $this->replacement($this->funcArgsWithDefaults, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsWithDefaultsForm::class, $replace), $this->replacement($this->tableFuncColumnList, \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncColumnListForm::class, $replace), $this->replacement($this->optCreatefuncOptList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptCreatefuncOptListForm::class, $replace), $this->replacement($this->optRoutineBody, \SqlSemantics\Statement\Model\PostgreSql\Role\OptRoutineBodyForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optOrReplace, \SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm::class, $replace), $this->replacement($this->funcName, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm::class, $replace), $this->replacement($this->funcArgsWithDefaults, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsWithDefaultsForm::class, $replace), $this->replacement($this->tableFuncColumnList, \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncColumnListForm::class, $replace), $this->replacement($this->optCreatefuncOptList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptCreatefuncOptListForm::class, $replace), $this->replacement($this->optRoutineBody, \SqlSemantics\Statement\Model\PostgreSql\Role\OptRoutineBodyForm::class, $replace)];
+
+        return $mapped === [$this->optOrReplace, $this->funcName, $this->funcArgsWithDefaults, $this->tableFuncColumnList, $this->optCreatefuncOptList, $this->optRoutineBody] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $mapped[5], $this->comments);
     }
 
     /**

@@ -67,13 +67,15 @@ final class PredicateWithBitExprNotInSymExprExprList_2feb440c implements \SqlSem
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->bitExpr, \SqlSemantics\Statement\Model\MySql\Role\BitExprForm::class, $replace), $this->replacement($this->not, \SqlSemantics\Statement\Model\MySql\Role\NotForm::class, $replace), $this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->replacement($this->exprList, \SqlSemantics\Statement\Model\MySql\Role\ExprListForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->bitExpr, \SqlSemantics\Statement\Model\MySql\Role\BitExprForm::class, $replace), $this->replacement($this->not, \SqlSemantics\Statement\Model\MySql\Role\NotForm::class, $replace), $this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->replacement($this->exprList, \SqlSemantics\Statement\Model\MySql\Role\ExprListForm::class, $replace)];
+
+        return $mapped === [$this->bitExpr, $this->not, $this->expr, $this->exprList] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $this->comments);
     }
 
     /**

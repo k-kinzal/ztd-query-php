@@ -32,4 +32,9 @@ enum ReferenceKind
      * A table the statement drops.
      */
     case Drop;
+
+    /**
+     * A table no dependency declares, named in a statement analyzed with partial declarations: the database may have it, and nothing is known of its columns.
+     */
+    case Undeclared;
 }

@@ -78,13 +78,15 @@ final class EventTailWithEventSymOptIfNotExistsSpNameOnSymScheduleSymEvScheduleT
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->optIfNotExists, \SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm::class, $replace), $this->replacement($this->spName, \SqlSemantics\Statement\Model\MySql\Role\SpNameForm::class, $replace), $this->replacement($this->evScheduleTime, \SqlSemantics\Statement\Model\MySql\Role\EvScheduleTimeForm::class, $replace), $this->replacement($this->optEvOnCompletion, \SqlSemantics\Statement\Model\MySql\Role\OptEvOnCompletionForm::class, $replace), $this->replacement($this->optEvStatus, \SqlSemantics\Statement\Model\MySql\Role\OptEvStatusForm::class, $replace), $this->replacement($this->optEvComment, \SqlSemantics\Statement\Model\MySql\Role\OptEvCommentForm::class, $replace), $this->replacement($this->evSqlStmt, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optIfNotExists, \SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm::class, $replace), $this->replacement($this->spName, \SqlSemantics\Statement\Model\MySql\Role\SpNameForm::class, $replace), $this->replacement($this->evScheduleTime, \SqlSemantics\Statement\Model\MySql\Role\EvScheduleTimeForm::class, $replace), $this->replacement($this->optEvOnCompletion, \SqlSemantics\Statement\Model\MySql\Role\OptEvOnCompletionForm::class, $replace), $this->replacement($this->optEvStatus, \SqlSemantics\Statement\Model\MySql\Role\OptEvStatusForm::class, $replace), $this->replacement($this->optEvComment, \SqlSemantics\Statement\Model\MySql\Role\OptEvCommentForm::class, $replace), $this->replacement($this->evSqlStmt, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm::class, $replace)];
+
+        return $mapped === [$this->optIfNotExists, $this->spName, $this->evScheduleTime, $this->optEvOnCompletion, $this->optEvStatus, $this->optEvComment, $this->evSqlStmt] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $mapped[5], $mapped[6], $this->comments);
     }
 
     /**

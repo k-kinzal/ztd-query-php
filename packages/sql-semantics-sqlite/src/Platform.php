@@ -14,6 +14,7 @@ use SqlSemantics\Core\Mode as SessionMode;
 use SqlSemantics\Core\Parameters;
 use SqlSemantics\Core\Platform as Contract;
 use SqlSemantics\Core\Policy;
+use SqlSemantics\Core\SearchPath as SessionSearchPath;
 
 /**
  * Assembles Sqlite semantic behavior from independent core contracts.
@@ -53,11 +54,20 @@ final class Platform implements Contract
     }
 
     /**
-     * Supplies the default declaration namespace.
+     * Reads unqualified names in `main` and then in the attached databases the path lists after it.
+     *
+     * @throws InvalidArgumentException When the path does not start with `main`, where SQLite creates an unqualified table
      */
-    public function defaultSchema(): string
+    public function searchPath(?SessionSearchPath $path = null): array
     {
-        return 'main';
+        if ($path === null) {
+            return ['main'];
+        }
+        if (strcasecmp($path->schemas[0], 'main') !== 0) {
+            throw new InvalidArgumentException('SQLite creates an unqualified table in main, so the search path starts with main, ' . $path->schemas[0] . ' given.');
+        }
+
+        return $path->schemas;
     }
 
     /**
@@ -90,6 +100,11 @@ final class Platform implements Contract
 
     /**
      * Names the positions where the grammar writes table names, and the forms that declare, drop, or merely name tables.
+     *
+     * The body of a common table expression names every one of its WITH
+     * clause, itself and later ones included, whether or not the clause is
+     * recursive. The table INSERT, UPDATE, or DELETE writes to is always a
+     * table, never a common table expression.
      */
     public function relations(): Policy\RelationRules
     {
@@ -110,6 +125,11 @@ final class Platform implements Contract
                 ['rule' => 'cmd', 'requires' => ['createkw', 'INDEX', 'ON'], 'pair' => ['nm']],
             ],
             parts: ['xfullname' => ['nm DOT nm AS nm' => [0, 1], 'nm AS nm' => [0]]],
+            withClauses: ['with', 'wqlist'],
+            recursive: 'RECURSIVE',
+            visibility: Policy\WithVisibility::All,
+            recursiveVisibility: Policy\WithVisibility::All,
+            targets: ['xfullname'],
         );
     }
 

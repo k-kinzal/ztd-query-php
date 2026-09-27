@@ -50,13 +50,15 @@ final class CopyGenericOptArgWithCopyGenericOptArgList_2ecb7de6 implements \SqlS
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->copyGenericOptArgList, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->copyGenericOptArgList, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListForm::class, $replace)];
+
+        return $mapped === [$this->copyGenericOptArgList] ? $this : new self($mapped[0], $this->comments);
     }
 
     /**

@@ -52,13 +52,15 @@ final class ValuesRowListWithValuesRowListRowValueExplicit_734510f7 implements \
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->valuesRowList, \SqlSemantics\Statement\Model\MySql\Role\ValuesRowListForm::class, $replace), $this->replacement($this->rowValueExplicit, \SqlSemantics\Statement\Model\MySql\Role\RowValueExplicitForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->valuesRowList, \SqlSemantics\Statement\Model\MySql\Role\ValuesRowListForm::class, $replace), $this->replacement($this->rowValueExplicit, \SqlSemantics\Statement\Model\MySql\Role\RowValueExplicitForm::class, $replace)];
+
+        return $mapped === [$this->valuesRowList, $this->rowValueExplicit] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

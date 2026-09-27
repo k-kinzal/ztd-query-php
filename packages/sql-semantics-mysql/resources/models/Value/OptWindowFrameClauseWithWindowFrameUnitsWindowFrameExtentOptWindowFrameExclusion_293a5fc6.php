@@ -54,13 +54,15 @@ final class OptWindowFrameClauseWithWindowFrameUnitsWindowFrameExtentOptWindowFr
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->windowFrameUnits, \SqlSemantics\Statement\Model\MySql\Role\WindowFrameUnitsForm::class, $replace), $this->replacement($this->windowFrameExtent, \SqlSemantics\Statement\Model\MySql\Role\WindowFrameExtentForm::class, $replace), $this->replacement($this->optWindowFrameExclusion, \SqlSemantics\Statement\Model\MySql\Role\OptWindowFrameExclusionForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->windowFrameUnits, \SqlSemantics\Statement\Model\MySql\Role\WindowFrameUnitsForm::class, $replace), $this->replacement($this->windowFrameExtent, \SqlSemantics\Statement\Model\MySql\Role\WindowFrameExtentForm::class, $replace), $this->replacement($this->optWindowFrameExclusion, \SqlSemantics\Statement\Model\MySql\Role\OptWindowFrameExclusionForm::class, $replace)];
+
+        return $mapped === [$this->windowFrameUnits, $this->windowFrameExtent, $this->optWindowFrameExclusion] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

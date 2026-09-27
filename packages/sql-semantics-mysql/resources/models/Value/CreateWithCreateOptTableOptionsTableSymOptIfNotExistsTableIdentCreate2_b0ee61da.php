@@ -62,13 +62,15 @@ final class CreateWithCreateOptTableOptionsTableSymOptIfNotExistsTableIdentCreat
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->optTableOptions, \SqlSemantics\Statement\Model\MySql\Role\OptTableOptionsForm::class, $replace), $this->replacement($this->optIfNotExists, \SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm::class, $replace), $this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->create2, \SqlSemantics\Statement\Model\MySql\Role\Create2Form::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optTableOptions, \SqlSemantics\Statement\Model\MySql\Role\OptTableOptionsForm::class, $replace), $this->replacement($this->optIfNotExists, \SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm::class, $replace), $this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->create2, \SqlSemantics\Statement\Model\MySql\Role\Create2Form::class, $replace)];
+
+        return $mapped === [$this->optTableOptions, $this->optIfNotExists, $this->tableIdent, $this->create2] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $this->comments);
     }
 
     /**

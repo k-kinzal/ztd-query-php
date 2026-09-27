@@ -52,13 +52,15 @@ final class SubPartDefinitionWithSubpartitionSymSubNameOptPartOptions_ff97ee22 i
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->subName, \SqlSemantics\Statement\Model\MySql\Role\SubNameForm::class, $replace), $this->replacement($this->optPartOptions, \SqlSemantics\Statement\Model\MySql\Role\OptPartOptionsForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->subName, \SqlSemantics\Statement\Model\MySql\Role\SubNameForm::class, $replace), $this->replacement($this->optPartOptions, \SqlSemantics\Statement\Model\MySql\Role\OptPartOptionsForm::class, $replace)];
+
+        return $mapped === [$this->subName, $this->optPartOptions] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

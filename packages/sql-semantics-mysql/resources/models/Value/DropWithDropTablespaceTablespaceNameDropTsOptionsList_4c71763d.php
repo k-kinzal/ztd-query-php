@@ -54,13 +54,15 @@ final class DropWithDropTablespaceTablespaceNameDropTsOptionsList_4c71763d imple
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->tablespaceName, \SqlSemantics\Statement\Model\MySql\Role\TablespaceNameForm::class, $replace), $this->replacement($this->dropTsOptionsList, \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionsListForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->tablespaceName, \SqlSemantics\Statement\Model\MySql\Role\TablespaceNameForm::class, $replace), $this->replacement($this->dropTsOptionsList, \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionsListForm::class, $replace)];
+
+        return $mapped === [$this->tablespaceName, $this->dropTsOptionsList] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

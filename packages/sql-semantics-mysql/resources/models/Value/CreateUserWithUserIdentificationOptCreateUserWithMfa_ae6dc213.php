@@ -54,13 +54,15 @@ final class CreateUserWithUserIdentificationOptCreateUserWithMfa_ae6dc213 implem
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->user, \SqlSemantics\Statement\Model\MySql\Role\UserForm::class, $replace), $this->replacement($this->identification, \SqlSemantics\Statement\Model\MySql\Role\IdentificationForm::class, $replace), $this->replacement($this->optCreateUserWithMfa, \SqlSemantics\Statement\Model\MySql\Role\OptCreateUserWithMfaForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->user, \SqlSemantics\Statement\Model\MySql\Role\UserForm::class, $replace), $this->replacement($this->identification, \SqlSemantics\Statement\Model\MySql\Role\IdentificationForm::class, $replace), $this->replacement($this->optCreateUserWithMfa, \SqlSemantics\Statement\Model\MySql\Role\OptCreateUserWithMfaForm::class, $replace)];
+
+        return $mapped === [$this->user, $this->identification, $this->optCreateUserWithMfa] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

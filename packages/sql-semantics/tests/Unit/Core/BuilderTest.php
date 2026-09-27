@@ -31,6 +31,8 @@ use SqlSemantics\Statement\Writer;
 #[UsesClass(\SqlSemantics\Core\Analysis\SourceComments::class)]
 #[UsesClass(\SqlSemantics\Core\Ast\DialectParser::class)]
 #[UsesClass(\SqlSemantics\Core\Composition\Operands::class)]
+#[UsesClass(\SqlSemantics\Core\Composition\Templates::class)]
+#[UsesClass(\SqlSemantics\Core\Composition\Templating::class)]
 #[UsesClass(\SqlSemantics\Statement\Statement::class)]
 #[UsesClass(\SqlSemantics\Statement\Comments::class)]
 #[UsesClass(Writer::class)]
@@ -63,7 +65,7 @@ final class BuilderTest extends TestCase
     public static function providerNumbers(): iterable
     {
         foreach ([MySqlDialect::MySql, PostgreSqlDialect::PostgreSql, SqliteDialect::Sqlite] as $dialect) {
-            foreach ([42, -7, 0, PHP_INT_MAX, 1.5, -2.0, 0.1, 1e25] as $value) {
+            foreach ([42, -7, 0, PHP_INT_MAX, 1.5, -2.0, 0.1, 0.1 + 0.2, -0.0, 5e-324, PHP_FLOAT_MAX, 1e25] as $value) {
                 yield $dialect->value . ' ' . var_export($value, true) => [$dialect, $value];
             }
         }
@@ -76,6 +78,7 @@ final class BuilderTest extends TestCase
         $literal = is_int($value) ? $semantics->builder()->integer($value) : $semantics->builder()->float($value);
         $sql = 'SELECT ' . Writer::render($literal);
         self::assertSame($sql, $semantics->analyze($sql)->toString());
+        self::assertSame(bin2hex(pack('E', $value)), bin2hex(pack('E', (float) str_replace('- ', '-', Writer::render($literal)))));
     }
 
     /**
@@ -242,6 +245,74 @@ final class BuilderTest extends TestCase
         $semantics = new Semantics($dialect);
         $this->expectException(CompositionException::class);
         $semantics->builder()->with([], $semantics->analyze('SELECT 1')->command);
+    }
+
+    #[TestWith([MySqlDialect::MySql])]
+    #[TestWith([PostgreSqlDialect::PostgreSql])]
+    #[TestWith([SqliteDialect::Sqlite])]
+    public function testIsNullComposesTheSameTestInEveryDialect(Dialect $dialect): void
+    {
+        $semantics = new Semantics($dialect);
+        $builder = $semantics->builder();
+        self::assertSame('a IS NOT NULL', Writer::render($builder->isNull($builder->column('a'), true)));
+    }
+
+    #[TestWith([MySqlDialect::MySql])]
+    #[TestWith([PostgreSqlDialect::PostgreSql])]
+    #[TestWith([SqliteDialect::Sqlite])]
+    public function testInComposesTheSameMembershipInEveryDialect(Dialect $dialect): void
+    {
+        $semantics = new Semantics($dialect);
+        $builder = $semantics->builder();
+        self::assertSame('a IN( 1 , 2 )', Writer::render($builder->in($builder->column('a'), [$builder->integer(1), $builder->integer(2)])));
+    }
+
+    #[TestWith([MySqlDialect::MySql])]
+    #[TestWith([PostgreSqlDialect::PostgreSql])]
+    #[TestWith([SqliteDialect::Sqlite])]
+    public function testCaseComposesTheSameSearchedCaseInEveryDialect(Dialect $dialect): void
+    {
+        $semantics = new Semantics($dialect);
+        $builder = $semantics->builder();
+        self::assertSame('CASE WHEN a THEN 1 ELSE 2 END', Writer::render($builder->case([[$builder->column('a'), $builder->integer(1)]], $builder->integer(2))));
+    }
+
+    #[TestWith([MySqlDialect::MySql])]
+    #[TestWith([PostgreSqlDialect::PostgreSql])]
+    #[TestWith([SqliteDialect::Sqlite])]
+    public function testCallComposesACallThatAnalyzesBackInEveryDialect(Dialect $dialect): void
+    {
+        $semantics = new Semantics($dialect);
+        $builder = $semantics->builder();
+        $call = Writer::render($builder->call('coalesce', [$builder->column('a'), $builder->integer(1)]));
+        self::assertSame('SELECT ' . $call, $semantics->analyze('SELECT ' . $call)->toString());
+    }
+
+    #[TestWith([MySqlDialect::MySql])]
+    #[TestWith([PostgreSqlDialect::PostgreSql])]
+    #[TestWith([SqliteDialect::Sqlite])]
+    public function testCastComposesACastThatAnalyzesBackInEveryDialect(Dialect $dialect): void
+    {
+        $semantics = new Semantics($dialect);
+        $builder = $semantics->builder();
+        $cast = Writer::render($builder->cast($builder->column('a'), new \SqlSemantics\Statement\Declaration\TypeDescriptor(\SqlSemantics\Statement\Declaration\Builtin::Numeric, precision: 5)));
+        self::assertSame('SELECT ' . $cast, $semantics->analyze('SELECT ' . $cast)->toString());
+    }
+
+    #[TestWith([MySqlDialect::MySql])]
+    #[TestWith([PostgreSqlDialect::PostgreSql])]
+    #[TestWith([SqliteDialect::Sqlite])]
+    public function testSelectCastAndConditionsComposeShadowRowsFromDeclaredTypesInEveryDialect(Dialect $dialect): void
+    {
+        $semantics = new Semantics($dialect);
+        $builder = $semantics->builder();
+        $users = $semantics->analyze('CREATE TABLE users (id DECIMAL(10,2), name VARCHAR(20))', []);
+        $types = array_map(static fn (\SqlSemantics\Statement\Declaration\ColumnDefinition $column): \SqlSemantics\Statement\Declaration\TypeDescriptor => $column->type, $users->resolution->declarations[0]->columns ?? []);
+        $row = $builder->select([[$builder->cast($builder->string('1.50'), $types[0]), 'id'], [$builder->case([[$builder->isNull($builder->null()), $builder->call('coalesce', [$builder->null(), $builder->string('a')])]]), 'name']], null, $builder->in($builder->integer(1), [$builder->integer(1)]));
+        $query = $builder->with([$builder->cte('users', $row)], $semantics->analyze('SELECT id, name FROM users')->command);
+        $sql = Writer::render($query);
+        self::assertSame($sql, $semantics->analyze($sql)->toString());
+        self::assertInstanceOf(\SqlSemantics\Statement\Command::class, $query);
     }
 
     #[TestWith([MySqlDialect::MySql])]

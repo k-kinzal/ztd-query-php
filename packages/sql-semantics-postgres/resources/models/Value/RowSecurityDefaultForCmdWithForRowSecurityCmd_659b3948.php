@@ -48,13 +48,15 @@ final class RowSecurityDefaultForCmdWithForRowSecurityCmd_659b3948 implements \S
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->rowSecurityCmd, \SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityCmdForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->rowSecurityCmd, \SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityCmdForm::class, $replace)];
+
+        return $mapped === [$this->rowSecurityCmd] ? $this : new self($mapped[0], $this->comments);
     }
 
     /**

@@ -52,13 +52,15 @@ final class GenericOptionListWithGenericOptionListGenericOptionElem_d80a0e21 imp
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->genericOptionList, \SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionListForm::class, $replace), $this->replacement($this->genericOptionElem, \SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionElemForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->genericOptionList, \SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionListForm::class, $replace), $this->replacement($this->genericOptionElem, \SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionElemForm::class, $replace)];
+
+        return $mapped === [$this->genericOptionList, $this->genericOptionElem] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

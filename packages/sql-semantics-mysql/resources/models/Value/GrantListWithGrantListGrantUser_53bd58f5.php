@@ -52,13 +52,15 @@ final class GrantListWithGrantListGrantUser_53bd58f5 implements \SqlSemantics\St
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->grantList, \SqlSemantics\Statement\Model\MySql\Role\GrantListForm::class, $replace), $this->replacement($this->grantUser, \SqlSemantics\Statement\Model\MySql\Role\GrantUserForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->grantList, \SqlSemantics\Statement\Model\MySql\Role\GrantListForm::class, $replace), $this->replacement($this->grantUser, \SqlSemantics\Statement\Model\MySql\Role\GrantUserForm::class, $replace)];
+
+        return $mapped === [$this->grantList, $this->grantUser] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

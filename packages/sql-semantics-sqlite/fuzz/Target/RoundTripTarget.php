@@ -7,6 +7,8 @@ namespace Fuzz\Target;
 use Error;
 use SqlFormatter\Facade\Formatter;
 use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Statement\Element;
+use SqlSemantics\Statement\Traversal;
 use Throwable;
 
 /**
@@ -41,6 +43,9 @@ final class RoundTripTarget
         }
         if ($actual !== $expected) {
             throw new Error("Semantic round trip changed the statement\n{$context}\nPrinted: {$printed}\nExpected: {$expected}\nActual: {$actual}");
+        }
+        if (Traversal::rewrite($statement->command, static fn (Element $value): Element => $value) !== $statement->command) {
+            throw new Error("Rewriting without replacing anything rebuilt the statement\n{$context}");
         }
     }
 }

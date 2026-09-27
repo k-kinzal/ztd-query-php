@@ -50,13 +50,15 @@ final class IndexElemWithFuncExprWindowlessIndexElemOptions_d397f329 implements 
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->funcExprWindowless, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprWindowlessForm::class, $replace), $this->replacement($this->indexElemOptions, \SqlSemantics\Statement\Model\PostgreSql\Role\IndexElemOptionsForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->funcExprWindowless, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprWindowlessForm::class, $replace), $this->replacement($this->indexElemOptions, \SqlSemantics\Statement\Model\PostgreSql\Role\IndexElemOptionsForm::class, $replace)];
+
+        return $mapped === [$this->funcExprWindowless, $this->indexElemOptions] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

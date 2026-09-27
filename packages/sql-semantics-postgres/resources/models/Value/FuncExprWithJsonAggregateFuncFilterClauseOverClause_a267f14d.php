@@ -54,13 +54,15 @@ final class FuncExprWithJsonAggregateFuncFilterClauseOverClause_a267f14d impleme
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->jsonAggregateFunc, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonAggregateFuncForm::class, $replace), $this->replacement($this->filterClause, \SqlSemantics\Statement\Model\PostgreSql\Role\FilterClauseForm::class, $replace), $this->replacement($this->overClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OverClauseForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->jsonAggregateFunc, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonAggregateFuncForm::class, $replace), $this->replacement($this->filterClause, \SqlSemantics\Statement\Model\PostgreSql\Role\FilterClauseForm::class, $replace), $this->replacement($this->overClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OverClauseForm::class, $replace)];
+
+        return $mapped === [$this->jsonAggregateFunc, $this->filterClause, $this->overClause] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

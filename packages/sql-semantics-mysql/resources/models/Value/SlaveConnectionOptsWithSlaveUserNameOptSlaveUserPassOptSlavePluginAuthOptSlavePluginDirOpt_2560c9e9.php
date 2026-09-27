@@ -58,13 +58,15 @@ final class SlaveConnectionOptsWithSlaveUserNameOptSlaveUserPassOptSlavePluginAu
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->slaveUserNameOpt, \SqlSemantics\Statement\Model\MySql\Role\SlaveUserNameOptForm::class, $replace), $this->replacement($this->slaveUserPassOpt, \SqlSemantics\Statement\Model\MySql\Role\SlaveUserPassOptForm::class, $replace), $this->replacement($this->slavePluginAuthOpt, \SqlSemantics\Statement\Model\MySql\Role\SlavePluginAuthOptForm::class, $replace), $this->replacement($this->slavePluginDirOpt, \SqlSemantics\Statement\Model\MySql\Role\SlavePluginDirOptForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->slaveUserNameOpt, \SqlSemantics\Statement\Model\MySql\Role\SlaveUserNameOptForm::class, $replace), $this->replacement($this->slaveUserPassOpt, \SqlSemantics\Statement\Model\MySql\Role\SlaveUserPassOptForm::class, $replace), $this->replacement($this->slavePluginAuthOpt, \SqlSemantics\Statement\Model\MySql\Role\SlavePluginAuthOptForm::class, $replace), $this->replacement($this->slavePluginDirOpt, \SqlSemantics\Statement\Model\MySql\Role\SlavePluginDirOptForm::class, $replace)];
+
+        return $mapped === [$this->slaveUserNameOpt, $this->slaveUserPassOpt, $this->slavePluginAuthOpt, $this->slavePluginDirOpt] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $this->comments);
     }
 
     /**

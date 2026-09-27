@@ -58,13 +58,15 @@ final class CreateTableArgsWithLpColumnlistConslistOptRpTableOptionSet_9c826ddf 
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->columnlist, \SqlSemantics\Statement\Model\Sqlite\Role\ColumnlistForm::class, $replace), $this->replacement($this->conslistOpt, \SqlSemantics\Statement\Model\Sqlite\Role\ConslistOptForm::class, $replace), $this->replacement($this->tableOptionSet, \SqlSemantics\Statement\Model\Sqlite\Role\TableOptionSetForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->columnlist, \SqlSemantics\Statement\Model\Sqlite\Role\ColumnlistForm::class, $replace), $this->replacement($this->conslistOpt, \SqlSemantics\Statement\Model\Sqlite\Role\ConslistOptForm::class, $replace), $this->replacement($this->tableOptionSet, \SqlSemantics\Statement\Model\Sqlite\Role\TableOptionSetForm::class, $replace)];
+
+        return $mapped === [$this->columnlist, $this->conslistOpt, $this->tableOptionSet] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

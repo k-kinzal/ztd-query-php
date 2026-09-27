@@ -76,13 +76,15 @@ final class CreatePolicyStmtWithCreatePolicyNameOnQualifiedNameRowSecurityDefaul
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->rowSecurityDefaultPermissive, \SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityDefaultPermissiveForm::class, $replace), $this->replacement($this->rowSecurityDefaultForCmd, \SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityDefaultForCmdForm::class, $replace), $this->replacement($this->rowSecurityDefaultToRole, \SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityDefaultToRoleForm::class, $replace), $this->replacement($this->rowSecurityOptionalExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityOptionalExprForm::class, $replace), $this->replacement($this->rowSecurityOptionalWithCheck, \SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityOptionalWithCheckForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->rowSecurityDefaultPermissive, \SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityDefaultPermissiveForm::class, $replace), $this->replacement($this->rowSecurityDefaultForCmd, \SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityDefaultForCmdForm::class, $replace), $this->replacement($this->rowSecurityDefaultToRole, \SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityDefaultToRoleForm::class, $replace), $this->replacement($this->rowSecurityOptionalExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityOptionalExprForm::class, $replace), $this->replacement($this->rowSecurityOptionalWithCheck, \SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityOptionalWithCheckForm::class, $replace)];
+
+        return $mapped === [$this->name, $this->qualifiedName, $this->rowSecurityDefaultPermissive, $this->rowSecurityDefaultForCmd, $this->rowSecurityDefaultToRole, $this->rowSecurityOptionalExpr, $this->rowSecurityOptionalWithCheck] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $mapped[5], $mapped[6], $this->comments);
     }
 
     /**

@@ -50,13 +50,15 @@ final class SelectPart2DerivedWithOptQuerySpecOptionsSelectItemList_8761c3a5 imp
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->optQuerySpecOptions, \SqlSemantics\Statement\Model\MySql\Role\OptQuerySpecOptionsForm::class, $replace), $this->replacement($this->projections, \SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optQuerySpecOptions, \SqlSemantics\Statement\Model\MySql\Role\OptQuerySpecOptionsForm::class, $replace), $this->replacement($this->projections, \SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm::class, $replace)];
+
+        return $mapped === [$this->optQuerySpecOptions, $this->projections] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

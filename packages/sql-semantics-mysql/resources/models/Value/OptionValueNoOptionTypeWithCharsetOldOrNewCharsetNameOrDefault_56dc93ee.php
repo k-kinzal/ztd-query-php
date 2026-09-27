@@ -50,13 +50,15 @@ final class OptionValueNoOptionTypeWithCharsetOldOrNewCharsetNameOrDefault_56dc9
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->charset, \SqlSemantics\Statement\Model\MySql\Role\CharsetForm::class, $replace), $this->replacement($this->oldOrNewCharsetNameOrDefault, \SqlSemantics\Statement\Model\MySql\Role\OldOrNewCharsetNameOrDefaultForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->charset, \SqlSemantics\Statement\Model\MySql\Role\CharsetForm::class, $replace), $this->replacement($this->oldOrNewCharsetNameOrDefault, \SqlSemantics\Statement\Model\MySql\Role\OldOrNewCharsetNameOrDefaultForm::class, $replace)];
+
+        return $mapped === [$this->charset, $this->oldOrNewCharsetNameOrDefault] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

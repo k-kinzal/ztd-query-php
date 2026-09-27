@@ -54,13 +54,15 @@ final class SubselectWithSubselectStartQueryExpressionBodySubselectEnd_4d4f9abf 
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->subselectStart, \SqlSemantics\Statement\Model\MySql\Role\SubselectStartForm::class, $replace), $this->replacement($this->queryExpressionBody, \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm::class, $replace), $this->replacement($this->subselectEnd, \SqlSemantics\Statement\Model\MySql\Role\SubselectEndForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->subselectStart, \SqlSemantics\Statement\Model\MySql\Role\SubselectStartForm::class, $replace), $this->replacement($this->queryExpressionBody, \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm::class, $replace), $this->replacement($this->subselectEnd, \SqlSemantics\Statement\Model\MySql\Role\SubselectEndForm::class, $replace)];
+
+        return $mapped === [$this->subselectStart, $this->queryExpressionBody, $this->subselectEnd] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

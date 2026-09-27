@@ -50,13 +50,15 @@ final class LineTermListWithLineTermListLineTerm_3c14dca0 implements \SqlSemanti
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->lineTermList, \SqlSemantics\Statement\Model\MySql\Role\LineTermListForm::class, $replace), $this->replacement($this->lineTerm, \SqlSemantics\Statement\Model\MySql\Role\LineTermForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->lineTermList, \SqlSemantics\Statement\Model\MySql\Role\LineTermListForm::class, $replace), $this->replacement($this->lineTerm, \SqlSemantics\Statement\Model\MySql\Role\LineTermForm::class, $replace)];
+
+        return $mapped === [$this->lineTermList, $this->lineTerm] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

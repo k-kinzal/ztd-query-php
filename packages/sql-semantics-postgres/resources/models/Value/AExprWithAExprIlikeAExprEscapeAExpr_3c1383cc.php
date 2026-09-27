@@ -60,13 +60,15 @@ final class AExprWithAExprIlikeAExprEscapeAExpr_3c1383cc implements \SqlSemantic
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->aExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm::class, $replace), $this->replacement($this->aExpr2, \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm::class, $replace), $this->replacement($this->aExpr3, \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->aExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm::class, $replace), $this->replacement($this->aExpr2, \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm::class, $replace), $this->replacement($this->aExpr3, \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm::class, $replace)];
+
+        return $mapped === [$this->aExpr, $this->aExpr2, $this->aExpr3] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

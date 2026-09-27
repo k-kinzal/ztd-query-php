@@ -52,13 +52,15 @@ final class FlushOptionsListWithFlushOptionsListFlushOption_c5b6f838 implements 
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->flushOptionsList, \SqlSemantics\Statement\Model\MySql\Role\FlushOptionsListForm::class, $replace), $this->replacement($this->flushOption, \SqlSemantics\Statement\Model\MySql\Role\FlushOptionForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->flushOptionsList, \SqlSemantics\Statement\Model\MySql\Role\FlushOptionsListForm::class, $replace), $this->replacement($this->flushOption, \SqlSemantics\Statement\Model\MySql\Role\FlushOptionForm::class, $replace)];
+
+        return $mapped === [$this->flushOptionsList, $this->flushOption] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

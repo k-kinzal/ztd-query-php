@@ -64,13 +64,15 @@ final class DropWithDropOptTemporaryTableOrTablesIfExistsTableListOptRestrict_b4
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->optTemporary, \SqlSemantics\Statement\Model\MySql\Role\OptTemporaryForm::class, $replace), $this->replacement($this->tableOrTables, \SqlSemantics\Statement\Model\MySql\Role\TableOrTablesForm::class, $replace), $this->replacement($this->ifExists, \SqlSemantics\Statement\Model\MySql\Role\IfExistsForm::class, $replace), $this->replacement($this->tableList, \SqlSemantics\Statement\Model\MySql\Role\TableListForm::class, $replace), $this->replacement($this->optRestrict, \SqlSemantics\Statement\Model\MySql\Role\OptRestrictForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optTemporary, \SqlSemantics\Statement\Model\MySql\Role\OptTemporaryForm::class, $replace), $this->replacement($this->tableOrTables, \SqlSemantics\Statement\Model\MySql\Role\TableOrTablesForm::class, $replace), $this->replacement($this->ifExists, \SqlSemantics\Statement\Model\MySql\Role\IfExistsForm::class, $replace), $this->replacement($this->tableList, \SqlSemantics\Statement\Model\MySql\Role\TableListForm::class, $replace), $this->replacement($this->optRestrict, \SqlSemantics\Statement\Model\MySql\Role\OptRestrictForm::class, $replace)];
+
+        return $mapped === [$this->optTemporary, $this->tableOrTables, $this->ifExists, $this->tableList, $this->optRestrict] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $this->comments);
     }
 
     /**

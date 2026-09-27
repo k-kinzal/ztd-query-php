@@ -10,6 +10,8 @@ use SqlSemantics\Core\Analysis\Forms;
 use SqlSemantics\Core\Analysis\NameSites;
 use SqlSemantics\Core\Analysis\Relations;
 use SqlSemantics\Core\Analysis\Resolver;
+use SqlSemantics\Core\Analysis\Scope;
+use SqlSemantics\Core\Analysis\Scopes;
 use SqlSemantics\Core\Ast\DialectParser;
 use SqlSemantics\Core\Ast\Identifiers;
 use SqlSemantics\Core\Ast\SchemaReader;
@@ -18,6 +20,7 @@ use SqlSemantics\Core\Language;
 use SqlSemantics\Statement\Command;
 use SqlSemantics\Statement\Element;
 use SqlSemantics\Statement\Traversal;
+use SqlSemantics\Statement\Writer;
 
 /**
  * States how the pieces of table name resolution are assembled for a dialect.
@@ -36,10 +39,10 @@ final class Resolving
         $tree = (new DialectParser($language))->parse($sql);
 
         return [
-            new Resolver($language, new SchemaReader(new Identifiers($dialect), $platform->defaultSchema(), $language->values())),
+            new Resolver($language, new SchemaReader(new Identifiers($dialect), $platform->searchPath()[0], $language->values()), $platform->searchPath()),
             $tree,
             $language->values()->statement($tree)->command,
-            new Relations($platform->names(), $platform->defaultSchema()),
+            new Relations($platform->names(), $platform->searchPath()),
         ];
     }
 
@@ -52,6 +55,61 @@ final class Resolving
         $platform = $dialect->platform();
 
         return new NameSites($language->vocabulary(), $platform->relations(), $platform->names(), new Forms($language->vocabulary()));
+    }
+
+    /**
+     * The scopes of common table expressions of the dialect.
+     */
+    public static function scopes(Dialect $dialect): Scopes
+    {
+        $vocabulary = (new Language($dialect))->vocabulary();
+
+        return new Scopes($vocabulary, $dialect->platform()->relations(), $dialect->platform()->names(), new Forms($vocabulary));
+    }
+
+    /**
+     * The values of a statement walked with their scopes, in walking order.
+     *
+     * @return list<array{Element, Scope}>
+     */
+    public static function walked(Dialect $dialect, Element $command): array
+    {
+        return self::pairs(self::scopes($dialect)->walk($command));
+    }
+
+    /**
+     * The values of a walk with their scopes, in walking order.
+     *
+     * @param iterable<int, array{Element, Scope}> $walk
+     * @return list<array{Element, Scope}>
+     */
+    public static function pairs(iterable $walk): array
+    {
+        $pairs = [];
+        foreach ($walk as $pair) {
+            $pairs[] = $pair;
+        }
+
+        return $pairs;
+    }
+
+    /**
+     * The names visible at each leaf of a walk that writes one of the texts, by that text.
+     *
+     * @param list<array{Element, Scope}> $walked
+     * @param list<string> $texts
+     * @return array<string, list<string>>
+     */
+    public static function visibleAt(array $walked, array $texts): array
+    {
+        $scopes = [];
+        foreach ($walked as [$value, $scope]) {
+            if ($value->children() === [] && in_array(Writer::render($value), $texts, true)) {
+                $scopes[Writer::render($value)] = $scope->names;
+            }
+        }
+
+        return $scopes;
     }
 
     /**

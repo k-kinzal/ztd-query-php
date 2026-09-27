@@ -82,13 +82,15 @@ final class CmdWithCreatekwUniqueflagIndexIfnotexistsNmDbnmOnNmLpSortlistRpWhere
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->createkw, \SqlSemantics\Statement\Model\Sqlite\Role\CreatekwForm::class, $replace), $this->replacement($this->uniqueflag, \SqlSemantics\Statement\Model\Sqlite\Role\UniqueflagForm::class, $replace), $this->replacement($this->ifnotexists, \SqlSemantics\Statement\Model\Sqlite\Role\IfnotexistsForm::class, $replace), $this->replacement($this->nm, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace), $this->replacement($this->dbnm, \SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm::class, $replace), $this->replacement($this->nm2, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace), $this->replacement($this->sortlist, \SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->createkw, \SqlSemantics\Statement\Model\Sqlite\Role\CreatekwForm::class, $replace), $this->replacement($this->uniqueflag, \SqlSemantics\Statement\Model\Sqlite\Role\UniqueflagForm::class, $replace), $this->replacement($this->ifnotexists, \SqlSemantics\Statement\Model\Sqlite\Role\IfnotexistsForm::class, $replace), $this->replacement($this->nm, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace), $this->replacement($this->dbnm, \SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm::class, $replace), $this->replacement($this->nm2, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace), $this->replacement($this->sortlist, \SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm::class, $replace)];
+
+        return $mapped === [$this->createkw, $this->uniqueflag, $this->ifnotexists, $this->nm, $this->dbnm, $this->nm2, $this->sortlist, $this->where] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $mapped[5], $mapped[6], $mapped[7], $this->comments);
     }
 
     /**

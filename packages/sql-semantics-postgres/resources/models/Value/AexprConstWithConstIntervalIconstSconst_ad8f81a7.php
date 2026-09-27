@@ -58,13 +58,15 @@ final class AexprConstWithConstIntervalIconstSconst_ad8f81a7 implements \SqlSema
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->constInterval, \SqlSemantics\Statement\Model\PostgreSql\Role\ConstIntervalForm::class, $replace), $this->replacement($this->iconst, \SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm::class, $replace), $this->replacement($this->sconst, \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->constInterval, \SqlSemantics\Statement\Model\PostgreSql\Role\ConstIntervalForm::class, $replace), $this->replacement($this->iconst, \SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm::class, $replace), $this->replacement($this->sconst, \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm::class, $replace)];
+
+        return $mapped === [$this->constInterval, $this->iconst, $this->sconst] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

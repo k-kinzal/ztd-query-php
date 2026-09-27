@@ -48,13 +48,15 @@ final class IndirectionElWithAttrName_4a5f8975 implements \SqlSemantics\Statemen
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->attrName, \SqlSemantics\Statement\Model\PostgreSql\Role\AttrNameForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->attrName, \SqlSemantics\Statement\Model\PostgreSql\Role\AttrNameForm::class, $replace)];
+
+        return $mapped === [$this->attrName] ? $this : new self($mapped[0], $this->comments);
     }
 
     /**

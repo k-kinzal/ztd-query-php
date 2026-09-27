@@ -50,13 +50,15 @@ final class ParseToplevelWithModePlpgsqlAssign3PlAssignStmt_6bc45fd8 implements 
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->modePlpgsqlAssign3, $this->replacement($this->plAssignStmt, \SqlSemantics\Statement\Model\PostgreSql\Role\PlAssignStmtForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->plAssignStmt, \SqlSemantics\Statement\Model\PostgreSql\Role\PlAssignStmtForm::class, $replace)];
+
+        return $mapped === [$this->plAssignStmt] ? $this : new self($this->modePlpgsqlAssign3, $mapped[0], $this->comments);
     }
 
     /**

@@ -52,13 +52,15 @@ final class ParameterNameListWithParameterNameListParameterName_f718c7a5 impleme
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->parameterNameList, \SqlSemantics\Statement\Model\PostgreSql\Role\ParameterNameListForm::class, $replace), $this->replacement($this->parameterName, \SqlSemantics\Statement\Model\PostgreSql\Role\ParameterNameForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->parameterNameList, \SqlSemantics\Statement\Model\PostgreSql\Role\ParameterNameListForm::class, $replace), $this->replacement($this->parameterName, \SqlSemantics\Statement\Model\PostgreSql\Role\ParameterNameForm::class, $replace)];
+
+        return $mapped === [$this->parameterNameList, $this->parameterName] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

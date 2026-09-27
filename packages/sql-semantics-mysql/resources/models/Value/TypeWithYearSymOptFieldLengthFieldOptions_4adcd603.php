@@ -54,13 +54,15 @@ final class TypeWithYearSymOptFieldLengthFieldOptions_4adcd603 implements \SqlSe
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->yearSym, $this->replacement($this->optFieldLength, \SqlSemantics\Statement\Model\MySql\Role\OptFieldLengthForm::class, $replace), $this->replacement($this->fieldOptions, \SqlSemantics\Statement\Model\MySql\Role\FieldOptionsForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optFieldLength, \SqlSemantics\Statement\Model\MySql\Role\OptFieldLengthForm::class, $replace), $this->replacement($this->fieldOptions, \SqlSemantics\Statement\Model\MySql\Role\FieldOptionsForm::class, $replace)];
+
+        return $mapped === [$this->optFieldLength, $this->fieldOptions] ? $this : new self($this->yearSym, $mapped[0], $mapped[1], $this->comments);
     }
 
     /**

@@ -57,13 +57,15 @@ final class PredicateWithBitExprNotInSymTableSubquery_110a4ffb implements \SqlSe
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->bitExpr, \SqlSemantics\Statement\Model\MySql\Role\BitExprForm::class, $replace), $this->replacement($this->not, \SqlSemantics\Statement\Model\MySql\Role\NotForm::class, $replace), $this->replacement($this->tableSubquery, \SqlSemantics\Statement\Model\MySql\Role\TableSubqueryForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->bitExpr, \SqlSemantics\Statement\Model\MySql\Role\BitExprForm::class, $replace), $this->replacement($this->not, \SqlSemantics\Statement\Model\MySql\Role\NotForm::class, $replace), $this->replacement($this->tableSubquery, \SqlSemantics\Statement\Model\MySql\Role\TableSubqueryForm::class, $replace)];
+
+        return $mapped === [$this->bitExpr, $this->not, $this->tableSubquery] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

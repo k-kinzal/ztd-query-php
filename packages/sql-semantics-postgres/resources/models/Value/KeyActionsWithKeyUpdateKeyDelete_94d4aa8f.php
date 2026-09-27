@@ -50,13 +50,15 @@ final class KeyActionsWithKeyUpdateKeyDelete_94d4aa8f implements \SqlSemantics\S
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->keyUpdate, \SqlSemantics\Statement\Model\PostgreSql\Role\KeyUpdateForm::class, $replace), $this->replacement($this->keyDelete, \SqlSemantics\Statement\Model\PostgreSql\Role\KeyDeleteForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->keyUpdate, \SqlSemantics\Statement\Model\PostgreSql\Role\KeyUpdateForm::class, $replace), $this->replacement($this->keyDelete, \SqlSemantics\Statement\Model\PostgreSql\Role\KeyDeleteForm::class, $replace)];
+
+        return $mapped === [$this->keyUpdate, $this->keyDelete] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

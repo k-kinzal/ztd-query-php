@@ -68,7 +68,7 @@ final class RelationsTest extends TestCase
 {
     public function testApplyPutsDeclarationsInForceAndTakesDropsOut(): void
     {
-        $relations = new Relations(MySqlDialect::MySql->platform()->names(), 'app');
+        $relations = new Relations(MySqlDialect::MySql->platform()->names(), ['app']);
         $users = (new Semantics(MySqlDialect::MySql))->analyze('CREATE TABLE users (id INT)', []);
         $table = Resolved::of($users)->declarations[0];
         $relations->apply(new Reference(new Name('users'), ['users'], ReferenceKind::Declaration, null, $table), $users);
@@ -81,7 +81,7 @@ final class RelationsTest extends TestCase
 
     public function testDeclareAndLookupKeepTheTableAndItsOwner(): void
     {
-        $relations = new Relations(MySqlDialect::MySql->platform()->names(), '');
+        $relations = new Relations(MySqlDialect::MySql->platform()->names(), ['']);
         $relations->declare('app', 'users', null, null);
         self::assertSame([null, null], $relations->lookup('app', 'users'));
         self::assertNull($relations->lookup('other', 'users'));
@@ -89,7 +89,7 @@ final class RelationsTest extends TestCase
 
     public function testDropRemovesOnlyTheNamedTable(): void
     {
-        $relations = new Relations(MySqlDialect::MySql->platform()->names(), '');
+        $relations = new Relations(MySqlDialect::MySql->platform()->names(), ['']);
         $relations->declare('app', 'users', null, null);
         $relations->declare('app', 'orders', null, null);
         $relations->drop('app', 'users');
@@ -99,12 +99,49 @@ final class RelationsTest extends TestCase
 
     public function testLookupAnswersNothingWhenNoTableIsInForce(): void
     {
-        self::assertNull((new Relations(MySqlDialect::MySql->platform()->names(), ''))->lookup('app', 'users'));
+        self::assertNull((new Relations(MySqlDialect::MySql->platform()->names(), ['']))->lookup('app', 'users'));
     }
 
-    public function testQualifiedUsesTheDefaultSchemaAndKeepsTheLastTwoParts(): void
+    public function testFindReadsAnUnqualifiedNameInTheFirstSchemaOfThePathThatHasIt(): void
     {
-        $relations = new Relations(MySqlDialect::MySql->platform()->names(), 'app');
+        $relations = new Relations(PostgreSqlDialect::PostgreSql->platform()->names(), ['app', 'public']);
+        $relations->declare('public', 'users', null, null);
+        $relations->declare('public', 'orders', null, null);
+        $relations->declare('app', 'orders', null, null);
+        self::assertSame(['public', 'users', null, null], $relations->find(['users']));
+        self::assertSame(['app', 'orders', null, null], $relations->find(['orders']));
+        self::assertSame(['public', 'orders', null, null], $relations->find(['public', 'orders']));
+        self::assertNull($relations->find(['other', 'users']));
+        self::assertNull($relations->find(['audit']));
+    }
+
+    public function testApplyDropsTheTableAnUnqualifiedDropFindsInThePath(): void
+    {
+        $relations = new Relations(PostgreSqlDialect::PostgreSql->platform()->names(), ['app', 'public']);
+        $relations->declare('public', 'users', null, null);
+        $users = (new Semantics(PostgreSqlDialect::PostgreSql))->analyze('DROP TABLE users');
+        $relations->apply(new Reference(new Name('users'), ['users'], ReferenceKind::Drop), $users);
+        self::assertNull($relations->find(['users']));
+        $relations->apply(new Reference(new Name('users'), ['users'], ReferenceKind::Drop), $users);
+        self::assertNull($relations->find(['users']));
+    }
+
+    public function testGoneTellsATableTheDropsTookOutUntilItIsDeclaredAgain(): void
+    {
+        $relations = new Relations(PostgreSqlDialect::PostgreSql->platform()->names(), ['app', 'public']);
+        $relations->drop('app', 'users');
+        self::assertTrue($relations->gone(['app', 'users']));
+        self::assertFalse($relations->gone(['users']));
+        $relations->drop('public', 'users');
+        self::assertTrue($relations->gone(['users']));
+        $relations->declare('public', 'users', null, null);
+        self::assertFalse($relations->gone(['users']));
+        self::assertFalse($relations->gone(['orders']));
+    }
+
+    public function testQualifiedUsesTheFirstSchemaOfThePathAndKeepsTheLastTwoParts(): void
+    {
+        $relations = new Relations(MySqlDialect::MySql->platform()->names(), ['app']);
         self::assertSame(['app', 'users'], $relations->qualified(['users']));
         self::assertSame(['other', 'users'], $relations->qualified(['other', 'users']));
         self::assertSame(['other', 'users'], $relations->qualified(['catalog', 'other', 'users']));
@@ -112,27 +149,9 @@ final class RelationsTest extends TestCase
 
     public function testSameComparesUnderTheRelationNamePolicy(): void
     {
-        $relations = new Relations(PostgreSqlDialect::PostgreSql->platform()->names(), 'public');
+        $relations = new Relations(PostgreSqlDialect::PostgreSql->platform()->names(), ['public']);
         self::assertTrue($relations->same('public', 'users', 'public', 'users'));
         self::assertFalse($relations->same('public', 'users', 'other', 'users'));
         self::assertFalse($relations->same('public', 'users', 'public', 'orders'));
-    }
-
-    public function testDefineRecordsSinglePartNamesOnly(): void
-    {
-        $relations = new Relations(MySqlDialect::MySql->platform()->names(), '');
-        $relations->define(['recent']);
-        $relations->define(['app', 'ignored']);
-        self::assertTrue($relations->isCommon(['recent']));
-        self::assertFalse($relations->isCommon(['ignored']));
-    }
-
-    public function testIsCommonComparesUnderTheNamePolicyAndRejectsQualifiedNames(): void
-    {
-        $relations = new Relations(MySqlDialect::MySql->platform()->names(), '');
-        $relations->define(['recent']);
-        self::assertTrue($relations->isCommon(['RECENT']));
-        self::assertFalse($relations->isCommon(['app', 'recent']));
-        self::assertFalse($relations->isCommon(['other']));
     }
 }

@@ -50,13 +50,15 @@ final class AlterIdentityColumnOptionListWithAlterIdentityColumnOptionListAlterI
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->alterIdentityColumnOptionList, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterIdentityColumnOptionListForm::class, $replace), $this->replacement($this->alterIdentityColumnOption, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterIdentityColumnOptionForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->alterIdentityColumnOptionList, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterIdentityColumnOptionListForm::class, $replace), $this->replacement($this->alterIdentityColumnOption, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterIdentityColumnOptionForm::class, $replace)];
+
+        return $mapped === [$this->alterIdentityColumnOptionList, $this->alterIdentityColumnOption] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

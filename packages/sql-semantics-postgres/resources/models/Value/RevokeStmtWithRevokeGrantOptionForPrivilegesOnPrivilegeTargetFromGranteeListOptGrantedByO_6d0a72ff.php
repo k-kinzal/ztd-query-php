@@ -74,13 +74,15 @@ final class RevokeStmtWithRevokeGrantOptionForPrivilegesOnPrivilegeTargetFromGra
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->privileges, \SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegesForm::class, $replace), $this->replacement($this->privilegeTarget, \SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegeTargetForm::class, $replace), $this->replacement($this->granteeList, \SqlSemantics\Statement\Model\PostgreSql\Role\GranteeListForm::class, $replace), $this->replacement($this->optGrantedBy, \SqlSemantics\Statement\Model\PostgreSql\Role\OptGrantedByForm::class, $replace), $this->replacement($this->optDropBehavior, \SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->privileges, \SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegesForm::class, $replace), $this->replacement($this->privilegeTarget, \SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegeTargetForm::class, $replace), $this->replacement($this->granteeList, \SqlSemantics\Statement\Model\PostgreSql\Role\GranteeListForm::class, $replace), $this->replacement($this->optGrantedBy, \SqlSemantics\Statement\Model\PostgreSql\Role\OptGrantedByForm::class, $replace), $this->replacement($this->optDropBehavior, \SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm::class, $replace)];
+
+        return $mapped === [$this->privileges, $this->privilegeTarget, $this->granteeList, $this->optGrantedBy, $this->optDropBehavior] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $this->comments);
     }
 
     /**

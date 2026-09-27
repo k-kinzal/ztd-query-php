@@ -83,7 +83,7 @@ $statement->command;    // the typed model of the statement
 $statement->toString(); // 'WITH changed AS( UPDATE accounts SET balance = balance + 10 WHERE id = 7 RETURNING id , balance ) SELECT id , balance FROM changed ;'
 ```
 
-A statement means something against the statements before it. Pass those as its dependencies, and every table name resolves to a table one of them declares, to a common table expression, or to a table the statement declares or drops itself; a name no dependency declares is an error. Without dependencies, a statement is structured only.
+A statement means something against the statements before it. Pass those as its dependencies, and every table name resolves to a table one of them declares, to a common table expression visible where it is written, or to a table the statement declares or drops itself; a name without a schema is read in the session's search path, such as MySQL's current database, and a name no dependency declares is an error unless the declarations are partial. Without dependencies, a statement is structured only.
 
 ```php
 use SqlSemantics\Facade\Semantics;
@@ -132,9 +132,12 @@ $rewritten = Traversal::rewrite($statement->command, static fn (Element $value):
 Writer::render($rewritten);                                         // 'SELECT id FROM members WHERE active = 1'
 
 $builder = $semantics->builder();
-$rows = $builder->unionAll($semantics->analyze("SELECT 1 AS id, 'a' AS name")->command, $semantics->analyze("SELECT 2, 'b'")->command);
+$rows = $builder->unionAll(
+    $builder->select([[$builder->integer(1), 'id'], [$builder->string('a'), 'name']]),
+    $builder->select([[$builder->integer(2), 'id'], [$builder->string('b'), 'name']]),
+);
 Writer::render($builder->with([$builder->cte('users', $rows)], $statement->command));
-// "WITH users AS( SELECT 1 AS id , 'a' AS name UNION ALL SELECT 2 , 'b' ) SELECT id FROM users WHERE active = 1"
+// "WITH users AS( SELECT 1 AS id , 'a' AS name UNION ALL SELECT 2 AS id , 'b' AS name ) SELECT id FROM users WHERE active = 1"
 Writer::render($builder->compare($builder->column('select'), '=', $builder->string("it's")));
 // "\"select\" = 'it''s'"
 ```

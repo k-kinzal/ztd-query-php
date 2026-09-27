@@ -8,6 +8,7 @@ use LogicException;
 use SqlParser\Parser\Node;
 use SqlSemantics\Core\Ast\SchemaReader;
 use SqlSemantics\Core\Ast\Tree;
+use SqlSemantics\Core\Declarations;
 use SqlSemantics\Core\Language;
 use SqlSemantics\Core\SemanticException;
 use SqlSemantics\Statement\Command;
@@ -25,8 +26,10 @@ use SqlSemantics\Statement\Statement;
  * already there or already gone changes nothing. The statement's own names
  * then resolve to a common table expression it defines, to a table a
  * dependency declares, to a table it declares itself, or to a table it
- * drops; any other name is an error, because the dependency that would
- * declare it was not given. A declaration whose columns come from another
+ * drops; an unqualified name is read in the schemas of the search path, in
+ * order. Any other name is an error, because the dependency that would
+ * declare it was not given, unless the declarations are partial, where it
+ * is an undeclared table. A declaration whose columns come from another
  * relation, such as CREATE TABLE ... LIKE or ... AS SELECT, declares its
  * name without a readable table.
  *
@@ -37,9 +40,11 @@ final class Resolver
     private readonly NameSites $sites;
 
     /**
-     * Resolves statements of the language.
+     * Resolves statements of the language, reading unqualified names in the schemas of the search path.
+     *
+     * @param non-empty-list<string> $path The schemas an unqualified name is read in, in order
      */
-    public function __construct(private readonly Language $language, private readonly SchemaReader $reader)
+    public function __construct(private readonly Language $language, private readonly SchemaReader $reader, private readonly array $path)
     {
         $vocabulary = $language->vocabulary();
         $platform = $language->dialect->platform();
@@ -53,29 +58,30 @@ final class Resolver
      * refer to a table it declares itself.
      *
      * @param list<array{Statement, Resolution}> $dependencies
+     * @param Declarations $declarations Whether the dependencies declare every table, or a name no dependency declares is an undeclared table
      *
-     * @throws SemanticException When a name resolves to nothing, or a declaration conflicts with one in force
+     * @throws SemanticException When a name resolves to nothing under complete declarations, or a declaration conflicts with one in force
      * @throws LogicException When the relation rules of the dialect do not fit its grammar
      */
-    public function resolve(Node $tree, Command $command, array $dependencies): Resolution
+    public function resolve(Node $tree, Command $command, array $dependencies, Declarations $declarations = Declarations::Complete): Resolution
     {
-        $relations = new Relations($this->language->dialect->platform()->names(), $this->language->dialect->platform()->defaultSchema());
+        $relations = new Relations($this->language->dialect->platform()->names(), $this->path);
         foreach ($dependencies as [$dependency, $resolution]) {
             foreach ($resolution->references as $reference) {
                 $relations->apply($reference, $dependency);
             }
         }
-        $declarations = $this->declarations($tree);
+        $tables = $this->declarations($tree);
         $sites = $this->sites->find($command);
         $references = [];
         foreach ($sites as $index => $site) {
             if ($site->kind === ReferenceKind::Declaration) {
-                $references[$index] = $this->declare($site, $relations, $declarations, $tree);
+                $references[$index] = $this->declare($site, $relations, $tables, $tree);
             }
         }
         foreach ($sites as $index => $site) {
             if ($site->kind !== ReferenceKind::Declaration) {
-                $references[$index] = $this->refer($site, $relations, $tree);
+                $references[$index] = $this->refer($site, $relations, $tree, $declarations);
             }
         }
         ksort($references);
@@ -104,43 +110,44 @@ final class Resolver
             throw new SemanticException('duplicate-table', 'Duplicate table declaration: ' . $table, $tree);
         }
         if ($known !== null) {
-            return new Reference($site->value, $site->name, ReferenceKind::Dependency, $known[1], $known[0], true);
+            return new Reference($site->value, $site->name, ReferenceKind::Dependency, $known[1], $known[0], true, $site->values);
         }
         $definition = $this->declared($declarations, $relations, $schema, $table);
         $relations->declare($schema, $table, $definition, null);
 
-        return new Reference($site->value, $site->name, ReferenceKind::Declaration, null, $definition, $site->conditional);
+        return new Reference($site->value, $site->name, ReferenceKind::Declaration, null, $definition, $site->conditional, $site->values);
     }
 
     /**
-     * Resolves a site that defines, drops or refers to a table: to a common table expression, to a table in force, or to nothing.
+     * Resolves a site that defines, drops or refers to a table: to a common table expression visible at the site, to a table in force, or, under partial declarations, to an undeclared table unless the dependencies dropped it.
      *
-     * @throws SemanticException When the name is not in force, and the site is not a conditional drop
+     * @throws SemanticException When the name is not in force under complete declarations, and the site is not a conditional drop
      */
-    public function refer(NameSite $site, Relations $relations, Node $tree): Reference
+    public function refer(NameSite $site, Relations $relations, Node $tree, Declarations $declarations = Declarations::Complete): Reference
     {
         if ($site->kind === ReferenceKind::CommonTableExpression) {
-            $relations->define($site->name);
-
-            return new Reference($site->value, $site->name, ReferenceKind::CommonTableExpression);
+            return new Reference($site->value, $site->name, ReferenceKind::CommonTableExpression, values: $site->values);
         }
-        [$schema, $table] = $relations->qualified($site->name);
-        $known = $relations->lookup($schema, $table);
+        $known = $relations->find($site->name);
+        $open = $declarations === Declarations::Partial && !$relations->gone($site->name);
         if ($site->kind === ReferenceKind::Drop) {
-            if ($known === null && !$site->conditional) {
-                throw new SemanticException('unknown-table', 'Cannot drop an unknown table: ' . $table, $tree);
+            if ($known === null && !$site->conditional && !$open) {
+                throw new SemanticException('unknown-table', 'Cannot drop an unknown table: ' . implode('.', $site->name), $tree);
             }
 
-            return new Reference($site->value, $site->name, ReferenceKind::Drop, $known[1] ?? null, $known[0] ?? null, $site->conditional);
+            return new Reference($site->value, $site->name, ReferenceKind::Drop, $known[3] ?? null, $known[2] ?? null, $site->conditional, $site->values);
         }
-        if ($relations->isCommon($site->name)) {
-            return new Reference($site->value, $site->name, ReferenceKind::CommonTableExpression);
+        if ($site->scope->contains($site->name, $this->language->dialect->platform()->names())) {
+            return new Reference($site->value, $site->name, ReferenceKind::CommonTableExpression, values: $site->values);
+        }
+        if ($known === null && $open) {
+            return new Reference($site->value, $site->name, ReferenceKind::Undeclared, values: $site->values);
         }
         if ($known === null) {
             throw new SemanticException('unknown-table', 'No dependency declares the table ' . implode('.', $site->name), $tree);
         }
 
-        return new Reference($site->value, $site->name, $known[1] === null ? ReferenceKind::Declaration : ReferenceKind::Dependency, $known[1], $known[0]);
+        return new Reference($site->value, $site->name, $known[3] === null ? ReferenceKind::Declaration : ReferenceKind::Dependency, $known[3], $known[2], false, $site->values);
     }
 
     /**

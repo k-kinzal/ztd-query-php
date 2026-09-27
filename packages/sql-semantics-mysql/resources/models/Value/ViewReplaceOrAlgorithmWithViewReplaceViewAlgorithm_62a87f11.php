@@ -50,13 +50,15 @@ final class ViewReplaceOrAlgorithmWithViewReplaceViewAlgorithm_62a87f11 implemen
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->viewReplace, \SqlSemantics\Statement\Model\MySql\Role\ViewReplaceForm::class, $replace), $this->replacement($this->viewAlgorithm, \SqlSemantics\Statement\Model\MySql\Role\ViewAlgorithmForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->viewReplace, \SqlSemantics\Statement\Model\MySql\Role\ViewReplaceForm::class, $replace), $this->replacement($this->viewAlgorithm, \SqlSemantics\Statement\Model\MySql\Role\ViewAlgorithmForm::class, $replace)];
+
+        return $mapped === [$this->viewReplace, $this->viewAlgorithm] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

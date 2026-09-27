@@ -56,13 +56,15 @@ final class OptAccountLockPasswordExpireOptionWithPasswordExpireIntervalSymRealU
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->passwordExpire, \SqlSemantics\Statement\Model\MySql\Role\PasswordExpireForm::class, $replace), $this->replacement($this->realUlongNum, \SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm::class, $replace), $this->daySym, $this->comments);
+        $mapped = [$this->replacement($this->passwordExpire, \SqlSemantics\Statement\Model\MySql\Role\PasswordExpireForm::class, $replace), $this->replacement($this->realUlongNum, \SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm::class, $replace)];
+
+        return $mapped === [$this->passwordExpire, $this->realUlongNum] ? $this : new self($mapped[0], $mapped[1], $this->daySym, $this->comments);
     }
 
     /**

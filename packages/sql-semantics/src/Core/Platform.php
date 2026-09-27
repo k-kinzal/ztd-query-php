@@ -40,9 +40,14 @@ interface Platform
     public function builder(Language $language): Builder;
 
     /**
-     * Supplies the unqualified declaration namespace.
+     * Answers the schemas an unqualified table name is read in, in order, for the session's search path or the server's default; an unqualified declaration creates its table in the first.
+     *
+     * @param SearchPath|null $path The session's search path, or null for the server's default
+     * @return non-empty-list<string>
+     *
+     * @throws InvalidArgumentException When the database cannot search the path
      */
-    public function defaultSchema(): string;
+    public function searchPath(?SearchPath $path = null): array;
 
     /**
      * @return array{string, string} Root and statement grammar names

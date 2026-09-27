@@ -14,6 +14,7 @@ use SqlSemantics\Core\Mode as SessionMode;
 use SqlSemantics\Core\Parameters;
 use SqlSemantics\Core\Platform as Contract;
 use SqlSemantics\Core\Policy;
+use SqlSemantics\Core\SearchPath as SessionSearchPath;
 
 /**
  * Assembles PostgreSql semantic behavior from independent core contracts.
@@ -53,11 +54,11 @@ final class Platform implements Contract
     }
 
     /**
-     * Supplies the default declaration namespace.
+     * Reads unqualified names in the schemas of the `search_path`, by default `public`.
      */
-    public function defaultSchema(): string
+    public function searchPath(?SessionSearchPath $path = null): array
     {
-        return 'public';
+        return $path === null ? ['public'] : $path->schemas;
     }
 
     /**
@@ -90,6 +91,11 @@ final class Platform implements Contract
 
     /**
      * Names the positions where the grammar writes table names, and the forms that declare, drop, or merely name tables.
+     *
+     * The body of a common table expression names the ones written before it
+     * in a plain WITH clause, and every one of a recursive clause, itself
+     * and later ones included. The table INSERT, UPDATE, DELETE, or MERGE
+     * writes to is always a table, never a common table expression.
      */
     public function relations(): Policy\RelationRules
     {
@@ -105,6 +111,11 @@ final class Platform implements Contract
             commonTableExpressions: [['rule' => 'common_table_expr', 'name' => 'name']],
             ignored: [['rule' => 'ViewStmt', 'name' => 'qualified_name']],
             parts: ['create_as_target' => ['qualified_name opt_column_list table_access_method_clause OptWith OnCommitOption OptTableSpace' => [0]]],
+            withClauses: ['opt_with_clause', 'with_clause'],
+            recursive: 'RECURSIVE',
+            visibility: Policy\WithVisibility::Preceding,
+            recursiveVisibility: Policy\WithVisibility::All,
+            targets: ['insert_target', 'relation_expr_opt_alias'],
         );
     }
 

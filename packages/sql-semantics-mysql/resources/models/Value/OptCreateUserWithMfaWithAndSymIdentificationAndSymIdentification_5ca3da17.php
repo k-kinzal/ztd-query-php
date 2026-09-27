@@ -54,13 +54,15 @@ final class OptCreateUserWithMfaWithAndSymIdentificationAndSymIdentification_5ca
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->identification, \SqlSemantics\Statement\Model\MySql\Role\IdentificationForm::class, $replace), $this->replacement($this->identification2, \SqlSemantics\Statement\Model\MySql\Role\IdentificationForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->identification, \SqlSemantics\Statement\Model\MySql\Role\IdentificationForm::class, $replace), $this->replacement($this->identification2, \SqlSemantics\Statement\Model\MySql\Role\IdentificationForm::class, $replace)];
+
+        return $mapped === [$this->identification, $this->identification2] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

@@ -50,13 +50,15 @@ final class NowWithNowSymFuncDatetimePrecision_8a7d9aba implements \SqlSemantics
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->nowSym, $this->replacement($this->funcDatetimePrecision, \SqlSemantics\Statement\Model\MySql\Role\FuncDatetimePrecisionForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->funcDatetimePrecision, \SqlSemantics\Statement\Model\MySql\Role\FuncDatetimePrecisionForm::class, $replace)];
+
+        return $mapped === [$this->funcDatetimePrecision] ? $this : new self($this->nowSym, $mapped[0], $this->comments);
     }
 
     /**

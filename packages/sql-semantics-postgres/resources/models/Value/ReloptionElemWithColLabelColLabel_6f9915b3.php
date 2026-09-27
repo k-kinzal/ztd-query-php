@@ -52,13 +52,15 @@ final class ReloptionElemWithColLabelColLabel_6f9915b3 implements \SqlSemantics\
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->colLabel, \SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm::class, $replace), $this->replacement($this->colLabel2, \SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->colLabel, \SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm::class, $replace), $this->replacement($this->colLabel2, \SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm::class, $replace)];
+
+        return $mapped === [$this->colLabel, $this->colLabel2] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

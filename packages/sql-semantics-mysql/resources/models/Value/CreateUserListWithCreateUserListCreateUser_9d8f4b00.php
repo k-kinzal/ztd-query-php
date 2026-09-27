@@ -52,13 +52,15 @@ final class CreateUserListWithCreateUserListCreateUser_9d8f4b00 implements \SqlS
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->createUserList, \SqlSemantics\Statement\Model\MySql\Role\CreateUserListForm::class, $replace), $this->replacement($this->createUser, \SqlSemantics\Statement\Model\MySql\Role\CreateUserForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->createUserList, \SqlSemantics\Statement\Model\MySql\Role\CreateUserListForm::class, $replace), $this->replacement($this->createUser, \SqlSemantics\Statement\Model\MySql\Role\CreateUserForm::class, $replace)];
+
+        return $mapped === [$this->createUserList, $this->createUser] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

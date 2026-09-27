@@ -58,13 +58,15 @@ final class WindowWithNmOrderBySortlistFrameOpt_f01cd5ad implements \SqlSemantic
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->nm, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace), $this->replacement($this->sortlist, \SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm::class, $replace), $this->replacement($this->frameOpt, \SqlSemantics\Statement\Model\Sqlite\Role\FrameOptForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->nm, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace), $this->replacement($this->sortlist, \SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm::class, $replace), $this->replacement($this->frameOpt, \SqlSemantics\Statement\Model\Sqlite\Role\FrameOptForm::class, $replace)];
+
+        return $mapped === [$this->nm, $this->sortlist, $this->frameOpt] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

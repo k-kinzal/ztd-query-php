@@ -58,13 +58,15 @@ final class SelectItemWithRememberNameExprRememberEndSelectAlias_243a56d3 implem
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->rememberName, \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm::class, $replace), $this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->replacement($this->rememberEnd, \SqlSemantics\Statement\Model\MySql\Role\RememberEndForm::class, $replace), $this->replacement($this->selectAlias, \SqlSemantics\Statement\Model\MySql\Role\SelectAliasForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->rememberName, \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm::class, $replace), $this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->replacement($this->rememberEnd, \SqlSemantics\Statement\Model\MySql\Role\RememberEndForm::class, $replace), $this->replacement($this->selectAlias, \SqlSemantics\Statement\Model\MySql\Role\SelectAliasForm::class, $replace)];
+
+        return $mapped === [$this->rememberName, $this->expr, $this->rememberEnd, $this->selectAlias] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $this->comments);
     }
 
     /**

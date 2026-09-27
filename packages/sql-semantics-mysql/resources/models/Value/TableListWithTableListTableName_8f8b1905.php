@@ -52,13 +52,15 @@ final class TableListWithTableListTableName_8f8b1905 implements \SqlSemantics\St
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->tableList, \SqlSemantics\Statement\Model\MySql\Role\TableListForm::class, $replace), $this->replacement($this->tableName, \SqlSemantics\Statement\Model\MySql\Role\TableNameForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->tableList, \SqlSemantics\Statement\Model\MySql\Role\TableListForm::class, $replace), $this->replacement($this->tableName, \SqlSemantics\Statement\Model\MySql\Role\TableNameForm::class, $replace)];
+
+        return $mapped === [$this->tableList, $this->tableName] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

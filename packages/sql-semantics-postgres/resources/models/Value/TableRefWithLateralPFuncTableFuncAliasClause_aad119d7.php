@@ -52,13 +52,15 @@ final class TableRefWithLateralPFuncTableFuncAliasClause_aad119d7 implements \Sq
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->funcTable, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncTableForm::class, $replace), $this->replacement($this->funcAliasClause, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncAliasClauseForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->funcTable, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncTableForm::class, $replace), $this->replacement($this->funcAliasClause, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncAliasClauseForm::class, $replace)];
+
+        return $mapped === [$this->funcTable, $this->funcAliasClause] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

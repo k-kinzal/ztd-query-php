@@ -58,13 +58,15 @@ final class AlterRoleStmtWithAlterUserRoleSpecOptWithAlterOptRoleList_793c5033 i
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->roleSpec, \SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm::class, $replace), $this->replacement($this->optWith, \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm::class, $replace), $this->replacement($this->alterOptRoleList, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterOptRoleListForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->roleSpec, \SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm::class, $replace), $this->replacement($this->optWith, \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm::class, $replace), $this->replacement($this->alterOptRoleList, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterOptRoleListForm::class, $replace)];
+
+        return $mapped === [$this->roleSpec, $this->optWith, $this->alterOptRoleList] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

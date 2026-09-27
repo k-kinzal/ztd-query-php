@@ -54,13 +54,15 @@ final class InsertFromConstructorWithFieldsInsertValues_aa046466 implements \Sql
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->fields, \SqlSemantics\Statement\Model\MySql\Role\FieldsForm::class, $replace), $this->replacement($this->insertValues, \SqlSemantics\Statement\Model\MySql\Role\InsertValuesForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->fields, \SqlSemantics\Statement\Model\MySql\Role\FieldsForm::class, $replace), $this->replacement($this->insertValues, \SqlSemantics\Statement\Model\MySql\Role\InsertValuesForm::class, $replace)];
+
+        return $mapped === [$this->fields, $this->insertValues] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

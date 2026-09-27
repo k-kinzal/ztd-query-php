@@ -24,6 +24,8 @@ use SqlSemantics\Statement\Writer;
  */
 abstract class Composition implements Builder
 {
+    use Templating;
+
     protected readonly LeafReader $leaves;
     protected readonly Vocabulary $vocabulary;
 
@@ -294,21 +296,58 @@ abstract class Composition implements Builder
     }
 
     /**
-     * Spells a finite number so the language reads it as a non-integer.
+     * Spells the magnitude of a finite number so the language reads it as a non-integer that is exactly the number.
+     *
+     * The digits are the fewest that read back as the same double, found
+     * without the `precision` or `serialize_precision` setting, so the
+     * spelling is the same in every environment. The number is written
+     * positionally when that is short, and with an exponent otherwise or
+     * when the language needs the exponent to read an approximate number.
+     *
+     * @param bool $exponent Whether to always write the exponent
      *
      * @throws CompositionException When the value is not finite
      */
-    protected function decimal(float $value): string
+    protected function decimal(float $value, bool $exponent = false): string
     {
         if (!is_finite($value)) {
             throw new CompositionException('A numeric literal must be finite.');
         }
-        $text = (string) abs($value);
-        if (preg_match('/[.eE]/', $text) !== 1) {
-            $text .= '.0';
+        [$digits, $power] = $this->digits(abs($value));
+        if ($exponent || $power < -7 || $power > 20) {
+            return $digits[0] . (strlen($digits) > 1 ? '.' . substr($digits, 1) : '') . 'e' . $power;
         }
+        if ($power < 0) {
+            return '0.' . str_repeat('0', -$power - 1) . $digits;
+        }
+        $digits = str_pad($digits, $power + 1, '0');
 
-        return $text;
+        return substr($digits, 0, $power + 1) . '.' . (strlen($digits) > $power + 1 ? substr($digits, $power + 1) : '0');
+    }
+
+    /**
+     * Answers the fewest significant digits that read back as exactly a finite, non-negative double, and the power of ten of the first.
+     *
+     * @return array{non-empty-string, int}
+     */
+    protected function digits(float $magnitude): array
+    {
+        $precision = 0;
+        do {
+            [$mantissa, $power] = explode('e', sprintf('%.' . $precision . 'e', $magnitude)) + ['', '0'];
+            $digits = preg_replace('/\D/', '', $mantissa) ?? '';
+        } while ((float) (substr($digits, 0, 1) . '.' . substr($digits, 1) . 'e' . $power) !== $magnitude && ++$precision < 17);
+        $digits = rtrim($digits, '0');
+
+        return [$digits === '' ? '0' : $digits, (int) $power];
+    }
+
+    /**
+     * Reports whether a number is negative, negative zero included.
+     */
+    protected function negative(float $value): bool
+    {
+        return $value < 0 || ($value === 0.0 && fdiv(1.0, $value) < 0);
     }
 
     /**

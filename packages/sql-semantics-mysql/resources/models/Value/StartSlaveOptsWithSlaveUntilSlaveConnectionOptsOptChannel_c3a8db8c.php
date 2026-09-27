@@ -54,13 +54,15 @@ final class StartSlaveOptsWithSlaveUntilSlaveConnectionOptsOptChannel_c3a8db8c i
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->slaveUntil, \SqlSemantics\Statement\Model\MySql\Role\SlaveUntilForm::class, $replace), $this->replacement($this->slaveConnectionOpts, \SqlSemantics\Statement\Model\MySql\Role\SlaveConnectionOptsForm::class, $replace), $this->replacement($this->optChannel, \SqlSemantics\Statement\Model\MySql\Role\OptChannelForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->slaveUntil, \SqlSemantics\Statement\Model\MySql\Role\SlaveUntilForm::class, $replace), $this->replacement($this->slaveConnectionOpts, \SqlSemantics\Statement\Model\MySql\Role\SlaveConnectionOptsForm::class, $replace), $this->replacement($this->optChannel, \SqlSemantics\Statement\Model\MySql\Role\OptChannelForm::class, $replace)];
+
+        return $mapped === [$this->slaveUntil, $this->slaveConnectionOpts, $this->optChannel] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

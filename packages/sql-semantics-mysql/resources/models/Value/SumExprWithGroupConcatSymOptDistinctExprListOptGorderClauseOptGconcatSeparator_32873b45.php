@@ -64,13 +64,15 @@ final class SumExprWithGroupConcatSymOptDistinctExprListOptGorderClauseOptGconca
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->optDistinct, \SqlSemantics\Statement\Model\MySql\Role\OptDistinctForm::class, $replace), $this->replacement($this->exprList, \SqlSemantics\Statement\Model\MySql\Role\ExprListForm::class, $replace), $this->replacement($this->optGorderClause, \SqlSemantics\Statement\Model\MySql\Role\OptGorderClauseForm::class, $replace), $this->replacement($this->optGconcatSeparator, \SqlSemantics\Statement\Model\MySql\Role\OptGconcatSeparatorForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optDistinct, \SqlSemantics\Statement\Model\MySql\Role\OptDistinctForm::class, $replace), $this->replacement($this->exprList, \SqlSemantics\Statement\Model\MySql\Role\ExprListForm::class, $replace), $this->replacement($this->optGorderClause, \SqlSemantics\Statement\Model\MySql\Role\OptGorderClauseForm::class, $replace), $this->replacement($this->optGconcatSeparator, \SqlSemantics\Statement\Model\MySql\Role\OptGconcatSeparatorForm::class, $replace)];
+
+        return $mapped === [$this->optDistinct, $this->exprList, $this->optGorderClause, $this->optGconcatSeparator] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $this->comments);
     }
 
     /**

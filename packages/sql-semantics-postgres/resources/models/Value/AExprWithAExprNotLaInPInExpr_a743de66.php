@@ -57,13 +57,15 @@ final class AExprWithAExprNotLaInPInExpr_a743de66 implements \SqlSemantics\State
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->aExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm::class, $replace), $this->notLa, $this->replacement($this->inExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\InExprForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->aExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm::class, $replace), $this->replacement($this->inExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\InExprForm::class, $replace)];
+
+        return $mapped === [$this->aExpr, $this->inExpr] ? $this : new self($mapped[0], $this->notLa, $mapped[1], $this->comments);
     }
 
     /**

@@ -54,13 +54,15 @@ final class AnylistWithAnylistLpAnylistRp_0c30e0aa implements \SqlSemantics\Stat
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->anylist, \SqlSemantics\Statement\Model\Sqlite\Role\AnylistForm::class, $replace), $this->replacement($this->anylist2, \SqlSemantics\Statement\Model\Sqlite\Role\AnylistForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->anylist, \SqlSemantics\Statement\Model\Sqlite\Role\AnylistForm::class, $replace), $this->replacement($this->anylist2, \SqlSemantics\Statement\Model\Sqlite\Role\AnylistForm::class, $replace)];
+
+        return $mapped === [$this->anylist, $this->anylist2] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

@@ -82,13 +82,15 @@ final class ViewStmtWithCreateOrReplaceOptTempRecursiveViewQualifiedNameColumnLi
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->optTemp, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm::class, $replace), $this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->columnList, \SqlSemantics\Statement\Model\PostgreSql\Role\ColumnListForm::class, $replace), $this->replacement($this->optReloptions, \SqlSemantics\Statement\Model\PostgreSql\Role\OptReloptionsForm::class, $replace), $this->replacement($this->selectStmt, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm::class, $replace), $this->replacement($this->optCheckOption, \SqlSemantics\Statement\Model\PostgreSql\Role\OptCheckOptionForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optTemp, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm::class, $replace), $this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->columnList, \SqlSemantics\Statement\Model\PostgreSql\Role\ColumnListForm::class, $replace), $this->replacement($this->optReloptions, \SqlSemantics\Statement\Model\PostgreSql\Role\OptReloptionsForm::class, $replace), $this->replacement($this->selectStmt, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm::class, $replace), $this->replacement($this->optCheckOption, \SqlSemantics\Statement\Model\PostgreSql\Role\OptCheckOptionForm::class, $replace)];
+
+        return $mapped === [$this->optTemp, $this->qualifiedName, $this->columnList, $this->optReloptions, $this->selectStmt, $this->optCheckOption] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $mapped[5], $this->comments);
     }
 
     /**

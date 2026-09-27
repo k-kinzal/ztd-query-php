@@ -28,7 +28,7 @@ The dependencies are applied in order. A `CREATE TABLE` declares a table with it
 
 A declaration whose columns come from another relation, such as `CREATE TABLE ... LIKE`, `CREATE TABLE ... AS SELECT`, or a partition of another table, declares its name but no readable table: its reference is a `Declaration` with a null `table`, and later references to it resolve with a null `table` too. Views, indexes, and other objects that are not tables are neither declared nor referenced. Computing the columns such statements would produce needs query evaluation and is left to the application, which has the statement model to do it from.
 
-A dependency that was analyzed without dependencies is resolved from its own SQL when it is used, so a plain `analyze('CREATE TABLE ...')` can be passed as a dependency. `analyzeAll()` with dependencies resolves each statement of a script against the dependencies and the statements before it, which is how a script of declarations is read.
+A dependency that was analyzed without dependencies is resolved from its own SQL, against the dependencies before it, when it is used, so a plain `analyze('CREATE TABLE ...')` can be passed as a dependency, and its foreign keys refer to the tables declared before it. `analyzeAll()` with dependencies resolves each statement of a script against the dependencies and the statements before it, which is how a script of declarations is read.
 
 ## Types
 
@@ -55,19 +55,72 @@ A SQLite primary key column is the rowid alias, and NOT NULL, only when it is th
 
 ## References
 
-Every table name a statement writes is a `Statement\Reference`: the name value as written, so it can be found and rewritten in the statement, its decoded parts with the schema before the table, its kind, and what it resolves to.
+Every table name a statement writes is a `Statement\Reference`: the name value as written, so it can be found and rewritten in the statement, its decoded parts with the schema before the table, its kind, and what it resolves to. The value is the one in the statement itself, and `Traversal::rewrite()` gives the function that same value while nothing below it is replaced, so a rewrite can change exactly the names that resolve to tables by identity; see [traversal](statements.md#traversal). SQLite's FROM writes a qualified name as two values of one form, a schema and a `.name`, with no single value for the whole name; `values` lists every value that writes a name, and `value` is the first.
 
 | Kind | Meaning |
 |------|---------|
 | `Dependency` | A table declared by a dependency; `declaration` is that statement and `table` its declared columns |
 | `Declaration` | A table the statement itself declares, or names again in its own constraints |
-| `CommonTableExpression` | A common table expression the statement defines; a name it shadows resolves to it |
+| `CommonTableExpression` | A common table expression the statement defines and the name can see; see [common table expressions](#common-table-expressions) |
 | `Drop` | A table the statement drops; `declaration` is where it was declared |
+| `Undeclared` | A table no dependency declares, under [partial declarations](#partial-declarations); nothing is known of its columns |
 
-A name that resolves to none of these is a `SemanticException` with reason `unknown-table`: the dependency that would declare it was not given. Names are compared as the dialect compares relation names, and an unqualified name is read in the dialect's default schema, so in MySQL `db.users` and `users` are different tables.
+A name that resolves to none of these is a `SemanticException` with reason `unknown-table`: the dependency that would declare it was not given. Names are compared as the dialect compares relation names, and an unqualified name is read in the schemas of the [search path](#search-path).
 
-Table names are found where each grammar writes them: in FROM and JOIN clauses, INSERT, UPDATE, DELETE, and MERGE targets, TRUNCATE, ALTER TABLE, CREATE INDEX, foreign key references, and the sources of `CREATE TABLE ... LIKE` and `... AS SELECT`. Aliases and column names are not resolved, and a name written inside a stored program body is not read.
+The references are listed in writing order. Table names are found where each grammar writes them: in FROM and JOIN clauses, INSERT, UPDATE, DELETE, and MERGE targets, TRUNCATE, ALTER TABLE, CREATE INDEX, foreign key references, and the sources of `CREATE TABLE ... LIKE` and `... AS SELECT`. Aliases and column names are not resolved, and a name written inside a stored program body is not read.
+
+## Search path
+
+A server reads a table name without a schema in the schemas of its session: MySQL in the current database, PostgreSQL in the schemas of `search_path`, and SQLite in `main` and then the attached databases. Pass them to `Semantics` as a `Core\SearchPath`, as the server stores their names. An unqualified name refers to the table of the first schema that has one, and an unqualified declaration creates its table in the first schema:
+
+```php
+use SqlSemantics\Core\SearchPath;
+
+$semantics = new Semantics(Dialect::MySql, searchPath: new SearchPath('app'));
+$users = $semantics->analyze('CREATE TABLE users (id INT PRIMARY KEY)');
+$query = $semantics->analyze('SELECT * FROM users JOIN app.users AS again USING (id)', [$users]);
+
+count($query->resolution->tables()); // 2: users and app.users are the same table
+```
+
+MySQL has one current database, so its search path has one schema; without one, an unqualified name is read in an unnamed database of its own, and `app.users` is a different table. PostgreSQL searches `public` by default, and SQLite `main`, which a SQLite search path starts with. `Semantics::searchPath()` answers the schemas in use.
+
+## Partial declarations
+
+The dependencies usually describe only some of the tables of a database. Analyzed with `Core\Declarations::Partial`, a name no dependency declares is not an error: it is a reference of kind `Undeclared`, with no declaration and no table, and every other name resolves as before.
+
+```php
+use SqlSemantics\Core\Declarations;
+
+$query = $semantics->analyze('SELECT * FROM users JOIN audit_log USING (id)', [$users], Declarations::Partial);
+// users is a Dependency with its declared table, audit_log is Undeclared
+```
+
+Under partial declarations, dropping an undeclared table is a `Drop` without a declaration. A table the dependencies dropped is known not to exist, so naming it is still an `unknown-table` error until a later dependency declares it again. Declarations that conflict with a dependency are errors either way.
+
+## Common table expressions
+
+A name resolves to a common table expression only where the server can see it. A WITH clause makes its expressions visible in the query or statement it belongs to, subqueries at any depth included, and not outside it; an inner clause shadows an outer one. Inside the clause, the body of each expression sees the expressions each database allows, and a name it cannot see resolves outside the clause, to an outer expression or to a table:
+
+| Database | Plain WITH | WITH RECURSIVE |
+|----------|------------|----------------|
+| MySQL | The expressions before it | The expressions before it and itself |
+| PostgreSQL | The expressions before it | Every expression of the clause |
+| SQLite | Every expression of the clause | Every expression of the clause |
+
+So in `WITH users AS (SELECT * FROM users WHERE id > 1) SELECT * FROM users`, MySQL and PostgreSQL read the table `users` inside the expression, and SQLite reads the expression itself, which the server reports as a circular reference:
+
+```php
+$semantics = new Semantics(Dialect::PostgreSql);
+$users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY)');
+$query = $semantics->analyze('WITH users AS (SELECT * FROM users WHERE id > 1) SELECT * FROM users', [$users]);
+
+array_map(static fn (Reference $reference): ReferenceKind => $reference->kind, $query->resolution->references);
+// [CommonTableExpression, Dependency, CommonTableExpression]
+```
+
+The table an INSERT, UPDATE, DELETE, or MERGE writes to is always a table in PostgreSQL and SQLite, even when an expression of that name is visible. In MySQL the target of an UPDATE or DELETE is resolved like any other name, so it can be an expression, which the server then rejects as not updatable. A qualified name is never an expression, and expression names are compared as the database compares table names.
 
 ## Verification
 
-Each database package fuzzes declarations: every `CREATE TABLE` sql-faker generates from the grammar must resolve to one readable table, write back the same SQL, and read the same declaration again, unchanged by an unrelated conditional drop before it. Resolution against dependencies is stated by unit tests for every statement kind above in each dialect.
+Each database package fuzzes declarations: every `CREATE TABLE` sql-faker generates from the grammar must resolve to one readable table, write back the same SQL, and read the same declaration again, unchanged by an unrelated conditional drop before it. Resolution against dependencies is stated by unit tests for every statement kind above in each dialect. The visibility of common table expressions was read from MySQL 8.4, PostgreSQL 17, and SQLite 3 running each case against real tables, and the unit tests state those outcomes.

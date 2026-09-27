@@ -11,10 +11,12 @@ use SqlSemantics\Statement\ReferenceKind;
 use SqlSemantics\Statement\Statement;
 
 /**
- * The tables in force while a statement is resolved, and the common table expressions it defines.
+ * The tables in force while a statement is resolved.
  *
- * Tables are compared under the dialect's relation name policy, and a
- * name without a schema belongs to the default schema.
+ * Tables are compared under the dialect's relation name policy. A name
+ * without a schema refers to the table of the first schema of the search
+ * path that has one, and is declared in the first schema of the path. A
+ * table that was dropped is remembered as gone until it is declared again.
  *
  * @visibility SqlSemantics
  */
@@ -26,14 +28,16 @@ final class Relations
     private array $tables = [];
 
     /**
-     * @var list<string>
+     * @var list<array{string, string}>
      */
-    private array $common = [];
+    private array $dropped = [];
 
     /**
      * Starts with no table in force.
+     *
+     * @param non-empty-list<string> $path The schemas an unqualified name is read in, in order
      */
-    public function __construct(private readonly NameRules $names, private readonly string $defaultSchema)
+    public function __construct(private readonly NameRules $names, private readonly array $path)
     {
     }
 
@@ -42,11 +46,12 @@ final class Relations
      */
     public function apply(Reference $reference, Statement $dependency): void
     {
-        [$schema, $name] = $this->qualified($reference->name);
         if ($reference->kind === ReferenceKind::Declaration) {
+            [$schema, $name] = $this->qualified($reference->name);
             $this->declare($schema, $name, $reference->table, $dependency);
         } elseif ($reference->kind === ReferenceKind::Drop) {
-            $this->drop($schema, $name);
+            $found = $this->find($reference->name) ?? $this->qualified($reference->name);
+            $this->drop($found[0], $found[1]);
         }
     }
 
@@ -56,6 +61,7 @@ final class Relations
     public function declare(string $schema, string $name, ?TableDefinition $table, ?Statement $owner): void
     {
         $this->tables[] = [$schema, $name, $table, $owner];
+        $this->dropped = array_values(array_filter($this->dropped, fn (array $gone): bool => !$this->same($gone[0], $gone[1], $schema, $name)));
     }
 
     /**
@@ -64,6 +70,25 @@ final class Relations
     public function drop(string $schema, string $name): void
     {
         $this->tables = array_values(array_filter($this->tables, fn (array $known): bool => !$this->same($known[0], $known[1], $schema, $name)));
+        $this->dropped[] = [$schema, $name];
+    }
+
+    /**
+     * Reports whether a name refers to no table because the tables it could refer to were dropped: in its schema, or in every schema of the search path.
+     *
+     * @param non-empty-list<string> $name
+     */
+    public function gone(array $name): bool
+    {
+        $parts = array_slice($name, -2);
+        $table = $parts[count($parts) - 1];
+        foreach (count($parts) === 2 ? [$parts[0]] : $this->path as $schema) {
+            if (array_filter($this->dropped, fn (array $gone): bool => $this->same($gone[0], $gone[1], $schema, $table)) === []) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -83,7 +108,28 @@ final class Relations
     }
 
     /**
-     * Qualifies a name with the default schema, keeping its last two parts.
+     * Finds the table in force a name refers to: a qualified name in its schema, an unqualified one in the first schema of the search path that has it.
+     *
+     * @param non-empty-list<string> $name
+     * @return array{string, string, TableDefinition|null, Statement|null}|null The schema and name the table is in force under, its definition and its owner
+     */
+    public function find(array $name): ?array
+    {
+        $parts = array_slice($name, -2);
+        $table = $parts[count($parts) - 1];
+        foreach (count($parts) === 2 ? [$parts[0]] : $this->path as $schema) {
+            foreach ($this->tables as [$knownSchema, $knownName, $definition, $owner]) {
+                if ($this->same($knownSchema, $knownName, $schema, $table)) {
+                    return [$knownSchema, $knownName, $definition, $owner];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Qualifies a name with the schema an unqualified declaration creates its table in, keeping its last two parts.
      *
      * @param non-empty-list<string> $name
      * @return array{string, string}
@@ -92,7 +138,7 @@ final class Relations
     {
         $parts = array_slice($name, -2);
 
-        return count($parts) === 2 ? [$parts[0], $parts[1]] : [$this->defaultSchema, $parts[0]];
+        return count($parts) === 2 ? [$parts[0], $parts[1]] : [$this->path[0], $parts[0]];
     }
 
     /**
@@ -101,33 +147,5 @@ final class Relations
     public function same(string $schema, string $name, string $otherSchema, string $otherName): bool
     {
         return $this->names->relationEqual($schema, $otherSchema) && $this->names->relationEqual($name, $otherName);
-    }
-
-    /**
-     * Records a common table expression the statement defines, by its single-part name.
-     *
-     * @param list<string> $name
-     */
-    public function define(array $name): void
-    {
-        if (count($name) === 1) {
-            $this->common[] = $name[0];
-        }
-    }
-
-    /**
-     * Reports whether a name refers to a common table expression the statement defines.
-     *
-     * @param list<string> $name
-     */
-    public function isCommon(array $name): bool
-    {
-        foreach ($this->common as $common) {
-            if (count($name) === 1 && $this->names->equal($common, $name[0])) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

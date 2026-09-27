@@ -52,13 +52,15 @@ final class PartFieldItemListWithPartFieldItemListPartFieldItem_fa9e734f impleme
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->partFieldItemList, \SqlSemantics\Statement\Model\MySql\Role\PartFieldItemListForm::class, $replace), $this->replacement($this->partFieldItem, \SqlSemantics\Statement\Model\MySql\Role\PartFieldItemForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->partFieldItemList, \SqlSemantics\Statement\Model\MySql\Role\PartFieldItemListForm::class, $replace), $this->replacement($this->partFieldItem, \SqlSemantics\Statement\Model\MySql\Role\PartFieldItemForm::class, $replace)];
+
+        return $mapped === [$this->partFieldItemList, $this->partFieldItem] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

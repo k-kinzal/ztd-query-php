@@ -52,13 +52,15 @@ final class InsertUpdateListWithInsertUpdateListInsertUpdateElem_22c65a33 implem
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->insertUpdateList, \SqlSemantics\Statement\Model\MySql\Role\InsertUpdateListForm::class, $replace), $this->replacement($this->insertUpdateElem, \SqlSemantics\Statement\Model\MySql\Role\InsertUpdateElemForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->insertUpdateList, \SqlSemantics\Statement\Model\MySql\Role\InsertUpdateListForm::class, $replace), $this->replacement($this->insertUpdateElem, \SqlSemantics\Statement\Model\MySql\Role\InsertUpdateElemForm::class, $replace)];
+
+        return $mapped === [$this->insertUpdateList, $this->insertUpdateElem] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

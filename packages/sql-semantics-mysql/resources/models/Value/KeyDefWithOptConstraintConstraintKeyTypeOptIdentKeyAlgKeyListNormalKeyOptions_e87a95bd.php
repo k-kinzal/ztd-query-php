@@ -70,13 +70,15 @@ final class KeyDefWithOptConstraintConstraintKeyTypeOptIdentKeyAlgKeyListNormalK
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->optConstraint, \SqlSemantics\Statement\Model\MySql\Role\OptConstraintForm::class, $replace), $this->replacement($this->constraintKeyType, \SqlSemantics\Statement\Model\MySql\Role\ConstraintKeyTypeForm::class, $replace), $this->replacement($this->optIdent, \SqlSemantics\Statement\Model\MySql\Role\OptIdentForm::class, $replace), $this->replacement($this->keyAlg, \SqlSemantics\Statement\Model\MySql\Role\KeyAlgForm::class, $replace), $this->replacement($this->keyList, \SqlSemantics\Statement\Model\MySql\Role\KeyListForm::class, $replace), $this->replacement($this->normalKeyOptions, \SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptionsForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optConstraint, \SqlSemantics\Statement\Model\MySql\Role\OptConstraintForm::class, $replace), $this->replacement($this->constraintKeyType, \SqlSemantics\Statement\Model\MySql\Role\ConstraintKeyTypeForm::class, $replace), $this->replacement($this->optIdent, \SqlSemantics\Statement\Model\MySql\Role\OptIdentForm::class, $replace), $this->replacement($this->keyAlg, \SqlSemantics\Statement\Model\MySql\Role\KeyAlgForm::class, $replace), $this->replacement($this->keyList, \SqlSemantics\Statement\Model\MySql\Role\KeyListForm::class, $replace), $this->replacement($this->normalKeyOptions, \SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptionsForm::class, $replace)];
+
+        return $mapped === [$this->optConstraint, $this->constraintKeyType, $this->optIdent, $this->keyAlg, $this->keyList, $this->normalKeyOptions] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $mapped[5], $this->comments);
     }
 
     /**

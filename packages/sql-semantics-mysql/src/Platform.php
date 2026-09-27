@@ -15,6 +15,7 @@ use SqlSemantics\Core\Mode as SessionMode;
 use SqlSemantics\Core\Parameters;
 use SqlSemantics\Core\Platform as Contract;
 use SqlSemantics\Core\Policy;
+use SqlSemantics\Core\SearchPath as SessionSearchPath;
 
 /**
  * Assembles MySql semantic behavior from independent core contracts.
@@ -54,11 +55,20 @@ final class Platform implements Contract
     }
 
     /**
-     * Supplies the default declaration namespace.
+     * Reads unqualified names in the current database, the one schema of the path; without one, in an unnamed database of their own.
+     *
+     * @throws InvalidArgumentException When the path has more than one schema, as MySQL has one current database
      */
-    public function defaultSchema(): string
+    public function searchPath(?SessionSearchPath $path = null): array
     {
-        return '';
+        if ($path === null) {
+            return [''];
+        }
+        if (count($path->schemas) !== 1) {
+            throw new InvalidArgumentException('MySQL reads unqualified names in its one current database, ' . count($path->schemas) . ' schemas given.');
+        }
+
+        return $path->schemas;
     }
 
     /**
@@ -92,6 +102,11 @@ final class Platform implements Contract
 
     /**
      * Names the positions where the grammar writes table names, and the forms that declare, drop, or merely name tables.
+     *
+     * The body of a common table expression names the ones written before it
+     * in its WITH clause, and itself only when the clause is recursive; a
+     * later one is not visible even then. The table an UPDATE or DELETE
+     * writes to is resolved like any other name, so it can be one.
      */
     public function relations(): Policy\RelationRules
     {
@@ -113,6 +128,10 @@ final class Platform implements Contract
                 ['rule' => 'table_to_table', 'pair' => ['table_ident', 'table_ident']],
                 ['rule' => 'alter_list_item', 'requires' => ['RENAME', 'table_ident'], 'name' => 'table_ident'],
             ],
+            withClauses: ['opt_with_clause', 'with_clause'],
+            recursive: 'RECURSIVE_SYM',
+            visibility: Policy\WithVisibility::Preceding,
+            recursiveVisibility: Policy\WithVisibility::PrecedingAndItself,
         );
     }
 

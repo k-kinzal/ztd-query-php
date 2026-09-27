@@ -64,13 +64,15 @@ final class SingleMultiWithFromTableIdentOptUsePartitionWhereClauseOptOrderClaus
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->optUsePartition, \SqlSemantics\Statement\Model\MySql\Role\OptUsePartitionForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\MySql\Role\WhereClauseForm::class, $replace), $this->replacement($this->orderBy, \SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm::class, $replace), $this->replacement($this->deleteLimitClause, \SqlSemantics\Statement\Model\MySql\Role\DeleteLimitClauseForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->optUsePartition, \SqlSemantics\Statement\Model\MySql\Role\OptUsePartitionForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\MySql\Role\WhereClauseForm::class, $replace), $this->replacement($this->orderBy, \SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm::class, $replace), $this->replacement($this->deleteLimitClause, \SqlSemantics\Statement\Model\MySql\Role\DeleteLimitClauseForm::class, $replace)];
+
+        return $mapped === [$this->tableIdent, $this->optUsePartition, $this->where, $this->orderBy, $this->deleteLimitClause] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $this->comments);
     }
 
     /**

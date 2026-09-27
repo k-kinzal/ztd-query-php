@@ -20,6 +20,7 @@ use SqlSemantics\Statement\Writer;
 use Tests\Contract\Composed;
 
 #[CoversClass(Builder::class)]
+#[UsesClass(\SqlSemantics\Platform\MySql\Casts::class)]
 #[UsesClass(Mode::class)]
 #[UsesClass(\SqlSemantics\Platform\MySql\Platform::class)]
 #[UsesClass(\SqlSemantics\Platform\MySql\Queries::class)]
@@ -81,10 +82,13 @@ final class BuilderTest extends TestCase
         Composed::assertExpressionRoundTrips($semantics, $semantics->builder()->integer($value));
     }
 
-    #[TestWith([0.1, '0.1'])]
-    #[TestWith([-2.0, '- 2.0'])]
-    #[TestWith([1e25, '1.0E+25'])]
-    public function testFloatIsReadAsANonInteger(float $value, string $expected): void
+    #[TestWith([0.1, '1e-1'])]
+    #[TestWith([0.1 + 0.2, '3.0000000000000004e-1'])]
+    #[TestWith([-2.0, '- 2e0'])]
+    #[TestWith([-0.0, '- 0e0'])]
+    #[TestWith([1e25, '1e25'])]
+    #[TestWith([5e-324, '5e-324'])]
+    public function testFloatIsAnApproximateValueLiteralOfExactlyTheNumber(float $value, string $expected): void
     {
         $semantics = new Semantics(Dialect::MySql);
         self::assertSame($expected, Writer::render($semantics->builder()->float($value)));
@@ -205,5 +209,72 @@ final class BuilderTest extends TestCase
         $builder = $semantics->builder();
         self::assertSame('( a = 1 )', Writer::render($builder->parenthesized($builder->compare($builder->column('a'), '=', $builder->integer(1)))));
         Composed::assertExpressionRoundTrips($semantics, $builder->parenthesized($builder->column('a')));
+    }
+
+    public function testIsNullIsAnExpressionOfThisDatabase(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $builder = $semantics->builder();
+        $condition = $builder->isNull($builder->and($builder->column('a'), $builder->column('b')), true);
+        self::assertSame('( a AND b ) IS NOT NULL', Writer::render($condition));
+        Composed::assertExpressionRoundTrips($semantics, $condition);
+    }
+
+    public function testInIsAnExpressionOfThisDatabase(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $builder = $semantics->builder();
+        $membership = $builder->in($builder->column('a'), [$builder->integer(1), $builder->string('x')]);
+        self::assertSame("a IN( 1 , 'x' )", Writer::render($membership));
+        Composed::assertExpressionRoundTrips($semantics, $membership);
+        $this->expectException(CompositionException::class);
+        $builder->in($builder->column('a'), []);
+    }
+
+    public function testCaseIsAnExpressionOfThisDatabase(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $builder = $semantics->builder();
+        $case = $builder->case([[$builder->isNull($builder->column('a')), $builder->string('none')]], $builder->column('a'));
+        self::assertSame("CASE WHEN a IS NULL THEN 'none' ELSE a END", Writer::render($case));
+        Composed::assertExpressionRoundTrips($semantics, $case);
+    }
+
+    public function testCallWritesAKeywordFunctionInItsOwnForm(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $builder = $semantics->builder();
+        $call = $builder->call('coalesce', [$builder->column('a'), $builder->integer(0)]);
+        self::assertSame('COALESCE( a , 0 )', Writer::render($call));
+        Composed::assertExpressionRoundTrips($semantics, $call);
+        self::assertSame('`My Func` ( a )', Writer::render($builder->call('My Func', [$builder->column('a')])));
+        $this->expectException(CompositionException::class);
+        $builder->call('row_number');
+    }
+
+    public function testCastIsAnExpressionOfThisDatabase(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $builder = $semantics->builder();
+        $cast = $builder->cast($builder->or($builder->column('a'), $builder->column('b')), new \SqlSemantics\Statement\Declaration\TypeDescriptor(\SqlSemantics\Statement\Declaration\Builtin::DoublePrecision));
+        self::assertSame('CAST( a OR b AS DOUBLE )', Writer::render($cast));
+        Composed::assertExpressionRoundTrips($semantics, $cast);
+    }
+
+    public function testSelectComposesShadowRowsWithoutSql(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $builder = $semantics->builder();
+        $type = new \SqlSemantics\Statement\Declaration\TypeDescriptor(\SqlSemantics\Statement\Declaration\Builtin::DoublePrecision);
+        $rows = $builder->unionAll($builder->select([[$builder->cast($builder->integer(1), $type), 'id']]), $builder->select([[$builder->cast($builder->integer(2), $type), 'id']]));
+        $empty = $builder->select([[$builder->cast($builder->null(), $type), 'id']], null, $builder->boolean(false));
+        Composed::assertQueryRoundTrips($semantics, $rows);
+        Composed::assertQueryRoundTrips($semantics, $empty);
+        self::assertSame('SELECT CAST( NULL AS DOUBLE ) AS id WHERE FALSE', Writer::render($empty));
+        $shadowed = $builder->with([$builder->cte('users', $rows)], $semantics->analyze('SELECT id FROM users')->command);
+        Composed::assertQueryRoundTrips($semantics, $shadowed);
+        self::assertSame('SELECT 1 AS `select` FROM app.users WHERE a', Writer::render($builder->select([[$builder->integer(1), 'select']], $builder->table('app', 'users'), $builder->column('a'))));
+        $this->expectException(CompositionException::class);
+        (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->builder()->select([[$builder->integer(1), 'id']], null, $builder->boolean(false));
     }
 }

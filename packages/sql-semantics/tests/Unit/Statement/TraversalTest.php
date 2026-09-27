@@ -67,6 +67,16 @@ final class TraversalTest extends TestCase
         self::assertSame('SELECT a FROM u WHERE u.b = 1 -- audited', $statement->withCommand($rewritten)->toString());
     }
 
+    public function testRewriteKeepsEveryValueNothingBelowWhichIsReplaced(): void
+    {
+        $command = (new Semantics(SqliteDialect::Sqlite))->analyze('SELECT a FROM main.t WHERE b = 1')->command;
+        self::assertSame($command, Traversal::rewrite($command, static fn (Element $value): Element => $value));
+        $tables = Traversal::find($command, \SqlSemantics\Statement\Model\Sqlite\Role\SeltablistForm::class);
+        $rewritten = Traversal::rewrite($command, static fn (Element $value): Element => $value instanceof Integer ? new Integer('2') : $value);
+        self::assertSame('SELECT a FROM main.t WHERE b = 2', Writer::render($rewritten));
+        self::assertSame($tables, Traversal::find($rewritten, \SqlSemantics\Statement\Model\Sqlite\Role\SeltablistForm::class));
+    }
+
     public function testRewriteGivesParentsTheirRewrittenChildren(): void
     {
         $command = (new Semantics(SqliteDialect::Sqlite))->analyze('SELECT 1 + 2')->command;

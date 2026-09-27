@@ -52,13 +52,15 @@ final class FuncExprCommonSubexprWithExtractExtractList_5dee0e54 implements \Sql
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->extractList, \SqlSemantics\Statement\Model\PostgreSql\Role\ExtractListForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->extractList, \SqlSemantics\Statement\Model\PostgreSql\Role\ExtractListForm::class, $replace)];
+
+        return $mapped === [$this->extractList] ? $this : new self($mapped[0], $this->comments);
     }
 
     /**

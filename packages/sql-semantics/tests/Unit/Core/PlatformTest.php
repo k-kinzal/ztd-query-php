@@ -74,11 +74,11 @@ final class PlatformTest extends TestCase
         $dialect->method('platform')->willReturn($platform);
         self::assertSame('application-1', (new \SqlSemantics\Core\Ast\DialectParser(new \SqlSemantics\Core\Language($dialect)))->version());
     }
-    public function testDefaultSchemaUsesTheLanguageNamespace(): void
+    public function testSearchPathDefaultsToTheServersSchemas(): void
     {
         $accept = static fn (\SqlSemantics\Core\Platform $rules): \SqlSemantics\Core\Platform => $rules;
         self::assertSame(PostgreSqlDialect::PostgreSql->platform()::class, $accept(PostgreSqlDialect::PostgreSql->platform())::class);
-        self::assertSame('public', PostgreSqlDialect::PostgreSql->platform()->defaultSchema());
+        self::assertSame(['public'], PostgreSqlDialect::PostgreSql->platform()->searchPath());
     }
     public function testStatementNamesIdentifyTheParserRoot(): void
     {

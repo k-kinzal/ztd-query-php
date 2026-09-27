@@ -52,13 +52,15 @@ final class FuncExprCommonSubexprWithJsonObjectJsonReturningClauseOpt_b2324021 i
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->jsonReturningClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonReturningClauseOptForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->jsonReturningClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonReturningClauseOptForm::class, $replace)];
+
+        return $mapped === [$this->jsonReturningClauseOpt] ? $this : new self($mapped[0], $this->comments);
     }
 
     /**

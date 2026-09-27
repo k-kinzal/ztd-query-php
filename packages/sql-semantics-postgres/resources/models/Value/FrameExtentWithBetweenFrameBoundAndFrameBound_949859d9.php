@@ -54,13 +54,15 @@ final class FrameExtentWithBetweenFrameBoundAndFrameBound_949859d9 implements \S
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->frameBound, \SqlSemantics\Statement\Model\PostgreSql\Role\FrameBoundForm::class, $replace), $this->replacement($this->frameBound2, \SqlSemantics\Statement\Model\PostgreSql\Role\FrameBoundForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->frameBound, \SqlSemantics\Statement\Model\PostgreSql\Role\FrameBoundForm::class, $replace), $this->replacement($this->frameBound2, \SqlSemantics\Statement\Model\PostgreSql\Role\FrameBoundForm::class, $replace)];
+
+        return $mapped === [$this->frameBound, $this->frameBound2] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

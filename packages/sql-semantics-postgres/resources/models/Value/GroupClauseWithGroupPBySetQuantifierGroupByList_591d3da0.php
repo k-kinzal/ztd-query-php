@@ -54,13 +54,15 @@ final class GroupClauseWithGroupPBySetQuantifierGroupByList_591d3da0 implements 
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->setQuantifier, \SqlSemantics\Statement\Model\PostgreSql\Role\SetQuantifierForm::class, $replace), $this->replacement($this->groupByList, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByListForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->setQuantifier, \SqlSemantics\Statement\Model\PostgreSql\Role\SetQuantifierForm::class, $replace), $this->replacement($this->groupByList, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByListForm::class, $replace)];
+
+        return $mapped === [$this->setQuantifier, $this->groupByList] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

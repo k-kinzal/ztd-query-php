@@ -52,13 +52,15 @@ final class PubObjListWithPubObjListPublicationObjSpec_0f6aac6e implements \SqlS
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->pubObjList, \SqlSemantics\Statement\Model\PostgreSql\Role\PubObjListForm::class, $replace), $this->replacement($this->publicationObjSpec, \SqlSemantics\Statement\Model\PostgreSql\Role\PublicationObjSpecForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->pubObjList, \SqlSemantics\Statement\Model\PostgreSql\Role\PubObjListForm::class, $replace), $this->replacement($this->publicationObjSpec, \SqlSemantics\Statement\Model\PostgreSql\Role\PublicationObjSpecForm::class, $replace)];
+
+        return $mapped === [$this->pubObjList, $this->publicationObjSpec] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

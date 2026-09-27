@@ -54,13 +54,15 @@ final class TypeWithNvarcharFieldLengthOptBinMod_a89a2a2d implements \SqlSemanti
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->nvarchar, \SqlSemantics\Statement\Model\MySql\Role\NvarcharForm::class, $replace), $this->replacement($this->fieldLength, \SqlSemantics\Statement\Model\MySql\Role\FieldLengthForm::class, $replace), $this->replacement($this->optBinMod, \SqlSemantics\Statement\Model\MySql\Role\OptBinModForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->nvarchar, \SqlSemantics\Statement\Model\MySql\Role\NvarcharForm::class, $replace), $this->replacement($this->fieldLength, \SqlSemantics\Statement\Model\MySql\Role\FieldLengthForm::class, $replace), $this->replacement($this->optBinMod, \SqlSemantics\Statement\Model\MySql\Role\OptBinModForm::class, $replace)];
+
+        return $mapped === [$this->nvarchar, $this->fieldLength, $this->optBinMod] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

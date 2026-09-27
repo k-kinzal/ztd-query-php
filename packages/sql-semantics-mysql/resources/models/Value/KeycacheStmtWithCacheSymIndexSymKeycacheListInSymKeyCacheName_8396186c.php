@@ -56,13 +56,15 @@ final class KeycacheStmtWithCacheSymIndexSymKeycacheListInSymKeyCacheName_839618
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->keycacheList, \SqlSemantics\Statement\Model\MySql\Role\KeycacheListForm::class, $replace), $this->replacement($this->keyCacheName, \SqlSemantics\Statement\Model\MySql\Role\KeyCacheNameForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->keycacheList, \SqlSemantics\Statement\Model\MySql\Role\KeycacheListForm::class, $replace), $this->replacement($this->keyCacheName, \SqlSemantics\Statement\Model\MySql\Role\KeyCacheNameForm::class, $replace)];
+
+        return $mapped === [$this->keycacheList, $this->keyCacheName] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

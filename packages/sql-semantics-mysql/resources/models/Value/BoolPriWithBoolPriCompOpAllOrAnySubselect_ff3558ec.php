@@ -63,13 +63,15 @@ final class BoolPriWithBoolPriCompOpAllOrAnySubselect_ff3558ec implements \SqlSe
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->boolPri, \SqlSemantics\Statement\Model\MySql\Role\BoolPriForm::class, $replace), $this->replacement($this->compOp, \SqlSemantics\Statement\Model\MySql\Role\CompOpForm::class, $replace), $this->replacement($this->allOrAny, \SqlSemantics\Statement\Model\MySql\Role\AllOrAnyForm::class, $replace), $this->replacement($this->subselect, \SqlSemantics\Statement\Model\MySql\Role\SubselectForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->boolPri, \SqlSemantics\Statement\Model\MySql\Role\BoolPriForm::class, $replace), $this->replacement($this->compOp, \SqlSemantics\Statement\Model\MySql\Role\CompOpForm::class, $replace), $this->replacement($this->allOrAny, \SqlSemantics\Statement\Model\MySql\Role\AllOrAnyForm::class, $replace), $this->replacement($this->subselect, \SqlSemantics\Statement\Model\MySql\Role\SubselectForm::class, $replace)];
+
+        return $mapped === [$this->boolPri, $this->compOp, $this->allOrAny, $this->subselect] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $this->comments);
     }
 
     /**

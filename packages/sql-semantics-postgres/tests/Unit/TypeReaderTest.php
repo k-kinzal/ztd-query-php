@@ -236,4 +236,12 @@ final class TypeReaderTest extends TestCase
         $this->expectException(SemanticException::class);
         (new TypeReader())->integer([new Token(1, 'ICONST', '99999999999999999999', 0)], $node);
     }
+
+    public function testSupportsTellsPostgreSqlTypesFromOthers(): void
+    {
+        self::assertTrue(TypeReader::supports(Builtin::Integer));
+        self::assertTrue(TypeReader::supports(Builtin::TimestampTz));
+        self::assertFalse(TypeReader::supports(Builtin::TinyInt));
+        self::assertFalse(TypeReader::supports(Builtin::Any));
+    }
 }

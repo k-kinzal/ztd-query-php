@@ -56,13 +56,15 @@ final class PartOptionWithOptStorageEngineSymOptEqualIdentOrText_6c2f88e4 implem
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->optStorage, \SqlSemantics\Statement\Model\MySql\Role\OptStorageForm::class, $replace), $this->replacement($this->optEqual, \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm::class, $replace), $this->replacement($this->identOrText, \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optStorage, \SqlSemantics\Statement\Model\MySql\Role\OptStorageForm::class, $replace), $this->replacement($this->optEqual, \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm::class, $replace), $this->replacement($this->identOrText, \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm::class, $replace)];
+
+        return $mapped === [$this->optStorage, $this->optEqual, $this->identOrText] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

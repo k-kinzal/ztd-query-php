@@ -10,6 +10,7 @@ use Override;
 use SqlSemantics\Core\Composition\Composition;
 use SqlSemantics\Core\Composition\Operands;
 use SqlSemantics\Core\CompositionException;
+use SqlSemantics\Statement\Declaration\TypeDescriptor;
 use SqlSemantics\Statement\Element;
 use SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts;
 use SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm;
@@ -40,6 +41,7 @@ final class Builder extends Composition
 {
     use Expressions;
     use Queries;
+    use Casts;
 
     private const COMPARISONS = ['=' => '=', '<' => '<', '>' => '>', '<=' => 'LESS_EQUALS', '>=' => 'GREATER_EQUALS', '<>' => 'NOT_EQUALS', '!=' => 'NOT_EQUALS'];
 
@@ -99,11 +101,11 @@ final class Builder extends Composition
     }
 
     /**
-     * A numeric literal.
+     * A numeric literal holding exactly the double, which a cast to double precision reads back unchanged.
      */
     public function float(float $value): AExprForm
     {
-        return $this->signed($value < 0, $this->constant($this->decimal($value)));
+        return $this->signed($this->negative($value), $this->constant($this->decimal($value)));
     }
 
     /**
@@ -188,6 +190,78 @@ final class Builder extends Composition
         assert($value instanceof CExprForm);
 
         return $value;
+    }
+
+    /**
+     * `IS NULL`, or `IS NOT NULL` when negated.
+     */
+    #[Override]
+    public function isNull(Element $operand, bool $negated = false): AExprForm
+    {
+        $value = parent::isNull($operand, $negated);
+        assert($value instanceof AExprForm);
+
+        return $value;
+    }
+
+    /**
+     * `IN` a list of values, or `NOT IN` when negated.
+     */
+    #[Override]
+    public function in(Element $operand, array $values, bool $negated = false): AExprForm
+    {
+        $value = parent::in($operand, $values, $negated);
+        assert($value instanceof AExprForm);
+
+        return $value;
+    }
+
+    /**
+     * A searched CASE.
+     */
+    #[Override]
+    public function case(array $whens, ?Element $else = null): AExprForm
+    {
+        $value = parent::case($whens, $else);
+        assert($value instanceof AExprForm);
+
+        return $value;
+    }
+
+    /**
+     * A call of a function by name.
+     */
+    #[Override]
+    public function call(string $name, array $arguments = []): AExprForm
+    {
+        $value = parent::call($name, $arguments);
+        assert($value instanceof AExprForm);
+
+        return $value;
+    }
+
+    /**
+     * `CAST` of an operand to a type.
+     */
+    #[Override]
+    public function cast(Element $operand, TypeDescriptor $type): AExprForm
+    {
+        $value = parent::cast($operand, $type);
+        assert($value instanceof AExprForm);
+
+        return $value;
+    }
+
+    #[Override]
+    protected function tableSymbol(): string
+    {
+        return 'qualified_name';
+    }
+
+    #[Override]
+    protected function expressionSymbol(): string
+    {
+        return 'a_expr';
     }
 
     #[Override]
