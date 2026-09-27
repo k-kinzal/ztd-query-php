@@ -8,8 +8,8 @@ use Closure;
 use PDOStatement;
 use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 use ZtdQuery\Connection\Exception\DatabaseException;
+use ZtdQuery\QueryExecutor;
 use ZtdQuery\Rewrite\RewritePlan;
-use ZtdQuery\Session;
 
 /**
  * Rewrites a prepared query against the current shadow before each execution.
@@ -23,7 +23,7 @@ final class PreparedQuery
      * @param Closure(string): (PDOStatement|false) $prepare Native preparation with its original options.
      */
     public function __construct(
-        private readonly Session $session,
+        private readonly QueryExecutor $executor,
         private readonly string $sql,
         private readonly Closure $prepare,
     ) {
@@ -36,7 +36,7 @@ final class PreparedQuery
      */
     public function rewrite(): RewritePlan
     {
-        return $this->session->rewrite($this->sql);
+        return $this->executor->rewrite($this->sql);
     }
 
     /**

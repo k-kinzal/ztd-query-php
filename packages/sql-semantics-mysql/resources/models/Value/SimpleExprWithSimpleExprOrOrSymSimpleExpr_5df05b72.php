@@ -25,9 +25,9 @@ final class SimpleExprWithSimpleExprOrOrSymSimpleExpr_5df05b72 implements \SqlSe
         public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleExpr), 'The simpleExpr must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($simpleExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 4,  'mysql-5.7.44' => 5,  'mysql-8.0.44' => 21,  'mysql-8.1.0' => 21,  'mysql-8.2.0' => 21,  'mysql-8.3.0' => 21,  'mysql-8.4.7' => 21,  'mysql-9.0.1' => 21,  'mysql-9.1.0' => 21,));
+        $this->assertOperandBindingStrength($simpleExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 4,  'mysql-5.7.44' => 5,  'mysql-8.0.44' => 21,  'mysql-8.1.0' => 21,  'mysql-8.2.0' => 21,  'mysql-8.3.0' => 21,  'mysql-8.4.7' => 21,  'mysql-9.0.1' => 21,  'mysql-9.1.0' => 21,), \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_RULES, 'simple_expr');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleExpr2), 'The simpleExpr2 must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($simpleExpr2, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 5,  'mysql-5.7.44' => 6,  'mysql-8.0.44' => 22,  'mysql-8.1.0' => 22,  'mysql-8.2.0' => 22,  'mysql-8.3.0' => 22,  'mysql-8.4.7' => 22,  'mysql-9.0.1' => 22,  'mysql-9.1.0' => 22,));
+        $this->assertOperandBindingStrength($simpleExpr2, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 5,  'mysql-5.7.44' => 6,  'mysql-8.0.44' => 22,  'mysql-8.1.0' => 22,  'mysql-8.2.0' => 22,  'mysql-8.3.0' => 22,  'mysql-8.4.7' => 22,  'mysql-9.0.1' => 22,  'mysql-9.1.0' => 22,), \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_RULES, 'simple_expr');
     }
 
     /**
@@ -41,6 +41,26 @@ final class SimpleExprWithSimpleExprOrOrSymSimpleExpr_5df05b72 implements \SqlSe
         $writer->append('||');
         $writer->comments($this->comments, 2);
         $this->simpleExpr2->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->simpleExpr, $this->simpleExpr2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->simpleExpr, \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm::class, $replace), $this->replacement($this->simpleExpr2, \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm::class, $replace), $this->comments);
     }
 
     /**

@@ -26,7 +26,7 @@ final class SimpleExprWithNot2SimpleExpr_a2c52a89 implements \SqlSemantics\State
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($not2), 'The not2 must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleExpr), 'The simpleExpr must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($simpleExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 16,  'mysql-5.7.44' => 17,  'mysql-8.0.44' => 23,  'mysql-8.1.0' => 23,  'mysql-8.2.0' => 23,  'mysql-8.3.0' => 23,  'mysql-8.4.7' => 23,  'mysql-9.0.1' => 23,  'mysql-9.1.0' => 23,));
+        $this->assertOperandBindingStrength($simpleExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 16,  'mysql-5.7.44' => 17,  'mysql-8.0.44' => 23,  'mysql-8.1.0' => 23,  'mysql-8.2.0' => 23,  'mysql-8.3.0' => 23,  'mysql-8.4.7' => 23,  'mysql-9.0.1' => 23,  'mysql-9.1.0' => 23,), \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_RULES, 'simple_expr');
     }
 
     /**
@@ -38,6 +38,26 @@ final class SimpleExprWithNot2SimpleExpr_a2c52a89 implements \SqlSemantics\State
         $this->not2->write($writer);
         $writer->comments($this->comments, 1);
         $this->simpleExpr->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->not2, $this->simpleExpr];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->not2, \SqlSemantics\Statement\Model\MySql\Role\Not2Form::class, $replace), $this->replacement($this->simpleExpr, \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm::class, $replace), $this->comments);
     }
 
     /**

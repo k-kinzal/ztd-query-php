@@ -40,6 +40,26 @@ final class FunctionCallNonkeywordWithCurtimeFuncDatetimePrecision_98072d05 impl
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->funcDatetimePrecision];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->curtime, $this->replacement($this->funcDatetimePrecision, \SqlSemantics\Statement\Model\MySql\Role\FuncDatetimePrecisionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new curtime, preserving every other field.
      */
     public function withCurtime(string $curtime): self

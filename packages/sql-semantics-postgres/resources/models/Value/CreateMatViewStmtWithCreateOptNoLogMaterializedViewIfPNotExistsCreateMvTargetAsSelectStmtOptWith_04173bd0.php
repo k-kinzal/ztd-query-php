@@ -62,6 +62,26 @@ final class CreateMatViewStmtWithCreateOptNoLogMaterializedViewIfPNotExistsCreat
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optNoLog, $this->createMvTarget, $this->selectStmt, $this->optWithData];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optNoLog, \SqlSemantics\Statement\Model\PostgreSql\Role\OptNoLogForm::class, $replace), $this->replacement($this->createMvTarget, \SqlSemantics\Statement\Model\PostgreSql\Role\CreateMvTargetForm::class, $replace), $this->replacement($this->selectStmt, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm::class, $replace), $this->replacement($this->optWithData, \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithDataForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optNoLog, preserving every other field.
      */
     public function withOptNoLog(\SqlSemantics\Statement\Model\PostgreSql\Role\OptNoLogForm $optNoLog): self

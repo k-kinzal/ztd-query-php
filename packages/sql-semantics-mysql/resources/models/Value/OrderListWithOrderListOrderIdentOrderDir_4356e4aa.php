@@ -46,6 +46,26 @@ final class OrderListWithOrderListOrderIdentOrderDir_4356e4aa implements \SqlSem
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->orderList, $this->orderIdent, $this->orderDir];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->orderList, \SqlSemantics\Statement\Model\MySql\Role\OrderListForm::class, $replace), $this->replacement($this->orderIdent, \SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm::class, $replace), $this->replacement($this->orderDir, \SqlSemantics\Statement\Model\MySql\Role\OrderDirForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new orderList, preserving every other field.
      */
     public function withOrderList(\SqlSemantics\Statement\Model\MySql\Role\OrderListForm $orderList): self

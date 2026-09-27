@@ -38,6 +38,26 @@ final class ConnectOptionsWithWithConnectOptionList_c99c8af1 implements \SqlSema
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->connectOptionList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->connectOptionList, \SqlSemantics\Statement\Model\MySql\Role\ConnectOptionListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new connectOptionList, preserving every other field.
      */
     public function withConnectOptionList(\SqlSemantics\Statement\Model\MySql\Role\ConnectOptionListForm $connectOptionList): self

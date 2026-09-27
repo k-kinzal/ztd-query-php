@@ -40,6 +40,26 @@ final class LiteralWithUnderscoreCharsetHexNum_b544dd41 implements \SqlSemantics
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [];
+    }
+
+    /**
+     * This form holds no values to replace.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return $this;
+    }
+
+    /**
      * Returns a copy with a new underscoreCharset, preserving every other field.
      */
     public function withUnderscoreCharset(string $underscoreCharset): self

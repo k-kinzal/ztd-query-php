@@ -48,6 +48,26 @@ final class SelectPart2DerivedWithOptQueryExpressionOptionsSelectItemListOptSele
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optQueryExpressionOptions, $this->projections, $this->optSelectFrom, $this->selectLockType];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optQueryExpressionOptions, \SqlSemantics\Statement\Model\MySql\Role\OptQueryExpressionOptionsForm::class, $replace), $this->replacement($this->projections, \SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm::class, $replace), $this->replacement($this->optSelectFrom, \SqlSemantics\Statement\Model\MySql\Role\OptSelectFromForm::class, $replace), $this->replacement($this->selectLockType, \SqlSemantics\Statement\Model\MySql\Role\SelectLockTypeForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optQueryExpressionOptions, preserving every other field.
      */
     public function withOptQueryExpressionOptions(\SqlSemantics\Statement\Model\MySql\Role\OptQueryExpressionOptionsForm $optQueryExpressionOptions): self

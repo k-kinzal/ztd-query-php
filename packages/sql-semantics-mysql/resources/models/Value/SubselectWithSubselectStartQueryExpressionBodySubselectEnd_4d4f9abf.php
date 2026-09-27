@@ -44,6 +44,26 @@ final class SubselectWithSubselectStartQueryExpressionBodySubselectEnd_4d4f9abf 
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->subselectStart, $this->queryExpressionBody, $this->subselectEnd];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->subselectStart, \SqlSemantics\Statement\Model\MySql\Role\SubselectStartForm::class, $replace), $this->replacement($this->queryExpressionBody, \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm::class, $replace), $this->replacement($this->subselectEnd, \SqlSemantics\Statement\Model\MySql\Role\SubselectEndForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new subselectStart, preserving every other field.
      */
     public function withSubselectStart(\SqlSemantics\Statement\Model\MySql\Role\SubselectStartForm $subselectStart): self

@@ -44,6 +44,26 @@ final class UndoTablespaceOptionListWithUndoTablespaceOptionListOptCommaUndoTabl
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->undoTablespaceOptionList, $this->optComma, $this->undoTablespaceOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->undoTablespaceOptionList, \SqlSemantics\Statement\Model\MySql\Role\UndoTablespaceOptionListForm::class, $replace), $this->replacement($this->optComma, \SqlSemantics\Statement\Model\MySql\Role\OptCommaForm::class, $replace), $this->replacement($this->undoTablespaceOption, \SqlSemantics\Statement\Model\MySql\Role\UndoTablespaceOptionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new undoTablespaceOptionList, preserving every other field.
      */
     public function withUndoTablespaceOptionList(\SqlSemantics\Statement\Model\MySql\Role\UndoTablespaceOptionListForm $undoTablespaceOptionList): self

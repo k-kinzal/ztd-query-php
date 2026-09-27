@@ -44,6 +44,26 @@ final class TableLockWithTableIdentOptTableAliasLockOption_e396abc1 implements \
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableIdent, $this->optTableAlias, $this->lockOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->optTableAlias, \SqlSemantics\Statement\Model\MySql\Role\OptTableAliasForm::class, $replace), $this->replacement($this->lockOption, \SqlSemantics\Statement\Model\MySql\Role\LockOptionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new tableIdent, preserving every other field.
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self

@@ -46,6 +46,26 @@ final class AlterRoleSetStmtWithAlterRoleAllOptInDatabaseSetResetClause_c3599227
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optInDatabase, $this->setResetClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optInDatabase, \SqlSemantics\Statement\Model\PostgreSql\Role\OptInDatabaseForm::class, $replace), $this->replacement($this->setResetClause, \SqlSemantics\Statement\Model\PostgreSql\Role\SetResetClauseForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optInDatabase, preserving every other field.
      */
     public function withOptInDatabase(\SqlSemantics\Statement\Model\PostgreSql\Role\OptInDatabaseForm $optInDatabase): self

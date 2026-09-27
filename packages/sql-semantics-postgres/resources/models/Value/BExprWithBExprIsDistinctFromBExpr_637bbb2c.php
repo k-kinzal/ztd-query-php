@@ -25,9 +25,9 @@ final class BExprWithBExprIsDistinctFromBExpr_637bbb2c implements \SqlSemantics\
         public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($bExpr), 'The bExpr must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($bExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 7,));
+        $this->assertOperandBindingStrength($bExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 7,), \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_RULES, 'b_expr');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($bExpr2), 'The bExpr2 must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($bExpr2, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 7,));
+        $this->assertOperandBindingStrength($bExpr2, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 7,), \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_RULES, 'b_expr');
     }
 
     /**
@@ -45,6 +45,26 @@ final class BExprWithBExprIsDistinctFromBExpr_637bbb2c implements \SqlSemantics\
         $writer->append('FROM');
         $writer->comments($this->comments, 4);
         $this->bExpr2->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->bExpr, $this->bExpr2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->bExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm::class, $replace), $this->replacement($this->bExpr2, \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm::class, $replace), $this->comments);
     }
 
     /**

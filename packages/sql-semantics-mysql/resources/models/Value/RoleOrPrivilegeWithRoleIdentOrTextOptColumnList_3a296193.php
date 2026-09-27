@@ -40,6 +40,26 @@ final class RoleOrPrivilegeWithRoleIdentOrTextOptColumnList_3a296193 implements 
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->roleIdentOrText, $this->optColumnList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->roleIdentOrText, \SqlSemantics\Statement\Model\MySql\Role\RoleIdentOrTextForm::class, $replace), $this->replacement($this->optColumnList, \SqlSemantics\Statement\Model\MySql\Role\OptColumnListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new roleIdentOrText, preserving every other field.
      */
     public function withRoleIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\RoleIdentOrTextForm $roleIdentOrText): self

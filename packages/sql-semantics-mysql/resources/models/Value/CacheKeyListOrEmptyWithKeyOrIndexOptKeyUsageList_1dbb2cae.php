@@ -44,6 +44,26 @@ final class CacheKeyListOrEmptyWithKeyOrIndexOptKeyUsageList_1dbb2cae implements
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->keyOrIndex, $this->optKeyUsageList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->keyOrIndex, \SqlSemantics\Statement\Model\MySql\Role\KeyOrIndexForm::class, $replace), $this->replacement($this->optKeyUsageList, \SqlSemantics\Statement\Model\MySql\Role\OptKeyUsageListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new keyOrIndex, preserving every other field.
      */
     public function withKeyOrIndex(\SqlSemantics\Statement\Model\MySql\Role\KeyOrIndexForm $keyOrIndex): self

@@ -26,7 +26,7 @@ final class ExprWithExprInOpLpSelectRp_a20110e2 implements \SqlSemantics\Stateme
         public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 4,));
+        $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 4,), \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_RULES, 'expr');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($inOp), 'The inOp must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($select), 'The select must be a generated immutable SQL value.');
     }
@@ -46,6 +46,26 @@ final class ExprWithExprInOpLpSelectRp_a20110e2 implements \SqlSemantics\Stateme
         $this->select->write($writer);
         $writer->comments($this->comments, 4);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->expr, $this->inOp, $this->select];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->expr, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm::class, $replace), $this->replacement($this->inOp, \SqlSemantics\Statement\Model\Sqlite\Role\InOpForm::class, $replace), $this->replacement($this->select, \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm::class, $replace), $this->comments);
     }
 
     /**

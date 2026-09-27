@@ -40,6 +40,26 @@ final class OptAttributeListWithOptAttributeListAttribute_1ec347af implements \S
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optAttributeList, $this->attribute];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optAttributeList, \SqlSemantics\Statement\Model\MySql\Role\OptAttributeListForm::class, $replace), $this->replacement($this->attribute, \SqlSemantics\Statement\Model\MySql\Role\AttributeForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optAttributeList, preserving every other field.
      */
     public function withOptAttributeList(\SqlSemantics\Statement\Model\MySql\Role\OptAttributeListForm $optAttributeList): self

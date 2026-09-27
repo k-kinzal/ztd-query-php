@@ -50,6 +50,26 @@ final class FuncExprCommonSubexprWithJsonArrayJsonValueExprListJsonArrayConstruc
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->jsonValueExprList, $this->jsonArrayConstructorNullClauseOpt, $this->jsonReturningClauseOpt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->jsonValueExprList, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprListForm::class, $replace), $this->replacement($this->jsonArrayConstructorNullClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonArrayConstructorNullClauseOptForm::class, $replace), $this->replacement($this->jsonReturningClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonReturningClauseOptForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new jsonValueExprList, preserving every other field.
      */
     public function withJsonValueExprList(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprListForm $jsonValueExprList): self

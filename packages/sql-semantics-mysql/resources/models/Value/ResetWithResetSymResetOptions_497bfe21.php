@@ -38,6 +38,26 @@ final class ResetWithResetSymResetOptions_497bfe21 implements \SqlSemantics\Stat
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->resetOptions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->resetOptions, \SqlSemantics\Statement\Model\MySql\Role\ResetOptionsForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new resetOptions, preserving every other field.
      */
     public function withResetOptions(\SqlSemantics\Statement\Model\MySql\Role\ResetOptionsForm $resetOptions): self

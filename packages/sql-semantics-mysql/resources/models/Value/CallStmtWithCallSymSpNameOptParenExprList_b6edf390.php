@@ -42,6 +42,26 @@ final class CallStmtWithCallSymSpNameOptParenExprList_b6edf390 implements \SqlSe
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->spName, $this->optParenExprList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->spName, \SqlSemantics\Statement\Model\MySql\Role\SpNameForm::class, $replace), $this->replacement($this->optParenExprList, \SqlSemantics\Statement\Model\MySql\Role\OptParenExprListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new spName, preserving every other field.
      */
     public function withSpName(\SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName): self

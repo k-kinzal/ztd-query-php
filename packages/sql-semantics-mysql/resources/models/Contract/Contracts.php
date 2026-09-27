@@ -3994,7 +3994,7 @@ final class Contracts
   'NEXT_SYM' => '~\\A(?:NEXT)\\z~isD',
   'NODEGROUP_SYM' => '~\\A(?:NODEGROUP)\\z~isD',
   'NONE_SYM' => '~\\A(?:NONE)\\z~isD',
-  'NOT2_SYM' => '~\\A(?:\\!)\\z~isD',
+  'NOT2_SYM' => '~\\A(?:!|NOT)\\z~isD',
   'NOWAIT_SYM' => '~\\A(?:NOWAIT)\\z~isD',
   'NOW_SYM' => '~\\A(?:CURRENT_TIMESTAMP|LOCALTIME|LOCALTIMESTAMP|NOW)\\z~isD',
   'NO_SYM' => '~\\A(?:NO)\\z~isD',
@@ -4013,14 +4013,14 @@ final class Contracts
   'OPEN_SYM' => '~\\A(?:OPEN)\\z~isD',
   'OPTIONAL_SYM' => '~\\A(?:OPTIONAL)\\z~isD',
   'OPTIONS_SYM' => '~\\A(?:OPTIONS)\\z~isD',
-  'OR2_SYM' => '~\\A(?:\\|\\|)\\z~isD',
+  'OR2_SYM' => '~\\A(?:\\|\\||OR)\\z~isD',
   'ORDINALITY_SYM' => '~\\A(?:ORDINALITY)\\z~isD',
   'ORGANIZATION_SYM' => '~\\A(?:ORGANIZATION)\\z~isD',
   'OTHERS_SYM' => '~\\A(?:OTHERS)\\z~isD',
   'OWNER_SYM' => '~\\A(?:OWNER)\\z~isD',
   'PACK_KEYS_SYM' => '~\\A(?:PACK_KEYS)\\z~isD',
   'PAGE_SYM' => '~\\A(?:PAGE)\\z~isD',
-  'PARAM_MARKER' => '~\\A(?:\\?)\\z~isD',
+  'PARAM_MARKER' => '~\\A(?:\\?|:[A-Za-z0-9_]+)\\z~isD',
   'PARSER_SYM' => '~\\A(?:PARSER)\\z~isD',
   'PARSE_GCOL_EXPR_SYM' => '~\\A(?:PARSE_GCOL_EXPR)\\z~isD',
   'PARSE_TREE_SYM' => '~\\A(?:PARSE_TREE)\\z~isD',
@@ -4205,7 +4205,7 @@ final class Contracts
   'TABLE_NAME_SYM' => '~\\A(?:TABLE_NAME)\\z~isD',
   'TEMPORARY' => '~\\A(?:TEMPORARY)\\z~isD',
   'TEMPTABLE_SYM' => '~\\A(?:TEMPTABLE)\\z~isD',
-  'TEXT_STRING' => '~\\A(?:\'(?:[^\'\\\\]|\\\\[\\s\\S]|\'\')*\'|"(?:[^"\\\\]|\\\\[\\s\\S]|"")*")\\z~isD',
+  'TEXT_STRING' => '~\\A(?:\'(?:[^\'\\\\]|\\\\[\\s\\S]|\'\')*\'|"(?:[^"\\\\]|\\\\[\\s\\S]|"")*"|\'(?:[^\']|\'\')*\'|"(?:[^"]|"")*")\\z~isD',
   'TEXT_SYM' => '~\\A(?:TEXT)\\z~isD',
   'THAN_SYM' => '~\\A(?:THAN)\\z~isD',
   'THREAD_PRIORITY_SYM' => '~\\A(?:THREAD_PRIORITY)\\z~isD',
@@ -4887,6 +4887,2244 @@ final class Contracts
     'mysql-9.0.1' => 22,
     'mysql-9.1.0' => 22,
   ),
+);
+    /**
+     * Generated construction facts; no parser is consulted by a value.
+     *
+     * @var array<class-string<\SqlSemantics\Statement\Element>, array<string, array<int, int>>>
+     */
+    public const BINDING_OPERANDS = array (
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprBitExpr_18836827' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 12,
+      2 => 13,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 13,
+      2 => 14,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 18,
+      2 => 19,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 18,
+      2 => 19,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 18,
+      2 => 19,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 18,
+      2 => 19,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 18,
+      2 => 19,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 18,
+      2 => 19,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 18,
+      2 => 19,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprBitExpr_71e493b1' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 13,
+      2 => 14,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 14,
+      2 => 15,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprBitExpr_b1e18bb5' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 10,
+      2 => 11,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 11,
+      2 => 12,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 16,
+      2 => 17,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 16,
+      2 => 17,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 16,
+      2 => 17,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 16,
+      2 => 17,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 16,
+      2 => 17,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 16,
+      2 => 17,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 16,
+      2 => 17,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprBitExpr_b739e7d8' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 12,
+      2 => 13,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 13,
+      2 => 14,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 18,
+      2 => 19,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 18,
+      2 => 19,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 18,
+      2 => 19,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 18,
+      2 => 19,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 18,
+      2 => 19,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 18,
+      2 => 19,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 18,
+      2 => 19,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprBitExpr_b9da6182' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 13,
+      2 => 14,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 14,
+      2 => 15,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprBitExpr_daf4ae21' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 9,
+      2 => 10,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 10,
+      2 => 11,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 15,
+      2 => 16,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 15,
+      2 => 16,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 15,
+      2 => 16,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 15,
+      2 => 16,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 15,
+      2 => 16,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 15,
+      2 => 16,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 15,
+      2 => 16,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprBitExpr_ee6728ce' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 13,
+      2 => 14,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 14,
+      2 => 15,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprBitExpr_fa755e68' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 14,
+      2 => 15,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 15,
+      2 => 16,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 20,
+      2 => 21,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 20,
+      2 => 21,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 20,
+      2 => 21,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 20,
+      2 => 21,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 20,
+      2 => 21,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 20,
+      2 => 21,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 20,
+      2 => 21,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprDivSymBitExpr_a81ee65d' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 13,
+      2 => 14,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 14,
+      2 => 15,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprIntervalSymExprInterval_5c9e5b84' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 12,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 13,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 18,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 18,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 18,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 18,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 18,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 18,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 18,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprIntervalSymExprInterval_ecc4c379' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 12,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 13,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 18,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 18,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 18,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 18,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 18,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 18,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 18,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprModSymBitExpr_d9ce4170' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 13,
+      2 => 14,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 14,
+      2 => 15,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprShiftLeftBitExpr_defcdee1' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 11,
+      2 => 12,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 12,
+      2 => 13,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 17,
+      2 => 18,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 17,
+      2 => 18,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 17,
+      2 => 18,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 17,
+      2 => 18,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 17,
+      2 => 18,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 17,
+      2 => 18,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 17,
+      2 => 18,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprShiftRightBitExpr_4d58b578' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 11,
+      2 => 12,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 12,
+      2 => 13,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 17,
+      2 => 18,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 17,
+      2 => 18,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 17,
+      2 => 18,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 17,
+      2 => 18,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 17,
+      2 => 18,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 17,
+      2 => 18,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 17,
+      2 => 18,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BoolPriWithBoolPriCompOpAllOrAnySubselect_ff3558ec' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 8,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 9,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BoolPriWithBoolPriCompOpAllOrAnyTableSubquery_17ee7fe5' =>
+  array (
+    'mysql-8.0.44' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 14,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BoolPriWithBoolPriCompOpPredicate_1de7e569' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 8,
+      2 => 9,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 9,
+      2 => 10,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BoolPriWithBoolPriEqualSymPredicate_6b5f755a' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 8,
+      2 => 9,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BoolPriWithBoolPriIsNotNullSym_232645ca' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 8,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 9,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 14,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BoolPriWithBoolPriIsNullSym_f56ead87' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 8,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 9,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 14,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\ExprWithBoolPriIsFalseSym_eec27390' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 8,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 9,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 14,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\ExprWithBoolPriIsNotFalseSym_a88bcb10' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 8,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 9,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 14,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\ExprWithBoolPriIsNotTrueSym_71c5c304' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 8,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 9,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 14,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\ExprWithBoolPriIsNotUnknownSym_f0b175c9' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 8,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 9,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 14,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\ExprWithBoolPriIsTrueSym_ebfa55ca' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 8,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 9,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 14,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\ExprWithBoolPriIsUnknownSym_2deb6c81' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 8,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 9,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 14,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\ExprWithExprAndExpr_7c66b353' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 6,
+      2 => 7,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 7,
+      2 => 8,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 12,
+      2 => 13,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 12,
+      2 => 13,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 12,
+      2 => 13,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 12,
+      2 => 13,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 12,
+      2 => 13,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 12,
+      2 => 13,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 12,
+      2 => 13,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\ExprWithExprOrExpr_f24995de' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 4,
+      2 => 5,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 5,
+      2 => 6,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 10,
+      2 => 11,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 10,
+      2 => 11,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 10,
+      2 => 11,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 10,
+      2 => 11,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 10,
+      2 => 11,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 10,
+      2 => 11,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 10,
+      2 => 11,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\ExprWithExprXorExpr_6b357729' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 5,
+      2 => 6,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 6,
+      2 => 7,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 11,
+      2 => 12,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 11,
+      2 => 12,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 11,
+      2 => 12,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 11,
+      2 => 12,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 11,
+      2 => 12,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 11,
+      2 => 12,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 11,
+      2 => 12,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\ExprWithNotSymExpr_61d2ec6a' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      1 => 16,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      1 => 17,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      1 => 23,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprBetweenSymBitExprAndSymPredicate_263af825' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 6,
+      4 => 7,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 7,
+      4 => 8,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 12,
+      4 => 13,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 12,
+      4 => 13,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 12,
+      4 => 13,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 12,
+      4 => 13,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 12,
+      4 => 13,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 12,
+      4 => 13,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 12,
+      4 => 13,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprInSymExprExprList_1b9e18a4' =>
+  array (
+    'mysql-8.0.44' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 27,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprInSymExpr_88828ec7' =>
+  array (
+    'mysql-8.0.44' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 27,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprInSymTableSubquery_7e45c094' =>
+  array (
+    'mysql-8.0.44' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 14,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprLikeSimpleExprEscapeSymSimpleExpr_95bd7cd4' =>
+  array (
+    'mysql-8.0.44' =>
+    array (
+      0 => 14,
+      4 => 15,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 14,
+      4 => 15,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 14,
+      4 => 15,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 14,
+      4 => 15,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 14,
+      4 => 15,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 14,
+      4 => 15,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 14,
+      4 => 15,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprLikeSimpleExprOptEscape_2697d22c' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 8,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 9,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprLikeSimpleExpr_6d1607c9' =>
+  array (
+    'mysql-8.0.44' =>
+    array (
+      0 => 14,
+      2 => 15,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 14,
+      2 => 15,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 14,
+      2 => 15,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 14,
+      2 => 15,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 14,
+      2 => 15,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 14,
+      2 => 15,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 14,
+      2 => 15,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprMemberSymOptOfSimpleExpr_03ad03f3' =>
+  array (
+    'mysql-8.0.44' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 27,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprNotBetweenSymBitExprAndSymPredicate_05866d1d' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 6,
+      5 => 7,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 7,
+      5 => 8,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 12,
+      5 => 13,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 12,
+      5 => 13,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 12,
+      5 => 13,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 12,
+      5 => 13,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 12,
+      5 => 13,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 12,
+      5 => 13,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 12,
+      5 => 13,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprNotInSymExprExprList_2feb440c' =>
+  array (
+    'mysql-8.0.44' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 27,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprNotInSymExpr_fb07a40f' =>
+  array (
+    'mysql-8.0.44' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 27,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 27,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprNotInSymTableSubquery_110a4ffb' =>
+  array (
+    'mysql-8.0.44' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 14,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 14,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprNotLikeSimpleExprEscapeSymSimpleExpr_3fac99d9' =>
+  array (
+    'mysql-8.0.44' =>
+    array (
+      0 => 14,
+      5 => 15,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 14,
+      5 => 15,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 14,
+      5 => 15,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 14,
+      5 => 15,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 14,
+      5 => 15,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 14,
+      5 => 15,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 14,
+      5 => 15,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprNotLikeSimpleExprOptEscape_ae900c15' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 8,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 9,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprNotLikeSimpleExpr_96dfb517' =>
+  array (
+    'mysql-8.0.44' =>
+    array (
+      0 => 14,
+      3 => 15,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 14,
+      3 => 15,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 14,
+      3 => 15,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 14,
+      3 => 15,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 14,
+      3 => 15,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 14,
+      3 => 15,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 14,
+      3 => 15,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprNotRegexpBitExpr_100c3f18' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 8,
+      3 => 9,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 9,
+      3 => 10,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 14,
+      3 => 15,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 14,
+      3 => 15,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 14,
+      3 => 15,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 14,
+      3 => 15,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 14,
+      3 => 15,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 14,
+      3 => 15,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 14,
+      3 => 15,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprRegexpBitExpr_8fdc7629' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 8,
+      2 => 9,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 9,
+      2 => 10,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 14,
+      2 => 15,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 14,
+      2 => 15,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 14,
+      2 => 15,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 14,
+      2 => 15,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 14,
+      2 => 15,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 14,
+      2 => 15,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 14,
+      2 => 15,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprSoundsSymLikeBitExpr_1aa4ab11' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 8,
+      3 => 9,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 9,
+      3 => 10,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 14,
+      3 => 15,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 14,
+      3 => 15,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 14,
+      3 => 15,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 14,
+      3 => 15,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 14,
+      3 => 15,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 14,
+      3 => 15,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 14,
+      3 => 15,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\SimpleExprWithBinarySimpleExpr_a8645d50' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      1 => 16,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      1 => 17,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\SimpleExprWithBinarySymSimpleExpr_5ee955b5' =>
+  array (
+    'mysql-8.0.44' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      1 => 23,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\SimpleExprWithIntervalSymExprIntervalExpr_b11621f6' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      4 => 19,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      4 => 20,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      4 => 26,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      4 => 26,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      4 => 26,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      4 => 26,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      4 => 26,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      4 => 26,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      4 => 26,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\SimpleExprWithNot2SimpleExpr_a2c52a89' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      1 => 16,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      1 => 17,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      1 => 23,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\SimpleExprWithSimpleExprCollateSymIdentOrText_e9fce836' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 15,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 16,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 22,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 22,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 22,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 22,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 22,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 22,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 22,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\SimpleExprWithSimpleExprOrOrSymSimpleExpr_5df05b72' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      0 => 4,
+      2 => 5,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      0 => 5,
+      2 => 6,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      0 => 21,
+      2 => 22,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      0 => 21,
+      2 => 22,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      0 => 21,
+      2 => 22,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      0 => 21,
+      2 => 22,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      0 => 21,
+      2 => 22,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      0 => 21,
+      2 => 22,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      0 => 21,
+      2 => 22,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\SimpleExprWithSimpleExpr_038aa870' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      1 => 16,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      1 => 17,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      1 => 23,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\SimpleExprWithSimpleExpr_9ba2b450' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      1 => 16,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      1 => 17,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      1 => 23,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\SimpleExprWithSimpleExpr_deab3046' =>
+  array (
+    'mysql-5.6.51' =>
+    array (
+      1 => 16,
+    ),
+    'mysql-5.7.44' =>
+    array (
+      1 => 17,
+    ),
+    'mysql-8.0.44' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-8.1.0' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-8.2.0' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-8.3.0' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-8.4.7' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-9.0.1' =>
+    array (
+      1 => 23,
+    ),
+    'mysql-9.1.0' =>
+    array (
+      1 => 23,
+    ),
+  ),
+);
+    /**
+     * Generated construction facts; no parser is consulted by a value.
+     *
+     * @var array<class-string<\SqlSemantics\Statement\Element>, string>
+     */
+    public const BINDING_RULES = array (
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprBitExpr_18836827' => 'bit_expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprBitExpr_71e493b1' => 'bit_expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprBitExpr_b1e18bb5' => 'bit_expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprBitExpr_b739e7d8' => 'bit_expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprBitExpr_b9da6182' => 'bit_expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprBitExpr_daf4ae21' => 'bit_expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprBitExpr_ee6728ce' => 'bit_expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprBitExpr_fa755e68' => 'bit_expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprDivSymBitExpr_a81ee65d' => 'bit_expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprIntervalSymExprInterval_5c9e5b84' => 'bit_expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprIntervalSymExprInterval_ecc4c379' => 'bit_expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprModSymBitExpr_d9ce4170' => 'bit_expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprShiftLeftBitExpr_defcdee1' => 'bit_expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BitExprWithBitExprShiftRightBitExpr_4d58b578' => 'bit_expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BoolPriWithBoolPriCompOpAllOrAnySubselect_ff3558ec' => 'bool_pri',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BoolPriWithBoolPriCompOpAllOrAnyTableSubquery_17ee7fe5' => 'bool_pri',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BoolPriWithBoolPriCompOpPredicate_1de7e569' => 'bool_pri',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BoolPriWithBoolPriEqualSymPredicate_6b5f755a' => 'bool_pri',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BoolPriWithBoolPriIsNotNullSym_232645ca' => 'bool_pri',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\BoolPriWithBoolPriIsNullSym_f56ead87' => 'bool_pri',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\ExprWithBoolPriIsFalseSym_eec27390' => 'expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\ExprWithBoolPriIsNotFalseSym_a88bcb10' => 'expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\ExprWithBoolPriIsNotTrueSym_71c5c304' => 'expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\ExprWithBoolPriIsNotUnknownSym_f0b175c9' => 'expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\ExprWithBoolPriIsTrueSym_ebfa55ca' => 'expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\ExprWithBoolPriIsUnknownSym_2deb6c81' => 'expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\ExprWithExprAndExpr_7c66b353' => 'expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\ExprWithExprOrExpr_f24995de' => 'expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\ExprWithExprXorExpr_6b357729' => 'expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\ExprWithNotSymExpr_61d2ec6a' => 'expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprBetweenSymBitExprAndSymPredicate_263af825' => 'predicate',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprInSymExprExprList_1b9e18a4' => 'predicate',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprInSymExpr_88828ec7' => 'predicate',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprInSymTableSubquery_7e45c094' => 'predicate',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprLikeSimpleExprEscapeSymSimpleExpr_95bd7cd4' => 'predicate',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprLikeSimpleExprOptEscape_2697d22c' => 'predicate',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprLikeSimpleExpr_6d1607c9' => 'predicate',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprMemberSymOptOfSimpleExpr_03ad03f3' => 'predicate',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprNotBetweenSymBitExprAndSymPredicate_05866d1d' => 'predicate',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprNotInSymExprExprList_2feb440c' => 'predicate',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprNotInSymExpr_fb07a40f' => 'predicate',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprNotInSymTableSubquery_110a4ffb' => 'predicate',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprNotLikeSimpleExprEscapeSymSimpleExpr_3fac99d9' => 'predicate',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprNotLikeSimpleExprOptEscape_ae900c15' => 'predicate',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprNotLikeSimpleExpr_96dfb517' => 'predicate',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprNotRegexpBitExpr_100c3f18' => 'predicate',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprRegexpBitExpr_8fdc7629' => 'predicate',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\PredicateWithBitExprSoundsSymLikeBitExpr_1aa4ab11' => 'predicate',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\SimpleExprWithBinarySimpleExpr_a8645d50' => 'simple_expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\SimpleExprWithBinarySymSimpleExpr_5ee955b5' => 'simple_expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\SimpleExprWithIntervalSymExprIntervalExpr_b11621f6' => 'simple_expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\SimpleExprWithNot2SimpleExpr_a2c52a89' => 'simple_expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\SimpleExprWithSimpleExprCollateSymIdentOrText_e9fce836' => 'simple_expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\SimpleExprWithSimpleExprOrOrSymSimpleExpr_5df05b72' => 'simple_expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\SimpleExprWithSimpleExpr_038aa870' => 'simple_expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\SimpleExprWithSimpleExpr_9ba2b450' => 'simple_expr',
+  'SqlSemantics\\Statement\\Model\\MySql\\Value\\SimpleExprWithSimpleExpr_deab3046' => 'simple_expr',
 );
 
     /**

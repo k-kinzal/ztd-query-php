@@ -42,6 +42,26 @@ final class FieldListWithFieldListFieldListItem_ff2bc09a implements \SqlSemantic
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->fieldList, $this->fieldListItem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->fieldList, \SqlSemantics\Statement\Model\MySql\Role\FieldListForm::class, $replace), $this->replacement($this->fieldListItem, \SqlSemantics\Statement\Model\MySql\Role\FieldListItemForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new fieldList, preserving every other field.
      */
     public function withFieldList(\SqlSemantics\Statement\Model\MySql\Role\FieldListForm $fieldList): self

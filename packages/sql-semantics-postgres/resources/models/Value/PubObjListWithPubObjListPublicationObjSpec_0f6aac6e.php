@@ -42,6 +42,26 @@ final class PubObjListWithPubObjListPublicationObjSpec_0f6aac6e implements \SqlS
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->pubObjList, $this->publicationObjSpec];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->pubObjList, \SqlSemantics\Statement\Model\PostgreSql\Role\PubObjListForm::class, $replace), $this->replacement($this->publicationObjSpec, \SqlSemantics\Statement\Model\PostgreSql\Role\PublicationObjSpecForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new pubObjList, preserving every other field.
      */
     public function withPubObjList(\SqlSemantics\Statement\Model\PostgreSql\Role\PubObjListForm $pubObjList): self

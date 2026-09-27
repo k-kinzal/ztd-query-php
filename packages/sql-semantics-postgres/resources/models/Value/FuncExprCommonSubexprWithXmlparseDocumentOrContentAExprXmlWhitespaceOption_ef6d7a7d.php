@@ -50,6 +50,26 @@ final class FuncExprCommonSubexprWithXmlparseDocumentOrContentAExprXmlWhitespace
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->documentOrContent, $this->aExpr, $this->xmlWhitespaceOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->documentOrContent, \SqlSemantics\Statement\Model\PostgreSql\Role\DocumentOrContentForm::class, $replace), $this->replacement($this->aExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm::class, $replace), $this->replacement($this->xmlWhitespaceOption, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlWhitespaceOptionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new documentOrContent, preserving every other field.
      */
     public function withDocumentOrContent(\SqlSemantics\Statement\Model\PostgreSql\Role\DocumentOrContentForm $documentOrContent): self

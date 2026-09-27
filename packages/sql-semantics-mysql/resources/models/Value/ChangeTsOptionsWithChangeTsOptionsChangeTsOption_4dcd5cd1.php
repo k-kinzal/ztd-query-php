@@ -42,6 +42,26 @@ final class ChangeTsOptionsWithChangeTsOptionsChangeTsOption_4dcd5cd1 implements
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->changeTsOptions, $this->changeTsOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->changeTsOptions, \SqlSemantics\Statement\Model\MySql\Role\ChangeTsOptionsForm::class, $replace), $this->replacement($this->changeTsOption, \SqlSemantics\Statement\Model\MySql\Role\ChangeTsOptionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new changeTsOptions, preserving every other field.
      */
     public function withChangeTsOptions(\SqlSemantics\Statement\Model\MySql\Role\ChangeTsOptionsForm $changeTsOptions): self

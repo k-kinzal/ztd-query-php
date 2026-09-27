@@ -5,52 +5,24 @@ declare(strict_types=1);
 namespace Tests\Unit\Core\Policy;
 
 use PHPUnit\Framework\TestCase;
-use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
-use SqlSemantics\Core\Binder;
 use SqlSemantics\Core\Dialect;
-use SqlSemantics\Core\Model\Expression;
-use SqlSemantics\Core\Model\ExpressionKind;
-use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\Type\Builtin;
 use SqlSemantics\Core\Type\Nullability;
 use SqlSemantics\Core\Type\TypeDeclaration;
 use SqlSemantics\Core\Type\TypeDescriptor;
+use SqlSemantics\Facade\Schema as SchemaFacade;
 use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\SemanticException::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(SchemaBuilder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(SchemaFacade::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(Binder::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\NullFacts::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\TypeResolution::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\IdentitySequence::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\SyntaxGuard::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\Scope::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\BoundRelation::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\FromBinder::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\SelectModifiersBinder::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\TableResolver::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\SelectBinder::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\ProjectionBinder::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\ExpressionRules::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\LiteralBinder::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\ColumnDefinition::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\TableDefinition::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\ConstraintKind::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\TableConstraint::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(Nullability::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(TypeDescriptor::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(Expression::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Model\Join::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(ExpressionKind::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Model\BoundSelect::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Model\TableUse::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Model\ColumnBinding::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Model\Ordering::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Model\OutputColumn::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Model\JoinKind::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\DialectParser::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\TokenGroups::class)]
@@ -59,19 +31,15 @@ use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\SchemaReader::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\ConstraintReader::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\Identifiers::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\StatementList::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Policy\SyntaxRules::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\PostgreSql\QueryRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\PostgreSql\TypeRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\PostgreSql\NameRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\PostgreSql\SchemaRules::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\Sqlite\QueryRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\Sqlite\Platform::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\Sqlite\TypeRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\Sqlite\NameRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\Sqlite\SchemaRules::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\QueryRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\Platform::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\TypeRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\NameRules::class)]
@@ -95,7 +63,8 @@ final class TypeRulesTest extends TestCase
     {
         $accept = static fn (\SqlSemantics\Core\Policy\TypeRules $rules): \SqlSemantics\Core\Policy\TypeRules => $rules;
         self::assertSame(PostgreSqlDialect::PostgreSql->platform()->types()::class, $accept(PostgreSqlDialect::PostgreSql->platform()->types())::class);
-        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE items (value DECIMAL(10, 2))');
+        $schema = (new SchemaFacade(PostgreSqlDialect::PostgreSql))->analyze('CREATE TABLE items (value DECIMAL(10, 2))');
+        self::assertSame(Builtin::Numeric, $schema->tables[0]->columns[0]->type->name);
         self::assertSame(10, $schema->tables[0]->columns[0]->type->precision);
         self::assertSame(2, $schema->tables[0]->columns[0]->type->scale);
     }
@@ -105,65 +74,5 @@ final class TypeRulesTest extends TestCase
         $rules = $accept(PostgreSqlDialect::PostgreSql->platform()->types());
         self::assertTrue($rules->supports(Builtin::Jsonb));
         self::assertFalse($rules->supports(Builtin::MediumInt));
-    }
-    public function testLiteralClassifiesIntegerToken(): void
-    {
-        $accept = static fn (\SqlSemantics\Core\Policy\TypeRules $rules): \SqlSemantics\Core\Policy\TypeRules => $rules;
-        $rules = $accept(PostgreSqlDialect::PostgreSql->platform()->types());
-        self::assertSame(Builtin::Integer, $rules->literal(new Token(1, 'ICONST', '42', 0))?->name);
-        self::assertNull($rules->literal(new Token(1, 'IDENT', 'value', 0)));
-    }
-    public function testIntegerModelsLargeMagnitude(): void
-    {
-        $accept = static fn (\SqlSemantics\Core\Policy\TypeRules $rules): \SqlSemantics\Core\Policy\TypeRules => $rules;
-        $rules = $accept(PostgreSqlDialect::PostgreSql->platform()->types());
-        self::assertSame(Builtin::BigInt, $rules->integer('2147483648'));
-    }
-    public function testCommonPreservesHomogeneousType(): void
-    {
-        $accept = static fn (\SqlSemantics\Core\Policy\TypeRules $rules): \SqlSemantics\Core\Policy\TypeRules => $rules;
-        $rules = $accept(PostgreSqlDialect::PostgreSql->platform()->types());
-        $source = new Node('value', 0, []);
-        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(PostgreSqlDialect::PostgreSql, Builtin::Integer), Nullability::NotNull, $source, symbol: '1');
-        self::assertSame(Builtin::Integer, $rules->common([$expression], $source)->name);
-    }
-    public function testBooleanNamesPredicateResult(): void
-    {
-        $accept = static fn (\SqlSemantics\Core\Policy\TypeRules $rules): \SqlSemantics\Core\Policy\TypeRules => $rules;
-        $rules = $accept(PostgreSqlDialect::PostgreSql->platform()->types());
-        self::assertSame(Builtin::Boolean, $rules->boolean()->name);
-    }
-    public function testArithmeticRetainsLanguageSemantics(): void
-    {
-        $accept = static fn (\SqlSemantics\Core\Policy\TypeRules $rules): \SqlSemantics\Core\Policy\TypeRules => $rules;
-        $rules = $accept(PostgreSqlDialect::PostgreSql->platform()->types());
-        $source = new Node('value', 0, []);
-        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(PostgreSqlDialect::PostgreSql, Builtin::Integer), Nullability::NotNull, $source, symbol: '1');
-        self::assertSame(Builtin::Integer, $rules->arithmetic(\SqlSemantics\Core\Model\Operator::Plus, [$expression], $source)->name);
-    }
-    public function testPredicateAcceptsBooleanResults(): void
-    {
-        $accept = static fn (\SqlSemantics\Core\Policy\TypeRules $rules): \SqlSemantics\Core\Policy\TypeRules => $rules;
-        $rules = $accept(PostgreSqlDialect::PostgreSql->platform()->types());
-        $source = new Node('value', 0, []);
-        $expression = new Expression(ExpressionKind::Literal, $rules->boolean(), Nullability::NotNull, $source, symbol: 'TRUE');
-        $rules->predicate($expression);
-        self::assertSame($source, $expression->source);
-    }
-    public function testCoalescePreservesOperands(): void
-    {
-        $accept = static fn (\SqlSemantics\Core\Policy\TypeRules $rules): \SqlSemantics\Core\Policy\TypeRules => $rules;
-        $rules = $accept(PostgreSqlDialect::PostgreSql->platform()->types());
-        $source = new Node('value', 0, []);
-        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(PostgreSqlDialect::PostgreSql, Builtin::Integer), Nullability::NotNull, $source, symbol: '1');
-        self::assertSame([$expression], $rules->coalesce([$expression], $expression->type));
-    }
-    public function testProjectPreservesTypedValues(): void
-    {
-        $accept = static fn (\SqlSemantics\Core\Policy\TypeRules $rules): \SqlSemantics\Core\Policy\TypeRules => $rules;
-        $rules = $accept(PostgreSqlDialect::PostgreSql->platform()->types());
-        $source = new Node('value', 0, []);
-        $expression = new Expression(ExpressionKind::Literal, new TypeDescriptor(PostgreSqlDialect::PostgreSql, Builtin::Integer), Nullability::NotNull, $source, symbol: '1');
-        self::assertSame($expression, $rules->project($expression));
     }
 }

@@ -46,6 +46,26 @@ final class IndirectionElWithOptSliceBoundOptSliceBound_bc1730ea implements \Sql
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optSliceBound, $this->optSliceBound2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optSliceBound, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm::class, $replace), $this->replacement($this->optSliceBound2, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optSliceBound, preserving every other field.
      */
     public function withOptSliceBound(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm $optSliceBound): self

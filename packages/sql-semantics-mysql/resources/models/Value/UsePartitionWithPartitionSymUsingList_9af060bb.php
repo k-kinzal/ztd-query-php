@@ -42,6 +42,26 @@ final class UsePartitionWithPartitionSymUsingList_9af060bb implements \SqlSemant
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->usingList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->usingList, \SqlSemantics\Statement\Model\MySql\Role\UsingListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new usingList, preserving every other field.
      */
     public function withUsingList(\SqlSemantics\Statement\Model\MySql\Role\UsingListForm $usingList): self

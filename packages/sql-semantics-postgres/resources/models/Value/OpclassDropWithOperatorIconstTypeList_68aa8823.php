@@ -46,6 +46,26 @@ final class OpclassDropWithOperatorIconstTypeList_68aa8823 implements \SqlSemant
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->iconst, $this->typeList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->iconst, \SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm::class, $replace), $this->replacement($this->typeList, \SqlSemantics\Statement\Model\PostgreSql\Role\TypeListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new iconst, preserving every other field.
      */
     public function withIconst(\SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst): self

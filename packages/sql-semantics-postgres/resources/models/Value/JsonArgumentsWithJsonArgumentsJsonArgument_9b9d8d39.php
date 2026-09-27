@@ -42,6 +42,26 @@ final class JsonArgumentsWithJsonArgumentsJsonArgument_9b9d8d39 implements \SqlS
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->jsonArguments, $this->jsonArgument];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->jsonArguments, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonArgumentsForm::class, $replace), $this->replacement($this->jsonArgument, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonArgumentForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new jsonArguments, preserving every other field.
      */
     public function withJsonArguments(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonArgumentsForm $jsonArguments): self

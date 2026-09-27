@@ -42,6 +42,26 @@ final class CreateWithCreateLogfileSymGroupSymLogfileGroupInfo_f44c8450 implemen
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->logfileGroupInfo];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->logfileGroupInfo, \SqlSemantics\Statement\Model\MySql\Role\LogfileGroupInfoForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new logfileGroupInfo, preserving every other field.
      */
     public function withLogfileGroupInfo(\SqlSemantics\Statement\Model\MySql\Role\LogfileGroupInfoForm $logfileGroupInfo): self

@@ -40,6 +40,26 @@ final class MiCheckTypesWithMiCheckTypeMiCheckTypes_322e3fb2 implements \SqlSema
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->miCheckType, $this->miCheckTypes];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->miCheckType, \SqlSemantics\Statement\Model\MySql\Role\MiCheckTypeForm::class, $replace), $this->replacement($this->miCheckTypes, \SqlSemantics\Statement\Model\MySql\Role\MiCheckTypesForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new miCheckType, preserving every other field.
      */
     public function withMiCheckType(\SqlSemantics\Statement\Model\MySql\Role\MiCheckTypeForm $miCheckType): self

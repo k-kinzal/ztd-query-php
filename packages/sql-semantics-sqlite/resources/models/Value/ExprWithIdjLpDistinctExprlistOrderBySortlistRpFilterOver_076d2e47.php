@@ -40,7 +40,7 @@ final class ExprWithIdjLpDistinctExprlistOrderBySortlistRpFilterOver_076d2e47 im
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->comments($this->comments, 0);
-        $writer->append($this->idj);
+        $writer->append($this->idj, true);
         $writer->comments($this->comments, 1);
         $writer->append('(');
         $writer->comments($this->comments, 2);
@@ -57,6 +57,26 @@ final class ExprWithIdjLpDistinctExprlistOrderBySortlistRpFilterOver_076d2e47 im
         $writer->append(')');
         $writer->comments($this->comments, 8);
         $this->filterOver->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->distinct, $this->exprlist, $this->sortlist, $this->filterOver];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->idj, $this->replacement($this->distinct, \SqlSemantics\Statement\Model\Sqlite\Role\DistinctForm::class, $replace), $this->replacement($this->exprlist, \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm::class, $replace), $this->replacement($this->sortlist, \SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm::class, $replace), $this->replacement($this->filterOver, \SqlSemantics\Statement\Model\Sqlite\Role\FilterOverForm::class, $replace), $this->comments);
     }
 
     /**

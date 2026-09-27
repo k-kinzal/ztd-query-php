@@ -48,6 +48,26 @@ final class PlAssignStmtWithPlassignTargetOptIndirectionPlassignEqualsPLpgSqlExp
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->plassignTarget, $this->optIndirection, $this->plassignEquals, $this->pLpgSqlExpr];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->plassignTarget, \SqlSemantics\Statement\Model\PostgreSql\Role\PlassignTargetForm::class, $replace), $this->replacement($this->optIndirection, \SqlSemantics\Statement\Model\PostgreSql\Role\OptIndirectionForm::class, $replace), $this->replacement($this->plassignEquals, \SqlSemantics\Statement\Model\PostgreSql\Role\PlassignEqualsForm::class, $replace), $this->replacement($this->pLpgSqlExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\PLpgSqlExprForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new plassignTarget, preserving every other field.
      */
     public function withPlassignTarget(\SqlSemantics\Statement\Model\PostgreSql\Role\PlassignTargetForm $plassignTarget): self

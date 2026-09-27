@@ -42,6 +42,26 @@ final class OptionValueListWithOptionValueListOptionValue_0cde6392 implements \S
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optionValueList, $this->optionValue];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optionValueList, \SqlSemantics\Statement\Model\MySql\Role\OptionValueListForm::class, $replace), $this->replacement($this->optionValue, \SqlSemantics\Statement\Model\MySql\Role\OptionValueForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optionValueList, preserving every other field.
      */
     public function withOptionValueList(\SqlSemantics\Statement\Model\MySql\Role\OptionValueListForm $optionValueList): self

@@ -44,6 +44,26 @@ final class LogfileGroupOptionListWithLogfileGroupOptionListOptCommaLogfileGroup
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->logfileGroupOptionList, $this->optComma, $this->logfileGroupOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->logfileGroupOptionList, \SqlSemantics\Statement\Model\MySql\Role\LogfileGroupOptionListForm::class, $replace), $this->replacement($this->optComma, \SqlSemantics\Statement\Model\MySql\Role\OptCommaForm::class, $replace), $this->replacement($this->logfileGroupOption, \SqlSemantics\Statement\Model\MySql\Role\LogfileGroupOptionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new logfileGroupOptionList, preserving every other field.
      */
     public function withLogfileGroupOptionList(\SqlSemantics\Statement\Model\MySql\Role\LogfileGroupOptionListForm $logfileGroupOptionList): self

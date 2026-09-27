@@ -32,5 +32,5 @@ deptrac:
     Core: [ParserCore, Statements]
     Facade: [Core, Statements]
     ParserCore: []
-    Platform: [Core, ParserCore, ParserPlatform]
+    Platform: [Core, Statements, ParserCore, ParserPlatform]
     ParserPlatform: []

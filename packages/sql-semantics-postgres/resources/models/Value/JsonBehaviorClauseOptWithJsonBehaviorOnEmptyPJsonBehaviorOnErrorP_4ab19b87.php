@@ -48,6 +48,26 @@ final class JsonBehaviorClauseOptWithJsonBehaviorOnEmptyPJsonBehaviorOnErrorP_4a
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->jsonBehavior, $this->jsonBehavior2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->jsonBehavior, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorForm::class, $replace), $this->replacement($this->jsonBehavior2, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new jsonBehavior, preserving every other field.
      */
     public function withJsonBehavior(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorForm $jsonBehavior): self

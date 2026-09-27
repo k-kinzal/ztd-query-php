@@ -40,6 +40,26 @@ final class LineTermListWithLineTermListLineTerm_3c14dca0 implements \SqlSemanti
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->lineTermList, $this->lineTerm];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->lineTermList, \SqlSemantics\Statement\Model\MySql\Role\LineTermListForm::class, $replace), $this->replacement($this->lineTerm, \SqlSemantics\Statement\Model\MySql\Role\LineTermForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new lineTermList, preserving every other field.
      */
     public function withLineTermList(\SqlSemantics\Statement\Model\MySql\Role\LineTermListForm $lineTermList): self

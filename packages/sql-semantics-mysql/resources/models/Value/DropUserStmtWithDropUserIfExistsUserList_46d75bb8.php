@@ -46,6 +46,26 @@ final class DropUserStmtWithDropUserIfExistsUserList_46d75bb8 implements \SqlSem
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->ifExists, $this->userList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->user, $this->replacement($this->ifExists, \SqlSemantics\Statement\Model\MySql\Role\IfExistsForm::class, $replace), $this->replacement($this->userList, \SqlSemantics\Statement\Model\MySql\Role\UserListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new user, preserving every other field.
      */
     public function withUser(string $user): self

@@ -44,6 +44,26 @@ final class FuncArgWithArgClassParamNameFuncType_32a02f12 implements \SqlSemanti
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->argClass, $this->paramName, $this->funcType];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->argClass, \SqlSemantics\Statement\Model\PostgreSql\Role\ArgClassForm::class, $replace), $this->replacement($this->paramName, \SqlSemantics\Statement\Model\PostgreSql\Role\ParamNameForm::class, $replace), $this->replacement($this->funcType, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncTypeForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new argClass, preserving every other field.
      */
     public function withArgClass(\SqlSemantics\Statement\Model\PostgreSql\Role\ArgClassForm $argClass): self

@@ -56,6 +56,26 @@ final class UpsertWithOnConflictLpSortlistRpWhereOptDoNothingUpsert_820f0d71 imp
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->sortlist, $this->where, $this->upsert];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->sortlist, \SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm::class, $replace), $this->replacement($this->upsert, \SqlSemantics\Statement\Model\Sqlite\Role\UpsertForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new sortlist, preserving every other field.
      */
     public function withSortlist(\SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm $sortlist): self

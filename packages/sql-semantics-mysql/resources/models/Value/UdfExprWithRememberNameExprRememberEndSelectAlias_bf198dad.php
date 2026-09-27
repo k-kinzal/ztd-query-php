@@ -48,6 +48,26 @@ final class UdfExprWithRememberNameExprRememberEndSelectAlias_bf198dad implement
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->rememberName, $this->expr, $this->rememberEnd, $this->selectAlias];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->rememberName, \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm::class, $replace), $this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->replacement($this->rememberEnd, \SqlSemantics\Statement\Model\MySql\Role\RememberEndForm::class, $replace), $this->replacement($this->selectAlias, \SqlSemantics\Statement\Model\MySql\Role\SelectAliasForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new rememberName, preserving every other field.
      */
     public function withRememberName(\SqlSemantics\Statement\Model\MySql\Role\RememberNameForm $rememberName): self

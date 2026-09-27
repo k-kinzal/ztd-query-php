@@ -68,6 +68,26 @@ final class UpdateStmtWithOptWithClauseUpdateSymOptLowPriorityOptIgnoreTableRefe
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->with, $this->optLowPriority, $this->optIgnore, $this->tableReferenceList, $this->updateList, $this->where, $this->orderBy, $this->optSimpleLimit];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->with, \SqlSemantics\Statement\Model\MySql\Role\OptWithClauseForm::class, $replace), $this->replacement($this->optLowPriority, \SqlSemantics\Statement\Model\MySql\Role\OptLowPriorityForm::class, $replace), $this->replacement($this->optIgnore, \SqlSemantics\Statement\Model\MySql\Role\OptIgnoreForm::class, $replace), $this->replacement($this->tableReferenceList, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm::class, $replace), $this->replacement($this->updateList, \SqlSemantics\Statement\Model\MySql\Role\UpdateListForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm::class, $replace), $this->replacement($this->orderBy, \SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm::class, $replace), $this->replacement($this->optSimpleLimit, \SqlSemantics\Statement\Model\MySql\Role\OptSimpleLimitForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new with, preserving every other field.
      */
     public function withWith(\SqlSemantics\Statement\Model\MySql\Role\OptWithClauseForm $with): self

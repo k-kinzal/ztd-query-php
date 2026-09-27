@@ -52,6 +52,26 @@ final class AexprConstWithFuncNameFuncArgListOptSortClauseSconst_cbe14648 implem
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->funcName, $this->funcArgList, $this->optSortClause, $this->sconst];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->funcName, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm::class, $replace), $this->replacement($this->funcArgList, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListForm::class, $replace), $this->replacement($this->optSortClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSortClauseForm::class, $replace), $this->replacement($this->sconst, \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new funcName, preserving every other field.
      */
     public function withFuncName(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm $funcName): self

@@ -38,6 +38,26 @@ final class InsertCmdWithInsertOrconf_17d8eea1 implements \SqlSemantics\Statemen
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->orconf];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->orconf, \SqlSemantics\Statement\Model\Sqlite\Role\OrconfForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new orconf, preserving every other field.
      */
     public function withOrconf(\SqlSemantics\Statement\Model\Sqlite\Role\OrconfForm $orconf): self

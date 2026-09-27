@@ -128,3 +128,24 @@ function source(string $version): array
 
     return ['Sqlite', 'https://raw.githubusercontent.com/sqlite/sqlite/refs/tags/version-' . substr($version, 7) . '/src/parse.y', new LemonGrammarReader()];
 }
+
+/**
+ * Reads the lexical hints a grammar declares: terminal classes and the terminal the parser retries with.
+ *
+ * @return array{classes: array<string, list<string>>, fallbacks: array<string, string>}
+ */
+function terminalHints(Grammar $grammar): array
+{
+    $classes = [];
+    foreach ($grammar->tokenClasses as $symbol => $members) {
+        $classes[$grammar->symbols->name($symbol)] = array_map(static fn (int $member): string => $grammar->symbols->name($member), $members);
+    }
+    $fallbacks = [];
+    foreach ($grammar->fallbacks as $from => $to) {
+        $fallbacks[$grammar->symbols->name($from)] = $grammar->symbols->name($to);
+    }
+    ksort($classes);
+    ksort($fallbacks);
+
+    return ['classes' => $classes, 'fallbacks' => $fallbacks];
+}

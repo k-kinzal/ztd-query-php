@@ -9,8 +9,8 @@ use ZtdQuery\Adapter\Mysqli\Driver\MysqliResultStatement;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqliException;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\ExecuteResult;
+use ZtdQuery\QueryExecutor;
 use ZtdQuery\Rewrite\RewritePlan;
-use ZtdQuery\Session;
 
 /**
  * Translates a native result into the session's simulated result.
@@ -22,14 +22,16 @@ final class MysqliResultProcessor
      *
      * @throws ZtdMysqliException When the session cannot process the result.
      */
-    public function process(Session $session, RewritePlan $plan, mysqli_result|false $result, int|string $affectedRows): ExecuteResult
+    public function process(QueryExecutor $executor, RewritePlan $plan, mysqli_result|false $result, int|string $affectedRows): ExecuteResult
     {
         if ($result === false) {
-            return $session->createEmptyWriteResult();
+            return $executor->createEmptyWriteResult();
         }
         try {
-            /** @throws DatabaseException */
-            return $session->processExecutedStatement($plan, new MysqliResultStatement($result, $affectedRows));
+            /**
+             * @throws DatabaseException
+             */
+            return $executor->processExecutedStatement($plan, new MysqliResultStatement($result, $affectedRows));
         } catch (DatabaseException $e) {
             throw new ZtdMysqliException($e->getMessage(), 0, $e);
         }

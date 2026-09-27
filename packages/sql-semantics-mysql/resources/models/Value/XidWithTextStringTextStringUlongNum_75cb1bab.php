@@ -48,6 +48,26 @@ final class XidWithTextStringTextStringUlongNum_75cb1bab implements \SqlSemantic
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->textString, $this->textString2, $this->ulongNum];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->textString, \SqlSemantics\Statement\Model\MySql\Role\TextStringForm::class, $replace), $this->replacement($this->textString2, \SqlSemantics\Statement\Model\MySql\Role\TextStringForm::class, $replace), $this->replacement($this->ulongNum, \SqlSemantics\Statement\Model\MySql\Role\UlongNumForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new textString, preserving every other field.
      */
     public function withTextString(\SqlSemantics\Statement\Model\MySql\Role\TextStringForm $textString): self

@@ -38,6 +38,26 @@ final class FieldOrVarWithIdentOrText_6fd3d2e3 implements \SqlSemantics\Statemen
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->identOrText];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->identOrText, \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new identOrText, preserving every other field.
      */
     public function withIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText): self

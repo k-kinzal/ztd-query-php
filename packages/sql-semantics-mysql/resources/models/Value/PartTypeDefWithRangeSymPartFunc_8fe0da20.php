@@ -38,6 +38,26 @@ final class PartTypeDefWithRangeSymPartFunc_8fe0da20 implements \SqlSemantics\St
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->partFunc];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->partFunc, \SqlSemantics\Statement\Model\MySql\Role\PartFuncForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new partFunc, preserving every other field.
      */
     public function withPartFunc(\SqlSemantics\Statement\Model\MySql\Role\PartFuncForm $partFunc): self

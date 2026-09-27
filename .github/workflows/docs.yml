@@ -64,6 +64,7 @@ jobs:
     permissions:
       contents: write
       pages: write
+      pull-requests: read
     steps:
       - name: Download the complete documentation site
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
@@ -79,8 +80,23 @@ jobs:
 
       - name: Publish the site
         working-directory: .docs-branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+
+          # Closed-event workflows can be superseded while waiting to publish.
+          # Reconcile retained previews before every publication.
+          open_pulls="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls?state=open&per_page=100" --jq '.[].number')"
+          for preview in pr/[0-9]*; do
+            [ -d "$preview" ] || continue
+            number="${preview#pr/}"
+            [[ "$number" =~ ^[0-9]+$ ]] || continue
+            if ! grep -Fxq "$number" <<< "$open_pulls"; then
+              echo "Removing preview for closed pull request #${number}."
+              rm -rf -- "$preview"
+            fi
+          done
 
           rsync -a --checksum --delete --exclude '/.git/' --exclude '/pr/' --exclude '/CNAME' ../build/docs/ ./
           touch .nojekyll

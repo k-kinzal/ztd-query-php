@@ -58,6 +58,26 @@ final class AlterPolicyStmtWithAlterPolicyNameOnQualifiedNameRowSecurityOptional
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->name, $this->qualifiedName, $this->rowSecurityOptionalToRole, $this->rowSecurityOptionalExpr, $this->rowSecurityOptionalWithCheck];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->rowSecurityOptionalToRole, \SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityOptionalToRoleForm::class, $replace), $this->replacement($this->rowSecurityOptionalExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityOptionalExprForm::class, $replace), $this->replacement($this->rowSecurityOptionalWithCheck, \SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityOptionalWithCheckForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new name, preserving every other field.
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self

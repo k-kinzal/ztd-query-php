@@ -48,6 +48,26 @@ final class CconsWithPrimaryKeySortorderOnconfAutoinc_23337c2b implements \SqlSe
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->sortorder, $this->onconf, $this->autoinc];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->sortorder, \SqlSemantics\Statement\Model\Sqlite\Role\SortorderForm::class, $replace), $this->replacement($this->onconf, \SqlSemantics\Statement\Model\Sqlite\Role\OnconfForm::class, $replace), $this->replacement($this->autoinc, \SqlSemantics\Statement\Model\Sqlite\Role\AutoincForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new sortorder, preserving every other field.
      */
     public function withSortorder(\SqlSemantics\Statement\Model\Sqlite\Role\SortorderForm $sortorder): self

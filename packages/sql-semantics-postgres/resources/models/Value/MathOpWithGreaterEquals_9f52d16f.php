@@ -36,6 +36,26 @@ final class MathOpWithGreaterEquals_9f52d16f implements \SqlSemantics\Statement\
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [];
+    }
+
+    /**
+     * This form holds no values to replace.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return $this;
+    }
+
+    /**
      * Returns a copy with a new greaterEquals, preserving every other field.
      */
     public function withGreaterEquals(string $greaterEquals): self

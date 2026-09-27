@@ -40,6 +40,26 @@ final class OptAlterTableActionsWithOptAlterCommandListAlterTablePartitionOption
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optAlterCommandList, $this->alterTablePartitionOptions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optAlterCommandList, \SqlSemantics\Statement\Model\MySql\Role\OptAlterCommandListForm::class, $replace), $this->replacement($this->alterTablePartitionOptions, \SqlSemantics\Statement\Model\MySql\Role\AlterTablePartitionOptionsForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optAlterCommandList, preserving every other field.
      */
     public function withOptAlterCommandList(\SqlSemantics\Statement\Model\MySql\Role\OptAlterCommandListForm $optAlterCommandList): self

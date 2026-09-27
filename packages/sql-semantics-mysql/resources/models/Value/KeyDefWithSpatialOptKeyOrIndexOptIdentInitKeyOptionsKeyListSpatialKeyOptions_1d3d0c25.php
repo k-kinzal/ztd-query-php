@@ -60,6 +60,26 @@ final class KeyDefWithSpatialOptKeyOrIndexOptIdentInitKeyOptionsKeyListSpatialKe
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->spatial, $this->optKeyOrIndex, $this->optIdent, $this->initKeyOptions, $this->keyList, $this->spatialKeyOptions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->spatial, \SqlSemantics\Statement\Model\MySql\Role\SpatialForm::class, $replace), $this->replacement($this->optKeyOrIndex, \SqlSemantics\Statement\Model\MySql\Role\OptKeyOrIndexForm::class, $replace), $this->replacement($this->optIdent, \SqlSemantics\Statement\Model\MySql\Role\OptIdentForm::class, $replace), $this->replacement($this->initKeyOptions, \SqlSemantics\Statement\Model\MySql\Role\InitKeyOptionsForm::class, $replace), $this->replacement($this->keyList, \SqlSemantics\Statement\Model\MySql\Role\KeyListForm::class, $replace), $this->replacement($this->spatialKeyOptions, \SqlSemantics\Statement\Model\MySql\Role\SpatialKeyOptionsForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new spatial, preserving every other field.
      */
     public function withSpatial(\SqlSemantics\Statement\Model\MySql\Role\SpatialForm $spatial): self

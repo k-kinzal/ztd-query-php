@@ -64,6 +64,26 @@ final class AlterEventStmtWithAlterDefinerOptEventSymSpNameEvAlterOnScheduleComp
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->definerOpt, $this->spName, $this->evAlterOnScheduleCompletion, $this->optEvRenameTo, $this->optEvStatus, $this->optEvComment, $this->optEvSqlStmt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->definerOpt, \SqlSemantics\Statement\Model\MySql\Role\DefinerOptForm::class, $replace), $this->replacement($this->spName, \SqlSemantics\Statement\Model\MySql\Role\SpNameForm::class, $replace), $this->replacement($this->evAlterOnScheduleCompletion, \SqlSemantics\Statement\Model\MySql\Role\EvAlterOnScheduleCompletionForm::class, $replace), $this->replacement($this->optEvRenameTo, \SqlSemantics\Statement\Model\MySql\Role\OptEvRenameToForm::class, $replace), $this->replacement($this->optEvStatus, \SqlSemantics\Statement\Model\MySql\Role\OptEvStatusForm::class, $replace), $this->replacement($this->optEvComment, \SqlSemantics\Statement\Model\MySql\Role\OptEvCommentForm::class, $replace), $this->replacement($this->optEvSqlStmt, \SqlSemantics\Statement\Model\MySql\Role\OptEvSqlStmtForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new definerOpt, preserving every other field.
      */
     public function withDefinerOpt(\SqlSemantics\Statement\Model\MySql\Role\DefinerOptForm $definerOpt): self

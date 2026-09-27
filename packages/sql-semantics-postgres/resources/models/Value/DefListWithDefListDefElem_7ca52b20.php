@@ -42,6 +42,26 @@ final class DefListWithDefListDefElem_7ca52b20 implements \SqlSemantics\Statemen
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->defList, $this->defElem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->defList, \SqlSemantics\Statement\Model\PostgreSql\Role\DefListForm::class, $replace), $this->replacement($this->defElem, \SqlSemantics\Statement\Model\PostgreSql\Role\DefElemForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new defList, preserving every other field.
      */
     public function withDefList(\SqlSemantics\Statement\Model\PostgreSql\Role\DefListForm $defList): self

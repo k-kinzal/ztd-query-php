@@ -44,6 +44,26 @@ final class ColumnsClauseWithColumnsColumnsList_8226384e implements \SqlSemantic
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->columnsList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->columns, $this->replacement($this->columnsList, \SqlSemantics\Statement\Model\MySql\Role\ColumnsListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new columns, preserving every other field.
      */
     public function withColumns(string $columns): self

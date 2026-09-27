@@ -44,6 +44,26 @@ final class FrameOptWithRangeOrRowsFrameBoundSFrameExcludeOpt_6d30675d implement
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->rangeOrRows, $this->frameBoundS, $this->frameExcludeOpt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->rangeOrRows, \SqlSemantics\Statement\Model\Sqlite\Role\RangeOrRowsForm::class, $replace), $this->replacement($this->frameBoundS, \SqlSemantics\Statement\Model\Sqlite\Role\FrameBoundSForm::class, $replace), $this->replacement($this->frameExcludeOpt, \SqlSemantics\Statement\Model\Sqlite\Role\FrameExcludeOptForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new rangeOrRows, preserving every other field.
      */
     public function withRangeOrRows(\SqlSemantics\Statement\Model\Sqlite\Role\RangeOrRowsForm $rangeOrRows): self

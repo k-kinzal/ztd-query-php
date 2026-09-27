@@ -52,6 +52,26 @@ final class DropStmtWithDropObjectTypeNameOnAnyNameNameOnAnyNameOptDropBehavior_
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->objectTypeNameOnAnyName, $this->name, $this->anyName, $this->optDropBehavior];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->objectTypeNameOnAnyName, \SqlSemantics\Statement\Model\PostgreSql\Role\ObjectTypeNameOnAnyNameForm::class, $replace), $this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->anyName, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm::class, $replace), $this->replacement($this->optDropBehavior, \SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new objectTypeNameOnAnyName, preserving every other field.
      */
     public function withObjectTypeNameOnAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\ObjectTypeNameOnAnyNameForm $objectTypeNameOnAnyName): self

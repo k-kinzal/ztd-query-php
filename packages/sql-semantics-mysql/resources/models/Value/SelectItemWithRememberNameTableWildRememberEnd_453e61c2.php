@@ -44,6 +44,26 @@ final class SelectItemWithRememberNameTableWildRememberEnd_453e61c2 implements \
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->rememberName, $this->tableWild, $this->rememberEnd];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->rememberName, \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm::class, $replace), $this->replacement($this->tableWild, \SqlSemantics\Statement\Model\MySql\Role\TableWildForm::class, $replace), $this->replacement($this->rememberEnd, \SqlSemantics\Statement\Model\MySql\Role\RememberEndForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new rememberName, preserving every other field.
      */
     public function withRememberName(\SqlSemantics\Statement\Model\MySql\Role\RememberNameForm $rememberName): self

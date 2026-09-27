@@ -44,6 +44,26 @@ final class FuncExprWithJsonAggregateFuncFilterClauseOverClause_a267f14d impleme
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->jsonAggregateFunc, $this->filterClause, $this->overClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->jsonAggregateFunc, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonAggregateFuncForm::class, $replace), $this->replacement($this->filterClause, \SqlSemantics\Statement\Model\PostgreSql\Role\FilterClauseForm::class, $replace), $this->replacement($this->overClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OverClauseForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new jsonAggregateFunc, preserving every other field.
      */
     public function withJsonAggregateFunc(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonAggregateFuncForm $jsonAggregateFunc): self

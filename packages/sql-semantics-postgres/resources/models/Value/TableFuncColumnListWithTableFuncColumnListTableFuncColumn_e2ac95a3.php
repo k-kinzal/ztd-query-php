@@ -42,6 +42,26 @@ final class TableFuncColumnListWithTableFuncColumnListTableFuncColumn_e2ac95a3 i
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableFuncColumnList, $this->tableFuncColumn];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableFuncColumnList, \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncColumnListForm::class, $replace), $this->replacement($this->tableFuncColumn, \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncColumnForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new tableFuncColumnList, preserving every other field.
      */
     public function withTableFuncColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncColumnListForm $tableFuncColumnList): self

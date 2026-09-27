@@ -40,6 +40,26 @@ final class StlPrefixWithSeltablistJoinop_d0edaade implements \SqlSemantics\Stat
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->seltablist, $this->joinop];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->seltablist, \SqlSemantics\Statement\Model\Sqlite\Role\SeltablistForm::class, $replace), $this->replacement($this->joinop, \SqlSemantics\Statement\Model\Sqlite\Role\JoinopForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new seltablist, preserving every other field.
      */
     public function withSeltablist(\SqlSemantics\Statement\Model\Sqlite\Role\SeltablistForm $seltablist): self

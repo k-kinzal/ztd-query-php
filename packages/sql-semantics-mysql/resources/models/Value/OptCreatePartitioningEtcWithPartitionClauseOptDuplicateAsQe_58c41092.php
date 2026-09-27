@@ -40,6 +40,26 @@ final class OptCreatePartitioningEtcWithPartitionClauseOptDuplicateAsQe_58c41092
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->partitionClause, $this->optDuplicateAsQe];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->partitionClause, \SqlSemantics\Statement\Model\MySql\Role\PartitionClauseForm::class, $replace), $this->replacement($this->optDuplicateAsQe, \SqlSemantics\Statement\Model\MySql\Role\OptDuplicateAsQeForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new partitionClause, preserving every other field.
      */
     public function withPartitionClause(\SqlSemantics\Statement\Model\MySql\Role\PartitionClauseForm $partitionClause): self

@@ -62,6 +62,26 @@ final class FieldDefWithTypeOptCollateExplicitOptGeneratedAlwaysAsGeneratedColum
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->type, $this->optCollateExplicit, $this->optGeneratedAlways, $this->generatedColumnFunc, $this->optStoredAttribute, $this->optGcolAttributeList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->type, \SqlSemantics\Statement\Model\MySql\Role\TypeForm::class, $replace), $this->replacement($this->optCollateExplicit, \SqlSemantics\Statement\Model\MySql\Role\OptCollateExplicitForm::class, $replace), $this->replacement($this->optGeneratedAlways, \SqlSemantics\Statement\Model\MySql\Role\OptGeneratedAlwaysForm::class, $replace), $this->replacement($this->generatedColumnFunc, \SqlSemantics\Statement\Model\MySql\Role\GeneratedColumnFuncForm::class, $replace), $this->replacement($this->optStoredAttribute, \SqlSemantics\Statement\Model\MySql\Role\OptStoredAttributeForm::class, $replace), $this->replacement($this->optGcolAttributeList, \SqlSemantics\Statement\Model\MySql\Role\OptGcolAttributeListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new type, preserving every other field.
      */
     public function withType(\SqlSemantics\Statement\Model\MySql\Role\TypeForm $type): self

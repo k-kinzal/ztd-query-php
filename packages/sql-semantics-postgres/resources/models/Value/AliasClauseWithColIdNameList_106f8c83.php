@@ -44,6 +44,26 @@ final class AliasClauseWithColIdNameList_106f8c83 implements \SqlSemantics\State
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->colId, $this->nameList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->colId, \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm::class, $replace), $this->replacement($this->nameList, \SqlSemantics\Statement\Model\PostgreSql\Role\NameListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new colId, preserving every other field.
      */
     public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self

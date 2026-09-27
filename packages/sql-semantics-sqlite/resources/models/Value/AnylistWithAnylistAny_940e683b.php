@@ -40,6 +40,26 @@ final class AnylistWithAnylistAny_940e683b implements \SqlSemantics\Statement\Mo
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->anylist];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->anylist, \SqlSemantics\Statement\Model\Sqlite\Role\AnylistForm::class, $replace), $this->any, $this->comments);
+    }
+
+    /**
      * Returns a copy with a new anylist, preserving every other field.
      */
     public function withAnylist(\SqlSemantics\Statement\Model\Sqlite\Role\AnylistForm $anylist): self

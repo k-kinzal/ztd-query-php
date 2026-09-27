@@ -7,31 +7,21 @@ namespace Tests\Unit\Core\Ast;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlSemantics\Core\Ast\DialectParser;
 use SqlSemantics\Core\Dialect;
+use SqlSemantics\Core\Language;
 use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
 use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 
 #[CoversClass(DialectParser::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Policy\SyntaxRules::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\QueryRules::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\TypeRules::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\NameRules::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\SchemaRules::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\Sqlite\QueryRules::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\Sqlite\Platform::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\Sqlite\TypeRules::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\Sqlite\NameRules::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\Sqlite\SchemaRules::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\MySql\QueryRules::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\MySql\Platform::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\MySql\TypeRules::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\MySql\NameRules::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\MySql\SchemaRules::class)]
+#[UsesClass(Language::class)]
+#[UsesClass(\SqlSemantics\Platform\MySql\Platform::class)]
+#[UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
+#[UsesClass(\SqlSemantics\Platform\Sqlite\Platform::class)]
 #[Medium]
 final class DialectParserTest extends TestCase
 {
@@ -40,7 +30,7 @@ final class DialectParserTest extends TestCase
     #[TestWith([SqliteDialect::Sqlite, 'input', 'sqlite-3.47.2'])]
     public function testParseUsesTheRequestedGrammarAndRetainsSql(Dialect $dialect, string $root, string $version): void
     {
-        $parser = new DialectParser($dialect, $version);
+        $parser = new DialectParser(new Language($dialect, $version));
         $sql = '/* text */ SELECT 1;';
         $tree = $parser->parse($sql);
         self::assertSame($root, $tree->name);
@@ -52,7 +42,7 @@ final class DialectParserTest extends TestCase
     #[TestWith([SqliteDialect::Sqlite, 'sqlite-3.47.2'])]
     public function testVersionReturnsTheResolvedRelease(Dialect $dialect, string $version): void
     {
-        self::assertSame($version, (new DialectParser($dialect))->version());
+        self::assertSame($version, (new DialectParser(new Language($dialect)))->version());
     }
 
     #[TestWith([PostgreSqlDialect::PostgreSql])]
@@ -62,12 +52,12 @@ final class DialectParserTest extends TestCase
     {
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Unsupported');
-        new DialectParser($dialect, 'unavailable-release');
+        (new DialectParser(new Language($dialect, 'unavailable-release')))->version();
     }
 
     public function testParseScriptPreservesStringAndRoutineSemicolons(): void
     {
-        $parser = new DialectParser(MySqlDialect::MySql);
+        $parser = new DialectParser(new Language(MySqlDialect::MySql));
         $trees = $parser->parseScript("CREATE PROCEDURE p() BEGIN SELECT ';'; SELECT 2; END; DROP TABLE IF EXISTS t;");
         self::assertCount(2, $trees);
         self::assertStringContainsString("SELECT ';'", $trees[0]->toString());
@@ -77,7 +67,30 @@ final class DialectParserTest extends TestCase
     public function testParseScriptRejectsAnInvalidTrailingCommand(): void
     {
         $this->expectException(\SqlParser\Parser\SyntaxException::class);
-        (new DialectParser(MySqlDialect::MySql))->parseScript('DROP TABLE t; CREATE TABLE');
+        (new DialectParser(new Language(MySqlDialect::MySql)))->parseScript('DROP TABLE t; CREATE TABLE');
     }
 
+    /**
+     * @param list<string> $expected
+     */
+    #[TestWith([MySqlDialect::MySql, "SELECT 1; CREATE PROCEDURE p() BEGIN SELECT ';'; SELECT 2; END; -- tail\nSELECT 3", ['SELECT 1;', " CREATE PROCEDURE p() BEGIN SELECT ';'; SELECT 2; END;", " -- tail\nSELECT 3"]])]
+    #[TestWith([PostgreSqlDialect::PostgreSql, 'SELECT 1; CREATE RULE r AS ON UPDATE TO t DO (SELECT 1; SELECT 2); SELECT $$;$$;  ', ['SELECT 1;', ' CREATE RULE r AS ON UPDATE TO t DO (SELECT 1; SELECT 2);', ' SELECT $$;$$;  ']])]
+    #[TestWith([SqliteDialect::Sqlite, "CREATE TRIGGER t AFTER INSERT ON x BEGIN SELECT 1; SELECT 2; END; SELECT ';'", ['CREATE TRIGGER t AFTER INSERT ON x BEGIN SELECT 1; SELECT 2; END;', " SELECT ';'"]])]
+    public function testSplitPartitionsAScriptAtStatementBoundaries(Dialect $dialect, string $sql, array $expected): void
+    {
+        self::assertSame($expected, (new DialectParser(new Language($dialect)))->split($sql));
+        self::assertSame($sql, implode('', $expected));
+    }
+
+    public function testSplitOfWhitespaceAndCommentsHasNoStatements(): void
+    {
+        self::assertSame([], (new DialectParser(new Language(SqliteDialect::Sqlite)))->split("  -- nothing\n"));
+        self::assertSame([], (new DialectParser(new Language(MySqlDialect::MySql)))->split(''));
+    }
+
+    public function testSplitRejectsAStatementTheGrammarDoesNotAccept(): void
+    {
+        $this->expectException(\SqlParser\Parser\SyntaxException::class);
+        (new DialectParser(new Language(MySqlDialect::MySql)))->split('SELECT 1; SELECT FROM; SELECT 2');
+    }
 }

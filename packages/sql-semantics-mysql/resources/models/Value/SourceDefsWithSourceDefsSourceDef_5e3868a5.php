@@ -42,6 +42,26 @@ final class SourceDefsWithSourceDefsSourceDef_5e3868a5 implements \SqlSemantics\
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->sourceDefs, $this->sourceDef];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->sourceDefs, \SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm::class, $replace), $this->replacement($this->sourceDef, \SqlSemantics\Statement\Model\MySql\Role\SourceDefForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new sourceDefs, preserving every other field.
      */
     public function withSourceDefs(\SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm $sourceDefs): self

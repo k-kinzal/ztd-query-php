@@ -40,6 +40,26 @@ final class OptTableAliasWithOptAsIdent_35f95dae implements \SqlSemantics\Statem
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optAs, $this->ident];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optAs, \SqlSemantics\Statement\Model\MySql\Role\OptAsForm::class, $replace), $this->replacement($this->ident, \SqlSemantics\Statement\Model\MySql\Role\IdentForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optAs, preserving every other field.
      */
     public function withOptAs(\SqlSemantics\Statement\Model\MySql\Role\OptAsForm $optAs): self

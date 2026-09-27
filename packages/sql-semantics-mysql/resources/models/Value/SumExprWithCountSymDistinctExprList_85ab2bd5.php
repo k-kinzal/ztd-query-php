@@ -46,6 +46,26 @@ final class SumExprWithCountSymDistinctExprList_85ab2bd5 implements \SqlSemantic
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->exprList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->distinct, $this->replacement($this->exprList, \SqlSemantics\Statement\Model\MySql\Role\ExprListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new distinct, preserving every other field.
      */
     public function withDistinct(string $distinct): self

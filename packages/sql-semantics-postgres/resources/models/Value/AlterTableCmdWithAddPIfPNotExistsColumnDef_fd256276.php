@@ -44,6 +44,26 @@ final class AlterTableCmdWithAddPIfPNotExistsColumnDef_fd256276 implements \SqlS
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->columnDef];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->columnDef, \SqlSemantics\Statement\Model\PostgreSql\Role\ColumnDefForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new columnDef, preserving every other field.
      */
     public function withColumnDef(\SqlSemantics\Statement\Model\PostgreSql\Role\ColumnDefForm $columnDef): self

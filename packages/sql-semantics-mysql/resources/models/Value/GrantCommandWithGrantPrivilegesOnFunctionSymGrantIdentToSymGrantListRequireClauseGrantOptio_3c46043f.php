@@ -58,6 +58,26 @@ final class GrantCommandWithGrantPrivilegesOnFunctionSymGrantIdentToSymGrantList
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->grantPrivileges, $this->grantIdent, $this->grantList, $this->requireClause, $this->grantOptions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->grantPrivileges, \SqlSemantics\Statement\Model\MySql\Role\GrantPrivilegesForm::class, $replace), $this->replacement($this->grantIdent, \SqlSemantics\Statement\Model\MySql\Role\GrantIdentForm::class, $replace), $this->replacement($this->grantList, \SqlSemantics\Statement\Model\MySql\Role\GrantListForm::class, $replace), $this->replacement($this->requireClause, \SqlSemantics\Statement\Model\MySql\Role\RequireClauseForm::class, $replace), $this->replacement($this->grantOptions, \SqlSemantics\Statement\Model\MySql\Role\GrantOptionsForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new grantPrivileges, preserving every other field.
      */
     public function withGrantPrivileges(\SqlSemantics\Statement\Model\MySql\Role\GrantPrivilegesForm $grantPrivileges): self

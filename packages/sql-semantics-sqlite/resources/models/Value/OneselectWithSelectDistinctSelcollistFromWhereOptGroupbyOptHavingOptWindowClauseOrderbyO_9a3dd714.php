@@ -70,6 +70,26 @@ final class OneselectWithSelectDistinctSelcollistFromWhereOptGroupbyOptHavingOpt
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->distinct, $this->projections, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause, $this->orderBy, $this->pagination];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->distinct, \SqlSemantics\Statement\Model\Sqlite\Role\DistinctForm::class, $replace), $this->replacement($this->projections, \SqlSemantics\Statement\Model\Sqlite\Role\SelcollistForm::class, $replace), $this->replacement($this->from, \SqlSemantics\Statement\Model\Sqlite\Role\FromForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm::class, $replace), $this->replacement($this->groupBy, \SqlSemantics\Statement\Model\Sqlite\Role\GroupbyOptForm::class, $replace), $this->replacement($this->having, \SqlSemantics\Statement\Model\Sqlite\Role\HavingOptForm::class, $replace), $this->replacement($this->windowClause, \SqlSemantics\Statement\Model\Sqlite\Role\WindowClauseForm::class, $replace), $this->replacement($this->orderBy, \SqlSemantics\Statement\Model\Sqlite\Role\OrderbyOptForm::class, $replace), $this->replacement($this->pagination, \SqlSemantics\Statement\Model\Sqlite\Role\LimitOptForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new distinct, preserving every other field.
      */
     public function withDistinct(\SqlSemantics\Statement\Model\Sqlite\Role\DistinctForm $distinct): self

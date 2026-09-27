@@ -54,6 +54,26 @@ final class VacuumStmtWithVacuumOptFullOptFreezeOptVerboseOptAnalyzeOptVacuumRel
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optFull, $this->optFreeze, $this->optVerbose, $this->optAnalyze, $this->optVacuumRelationList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optFull, \SqlSemantics\Statement\Model\PostgreSql\Role\OptFullForm::class, $replace), $this->replacement($this->optFreeze, \SqlSemantics\Statement\Model\PostgreSql\Role\OptFreezeForm::class, $replace), $this->replacement($this->optVerbose, \SqlSemantics\Statement\Model\PostgreSql\Role\OptVerboseForm::class, $replace), $this->replacement($this->optAnalyze, \SqlSemantics\Statement\Model\PostgreSql\Role\OptAnalyzeForm::class, $replace), $this->replacement($this->optVacuumRelationList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptVacuumRelationListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optFull, preserving every other field.
      */
     public function withOptFull(\SqlSemantics\Statement\Model\PostgreSql\Role\OptFullForm $optFull): self

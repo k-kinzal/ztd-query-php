@@ -38,6 +38,26 @@ final class OptInstallSetValueListWithSetSymInstallSetValueList_cef00b1a impleme
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->installSetValueList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->installSetValueList, \SqlSemantics\Statement\Model\MySql\Role\InstallSetValueListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new installSetValueList, preserving every other field.
      */
     public function withInstallSetValueList(\SqlSemantics\Statement\Model\MySql\Role\InstallSetValueListForm $installSetValueList): self

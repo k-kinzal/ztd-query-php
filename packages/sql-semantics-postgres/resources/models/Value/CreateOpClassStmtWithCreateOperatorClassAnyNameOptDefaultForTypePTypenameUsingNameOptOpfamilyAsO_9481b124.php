@@ -70,6 +70,26 @@ final class CreateOpClassStmtWithCreateOperatorClassAnyNameOptDefaultForTypePTyp
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->anyName, $this->optDefault, $this->typename, $this->name, $this->optOpfamily, $this->opclassItemList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->anyName, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm::class, $replace), $this->replacement($this->optDefault, \SqlSemantics\Statement\Model\PostgreSql\Role\OptDefaultForm::class, $replace), $this->replacement($this->typename, \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm::class, $replace), $this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->optOpfamily, \SqlSemantics\Statement\Model\PostgreSql\Role\OptOpfamilyForm::class, $replace), $this->replacement($this->opclassItemList, \SqlSemantics\Statement\Model\PostgreSql\Role\OpclassItemListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new anyName, preserving every other field.
      */
     public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self

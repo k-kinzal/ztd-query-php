@@ -9,7 +9,7 @@ use SqlParser\Grammar\Grammar;
  * Retains expression binding facts needed by structural construction assertions.
  *
  * @param array<string, array<int, list<array{name: string, terminal: bool, fixed: ?string, identifier?: bool}>>> $forms
- * @return array<string, array{power: int, operands: array<int, int>}>
+ * @return array<string, array{power: int, operands: array<int, int>, rule: string}>
  */
 function bindingContracts(Grammar $grammar, array $forms): array
 {
@@ -34,7 +34,7 @@ function bindingContracts(Grammar $grammar, array $forms): array
             $operands[$index] = $precedence->level + ($equal ? 0 : 1);
         }
         if ($operands !== []) {
-            $contracts[valueName($name, $symbols)] = ['power' => $precedence->level, 'operands' => $operands];
+            $contracts[valueName($name, $symbols)] = ['power' => $precedence->level, 'operands' => $operands, 'rule' => $name];
         }
     }
 
@@ -45,7 +45,7 @@ function bindingContracts(Grammar $grammar, array $forms): array
  * Writes parser-independent facts used to state the generated value invariants.
  *
  * @param array<string, list<string>> $patterns
- * @param array<string, array<string, array{power: int, operands: array<int, int>}>> $bindings
+ * @param array<string, array<string, array{power: int, operands: array<int, int>, rule: string}>> $bindings
  */
 function writeContracts(string $directory, string $dialect, array $patterns, array $bindings): void
 {
@@ -62,14 +62,20 @@ function writeContracts(string $directory, string $dialect, array $patterns, arr
     }
     ksort($spellings);
     $powers = [];
+    $operands = [];
+    $rules = [];
     foreach ($bindings as $name => $versions) {
         $fqcn = 'SqlSemantics\\Statement\\Model\\' . $dialect . '\\Value\\' . $name;
         $powers[$fqcn] = array_map(static fn (array $contract): int => $contract['power'], $versions);
+        $operands[$fqcn] = array_map(static fn (array $contract): array => $contract['operands'], $versions);
+        $rules[$fqcn] = array_values($versions)[0]['rule'];
     }
     ksort($powers);
+    ksort($operands);
+    ksort($rules);
     $body = "/**\n * Immutable model membership, lexical domains and operand binding strengths.\n *\n * @visibility SqlSemantics\n */\nfinal class Contracts\n{\n";
-    $types = ['ELEMENTS' => 'array<class-string<\\SqlSemantics\\Statement\\Element>, true>', 'SPELLINGS' => 'array<string, string>', 'BINDING_POWERS' => 'array<class-string<\\SqlSemantics\\Statement\\Element>, array<string, int>>'];
-    foreach (['ELEMENTS' => $classes, 'SPELLINGS' => $spellings, 'BINDING_POWERS' => $powers] as $name => $values) {
+    $types = ['ELEMENTS' => 'array<class-string<\\SqlSemantics\\Statement\\Element>, true>', 'SPELLINGS' => 'array<string, string>', 'BINDING_POWERS' => 'array<class-string<\\SqlSemantics\\Statement\\Element>, array<string, int>>', 'BINDING_OPERANDS' => 'array<class-string<\\SqlSemantics\\Statement\\Element>, array<string, array<int, int>>>', 'BINDING_RULES' => 'array<class-string<\\SqlSemantics\\Statement\\Element>, string>'];
+    foreach (['ELEMENTS' => $classes, 'SPELLINGS' => $spellings, 'BINDING_POWERS' => $powers, 'BINDING_OPERANDS' => $operands, 'BINDING_RULES' => $rules] as $name => $values) {
         $export = preg_replace('/[ \t]+$/m', '', var_export($values, true));
         $body .= "    /**\n     * Generated construction facts; no parser is consulted by a value.\n     *\n     * @var {$types[$name]}\n     */\n    public const {$name} = " . $export . ";\n";
     }

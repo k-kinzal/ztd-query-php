@@ -28,7 +28,7 @@ final class SimpleExprWithIntervalSymExprIntervalExpr_b11621f6 implements \SqlSe
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($interval), 'The interval must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr2), 'The expr2 must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($expr2, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 19,  'mysql-5.7.44' => 20,  'mysql-8.0.44' => 26,  'mysql-8.1.0' => 26,  'mysql-8.2.0' => 26,  'mysql-8.3.0' => 26,  'mysql-8.4.7' => 26,  'mysql-9.0.1' => 26,  'mysql-9.1.0' => 26,));
+        $this->assertOperandBindingStrength($expr2, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 19,  'mysql-5.7.44' => 20,  'mysql-8.0.44' => 26,  'mysql-8.1.0' => 26,  'mysql-8.2.0' => 26,  'mysql-8.3.0' => 26,  'mysql-8.4.7' => 26,  'mysql-9.0.1' => 26,  'mysql-9.1.0' => 26,), \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_RULES, 'expr');
     }
 
     /**
@@ -46,6 +46,26 @@ final class SimpleExprWithIntervalSymExprIntervalExpr_b11621f6 implements \SqlSe
         $writer->append('+');
         $writer->comments($this->comments, 4);
         $this->expr2->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->expr, $this->interval, $this->expr2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->replacement($this->interval, \SqlSemantics\Statement\Model\MySql\Role\IntervalForm::class, $replace), $this->replacement($this->expr2, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->comments);
     }
 
     /**

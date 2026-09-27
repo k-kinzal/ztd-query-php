@@ -44,6 +44,26 @@ final class ShowVariablesStmtWithShowOptVarTypeVariablesOptWildOrWhere_9e93e053 
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optVarType, $this->optWildOrWhere];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optVarType, \SqlSemantics\Statement\Model\MySql\Role\OptVarTypeForm::class, $replace), $this->replacement($this->optWildOrWhere, \SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optVarType, preserving every other field.
      */
     public function withOptVarType(\SqlSemantics\Statement\Model\MySql\Role\OptVarTypeForm $optVarType): self

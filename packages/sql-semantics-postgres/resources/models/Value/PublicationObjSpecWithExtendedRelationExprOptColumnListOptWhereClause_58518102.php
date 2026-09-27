@@ -44,6 +44,26 @@ final class PublicationObjSpecWithExtendedRelationExprOptColumnListOptWhereClaus
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->extendedRelationExpr, $this->optColumnList, $this->optWhereClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->extendedRelationExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\ExtendedRelationExprForm::class, $replace), $this->replacement($this->optColumnList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnListForm::class, $replace), $this->replacement($this->optWhereClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OptWhereClauseForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new extendedRelationExpr, preserving every other field.
      */
     public function withExtendedRelationExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\ExtendedRelationExprForm $extendedRelationExpr): self

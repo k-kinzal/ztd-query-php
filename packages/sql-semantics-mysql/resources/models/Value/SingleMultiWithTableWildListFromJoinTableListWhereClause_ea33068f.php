@@ -46,6 +46,26 @@ final class SingleMultiWithTableWildListFromJoinTableListWhereClause_ea33068f im
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableWildList, $this->joinTableList, $this->where];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableWildList, \SqlSemantics\Statement\Model\MySql\Role\TableWildListForm::class, $replace), $this->replacement($this->joinTableList, \SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\MySql\Role\WhereClauseForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new tableWildList, preserving every other field.
      */
     public function withTableWildList(\SqlSemantics\Statement\Model\MySql\Role\TableWildListForm $tableWildList): self

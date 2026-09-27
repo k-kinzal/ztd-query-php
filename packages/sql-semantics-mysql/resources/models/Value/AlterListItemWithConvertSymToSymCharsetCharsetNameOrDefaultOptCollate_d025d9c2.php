@@ -48,6 +48,26 @@ final class AlterListItemWithConvertSymToSymCharsetCharsetNameOrDefaultOptCollat
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->charset, $this->charsetNameOrDefault, $this->optCollate];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->charset, \SqlSemantics\Statement\Model\MySql\Role\CharsetForm::class, $replace), $this->replacement($this->charsetNameOrDefault, \SqlSemantics\Statement\Model\MySql\Role\CharsetNameOrDefaultForm::class, $replace), $this->replacement($this->optCollate, \SqlSemantics\Statement\Model\MySql\Role\OptCollateForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new charset, preserving every other field.
      */
     public function withCharset(\SqlSemantics\Statement\Model\MySql\Role\CharsetForm $charset): self

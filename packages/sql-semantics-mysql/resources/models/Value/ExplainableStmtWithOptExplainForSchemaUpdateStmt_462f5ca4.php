@@ -40,6 +40,26 @@ final class ExplainableStmtWithOptExplainForSchemaUpdateStmt_462f5ca4 implements
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optExplainForSchema, $this->updateStmt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optExplainForSchema, \SqlSemantics\Statement\Model\MySql\Role\OptExplainForSchemaForm::class, $replace), $this->replacement($this->updateStmt, \SqlSemantics\Statement\Model\MySql\Role\UpdateStmtForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optExplainForSchema, preserving every other field.
      */
     public function withOptExplainForSchema(\SqlSemantics\Statement\Model\MySql\Role\OptExplainForSchemaForm $optExplainForSchema): self

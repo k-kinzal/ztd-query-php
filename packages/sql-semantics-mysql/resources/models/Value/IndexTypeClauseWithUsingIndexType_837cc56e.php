@@ -38,6 +38,26 @@ final class IndexTypeClauseWithUsingIndexType_837cc56e implements \SqlSemantics\
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->indexType];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->indexType, \SqlSemantics\Statement\Model\MySql\Role\IndexTypeForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new indexType, preserving every other field.
      */
     public function withIndexType(\SqlSemantics\Statement\Model\MySql\Role\IndexTypeForm $indexType): self

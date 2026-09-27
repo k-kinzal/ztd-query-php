@@ -46,6 +46,26 @@ final class ColumnlistWithColumnlistCommaColumnnameCarglist_106fb537 implements 
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->columnlist, $this->columnname, $this->carglist];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->columnlist, \SqlSemantics\Statement\Model\Sqlite\Role\ColumnlistForm::class, $replace), $this->replacement($this->columnname, \SqlSemantics\Statement\Model\Sqlite\Role\ColumnnameForm::class, $replace), $this->replacement($this->carglist, \SqlSemantics\Statement\Model\Sqlite\Role\CarglistForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new columnlist, preserving every other field.
      */
     public function withColumnlist(\SqlSemantics\Statement\Model\Sqlite\Role\ColumnlistForm $columnlist): self

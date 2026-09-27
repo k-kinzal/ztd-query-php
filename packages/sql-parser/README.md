@@ -62,6 +62,26 @@ $tree->find('table_reference')[0]->text($sql);   // 'users u'
 $tree->toString();                               // the statement again, byte for byte
 ```
 
+A MySQL parser reads text under a `sql_mode`, since `ANSI_QUOTES`, `PIPES_AS_CONCAT`, `HIGH_NOT_PRECEDENCE`, `NO_BACKSLASH_ESCAPES` and `IGNORE_SPACE` change how text is tokenized. Pass the value a session reports:
+
+```php
+use SqlParser\MySql\MySqlParser;
+use SqlParser\MySql\SqlMode;
+
+$parser = new MySqlParser('mysql-8.4.7', SqlMode::fromString('ANSI_QUOTES,NO_BACKSLASH_ESCAPES'));
+$parser->tokenize('SELECT "x"')[1]->name;        // 'IDENT_QUOTED'
+```
+
+A statement written for PDO is not in the server's language: PDO rewrites `:name`, and `?` for PostgreSQL, before the server sees them. The MySQL and PostgreSQL parsers read those markers as parameters under `ParameterSyntax::Pdo`; SQLite reads them natively.
+
+```php
+use SqlParser\Lexer\ParameterSyntax;
+use SqlParser\PostgreSql\PostgreSqlParser;
+
+$parser = new PostgreSqlParser(parameters: ParameterSyntax::Pdo);
+$parser->parse('SELECT id FROM users WHERE id = :id OR id = ?');
+```
+
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.

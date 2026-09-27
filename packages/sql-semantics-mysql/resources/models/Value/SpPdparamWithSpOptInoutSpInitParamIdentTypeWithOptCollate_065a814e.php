@@ -48,6 +48,26 @@ final class SpPdparamWithSpOptInoutSpInitParamIdentTypeWithOptCollate_065a814e i
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->spOptInout, $this->spInitParam, $this->ident, $this->typeWithOptCollate];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->spOptInout, \SqlSemantics\Statement\Model\MySql\Role\SpOptInoutForm::class, $replace), $this->replacement($this->spInitParam, \SqlSemantics\Statement\Model\MySql\Role\SpInitParamForm::class, $replace), $this->replacement($this->ident, \SqlSemantics\Statement\Model\MySql\Role\IdentForm::class, $replace), $this->replacement($this->typeWithOptCollate, \SqlSemantics\Statement\Model\MySql\Role\TypeWithOptCollateForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new spOptInout, preserving every other field.
      */
     public function withSpOptInout(\SqlSemantics\Statement\Model\MySql\Role\SpOptInoutForm $spOptInout): self

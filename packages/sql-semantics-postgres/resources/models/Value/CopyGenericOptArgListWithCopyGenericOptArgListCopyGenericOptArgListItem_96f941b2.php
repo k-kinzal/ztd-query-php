@@ -42,6 +42,26 @@ final class CopyGenericOptArgListWithCopyGenericOptArgListCopyGenericOptArgListI
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->copyGenericOptArgList, $this->copyGenericOptArgListItem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->copyGenericOptArgList, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListForm::class, $replace), $this->replacement($this->copyGenericOptArgListItem, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListItemForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new copyGenericOptArgList, preserving every other field.
      */
     public function withCopyGenericOptArgList(\SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListForm $copyGenericOptArgList): self

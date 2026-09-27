@@ -50,6 +50,26 @@ final class OptSubPartWithSubpartitionSymByOptLinearHashSymSubPartFuncOptNumSubp
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optLinear, $this->subPartFunc, $this->optNumSubparts];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optLinear, \SqlSemantics\Statement\Model\MySql\Role\OptLinearForm::class, $replace), $this->replacement($this->subPartFunc, \SqlSemantics\Statement\Model\MySql\Role\SubPartFuncForm::class, $replace), $this->replacement($this->optNumSubparts, \SqlSemantics\Statement\Model\MySql\Role\OptNumSubpartsForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optLinear, preserving every other field.
      */
     public function withOptLinear(\SqlSemantics\Statement\Model\MySql\Role\OptLinearForm $optLinear): self

@@ -42,6 +42,26 @@ final class SumExprWithCountSymInSumExpr_cc334516 implements \SqlSemantics\State
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->inSumExpr];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->inSumExpr, \SqlSemantics\Statement\Model\MySql\Role\InSumExprForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new inSumExpr, preserving every other field.
      */
     public function withInSumExpr(\SqlSemantics\Statement\Model\MySql\Role\InSumExprForm $inSumExpr): self

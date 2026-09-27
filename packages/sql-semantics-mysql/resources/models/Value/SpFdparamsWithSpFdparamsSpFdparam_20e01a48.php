@@ -42,6 +42,26 @@ final class SpFdparamsWithSpFdparamsSpFdparam_20e01a48 implements \SqlSemantics\
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->spFdparams, $this->spFdparam];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->spFdparams, \SqlSemantics\Statement\Model\MySql\Role\SpFdparamsForm::class, $replace), $this->replacement($this->spFdparam, \SqlSemantics\Statement\Model\MySql\Role\SpFdparamForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new spFdparams, preserving every other field.
      */
     public function withSpFdparams(\SqlSemantics\Statement\Model\MySql\Role\SpFdparamsForm $spFdparams): self

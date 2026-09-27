@@ -42,6 +42,26 @@ final class QualifiedNameListWithQualifiedNameListQualifiedName_62423088 impleme
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->qualifiedNameList, $this->qualifiedName];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->qualifiedNameList, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameListForm::class, $replace), $this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new qualifiedNameList, preserving every other field.
      */
     public function withQualifiedNameList(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameListForm $qualifiedNameList): self

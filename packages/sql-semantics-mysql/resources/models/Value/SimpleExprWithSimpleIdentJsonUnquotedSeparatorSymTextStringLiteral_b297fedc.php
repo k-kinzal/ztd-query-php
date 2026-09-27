@@ -44,6 +44,26 @@ final class SimpleExprWithSimpleIdentJsonUnquotedSeparatorSymTextStringLiteral_b
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->simpleIdent, $this->textStringLiteral];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->simpleIdent, \SqlSemantics\Statement\Model\MySql\Role\SimpleIdentForm::class, $replace), $this->jsonUnquotedSeparatorSym, $this->replacement($this->textStringLiteral, \SqlSemantics\Statement\Model\MySql\Role\TextStringLiteralForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new simpleIdent, preserving every other field.
      */
     public function withSimpleIdent(\SqlSemantics\Statement\Model\MySql\Role\SimpleIdentForm $simpleIdent): self

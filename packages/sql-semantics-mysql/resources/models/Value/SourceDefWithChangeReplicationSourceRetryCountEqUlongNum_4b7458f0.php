@@ -42,6 +42,26 @@ final class SourceDefWithChangeReplicationSourceRetryCountEqUlongNum_4b7458f0 im
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->changeReplicationSourceRetryCount, $this->ulongNum];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->changeReplicationSourceRetryCount, \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceRetryCountForm::class, $replace), $this->replacement($this->ulongNum, \SqlSemantics\Statement\Model\MySql\Role\UlongNumForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new changeReplicationSourceRetryCount, preserving every other field.
      */
     public function withChangeReplicationSourceRetryCount(\SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceRetryCountForm $changeReplicationSourceRetryCount): self
