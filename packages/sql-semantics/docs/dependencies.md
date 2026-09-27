@@ -96,7 +96,7 @@ $query = $semantics->analyze('SELECT * FROM users JOIN audit_log USING (id)', [$
 // users is a Dependency with its declared table, audit_log is Undeclared
 ```
 
-Under partial declarations, dropping an undeclared table is a `Drop` without a declaration. Declarations that conflict with a dependency are errors either way.
+Under partial declarations, dropping an undeclared table is a `Drop` without a declaration. A table the dependencies dropped is known not to exist, so naming it is still an `unknown-table` error until a later dependency declares it again. Declarations that conflict with a dependency are errors either way.
 
 ## Common table expressions
 

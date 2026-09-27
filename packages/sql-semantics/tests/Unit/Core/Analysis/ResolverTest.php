@@ -359,9 +359,10 @@ final class ResolverTest extends TestCase
         $kinds = array_map(static fn (Reference $reference): string => implode('.', $reference->name) . ':' . $reference->kind->name, Resolved::of($query)->references);
         self::assertSame(['recent:CommonTableExpression', 'users:Dependency', 'audit_log:Undeclared', 'recent:CommonTableExpression'], $kinds);
         self::assertNull(Resolved::of($query)->references[2]->table);
-        self::assertSame(ReferenceKind::Drop, Resolved::of($semantics->analyze('DROP TABLE audit_log', [$users], Declarations::Partial))->references[0]->kind);
+        $drop = $semantics->analyze('DROP TABLE audit_log', [$users], Declarations::Partial);
+        self::assertSame(ReferenceKind::Drop, Resolved::of($drop)->references[0]->kind);
         $this->expectException(SemanticException::class);
-        $semantics->analyze('SELECT * FROM audit_log', [$users]);
+        $semantics->analyze('SELECT * FROM audit_log', [$users, $drop], Declarations::Partial);
     }
 
     public function testDeclarePutsANewTableInForceAndRefersToAConditionalDuplicate(): void

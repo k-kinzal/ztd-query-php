@@ -126,6 +126,19 @@ final class RelationsTest extends TestCase
         self::assertNull($relations->find(['users']));
     }
 
+    public function testGoneTellsATableTheDropsTookOutUntilItIsDeclaredAgain(): void
+    {
+        $relations = new Relations(PostgreSqlDialect::PostgreSql->platform()->names(), ['app', 'public']);
+        $relations->drop('app', 'users');
+        self::assertTrue($relations->gone(['app', 'users']));
+        self::assertFalse($relations->gone(['users']));
+        $relations->drop('public', 'users');
+        self::assertTrue($relations->gone(['users']));
+        $relations->declare('public', 'users', null, null);
+        self::assertFalse($relations->gone(['users']));
+        self::assertFalse($relations->gone(['orders']));
+    }
+
     public function testQualifiedUsesTheFirstSchemaOfThePathAndKeepsTheLastTwoParts(): void
     {
         $relations = new Relations(MySqlDialect::MySql->platform()->names(), ['app']);

@@ -15,7 +15,8 @@ use SqlSemantics\Statement\Statement;
  *
  * Tables are compared under the dialect's relation name policy. A name
  * without a schema refers to the table of the first schema of the search
- * path that has one, and is declared in the first schema of the path.
+ * path that has one, and is declared in the first schema of the path. A
+ * table that was dropped is remembered as gone until it is declared again.
  *
  * @visibility SqlSemantics
  */
@@ -25,6 +26,11 @@ final class Relations
      * @var list<array{string, string, TableDefinition|null, Statement|null}>
      */
     private array $tables = [];
+
+    /**
+     * @var list<array{string, string}>
+     */
+    private array $dropped = [];
 
     /**
      * Starts with no table in force.
@@ -44,10 +50,8 @@ final class Relations
             [$schema, $name] = $this->qualified($reference->name);
             $this->declare($schema, $name, $reference->table, $dependency);
         } elseif ($reference->kind === ReferenceKind::Drop) {
-            $found = $this->find($reference->name);
-            if ($found !== null) {
-                $this->drop($found[0], $found[1]);
-            }
+            $found = $this->find($reference->name) ?? $this->qualified($reference->name);
+            $this->drop($found[0], $found[1]);
         }
     }
 
@@ -57,6 +61,7 @@ final class Relations
     public function declare(string $schema, string $name, ?TableDefinition $table, ?Statement $owner): void
     {
         $this->tables[] = [$schema, $name, $table, $owner];
+        $this->dropped = array_values(array_filter($this->dropped, fn (array $gone): bool => !$this->same($gone[0], $gone[1], $schema, $name)));
     }
 
     /**
@@ -65,6 +70,25 @@ final class Relations
     public function drop(string $schema, string $name): void
     {
         $this->tables = array_values(array_filter($this->tables, fn (array $known): bool => !$this->same($known[0], $known[1], $schema, $name)));
+        $this->dropped[] = [$schema, $name];
+    }
+
+    /**
+     * Reports whether a name refers to no table because the tables it could refer to were dropped: in its schema, or in every schema of the search path.
+     *
+     * @param non-empty-list<string> $name
+     */
+    public function gone(array $name): bool
+    {
+        $parts = array_slice($name, -2);
+        $table = $parts[count($parts) - 1];
+        foreach (count($parts) === 2 ? [$parts[0]] : $this->path as $schema) {
+            if (array_filter($this->dropped, fn (array $gone): bool => $this->same($gone[0], $gone[1], $schema, $table)) === []) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

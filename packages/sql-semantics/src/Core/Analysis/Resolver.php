@@ -119,7 +119,7 @@ final class Resolver
     }
 
     /**
-     * Resolves a site that defines, drops or refers to a table: to a common table expression visible at the site, to a table in force, or, under partial declarations, to an undeclared table.
+     * Resolves a site that defines, drops or refers to a table: to a common table expression visible at the site, to a table in force, or, under partial declarations, to an undeclared table unless the dependencies dropped it.
      *
      * @throws SemanticException When the name is not in force under complete declarations, and the site is not a conditional drop
      */
@@ -129,8 +129,9 @@ final class Resolver
             return new Reference($site->value, $site->name, ReferenceKind::CommonTableExpression, values: $site->values);
         }
         $known = $relations->find($site->name);
+        $open = $declarations === Declarations::Partial && !$relations->gone($site->name);
         if ($site->kind === ReferenceKind::Drop) {
-            if ($known === null && !$site->conditional && $declarations === Declarations::Complete) {
+            if ($known === null && !$site->conditional && !$open) {
                 throw new SemanticException('unknown-table', 'Cannot drop an unknown table: ' . implode('.', $site->name), $tree);
             }
 
@@ -139,7 +140,7 @@ final class Resolver
         if ($site->scope->contains($site->name, $this->language->dialect->platform()->names())) {
             return new Reference($site->value, $site->name, ReferenceKind::CommonTableExpression, values: $site->values);
         }
-        if ($known === null && $declarations === Declarations::Partial) {
+        if ($known === null && $open) {
             return new Reference($site->value, $site->name, ReferenceKind::Undeclared, values: $site->values);
         }
         if ($known === null) {

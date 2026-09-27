@@ -61,7 +61,7 @@ interface Builder
      * A numeric literal that the language reads as a non-integer number and that reads back as exactly the double.
      *
      * The digits are the fewest that denote the same double, whatever the
-     * `precision` settings, and negative zero keeps its sign.
+     * `precision` settings, and negative zero is written negated.
      *
      * @throws CompositionException When the value is not finite
      */

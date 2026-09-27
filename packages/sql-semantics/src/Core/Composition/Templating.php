@@ -38,6 +38,11 @@ trait Templating
     abstract protected function expressionSymbol(): string;
 
     /**
+     * Answers the grammar symbol of the table names table() composes.
+     */
+    abstract protected function tableSymbol(): string;
+
+    /**
      * `IS NULL`, or `IS NOT NULL` when negated.
      */
     public function isNull(Element $operand, bool $negated = false): Element
@@ -90,9 +95,11 @@ trait Templating
         if ($name === '') {
             throw new CompositionException('A function name must not be empty.');
         }
-        $slots = '(' . implode(', ', array_map(static fn (int $index): string => 'slot' . $index, array_keys($arguments))) . ')';
+        $spelled = $this->bare($name) ?? $this->quote($name);
+        $marker = $this->slotMarker($spelled);
+        $slots = '(' . implode(', ', array_map(static fn (int $index): string => $marker . $index, array_keys($arguments))) . ')';
 
-        return $this->expression(($this->bare($name) ?? $this->quote($name)) . $slots, $arguments);
+        return $this->expression($spelled . $slots, $arguments, $marker);
     }
 
     /**
@@ -106,19 +113,20 @@ trait Templating
     /**
      * A SELECT of columns, each an expression with an optional alias, from an optional table and filtered by an optional condition.
      *
-     * The table is written into the template as it is written, so the
-     * slots are named with a word it does not contain.
+     * The table is a table name, such as one answered by table(); it is
+     * written into the template as it is written, so the slots are named
+     * with a word it does not contain.
      */
     public function select(array $columns, ?Element $from = null, ?Element $where = null): Element
     {
         if ($columns === []) {
             throw new CompositionException('A SELECT needs at least one column.');
         }
-        $table = $from === null ? '' : Writer::render($from);
-        $marker = 'slot';
-        while (stripos($table, $marker) !== false) {
-            $marker .= 'x';
+        if ($from !== null) {
+            $this->expect($from, $this->tableSymbol(), 'The table of a SELECT');
         }
+        $table = $from === null ? '' : Writer::render($from);
+        $marker = $this->slotMarker($table);
         $items = [];
         $operands = [];
         $names = [];
@@ -147,14 +155,27 @@ trait Templating
      *
      * @throws CompositionException When the release reads no such expression
      */
-    protected function expression(string $text, array $operands): Element
+    protected function expression(string $text, array $operands, string $marker = 'slot'): Element
     {
         $value = $this->templates()->written($this->templates()->command('SELECT ' . $text), $text, $this->roleInterface($this->expressionSymbol()));
         if ($value === null) {
             throw new CompositionException('No expression ' . $text . ' in ' . $this->language->version);
         }
 
-        return $this->substitute($value, 'slot', $operands);
+        return $this->substitute($value, $marker, $operands);
+    }
+
+    /**
+     * Answers the letters slots begin with: `slot`, lengthened until the text written into a template around the slots does not contain it.
+     */
+    protected function slotMarker(string $text): string
+    {
+        $marker = 'slot';
+        while (stripos($text, $marker) !== false) {
+            $marker .= 'x';
+        }
+
+        return $marker;
     }
 
     /**
@@ -181,8 +202,8 @@ trait Templating
         foreach ($value->children() as $index => $child) {
             $text = $child->children() === [] ? Writer::render($child) : '';
             $replacements[] = match (true) {
-                preg_match('/^' . $marker . '(\d+)$/D', $text, $slot) === 1 => $this->placed($operands[(int) $slot[1]], $shape['rule'], $shape['symbols'], $positions[$index]),
-                preg_match('/^' . $marker . '_(\d+)$/D', $text, $slot) === 1 => $this->name($shape['symbols'][$positions[$index]], $names[(int) $slot[1]]),
+                preg_match('/^' . $marker . '(\d+)$/D', $text, $slot) === 1 => $this->placed($operands[(int) $slot[1]] ?? throw new CompositionException('No operand for the slot ' . $text), $shape['rule'], $shape['symbols'], $positions[$index]),
+                preg_match('/^' . $marker . '_(\d+)$/D', $text, $slot) === 1 => $this->name($shape['symbols'][$positions[$index]], $names[(int) $slot[1]] ?? throw new CompositionException('No name for the slot ' . $text)),
                 default => $this->substitute($child, $marker, $operands, $names),
             };
         }

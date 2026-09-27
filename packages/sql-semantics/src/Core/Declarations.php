@@ -11,7 +11,8 @@ namespace SqlSemantics\Core;
  * error: the dependency that would declare it was not given. With partial
  * declarations, the database has tables the dependencies do not describe,
  * and such a name is a reference to an undeclared table, with nothing known
- * of its columns; every other name is resolved as before.
+ * of its columns, unless the dependencies dropped that table; every other
+ * name is resolved as before.
  *
  * @visibility public
  * @example Reading declarations that describe only some tables

@@ -319,6 +319,12 @@ final class Builder extends Composition
     }
 
     #[Override]
+    protected function tableSymbol(): string
+    {
+        return 'fullname';
+    }
+
+    #[Override]
     protected function expressionSymbol(): string
     {
         return 'expr';

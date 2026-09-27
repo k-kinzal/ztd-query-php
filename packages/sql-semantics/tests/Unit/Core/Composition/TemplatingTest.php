@@ -63,4 +63,17 @@ final class TemplatingTest extends TestCase
         $query = $builder->select([[$builder->column('slot1'), 'slot_0']], $builder->table('slot0'), $builder->column('slot_1'));
         self::assertSame('SELECT slot1 AS slot_0 FROM slot0 WHERE slot_1', Writer::render($query));
     }
+
+    public function testAFunctionNameThatWritesASlotNameIsNotTakenForASlot(): void
+    {
+        $builder = (new Semantics(SqliteDialect::Sqlite))->builder();
+        self::assertSame('slot1 ( 1 , evil )', Writer::render($builder->call('slot1', [$builder->integer(1), $builder->column('evil')])));
+    }
+
+    public function testTheTableOfASelectMustBeATableName(): void
+    {
+        $builder = (new Semantics(SqliteDialect::Sqlite))->builder();
+        $this->expectException(CompositionException::class);
+        $builder->select([[$builder->column('a'), null]], $builder->string('x'));
+    }
 }

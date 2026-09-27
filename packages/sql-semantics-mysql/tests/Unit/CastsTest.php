@@ -32,10 +32,10 @@ final class CastsTest extends TestCase
     {
         yield 'signed' => [new TypeDescriptor(Builtin::BigInt), 'CAST( NULL AS SIGNED )', null];
         yield 'unsigned' => [new TypeDescriptor(Builtin::BigInt, unsigned: true), 'CAST( NULL AS UNSIGNED )', null];
-        yield 'char' => [new TypeDescriptor(Builtin::Char, length: 10, characterSet: 'utf8mb4'), 'CAST( NULL AS CHAR( 10 ) CHARACTER SET utf8mb4 )', null];
-        yield 'char of a quoted character set' => [new TypeDescriptor(Builtin::Char, characterSet: 'utf8mb4) , x('), 'CAST( NULL AS CHAR CHARACTER SET `utf8mb4) , x(` )', null];
-        yield 'char binary' => [new TypeDescriptor(Builtin::Char, binaryCollation: true), 'CAST( NULL AS CHAR BINARY )', null];
-        yield 'binary' => [new TypeDescriptor(Builtin::Binary, length: 4), 'CAST( NULL AS BINARY( 4 ) )', null];
+        yield 'varchar of a quoted character set' => [new TypeDescriptor(Builtin::VarChar, length: 10, characterSet: 'utf8mb4) , x('), 'CAST( NULL AS CHAR( 10 ) CHARACTER SET `utf8mb4) , x(` )', null];
+        yield 'varchar' => [new TypeDescriptor(Builtin::VarChar, length: 10, characterSet: 'utf8mb4'), 'CAST( NULL AS CHAR( 10 ) CHARACTER SET utf8mb4 )', null];
+        yield 'varchar as long as the value' => [new TypeDescriptor(Builtin::VarChar, binaryCollation: true), 'CAST( NULL AS CHAR BINARY )', null];
+        yield 'varbinary as long as the value' => [new TypeDescriptor(Builtin::VarBinary), 'CAST( NULL AS BINARY )', null];
         yield 'decimal' => [new TypeDescriptor(Builtin::Numeric, precision: 10, scale: 2), 'CAST( NULL AS DECIMAL( 10 , 2 ) )', null];
         yield 'double' => [new TypeDescriptor(Builtin::DoublePrecision), 'CAST( NULL AS DOUBLE )', null];
         yield 'float' => [new TypeDescriptor(Builtin::Real), 'CAST( NULL AS FLOAT )', null];
@@ -63,7 +63,9 @@ final class CastsTest extends TestCase
     public static function providerRejected(): iterable
     {
         yield 'int' => [new TypeDescriptor(Builtin::Integer), 'no target of type integer', null];
-        yield 'varchar' => [new TypeDescriptor(Builtin::VarChar, length: 10), 'no target of type varchar', null];
+        yield 'char' => [new TypeDescriptor(Builtin::Char, length: 1), 'no target of type char', null];
+        yield 'binary' => [new TypeDescriptor(Builtin::Binary, length: 4), 'no target of type binary', null];
+        yield 'varbinary of a length' => [new TypeDescriptor(Builtin::VarBinary, length: 4), 'no target of type varbinary', null];
         yield 'text' => [new TypeDescriptor(Builtin::Text), 'no target of type text', null];
         yield 'enum' => [new TypeDescriptor(Builtin::Enum, members: [(new Semantics(Dialect::MySql))->builder()->string('a')]), 'no target of type enum', null];
         yield 'display width' => [new TypeDescriptor(Builtin::BigInt, length: 20), 'cannot state its length', null];

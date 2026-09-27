@@ -271,6 +271,12 @@ final class Builder extends Composition
     }
 
     #[Override]
+    protected function tableSymbol(): string
+    {
+        return 'table_ident';
+    }
+
+    #[Override]
     protected function expressionSymbol(): string
     {
         return 'expr';
