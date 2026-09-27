@@ -8,9 +8,9 @@ use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
-use ZtdQuery\Adapter\Pdo\Session\DriverSessionFactory;
+use ZtdQuery\Adapter\Pdo\Session\DriverPlatform;
 
-#[CoversClass(DriverSessionFactory::class)]
+#[CoversClass(DriverPlatform::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\ZtdPdoException::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\ZtdPdoStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\ZtdPdo::class)]
@@ -23,18 +23,18 @@ use ZtdQuery\Adapter\Pdo\Session\DriverSessionFactory;
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\ParameterBinder::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\PreparedQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\ConnectionExecution::class)]
-final class DriverSessionFactoryTest extends TestCase
+final class DriverPlatformTest extends TestCase
 {
     public function testDriverNamesAnswersEveryDriverZtdHasAPlatformFor(): void
     {
-        self::assertSame(['mysql', 'pgsql', 'sqlite'], (new DriverSessionFactory())->driverNames());
+        self::assertSame(['mysql', 'pgsql', 'sqlite'], (new DriverPlatform())->driverNames());
     }
 
     public function testForDriverAnswersThePlatformThatDriverSpeaks(): void
     {
         self::assertInstanceOf(
-            'ZtdQuery\\Platform\\Sqlite\\SqliteSessionFactory',
-            (new DriverSessionFactory())->forDriver('sqlite'),
+            'ZtdQuery\\Platform\\Sqlite\\SqlitePlatform',
+            (new DriverPlatform())->forDriver('sqlite'),
         );
     }
 
@@ -43,21 +43,21 @@ final class DriverSessionFactoryTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Unsupported PDO driver: "oci"');
 
-        (new DriverSessionFactory())->forDriver('oci');
+        (new DriverPlatform())->forDriver('oci');
     }
 
     public function testForDriverNamesEverySupportedDriverWhenItRefusesOne(): void
     {
         $this->expectExceptionMessage('Supported drivers: mysql, pgsql, sqlite.');
 
-        (new DriverSessionFactory())->forDriver('firebird');
+        (new DriverPlatform())->forDriver('firebird');
     }
 
     public function testForConnectionReadsTheDriverOffTheConnection(): void
     {
-        $factory = (new DriverSessionFactory())->forConnection(new PDO('sqlite::memory:'));
+        $platform = (new DriverPlatform())->forConnection(new PDO('sqlite::memory:'));
 
-        self::assertInstanceOf('ZtdQuery\\Platform\\Sqlite\\SqliteSessionFactory', $factory);
+        self::assertInstanceOf('ZtdQuery\\Platform\\Sqlite\\SqlitePlatform', $platform);
     }
 
 

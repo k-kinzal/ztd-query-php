@@ -80,6 +80,17 @@ jobs:
       - name: Check runtime platform requirements
         if: matrix.php == '8.4' || matrix.php == '8.5'
         run: composer check-platform-reqs --no-dev
+      - name: Pull database images before timed tests
+        run: |
+          php -r '
+            require "vendor/autoload.php";
+            echo (new Container\MySql80Container())->image(), PHP_EOL;
+            if (getenv("MYSQL_VERSION") === "8.4.7") {
+                echo (new Container\MySql84Container())->image(), PHP_EOL;
+            }
+          ' | while IFS= read -r image; do
+            docker pull "$image"
+          done
       - name: Unit, integration and documentation examples
         run: composer run-script --timeout=1800 test
 

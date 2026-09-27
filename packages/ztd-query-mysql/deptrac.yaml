@@ -11,7 +11,7 @@ deptrac:
     - name: Session
       collectors:
         - type: directory
-          value: src/MySqlSessionFactory.php$
+          value: src/MySqlPlatform.php$
         - type: directory
           value: src/Compatibility/.*
     - name: Simulation
@@ -35,7 +35,7 @@ deptrac:
     - name: CoreSession
       collectors:
         - type: classLike
-          value: ^ZtdQuery\\(?:[^\\]+|Platform\\SessionFactory)$
+          value: ^ZtdQuery\\[^\\]+$
     - name: CoreSimulation
       collectors:
         - type: classLike
@@ -43,7 +43,7 @@ deptrac:
     - name: CoreContract
       collectors:
         - type: classLike
-          value: ^ZtdQuery\\Platform\\(?!SessionFactory$)[^\\]+$
+          value: ^ZtdQuery\\Platform\\[^\\]+$
     - name: CoreConnection
       collectors:
         - type: classLike
@@ -79,6 +79,7 @@ deptrac:
       - Schema
       - Sql
       - CoreSession
+      - CoreContract
       - CoreSimulation
       - CoreConnection
       - CoreSchema

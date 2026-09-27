@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\MySql;
 
 use PhpMyAdmin\SqlParser\Context;
-use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
+use ZtdQuery\Platform;
+use ZtdQuery\Platform\CopySupport;
 use ZtdQuery\Platform\MySql\Connection\MySqlSessionSqlModeReflector;
 use ZtdQuery\Platform\MySql\Connection\Result\MySqlResultColumnTypeResolver;
 use ZtdQuery\Platform\MySql\Rewrite\MySqlQueryGuard;
@@ -21,27 +22,32 @@ use ZtdQuery\Platform\MySql\Schema\MySqlSchemaParser;
 use ZtdQuery\Platform\MySql\Schema\MySqlSchemaReflector;
 use ZtdQuery\Platform\MySql\Shadow\MySqlMutationResolver;
 use ZtdQuery\Platform\MySql\Sql\MySqlParser;
-use ZtdQuery\Platform\SessionFactory;
-use ZtdQuery\ResultSelectRunner;
+use ZtdQuery\Platform\ParameterBindingCompiler;
+use ZtdQuery\Platform\ResultColumnTypeResolver;
+use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Schema\ViewDefinitionSet;
-use ZtdQuery\Session;
 use ZtdQuery\Shadow\ShadowStore;
-use ZtdQuery\Shadow\ShadowTransactions;
 
 /**
- * Factory for creating Session instances pre-configured for MySQL.
+ * Database semantics for MySQL.
+ *
+ * Inject this platform into a QueryExecutor or a driver adapter. Each executor owns
+ * its session state and receives an independent rewrite pipeline.
+ * @visibility public
+ * @example Inject database semantics without creating a session
+ *     $platform = new \ZtdQuery\Platform\MySql\MySqlPlatform();
+ *     $platform instanceof \ZtdQuery\Platform // => true
  */
-final class MySqlSessionFactory implements SessionFactory
+final class MySqlPlatform implements Platform
 {
     /**
-     * Create a Session pre-configured for MySQL.
+     * {@inheritDoc}
      */
-    public function create(ConnectionInterface $connection, ZtdConfig $config): Session
+    public function reflectSchema(ConnectionInterface $connection): TableDefinitionRegistry
     {
         Context::setMode((new MySqlSessionSqlModeReflector($connection))->reflect());
 
-        $shadowStore = new ShadowStore();
         $parser = new MySqlParser();
         $schemaParser = new MySqlSchemaParser($parser);
         $registry = new TableDefinitionRegistry();
@@ -53,10 +59,31 @@ final class MySqlSessionFactory implements SessionFactory
                 $registry->register($tableName, $definition);
             }
         }
+
+        return $registry;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function reflectViews(ConnectionInterface $connection): ViewDefinitionSet
+    {
+        $reflector = new MySqlSchemaReflector($connection);
         $views = new ViewDefinitionSet();
         foreach ($reflector->reflectViews() as $viewName => $definition) {
             $views->register($viewName, $definition);
         }
+
+        return $views;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function createRewriter(ShadowStore $store, TableDefinitionRegistry $registry, ViewDefinitionSet $views): SqlRewriter
+    {
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
 
         $guard = new MySqlQueryGuard($parser);
         $selectTransformer = new SelectTransformer();
@@ -65,18 +92,31 @@ final class MySqlSessionFactory implements SessionFactory
         $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
         $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
         $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
-        $mutationResolver = new MySqlMutationResolver($shadowStore, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
-        $rewriter = new MySqlRewriter($guard, $shadowStore, $registry, $transformer, $mutationResolver, $parser, $views);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        return new MySqlRewriter($guard, $store, $registry, $transformer, $mutationResolver, $parser, $views);
+    }
 
-        return new Session(
-            $rewriter,
-            $shadowStore,
-            new ResultSelectRunner(),
-            $config,
-            $connection,
-            new ShadowTransactions($shadowStore, $registry),
-            $registry,
-            resultColumnTypeResolver: new MySqlResultColumnTypeResolver(),
-        );
+    /**
+     * {@inheritDoc}
+     */
+    public function copySupport(): ?CopySupport
+    {
+        return null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function parameterBindingCompiler(): ?ParameterBindingCompiler
+    {
+        return null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function resultColumnTypeResolver(): ResultColumnTypeResolver
+    {
+        return new MySqlResultColumnTypeResolver();
     }
 }

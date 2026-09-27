@@ -6,13 +6,13 @@ namespace ZtdQuery\Adapter\Pdo\Session;
 
 use PDO;
 use RuntimeException;
-use ZtdQuery\Platform\MySql\MySqlSessionFactory;
-use ZtdQuery\Platform\Postgres\PgSqlSessionFactory;
-use ZtdQuery\Platform\SessionFactory;
-use ZtdQuery\Platform\Sqlite\SqliteSessionFactory;
+use ZtdQuery\Platform;
+use ZtdQuery\Platform\MySql\MySqlPlatform;
+use ZtdQuery\Platform\Postgres\PgSqlPlatform;
+use ZtdQuery\Platform\Sqlite\SqlitePlatform;
 
 /**
- * Answers the session factory a connection's driver needs.
+ * Answers the database platform a connection's driver needs.
  *
  * A PDO connection says which driver it speaks; each driver ZTD supports has a
  * platform package that knows how to rewrite that dialect. This is the one
@@ -21,24 +21,24 @@ use ZtdQuery\Platform\Sqlite\SqliteSessionFactory;
  *
  * @visibility ZtdQuery\Adapter\Pdo
  */
-final class DriverSessionFactory
+final class DriverPlatform
 {
     /**
      * The platform package each driver name is served by.
      *
-     * @var array<string, array{class: class-string<SessionFactory>, package: string}>
+     * @var array<string, array{class: class-string<Platform>, package: string}>
      */
     private const DRIVER_MAP = [
         'mysql' => [
-            'class' => MySqlSessionFactory::class,
+            'class' => MySqlPlatform::class,
             'package' => 'k-kinzal/ztd-query-mysql',
         ],
         'pgsql' => [
-            'class' => PgSqlSessionFactory::class,
+            'class' => PgSqlPlatform::class,
             'package' => 'k-kinzal/ztd-query-postgres',
         ],
         'sqlite' => [
-            'class' => SqliteSessionFactory::class,
+            'class' => SqlitePlatform::class,
             'package' => 'k-kinzal/ztd-query-sqlite',
         ],
     ];
@@ -54,15 +54,15 @@ final class DriverSessionFactory
     }
 
     /**
-     * Answers the factory that builds a session for the connection's driver.
+     * Answers the database platform for the connection's driver.
      *
      * @param PDO $pdo Connection to read the driver name off
      *
-     * @return SessionFactory The factory for that driver
+     * @return Platform The platform for that driver
      *
      * @throws RuntimeException When ZTD has no platform for the driver, or its package is not installed
      */
-    public function forConnection(PDO $pdo): SessionFactory
+    public function forConnection(PDO $pdo): Platform
     {
         $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
 
@@ -70,15 +70,15 @@ final class DriverSessionFactory
     }
 
     /**
-     * Answers the factory that builds a session for a driver name.
+     * Answers the database platform for a driver name.
      *
      * @param string $driver Driver name, as PDO reports it
      *
-     * @return SessionFactory The factory for that driver
+     * @return Platform The platform for that driver
      *
      * @throws RuntimeException When ZTD has no platform for the driver, or its package is not installed
      */
-    public function forDriver(string $driver): SessionFactory
+    public function forDriver(string $driver): Platform
     {
         if (!isset(self::DRIVER_MAP[$driver])) {
             throw new RuntimeException(sprintf(
