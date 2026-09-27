@@ -39,9 +39,9 @@ use SqlParser\Table\TableFile;
  *     $parser->parse($sql)->toString() === $sql // => true
  * @example Rejecting an unsupported release
  *     new \SqlParser\PostgreSql\PostgreSqlParser('pg-9.6.0') // throws \RuntimeException: Unsupported
- * @example Reading a statement written for PDO
- *     $parser = new \SqlParser\PostgreSql\PostgreSqlParser(parameters: \SqlParser\Lexer\ParameterSyntax::Pdo);
- *     $parser->tokenize('SELECT id FROM users WHERE id = :id OR id = ?')[7]->name // => 'PARAM'
+ * @example Reading a named placeholder
+ *     $parser = new \SqlParser\PostgreSql\PostgreSqlParser(parameters: \SqlParser\Lexer\ParameterSyntax::Named);
+ *     $parser->tokenize('SELECT id FROM users WHERE id = :id')[7]->name // => 'PARAM'
  */
 final class PostgreSqlParser implements SqlParser
 {

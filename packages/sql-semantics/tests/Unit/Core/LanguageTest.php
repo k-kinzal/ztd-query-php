@@ -35,7 +35,7 @@ final class LanguageTest extends TestCase
     public function testKeepsTheReleaseModeAndParameterSyntax(): void
     {
         $mode = Mode::fromString('ANSI_QUOTES');
-        $language = new Language(MySqlDialect::MySql, 'mysql-8.0.44', $mode, Parameters::Pdo);
+        $language = new Language(MySqlDialect::MySql, 'mysql-8.0.44', $mode, Parameters::Named);
         self::assertSame('mysql-8.0.44', $language->version);
         self::assertSame($mode, $language->mode);
         self::assertSame('IDENT_QUOTED', $language->parser()->tokenize('SELECT "x"')[1]->name);

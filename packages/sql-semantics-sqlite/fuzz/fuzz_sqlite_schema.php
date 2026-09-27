@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Fuzz complete pre-state SQL through typed, immutable schema analysis.
+ * Fuzz complete declarations through analysis with dependencies: each must resolve to one readable table.
  * Usage: vendor/bin/php-fuzzer fuzz fuzz/fuzz_sqlite_schema.php fuzz/corpus/sqlite-schema/
  * SQLFAKER_COVERAGE=0 disables grammar accounting.
  */
@@ -19,13 +19,13 @@ use SqlFormatter\Core\FormatOptions;
 use SqlFormatter\Core\Style;
 use SqlFormatter\Facade\Formatter;
 use SqlParser\Sqlite\SqliteParser;
-use SqlSemantics\Facade\Schema;
+use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
 
 $grammarVersion = 'sqlite-3.47.2';
 $coverage = getenv('SQLFAKER_COVERAGE') === '0' ? null : new GrammarCoverage(__DIR__ . '/coverage/sqlite-schema');
 $provider = new SqliteProvider(Factory::create(), $grammarVersion, $coverage);
-$target = new SchemaTarget(new Schema(Dialect::Sqlite, grammarVersion: $grammarVersion), new Formatter(new SqliteParser($grammarVersion), new FormatOptions(Style::Compact)), $grammarVersion);
+$target = new SchemaTarget(new Semantics(Dialect::Sqlite, $grammarVersion), new Formatter(new SqliteParser($grammarVersion), new FormatOptions(Style::Compact)), $grammarVersion);
 $planner = $provider->planner();
 $constraints = GenerationPlan::constrained('cmd', [
     'cmd' => [ProductionPattern::containing('create_table', 'create_table_args')],

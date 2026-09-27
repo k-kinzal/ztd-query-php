@@ -312,6 +312,32 @@ abstract class Composition implements Builder
     }
 
     /**
+     * Spells a parameter marker: the language's own for a position, or `:name` for a name the language reads.
+     *
+     * @param string $positional The language's marker for the position, when the marker is a position
+     *
+     * @throws CompositionException When the position is below one, the name is not a name, or the language reads no named placeholder
+     */
+    protected function marker(int|string $marker, string $positional): string
+    {
+        if (is_int($marker)) {
+            if ($marker < 1) {
+                throw new CompositionException('A parameter position counts from one.');
+            }
+
+            return $positional;
+        }
+        if (preg_match('/^[A-Za-z0-9_]+$/D', $marker) !== 1) {
+            throw new CompositionException('A parameter name holds letters, digits, and underscores.');
+        }
+        if ($this->leaves->terminal(':' . $marker) === null) {
+            throw new CompositionException('The language reads no named placeholder; select the named parameter syntax.');
+        }
+
+        return ':' . $marker;
+    }
+
+    /**
      * Spells bytes as a hexadecimal string literal body.
      */
     protected function hex(string $bytes): string

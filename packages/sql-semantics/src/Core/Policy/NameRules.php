@@ -19,6 +19,11 @@ interface NameRules
     public function name(Token $token): string;
 
     /**
+     * Decodes the spelling of a name as written, quoted or bare.
+     */
+    public function decode(string $spelling): string;
+
+    /**
      * Compares column or correlation names using this dialect.
      */
     public function equal(string $left, string $right): bool;

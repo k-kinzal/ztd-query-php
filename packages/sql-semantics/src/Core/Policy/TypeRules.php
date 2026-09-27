@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Core\Policy;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Core\Type\TypeDescriptor;
+use SqlSemantics\Statement\Declaration\TypeDescriptor;
 
 /**
  * Supplies declared type interpretation.

@@ -79,4 +79,18 @@ final class VocabularyTest extends TestCase
         self::assertNotNull($choice);
         self::assertSame(Sortorder::from('DESC'), $vocabulary->build($choice, []));
     }
+
+    public function testShapeAnswersTheRuleAndSymbolsOfAValue(): void
+    {
+        $vocabulary = \SqlSemantics\Platform\Sqlite\Dialect::Sqlite->platform()->values('sqlite-3.47.2')->vocabulary;
+        self::assertSame(['rule' => 'nm', 'symbols' => ['idj']], $vocabulary->shape(new Name('x')));
+        self::assertNull($vocabulary->shape(Sortorder::cases()[0]));
+    }
+
+    public function testIsRuleTellsRulesFromTerminals(): void
+    {
+        $vocabulary = \SqlSemantics\Platform\Sqlite\Dialect::Sqlite->platform()->values('sqlite-3.47.2')->vocabulary;
+        self::assertTrue($vocabulary->isRule('nm'));
+        self::assertFalse($vocabulary->isRule('DOT'));
+    }
 }

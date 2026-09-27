@@ -86,12 +86,12 @@ final class MySqlParserTest extends TestCase
         (new MySqlParser())->tokenize("SELECT 'abc");
     }
 
-    public function testParseReadsPdoNamedParametersUnderThePdoSyntax(): void
+    public function testParseReadsNamedParametersUnderTheNamedSyntax(): void
     {
         $sql = 'UPDATE users SET name = :name WHERE id = :id AND status = ?';
 
-        self::assertSame($sql, (new MySqlParser(parameters: ParameterSyntax::Pdo))->parse($sql)->toString());
-        self::assertSame(3, count(array_filter((new MySqlParser(parameters: ParameterSyntax::Pdo))->tokenize($sql), static fn (Token $token): bool => $token->name === 'PARAM_MARKER')));
+        self::assertSame($sql, (new MySqlParser(parameters: ParameterSyntax::Named))->parse($sql)->toString());
+        self::assertSame(3, count(array_filter((new MySqlParser(parameters: ParameterSyntax::Named))->tokenize($sql), static fn (Token $token): bool => $token->name === 'PARAM_MARKER')));
 
         $this->expectException(SyntaxException::class);
 

@@ -79,11 +79,11 @@ interface Builder
     public function binary(string $bytes): Element;
 
     /**
-     * A bound parameter marker, numbered from one where the language numbers them.
+     * A bound parameter marker: numbered from one where the language numbers them, or the named placeholder `:name`.
      *
-     * @throws CompositionException When the position is below one
+     * @throws CompositionException When the position is below one, the name is not a name, or the language reads no named placeholder
      */
-    public function parameter(int $position = 1): Element;
+    public function parameter(int|string $marker = 1): Element;
 
     /**
      * The conjunction of two conditions.

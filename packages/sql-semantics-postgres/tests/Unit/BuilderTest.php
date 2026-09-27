@@ -107,13 +107,14 @@ final class BuilderTest extends TestCase
     public function testParameterFollowsTheParameterSyntax(): void
     {
         $native = new Semantics(Dialect::PostgreSql);
-        $pdo = new Semantics(Dialect::PostgreSql, parameters: Parameters::Pdo);
+        $named = new Semantics(Dialect::PostgreSql, parameters: Parameters::Named);
         self::assertSame('$3', Writer::render($native->builder()->parameter(3)));
-        self::assertSame('?', Writer::render($pdo->builder()->parameter(3)));
+        self::assertSame('$3', Writer::render($named->builder()->parameter(3)));
+        self::assertSame(':user_id', Writer::render($named->builder()->parameter('user_id')));
         Composed::assertExpressionRoundTrips($native, $native->builder()->parameter(3));
-        Composed::assertExpressionRoundTrips($pdo, $pdo->builder()->parameter());
+        Composed::assertExpressionRoundTrips($named, $named->builder()->parameter('user_id'));
         $this->expectException(CompositionException::class);
-        $native->builder()->parameter(0);
+        $native->builder()->parameter('user_id');
     }
 
     public function testAndParenthesizesWeakerOperands(): void

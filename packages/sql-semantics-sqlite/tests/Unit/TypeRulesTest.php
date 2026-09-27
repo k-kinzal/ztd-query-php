@@ -5,18 +5,18 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Core\Type\Nullability;
-use SqlSemantics\Core\Type\TypeDescriptor;
-use SqlSemantics\Facade\Schema as SchemaFacade;
+use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Statement\Declaration\Nullability;
+use SqlSemantics\Statement\Declaration\TypeDescriptor;
+use Tests\Contract\Resolved;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\SemanticException::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(SchemaFacade::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\ColumnDefinition::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\TableDefinition::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\ConstraintKind::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\TableConstraint::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(Semantics::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\ColumnDefinition::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TableDefinition::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\ConstraintKind::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TableConstraint::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(Nullability::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(TypeDescriptor::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\TypeReader::class)]
@@ -38,18 +38,18 @@ final class TypeRulesTest extends TestCase
 {
     public function testReadPreservesModifiers(): void
     {
-        $schema = (new SchemaFacade(Dialect::Sqlite))->analyze('CREATE TABLE items (value DECIMAL(10, 2))');
-        self::assertSame(['10', '2'], $schema->tables[0]->columns[0]->type->modifiers);
+        $schema = Resolved::of((new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE items (value DECIMAL(10, 2))', []));
+        self::assertSame(['10', '2'], $schema->declarations[0]->columns[0]->type->modifiers);
     }
 
     public function testCanonicalResolvesInteger(): void
     {
-        self::assertSame('integer', (new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->canonical('INT'));
+        self::assertSame('integer', (new \SqlSemantics\Platform\Sqlite\TypeRules())->canonical('INT'));
     }
 
     public function testAffinityUsesDeclaredTypePrecedence(): void
     {
-        self::assertSame('integer', (new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->affinity('FLOATING POINT'));
+        self::assertSame('integer', (new \SqlSemantics\Platform\Sqlite\TypeRules())->affinity('FLOATING POINT'));
     }
 
 
@@ -64,7 +64,7 @@ final class TypeRulesTest extends TestCase
     public function testReadPreservesAnyValuesInStrictTables(string $declaredType): void
     {
         $table = (new \SqlParser\Sqlite\SqliteParser())->parse('CREATE TABLE t (value ' . $declaredType . ') STRICT');
-        $type = (new \SqlSemantics\Platform\Sqlite\TypeRules(Dialect::Sqlite))->read($table->find('typetoken')[0], $table);
+        $type = (new \SqlSemantics\Platform\Sqlite\TypeRules())->read($table->find('typetoken')[0], $table);
         self::assertSame('any', $type->name);
         self::assertSame('blob', $type->affinity);
     }

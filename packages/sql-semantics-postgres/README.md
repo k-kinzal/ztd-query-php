@@ -5,7 +5,7 @@
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
-SQL Semantics for PostgreSQL adds PostgreSQL to [SQL Semantics](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics): the typed statement models of the official PostgreSQL grammars, the PostgreSQL rules for reading declarations, and the PostgreSQL builder that composes values under stable names. Installing it also installs the shared SQL Semantics runtime, and `Dialect::PostgreSql` selects PostgreSQL in the runtime's `Semantics` and `Schema`. No database connection is needed.
+SQL Semantics for PostgreSQL adds PostgreSQL to [SQL Semantics](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics): the typed statement models of the official PostgreSQL grammars, the PostgreSQL rules for reading declarations, and the PostgreSQL builder that composes values under stable names. Installing it also installs the shared SQL Semantics runtime, and `Dialect::PostgreSql` selects PostgreSQL in the runtime's `Semantics`. No database connection is needed.
 
 ## Requirements
 
@@ -13,7 +13,7 @@ SQL Semantics for PostgreSQL adds PostgreSQL to [SQL Semantics](https://github.c
 
 ## Support Syntax
 
-The following grammar versions are supported. Pass the version tag as the second argument of `Semantics` or the third argument of `Schema`; omitting it uses the default.
+The following grammar versions are supported. Pass the version tag as the second argument of `Semantics`; omitting it uses the default.
 
 | Version | Version tag | Default |
 |---------|-------------|---------|
@@ -36,7 +36,7 @@ $statement = (new Semantics(Dialect::PostgreSql))->analyze("INSERT INTO users (i
 $statement->toString(); // "INSERT INTO users ( id , name ) VALUES( 1 , 'Alice' ) RETURNING id"
 ```
 
-See the [SQL Semantics documentation](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics) for statement models, traversal, composition, and schema state.
+See the [SQL Semantics documentation](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics) for statement models, traversal, dependencies, and composition.
 
 ## License
 

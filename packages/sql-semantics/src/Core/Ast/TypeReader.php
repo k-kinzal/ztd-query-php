@@ -6,7 +6,7 @@ namespace SqlSemantics\Core\Ast;
 
 use SqlParser\Parser\Node;
 use SqlSemantics\Core\Dialect;
-use SqlSemantics\Core\Type\TypeDescriptor;
+use SqlSemantics\Statement\Declaration\TypeDescriptor;
 
 /**
  * Interprets a declared type without erasing its modifiers.

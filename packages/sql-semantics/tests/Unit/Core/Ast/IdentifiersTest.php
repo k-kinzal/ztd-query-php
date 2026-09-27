@@ -10,13 +10,14 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\SemanticException;
-use SqlSemantics\Facade\Schema as SchemaFacade;
+use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
 use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
+use Tests\Contract\Resolved;
 
 #[CoversClass(\SqlSemantics\Core\Ast\Identifiers::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(SchemaFacade::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(Semantics::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\DialectParser::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\ColumnReader::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\ConstraintReader::class)]
@@ -24,12 +25,11 @@ use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 #[CoversClass(\SqlSemantics\Core\Ast\TokenGroups::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\Tree::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\TypeReader::class)]
-#[CoversClass(\SqlSemantics\Core\Schema::class)]
-#[CoversClass(\SqlSemantics\Core\Schema\ColumnDefinition::class)]
-#[CoversClass(\SqlSemantics\Core\Schema\TableConstraint::class)]
-#[CoversClass(\SqlSemantics\Core\Schema\TableDefinition::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\ColumnDefinition::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\TableConstraint::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\TableDefinition::class)]
 #[CoversClass(SemanticException::class)]
-#[CoversClass(\SqlSemantics\Core\Type\TypeDescriptor::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\TypeDescriptor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Policy\SyntaxRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\TypeRules::class)]
@@ -48,26 +48,26 @@ final class IdentifiersTest extends TestCase
 {
     public function testNamePreservesQuotedPostgresCaseAndFoldsUnquotedNames(): void
     {
-        $builder = new SchemaFacade(PostgreSqlDialect::PostgreSql);
-        $schema = $builder->analyze('CREATE TABLE "Users" ("Id" INTEGER NOT NULL, SCORE INTEGER)');
-        self::assertSame('Users', $schema->tables[0]->name);
-        self::assertSame(['Id', 'score'], array_column($schema->tables[0]->columns, 'name'));
+        $builder = new Semantics(PostgreSqlDialect::PostgreSql);
+        $schema = Resolved::of($builder->analyze('CREATE TABLE "Users" ("Id" INTEGER NOT NULL, SCORE INTEGER)', []));
+        self::assertSame('Users', $schema->declarations[0]->name);
+        self::assertSame(['Id', 'score'], array_column($schema->declarations[0]->columns, 'name'));
     }
 
     public function testEqualDistinguishesQuotedPostgresCase(): void
     {
-        $builder = new SchemaFacade(PostgreSqlDialect::PostgreSql);
-        $schema = $builder->analyze('CREATE TABLE "Users" ("Id" INTEGER)');
+        $builder = new Semantics(PostgreSqlDialect::PostgreSql);
+        $schema = Resolved::of($builder->analyze('CREATE TABLE "Users" ("Id" INTEGER)', []));
         $this->expectException(SemanticException::class);
-        $builder->analyze('CREATE TABLE "Users" ("Id" INTEGER, PRIMARY KEY (id))');
+        Resolved::of($builder->analyze('CREATE TABLE "Users" ("Id" INTEGER, PRIMARY KEY (id))', []));
     }
 
     public function testPartsDoesNotSplitDotsInsideQuotedIdentifiers(): void
     {
-        $builder = new SchemaFacade(PostgreSqlDialect::PostgreSql);
-        $schema = $builder->analyze('CREATE TABLE "a.b" ("c.d" INTEGER)');
-        self::assertSame('a.b', $schema->tables[0]->name);
-        self::assertSame('c.d', $schema->tables[0]->columns[0]->name);
+        $builder = new Semantics(PostgreSqlDialect::PostgreSql);
+        $schema = Resolved::of($builder->analyze('CREATE TABLE "a.b" ("c.d" INTEGER)', []));
+        self::assertSame('a.b', $schema->declarations[0]->name);
+        self::assertSame('c.d', $schema->declarations[0]->columns[0]->name);
     }
 
     public function testRelationEqualModelsMysqlTableAliasesSeparatelyFromColumns(): void
@@ -75,8 +75,8 @@ final class IdentifiersTest extends TestCase
         $names = new \SqlSemantics\Core\Ast\Identifiers(MySqlDialect::MySql);
         self::assertTrue($names->equal('Score', 'score'));
         self::assertFalse($names->relationEqual('Child', 'child'));
-        $schema = (new SchemaFacade(MySqlDialect::MySql))->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
-        self::assertSame('users', $schema->tables[0]->name);
+        $schema = Resolved::of((new Semantics(MySqlDialect::MySql))->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)', []));
+        self::assertSame('users', $schema->declarations[0]->name);
     }
 
     #[DataProvider('providerIdentifiers')]

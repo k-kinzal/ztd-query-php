@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Bench;
 
 use PhpBench\Attributes as Benchmark;
-use SqlSemantics\Facade\Schema;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 use SqlSemantics\Statement\Traversal;
@@ -16,7 +15,6 @@ use SqlSemantics\Statement\Traversal;
 final class SemanticsBench
 {
     private Semantics $semantics;
-    private Schema $schema;
 
     /**
      * Loads parser and model resources before measurement.
@@ -24,9 +22,7 @@ final class SemanticsBench
     public function setUp(): void
     {
         $this->semantics = new Semantics(PostgreSqlDialect::PostgreSql);
-        $this->schema = new Schema(PostgreSqlDialect::PostgreSql);
-        $this->semantics->analyze('SELECT 1');
-        $this->schema->analyze('CREATE TABLE warm (id INTEGER)');
+        $this->semantics->analyze('SELECT 1', [$this->semantics->analyze('CREATE TABLE warm (id INTEGER)')]);
     }
 
     /**
@@ -64,13 +60,14 @@ final class SemanticsBench
     }
 
     /**
-     * Reads a declaration into state on each iteration.
+     * Reads a declaration and resolves a query against it on each iteration.
      */
     #[Benchmark\BeforeMethods('setUp')]
     #[Benchmark\Revs(100)]
     #[Benchmark\Iterations(5)]
-    public function benchSchema(): void
+    public function benchResolve(): void
     {
-        $this->schema->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $users = $this->semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)', []);
+        $this->semantics->analyze('SELECT child.id FROM users child LEFT JOIN users parent ON child.parent_id = parent.id', [$users]);
     }
 }

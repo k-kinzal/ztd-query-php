@@ -10,7 +10,6 @@ use SqlParser\MySql\MySqlVersion;
 use SqlParser\Parser\SqlParser;
 use SqlSemantics\Core\Analysis\TriviaReader;
 use SqlSemantics\Core\Builder as Composer;
-use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\Language;
 use SqlSemantics\Core\Mode as SessionMode;
 use SqlSemantics\Core\Parameters;
@@ -24,13 +23,6 @@ use SqlSemantics\Core\Policy;
  */
 final class Platform implements Contract
 {
-    /**
-     * Retains the public language identity in all semantic types.
-     */
-    public function __construct(private readonly Dialect $dialect)
-    {
-    }
-
     /**
      * Configures the selected grammar release under the session's `sql_mode` and parameter syntax.
      *
@@ -84,10 +76,8 @@ final class Platform implements Contract
     {
         return new Policy\SyntaxRules([
             'autoIncrement' => [],
-            'dropTableName' => ['table_ident'],
             'generationStorage' => ['opt_stored_attribute'],
             'generationClause' => ['field_def'],
-            'statementRoot' => ['query'],
             'statement' => ['statement'],
             'columnName' => ['field_ident', 'ident'],
             'declaredType' => ['type'],
@@ -98,6 +88,32 @@ final class Platform implements Contract
             'tableName' => ['table_ident'],
             'tableConstraint' => ['table_constraint_def'],
         ]);
+    }
+
+    /**
+     * Names the positions where the grammar writes table names, and the forms that declare, drop, or merely name tables.
+     */
+    public function relations(): Policy\RelationRules
+    {
+        return new Policy\RelationRules(
+            nameSymbols: ['table_ident', 'table_name', 'table_list'],
+            declarations: [
+                ['rule' => 'create_table_stmt', 'name' => 'table_ident', 'conditional' => 'opt_if_not_exists'],
+                ['rule' => 'create', 'requires' => ['TABLE_SYM'], 'name' => 'table_ident', 'conditional' => 'opt_if_not_exists'],
+            ],
+            drops: [
+                ['rule' => 'drop_table_stmt', 'names' => 'table_list', 'list' => ['table_list', ['table_list', ',', 'table_ident']], 'conditional' => 'if_exists'],
+                ['rule' => 'drop', 'requires' => ['table_or_tables'], 'names' => 'table_list', 'list' => ['table_list', ['table_list', ',', 'table_name']], 'conditional' => 'if_exists'],
+            ],
+            commonTableExpressions: [['rule' => 'common_table_expr', 'name' => 'ident']],
+            ignored: [
+                ['rule' => 'view_tail', 'name' => 'table_ident'],
+                ['rule' => 'drop_view_stmt', 'name' => 'table_list'],
+                ['rule' => 'drop', 'requires' => ['VIEW_SYM'], 'name' => 'table_list'],
+                ['rule' => 'table_to_table', 'pair' => ['table_ident', 'table_ident']],
+                ['rule' => 'alter_list_item', 'requires' => ['RENAME', 'table_ident'], 'name' => 'table_ident'],
+            ],
+        );
     }
 
     /**
@@ -113,7 +129,7 @@ final class Platform implements Contract
      */
     public function types(): Policy\TypeRules
     {
-        return new TypeRules($this->dialect);
+        return new TypeRules();
     }
 
     /**

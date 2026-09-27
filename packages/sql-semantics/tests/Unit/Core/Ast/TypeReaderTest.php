@@ -11,14 +11,15 @@ use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\SemanticException;
-use SqlSemantics\Core\Type\Nullability;
-use SqlSemantics\Facade\Schema as SchemaFacade;
+use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
 use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
+use SqlSemantics\Statement\Declaration\Nullability;
+use Tests\Contract\Resolved;
 
 #[CoversClass(\SqlSemantics\Core\Ast\TypeReader::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(SchemaFacade::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(Semantics::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\DialectParser::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\ColumnReader::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\ConstraintReader::class)]
@@ -26,12 +27,11 @@ use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 #[CoversClass(\SqlSemantics\Core\Ast\SchemaReader::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\TokenGroups::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\Tree::class)]
-#[CoversClass(\SqlSemantics\Core\Schema::class)]
-#[CoversClass(\SqlSemantics\Core\Schema\ColumnDefinition::class)]
-#[CoversClass(\SqlSemantics\Core\Schema\TableConstraint::class)]
-#[CoversClass(\SqlSemantics\Core\Schema\TableDefinition::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\ColumnDefinition::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\TableConstraint::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\TableDefinition::class)]
 #[CoversClass(SemanticException::class)]
-#[CoversClass(\SqlSemantics\Core\Type\TypeDescriptor::class)]
+#[CoversClass(\SqlSemantics\Statement\Declaration\TypeDescriptor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Policy\SyntaxRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\PostgreSql\TypeRules::class)]
@@ -53,13 +53,13 @@ final class TypeReaderTest extends TestCase
     #[TestWith([SqliteDialect::Sqlite])]
     public function testReadPreservesDecimalPrecisionAndScale(Dialect $dialect): void
     {
-        $table = (new SchemaFacade($dialect))->analyze('CREATE TABLE users (amount DECIMAL(10, 2))')->tables[0];
+        $table = Resolved::of((new Semantics($dialect))->analyze('CREATE TABLE users (amount DECIMAL(10, 2))', []))->declarations[0];
         self::assertSame(['10', '2'], $table->columns[0]->type->modifiers);
     }
 
     public function testAffinityPreservesSqliteDeclaredTypes(): void
     {
-        $table = (new SchemaFacade(SqliteDialect::Sqlite))->analyze('CREATE TABLE users (id TEXT PRIMARY KEY, score INTEGER)')->tables[0];
+        $table = Resolved::of((new Semantics(SqliteDialect::Sqlite))->analyze('CREATE TABLE users (id TEXT PRIMARY KEY, score INTEGER)', []))->declarations[0];
         self::assertSame(Nullability::MaybeNull, $table->columns[0]->nullability);
         self::assertSame('text', $table->columns[0]->type->affinity);
     }

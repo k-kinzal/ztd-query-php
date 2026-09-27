@@ -7,9 +7,9 @@ namespace SqlSemantics\Core\Ast;
 use SqlParser\Parser\Node;
 use SqlSemantics\Core\Analysis\ValueReader;
 use SqlSemantics\Core\Language;
-use SqlSemantics\Core\Schema\ColumnDefinition;
-use SqlSemantics\Core\Schema\TableConstraint;
-use SqlSemantics\Core\Type\Nullability;
+use SqlSemantics\Statement\Declaration\ColumnDefinition;
+use SqlSemantics\Statement\Declaration\Nullability;
+use SqlSemantics\Statement\Declaration\TableConstraint;
 
 /**
  * Reads declaration-level nullability, defaults, and column constraints.
@@ -63,7 +63,7 @@ final class ColumnReader
 
         $properties = new ColumnProperties($this->identifiers, $this->values);
         $generation = $properties->generation($node, $attributes);
-        if ($generation?->kind === \SqlSemantics\Core\Schema\GenerationKind::Identity || $properties->autoIncrement($attributes)) {
+        if ($generation?->kind === \SqlSemantics\Statement\Declaration\GenerationKind::Identity || $properties->autoIncrement($attributes)) {
             $nullability = Nullability::NotNull;
         }
         return [new ColumnDefinition($name, $type, $nullability, $this->values->read($node), $default, $generation, $properties->collation($attributes), $properties->autoIncrement($attributes), array_map($this->values->read(...), $attributes)), $constraints];
