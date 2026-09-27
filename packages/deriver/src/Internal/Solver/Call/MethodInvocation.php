@@ -39,11 +39,12 @@ final class MethodInvocation
         if ($name->kind !== 'constant' || !is_string($name->literal)) {
             return (new UnknownCall($context))->apply($state, $instruction, $arguments, $receiver, 'OPEN_DISPATCH');
         }
-        $dispatch = new Dispatch($context->program);
         $static = $instruction->operation === 'invoke-static';
-        $class = $static ? $receiver->literal : ($receiver->attributes['class'] ?? $receiver->attributes['type'] ?? '');
-        $class = is_string($class) ? $class : '';
-        $class = $dispatch->className($class, $caller->className, $state->lateStaticClass);
+        $resolved = (new \Deriver\Internal\Solver\Constant\ClassNames($context))->receiver($caller, $instruction, $state, $receiver, $static);
+        if ($resolved->kind === 'throwable') {
+            return (new Member\Invocation($this->machine))->error($state);
+        }
+        $class = $resolved->kind === 'constant' && is_string($resolved->literal) ? $resolved->literal : '';
         if (!$static && in_array($receiver->kind, ['constant', 'array'], true)) {
             return (new Member\Invocation($this->machine))->error($state);
         }
@@ -114,6 +115,6 @@ final class MethodInvocation
      */
     public function calledClass(Term $receiver, State $state, string $class, bool $static): string
     {
-        return $static && in_array(strtolower(is_string($receiver->literal) ? $receiver->literal : ''), ['self', 'parent', 'static'], true) ? $state->lateStaticClass : $class;
+        return $static && in_array(strtolower(is_string($receiver->literal) ? $receiver->literal : ''), ['self', 'parent', 'static'], true) ? $state->lateStaticClass : ((new \Deriver\Internal\Solver\Constant\ClassNames($this->machine->context))->canonical($class) ?? $class);
     }
 }

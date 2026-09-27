@@ -120,6 +120,7 @@ use Tests\Fake\SummaryFixture;
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeBinding::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeCheck::class)]
 #[UsesClass(\Deriver\Internal\Solver\Completion::class)]
+#[UsesClass(\Deriver\Internal\Solver\Constant\ClassNames::class)]
 #[UsesClass(\Deriver\Internal\Solver\Context::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\ExceptionChain::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\ExceptionMatch::class)]

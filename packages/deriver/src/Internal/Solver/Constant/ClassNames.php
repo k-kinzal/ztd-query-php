@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Deriver\Internal\Solver\Constant;
 
 use Deriver\Internal\IR\CallableIR;
+use Deriver\Internal\IR\Instruction;
 use Deriver\Internal\Solver\Call\Creation\Builtins;
 use Deriver\Internal\Solver\Call\Dispatch;
 use Deriver\Internal\Solver\Context;
@@ -84,5 +85,23 @@ final class ClassNames
         }
         $class = $value->attributes['class'] ?? null;
         return in_array($value->kind, ['object','enum'], true) && is_string($class) ? $class : null;
+    }
+    /**
+     * Resolves static class values while retaining declared bounds on instance receivers.
+     * @param CallableIR $caller Lexical caller
+     * @param Instruction $instruction Class syntax metadata
+     * @param State $state Runtime called class
+     * @param Term $receiver Class operand or instance
+     * @param bool $static Whether static syntax was used
+     * @return Term Resolved name, definite error, or unresolved class value
+     */
+    public function receiver(CallableIR $caller, Instruction $instruction, State $state, Term $receiver, bool $static): Term
+    {
+        $context = $this->context;
+        if ($static) {
+            return $this->resolve($receiver, ($instruction->attributes['literal-class'] ?? true) === true, $caller, $state);
+        }
+        $class = $receiver->attributes['class'] ?? $receiver->attributes['type'] ?? '';
+        return Term::constant((new Dispatch($context->program))->className(is_string($class) ? $class : '', $caller->className, $state->lateStaticClass));
     }
 }

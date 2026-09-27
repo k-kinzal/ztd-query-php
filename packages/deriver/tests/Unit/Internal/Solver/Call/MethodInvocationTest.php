@@ -58,6 +58,7 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Internal\Frontend\Php\CallLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\CallableCompiler::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\CallableSource::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\Control\ExceptionLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\DeclarationScanner::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\ExpressionLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\GraphBuilder::class)]
@@ -71,10 +72,14 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Internal\Frontend\Php\Traits\Composition::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\ClassScope::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\TargetSyntax::class)]
+#[UsesClass(\Deriver\Internal\IR\Argument::class)]
 #[UsesClass(\Deriver\Internal\IR\BasicBlock::class)]
 #[UsesClass(\Deriver\Internal\IR\CallableIR::class)]
 #[UsesClass(\Deriver\Internal\IR\CallableIdentity::class)]
+#[UsesClass(\Deriver\Internal\IR\CatchTarget::class)]
+#[UsesClass(\Deriver\Internal\IR\ClassConstant::class)]
 #[UsesClass(\Deriver\Internal\IR\ClassDeclaration::class)]
+#[UsesClass(\Deriver\Internal\IR\ExceptionRegion::class)]
 #[UsesClass(Instruction::class)]
 #[UsesClass(\Deriver\Internal\IR\Parameter::class)]
 #[UsesClass(\Deriver\Internal\IR\PropertyDeclaration::class)]
@@ -86,6 +91,10 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Internal\Memory\StorageCapture::class)]
 #[UsesClass(\Deriver\Internal\Model\Extensions::class)]
 #[UsesClass(\Deriver\Internal\Model\ModelBoundary::class)]
+#[UsesClass(\Deriver\Internal\Model\PlanActions::class)]
+#[UsesClass(\Deriver\Internal\Model\PlanCompiler::class)]
+#[UsesClass(\Deriver\Internal\Model\PlanFootprints::class)]
+#[UsesClass(\Deriver\Internal\Model\PlanValidation::class)]
 #[UsesClass(\Deriver\Internal\Model\ProviderInputs::class)]
 #[UsesClass(\Deriver\Internal\Model\Registry::class)]
 #[UsesClass(\Deriver\Internal\Model\StateRegistry::class)]
@@ -94,16 +103,27 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Internal\Solver\Call\ArgumentOrder::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\CallExecutor::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\CallResolution::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\CallableCheck::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Closure\Binding::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Closure\Capture::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Creation\Access::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Creation\Builtins::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Dispatch::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Member\Access::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Member\Constants::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Member\Invocation::class)]
 #[UsesClass(MethodInvocation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Model\Inputs::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Model\NativeArguments::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Native\Invocation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Native\Properties::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Native\Signatures::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\ParameterBinding::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\PassedArgument::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Arguments::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Creation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Methods::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Modes::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Resolution::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Target::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Transfer::class)]
@@ -112,7 +132,11 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeCheck::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\UnknownCall::class)]
 #[UsesClass(\Deriver\Internal\Solver\Completion::class)]
+#[UsesClass(\Deriver\Internal\Solver\Constant\ClassNames::class)]
 #[UsesClass(\Deriver\Internal\Solver\Context::class)]
+#[UsesClass(\Deriver\Internal\Solver\Control\ExceptionChain::class)]
+#[UsesClass(\Deriver\Internal\Solver\Control\ExceptionMatch::class)]
+#[UsesClass(\Deriver\Internal\Solver\Control\Handler::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\ObservationLimit::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\Resources::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\StateJoin::class)]
@@ -136,6 +160,8 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Internal\Solver\Summary\Evaluation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Summary\Invocation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Summary\Isolation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Transfer\ConstantTransfer::class)]
+#[UsesClass(\Deriver\Internal\Solver\Transfer\IntrinsicTransfer::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\MemoryStep::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\ObjectAccess::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\PropertyAccessCheck::class)]
@@ -147,13 +173,26 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Internal\Value\Arrays::class)]
 #[UsesClass(\Deriver\Internal\Value\Identity::class)]
 #[UsesClass(\Deriver\Internal\Value\PhpSemantics::class)]
+#[UsesClass(\Deriver\Model\Binding\ArgumentBindings::class)]
+#[UsesClass(\Deriver\Model\Binding\BoundArgument::class)]
+#[UsesClass(\Deriver\Model\CallDescription::class)]
+#[UsesClass(\Deriver\Model\ModelDecision::class)]
+#[UsesClass(\Deriver\Model\ModelDescriptor::class)]
+#[UsesClass(\Deriver\Model\Plan\Action::class)]
+#[UsesClass(\Deriver\Model\Plan\Expression::class)]
+#[UsesClass(\Deriver\Model\Plan\SemanticPlan::class)]
 #[UsesClass(DispatchDecision::class)]
 #[UsesClass(DispatchProvider::class)]
 #[UsesClass(\Deriver\Model\Provider\DispatchRequest::class)]
 #[UsesClass(DispatchTarget::class)]
+#[UsesClass(\Deriver\Model\Signature\Parameter::class)]
+#[UsesClass(\Deriver\Model\Signature\Signature::class)]
 #[UsesClass(\Deriver\Report\JsonText::class)]
 #[UsesClass(\Deriver\Report\QueryEncoding::class)]
 #[UsesClass(\Deriver\Report\ValueGraph::class)]
+#[UsesClass(\Deriver\Standard\FunctionModel::class)]
+#[UsesClass(\Deriver\Standard\Library::class)]
+#[UsesClass(\Deriver\Standard\ScalarFunctions::class)]
 #[UsesClass(Term::class)]
 #[Small]
 final class MethodInvocationTest extends TestCase
@@ -382,5 +421,19 @@ final class MethodInvocationTest extends TestCase
     public static function providerCalledClasses(): array
     {
         return ['self' => [Term::constant('SELF'),true,'Child'],'parent' => [Term::constant('PARENT'),true,'Child'],'static' => [Term::constant('STATIC'),true,'Child'],'explicit' => [Term::constant('Box'),true,'Resolved'],'instance' => [Term::constant('self'),false,'Resolved'],'symbolic class' => [new Term('opaque'),true,'Resolved']];
+    }
+
+    /**
+     * @throws JsonException If fixture metadata cannot be encoded
+     */
+    #[\PHPUnit\Framework\Attributes\DataProviderExternal(\Tests\Fake\Programs\DynamicClassPrograms::class, 'methods')]
+    public function testApplySeparatesLiteralAndRuntimeClassOperands(string $source, string $expected): void
+    {
+        $result = \Tests\Fake\Analysis::returns($source);
+        self::assertSame([], $result->frontiers);
+        self::assertSame([], $result->projectDiagnostics);
+        self::assertSame([], $result->exceptionalOutcomes);
+        self::assertCount(1, $result->normalOutcomes);
+        self::assertSame(json_decode($expected, true, flags:JSON_THROW_ON_ERROR), $result->normalOutcomes[0]->values['return']->native());
     }
 }

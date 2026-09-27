@@ -34,8 +34,7 @@ final class ObjectAccess
         $receiver = $state->value($instruction->operands[0] ?? '');
         $name = $state->value($instruction->operands[1] ?? '');
         $static = $instruction->operation === 'static-address';
-        $class = $static && is_string($receiver->literal) ? $receiver->literal : ($receiver->attributes['class'] ?? $receiver->attributes['type'] ?? '');
-        $class = (new \Deriver\Internal\Solver\Call\Dispatch($this->context->program))->className(is_string($class) ? $class : '', $instruction->name, $state->lateStaticClass);
+        $class = $this->receiverClass($instruction, $receiver, $state);
         $property = $name->kind === 'constant' && is_string($name->literal) ? (new PropertyLookup($this->context->program))->find($class, $instruction->name, $name->literal) : null;
         $id = $static ? ($property->className ?? $class) : (is_string($receiver->literal) ? $receiver->literal : 'unknown');
         $root = ($static ? 'static:' : 'object:') . $id;
@@ -84,5 +83,20 @@ final class ObjectAccess
         if (!isset($record->operands[$slot]) && $receiver->kind === 'parameter') {
             $state->memory->write(new Location($root, [$slot]), new Term('external', $root . ':' . $slot, attributes: ['type' => $property->type ?? 'mixed', 'stability' => 'state', 'maybeUninitialized' => true]));
         }
+    }
+
+    /**
+     * Separates lexical static names, runtime class strings, and object classes.
+     * @param Instruction $instruction Access syntax and lexical scope
+     * @param Term $receiver Evaluated class or object operand
+     * @param State $state Runtime called class
+     * @return string Lookup class or an unresolved empty name
+     */
+    public function receiverClass(Instruction $instruction, Term $receiver, State $state): string
+    {
+        $static = $instruction->operation === 'static-address';
+        $class = $static && $receiver->kind === 'constant' && is_string($receiver->literal) ? $receiver->literal : ($receiver->attributes['class'] ?? $receiver->attributes['type'] ?? '');
+        $class = is_string($class) ? $class : '';
+        return !$static || ($instruction->attributes['literal-class'] ?? true) === true ? (new \Deriver\Internal\Solver\Call\Dispatch($this->context->program))->className($class, $instruction->name, $state->lateStaticClass) : ltrim($class, '\\');
     }
 }

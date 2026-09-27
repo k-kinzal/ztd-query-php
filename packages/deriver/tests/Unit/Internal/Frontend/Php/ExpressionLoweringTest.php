@@ -90,6 +90,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeBinding::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeCheck::class)]
 #[UsesClass(\Deriver\Internal\Solver\Completion::class)]
+#[UsesClass(\Deriver\Internal\Solver\Constant\ClassNames::class)]
 #[UsesClass(\Deriver\Internal\Solver\Context::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\ObservationLimit::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\Resources::class)]
@@ -351,5 +352,25 @@ final class ExpressionLoweringTest extends TestCase
         yield 'dynamic class dynamic constant' => ['$x::{$name}',false,false];
         yield 'class keyword case' => ['Box::ClAsS',true,true];
         yield 'ordinary constant' => ['Box::VALUE',true,false];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerClassOperandSyntax')]
+    public function testOtherPreservesWhetherAClassOperandIsLiteral(string $expression, bool $literal): void
+    {
+        $index = \Tests\Fake\FrontendFixture::index('<?php function target($class,$value){return ' . $expression . ';}');
+        $body = $index->callable('target');
+        self::assertNotNull($body);
+        $instructions = array_values(array_filter($body->blocks[0]->instructions, static fn (\Deriver\Internal\IR\Instruction $instruction): bool => $instruction->operation === 'instanceof'));
+        self::assertCount(1, $instructions);
+        self::assertSame($literal, $instructions[0]->attributes['literal-class']);
+    }
+
+    /**
+     * @return iterable<string,array{string,bool}>
+     */
+    public static function providerClassOperandSyntax(): iterable
+    {
+        yield '$value instanceof Box' => ['$value instanceof Box', true];
+        yield '$value instanceof $class' => ['$value instanceof $class', false];
     }
 }

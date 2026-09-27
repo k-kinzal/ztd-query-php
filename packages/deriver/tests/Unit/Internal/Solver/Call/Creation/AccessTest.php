@@ -50,6 +50,7 @@ use Tests\Fake\SummaryFixture;
 #[UsesClass(\Deriver\Internal\Api\QueryValidation::class)]
 #[UsesClass(\Deriver\Internal\Api\ResultAssessment::class)]
 #[UsesClass(\Deriver\Internal\Api\Session::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\AggregateLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\AssignmentLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\GraphCache::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\GraphTemplate::class)]
@@ -82,6 +83,7 @@ use Tests\Fake\SummaryFixture;
 #[UsesClass(\Deriver\Internal\IR\ClassDeclaration::class)]
 #[UsesClass(\Deriver\Internal\IR\ExceptionRegion::class)]
 #[UsesClass(Instruction::class)]
+#[UsesClass(\Deriver\Internal\IR\Parameter::class)]
 #[UsesClass(\Deriver\Internal\IR\PropertyDeclaration::class)]
 #[UsesClass(\Deriver\Internal\IR\Terminator::class)]
 #[UsesClass(\Deriver\Internal\Memory\Location::class)]
@@ -90,6 +92,11 @@ use Tests\Fake\SummaryFixture;
 #[UsesClass(\Deriver\Internal\Memory\ReferenceConstraint::class)]
 #[UsesClass(\Deriver\Internal\Memory\StorageCapture::class)]
 #[UsesClass(\Deriver\Internal\Model\Extensions::class)]
+#[UsesClass(\Deriver\Internal\Model\ModelBoundary::class)]
+#[UsesClass(\Deriver\Internal\Model\PlanActions::class)]
+#[UsesClass(\Deriver\Internal\Model\PlanCompiler::class)]
+#[UsesClass(\Deriver\Internal\Model\PlanFootprints::class)]
+#[UsesClass(\Deriver\Internal\Model\PlanValidation::class)]
 #[UsesClass(\Deriver\Internal\Model\ProviderInputs::class)]
 #[UsesClass(\Deriver\Internal\Model\Registry::class)]
 #[UsesClass(\Deriver\Internal\Model\StateRegistry::class)]
@@ -97,16 +104,24 @@ use Tests\Fake\SummaryFixture;
 #[UsesClass(\Deriver\Internal\Solver\Call\ArgumentBinding::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\ArgumentOrder::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\CallExecutor::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\CallResolution::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\CallableCheck::class)]
 #[UsesClass(Access::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Creation\Builtins::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Dispatch::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Member\Access::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Member\Invocation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\MethodInvocation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Model\Inputs::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Model\NativeArguments::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Native\Invocation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Native\Properties::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Native\Signatures::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\ParameterBinding::class)]
 #[UsesClass(PassedArgument::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Arguments::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Creation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Methods::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Modes::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Resolution::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Target::class)]
@@ -115,6 +130,7 @@ use Tests\Fake\SummaryFixture;
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeCheck::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\UnknownCall::class)]
 #[UsesClass(\Deriver\Internal\Solver\Completion::class)]
+#[UsesClass(\Deriver\Internal\Solver\Constant\ClassNames::class)]
 #[UsesClass(\Deriver\Internal\Solver\Context::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\ExceptionChain::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\ExceptionMatch::class)]
@@ -129,21 +145,37 @@ use Tests\Fake\SummaryFixture;
 #[UsesClass(\Deriver\Internal\Solver\InstructionTransfer::class)]
 #[UsesClass(Machine::class)]
 #[UsesClass(\Deriver\Internal\Solver\Model\SlotReference::class)]
+#[UsesClass(\Deriver\Internal\Solver\Model\StateStorage::class)]
 #[UsesClass(\Deriver\Internal\Solver\ObservationCollector::class)]
 #[UsesClass(\Deriver\Internal\Solver\Operation\Conversions::class)]
 #[UsesClass(\Deriver\Internal\Solver\Operation\ScalarErrors::class)]
 #[UsesClass(State::class)]
 #[UsesClass(\Deriver\Internal\Solver\Summary\Evaluation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Summary\Isolation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Transfer\IntrinsicTransfer::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\MemoryStep::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\PureStep::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\ReferenceAssignment::class)]
 #[UsesClass(\Deriver\Internal\Value\Arrays::class)]
 #[UsesClass(\Deriver\Internal\Value\Identity::class)]
 #[UsesClass(\Deriver\Internal\Value\PhpSemantics::class)]
+#[UsesClass(\Deriver\Model\Binding\ArgumentBindings::class)]
+#[UsesClass(\Deriver\Model\Binding\BoundArgument::class)]
+#[UsesClass(\Deriver\Model\CallDescription::class)]
+#[UsesClass(\Deriver\Model\ModelDecision::class)]
+#[UsesClass(\Deriver\Model\ModelDescriptor::class)]
+#[UsesClass(\Deriver\Model\Plan\Action::class)]
+#[UsesClass(\Deriver\Model\Plan\Expression::class)]
+#[UsesClass(\Deriver\Model\Plan\SemanticPlan::class)]
+#[UsesClass(\Deriver\Model\Provider\DispatchDecision::class)]
+#[UsesClass(\Deriver\Model\Signature\Parameter::class)]
+#[UsesClass(\Deriver\Model\Signature\Signature::class)]
 #[UsesClass(\Deriver\Report\JsonText::class)]
 #[UsesClass(\Deriver\Report\QueryEncoding::class)]
 #[UsesClass(\Deriver\Report\ValueGraph::class)]
+#[UsesClass(\Deriver\Standard\FunctionModel::class)]
+#[UsesClass(\Deriver\Standard\Library::class)]
+#[UsesClass(\Deriver\Standard\ScalarFunctions::class)]
 #[UsesClass(Term::class)]
 #[Small]
 final class AccessTest extends TestCase
@@ -346,5 +378,47 @@ final class AccessTest extends TestCase
         self::assertSame('normal', $paths[0]->completion->kind);
         self::assertSame('throw', $paths[1]->completion->kind);
         self::assertSame('UNSUPPORTED_LANGUAGE_FEATURE', $paths[0]->registers['result']->literal);
+    }
+
+    /**
+     * @throws JsonException If fixture metadata cannot be encoded
+     */
+    #[\PHPUnit\Framework\Attributes\DataProviderExternal(\Tests\Fake\Programs\DynamicClassPrograms::class, 'allocations')]
+    public function testNameSeparatesLiteralAndRuntimeClassOperands(string $source, string $expected): void
+    {
+        $result = \Tests\Fake\Analysis::returns($source);
+        self::assertSame([], $result->frontiers);
+        self::assertSame([], $result->projectDiagnostics);
+        self::assertSame([], $result->exceptionalOutcomes);
+        self::assertCount(1, $result->normalOutcomes);
+        self::assertSame(json_decode($expected, true, flags:JSON_THROW_ON_ERROR), $result->normalOutcomes[0]->values['return']->native());
+    }
+
+    #[DataProvider('providerAllocationOperands')]
+    public function testInvalidOperandDistinguishesAllocationFromCloning(Term $value, bool $clone, bool $invalid): void
+    {
+        $access = new Access(new Machine(SolverFixture::context()));
+        self::assertSame($invalid, $access->invalidOperand($value, $clone));
+    }
+
+    /**
+     * @return iterable<string,array{Term,bool,bool}>
+     */
+    public static function providerAllocationOperands(): iterable
+    {
+        yield 'new class string' => [Term::constant('Box'),false,false];
+        yield 'clone class string' => [Term::constant('Box'),true,true];
+        yield 'new number' => [Term::constant(1),false,true];
+        yield 'clone number' => [Term::constant(1),true,true];
+        yield 'new null' => [Term::constant(null),false,true];
+        yield 'clone null' => [Term::constant(null),true,true];
+        yield 'new array' => [Term::array([]),false,true];
+        yield 'clone array' => [Term::array([]),true,true];
+        yield 'new object class' => [new Term('object', 'one'),false,false];
+        yield 'clone object' => [new Term('object', 'one'),true,false];
+        yield 'enum allocation needs lifecycle validation' => [new Term('enum', 'E::A'),false,false];
+        yield 'enum cannot be cloned' => [new Term('enum', 'E::A'),true,true];
+        yield 'unknown allocation remains unresolved' => [Term::parameter('x'),false,false];
+        yield 'unknown clone remains unresolved' => [Term::parameter('x'),true,false];
     }
 }

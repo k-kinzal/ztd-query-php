@@ -41,7 +41,7 @@ final class Allocation
         }
         $source = $state->value($instruction->operands[0]);
         $clone = $instruction->operation === 'clone';
-        $class = $access->name($source, $caller, $state) ?? '';
+        $class = $access->name($source, $caller, $state, ($instruction->attributes['literal-class'] ?? true) === true) ?? '';
         $dispatch = new Dispatch($this->machine->context->program);
         if ($dispatch->method($class, '__destruct') !== null) {
             $paths = (new \Deriver\Internal\Solver\Operation\Conversions($this->machine))->boundary($caller, $instruction, $state, 'destructor-lifetime');

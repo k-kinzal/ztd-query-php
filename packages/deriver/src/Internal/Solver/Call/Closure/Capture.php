@@ -51,7 +51,7 @@ final class Capture
                 $path->registers[$instruction->result] = $target;
                 continue;
             }
-            $target = $this->target($caller, $path, $target, $signature?->symbol);
+            $target = $this->target($caller, $path, $target, $signature?->symbol, ($instruction->attributes['literal-class'] ?? true) === true);
             $captures = ['target' => $target];
             if (isset($path->locals['this'])) {
                 $captures['this'] = $path->memory->read($path->locals['this']);
@@ -67,9 +67,10 @@ final class Capture
      * @param State $state Captured receiver context
      * @param Term $target Evaluated callable expression
      * @param string|null $symbol Resolved function signature
+     * @param bool $literal Whether a static class operand uses literal syntax
      * @return Term Frozen function or method target
      */
-    public function target(CallableIR $caller, State $state, Term $target, ?string $symbol): Term
+    public function target(CallableIR $caller, State $state, Term $target, ?string $symbol, bool $literal = true): Term
     {
         if ($target->kind === 'constant' && is_string($target->literal)) {
             if (!str_contains($target->literal, '::')) {
@@ -86,7 +87,8 @@ final class Capture
         $receiver = $state->memory->dereference($target->operands[0]);
         $static = $receiver->kind === 'constant';
         $name = $static ? $receiver->literal : ($receiver->attributes['class'] ?? $receiver->attributes['type'] ?? '');
-        $class = (new Dispatch($this->machine->context->program))->className(is_string($name) ? $name : '', $caller->className, $state->lateStaticClass);
+        $name = is_string($name) ? $name : '';
+        $class = $literal ? (new Dispatch($this->machine->context->program))->className($name, $caller->className, $state->lateStaticClass) : ltrim($name, '\\');
         $calledClass = (new MethodInvocation($this->machine))->calledClass($receiver, $state, $class, $static);
         return new Term('callable-method', operands: [$static ? Term::constant($class) : $receiver, $state->memory->dereference($target->operands[1])], attributes: ['bound-callable' => true, 'late-static' => $calledClass]);
     }

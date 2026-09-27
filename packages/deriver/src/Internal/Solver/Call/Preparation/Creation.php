@@ -42,7 +42,10 @@ final class Creation
             return new Target(error: 'Error');
         }
         $access = new Access($this->machine);
-        $class = $access->name($source, $caller, $state);
+        $class = $access->name($source, $caller, $state, ($instruction->attributes['literal-class'] ?? true) === true);
+        if ($class !== null && in_array(strtolower($class), ['', 'self', 'parent', 'static'], true)) {
+            return new Target(error: 'Error');
+        }
         if ($class === null) {
             return new Target();
         }

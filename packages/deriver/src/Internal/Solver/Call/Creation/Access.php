@@ -32,15 +32,16 @@ final class Access
      * @param Term $source Evaluated new/clone operand
      * @param CallableIR $caller Lexical scope
      * @param State $state Late static context
+     * @param bool $literal Whether the source uses a literal class reference
      * @return string|null Known canonical class
      */
-    public function name(Term $source, CallableIR $caller, State $state): ?string
+    public function name(Term $source, CallableIR $caller, State $state, bool $literal = true): ?string
     {
         $name = in_array($source->kind, ['object', 'enum'], true) ? ($source->attributes['class'] ?? null) : ($source->kind === 'constant' ? $source->literal : null);
         if (!is_string($name)) {
             return null;
         }
-        $name = (new Dispatch($this->machine->context->program))->className($name, $caller->className, $state->lateStaticClass);
+        $name = $literal ? (new Dispatch($this->machine->context->program))->className($name, $caller->className, $state->lateStaticClass) : ltrim($name, '\\');
         return $this->machine->context->program->classes()[strtolower($name)]->name ?? (new Builtins())->name($name) ?? $name;
     }
 
@@ -57,9 +58,12 @@ final class Access
         $context = $this->machine->context;
         $source = $state->value($instruction->operands[0]);
         $clone = $instruction->operation === 'clone';
-        $class = $this->name($source, $caller, $state);
+        $class = $this->name($source, $caller, $state, ($instruction->attributes['literal-class'] ?? true) === true);
         $error = new Member\Invocation($this->machine);
-        if (($clone && in_array($source->kind, ['constant', 'array', 'enum'], true)) || (!$clone && ($source->kind === 'array' || $source->kind === 'constant' && !is_string($source->literal)))) {
+        if ($this->invalidOperand($source, $clone)) {
+            return $error->error($state);
+        }
+        if ($class !== null && in_array(strtolower($class), ['', 'self', 'parent', 'static'], true)) {
             return $error->error($state);
         }
         if ($class === null) {
@@ -123,5 +127,16 @@ final class Access
             }
         }
         return null;
+    }
+
+    /**
+     * Checks the distinct concrete operand categories accepted by new and clone.
+     * @param Term $source Evaluated operand
+     * @param bool $clone Whether the operation clones an existing object
+     * @return bool Whether the operand necessarily causes a target Error
+     */
+    public function invalidOperand(Term $source, bool $clone): bool
+    {
+        return $clone ? in_array($source->kind, ['constant', 'array', 'enum'], true) : ($source->kind === 'array' || $source->kind === 'constant' && !is_string($source->literal));
     }
 }

@@ -50,8 +50,11 @@ final class Methods
             return new Target();
         }
         $context = $this->machine->context;
-        $class = $static ? $receiver->literal : ($receiver->attributes['class'] ?? $receiver->attributes['type'] ?? '');
-        $class = (new Dispatch($context->program))->className(is_string($class) ? $class : '', $caller->className, $state->lateStaticClass);
+        $resolved = (new \Deriver\Internal\Solver\Constant\ClassNames($context))->receiver($caller, $instruction, $state, $receiver, $static);
+        if ($resolved->kind === 'throwable') {
+            return new Target(error: 'Error');
+        }
+        $class = $resolved->kind === 'constant' && is_string($resolved->literal) ? $resolved->literal : '';
         $symbol = (new Access($context->program))->target($class, $caller->className, $name->literal, $static);
         $method = $symbol === null ? null : $context->program->callable($symbol);
         if ($method !== null && !(new Access($context->program))->allows($method, $caller->className)) {
@@ -141,4 +144,5 @@ final class Methods
     {
         return !$static && $receiver->kind !== 'object' && !($this->machine->context->program->classes()[strtolower($class)]->final ?? false);
     }
+
 }

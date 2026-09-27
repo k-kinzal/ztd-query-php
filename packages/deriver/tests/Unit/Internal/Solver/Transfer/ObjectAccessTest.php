@@ -45,6 +45,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Frontend\Php\CallLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\CallableCompiler::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\CallableSource::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\Control\ExceptionLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\DeclarationScanner::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\ExpressionLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\GraphBuilder::class)]
@@ -58,11 +59,15 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Frontend\Php\Traits\Composition::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\ClassScope::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\TargetSyntax::class)]
+#[UsesClass(\Deriver\Internal\IR\Argument::class)]
 #[UsesClass(\Deriver\Internal\IR\BasicBlock::class)]
 #[UsesClass(\Deriver\Internal\IR\CallableIR::class)]
 #[UsesClass(\Deriver\Internal\IR\CallableIdentity::class)]
+#[UsesClass(\Deriver\Internal\IR\CatchTarget::class)]
 #[UsesClass(\Deriver\Internal\IR\ClassDeclaration::class)]
+#[UsesClass(\Deriver\Internal\IR\ExceptionRegion::class)]
 #[UsesClass(\Deriver\Internal\IR\Instruction::class)]
+#[UsesClass(\Deriver\Internal\IR\Parameter::class)]
 #[UsesClass(\Deriver\Internal\IR\PropertyDeclaration::class)]
 #[UsesClass(\Deriver\Internal\IR\Terminator::class)]
 #[UsesClass(\Deriver\Internal\Memory\Location::class)]
@@ -71,6 +76,11 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Memory\ReferenceConstraint::class)]
 #[UsesClass(\Deriver\Internal\Memory\StorageCapture::class)]
 #[UsesClass(\Deriver\Internal\Model\Extensions::class)]
+#[UsesClass(\Deriver\Internal\Model\ModelBoundary::class)]
+#[UsesClass(\Deriver\Internal\Model\PlanActions::class)]
+#[UsesClass(\Deriver\Internal\Model\PlanCompiler::class)]
+#[UsesClass(\Deriver\Internal\Model\PlanFootprints::class)]
+#[UsesClass(\Deriver\Internal\Model\PlanValidation::class)]
 #[UsesClass(\Deriver\Internal\Model\ProviderInputs::class)]
 #[UsesClass(\Deriver\Internal\Model\Registry::class)]
 #[UsesClass(\Deriver\Internal\Model\StateRegistry::class)]
@@ -78,19 +88,36 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Call\ArgumentBinding::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\ArgumentOrder::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\CallExecutor::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\CallResolution::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\CallableCheck::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Creation\Access::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Creation\Builtins::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Dispatch::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Member\Access::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Member\Invocation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\MethodInvocation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Model\Inputs::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Model\NativeArguments::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Native\Invocation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Native\Properties::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Native\Signatures::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\ParameterBinding::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\PassedArgument::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Arguments::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Creation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Methods::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Modes::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Resolution::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Target::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Transfer::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeBinding::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeCheck::class)]
 #[UsesClass(\Deriver\Internal\Solver\Completion::class)]
+#[UsesClass(\Deriver\Internal\Solver\Constant\ClassNames::class)]
 #[UsesClass(\Deriver\Internal\Solver\Context::class)]
+#[UsesClass(\Deriver\Internal\Solver\Control\ExceptionChain::class)]
+#[UsesClass(\Deriver\Internal\Solver\Control\ExceptionMatch::class)]
+#[UsesClass(\Deriver\Internal\Solver\Control\Handler::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\ObservationLimit::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\Resources::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\StateJoin::class)]
@@ -107,9 +134,11 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\State::class)]
 #[UsesClass(\Deriver\Internal\Solver\Summary\Evaluation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Summary\Isolation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Transfer\IntrinsicTransfer::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\MemoryStep::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\PropertyAccessCheck::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\PropertyLookup::class)]
+#[UsesClass(\Deriver\Internal\Solver\Transfer\PropertyMagic::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\PropertySlot::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\PropertyTransfer::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\PureStep::class)]
@@ -117,9 +146,23 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Value\Arrays::class)]
 #[UsesClass(\Deriver\Internal\Value\Identity::class)]
 #[UsesClass(\Deriver\Internal\Value\PhpSemantics::class)]
+#[UsesClass(\Deriver\Model\Binding\ArgumentBindings::class)]
+#[UsesClass(\Deriver\Model\Binding\BoundArgument::class)]
+#[UsesClass(\Deriver\Model\CallDescription::class)]
+#[UsesClass(\Deriver\Model\ModelDecision::class)]
+#[UsesClass(\Deriver\Model\ModelDescriptor::class)]
+#[UsesClass(\Deriver\Model\Plan\Action::class)]
+#[UsesClass(\Deriver\Model\Plan\Expression::class)]
+#[UsesClass(\Deriver\Model\Plan\SemanticPlan::class)]
+#[UsesClass(\Deriver\Model\Provider\DispatchDecision::class)]
+#[UsesClass(\Deriver\Model\Signature\Parameter::class)]
+#[UsesClass(\Deriver\Model\Signature\Signature::class)]
 #[UsesClass(\Deriver\Report\JsonText::class)]
 #[UsesClass(\Deriver\Report\QueryEncoding::class)]
 #[UsesClass(\Deriver\Report\ValueGraph::class)]
+#[UsesClass(\Deriver\Standard\FunctionModel::class)]
+#[UsesClass(\Deriver\Standard\Library::class)]
+#[UsesClass(\Deriver\Standard\ScalarFunctions::class)]
 #[UsesClass(\Deriver\Value\Term::class)]
 #[Small]
 final class ObjectAccessTest extends TestCase
@@ -148,5 +191,45 @@ final class ObjectAccessTest extends TestCase
         (new \Deriver\Internal\Solver\Transfer\ObjectAccess(\Tests\Fake\SolverFixture::context()))->prepare($state, 'object:input', 'x', \Deriver\Value\Term::parameter('input', 'A'), $property);
         self::assertSame('int', $state->memory->propertyTypes['object:input']['x']);
         self::assertSame('external', $state->memory->cells['object:input']->operands['x']->kind);
+    }
+
+    /**
+     * @throws JsonException If fixture metadata cannot be encoded
+     */
+    #[\PHPUnit\Framework\Attributes\DataProviderExternal(\Tests\Fake\Programs\DynamicClassPrograms::class, 'properties')]
+    public function testAddressSeparatesLiteralAndRuntimeClassOperands(string $source, string $expected): void
+    {
+        $result = \Tests\Fake\Analysis::returns($source);
+        self::assertSame([], $result->frontiers);
+        self::assertSame([], $result->projectDiagnostics);
+        self::assertSame([], $result->exceptionalOutcomes);
+        self::assertCount(1, $result->normalOutcomes);
+        self::assertSame(json_decode($expected, true, flags:JSON_THROW_ON_ERROR), $result->normalOutcomes[0]->values['return']->native());
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerPropertyClasses')]
+    public function testReceiverClassKeepsObjectIdentitySeparateFromStaticNames(\Deriver\Value\Term $receiver, bool $literal, string $expected): void
+    {
+        $context = \Tests\Fake\SolverFixture::context('<?php class Base{}class Box extends Base{}class Child extends Box{}function target(){}');
+        $state = new \Deriver\Internal\Solver\State();
+        $state->lateStaticClass = 'Child';
+        $instruction = new \Deriver\Internal\IR\Instruction('property', 'static-address', new \Deriver\Api\Reference\SourceRef('test', 'fixture.php', 0, 1), 'address', name:'Box', attributes:['literal-class' => $literal]);
+        self::assertSame($expected, (new \Deriver\Internal\Solver\Transfer\ObjectAccess($context))->receiverClass($instruction, $receiver, $state));
+    }
+
+    /**
+     * @return iterable<string,array{\Deriver\Value\Term,bool,string}>
+     */
+    public static function providerPropertyClasses(): iterable
+    {
+        yield 'literal self' => [\Deriver\Value\Term::constant('self'),true,'Box'];
+        yield 'literal parent' => [\Deriver\Value\Term::constant('parent'),true,'Base'];
+        yield 'literal static' => [\Deriver\Value\Term::constant('static'),true,'Child'];
+        yield 'runtime self string' => [\Deriver\Value\Term::constant('self'),false,'self'];
+        yield 'qualified runtime name' => [\Deriver\Value\Term::constant('\\bOx'),false,'bOx'];
+        yield 'object identity is not a class name' => [new \Deriver\Value\Term('object', 'identity', attributes:['class' => 'Box']),false,'Box'];
+        yield 'enum singleton identity is not a class name' => [new \Deriver\Value\Term('enum', 'E::A', attributes:['class' => 'E']),false,'E'];
+        yield 'declared subtype bound' => [\Deriver\Value\Term::parameter('x', 'Box'),false,'Box'];
+        yield 'invalid class metadata' => [new \Deriver\Value\Term('object', 'identity', attributes:['class' => 1]),false,''];
     }
 }

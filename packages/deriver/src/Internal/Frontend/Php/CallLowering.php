@@ -38,7 +38,7 @@ final class CallLowering
             if ($node->class instanceof Stmt\Class_) {
                 return $g->emit($node, 'unsupported', name: 'anonymous-class');
             }
-            return $this->invoke($node, 'new', [$l->name($node->class)], ['scope' => $l->className]);
+            return $this->invoke($node, 'new', [$l->name($node->class)], ['scope' => $l->className, 'literal-class' => $node->class instanceof Name]);
         }
         if ($node instanceof Expr\FuncCall) {
             $target = $l->name($node->name);
@@ -49,7 +49,7 @@ final class CallLowering
             $receiver = $node instanceof Expr\MethodCall ? $l->expression($node->var) : $l->name($node->class);
             $name = $l->name($node->name);
             $operation = $node instanceof Expr\MethodCall ? 'invoke-method' : 'invoke-static';
-            $attributes = ['scope' => $l->className, 'static' => $node instanceof Expr\StaticCall];
+            $attributes = ['scope' => $l->className, 'static' => $node instanceof Expr\StaticCall, 'literal-class' => $node instanceof Expr\StaticCall && $node->class instanceof Name];
             return $node->isFirstClassCallable() ? $g->emit($node, 'callable-method', [$receiver, $name], attributes: $attributes) : $this->invoke($node, $operation, [$receiver, $name], $attributes);
         }
         return $g->emit($node, 'unsupported', name: $node->getType());

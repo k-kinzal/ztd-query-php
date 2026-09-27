@@ -125,7 +125,7 @@ final class ExpressionLowering
             return $g->emit($node, 'class-constant', [$this->lowering->name($node->class), $this->lowering->name($node->name)], $this->lowering->className, attributes: ['literal-class' => $node->class instanceof \PhpParser\Node\Name, 'class-name' => $node->name instanceof \PhpParser\Node\Identifier && strtolower($node->name->toString()) === 'class']);
         }
         if ($node instanceof Expr\Instanceof_) {
-            return $g->emit($node, 'instanceof', [$this->lowering->expression($node->expr), $this->lowering->name($node->class)]);
+            return $g->emit($node, 'instanceof', [$this->lowering->expression($node->expr), $this->lowering->name($node->class)], attributes: ['literal-class' => $node->class instanceof \PhpParser\Node\Name]);
         }
         if ($node instanceof Expr\Include_ || $node instanceof Expr\Eval_) {
             return $g->emit($node, 'symbol-table-boundary', [$this->lowering->expression($node->expr)], $node instanceof Expr\Include_ ? 'INCLUDE_SEMANTICS_UNSUPPORTED' : 'UNSUPPORTED_LANGUAGE_FEATURE');

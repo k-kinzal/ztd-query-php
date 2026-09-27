@@ -100,6 +100,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeBinding::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeCheck::class)]
 #[UsesClass(\Deriver\Internal\Solver\Completion::class)]
+#[UsesClass(\Deriver\Internal\Solver\Constant\ClassNames::class)]
 #[UsesClass(\Deriver\Internal\Solver\Context::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\ExceptionChain::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\ExceptionMatch::class)]
@@ -166,5 +167,25 @@ final class CallLoweringTest extends TestCase
         self::assertSame(1, $result->normalOutcomes[0]->values['return']->native());
         self::assertSame([], array_column($result->frontiers, 'code'));
         self::assertSame([], $result->exceptionalOutcomes);
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerClassOperandSyntax')]
+    public function testLowerPreservesWhetherAClassOperandIsLiteral(string $expression, bool $literal): void
+    {
+        $index = \Tests\Fake\FrontendFixture::index('<?php function target($class,$value){return ' . $expression . ';}');
+        $body = $index->callable('target');
+        self::assertNotNull($body);
+        $instructions = array_values(array_filter($body->blocks[0]->instructions, static fn (\Deriver\Internal\IR\Instruction $instruction): bool => $instruction->operation === 'invoke-static'));
+        self::assertCount(1, $instructions);
+        self::assertSame($literal, $instructions[0]->attributes['literal-class']);
+    }
+
+    /**
+     * @return iterable<string,array{string,bool}>
+     */
+    public static function providerClassOperandSyntax(): iterable
+    {
+        yield 'Box::value()' => ['Box::value()', true];
+        yield '$class::value()' => ['$class::value()', false];
     }
 }

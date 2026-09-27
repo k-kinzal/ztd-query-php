@@ -167,4 +167,37 @@ final class ClassNamesTest extends TestCase
         $public = $names->runtime(new Term('object', 'two', attributes:['class' => 'Box']));
         self::assertFalse($public->isSecret());
     }
+
+    #[DataProvider('providerReceiverClasses')]
+    public function testReceiverPreservesInstanceBoundsAndStaticClassSyntax(Term $value, bool $static, bool $literal, string $kind, string $expected): void
+    {
+        $context = SolverFixture::context('<?php class Base{}class Box extends Base{function value(){}}class Child extends Box{}function target(){}');
+        $caller = $context->program->callable('Box::value');
+        self::assertNotNull($caller);
+        $state = new State();
+        $state->lateStaticClass = 'Child';
+        $instruction = new \Deriver\Internal\IR\Instruction('call', 'invoke-static', $caller->source, 'result', attributes: ['literal-class' => $literal]);
+        $resolved = (new ClassNames($context))->receiver($caller, $instruction, $state, $value, $static);
+        self::assertSame($kind, $resolved->kind);
+        self::assertSame($expected, $resolved->literal);
+    }
+
+    /**
+     * @return iterable<string,array{Term,bool,bool,string,string}>
+     */
+    public static function providerReceiverClasses(): iterable
+    {
+        yield 'instance class' => [new Term('object', 'one', attributes:['class' => 'Box']),false,false,'constant','Box'];
+        yield 'instance subtype bound' => [Term::parameter('x', 'Box'),false,false,'constant','Box'];
+        yield 'instance relative type' => [Term::parameter('x', 'self'),false,false,'constant','Box'];
+        yield 'unknown instance' => [new Term('object', 'one'),false,false,'constant',''];
+        yield 'static object' => [new Term('object', 'one', attributes:['class' => 'Box']),true,false,'constant','Box'];
+        yield 'static runtime string' => [Term::constant('\\bOx'),true,false,'constant','bOx'];
+        yield 'static literal self' => [Term::constant('self'),true,true,'constant','Box'];
+        yield 'static literal parent' => [Term::constant('parent'),true,true,'constant','Base'];
+        yield 'static late bound' => [Term::constant('static'),true,true,'constant','Child'];
+        yield 'static dynamic relative' => [Term::constant('self'),true,false,'throwable','Error'];
+        yield 'invalid static type' => [Term::constant(1),true,false,'throwable','Error'];
+        yield 'unknown static type' => [Term::parameter('x'),true,false,'opaque','UNSUPPORTED_LANGUAGE_FEATURE'];
+    }
 }

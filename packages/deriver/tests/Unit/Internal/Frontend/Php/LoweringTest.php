@@ -60,6 +60,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\IR\CallableIR::class)]
 #[UsesClass(\Deriver\Internal\IR\CallableIdentity::class)]
 #[UsesClass(\Deriver\Internal\IR\Instruction::class)]
+#[UsesClass(\Deriver\Internal\IR\Parameter::class)]
 #[UsesClass(\Deriver\Internal\IR\Terminator::class)]
 #[UsesClass(\Deriver\Internal\Memory\Location::class)]
 #[UsesClass(\Deriver\Internal\Memory\Materialization::class)]
@@ -154,5 +155,25 @@ final class LoweringTest extends TestCase
         $lowering = \Tests\Fake\FrontendFixture::lowering();
         self::assertFalse($lowering->addressable(new \PhpParser\Node\Scalar\Int_(1)));
         self::assertTrue($lowering->addressable(new \PhpParser\Node\Expr\Variable('x')));
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerClassOperandSyntax')]
+    public function testLocationPreservesWhetherAClassOperandIsLiteral(string $expression, bool $literal): void
+    {
+        $index = \Tests\Fake\FrontendFixture::index('<?php function target($class,$value){return ' . $expression . ';}');
+        $body = $index->callable('target');
+        self::assertNotNull($body);
+        $instructions = array_values(array_filter($body->blocks[0]->instructions, static fn (\Deriver\Internal\IR\Instruction $instruction): bool => $instruction->operation === 'static-address'));
+        self::assertCount(1, $instructions);
+        self::assertSame($literal, $instructions[0]->attributes['literal-class']);
+    }
+
+    /**
+     * @return iterable<string,array{string,bool}>
+     */
+    public static function providerClassOperandSyntax(): iterable
+    {
+        yield 'Box::$value' => ['Box::$value', true];
+        yield '$class::$value' => ['$class::$value', false];
     }
 }

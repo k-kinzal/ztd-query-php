@@ -39,7 +39,7 @@ final class CallableTransfer
         $a = $state->value($instruction->operands[0] ?? '');
         $b = $state->value($instruction->operands[1] ?? '');
         if ($instruction->operation === 'instanceof') {
-            return $this->instance($callable, $state, $a, $b);
+            return $this->instance($callable, $state, $a, $b, ($instruction->attributes['literal-class'] ?? true) === true);
         }
         return new Term($instruction->operation, operands: [$a, $b], attributes: ['type' => 'bool']);
     }
@@ -72,17 +72,24 @@ final class CallableTransfer
      * @param State $state Called class context
      * @param Term $value Tested value
      * @param Term $bound Target class name
+     * @param bool $literal Whether the tested class uses literal syntax
      * @return Term Known relation or a symbolic instance predicate
      */
-    public function instance(CallableIR $caller, State $state, Term $value, Term $bound): Term
+    public function instance(CallableIR $caller, State $state, Term $value, Term $bound, bool $literal = true): Term
     {
         if (in_array($value->kind, ['constant', 'array'], true)) {
             return Term::constant(false);
         }
-        $class = $value->kind === 'closure' ? 'Closure' : ($value->attributes['class'] ?? null);
-        if (is_string($class) && is_string($bound->literal)) {
+        $names = new \Deriver\Internal\Solver\Constant\ClassNames($this->context);
+        $class = $names->object($value);
+        $target = $names->object($bound) ?? ($bound->kind === 'constant' && is_string($bound->literal) ? $bound->literal : null);
+        if ($class !== null && $target === null && in_array($bound->kind, ['constant', 'array', 'uninitialized'], true)) {
+            return new Term('throwable', 'Error');
+        }
+        if ($class !== null && $target !== null) {
             $dispatch = new Dispatch($this->context->program);
-            return Term::constant($dispatch->subtype($class, $dispatch->className($bound->literal, $caller->className, $state->lateStaticClass)));
+            $target = $literal ? $dispatch->className($target, $caller->className, $state->lateStaticClass) : ltrim($target, '\\');
+            return $literal && $target === '' ? new Term('throwable', 'Error') : Term::constant($dispatch->subtype($class, $target));
         }
         return new Term('instanceof', operands: [$value, $bound], attributes: ['type' => 'bool']);
     }

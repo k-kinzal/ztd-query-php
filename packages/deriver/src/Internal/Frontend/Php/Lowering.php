@@ -72,7 +72,7 @@ final class Lowering
             return $this->graph->emit($expression, 'field-address', [$this->expression($expression->var), $this->name($expression->name)], name: $this->className);
         }
         if ($expression instanceof Expr\StaticPropertyFetch) {
-            return $this->graph->emit($expression, 'static-address', [$this->name($expression->class), $this->name($expression->name)], name: $this->className);
+            return $this->graph->emit($expression, 'static-address', [$this->name($expression->class), $this->name($expression->name)], name: $this->className, attributes: ['literal-class' => $expression->class instanceof Name]);
         }
         if ($expression instanceof Expr\CallLike) {
             return $this->graph->emit($expression, 'returned-address', [$this->expression($expression)]);
