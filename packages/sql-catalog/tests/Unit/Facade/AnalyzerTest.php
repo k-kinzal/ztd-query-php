@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Facade;
 
+use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -23,6 +25,9 @@ use SqlCatalog\Core\Source\SourceScanException;
 use SqlCatalog\Extension\Pdo\PdoExtension;
 use SqlCatalog\Facade\AnalysisOptions;
 use SqlCatalog\Facade\Analyzer;
+use Tests\Fake\CharacterizationCase;
+use Tests\Fake\CharacterizationCorpus;
+use UnexpectedValueException;
 
 #[CoversClass(Analyzer::class)]
 #[UsesClass(AnalysisOptions::class)]
@@ -1178,5 +1183,29 @@ SOURCE;
             'app.php' => '<?php \Illuminate\Support\Facades\DB::table("items")->get();',
         ], new AnalysisOptions(['laravel'], dialect: 'application'));
         self::assertSame('select * from !items!', $catalog->entries()[0]->sql());
+    }
+
+    /**
+     * @return array<string, array{CharacterizationCase}>
+     * @throws JsonException
+     * @throws UnexpectedValueException
+     */
+    public static function providerCharacterization(): array
+    {
+        return array_map(
+            static fn (CharacterizationCase $case): array => [$case],
+            CharacterizationCorpus::load(__DIR__ . '/../../Characterization'),
+        );
+    }
+
+    /**
+     * @throws JsonException
+     * @throws UnknownExtensionException
+     */
+    #[CoversNothing]
+    #[DataProvider('providerCharacterization')]
+    public function testAnalyzeSourceReproducesTheRecordedReport(CharacterizationCase $case): void
+    {
+        self::assertSame($case->expected, $case->report());
     }
 }
