@@ -29,6 +29,7 @@ final class TypeReader
      * Reads a declared type, including table-dependent storage rules and the column facts it implies.
      *
      * @throws LogicException When the dialect policy produces a built-in type it does not support
+     * @throws \SqlSemantics\Core\SemanticException When the declared type is invalid
      */
     public function read(Node $node, ValueReader $values, ?Node $table = null): TypeDeclaration
     {

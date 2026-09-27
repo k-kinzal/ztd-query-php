@@ -53,6 +53,14 @@ final class Platform implements Contract
     }
 
     /**
+     * Supplies the literal decoder for the resolved language.
+     */
+    public function literals(Language $language): Policy\LiteralRules
+    {
+        return new LiteralDecoder($language);
+    }
+
+    /**
      * Supplies the default declaration namespace.
      */
     public function defaultSchema(): string

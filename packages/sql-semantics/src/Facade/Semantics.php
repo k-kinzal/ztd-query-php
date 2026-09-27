@@ -11,6 +11,7 @@ use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\Language;
 use SqlSemantics\Core\Mode;
 use SqlSemantics\Core\Parameters;
+use SqlSemantics\Core\ResolutionMode;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -21,7 +22,7 @@ use SqlSemantics\Statement\Statement;
  * settings given as the mode, and with the selected parameter markers. A
  * statement analyzed with its dependencies, the declarations that came
  * before it, also resolves every table name it writes; a name no dependency
- * declares is an error.
+ * declares is an error in strict resolution. Partial resolution records it explicitly.
  *
  * @visibility public
  * @example Reconstructing SQL with the SQLite database package
@@ -68,21 +69,22 @@ final class Semantics
     /**
      * Builds an immutable statement from the SQL of one statement, resolved against its dependencies when they are given.
      *
-     * Without dependencies the statement is structured only. With them, even
+     * Without dependencies the statement is structured only, unless partial resolution is requested. With them, even
      * none, the statement is also resolved: the tables it declares are read,
      * and every table name it writes must be a common table expression it
      * defines, a table a dependency declares, or a table it declares or
      * drops itself. Dependencies are applied in order, so a later DROP TABLE
-     * removes an earlier declaration.
+     * removes an earlier declaration. Partial resolution keeps missing references
+     * as ReferenceKind::Unresolved and still validates local declarations.
      *
      * @param list<Statement>|null $dependencies The declarations the statement is read against, in order
      *
      * @throws \SqlSemantics\Core\AnalysisException When SQL is not one statement of the selected language
      * @throws \SqlSemantics\Core\SemanticException When a table name resolves to nothing or a declaration conflicts with a dependency
      */
-    public function analyze(string $sql, ?array $dependencies = null): Statement
+    public function analyze(string $sql, ?array $dependencies = null, ResolutionMode $resolutionMode = ResolutionMode::Strict): Statement
     {
-        return $this->analyzer->analyze($sql, $dependencies);
+        return $this->analyzer->analyze($sql, $dependencies, $resolutionMode);
     }
 
     /**
@@ -93,9 +95,9 @@ final class Semantics
      * @throws \SqlSemantics\Core\AnalysisException When a statement is not in the selected language
      * @throws \SqlSemantics\Core\SemanticException When a table name resolves to nothing or a declaration conflicts
      */
-    public function analyzeAll(string $sql, ?array $dependencies = null): array
+    public function analyzeAll(string $sql, ?array $dependencies = null, ResolutionMode $resolutionMode = ResolutionMode::Strict): array
     {
-        return $this->analyzer->analyzeAll($sql, $dependencies);
+        return $this->analyzer->analyzeAll($sql, $dependencies, $resolutionMode);
     }
 
     /**
@@ -111,6 +113,29 @@ final class Semantics
     public function split(string $sql): array
     {
         return $this->analyzer->split($sql);
+    }
+
+    /**
+     * Decodes a literal without evaluating an expression or applying a column type.
+     *
+     * Numeric values remain exact decimal text. SQL NULL has its own variant;
+     * a value requiring evaluation throws rather than pretending to be NULL.
+     * @throws \SqlSemantics\Core\Literal\DecodingException When the value is not a decodable literal
+     */
+    public function decodeLiteral(\SqlSemantics\Statement\Element $value): \SqlSemantics\Statement\Literal\Literal
+    {
+        return (new \SqlSemantics\Core\Literal\Reader($this->language))->read($value);
+    }
+
+    /**
+     * Reads a standalone column type, keeping its syntax, declared facts, and effective numeric size.
+     *
+     * @throws \SqlSemantics\Core\AnalysisException When input is not exactly one type
+     * @throws \SqlSemantics\Core\SemanticException When the declared type has invalid parameters
+     */
+    public function type(string $sql): \SqlSemantics\Statement\Declaration\TypeDeclaration
+    {
+        return (new \SqlSemantics\Core\Ast\TypeInput($this->language))->read($sql);
     }
 
     /**

@@ -1,6 +1,6 @@
 # Dependencies
 
-A statement means something against the statements that came before it. `Semantics::analyze()` takes those statements as its dependencies, in order, and answers a statement whose `resolution` says what it declares and what every table name it writes resolves to. Without dependencies, a statement is structured only and its `resolution` is null.
+A statement means something against the statements that came before it. `Semantics::analyze()` takes those statements as its dependencies, in order, and answers a statement whose `resolution` says what it declares and what every table name it writes resolves to. Without dependencies, a statement is structured only and its `resolution` is null, unless `ResolutionMode::Partial` is selected. [Partial declaration reading](declarations.md) preserves absent dependencies as explicit unresolved references.
 
 ```php
 use SqlSemantics\Facade\Semantics;
@@ -59,15 +59,18 @@ Every table name a statement writes is a `Statement\Reference`: the name value a
 
 | Kind | Meaning |
 |------|---------|
+| `Unresolved` | An absent table reference recorded by partial analysis; no declaration or table is fabricated |
 | `Dependency` | A table declared by a dependency; `declaration` is that statement and `table` its declared columns |
 | `Declaration` | A table the statement itself declares, or names again in its own constraints |
 | `CommonTableExpression` | A common table expression the statement defines; a name it shadows resolves to it |
 | `Drop` | A table the statement drops; `declaration` is where it was declared |
 
-A name that resolves to none of these is a `SemanticException` with reason `unknown-table`: the dependency that would declare it was not given. Names are compared as the dialect compares relation names, and an unqualified name is read in the dialect's default schema, so in MySQL `db.users` and `users` are different tables.
+In strict resolution, a name that resolves to none of these is a `SemanticException` with reason `unknown-table`: the dependency that would declare it was not given. Names are compared as the dialect compares relation names, and an unqualified name searches the dialect's implicit namespaces (SQLite searches `temp` before `main`), so in MySQL `db.users` and `users` are different tables.
 
 Table names are found where each grammar writes them: in FROM and JOIN clauses, INSERT, UPDATE, DELETE, and MERGE targets, TRUNCATE, ALTER TABLE, CREATE INDEX, foreign key references, and the sources of `CREATE TABLE ... LIKE` and `... AS SELECT`. Aliases and column names are not resolved, and a name written inside a stored program body is not read.
 
 ## Verification
 
 Each database package fuzzes declarations: every `CREATE TABLE` sql-faker generates from the grammar must resolve to one readable table, write back the same SQL, and read the same declaration again, unchanged by an unrelated conditional drop before it. Resolution against dependencies is stated by unit tests for every statement kind above in each dialect.
+
+The [declaration and literal APIs](declarations.md) preserve declared precision and scale separately from effective numeric size, expose default values without their DEFAULT envelope, and decode literal values without evaluating expressions.

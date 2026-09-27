@@ -38,6 +38,7 @@ final class TypeDescriptor
      * @param int $arrayDimensions Number of array dimensions; zero for a scalar
      * @param IntervalFields|null $intervalFields Fields an interval is restricted to
      * @param Affinity|null $affinity Storage affinity, in dialects that have one; not a runtime storage-class guarantee
+     * @param NumericSize|null $effectiveNumericSize Enforced decimal size, including dialect defaults; null for unconstrained or affinity-only types
      * @throws InvalidArgumentException When the facts contradict each other
      */
     public function __construct(
@@ -53,6 +54,7 @@ final class TypeDescriptor
         public readonly int $arrayDimensions = 0,
         public readonly ?IntervalFields $intervalFields = null,
         public readonly ?Affinity $affinity = null,
+        public readonly ?NumericSize $effectiveNumericSize = null,
     ) {
         Invariant::ensure($length === null || $length >= 0, 'A type length cannot be negative.');
         Invariant::ensure($precision === null || $precision >= 0, 'A type precision cannot be negative.');
@@ -65,6 +67,9 @@ final class TypeDescriptor
         Invariant::ensure(($members !== []) === in_array($name, [Builtin::Enum, Builtin::Set], true), 'Exactly the enumeration types have members.');
         Invariant::ensure($arrayDimensions >= 0, 'Array dimensions cannot be negative.');
         Invariant::ensure($intervalFields === null || $name === Builtin::Interval, 'Only intervals carry interval fields.');
+        Invariant::ensure($effectiveNumericSize === null || $name === Builtin::Numeric, 'Only an exact decimal type has an effective decimal size.');
+        Invariant::ensure($effectiveNumericSize === null || $precision === null || $precision === 0 || $effectiveNumericSize->precision === $precision, 'Effective precision must preserve declared precision.');
+        Invariant::ensure($effectiveNumericSize === null || $scale === null || $effectiveNumericSize->scale === $scale, 'Effective scale must preserve declared scale.');
     }
 
     /**

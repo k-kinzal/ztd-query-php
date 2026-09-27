@@ -135,4 +135,14 @@ final class RelationsTest extends TestCase
         self::assertFalse($relations->isCommon(['app', 'recent']));
         self::assertFalse($relations->isCommon(['other']));
     }
+
+    public function testLookupNameSearchesNamespacesOnlyForAnUnqualifiedName(): void
+    {
+        $relations = new Relations(MySqlDialect::MySql->platform()->names(), 'main', ['temp', 'main']);
+        $relations->declare('temp', 't', null, null);
+        self::assertSame([null, null], $relations->lookupName(['t']));
+        self::assertNull($relations->lookupName(['main', 't']));
+        self::assertNull($relations->lookupName(['absent']));
+    }
+
 }

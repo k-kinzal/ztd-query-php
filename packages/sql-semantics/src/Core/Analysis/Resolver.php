@@ -9,6 +9,7 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Core\Ast\SchemaReader;
 use SqlSemantics\Core\Ast\Tree;
 use SqlSemantics\Core\Language;
+use SqlSemantics\Core\ResolutionMode;
 use SqlSemantics\Core\SemanticException;
 use SqlSemantics\Statement\Command;
 use SqlSemantics\Statement\Declaration\TableDefinition;
@@ -57,9 +58,9 @@ final class Resolver
      * @throws SemanticException When a name resolves to nothing, or a declaration conflicts with one in force
      * @throws LogicException When the relation rules of the dialect do not fit its grammar
      */
-    public function resolve(Node $tree, Command $command, array $dependencies): Resolution
+    public function resolve(Node $tree, Command $command, array $dependencies, ResolutionMode $mode = ResolutionMode::Strict): Resolution
     {
-        $relations = new Relations($this->language->dialect->platform()->names(), $this->language->dialect->platform()->defaultSchema());
+        $relations = new Relations($this->language->dialect->platform()->names(), $this->language->dialect->platform()->defaultSchema(), $this->language->dialect->platform()->schema()->searchSchemas());
         foreach ($dependencies as [$dependency, $resolution]) {
             foreach ($resolution->references as $reference) {
                 $relations->apply($reference, $dependency);
@@ -75,7 +76,7 @@ final class Resolver
         }
         foreach ($sites as $index => $site) {
             if ($site->kind !== ReferenceKind::Declaration) {
-                $references[$index] = $this->refer($site, $relations, $tree);
+                $references[$index] = $this->refer($site, $relations, $tree, $mode);
             }
         }
         ksort($references);
@@ -99,6 +100,14 @@ final class Resolver
     public function declare(NameSite $site, Relations $relations, array $declarations, Node $tree): Reference
     {
         [$schema, $table] = $relations->qualified($site->name);
+        if (count($site->name) === 1) {
+            foreach ($declarations as $candidate) {
+                if ($relations->same($candidate->schema, $candidate->name, $candidate->schema, $table)) {
+                    $schema = $candidate->schema;
+                    break;
+                }
+            }
+        }
         $known = $relations->lookup($schema, $table);
         if ($known !== null && !$site->conditional) {
             throw new SemanticException('duplicate-table', 'Duplicate table declaration: ' . $table, $tree);
@@ -117,17 +126,17 @@ final class Resolver
      *
      * @throws SemanticException When the name is not in force, and the site is not a conditional drop
      */
-    public function refer(NameSite $site, Relations $relations, Node $tree): Reference
+    public function refer(NameSite $site, Relations $relations, Node $tree, ResolutionMode $mode = ResolutionMode::Strict): Reference
     {
         if ($site->kind === ReferenceKind::CommonTableExpression) {
             $relations->define($site->name);
 
             return new Reference($site->value, $site->name, ReferenceKind::CommonTableExpression);
         }
-        [$schema, $table] = $relations->qualified($site->name);
-        $known = $relations->lookup($schema, $table);
+        [, $table] = $relations->qualified($site->name);
+        $known = $relations->lookupName($site->name);
         if ($site->kind === ReferenceKind::Drop) {
-            if ($known === null && !$site->conditional) {
+            if ($known === null && !$site->conditional && $mode === ResolutionMode::Strict) {
                 throw new SemanticException('unknown-table', 'Cannot drop an unknown table: ' . $table, $tree);
             }
 
@@ -137,6 +146,9 @@ final class Resolver
             return new Reference($site->value, $site->name, ReferenceKind::CommonTableExpression);
         }
         if ($known === null) {
+            if ($mode === ResolutionMode::Partial) {
+                return new Reference($site->value, $site->name, ReferenceKind::Unresolved);
+            }
             throw new SemanticException('unknown-table', 'No dependency declares the table ' . implode('.', $site->name), $tree);
         }
 

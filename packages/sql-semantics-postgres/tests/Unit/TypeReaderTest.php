@@ -236,4 +236,12 @@ final class TypeReaderTest extends TestCase
         $this->expectException(SemanticException::class);
         (new TypeReader())->integer([new Token(1, 'ICONST', '99999999999999999999', 0)], $node);
     }
+
+    public function testNumericSizeSeparatesWrittenAndEffectiveScale(): void
+    {
+        $type = (new Semantics(Dialect::PostgreSql))->type('DECIMAL(5)')->type;
+        self::assertNull($type->scale);
+        self::assertSame(0, $type->effectiveNumericSize?->scale);
+    }
+
 }

@@ -40,6 +40,11 @@ interface Platform
     public function builder(Language $language): Builder;
 
     /**
+     * Supplies literal decoding under the language's session settings.
+     */
+    public function literals(Language $language): Policy\LiteralRules;
+
+    /**
      * Supplies the unqualified declaration namespace.
      */
     public function defaultSchema(): string;

@@ -19,6 +19,9 @@ use SqlSemantics\Statement\Declaration\TableDefinition;
  *     $users = $semantics->analyze('CREATE TABLE users (id INTEGER)', []);
  *     $reference = $semantics->analyze('SELECT id FROM users', [$users])->resolution?->references[0];
  *     [$reference?->name, $reference?->kind?->name, $reference?->declaration === $users] // => [['users'], 'Dependency', true]
+ * @example An unresolved reference cannot claim to be a conditional declaration
+ *     $value = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->builder()->column('t');
+ *     new \SqlSemantics\Statement\Reference($value, ['t'], \SqlSemantics\Statement\ReferenceKind::Unresolved, conditional: true) // throws \InvalidArgumentException
  */
 final class Reference
 {
@@ -38,6 +41,8 @@ final class Reference
         public readonly ?TableDefinition $table = null,
         public readonly bool $conditional = false,
     ) {
-        Declaration\Invariant::names($name);
+        Declaration\Invariant::nonEmptyNames($name);
+        Declaration\Invariant::elements($value);
+        Declaration\Invariant::ensure($kind !== ReferenceKind::Unresolved || ($declaration === null && $table === null && !$conditional), 'An unresolved reference cannot carry a resolution.');
     }
 }

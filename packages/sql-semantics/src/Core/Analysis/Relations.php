@@ -32,8 +32,9 @@ final class Relations
 
     /**
      * Starts with no table in force.
+     * @param list<string> $searchSchemas Namespaces searched by an unqualified reference
      */
-    public function __construct(private readonly NameRules $names, private readonly string $defaultSchema)
+    public function __construct(private readonly NameRules $names, private readonly string $defaultSchema, private readonly array $searchSchemas = [])
     {
     }
 
@@ -42,7 +43,7 @@ final class Relations
      */
     public function apply(Reference $reference, Statement $dependency): void
     {
-        [$schema, $name] = $this->qualified($reference->name);
+        [$schema, $name] = ($reference->table === null || $reference->table->schema === '') ? $this->qualified($reference->name) : [$reference->table->schema, $reference->table->name];
         if ($reference->kind === ReferenceKind::Declaration) {
             $this->declare($schema, $name, $reference->table, $dependency);
         } elseif ($reference->kind === ReferenceKind::Drop) {
@@ -79,6 +80,25 @@ final class Relations
             }
         }
 
+        return null;
+    }
+
+    /**
+     * Resolves a written name, searching namespaces only when it is unqualified.
+     * @param non-empty-list<string> $name
+     * @return array{TableDefinition|null, Statement|null}|null
+     */
+    public function lookupName(array $name): ?array
+    {
+        if (count($name) > 1) {
+            return $this->lookup(...$this->qualified($name));
+        }
+        foreach ($this->searchSchemas === [] ? [$this->defaultSchema] : $this->searchSchemas as $schema) {
+            $found = $this->lookup($schema, $name[0]);
+            if ($found !== null) {
+                return $found;
+            }
+        }
         return null;
     }
 

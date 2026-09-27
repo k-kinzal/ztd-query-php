@@ -42,8 +42,10 @@ final class ColumnReader
         }
         $name = $this->identifiers->parts($nameNode)[0];
         $declared = (new TypeReader($this->identifiers->dialect))->read($typeNode, $this->values, $table);
-        $nullability = $declared->notNull ? Nullability::NotNull : Nullability::MaybeNull;
+        $rules = $this->identifiers->dialect->platform()->schema();
+        $nullability = $rules->nullability($node, $attributes, $declared->notNull ? Nullability::NotNull : Nullability::MaybeNull);
         $default = null;
+        $defaultValue = null;
         $constraints = [];
         if ($declared->unique) {
             $constraints[] = new TableConstraint(ConstraintKind::Unique, [$name], $this->values->read($typeNode), inline: true);
@@ -59,10 +61,11 @@ final class ColumnReader
                 $tokens = array_slice($tokens, 2);
             }
             $text = strtoupper(implode(' ', array_map(static fn ($token): string => $token->text, $tokens)));
-            if (preg_match('/^NOT NULL(?: |$)/', $text) === 1) {
-                $nullability = Nullability::NotNull;
-            } elseif (str_starts_with($text, 'DEFAULT ')) {
+            if (str_starts_with($text, 'DEFAULT ')) {
                 $default = $this->values->read($attribute);
+                $defaultValue = $rules->defaultValue($attribute, $this->values);
+            } elseif ($text === 'SERIAL DEFAULT VALUE') {
+                $constraints[] = new TableConstraint(ConstraintKind::Unique, [$name], $this->values->read($attribute), inline: true);
             }
         }
 
@@ -72,6 +75,6 @@ final class ColumnReader
         if ($generation?->kind === GenerationKind::Identity || $autoIncrement) {
             $nullability = Nullability::NotNull;
         }
-        return [new ColumnDefinition($name, $declared->type, $nullability, $this->values->read($node), $default, $generation, $properties->collation($attributes), $autoIncrement, array_map($this->values->read(...), $attributes)), $constraints];
+        return [new ColumnDefinition($name, $declared->type, $nullability, $this->values->read($node), $default, $generation, $properties->collation($attributes), $autoIncrement, array_map($this->values->read(...), $attributes), $defaultValue), $constraints];
     }
 }

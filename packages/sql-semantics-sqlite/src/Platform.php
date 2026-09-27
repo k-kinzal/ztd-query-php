@@ -53,6 +53,14 @@ final class Platform implements Contract
     }
 
     /**
+     * Supplies the literal decoder for the resolved language.
+     */
+    public function literals(Language $language): Policy\LiteralRules
+    {
+        return new LiteralDecoder();
+    }
+
+    /**
      * Supplies the default declaration namespace.
      */
     public function defaultSchema(): string
@@ -106,6 +114,8 @@ final class Platform implements Contract
                 ['rule' => 'cmd', 'requires' => ['DROP', 'INDEX'], 'name' => 'fullname'],
             ],
             pairs: [
+                ['rule' => 'ccons', 'requires' => ['REFERENCES', 'nm'], 'pair' => ['nm']],
+                ['rule' => 'tcons', 'requires' => ['FOREIGN', 'REFERENCES', 'nm'], 'pair' => ['nm']],
                 ['rule' => 'seltablist', 'requires' => ['nm', 'dbnm'], 'pair' => ['nm', 'dbnm']],
                 ['rule' => 'cmd', 'requires' => ['createkw', 'INDEX', 'ON'], 'pair' => ['nm']],
             ],

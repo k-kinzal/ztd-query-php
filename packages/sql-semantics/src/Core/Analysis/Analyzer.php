@@ -10,6 +10,7 @@ use SqlSemantics\Core\Ast\DialectParser;
 use SqlSemantics\Core\Ast\Identifiers;
 use SqlSemantics\Core\Ast\SchemaReader;
 use SqlSemantics\Core\Language;
+use SqlSemantics\Core\ResolutionMode;
 use SqlSemantics\Statement\Resolution;
 use SqlSemantics\Statement\Statement;
 
@@ -42,7 +43,7 @@ final class Analyzer
      * @throws AnalysisException When SQL is not one statement of the selected language
      * @throws \SqlSemantics\Core\SemanticException When a name resolves to nothing or a declaration conflicts
      */
-    public function analyze(string $sql, ?array $dependencies = null): Statement
+    public function analyze(string $sql, ?array $dependencies = null, ResolutionMode $resolutionMode = ResolutionMode::Strict): Statement
     {
         try {
             $tree = $this->parser->parse($sql);
@@ -50,15 +51,15 @@ final class Analyzer
             throw new AnalysisException($error->getMessage(), 0, $error);
         }
         $statement = $this->values->statement($tree);
-        if ($dependencies === null) {
+        if ($dependencies === null && $resolutionMode === ResolutionMode::Strict) {
             return $statement;
         }
         $resolved = [];
-        foreach ($dependencies as $dependency) {
-            $resolved[] = [$dependency, $dependency->resolution ?? $this->analyze($dependency->toString(), [])->resolution ?? new Resolution()];
+        foreach ($dependencies ?? [] as $dependency) {
+            $resolved[] = [$dependency, $dependency->resolution ?? $this->analyze($dependency->toString(), [], $resolutionMode)->resolution ?? new Resolution()];
         }
 
-        return new Statement($statement->command, $statement->comments, $this->resolver->resolve($tree, $statement->command, $resolved));
+        return new Statement($statement->command, $statement->comments, $this->resolver->resolve($tree, $statement->command, $resolved, $resolutionMode));
     }
 
     /**
@@ -69,11 +70,11 @@ final class Analyzer
      * @throws AnalysisException When a statement is not in the selected language
      * @throws \SqlSemantics\Core\SemanticException When a name resolves to nothing or a declaration conflicts
      */
-    public function analyzeAll(string $sql, ?array $dependencies = null): array
+    public function analyzeAll(string $sql, ?array $dependencies = null, ResolutionMode $resolutionMode = ResolutionMode::Strict): array
     {
         $statements = [];
         foreach ($this->split($sql) as $text) {
-            $statements[] = $this->analyze($text, $dependencies === null ? null : [...$dependencies, ...$statements]);
+            $statements[] = $this->analyze($text, $dependencies === null && $resolutionMode === ResolutionMode::Strict ? null : [...($dependencies ?? []), ...$statements], $resolutionMode);
         }
 
         return $statements;
