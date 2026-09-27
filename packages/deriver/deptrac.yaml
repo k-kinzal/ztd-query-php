@@ -1,0 +1,77 @@
+# Source syntax is confined to source capture and graph construction.
+deptrac:
+  paths: [./src]
+  analyser:
+    types: [class, use]
+  layers:
+    - name: Analysis
+      collectors:
+        - type: classLike
+          value: '^Deriver\\(Analyzer$|Analysis\\)'
+    - name: Contracts
+      collectors:
+        - type: classLike
+          value: '^Deriver\\(AnalysisSession$|(Project|Query|Reference|Exception)\\|Result\\(?!Serialization\\)|Model\\(?!Compilation\\|Registration\\|Builtin\\|Domain\\DomainOperations$|Intrinsic\\IntrinsicEvaluation$)|Value\\(Term$|Projection$))'
+    - name: Serialization
+      collectors:
+        - type: classLike
+          value: '^Deriver\\Result\\Serialization\\'
+    - name: Source
+      collectors:
+        - type: classLike
+          value: '^Deriver\\Source\\'
+    - name: ControlFlow
+      collectors:
+        - type: classLike
+          value: '^Deriver\\ControlFlow\\'
+    - name: Evaluation
+      collectors:
+        - type: classLike
+          value: '^Deriver\\Evaluation\\'
+    - name: Memory
+      collectors:
+        - type: classLike
+          value: '^Deriver\\Memory\\'
+    - name: Constraint
+      collectors:
+        - type: classLike
+          value: '^Deriver\\Constraint\\'
+    - name: ValueOperations
+      collectors:
+        - type: classLike
+          value: '^Deriver\\Value\\(?!Term$|Projection$)'
+    - name: ModelCompilation
+      collectors:
+        - type: classLike
+          value: '^Deriver\\Model\\Compilation\\'
+    - name: ModelRegistration
+      collectors:
+        - type: classLike
+          value: '^Deriver\\Model\\Registration\\'
+    - name: ModelOperations
+      collectors:
+        - type: classLike
+          value: '^Deriver\\Model\\(Domain\\DomainOperations$|Intrinsic\\IntrinsicEvaluation$)'
+    - name: Builtin
+      collectors:
+        - type: classLike
+          value: '^Deriver\\Model\\Builtin\\'
+    - name: PhpParser
+      collectors:
+        - type: classLike
+          value: '^PhpParser\\'
+  ruleset:
+    Analysis: [Contracts, Serialization, Source, ControlFlow, Evaluation, ModelRegistration, ValueOperations]
+    Contracts: [Serialization]
+    Serialization: [Contracts, ValueOperations]
+    Source: [Contracts, ControlFlow, PhpParser]
+    ControlFlow: [Contracts]
+    Evaluation: [Contracts, ControlFlow, Memory, Constraint, ValueOperations, ModelCompilation, ModelRegistration, ModelOperations, Builtin]
+    Memory: [Contracts, ValueOperations]
+    Constraint: [Contracts, Evaluation, ValueOperations]
+    ValueOperations: [Contracts, ModelOperations]
+    ModelCompilation: [Contracts, ControlFlow, ValueOperations]
+    ModelRegistration: [Contracts, ControlFlow, ValueOperations, ModelOperations, Builtin]
+    ModelOperations: [Contracts, ValueOperations]
+    Builtin: [Contracts, ValueOperations]
+    PhpParser: []

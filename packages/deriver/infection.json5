@@ -1,0 +1,20 @@
+{
+    "$schema": "https://raw.githubusercontent.com/infection/infection/0.35.4/resources/schema.json",
+    "source": {"directories": ["src"]},
+    "mutators": {"@default": true},
+    "minMsi": 80,
+    "minCoveredMsi": 80,
+    "timeout": 30,
+    "timeoutsAsEscaped": true,
+    "tmpDir": "build/infection-tmp",
+    "logs": {
+        "text": "build/infection/escaped.log",
+        "summary": "build/infection/summary.log",
+        "perMutator": "build/infection/per-mutator.md",
+        "json": "build/infection/infection.json"
+    },
+    // Score the unit suite with strict coverage metadata; semantic and differential tests run separately.
+    "testFrameworkExtraArgs": "--no-extensions --testsuite=unit",
+    "testFramework": "phpunit",
+    "phpUnit": {"configDir": ".", "customPath": "vendor/bin/phpunit"}
+}
