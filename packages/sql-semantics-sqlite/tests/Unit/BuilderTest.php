@@ -71,7 +71,10 @@ final class BuilderTest extends TestCase
     }
 
     #[TestWith([0.5, '0.5'])]
+    #[TestWith([0.1 + 0.2, '0.30000000000000004'])]
     #[TestWith([-2.0, '- 2.0'])]
+    #[TestWith([-0.0, '- 0.0'])]
+    #[TestWith([1e25, '1e25'])]
     public function testFloatIsReadAsAFloat(float $value, string $expected): void
     {
         $semantics = new Semantics(Dialect::Sqlite);

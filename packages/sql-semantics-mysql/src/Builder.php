@@ -108,11 +108,11 @@ final class Builder extends Composition
     }
 
     /**
-     * A decimal or floating-point literal.
+     * An approximate-value literal holding exactly the double: written with an exponent, which MySQL reads as a DOUBLE rather than an exact DECIMAL.
      */
     public function float(float $value): ExprForm
     {
-        return $this->signed($value < 0, $this->literal($this->decimal($value)));
+        return $this->signed($this->negative($value), $this->literal($this->decimal($value, exponent: true)));
     }
 
     /**

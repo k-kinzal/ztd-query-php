@@ -99,11 +99,11 @@ final class Builder extends Composition
     }
 
     /**
-     * A numeric literal.
+     * A numeric literal holding exactly the double, which a cast to double precision reads back unchanged.
      */
     public function float(float $value): AExprForm
     {
-        return $this->signed($value < 0, $this->constant($this->decimal($value)));
+        return $this->signed($this->negative($value), $this->constant($this->decimal($value)));
     }
 
     /**

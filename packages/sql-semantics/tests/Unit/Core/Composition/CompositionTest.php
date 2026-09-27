@@ -6,6 +6,7 @@ namespace Tests\Unit\Core\Composition;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Composition\Composition;
@@ -61,6 +62,33 @@ final class CompositionTest extends TestCase
         self::assertSame('"with space"', Writer::render($builder->identifier('with space')));
         self::assertSame('"select"', Writer::render($builder->identifier('select')));
         self::assertSame('"9lives"', Writer::render($builder->identifier('9lives')));
+    }
+
+    #[TestWith([0.1 + 0.2, '0.30000000000000004'])]
+    #[TestWith([123.25, '123.25'])]
+    #[TestWith([100.0, '100.0'])]
+    #[TestWith([1e20, '100000000000000000000.0'])]
+    #[TestWith([1e21, '1e21'])]
+    #[TestWith([1e-7, '0.0000001'])]
+    #[TestWith([1.5e-8, '1.5e-8'])]
+    #[TestWith([5e-324, '5e-324'])]
+    #[TestWith([PHP_FLOAT_MAX, '1.7976931348623157e308'])]
+    #[TestWith([0.0, '0.0'])]
+    #[TestWith([-0.0, '- 0.0'])]
+    public function testFloatsAreSpelledWithTheFewestDigitsThatReadBackAsTheNumber(float $value, string $expected): void
+    {
+        self::assertSame($expected, Writer::render((new Semantics(SqliteDialect::Sqlite))->builder()->float($value)));
+    }
+
+    public function testFloatSpellingDoesNotDependOnThePrecisionSettings(): void
+    {
+        $builder = (new Semantics(SqliteDialect::Sqlite))->builder();
+        $precision = ini_set('precision', '3');
+        $serialize = ini_set('serialize_precision', '3');
+        $spelled = Writer::render($builder->float(0.1 + 0.2));
+        ini_set('precision', (string) $precision);
+        ini_set('serialize_precision', (string) $serialize);
+        self::assertSame('0.30000000000000004', $spelled);
     }
 
     public function testAnEmptyNameIsRejected(): void

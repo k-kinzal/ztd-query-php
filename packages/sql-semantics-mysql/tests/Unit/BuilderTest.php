@@ -81,10 +81,13 @@ final class BuilderTest extends TestCase
         Composed::assertExpressionRoundTrips($semantics, $semantics->builder()->integer($value));
     }
 
-    #[TestWith([0.1, '0.1'])]
-    #[TestWith([-2.0, '- 2.0'])]
-    #[TestWith([1e25, '1.0E+25'])]
-    public function testFloatIsReadAsANonInteger(float $value, string $expected): void
+    #[TestWith([0.1, '1e-1'])]
+    #[TestWith([0.1 + 0.2, '3.0000000000000004e-1'])]
+    #[TestWith([-2.0, '- 2e0'])]
+    #[TestWith([-0.0, '- 0e0'])]
+    #[TestWith([1e25, '1e25'])]
+    #[TestWith([5e-324, '5e-324'])]
+    public function testFloatIsAnApproximateValueLiteralOfExactlyTheNumber(float $value, string $expected): void
     {
         $semantics = new Semantics(Dialect::MySql);
         self::assertSame($expected, Writer::render($semantics->builder()->float($value)));

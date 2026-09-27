@@ -110,11 +110,11 @@ final class Builder extends Composition
     }
 
     /**
-     * A floating-point literal.
+     * A floating-point literal holding exactly the double, which SQLite reads as a REAL.
      */
     public function float(float $value): ExprForm
     {
-        return $this->signed($value < 0, $this->term($this->decimal($value)));
+        return $this->signed($this->negative($value), $this->term($this->decimal($value)));
     }
 
     /**

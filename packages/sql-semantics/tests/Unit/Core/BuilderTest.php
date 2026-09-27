@@ -63,7 +63,7 @@ final class BuilderTest extends TestCase
     public static function providerNumbers(): iterable
     {
         foreach ([MySqlDialect::MySql, PostgreSqlDialect::PostgreSql, SqliteDialect::Sqlite] as $dialect) {
-            foreach ([42, -7, 0, PHP_INT_MAX, 1.5, -2.0, 0.1, 1e25] as $value) {
+            foreach ([42, -7, 0, PHP_INT_MAX, 1.5, -2.0, 0.1, 0.1 + 0.2, -0.0, 5e-324, PHP_FLOAT_MAX, 1e25] as $value) {
                 yield $dialect->value . ' ' . var_export($value, true) => [$dialect, $value];
             }
         }
@@ -76,6 +76,7 @@ final class BuilderTest extends TestCase
         $literal = is_int($value) ? $semantics->builder()->integer($value) : $semantics->builder()->float($value);
         $sql = 'SELECT ' . Writer::render($literal);
         self::assertSame($sql, $semantics->analyze($sql)->toString());
+        self::assertSame(bin2hex(pack('E', $value)), bin2hex(pack('E', (float) str_replace('- ', '-', Writer::render($literal)))));
     }
 
     /**
