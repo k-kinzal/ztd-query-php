@@ -42,6 +42,26 @@ final class ReplicaThreadOptionListWithReplicaThreadOptionListReplicaThreadOptio
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->replicaThreadOptionList, $this->replicaThreadOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->replicaThreadOptionList, \SqlSemantics\Statement\Model\MySql\Role\ReplicaThreadOptionListForm::class, $replace), $this->replacement($this->replicaThreadOption, \SqlSemantics\Statement\Model\MySql\Role\ReplicaThreadOptionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new replicaThreadOptionList, preserving every other field.
      */
     public function withReplicaThreadOptionList(\SqlSemantics\Statement\Model\MySql\Role\ReplicaThreadOptionListForm $replicaThreadOptionList): self

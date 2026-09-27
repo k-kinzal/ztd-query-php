@@ -40,6 +40,26 @@ final class SimpleExprWithSubselect_decff698 implements \SqlSemantics\Statement\
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->subselect];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->subselect, \SqlSemantics\Statement\Model\MySql\Role\SubselectForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new subselect, preserving every other field.
      */
     public function withSubselect(\SqlSemantics\Statement\Model\MySql\Role\SubselectForm $subselect): self

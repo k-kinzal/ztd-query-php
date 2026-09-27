@@ -40,6 +40,26 @@ final class IndexHintsListWithIndexHintsListIndexHintDefinition_fbca760e impleme
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->indexHintsList, $this->indexHintDefinition];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->indexHintsList, \SqlSemantics\Statement\Model\MySql\Role\IndexHintsListForm::class, $replace), $this->replacement($this->indexHintDefinition, \SqlSemantics\Statement\Model\MySql\Role\IndexHintDefinitionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new indexHintsList, preserving every other field.
      */
     public function withIndexHintsList(\SqlSemantics\Statement\Model\MySql\Role\IndexHintsListForm $indexHintsList): self

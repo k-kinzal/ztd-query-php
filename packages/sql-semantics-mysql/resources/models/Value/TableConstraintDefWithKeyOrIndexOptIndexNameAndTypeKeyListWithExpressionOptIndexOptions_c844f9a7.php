@@ -52,6 +52,26 @@ final class TableConstraintDefWithKeyOrIndexOptIndexNameAndTypeKeyListWithExpres
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->keyOrIndex, $this->optIndexNameAndType, $this->keyListWithExpression, $this->optIndexOptions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->keyOrIndex, \SqlSemantics\Statement\Model\MySql\Role\KeyOrIndexForm::class, $replace), $this->replacement($this->optIndexNameAndType, \SqlSemantics\Statement\Model\MySql\Role\OptIndexNameAndTypeForm::class, $replace), $this->replacement($this->keyListWithExpression, \SqlSemantics\Statement\Model\MySql\Role\KeyListWithExpressionForm::class, $replace), $this->replacement($this->optIndexOptions, \SqlSemantics\Statement\Model\MySql\Role\OptIndexOptionsForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new keyOrIndex, preserving every other field.
      */
     public function withKeyOrIndex(\SqlSemantics\Statement\Model\MySql\Role\KeyOrIndexForm $keyOrIndex): self

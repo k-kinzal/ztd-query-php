@@ -62,6 +62,26 @@ final class CreateWithCreateUserOptIfNotExistsClearPrivilegesGrantListRequireCla
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optIfNotExists, $this->clearPrivileges, $this->grantList, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->user, $this->replacement($this->optIfNotExists, \SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm::class, $replace), $this->replacement($this->clearPrivileges, \SqlSemantics\Statement\Model\MySql\Role\ClearPrivilegesForm::class, $replace), $this->replacement($this->grantList, \SqlSemantics\Statement\Model\MySql\Role\GrantListForm::class, $replace), $this->replacement($this->requireClause, \SqlSemantics\Statement\Model\MySql\Role\RequireClauseForm::class, $replace), $this->replacement($this->connectOptions, \SqlSemantics\Statement\Model\MySql\Role\ConnectOptionsForm::class, $replace), $this->replacement($this->optAccountLockPasswordExpireOptions, \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionsForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new user, preserving every other field.
      */
     public function withUser(string $user): self

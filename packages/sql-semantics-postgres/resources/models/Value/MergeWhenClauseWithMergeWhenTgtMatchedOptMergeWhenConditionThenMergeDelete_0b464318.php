@@ -46,6 +46,26 @@ final class MergeWhenClauseWithMergeWhenTgtMatchedOptMergeWhenConditionThenMerge
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->mergeWhenTgtMatched, $this->optMergeWhenCondition, $this->mergeDelete];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->mergeWhenTgtMatched, \SqlSemantics\Statement\Model\PostgreSql\Role\MergeWhenTgtMatchedForm::class, $replace), $this->replacement($this->optMergeWhenCondition, \SqlSemantics\Statement\Model\PostgreSql\Role\OptMergeWhenConditionForm::class, $replace), $this->replacement($this->mergeDelete, \SqlSemantics\Statement\Model\PostgreSql\Role\MergeDeleteForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new mergeWhenTgtMatched, preserving every other field.
      */
     public function withMergeWhenTgtMatched(\SqlSemantics\Statement\Model\PostgreSql\Role\MergeWhenTgtMatchedForm $mergeWhenTgtMatched): self

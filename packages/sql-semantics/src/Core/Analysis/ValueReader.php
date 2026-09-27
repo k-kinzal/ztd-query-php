@@ -19,7 +19,6 @@ use SqlSemantics\Statement\Statement;
  * the comment was written before. Comments before the first token and after
  * the last one belong to the statement.
  *
- * @phpstan-type Recipe array{forward: int}|array{constant: string}|array{class: class-string<Element>, fields: list<int>}
  * @visibility SqlSemantics
  */
 final class ValueReader
@@ -29,10 +28,10 @@ final class ValueReader
     private readonly Comments $none;
 
     /**
-     * @param array<string, array<int, Recipe>> $recipes Complete construction vocabulary
+     * @param Vocabulary $vocabulary Complete construction vocabulary of the release
      * @param TriviaReader $trivia Reads the comments of the language
      */
-    public function __construct(private readonly array $recipes, private readonly TriviaReader $trivia = new TriviaReader())
+    public function __construct(public readonly Vocabulary $vocabulary, private readonly TriviaReader $trivia = new TriviaReader())
     {
         $this->none = new Comments();
     }
@@ -46,15 +45,7 @@ final class ValueReader
      */
     public static function fromFile(string $path, ?TriviaReader $trivia = null): self
     {
-        if (!is_file($path)) {
-            throw new LogicException('Missing statement model resource: ' . $path);
-        }
-        $reader = require $path;
-        if (!$reader instanceof self) {
-            throw new LogicException('Invalid statement model resource: ' . $path);
-        }
-
-        return $trivia === null ? $reader : new self($reader->recipes, $trivia);
+        return new self(Vocabulary::fromFile($path), $trivia ?? new TriviaReader());
     }
 
     /**
@@ -101,7 +92,7 @@ final class ValueReader
      */
     public function lower(Node $node, SourceComments $comments, bool $firstKept): Element
     {
-        $recipe = $this->recipes[$node->name][$node->ordinal] ?? null;
+        $recipe = $this->vocabulary->recipe($node->name, $node->ordinal);
         if ($recipe === null) {
             throw new LogicException('Parser/model resource mismatch at ' . $node->name . ':' . $node->ordinal);
         }

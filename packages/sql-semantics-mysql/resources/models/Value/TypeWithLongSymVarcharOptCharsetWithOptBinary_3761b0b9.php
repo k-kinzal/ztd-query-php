@@ -42,6 +42,26 @@ final class TypeWithLongSymVarcharOptCharsetWithOptBinary_3761b0b9 implements \S
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->varchar, $this->optCharsetWithOptBinary];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->varchar, \SqlSemantics\Statement\Model\MySql\Role\VarcharForm::class, $replace), $this->replacement($this->optCharsetWithOptBinary, \SqlSemantics\Statement\Model\MySql\Role\OptCharsetWithOptBinaryForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new varchar, preserving every other field.
      */
     public function withVarchar(\SqlSemantics\Statement\Model\MySql\Role\VarcharForm $varchar): self

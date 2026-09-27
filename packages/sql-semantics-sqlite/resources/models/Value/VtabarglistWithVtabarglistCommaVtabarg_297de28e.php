@@ -42,6 +42,26 @@ final class VtabarglistWithVtabarglistCommaVtabarg_297de28e implements \SqlSeman
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->vtabarglist, $this->vtabarg];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->vtabarglist, \SqlSemantics\Statement\Model\Sqlite\Role\VtabarglistForm::class, $replace), $this->replacement($this->vtabarg, \SqlSemantics\Statement\Model\Sqlite\Role\VtabargForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new vtabarglist, preserving every other field.
      */
     public function withVtabarglist(\SqlSemantics\Statement\Model\Sqlite\Role\VtabarglistForm $vtabarglist): self

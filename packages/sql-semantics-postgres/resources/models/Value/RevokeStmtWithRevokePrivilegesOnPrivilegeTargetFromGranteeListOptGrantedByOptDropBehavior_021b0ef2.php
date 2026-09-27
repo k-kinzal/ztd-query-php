@@ -58,6 +58,26 @@ final class RevokeStmtWithRevokePrivilegesOnPrivilegeTargetFromGranteeListOptGra
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->privileges, $this->privilegeTarget, $this->granteeList, $this->optGrantedBy, $this->optDropBehavior];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->privileges, \SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegesForm::class, $replace), $this->replacement($this->privilegeTarget, \SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegeTargetForm::class, $replace), $this->replacement($this->granteeList, \SqlSemantics\Statement\Model\PostgreSql\Role\GranteeListForm::class, $replace), $this->replacement($this->optGrantedBy, \SqlSemantics\Statement\Model\PostgreSql\Role\OptGrantedByForm::class, $replace), $this->replacement($this->optDropBehavior, \SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new privileges, preserving every other field.
      */
     public function withPrivileges(\SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegesForm $privileges): self

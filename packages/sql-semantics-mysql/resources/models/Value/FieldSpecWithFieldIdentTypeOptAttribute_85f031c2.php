@@ -44,6 +44,26 @@ final class FieldSpecWithFieldIdentTypeOptAttribute_85f031c2 implements \SqlSema
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->fieldIdent, $this->type, $this->optAttribute];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->fieldIdent, \SqlSemantics\Statement\Model\MySql\Role\FieldIdentForm::class, $replace), $this->replacement($this->type, \SqlSemantics\Statement\Model\MySql\Role\TypeForm::class, $replace), $this->replacement($this->optAttribute, \SqlSemantics\Statement\Model\MySql\Role\OptAttributeForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new fieldIdent, preserving every other field.
      */
     public function withFieldIdent(\SqlSemantics\Statement\Model\MySql\Role\FieldIdentForm $fieldIdent): self

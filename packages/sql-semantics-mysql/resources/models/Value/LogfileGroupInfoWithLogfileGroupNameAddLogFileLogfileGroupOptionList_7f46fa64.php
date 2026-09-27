@@ -44,6 +44,26 @@ final class LogfileGroupInfoWithLogfileGroupNameAddLogFileLogfileGroupOptionList
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->logfileGroupName, $this->addLogFile, $this->logfileGroupOptionList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->logfileGroupName, \SqlSemantics\Statement\Model\MySql\Role\LogfileGroupNameForm::class, $replace), $this->replacement($this->addLogFile, \SqlSemantics\Statement\Model\MySql\Role\AddLogFileForm::class, $replace), $this->replacement($this->logfileGroupOptionList, \SqlSemantics\Statement\Model\MySql\Role\LogfileGroupOptionListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new logfileGroupName, preserving every other field.
      */
     public function withLogfileGroupName(\SqlSemantics\Statement\Model\MySql\Role\LogfileGroupNameForm $logfileGroupName): self

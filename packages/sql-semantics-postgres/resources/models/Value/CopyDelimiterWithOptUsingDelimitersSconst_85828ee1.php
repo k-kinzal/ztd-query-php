@@ -42,6 +42,26 @@ final class CopyDelimiterWithOptUsingDelimitersSconst_85828ee1 implements \SqlSe
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optUsing, $this->sconst];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optUsing, \SqlSemantics\Statement\Model\PostgreSql\Role\OptUsingForm::class, $replace), $this->replacement($this->sconst, \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optUsing, preserving every other field.
      */
     public function withOptUsing(\SqlSemantics\Statement\Model\PostgreSql\Role\OptUsingForm $optUsing): self

@@ -40,6 +40,26 @@ final class AlterCommandsWithAlterCommandListPartitioning_c6485e9e implements \S
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->alterCommandList, $this->partitioning];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->alterCommandList, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm::class, $replace), $this->replacement($this->partitioning, \SqlSemantics\Statement\Model\MySql\Role\PartitioningForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new alterCommandList, preserving every other field.
      */
     public function withAlterCommandList(\SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm $alterCommandList): self

@@ -40,6 +40,26 @@ final class TableRefWithXmltableOptAliasClause_980a8c2e implements \SqlSemantics
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->xmltable, $this->optAliasClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->xmltable, \SqlSemantics\Statement\Model\PostgreSql\Role\XmltableForm::class, $replace), $this->replacement($this->optAliasClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OptAliasClauseForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new xmltable, preserving every other field.
      */
     public function withXmltable(\SqlSemantics\Statement\Model\PostgreSql\Role\XmltableForm $xmltable): self

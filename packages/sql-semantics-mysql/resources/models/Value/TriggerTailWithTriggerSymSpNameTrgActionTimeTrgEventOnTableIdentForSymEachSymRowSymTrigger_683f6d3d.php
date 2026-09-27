@@ -66,6 +66,26 @@ final class TriggerTailWithTriggerSymSpNameTrgActionTimeTrgEventOnTableIdentForS
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->spName, $this->trgActionTime, $this->trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->spName, \SqlSemantics\Statement\Model\MySql\Role\SpNameForm::class, $replace), $this->replacement($this->trgActionTime, \SqlSemantics\Statement\Model\MySql\Role\TrgActionTimeForm::class, $replace), $this->replacement($this->trgEvent, \SqlSemantics\Statement\Model\MySql\Role\TrgEventForm::class, $replace), $this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->triggerFollowsPrecedesClause, \SqlSemantics\Statement\Model\MySql\Role\TriggerFollowsPrecedesClauseForm::class, $replace), $this->replacement($this->spProcStmt, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new spName, preserving every other field.
      */
     public function withSpName(\SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName): self

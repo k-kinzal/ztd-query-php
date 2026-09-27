@@ -74,6 +74,26 @@ final class CreateStmtWithCreateOptTempTableQualifiedNameOfAnyNameOptTypedTableE
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optTemp, $this->qualifiedName, $this->anyName, $this->optTypedTableElementList, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optTemp, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm::class, $replace), $this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->anyName, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm::class, $replace), $this->replacement($this->optTypedTableElementList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTypedTableElementListForm::class, $replace), $this->replacement($this->optPartitionSpec, \SqlSemantics\Statement\Model\PostgreSql\Role\OptPartitionSpecForm::class, $replace), $this->replacement($this->tableAccessMethodClause, \SqlSemantics\Statement\Model\PostgreSql\Role\TableAccessMethodClauseForm::class, $replace), $this->replacement($this->optWith, \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm::class, $replace), $this->replacement($this->onCommitOption, \SqlSemantics\Statement\Model\PostgreSql\Role\OnCommitOptionForm::class, $replace), $this->replacement($this->optTableSpace, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTableSpaceForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optTemp, preserving every other field.
      */
     public function withOptTemp(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm $optTemp): self

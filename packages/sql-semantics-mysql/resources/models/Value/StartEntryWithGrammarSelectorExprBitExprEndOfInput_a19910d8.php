@@ -41,6 +41,26 @@ final class StartEntryWithGrammarSelectorExprBitExprEndOfInput_a19910d8 implemen
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->bitExpr];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->grammarSelectorExpr, $this->replacement($this->bitExpr, \SqlSemantics\Statement\Model\MySql\Role\BitExprForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new grammarSelectorExpr, preserving every other field.
      */
     public function withGrammarSelectorExpr(string $grammarSelectorExpr): self

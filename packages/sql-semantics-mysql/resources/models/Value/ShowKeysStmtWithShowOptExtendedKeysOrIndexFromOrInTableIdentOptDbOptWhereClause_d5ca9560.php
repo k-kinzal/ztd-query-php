@@ -58,6 +58,26 @@ final class ShowKeysStmtWithShowOptExtendedKeysOrIndexFromOrInTableIdentOptDbOpt
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optExtended, $this->keysOrIndex, $this->fromOrIn, $this->tableIdent, $this->optDb, $this->where];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optExtended, \SqlSemantics\Statement\Model\MySql\Role\OptExtendedForm::class, $replace), $this->replacement($this->keysOrIndex, \SqlSemantics\Statement\Model\MySql\Role\KeysOrIndexForm::class, $replace), $this->replacement($this->fromOrIn, \SqlSemantics\Statement\Model\MySql\Role\FromOrInForm::class, $replace), $this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->optDb, \SqlSemantics\Statement\Model\MySql\Role\OptDbForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optExtended, preserving every other field.
      */
     public function withOptExtended(\SqlSemantics\Statement\Model\MySql\Role\OptExtendedForm $optExtended): self

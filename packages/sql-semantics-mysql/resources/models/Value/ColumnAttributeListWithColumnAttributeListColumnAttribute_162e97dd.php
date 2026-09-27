@@ -40,6 +40,26 @@ final class ColumnAttributeListWithColumnAttributeListColumnAttribute_162e97dd i
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->columnAttributeList, $this->columnAttribute];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->columnAttributeList, \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeListForm::class, $replace), $this->replacement($this->columnAttribute, \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new columnAttributeList, preserving every other field.
      */
     public function withColumnAttributeList(\SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeListForm $columnAttributeList): self

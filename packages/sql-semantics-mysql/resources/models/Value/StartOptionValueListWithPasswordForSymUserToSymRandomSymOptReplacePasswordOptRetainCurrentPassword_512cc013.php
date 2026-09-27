@@ -52,6 +52,26 @@ final class StartOptionValueListWithPasswordForSymUserToSymRandomSymOptReplacePa
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->user, $this->optReplacePassword, $this->optRetainCurrentPassword];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->user, \SqlSemantics\Statement\Model\MySql\Role\UserForm::class, $replace), $this->replacement($this->optReplacePassword, \SqlSemantics\Statement\Model\MySql\Role\OptReplacePasswordForm::class, $replace), $this->replacement($this->optRetainCurrentPassword, \SqlSemantics\Statement\Model\MySql\Role\OptRetainCurrentPasswordForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new user, preserving every other field.
      */
     public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self

@@ -48,6 +48,26 @@ final class SelectPart2WithSelectOptionsSelectItemListSelectIntoSelectLockType_5
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->options, $this->projections, $this->selectInto, $this->selectLockType];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->options, \SqlSemantics\Statement\Model\MySql\Role\SelectOptionsForm::class, $replace), $this->replacement($this->projections, \SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm::class, $replace), $this->replacement($this->selectInto, \SqlSemantics\Statement\Model\MySql\Role\SelectIntoForm::class, $replace), $this->replacement($this->selectLockType, \SqlSemantics\Statement\Model\MySql\Role\SelectLockTypeForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new options, preserving every other field.
      */
     public function withOptions(\SqlSemantics\Statement\Model\MySql\Role\SelectOptionsForm $options): self

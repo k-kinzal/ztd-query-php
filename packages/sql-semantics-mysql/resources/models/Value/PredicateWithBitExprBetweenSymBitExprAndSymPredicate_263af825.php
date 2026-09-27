@@ -26,10 +26,10 @@ final class PredicateWithBitExprBetweenSymBitExprAndSymPredicate_263af825 implem
         public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($bitExpr), 'The bitExpr must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($bitExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 6,  'mysql-5.7.44' => 7,  'mysql-8.0.44' => 12,  'mysql-8.1.0' => 12,  'mysql-8.2.0' => 12,  'mysql-8.3.0' => 12,  'mysql-8.4.7' => 12,  'mysql-9.0.1' => 12,  'mysql-9.1.0' => 12,));
+        $this->assertOperandBindingStrength($bitExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 6,  'mysql-5.7.44' => 7,  'mysql-8.0.44' => 12,  'mysql-8.1.0' => 12,  'mysql-8.2.0' => 12,  'mysql-8.3.0' => 12,  'mysql-8.4.7' => 12,  'mysql-9.0.1' => 12,  'mysql-9.1.0' => 12,), \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_RULES, 'bit_expr');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($bitExpr2), 'The bitExpr2 must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($predicate), 'The predicate must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($predicate, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 7,  'mysql-5.7.44' => 8,  'mysql-8.0.44' => 13,  'mysql-8.1.0' => 13,  'mysql-8.2.0' => 13,  'mysql-8.3.0' => 13,  'mysql-8.4.7' => 13,  'mysql-9.0.1' => 13,  'mysql-9.1.0' => 13,));
+        $this->assertOperandBindingStrength($predicate, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 7,  'mysql-5.7.44' => 8,  'mysql-8.0.44' => 13,  'mysql-8.1.0' => 13,  'mysql-8.2.0' => 13,  'mysql-8.3.0' => 13,  'mysql-8.4.7' => 13,  'mysql-9.0.1' => 13,  'mysql-9.1.0' => 13,), \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_RULES, 'predicate');
     }
 
     /**
@@ -47,6 +47,26 @@ final class PredicateWithBitExprBetweenSymBitExprAndSymPredicate_263af825 implem
         $writer->append('AND');
         $writer->comments($this->comments, 4);
         $this->predicate->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->bitExpr, $this->bitExpr2, $this->predicate];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->bitExpr, \SqlSemantics\Statement\Model\MySql\Role\BitExprForm::class, $replace), $this->replacement($this->bitExpr2, \SqlSemantics\Statement\Model\MySql\Role\BitExprForm::class, $replace), $this->replacement($this->predicate, \SqlSemantics\Statement\Model\MySql\Role\PredicateForm::class, $replace), $this->comments);
     }
 
     /**

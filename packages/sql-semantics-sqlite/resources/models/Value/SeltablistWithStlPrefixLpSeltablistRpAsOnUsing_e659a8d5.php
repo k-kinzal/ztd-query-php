@@ -52,6 +52,26 @@ final class SeltablistWithStlPrefixLpSeltablistRpAsOnUsing_e659a8d5 implements \
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->stlPrefix, $this->seltablist, $this->as, $this->onUsing];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->stlPrefix, \SqlSemantics\Statement\Model\Sqlite\Role\StlPrefixForm::class, $replace), $this->replacement($this->seltablist, \SqlSemantics\Statement\Model\Sqlite\Role\SeltablistForm::class, $replace), $this->replacement($this->as, \SqlSemantics\Statement\Model\Sqlite\Role\AsForm::class, $replace), $this->replacement($this->onUsing, \SqlSemantics\Statement\Model\Sqlite\Role\OnUsingForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new stlPrefix, preserving every other field.
      */
     public function withStlPrefix(\SqlSemantics\Statement\Model\Sqlite\Role\StlPrefixForm $stlPrefix): self

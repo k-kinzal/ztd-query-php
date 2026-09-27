@@ -40,6 +40,26 @@ final class OptSchemaEltListWithOptSchemaEltListSchemaStmt_b2872bbe implements \
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optSchemaEltList, $this->schemaStmt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optSchemaEltList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSchemaEltListForm::class, $replace), $this->replacement($this->schemaStmt, \SqlSemantics\Statement\Model\PostgreSql\Role\SchemaStmtForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optSchemaEltList, preserving every other field.
      */
     public function withOptSchemaEltList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSchemaEltListForm $optSchemaEltList): self

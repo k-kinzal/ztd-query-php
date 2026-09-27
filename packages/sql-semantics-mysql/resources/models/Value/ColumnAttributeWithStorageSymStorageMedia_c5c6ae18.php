@@ -38,6 +38,26 @@ final class ColumnAttributeWithStorageSymStorageMedia_c5c6ae18 implements \SqlSe
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->storageMedia];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->storageMedia, \SqlSemantics\Statement\Model\MySql\Role\StorageMediaForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new storageMedia, preserving every other field.
      */
     public function withStorageMedia(\SqlSemantics\Statement\Model\MySql\Role\StorageMediaForm $storageMedia): self

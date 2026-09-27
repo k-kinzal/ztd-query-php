@@ -44,6 +44,26 @@ final class TriggerCmdWithScanptSelectScanpt_2cdaedbb implements \SqlSemantics\S
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->scanpt, $this->select, $this->scanpt2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->scanpt, \SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm::class, $replace), $this->replacement($this->select, \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm::class, $replace), $this->replacement($this->scanpt2, \SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new scanpt, preserving every other field.
      */
     public function withScanpt(\SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt): self

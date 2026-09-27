@@ -42,6 +42,26 @@ final class OverClauseWithOverLpWindowRp_f91aff11 implements \SqlSemantics\State
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->window];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->window, \SqlSemantics\Statement\Model\Sqlite\Role\WindowForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new window, preserving every other field.
      */
     public function withWindow(\SqlSemantics\Statement\Model\Sqlite\Role\WindowForm $window): self

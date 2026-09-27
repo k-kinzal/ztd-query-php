@@ -50,6 +50,26 @@ final class Create2aWithCreateFieldListOptCreateTableOptionsOptCreatePartitionin
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->createFieldList, $this->optCreateTableOptions, $this->optCreatePartitioning, $this->create3];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->createFieldList, \SqlSemantics\Statement\Model\MySql\Role\CreateFieldListForm::class, $replace), $this->replacement($this->optCreateTableOptions, \SqlSemantics\Statement\Model\MySql\Role\OptCreateTableOptionsForm::class, $replace), $this->replacement($this->optCreatePartitioning, \SqlSemantics\Statement\Model\MySql\Role\OptCreatePartitioningForm::class, $replace), $this->replacement($this->create3, \SqlSemantics\Statement\Model\MySql\Role\Create3Form::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new createFieldList, preserving every other field.
      */
     public function withCreateFieldList(\SqlSemantics\Statement\Model\MySql\Role\CreateFieldListForm $createFieldList): self

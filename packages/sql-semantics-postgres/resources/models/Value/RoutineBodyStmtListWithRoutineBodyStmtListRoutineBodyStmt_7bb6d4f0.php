@@ -42,6 +42,26 @@ final class RoutineBodyStmtListWithRoutineBodyStmtListRoutineBodyStmt_7bb6d4f0 i
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->routineBodyStmtList, $this->routineBodyStmt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->routineBodyStmtList, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtListForm::class, $replace), $this->replacement($this->routineBodyStmt, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new routineBodyStmtList, preserving every other field.
      */
     public function withRoutineBodyStmtList(\SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtListForm $routineBodyStmtList): self

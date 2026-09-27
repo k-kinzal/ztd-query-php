@@ -40,6 +40,26 @@ final class OptAccountLockPasswordExpireOptionListWithOptAccountLockPasswordExpi
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optAccountLockPasswordExpireOptionList, $this->optAccountLockPasswordExpireOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optAccountLockPasswordExpireOptionList, \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionListForm::class, $replace), $this->replacement($this->optAccountLockPasswordExpireOption, \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optAccountLockPasswordExpireOptionList, preserving every other field.
      */
     public function withOptAccountLockPasswordExpireOptionList(\SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionListForm $optAccountLockPasswordExpireOptionList): self

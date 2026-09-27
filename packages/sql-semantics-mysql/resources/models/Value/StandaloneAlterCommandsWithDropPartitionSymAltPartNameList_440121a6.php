@@ -40,6 +40,26 @@ final class StandaloneAlterCommandsWithDropPartitionSymAltPartNameList_440121a6 
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->altPartNameList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->altPartNameList, \SqlSemantics\Statement\Model\MySql\Role\AltPartNameListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new altPartNameList, preserving every other field.
      */
     public function withAltPartNameList(\SqlSemantics\Statement\Model\MySql\Role\AltPartNameListForm $altPartNameList): self

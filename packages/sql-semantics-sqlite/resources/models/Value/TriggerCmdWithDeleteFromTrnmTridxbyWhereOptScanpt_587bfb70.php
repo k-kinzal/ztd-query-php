@@ -52,6 +52,26 @@ final class TriggerCmdWithDeleteFromTrnmTridxbyWhereOptScanpt_587bfb70 implement
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->trnm, $this->tridxby, $this->where, $this->scanpt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->trnm, \SqlSemantics\Statement\Model\Sqlite\Role\TrnmForm::class, $replace), $this->replacement($this->tridxby, \SqlSemantics\Statement\Model\Sqlite\Role\TridxbyForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm::class, $replace), $this->replacement($this->scanpt, \SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new trnm, preserving every other field.
      */
     public function withTrnm(\SqlSemantics\Statement\Model\Sqlite\Role\TrnmForm $trnm): self

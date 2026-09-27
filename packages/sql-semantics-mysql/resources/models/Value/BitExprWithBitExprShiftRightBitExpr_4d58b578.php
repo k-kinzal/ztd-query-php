@@ -25,9 +25,9 @@ final class BitExprWithBitExprShiftRightBitExpr_4d58b578 implements \SqlSemantic
         public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($bitExpr), 'The bitExpr must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($bitExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 11,  'mysql-5.7.44' => 12,  'mysql-8.0.44' => 17,  'mysql-8.1.0' => 17,  'mysql-8.2.0' => 17,  'mysql-8.3.0' => 17,  'mysql-8.4.7' => 17,  'mysql-9.0.1' => 17,  'mysql-9.1.0' => 17,));
+        $this->assertOperandBindingStrength($bitExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 11,  'mysql-5.7.44' => 12,  'mysql-8.0.44' => 17,  'mysql-8.1.0' => 17,  'mysql-8.2.0' => 17,  'mysql-8.3.0' => 17,  'mysql-8.4.7' => 17,  'mysql-9.0.1' => 17,  'mysql-9.1.0' => 17,), \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_RULES, 'bit_expr');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($bitExpr2), 'The bitExpr2 must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($bitExpr2, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 12,  'mysql-5.7.44' => 13,  'mysql-8.0.44' => 18,  'mysql-8.1.0' => 18,  'mysql-8.2.0' => 18,  'mysql-8.3.0' => 18,  'mysql-8.4.7' => 18,  'mysql-9.0.1' => 18,  'mysql-9.1.0' => 18,));
+        $this->assertOperandBindingStrength($bitExpr2, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 12,  'mysql-5.7.44' => 13,  'mysql-8.0.44' => 18,  'mysql-8.1.0' => 18,  'mysql-8.2.0' => 18,  'mysql-8.3.0' => 18,  'mysql-8.4.7' => 18,  'mysql-9.0.1' => 18,  'mysql-9.1.0' => 18,), \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_RULES, 'bit_expr');
     }
 
     /**
@@ -41,6 +41,26 @@ final class BitExprWithBitExprShiftRightBitExpr_4d58b578 implements \SqlSemantic
         $writer->append('>>');
         $writer->comments($this->comments, 2);
         $this->bitExpr2->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->bitExpr, $this->bitExpr2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->bitExpr, \SqlSemantics\Statement\Model\MySql\Role\BitExprForm::class, $replace), $this->replacement($this->bitExpr2, \SqlSemantics\Statement\Model\MySql\Role\BitExprForm::class, $replace), $this->comments);
     }
 
     /**

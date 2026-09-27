@@ -48,6 +48,26 @@ final class CmdWithCreatekwTriggerDeclBeginTriggerCmdListEnd_8217e10b implements
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->createkw, $this->triggerDecl, $this->triggerCmdList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->createkw, \SqlSemantics\Statement\Model\Sqlite\Role\CreatekwForm::class, $replace), $this->replacement($this->triggerDecl, \SqlSemantics\Statement\Model\Sqlite\Role\TriggerDeclForm::class, $replace), $this->replacement($this->triggerCmdList, \SqlSemantics\Statement\Model\Sqlite\Role\TriggerCmdListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new createkw, preserving every other field.
      */
     public function withCreatekw(\SqlSemantics\Statement\Model\Sqlite\Role\CreatekwForm $createkw): self

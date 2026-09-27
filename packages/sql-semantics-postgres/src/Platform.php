@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql;
 
+use InvalidArgumentException;
 use SqlParser\Parser\SqlParser;
 use SqlParser\PostgreSql\PostgreSqlParser;
 use SqlSemantics\Core\Analysis\TriviaReader;
+use SqlSemantics\Core\Builder as Composer;
 use SqlSemantics\Core\Dialect;
+use SqlSemantics\Core\Language;
+use SqlSemantics\Core\Mode as SessionMode;
+use SqlSemantics\Core\Parameters;
 use SqlSemantics\Core\Platform as Contract;
 use SqlSemantics\Core\Policy;
 
@@ -26,11 +31,25 @@ final class Platform implements Contract
     }
 
     /**
-     * Configures the selected grammar release.
+     * Configures the selected grammar release and parameter syntax; this database has no session mode.
+     *
+     * @throws InvalidArgumentException When a mode is given
      */
-    public function parser(?string $version = null): SqlParser
+    public function parser(?string $version = null, ?SessionMode $mode = null, Parameters $parameters = Parameters::Native): SqlParser
     {
-        return new PostgreSqlParser($version);
+        if ($mode !== null) {
+            throw new InvalidArgumentException('This database reads SQL under no session mode; ' . $mode::class . ' given.');
+        }
+
+        return new PostgreSqlParser($version, parameters: $parameters->syntax());
+    }
+
+    /**
+     * Composes this database's values for a language.
+     */
+    public function builder(Language $language): Composer
+    {
+        return new Builder($language);
     }
 
     /**
@@ -75,29 +94,6 @@ final class Platform implements Contract
             'createHeader' => [],
             'tableName' => ['qualified_name'],
             'tableConstraint' => ['TableConstraint'],
-            'columnReference' => ['columnref'],
-            'identifierToken' => ['IDENT'],
-            'parameterToken' => ['PARAM'],
-            'projectionList' => [],
-            'projectionExpression' => ['a_expr'],
-            'projectionAlias' => ['ColLabel', 'BareColLabel'],
-            'selectStatement' => ['SelectStmt'],
-            'selectBody' => ['simple_select'],
-            'from' => ['from_clause'],
-            'where' => ['where_clause'],
-            'selectOptions' => ['distinct_clause'],
-            'orderingChildren' => ['a_expr', 'opt_asc_desc', 'opt_nulls_order'],
-            'orderingDirection' => ['opt_asc_desc'],
-            'nullsOrder' => ['opt_nulls_order'],
-            'stringToken' => ['SCONST', 'USCONST'],
-            'limit' => ['limit_clause'],
-            'offset' => ['offset_clause'],
-            'paginationExpression' => ['a_expr'],
-            'selectChildren' => ['opt_target_list', 'target_list', 'distinct_clause', 'from_clause', 'where_clause'],
-            'unsupportedModifier' => ['opt_for_locking_clause', 'for_locking_clause', 'with_clause', 'into_clause'],
-            'relation' => ['table_ref'],
-            'qualifiedExpression' => [],
-            'qualifiedPart' => [],
         ]);
     }
 
@@ -125,11 +121,4 @@ final class Platform implements Contract
         return new SchemaRules();
     }
 
-    /**
-     * Supplies query semantics.
-     */
-    public function query(): Policy\QueryRules
-    {
-        return new QueryRules();
-    }
 }

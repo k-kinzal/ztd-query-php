@@ -44,6 +44,26 @@ final class TypeWithNvarcharFieldLengthOptBinMod_a89a2a2d implements \SqlSemanti
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->nvarchar, $this->fieldLength, $this->optBinMod];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->nvarchar, \SqlSemantics\Statement\Model\MySql\Role\NvarcharForm::class, $replace), $this->replacement($this->fieldLength, \SqlSemantics\Statement\Model\MySql\Role\FieldLengthForm::class, $replace), $this->replacement($this->optBinMod, \SqlSemantics\Statement\Model\MySql\Role\OptBinModForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new nvarchar, preserving every other field.
      */
     public function withNvarchar(\SqlSemantics\Statement\Model\MySql\Role\NvarcharForm $nvarchar): self

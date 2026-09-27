@@ -52,6 +52,26 @@ final class AlterCommandsWithExchangeSymPartitionSymAltPartNameItemWithTableSymT
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->altPartNameItem, $this->tableIdent, $this->havePartitioning];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->altPartNameItem, \SqlSemantics\Statement\Model\MySql\Role\AltPartNameItemForm::class, $replace), $this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->havePartitioning, \SqlSemantics\Statement\Model\MySql\Role\HavePartitioningForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new altPartNameItem, preserving every other field.
      */
     public function withAltPartNameItem(\SqlSemantics\Statement\Model\MySql\Role\AltPartNameItemForm $altPartNameItem): self

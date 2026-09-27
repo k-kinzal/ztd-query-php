@@ -60,6 +60,26 @@ final class CopyStmtWithCopyPreparableStmtToOptProgramCopyFileNameOptWithCopyOpt
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->preparableStmt, $this->optProgram, $this->copyFileName, $this->optWith, $this->copyOptions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->preparableStmt, \SqlSemantics\Statement\Model\PostgreSql\Role\PreparableStmtForm::class, $replace), $this->replacement($this->optProgram, \SqlSemantics\Statement\Model\PostgreSql\Role\OptProgramForm::class, $replace), $this->replacement($this->copyFileName, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyFileNameForm::class, $replace), $this->replacement($this->optWith, \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm::class, $replace), $this->replacement($this->copyOptions, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyOptionsForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new preparableStmt, preserving every other field.
      */
     public function withPreparableStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\PreparableStmtForm $preparableStmt): self

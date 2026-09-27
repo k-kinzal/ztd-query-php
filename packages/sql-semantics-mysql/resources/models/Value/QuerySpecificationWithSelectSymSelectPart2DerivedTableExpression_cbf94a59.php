@@ -42,6 +42,26 @@ final class QuerySpecificationWithSelectSymSelectPart2DerivedTableExpression_cbf
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->selectPart2Derived, $this->tableExpression];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->selectPart2Derived, \SqlSemantics\Statement\Model\MySql\Role\SelectPart2DerivedForm::class, $replace), $this->replacement($this->tableExpression, \SqlSemantics\Statement\Model\MySql\Role\TableExpressionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new selectPart2Derived, preserving every other field.
      */
     public function withSelectPart2Derived(\SqlSemantics\Statement\Model\MySql\Role\SelectPart2DerivedForm $selectPart2Derived): self

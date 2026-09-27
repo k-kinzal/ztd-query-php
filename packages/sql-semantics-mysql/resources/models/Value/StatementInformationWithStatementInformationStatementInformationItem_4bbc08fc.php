@@ -42,6 +42,26 @@ final class StatementInformationWithStatementInformationStatementInformationItem
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->statementInformation, $this->statementInformationItem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->statementInformation, \SqlSemantics\Statement\Model\MySql\Role\StatementInformationForm::class, $replace), $this->replacement($this->statementInformationItem, \SqlSemantics\Statement\Model\MySql\Role\StatementInformationItemForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new statementInformation, preserving every other field.
      */
     public function withStatementInformation(\SqlSemantics\Statement\Model\MySql\Role\StatementInformationForm $statementInformation): self

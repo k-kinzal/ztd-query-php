@@ -26,4 +26,24 @@ enum StatementInformationItemNameChoice_7f0cdc04: string implements \SqlSemantic
             $writer->append($word);
         }
     }
+
+    /**
+     * A choice is made of no values.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [];
+    }
+
+    /**
+     * A choice has nothing to replace.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return $this;
+    }
 }

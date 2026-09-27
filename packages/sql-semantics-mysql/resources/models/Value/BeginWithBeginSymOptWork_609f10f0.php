@@ -12,7 +12,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\BeginWithBeginSymOptWork_609f10f0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class BeginWithBeginSymOptWork_609f10f0 implements \SqlSemantics\Statement\Model\MySql\Role\BeginForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class BeginWithBeginSymOptWork_609f10f0 implements \SqlSemantics\Statement\Model\MySql\Role\BeginForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
     use \SqlSemantics\Statement\Assertion;
 
@@ -35,6 +35,26 @@ final class BeginWithBeginSymOptWork_609f10f0 implements \SqlSemantics\Statement
         $writer->append('BEGIN');
         $writer->comments($this->comments, 1);
         $this->optWork->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optWork];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optWork, \SqlSemantics\Statement\Model\MySql\Role\OptWorkForm::class, $replace), $this->comments);
     }
 
     /**

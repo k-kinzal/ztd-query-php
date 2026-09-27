@@ -1,10 +1,9 @@
 # Schema State
 
-`SqlSemantics\Facade\Schema` reads the prior state needed to analyze statements. It returns `SqlSemantics\Core\Schema`: a dialect and grammar release, a default namespace, and ordered tables with columns, types and integrity constraints. `SqlSemantics\Facade\Semantics` models operations on that state. A schema is not a collection of arbitrary commands and does not execute SQL.
+`SqlSemantics\Facade\Schema` reads declarations into the state statements are analyzed against. It returns `SqlSemantics\Core\Schema`: a dialect and grammar release, a default namespace, and ordered tables with columns, types and integrity constraints. The state is what the declarations say, not the result of running them: `SqlSemantics\Facade\Semantics` models the operations, including the ones that would change state, and this reader does not evaluate them. A schema is not a collection of arbitrary commands and does not execute SQL.
 
 ```php
 use SqlSemantics\Facade\Schema;
-use SqlSemantics\Core\Binder;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Statement\Writer;
 
@@ -20,8 +19,9 @@ SQL);
 $column = $schema->tables[0]->columns[2];
 $column->generation->kind->value;                  // 'stored'
 Writer::render($column->generation->expression); // 'LENGTH ( label )'
-(new Binder($schema))->bind('SELECT label FROM items');
 ```
+
+`Schema` takes the dialect, an optional default namespace, an optional release tag, and the mode and parameter syntax `Semantics` takes, for example `new Schema(Dialect::MySql, null, 'mysql-8.0.44', Mode::fromString('ANSI_QUOTES'))`.
 
 ## Reading declarations
 
@@ -31,7 +31,7 @@ Explicit CREATE TABLE declarations retain their complete typed declaration, colu
 
 DROP TABLE applies in declaration order, including multiple targets and IF EXISTS. A subsequent CREATE defines a new table. CREATE TABLE IF NOT EXISTS preserves an existing table. Duplicate unconditional declarations, duplicate columns or primary keys, and unknown local constraint columns are semantic errors.
 
-Schema handles declarations with known columns. CREATE AS SELECT, LIKE/inheritance, ALTER, views and other operations remain typed statement models in `Semantics`; Schema does not evaluate them to invent a resulting catalog. SQLite temporary-schema resolution also remains outside this state reader. The SELECT binder's supported expression and query surface is documented in [binding](binding.md).
+Schema handles declarations with known columns. CREATE AS SELECT, LIKE/inheritance, ALTER, views and other operations remain typed statement models in `Semantics`, which structures every one of them and can walk and rewrite them; Schema does not evaluate them to invent a resulting catalog. Computing the state after such an operation is the work of the application that applies it, from the statement model and the prior state. SQLite temporary-schema resolution also remains outside this state reader.
 
 SQLite STRICT and WITHOUT ROWID options affect primary-key nullability. In a STRICT table, `ANY` has no coercing affinity (`blob`), whereas an ordinary table gives it numeric affinity; see [STRICT tables](https://www.sqlite.org/stricttables.html). Ordinary SQLite primary keys may remain nullable; the INTEGER PRIMARY KEY rules are applied separately. See [SQLite CREATE TABLE](https://www.sqlite.org/lang_createtable.html), [PostgreSQL CREATE TABLE](https://www.postgresql.org/docs/17/sql-createtable.html), and [MySQL CREATE TABLE](https://dev.mysql.com/doc/refman/8.4/en/create-table.html) for database definitions.
 
@@ -39,17 +39,11 @@ SQLite STRICT and WITHOUT ROWID options affect primary-key nullability. In a STR
 
 All state objects are final and expose readonly fields. The `source`, default, CHECK, collation, generation and option fields are independent `Statement\Element` values from the selected dialect's typed model. They contain neither parser nodes nor retained SQL strings. `Writer::render()` reconstructs a declaration or fragment from these fields.
 
-Column generation uses `ColumnGeneration` and `GenerationKind` (`virtual`, `stored`, `identity`). Computed columns carry an expression; identity columns carry identity options and no computation expression. Column attributes remain available as typed values even when a property is outside the SELECT binder's supported surface.
+Column generation uses `ColumnGeneration` and `GenerationKind` (`virtual`, `stored`, `identity`). Computed columns carry an expression; identity columns carry identity options and no computation expression. Column attributes remain available as typed values, and the `source` of a declaration is its complete statement model.
 
 Constructors check collection member types, ordered lists, immutable SQL graphs, generation shape, constraint shape, consistent column dialects and unique table identities. Invalid direct construction throws `InvalidArgumentException`, including when PHP assertions are disabled. Invalid SQL syntax throws `AnalysisException`; conflicting or unresolved declarations throw `SemanticException` with a reason code.
 
 `$state->withTables(...$tables)` returns a new state with the same dialect, version and default namespace. `$column->withNullability($fact)` returns a refined column while sharing its immutable declaration data. Neither method changes the original value. Statement-model fields have their own typed `with*()` methods; analyze a changed declaration again when its catalog facts must be recomputed.
-
-## Migrating from SchemaBuilder
-
-`Core\SchemaBuilder` remains as a deprecated compatibility adapter. Replace `new SchemaBuilder($dialect, $defaultSchema, $grammarVersion)` with `new Facade\Schema(...)`, and `build(...)` with `analyze(...)`. The new entry point reports syntax errors as `AnalysisException`, consistently with `Semantics`; the adapter preserves the previous parser exception contract.
-
-Consumers of state `source` or expression fields should replace parser traversal with the typed model fields and replace `Node::toString()` with `Writer::render()`. SELECT binding results still have their existing source-node contract.
 
 ## Fuzzing state and statements
 

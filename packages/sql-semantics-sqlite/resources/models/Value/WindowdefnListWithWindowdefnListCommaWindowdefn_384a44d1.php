@@ -42,6 +42,26 @@ final class WindowdefnListWithWindowdefnListCommaWindowdefn_384a44d1 implements 
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->windowdefnList, $this->windowdefn];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->windowdefnList, \SqlSemantics\Statement\Model\Sqlite\Role\WindowdefnListForm::class, $replace), $this->replacement($this->windowdefn, \SqlSemantics\Statement\Model\Sqlite\Role\WindowdefnForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new windowdefnList, preserving every other field.
      */
     public function withWindowdefnList(\SqlSemantics\Statement\Model\Sqlite\Role\WindowdefnListForm $windowdefnList): self

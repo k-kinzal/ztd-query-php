@@ -42,6 +42,26 @@ final class ExclusionConstraintListWithExclusionConstraintListExclusionConstrain
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->exclusionConstraintList, $this->exclusionConstraintElem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->exclusionConstraintList, \SqlSemantics\Statement\Model\PostgreSql\Role\ExclusionConstraintListForm::class, $replace), $this->replacement($this->exclusionConstraintElem, \SqlSemantics\Statement\Model\PostgreSql\Role\ExclusionConstraintElemForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new exclusionConstraintList, preserving every other field.
      */
     public function withExclusionConstraintList(\SqlSemantics\Statement\Model\PostgreSql\Role\ExclusionConstraintListForm $exclusionConstraintList): self

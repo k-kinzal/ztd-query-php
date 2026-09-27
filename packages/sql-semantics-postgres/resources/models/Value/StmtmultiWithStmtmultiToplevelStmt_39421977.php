@@ -42,6 +42,26 @@ final class StmtmultiWithStmtmultiToplevelStmt_39421977 implements \SqlSemantics
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->stmtmulti, $this->toplevelStmt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->stmtmulti, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm::class, $replace), $this->replacement($this->toplevelStmt, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new stmtmulti, preserving every other field.
      */
     public function withStmtmulti(\SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm $stmtmulti): self

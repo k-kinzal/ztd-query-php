@@ -52,6 +52,26 @@ final class OptionValueNoOptionTypeWithOptVarIdentTypeInternalVariableNameEqualS
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optVarIdentType, $this->internalVariableName, $this->equal, $this->setExprOrDefault];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optVarIdentType, \SqlSemantics\Statement\Model\MySql\Role\OptVarIdentTypeForm::class, $replace), $this->replacement($this->internalVariableName, \SqlSemantics\Statement\Model\MySql\Role\InternalVariableNameForm::class, $replace), $this->replacement($this->equal, \SqlSemantics\Statement\Model\MySql\Role\EqualForm::class, $replace), $this->replacement($this->setExprOrDefault, \SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optVarIdentType, preserving every other field.
      */
     public function withOptVarIdentType(\SqlSemantics\Statement\Model\MySql\Role\OptVarIdentTypeForm $optVarIdentType): self

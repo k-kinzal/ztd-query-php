@@ -40,6 +40,26 @@ final class TriggerCmdListWithTriggerCmdSemi_34d876f1 implements \SqlSemantics\S
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->triggerCmd];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->triggerCmd, \SqlSemantics\Statement\Model\Sqlite\Role\TriggerCmdForm::class, $replace), $this->semi, $this->comments);
+    }
+
+    /**
      * Returns a copy with a new triggerCmd, preserving every other field.
      */
     public function withTriggerCmd(\SqlSemantics\Statement\Model\Sqlite\Role\TriggerCmdForm $triggerCmd): self

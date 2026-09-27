@@ -56,6 +56,26 @@ final class FunctionCallKeywordWithJsonValueSymSimpleExprTextLiteralOptReturning
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->simpleExpr, $this->textLiteral, $this->optReturningType, $this->optOnEmptyOrError];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->simpleExpr, \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm::class, $replace), $this->replacement($this->textLiteral, \SqlSemantics\Statement\Model\MySql\Role\TextLiteralForm::class, $replace), $this->replacement($this->optReturningType, \SqlSemantics\Statement\Model\MySql\Role\OptReturningTypeForm::class, $replace), $this->replacement($this->optOnEmptyOrError, \SqlSemantics\Statement\Model\MySql\Role\OptOnEmptyOrErrorForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new simpleExpr, preserving every other field.
      */
     public function withSimpleExpr(\SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm $simpleExpr): self

@@ -42,6 +42,26 @@ final class GrantRoleOptListWithGrantRoleOptListGrantRoleOpt_43c09d0e implements
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->grantRoleOptList, $this->grantRoleOpt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->grantRoleOptList, \SqlSemantics\Statement\Model\PostgreSql\Role\GrantRoleOptListForm::class, $replace), $this->replacement($this->grantRoleOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\GrantRoleOptForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new grantRoleOptList, preserving every other field.
      */
     public function withGrantRoleOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\GrantRoleOptListForm $grantRoleOptList): self

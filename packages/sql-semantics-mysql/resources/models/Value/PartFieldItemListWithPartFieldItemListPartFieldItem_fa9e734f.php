@@ -42,6 +42,26 @@ final class PartFieldItemListWithPartFieldItemListPartFieldItem_fa9e734f impleme
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->partFieldItemList, $this->partFieldItem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->partFieldItemList, \SqlSemantics\Statement\Model\MySql\Role\PartFieldItemListForm::class, $replace), $this->replacement($this->partFieldItem, \SqlSemantics\Statement\Model\MySql\Role\PartFieldItemForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new partFieldItemList, preserving every other field.
      */
     public function withPartFieldItemList(\SqlSemantics\Statement\Model\MySql\Role\PartFieldItemListForm $partFieldItemList): self

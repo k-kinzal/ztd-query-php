@@ -40,6 +40,26 @@ final class IsolationLevelWithIsolationLevelSymIsolationTypes_8770c38e implement
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->isolationTypes];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->isolationTypes, \SqlSemantics\Statement\Model\MySql\Role\IsolationTypesForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new isolationTypes, preserving every other field.
      */
     public function withIsolationTypes(\SqlSemantics\Statement\Model\MySql\Role\IsolationTypesForm $isolationTypes): self

@@ -44,6 +44,26 @@ final class ForLockingItemWithForLockingStrengthLockedRelsListOptNowaitOrSkip_d9
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->forLockingStrength, $this->lockedRelsList, $this->optNowaitOrSkip];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->forLockingStrength, \SqlSemantics\Statement\Model\PostgreSql\Role\ForLockingStrengthForm::class, $replace), $this->replacement($this->lockedRelsList, \SqlSemantics\Statement\Model\PostgreSql\Role\LockedRelsListForm::class, $replace), $this->replacement($this->optNowaitOrSkip, \SqlSemantics\Statement\Model\PostgreSql\Role\OptNowaitOrSkipForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new forLockingStrength, preserving every other field.
      */
     public function withForLockingStrength(\SqlSemantics\Statement\Model\PostgreSql\Role\ForLockingStrengthForm $forLockingStrength): self

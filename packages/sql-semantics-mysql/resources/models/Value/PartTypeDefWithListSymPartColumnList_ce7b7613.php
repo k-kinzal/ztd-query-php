@@ -38,6 +38,26 @@ final class PartTypeDefWithListSymPartColumnList_ce7b7613 implements \SqlSemanti
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->partColumnList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->partColumnList, \SqlSemantics\Statement\Model\MySql\Role\PartColumnListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new partColumnList, preserving every other field.
      */
     public function withPartColumnList(\SqlSemantics\Statement\Model\MySql\Role\PartColumnListForm $partColumnList): self

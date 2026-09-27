@@ -44,6 +44,26 @@ final class UpsertWithOnConflictDoNothingReturning_162a31bb implements \SqlSeman
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->returning];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->returning, \SqlSemantics\Statement\Model\Sqlite\Role\ReturningForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new returning, preserving every other field.
      */
     public function withReturning(\SqlSemantics\Statement\Model\Sqlite\Role\ReturningForm $returning): self

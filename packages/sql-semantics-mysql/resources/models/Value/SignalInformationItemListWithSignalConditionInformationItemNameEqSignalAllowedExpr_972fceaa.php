@@ -42,6 +42,26 @@ final class SignalInformationItemListWithSignalConditionInformationItemNameEqSig
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->signalConditionInformationItemName, $this->signalAllowedExpr];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->signalConditionInformationItemName, \SqlSemantics\Statement\Model\MySql\Role\SignalConditionInformationItemNameForm::class, $replace), $this->replacement($this->signalAllowedExpr, \SqlSemantics\Statement\Model\MySql\Role\SignalAllowedExprForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new signalConditionInformationItemName, preserving every other field.
      */
     public function withSignalConditionInformationItemName(\SqlSemantics\Statement\Model\MySql\Role\SignalConditionInformationItemNameForm $signalConditionInformationItemName): self

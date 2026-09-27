@@ -48,6 +48,26 @@ final class InstallSetValueWithInstallOptionTypeLvalueVariableEqualInstallSetRva
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->installOptionType, $this->lvalueVariable, $this->equal, $this->installSetRvalue];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->installOptionType, \SqlSemantics\Statement\Model\MySql\Role\InstallOptionTypeForm::class, $replace), $this->replacement($this->lvalueVariable, \SqlSemantics\Statement\Model\MySql\Role\LvalueVariableForm::class, $replace), $this->replacement($this->equal, \SqlSemantics\Statement\Model\MySql\Role\EqualForm::class, $replace), $this->replacement($this->installSetRvalue, \SqlSemantics\Statement\Model\MySql\Role\InstallSetRvalueForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new installOptionType, preserving every other field.
      */
     public function withInstallOptionType(\SqlSemantics\Statement\Model\MySql\Role\InstallOptionTypeForm $installOptionType): self

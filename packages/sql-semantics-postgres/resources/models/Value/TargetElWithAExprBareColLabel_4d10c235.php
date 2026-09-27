@@ -40,6 +40,26 @@ final class TargetElWithAExprBareColLabel_4d10c235 implements \SqlSemantics\Stat
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->aExpr, $this->bareColLabel];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->aExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm::class, $replace), $this->replacement($this->bareColLabel, \SqlSemantics\Statement\Model\PostgreSql\Role\BareColLabelForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new aExpr, preserving every other field.
      */
     public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self

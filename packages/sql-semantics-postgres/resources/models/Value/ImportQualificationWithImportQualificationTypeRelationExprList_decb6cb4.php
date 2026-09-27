@@ -44,6 +44,26 @@ final class ImportQualificationWithImportQualificationTypeRelationExprList_decb6
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->importQualificationType, $this->relationExprList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->importQualificationType, \SqlSemantics\Statement\Model\PostgreSql\Role\ImportQualificationTypeForm::class, $replace), $this->replacement($this->relationExprList, \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new importQualificationType, preserving every other field.
      */
     public function withImportQualificationType(\SqlSemantics\Statement\Model\PostgreSql\Role\ImportQualificationTypeForm $importQualificationType): self

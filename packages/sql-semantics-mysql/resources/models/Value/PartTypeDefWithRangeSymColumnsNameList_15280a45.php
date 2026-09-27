@@ -46,6 +46,26 @@ final class PartTypeDefWithRangeSymColumnsNameList_15280a45 implements \SqlSeman
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->nameList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->columns, $this->replacement($this->nameList, \SqlSemantics\Statement\Model\MySql\Role\NameListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new columns, preserving every other field.
      */
     public function withColumns(string $columns): self

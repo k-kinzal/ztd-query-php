@@ -40,6 +40,26 @@ final class AlterDatabaseOptionsWithAlterDatabaseOptionsAlterDatabaseOption_6104
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->alterDatabaseOptions, $this->alterDatabaseOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->alterDatabaseOptions, \SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseOptionsForm::class, $replace), $this->replacement($this->alterDatabaseOption, \SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseOptionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new alterDatabaseOptions, preserving every other field.
      */
     public function withAlterDatabaseOptions(\SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseOptionsForm $alterDatabaseOptions): self

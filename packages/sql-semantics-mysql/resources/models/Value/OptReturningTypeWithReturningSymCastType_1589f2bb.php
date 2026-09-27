@@ -38,6 +38,26 @@ final class OptReturningTypeWithReturningSymCastType_1589f2bb implements \SqlSem
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->castType];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->castType, \SqlSemantics\Statement\Model\MySql\Role\CastTypeForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new castType, preserving every other field.
      */
     public function withCastType(\SqlSemantics\Statement\Model\MySql\Role\CastTypeForm $castType): self

@@ -40,6 +40,26 @@ final class StartOptionValueListFollowingOptionTypeWithOptionValueFollowingOptio
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optionValueFollowingOptionType, $this->optionValueListContinued];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optionValueFollowingOptionType, \SqlSemantics\Statement\Model\MySql\Role\OptionValueFollowingOptionTypeForm::class, $replace), $this->replacement($this->optionValueListContinued, \SqlSemantics\Statement\Model\MySql\Role\OptionValueListContinuedForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optionValueFollowingOptionType, preserving every other field.
      */
     public function withOptionValueFollowingOptionType(\SqlSemantics\Statement\Model\MySql\Role\OptionValueFollowingOptionTypeForm $optionValueFollowingOptionType): self

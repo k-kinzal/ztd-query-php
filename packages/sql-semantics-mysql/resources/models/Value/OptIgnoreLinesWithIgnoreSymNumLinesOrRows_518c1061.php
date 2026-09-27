@@ -42,6 +42,26 @@ final class OptIgnoreLinesWithIgnoreSymNumLinesOrRows_518c1061 implements \SqlSe
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->linesOrRows];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->value, $this->replacement($this->linesOrRows, \SqlSemantics\Statement\Model\MySql\Role\LinesOrRowsForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new value, preserving every other field.
      */
     public function withValue(string $value): self

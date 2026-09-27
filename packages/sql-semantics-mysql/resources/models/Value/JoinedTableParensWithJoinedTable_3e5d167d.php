@@ -40,6 +40,26 @@ final class JoinedTableParensWithJoinedTable_3e5d167d implements \SqlSemantics\S
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->joinedTable];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->joinedTable, \SqlSemantics\Statement\Model\MySql\Role\JoinedTableForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new joinedTable, preserving every other field.
      */
     public function withJoinedTable(\SqlSemantics\Statement\Model\MySql\Role\JoinedTableForm $joinedTable): self

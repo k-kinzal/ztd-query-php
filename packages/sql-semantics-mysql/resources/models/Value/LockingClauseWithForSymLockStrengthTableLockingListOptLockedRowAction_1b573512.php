@@ -46,6 +46,26 @@ final class LockingClauseWithForSymLockStrengthTableLockingListOptLockedRowActio
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->lockStrength, $this->tableLockingList, $this->optLockedRowAction];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->lockStrength, \SqlSemantics\Statement\Model\MySql\Role\LockStrengthForm::class, $replace), $this->replacement($this->tableLockingList, \SqlSemantics\Statement\Model\MySql\Role\TableLockingListForm::class, $replace), $this->replacement($this->optLockedRowAction, \SqlSemantics\Statement\Model\MySql\Role\OptLockedRowActionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new lockStrength, preserving every other field.
      */
     public function withLockStrength(\SqlSemantics\Statement\Model\MySql\Role\LockStrengthForm $lockStrength): self

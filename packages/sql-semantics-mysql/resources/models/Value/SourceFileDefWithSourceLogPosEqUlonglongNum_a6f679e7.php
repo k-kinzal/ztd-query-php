@@ -42,6 +42,26 @@ final class SourceFileDefWithSourceLogPosEqUlonglongNum_a6f679e7 implements \Sql
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->sourceLogPos, $this->ulonglongNum];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->sourceLogPos, \SqlSemantics\Statement\Model\MySql\Role\SourceLogPosForm::class, $replace), $this->replacement($this->ulonglongNum, \SqlSemantics\Statement\Model\MySql\Role\UlonglongNumForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new sourceLogPos, preserving every other field.
      */
     public function withSourceLogPos(\SqlSemantics\Statement\Model\MySql\Role\SourceLogPosForm $sourceLogPos): self

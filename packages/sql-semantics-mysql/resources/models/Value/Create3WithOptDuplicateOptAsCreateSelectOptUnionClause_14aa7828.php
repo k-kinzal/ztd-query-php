@@ -48,6 +48,26 @@ final class Create3WithOptDuplicateOptAsCreateSelectOptUnionClause_14aa7828 impl
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optDuplicate, $this->optAs, $this->createSelect, $this->optUnionClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optDuplicate, \SqlSemantics\Statement\Model\MySql\Role\OptDuplicateForm::class, $replace), $this->replacement($this->optAs, \SqlSemantics\Statement\Model\MySql\Role\OptAsForm::class, $replace), $this->replacement($this->createSelect, \SqlSemantics\Statement\Model\MySql\Role\CreateSelectForm::class, $replace), $this->replacement($this->optUnionClause, \SqlSemantics\Statement\Model\MySql\Role\OptUnionClauseForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optDuplicate, preserving every other field.
      */
     public function withOptDuplicate(\SqlSemantics\Statement\Model\MySql\Role\OptDuplicateForm $optDuplicate): self

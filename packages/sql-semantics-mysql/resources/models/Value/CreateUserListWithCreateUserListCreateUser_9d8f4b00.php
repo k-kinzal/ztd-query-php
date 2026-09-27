@@ -42,6 +42,26 @@ final class CreateUserListWithCreateUserListCreateUser_9d8f4b00 implements \SqlS
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->createUserList, $this->createUser];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->createUserList, \SqlSemantics\Statement\Model\MySql\Role\CreateUserListForm::class, $replace), $this->replacement($this->createUser, \SqlSemantics\Statement\Model\MySql\Role\CreateUserForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new createUserList, preserving every other field.
      */
     public function withCreateUserList(\SqlSemantics\Statement\Model\MySql\Role\CreateUserListForm $createUserList): self

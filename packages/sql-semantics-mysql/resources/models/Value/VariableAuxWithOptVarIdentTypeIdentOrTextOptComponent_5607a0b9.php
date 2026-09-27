@@ -46,6 +46,26 @@ final class VariableAuxWithOptVarIdentTypeIdentOrTextOptComponent_5607a0b9 imple
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optVarIdentType, $this->identOrText, $this->optComponent];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optVarIdentType, \SqlSemantics\Statement\Model\MySql\Role\OptVarIdentTypeForm::class, $replace), $this->replacement($this->identOrText, \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm::class, $replace), $this->replacement($this->optComponent, \SqlSemantics\Statement\Model\MySql\Role\OptComponentForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optVarIdentType, preserving every other field.
      */
     public function withOptVarIdentType(\SqlSemantics\Statement\Model\MySql\Role\OptVarIdentTypeForm $optVarIdentType): self

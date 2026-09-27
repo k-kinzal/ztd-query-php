@@ -42,6 +42,26 @@ final class SourceDefWithChangeReplicationSourceBindEqTextStringSysNonewline_810
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->changeReplicationSourceBind, $this->textStringSysNonewline];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->changeReplicationSourceBind, \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceBindForm::class, $replace), $this->replacement($this->textStringSysNonewline, \SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new changeReplicationSourceBind, preserving every other field.
      */
     public function withChangeReplicationSourceBind(\SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceBindForm $changeReplicationSourceBind): self

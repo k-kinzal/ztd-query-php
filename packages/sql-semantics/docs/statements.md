@@ -14,6 +14,25 @@ $statement->toString(); // 'SELECT id , name FROM users WHERE id = ? ORDER BY na
 
 A syntax error throws `SqlSemantics\Core\AnalysisException`.
 
+## The language
+
+`Semantics` reads SQL in one language: a dialect, a grammar release, a mode, and a parameter syntax. `Semantics::language()` answers it as a `SqlSemantics\Core\Language`.
+
+A mode is the session settings of a database that change how it reads text. MySQL's `sql_mode` is one: under `ANSI_QUOTES` the server reads `"x"` as an identifier, under `NO_BACKSLASH_ESCAPES` a backslash is an ordinary character, `PIPES_AS_CONCAT` makes `||` concatenation, and `HIGH_NOT_PRECEDENCE` changes what `NOT a = b` means. Pass the value the session reports as `SqlSemantics\Platform\MySql\Mode::fromString('ANSI_QUOTES,NO_BACKSLASH_ESCAPES')`; the statement is then tokenized, parsed, and written as that session would read it. PostgreSQL and SQLite have no mode.
+
+A parameter syntax says which markers are bound parameters. The server's own are `?` for MySQL, `$1` for PostgreSQL, and `?`, `?1`, `:name`, `@name`, and `$name` for SQLite. PHP's PDO rewrites `:name`, and `?` for PostgreSQL, before the server sees them, so a statement written for PDO is read with `SqlParser\Lexer\Parameters::Pdo`, which keeps those markers as parameters in the model.
+
+## Statement boundaries
+
+A server reads one statement at a time and stops at the semicolon that ends it, while a semicolon inside a string, a comment, a compound statement, a trigger body, or a rule action ends nothing. `Semantics::split()` finds the boundaries the same way and answers the text of each statement, ending with its own terminator; trailing whitespace and comments stay with the last statement. `Semantics::analyzeAll()` analyzes each of them.
+
+```php
+$semantics->split("SELECT 1; CREATE PROCEDURE p() BEGIN SELECT ';'; END; SELECT 2");
+// ['SELECT 1;', " CREATE PROCEDURE p() BEGIN SELECT ';'; END;", ' SELECT 2']
+```
+
+The client-side `DELIMITER` command of the mysql client is not SQL and is not read.
+
 ## Models
 
 The models of each database live under `SqlSemantics\Statement\Model\MySql`, `...\PostgreSql`, and `...\Sqlite`, and are generated from the official grammars of all supported versions:
@@ -25,6 +44,28 @@ The models of each database live under `SqlSemantics\Statement\Model\MySql`, `..
 | `Choice` enums | A finite set of fixed options, including an absent clause |
 
 Identifiers and literals are fields that keep their spelling and quoting. Model class names end in a signature suffix that tells apart forms with the same grammar name.
+
+## Traversal
+
+Every value lists the values it is made of with `children()`, in writing order, and rebuilds itself around replacements with `map()`, so a statement of any dialect and release can be searched and rewritten without naming its classes. `SqlSemantics\Statement\Traversal` builds on that:
+
+| Method | Answers |
+|--------|---------|
+| `walk($root)` | Every value, each before its own children |
+| `find($root, $class)` | The values of a class or role interface, in writing order |
+| `rewrite($root, $replace)` | The value rebuilt from the leaves up, giving every value, children first, to the function |
+
+```php
+use SqlSemantics\Statement\Element;
+use SqlSemantics\Statement\Model\MySql\Role\TableIdentForm;
+use SqlSemantics\Statement\Model\MySql\Value\TableIdentWithIdentIdent_040003e0 as QualifiedTable;
+use SqlSemantics\Statement\Traversal;
+
+$tables = Traversal::find($statement->command, TableIdentForm::class);
+$unqualified = Traversal::rewrite($statement->command, static fn (Element $value): Element => $value instanceof QualifiedTable ? $value->ident2 : $value);
+```
+
+A replacement must be a value the position accepts: `map()` checks it against the role of the position and throws `InvalidArgumentException` otherwise. Lexical fields such as a name or a literal spelling, and comments, are not child values; the typed `with*()` methods change them.
 
 ## Reconstructing SQL
 

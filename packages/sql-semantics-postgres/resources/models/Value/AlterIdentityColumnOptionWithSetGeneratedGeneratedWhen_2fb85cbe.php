@@ -40,6 +40,26 @@ final class AlterIdentityColumnOptionWithSetGeneratedGeneratedWhen_2fb85cbe impl
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->generatedWhen];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->generatedWhen, \SqlSemantics\Statement\Model\PostgreSql\Role\GeneratedWhenForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new generatedWhen, preserving every other field.
      */
     public function withGeneratedWhen(\SqlSemantics\Statement\Model\PostgreSql\Role\GeneratedWhenForm $generatedWhen): self

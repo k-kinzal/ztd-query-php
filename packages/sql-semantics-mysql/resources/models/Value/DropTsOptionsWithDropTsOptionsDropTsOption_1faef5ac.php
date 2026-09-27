@@ -40,6 +40,26 @@ final class DropTsOptionsWithDropTsOptionsDropTsOption_1faef5ac implements \SqlS
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->dropTsOptions, $this->dropTsOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->dropTsOptions, \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionsForm::class, $replace), $this->replacement($this->dropTsOption, \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new dropTsOptions, preserving every other field.
      */
     public function withDropTsOptions(\SqlSemantics\Statement\Model\MySql\Role\DropTsOptionsForm $dropTsOptions): self

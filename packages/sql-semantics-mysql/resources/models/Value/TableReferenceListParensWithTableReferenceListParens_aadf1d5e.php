@@ -40,6 +40,26 @@ final class TableReferenceListParensWithTableReferenceListParens_aadf1d5e implem
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableReferenceListParens];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableReferenceListParens, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListParensForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new tableReferenceListParens, preserving every other field.
      */
     public function withTableReferenceListParens(\SqlSemantics\Statement\Model\MySql\Role\TableReferenceListParensForm $tableReferenceListParens): self

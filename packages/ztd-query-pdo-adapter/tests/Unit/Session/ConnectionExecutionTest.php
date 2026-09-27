@@ -13,13 +13,13 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Adapter\Pdo\Driver\PdoConnection;
 use ZtdQuery\Adapter\Pdo\Session\ConnectionExecution;
-use ZtdQuery\Adapter\Pdo\Session\DriverSessionFactory;
+use ZtdQuery\Adapter\Pdo\Session\DriverPlatform;
 use ZtdQuery\Adapter\Pdo\Session\PreparedQuery;
 use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 
 #[CoversClass(ConnectionExecution::class)]
 #[UsesClass(PdoConnection::class)]
-#[UsesClass(DriverSessionFactory::class)]
+#[UsesClass(DriverPlatform::class)]
 #[UsesClass(PreparedQuery::class)]
 #[UsesClass(ZtdPdoException::class)]
 #[Medium]
@@ -79,14 +79,14 @@ final class ConnectionExecutionTest extends TestCase
         self::assertFalse($native->inTransaction());
     }
 
-    public function testSessionKeepsShadowWritesOffTheNativeConnection(): void
+    public function testExecutorKeepsShadowWritesOffTheNativeConnection(): void
     {
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY)');
         $execution = new ConnectionExecution($native);
-        self::assertSame(1, $execution->session()->execStatement('INSERT INTO users VALUES (9)'));
+        self::assertSame(1, $execution->executor()->execStatement('INSERT INTO users VALUES (9)'));
         $physical = $native->query('SELECT COUNT(*) FROM users');
-        $shadow = $native->query($execution->session()->rewrite('SELECT COUNT(*) FROM users')->sql());
+        $shadow = $native->query($execution->executor()->rewrite('SELECT COUNT(*) FROM users')->sql());
         self::assertNotFalse($physical);
         self::assertNotFalse($shadow);
         self::assertSame(0, $physical->fetchColumn());
@@ -108,11 +108,11 @@ final class ConnectionExecutionTest extends TestCase
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY)');
         $execution = new ConnectionExecution($native);
         self::assertTrue($execution->beginTransaction());
-        self::assertSame(1, $execution->session()->execStatement('INSERT INTO users VALUES (9)'));
+        self::assertSame(1, $execution->executor()->execStatement('INSERT INTO users VALUES (9)'));
         self::assertTrue($execution->commit());
         self::assertTrue($execution->beginTransaction());
         self::assertTrue($execution->rollBack());
-        $statement = $native->query($execution->session()->rewrite('SELECT id FROM users')->sql());
+        $statement = $native->query($execution->executor()->rewrite('SELECT id FROM users')->sql());
         self::assertNotFalse($statement);
         self::assertSame([9], $statement->fetchAll(PDO::FETCH_COLUMN));
     }
@@ -123,9 +123,9 @@ final class ConnectionExecutionTest extends TestCase
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY)');
         $execution = new ConnectionExecution($native);
         self::assertTrue($execution->beginTransaction());
-        self::assertSame(1, $execution->session()->execStatement('INSERT INTO users VALUES (9)'));
+        self::assertSame(1, $execution->executor()->execStatement('INSERT INTO users VALUES (9)'));
         self::assertTrue($execution->rollBack());
-        $statement = $native->query($execution->session()->rewrite('SELECT id FROM users')->sql());
+        $statement = $native->query($execution->executor()->rewrite('SELECT id FROM users')->sql());
         self::assertNotFalse($statement);
         self::assertSame([], $statement->fetchAll(PDO::FETCH_COLUMN));
     }
@@ -137,10 +137,10 @@ final class ConnectionExecutionTest extends TestCase
         $native->exec('INSERT INTO users VALUES (7)');
         $execution = new ConnectionExecution($native);
         self::assertSame('7', $execution->lastInsertId());
-        self::assertSame(1, $execution->session()->execStatement('INSERT INTO users VALUES (9)'));
+        self::assertSame(1, $execution->executor()->execStatement('INSERT INTO users VALUES (9)'));
         self::assertSame('9', $execution->lastInsertId());
         self::assertSame('7', $execution->lastInsertId('id'));
-        $execution->session()->disable();
+        $execution->executor()->session()->disable();
         self::assertSame('7', $execution->lastInsertId());
     }
 }

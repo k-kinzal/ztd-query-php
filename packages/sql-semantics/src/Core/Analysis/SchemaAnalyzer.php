@@ -9,11 +9,11 @@ use SqlSemantics\Core\AnalysisException;
 use SqlSemantics\Core\Ast\DialectParser;
 use SqlSemantics\Core\Ast\Identifiers;
 use SqlSemantics\Core\Ast\SchemaReader;
-use SqlSemantics\Core\Dialect;
+use SqlSemantics\Core\Language;
 use SqlSemantics\Core\Schema;
 
 /**
- * Resolves declaration SQL into immutable state used by statement binding.
+ * Resolves declaration SQL into the immutable state statements are analyzed against.
  * @visibility SqlSemantics
  */
 final class SchemaAnalyzer
@@ -22,12 +22,12 @@ final class SchemaAnalyzer
     private readonly string $defaultSchema;
 
     /**
-     * Selects a language, release and default declaration namespace.
+     * Reads declarations of the language into the default declaration namespace.
      */
-    public function __construct(private readonly Dialect $dialect, ?string $defaultSchema = null, ?string $grammarVersion = null)
+    public function __construct(private readonly Language $language, ?string $defaultSchema = null)
     {
-        $this->defaultSchema = $defaultSchema ?? $dialect->platform()->defaultSchema();
-        $this->parser = new DialectParser($dialect, $grammarVersion);
+        $this->defaultSchema = $defaultSchema ?? $language->dialect->platform()->defaultSchema();
+        $this->parser = new DialectParser($language);
     }
 
     /**
@@ -45,7 +45,7 @@ final class SchemaAnalyzer
     }
 
     /**
-     * Compatibility path preserving the original parser exception contract.
+     * Reads declarations, reporting syntax errors with the parser's own exceptions.
      * @throws \SqlSemantics\Core\SemanticException When state facts conflict or cannot be resolved
      * @throws SourceException When declarations are outside the selected language
      */
@@ -55,9 +55,8 @@ final class SchemaAnalyzer
         foreach ($sql as $text) {
             array_push($trees, ...$this->parser->parseScript($text));
         }
-        $values = $this->dialect->platform()->values($this->parser->version());
-        $tables = (new SchemaReader(new Identifiers($this->dialect), $this->defaultSchema, $values))->read($trees);
+        $tables = (new SchemaReader(new Identifiers($this->language->dialect), $this->defaultSchema, $this->language->values()))->read($trees);
 
-        return new Schema($this->dialect, $tables, $this->defaultSchema, $this->parser->version());
+        return new Schema($this->language->dialect, $tables, $this->defaultSchema, $this->language->version);
     }
 }

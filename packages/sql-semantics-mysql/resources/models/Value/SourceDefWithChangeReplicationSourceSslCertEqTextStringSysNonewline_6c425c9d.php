@@ -42,6 +42,26 @@ final class SourceDefWithChangeReplicationSourceSslCertEqTextStringSysNonewline_
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->changeReplicationSourceSslCert, $this->textStringSysNonewline];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->changeReplicationSourceSslCert, \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceSslCertForm::class, $replace), $this->replacement($this->textStringSysNonewline, \SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new changeReplicationSourceSslCert, preserving every other field.
      */
     public function withChangeReplicationSourceSslCert(\SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceSslCertForm $changeReplicationSourceSslCert): self

@@ -42,6 +42,26 @@ final class GenericOptionListWithGenericOptionListGenericOptionElem_d80a0e21 imp
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->genericOptionList, $this->genericOptionElem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->genericOptionList, \SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionListForm::class, $replace), $this->replacement($this->genericOptionElem, \SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionElemForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new genericOptionList, preserving every other field.
      */
     public function withGenericOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionListForm $genericOptionList): self

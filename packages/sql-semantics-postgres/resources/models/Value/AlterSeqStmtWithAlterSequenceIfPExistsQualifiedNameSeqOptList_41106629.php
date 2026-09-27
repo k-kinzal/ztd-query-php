@@ -48,6 +48,26 @@ final class AlterSeqStmtWithAlterSequenceIfPExistsQualifiedNameSeqOptList_411066
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->qualifiedName, $this->seqOptList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->seqOptList, \SqlSemantics\Statement\Model\PostgreSql\Role\SeqOptListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new qualifiedName, preserving every other field.
      */
     public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self

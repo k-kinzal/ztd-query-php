@@ -44,6 +44,26 @@ final class DerivedTableWithTableSubqueryOptTableAliasOptDerivedColumnList_52c62
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableSubquery, $this->optTableAlias, $this->optDerivedColumnList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableSubquery, \SqlSemantics\Statement\Model\MySql\Role\TableSubqueryForm::class, $replace), $this->replacement($this->optTableAlias, \SqlSemantics\Statement\Model\MySql\Role\OptTableAliasForm::class, $replace), $this->replacement($this->optDerivedColumnList, \SqlSemantics\Statement\Model\MySql\Role\OptDerivedColumnListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new tableSubquery, preserving every other field.
      */
     public function withTableSubquery(\SqlSemantics\Statement\Model\MySql\Role\TableSubqueryForm $tableSubquery): self

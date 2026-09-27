@@ -42,6 +42,26 @@ final class ProfileDefsWithProfileDefsProfileDef_7aace7bf implements \SqlSemanti
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->profileDefs, $this->profileDef];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->profileDefs, \SqlSemantics\Statement\Model\MySql\Role\ProfileDefsForm::class, $replace), $this->replacement($this->profileDef, \SqlSemantics\Statement\Model\MySql\Role\ProfileDefForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new profileDefs, preserving every other field.
      */
     public function withProfileDefs(\SqlSemantics\Statement\Model\MySql\Role\ProfileDefsForm $profileDefs): self

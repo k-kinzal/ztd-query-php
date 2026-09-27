@@ -54,6 +54,26 @@ final class ShowRelaylogEventsStmtWithShowRelaylogSymEventsSymOptBinlogInBinlogF
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optBinlogIn, $this->binlogFrom, $this->optLimitClause, $this->optChannel];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optBinlogIn, \SqlSemantics\Statement\Model\MySql\Role\OptBinlogInForm::class, $replace), $this->replacement($this->binlogFrom, \SqlSemantics\Statement\Model\MySql\Role\BinlogFromForm::class, $replace), $this->replacement($this->optLimitClause, \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm::class, $replace), $this->replacement($this->optChannel, \SqlSemantics\Statement\Model\MySql\Role\OptChannelForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optBinlogIn, preserving every other field.
      */
     public function withOptBinlogIn(\SqlSemantics\Statement\Model\MySql\Role\OptBinlogInForm $optBinlogIn): self

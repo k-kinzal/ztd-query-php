@@ -44,6 +44,26 @@ final class EvAlterOnScheduleCompletionWithOnSymScheduleSymEvScheduleTimeEvOnCom
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->evScheduleTime, $this->evOnCompletion];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->evScheduleTime, \SqlSemantics\Statement\Model\MySql\Role\EvScheduleTimeForm::class, $replace), $this->replacement($this->evOnCompletion, \SqlSemantics\Statement\Model\MySql\Role\EvOnCompletionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new evScheduleTime, preserving every other field.
      */
     public function withEvScheduleTime(\SqlSemantics\Statement\Model\MySql\Role\EvScheduleTimeForm $evScheduleTime): self

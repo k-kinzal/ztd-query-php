@@ -52,6 +52,26 @@ final class CreateWithCreateTablespaceSymIdentOptTsDatafileNameOptLogfileGroupNa
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->ident, $this->optTsDatafileName, $this->optLogfileGroupName, $this->optTablespaceOptions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->ident, \SqlSemantics\Statement\Model\MySql\Role\IdentForm::class, $replace), $this->replacement($this->optTsDatafileName, \SqlSemantics\Statement\Model\MySql\Role\OptTsDatafileNameForm::class, $replace), $this->replacement($this->optLogfileGroupName, \SqlSemantics\Statement\Model\MySql\Role\OptLogfileGroupNameForm::class, $replace), $this->replacement($this->optTablespaceOptions, \SqlSemantics\Statement\Model\MySql\Role\OptTablespaceOptionsForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new ident, preserving every other field.
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self

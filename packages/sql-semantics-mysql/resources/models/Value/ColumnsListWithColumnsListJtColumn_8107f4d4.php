@@ -42,6 +42,26 @@ final class ColumnsListWithColumnsListJtColumn_8107f4d4 implements \SqlSemantics
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->columnsList, $this->jtColumn];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->columnsList, \SqlSemantics\Statement\Model\MySql\Role\ColumnsListForm::class, $replace), $this->replacement($this->jtColumn, \SqlSemantics\Statement\Model\MySql\Role\JtColumnForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new columnsList, preserving every other field.
      */
     public function withColumnsList(\SqlSemantics\Statement\Model\MySql\Role\ColumnsListForm $columnsList): self

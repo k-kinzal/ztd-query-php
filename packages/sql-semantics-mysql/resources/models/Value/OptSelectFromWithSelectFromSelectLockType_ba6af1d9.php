@@ -40,6 +40,26 @@ final class OptSelectFromWithSelectFromSelectLockType_ba6af1d9 implements \SqlSe
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->selectFrom, $this->selectLockType];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->selectFrom, \SqlSemantics\Statement\Model\MySql\Role\SelectFromForm::class, $replace), $this->replacement($this->selectLockType, \SqlSemantics\Statement\Model\MySql\Role\SelectLockTypeForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new selectFrom, preserving every other field.
      */
     public function withSelectFrom(\SqlSemantics\Statement\Model\MySql\Role\SelectFromForm $selectFrom): self

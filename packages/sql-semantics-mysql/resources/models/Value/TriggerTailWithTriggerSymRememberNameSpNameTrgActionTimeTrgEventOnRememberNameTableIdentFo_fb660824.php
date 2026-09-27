@@ -74,6 +74,26 @@ final class TriggerTailWithTriggerSymRememberNameSpNameTrgActionTimeTrgEventOnRe
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->rememberName, $this->spName, $this->trgActionTime, $this->trgEvent, $this->rememberName2, $this->tableIdent, $this->rememberName3, $this->spProcStmt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->rememberName, \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm::class, $replace), $this->replacement($this->spName, \SqlSemantics\Statement\Model\MySql\Role\SpNameForm::class, $replace), $this->replacement($this->trgActionTime, \SqlSemantics\Statement\Model\MySql\Role\TrgActionTimeForm::class, $replace), $this->replacement($this->trgEvent, \SqlSemantics\Statement\Model\MySql\Role\TrgEventForm::class, $replace), $this->replacement($this->rememberName2, \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm::class, $replace), $this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->rememberName3, \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm::class, $replace), $this->replacement($this->spProcStmt, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new rememberName, preserving every other field.
      */
     public function withRememberName(\SqlSemantics\Statement\Model\MySql\Role\RememberNameForm $rememberName): self

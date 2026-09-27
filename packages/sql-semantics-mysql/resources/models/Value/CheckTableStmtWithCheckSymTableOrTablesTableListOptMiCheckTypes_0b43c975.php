@@ -46,6 +46,26 @@ final class CheckTableStmtWithCheckSymTableOrTablesTableListOptMiCheckTypes_0b43
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableOrTables, $this->tableList, $this->optMiCheckTypes];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableOrTables, \SqlSemantics\Statement\Model\MySql\Role\TableOrTablesForm::class, $replace), $this->replacement($this->tableList, \SqlSemantics\Statement\Model\MySql\Role\TableListForm::class, $replace), $this->replacement($this->optMiCheckTypes, \SqlSemantics\Statement\Model\MySql\Role\OptMiCheckTypesForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new tableOrTables, preserving every other field.
      */
     public function withTableOrTables(\SqlSemantics\Statement\Model\MySql\Role\TableOrTablesForm $tableOrTables): self

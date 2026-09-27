@@ -40,6 +40,26 @@ final class MiRepairTypesWithMiRepairTypesMiRepairType_ea14dd21 implements \SqlS
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->miRepairTypes, $this->miRepairType];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->miRepairTypes, \SqlSemantics\Statement\Model\MySql\Role\MiRepairTypesForm::class, $replace), $this->replacement($this->miRepairType, \SqlSemantics\Statement\Model\MySql\Role\MiRepairTypeForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new miRepairTypes, preserving every other field.
      */
     public function withMiRepairTypes(\SqlSemantics\Statement\Model\MySql\Role\MiRepairTypesForm $miRepairTypes): self

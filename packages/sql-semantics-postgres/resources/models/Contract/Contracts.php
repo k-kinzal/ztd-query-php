@@ -3081,7 +3081,7 @@ final class Contracts
   'OWNER' => '~\\A(?:OWNER)\\z~isD',
   'Op' => '~\\A(?:(?!.*(?:--|/\\*))[+*/<>=\\x7E!@#%^&|`?\\x2D]+)\\z~isD',
   'PARALLEL' => '~\\A(?:PARALLEL)\\z~isD',
-  'PARAM' => '~\\A(?:\\$[0-9]+)\\z~isD',
+  'PARAM' => '~\\A(?:\\$[0-9]+|\\?|:[A-Za-z0-9_]+)\\z~isD',
   'PARAMETER' => '~\\A(?:PARAMETER)\\z~isD',
   'PARSER' => '~\\A(?:PARSER)\\z~isD',
   'PARTIAL' => '~\\A(?:PARTIAL)\\z~isD',
@@ -3619,6 +3619,749 @@ final class Contracts
   array (
     'pg-17.2' => 12,
   ),
+);
+    /**
+     * Generated construction facts; no parser is consulted by a value.
+     *
+     * @var array<class-string<\SqlSemantics\Statement\Element>, array<string, array<int, int>>>
+     */
+    public const BINDING_OPERANDS = array (
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_0db717aa' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 8,
+      2 => 8,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_13ac9fee' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 13,
+      2 => 14,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_24c5a085' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 8,
+      2 => 8,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_93da98b3' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 14,
+      2 => 15,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_a6e8e5ce' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 13,
+      2 => 14,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_ac74014b' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 8,
+      2 => 8,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_afc84b1e' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 14,
+      2 => 15,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_c9d0adc9' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 15,
+      2 => 16,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_fe8837ab' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 14,
+      2 => 15,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAndAExpr_d8da0043' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 4,
+      2 => 5,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAtLocal_f7c569db' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 16,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAtTimeZoneAExpr_34c8e63b' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 16,
+      4 => 17,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprBetweenOptAsymmetricBExprAndAExpr_770a2a8e' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 9,
+      5 => 9,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprBetweenSymmetricBExprAndAExpr_e94db72e' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 9,
+      5 => 9,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprCollateAnyName_8b12aefc' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 17,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprGreaterEqualsAExpr_7d19ac70' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 8,
+      2 => 8,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIlikeAExprEscapeAExpr_3c1383cc' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 9,
+      4 => 9,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIlikeAExpr_c47aa30a' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 9,
+      2 => 9,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprInPInExpr_03378548' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 9,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsDistinctFromAExpr_4cf9c884' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 7,
+      4 => 7,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsDocumentP_af196ce8' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 7,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsFalseP_335a1016' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 7,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsJsonPredicateTypeConstraintJsonKeyUniquenessConstraintOpt_25f5c4f8' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 7,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNormalized_1ed5cf4d' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 7,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotDistinctFromAExpr_3f110746' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 7,
+      5 => 7,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotDocumentP_10826c8a' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 7,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotFalseP_79d9e977' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 7,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotJsonPredicateTypeConstraintJsonKeyUniquenessConstraintOpt_1b6db014' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 7,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotNormalized_944144d7' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 7,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotNullP_bbeb34b7' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 7,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotTrueP_9abc9f2d' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 7,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotUnicodeNormalFormNormalized_3b8205d0' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 7,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotUnknown_7d0941e4' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 7,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNullP_7751c3ac' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 7,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsTrueP_e3e84644' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 7,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsUnicodeNormalFormNormalized_ce3efbcd' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 7,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsUnknown_6dc2eece' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 7,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsnull_8363259b' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 7,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprLessEqualsAExpr_84fef888' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 8,
+      2 => 8,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprLikeAExprEscapeAExpr_53fbfeff' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 9,
+      4 => 9,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprLikeAExpr_8d82e593' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 9,
+      2 => 9,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotEqualsAExpr_27e5f813' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 8,
+      2 => 8,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaBetweenOptAsymmetricBExprAndAExpr_ed8e9725' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 9,
+      6 => 9,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaBetweenSymmetricBExprAndAExpr_6ed5dfc6' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 9,
+      6 => 9,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaIlikeAExprEscapeAExpr_8644ddc2' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 9,
+      5 => 9,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaIlikeAExpr_bd2d9cfe' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 9,
+      3 => 9,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaInPInExpr_a743de66' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 9,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaLikeAExprEscapeAExpr_a57ce8bd' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 9,
+      5 => 9,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaLikeAExpr_4650559c' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 9,
+      3 => 9,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaSimilarToAExprEscapeAExpr_3d5bdcef' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 9,
+      6 => 9,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaSimilarToAExpr_adecc524' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 9,
+      4 => 9,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotnull_df392d26' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 7,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprOrAExpr_ac9947a4' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 3,
+      2 => 4,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprQualOpAExpr_41175adc' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 12,
+      2 => 13,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprSimilarToAExprEscapeAExpr_e2fba479' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 9,
+      5 => 9,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprSimilarToAExpr_7a772180' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 9,
+      3 => 9,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprSubqueryOpSubTypeAExpr_cd3712f4' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 12,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprSubqueryOpSubTypeSelectWithParens_65735583' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 12,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprTypecastTypename_251785d1' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 21,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExpr_754cdd93' =>
+  array (
+    'pg-17.2' =>
+    array (
+      1 => 18,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExpr_8ff574e6' =>
+  array (
+    'pg-17.2' =>
+    array (
+      1 => 18,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithNotAExpr_00b8874f' =>
+  array (
+    'pg-17.2' =>
+    array (
+      1 => 5,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithNotLaAExpr_1ebc1180' =>
+  array (
+    'pg-17.2' =>
+    array (
+      1 => 5,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithQualOpAExpr_43bfb7f8' =>
+  array (
+    'pg-17.2' =>
+    array (
+      1 => 13,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_03794e77' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 14,
+      2 => 15,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_0e191771' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 15,
+      2 => 16,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_2968b814' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 14,
+      2 => 15,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_2ec9aee1' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 8,
+      2 => 8,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_5c9a3111' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 13,
+      2 => 14,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_6acac436' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 8,
+      2 => 8,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_7cc500ab' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 14,
+      2 => 15,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_80309f96' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 8,
+      2 => 8,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_9c226265' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 13,
+      2 => 14,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprGreaterEqualsBExpr_317ca80d' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 8,
+      2 => 8,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprIsDistinctFromBExpr_637bbb2c' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 7,
+      4 => 7,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprIsDocumentP_23b22804' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 7,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprIsNotDistinctFromBExpr_fe469b0a' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 7,
+      5 => 7,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprIsNotDocumentP_aadd75a8' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 7,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprLessEqualsBExpr_290e9b93' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 8,
+      2 => 8,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprNotEqualsBExpr_976e0805' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 8,
+      2 => 8,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprQualOpBExpr_b7fdc6b2' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 12,
+      2 => 13,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprTypecastTypename_b682d353' =>
+  array (
+    'pg-17.2' =>
+    array (
+      0 => 21,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExpr_4bb217fb' =>
+  array (
+    'pg-17.2' =>
+    array (
+      1 => 18,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExpr_d6a8b1b1' =>
+  array (
+    'pg-17.2' =>
+    array (
+      1 => 18,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithQualOpBExpr_e6ab4191' =>
+  array (
+    'pg-17.2' =>
+    array (
+      1 => 13,
+    ),
+  ),
+);
+    /**
+     * Generated construction facts; no parser is consulted by a value.
+     *
+     * @var array<class-string<\SqlSemantics\Statement\Element>, string>
+     */
+    public const BINDING_RULES = array (
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_0db717aa' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_13ac9fee' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_24c5a085' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_93da98b3' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_a6e8e5ce' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_ac74014b' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_afc84b1e' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_c9d0adc9' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_fe8837ab' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAndAExpr_d8da0043' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAtLocal_f7c569db' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAtTimeZoneAExpr_34c8e63b' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprBetweenOptAsymmetricBExprAndAExpr_770a2a8e' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprBetweenSymmetricBExprAndAExpr_e94db72e' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprCollateAnyName_8b12aefc' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprGreaterEqualsAExpr_7d19ac70' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIlikeAExprEscapeAExpr_3c1383cc' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIlikeAExpr_c47aa30a' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprInPInExpr_03378548' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsDistinctFromAExpr_4cf9c884' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsDocumentP_af196ce8' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsFalseP_335a1016' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsJsonPredicateTypeConstraintJsonKeyUniquenessConstraintOpt_25f5c4f8' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNormalized_1ed5cf4d' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotDistinctFromAExpr_3f110746' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotDocumentP_10826c8a' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotFalseP_79d9e977' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotJsonPredicateTypeConstraintJsonKeyUniquenessConstraintOpt_1b6db014' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotNormalized_944144d7' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotNullP_bbeb34b7' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotTrueP_9abc9f2d' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotUnicodeNormalFormNormalized_3b8205d0' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotUnknown_7d0941e4' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNullP_7751c3ac' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsTrueP_e3e84644' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsUnicodeNormalFormNormalized_ce3efbcd' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsUnknown_6dc2eece' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsnull_8363259b' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprLessEqualsAExpr_84fef888' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprLikeAExprEscapeAExpr_53fbfeff' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprLikeAExpr_8d82e593' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotEqualsAExpr_27e5f813' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaBetweenOptAsymmetricBExprAndAExpr_ed8e9725' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaBetweenSymmetricBExprAndAExpr_6ed5dfc6' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaIlikeAExprEscapeAExpr_8644ddc2' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaIlikeAExpr_bd2d9cfe' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaInPInExpr_a743de66' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaLikeAExprEscapeAExpr_a57ce8bd' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaLikeAExpr_4650559c' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaSimilarToAExprEscapeAExpr_3d5bdcef' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaSimilarToAExpr_adecc524' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotnull_df392d26' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprOrAExpr_ac9947a4' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprQualOpAExpr_41175adc' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprSimilarToAExprEscapeAExpr_e2fba479' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprSimilarToAExpr_7a772180' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprSubqueryOpSubTypeAExpr_cd3712f4' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprSubqueryOpSubTypeSelectWithParens_65735583' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprTypecastTypename_251785d1' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExpr_754cdd93' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExpr_8ff574e6' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithNotAExpr_00b8874f' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithNotLaAExpr_1ebc1180' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithQualOpAExpr_43bfb7f8' => 'a_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_03794e77' => 'b_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_0e191771' => 'b_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_2968b814' => 'b_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_2ec9aee1' => 'b_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_5c9a3111' => 'b_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_6acac436' => 'b_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_7cc500ab' => 'b_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_80309f96' => 'b_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_9c226265' => 'b_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprGreaterEqualsBExpr_317ca80d' => 'b_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprIsDistinctFromBExpr_637bbb2c' => 'b_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprIsDocumentP_23b22804' => 'b_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprIsNotDistinctFromBExpr_fe469b0a' => 'b_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprIsNotDocumentP_aadd75a8' => 'b_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprLessEqualsBExpr_290e9b93' => 'b_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprNotEqualsBExpr_976e0805' => 'b_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprQualOpBExpr_b7fdc6b2' => 'b_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprTypecastTypename_b682d353' => 'b_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExpr_4bb217fb' => 'b_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExpr_d6a8b1b1' => 'b_expr',
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithQualOpBExpr_e6ab4191' => 'b_expr',
 );
 
     /**

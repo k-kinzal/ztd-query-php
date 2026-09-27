@@ -48,6 +48,26 @@ final class GrantWithGrantRoleOrPrivilegeListToSymUserListOptWithAdminOption_249
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->roleOrPrivilegeList, $this->userList, $this->optWithAdminOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->roleOrPrivilegeList, \SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeListForm::class, $replace), $this->replacement($this->userList, \SqlSemantics\Statement\Model\MySql\Role\UserListForm::class, $replace), $this->replacement($this->optWithAdminOption, \SqlSemantics\Statement\Model\MySql\Role\OptWithAdminOptionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new roleOrPrivilegeList, preserving every other field.
      */
     public function withRoleOrPrivilegeList(\SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeListForm $roleOrPrivilegeList): self

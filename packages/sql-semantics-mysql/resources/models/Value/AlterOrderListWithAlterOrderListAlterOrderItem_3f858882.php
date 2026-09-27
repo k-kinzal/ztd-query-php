@@ -42,6 +42,26 @@ final class AlterOrderListWithAlterOrderListAlterOrderItem_3f858882 implements \
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->alterOrderList, $this->alterOrderItem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->alterOrderList, \SqlSemantics\Statement\Model\MySql\Role\AlterOrderListForm::class, $replace), $this->replacement($this->alterOrderItem, \SqlSemantics\Statement\Model\MySql\Role\AlterOrderItemForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new alterOrderList, preserving every other field.
      */
     public function withAlterOrderList(\SqlSemantics\Statement\Model\MySql\Role\AlterOrderListForm $alterOrderList): self

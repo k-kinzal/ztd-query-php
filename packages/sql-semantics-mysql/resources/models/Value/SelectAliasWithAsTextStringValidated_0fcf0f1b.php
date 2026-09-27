@@ -38,6 +38,26 @@ final class SelectAliasWithAsTextStringValidated_0fcf0f1b implements \SqlSemanti
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->textStringValidated];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->textStringValidated, \SqlSemantics\Statement\Model\MySql\Role\TextStringValidatedForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new textStringValidated, preserving every other field.
      */
     public function withTextStringValidated(\SqlSemantics\Statement\Model\MySql\Role\TextStringValidatedForm $textStringValidated): self

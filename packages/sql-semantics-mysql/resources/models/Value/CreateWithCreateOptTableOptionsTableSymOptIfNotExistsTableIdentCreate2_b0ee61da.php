@@ -52,6 +52,26 @@ final class CreateWithCreateOptTableOptionsTableSymOptIfNotExistsTableIdentCreat
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optTableOptions, $this->optIfNotExists, $this->tableIdent, $this->create2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optTableOptions, \SqlSemantics\Statement\Model\MySql\Role\OptTableOptionsForm::class, $replace), $this->replacement($this->optIfNotExists, \SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm::class, $replace), $this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->create2, \SqlSemantics\Statement\Model\MySql\Role\Create2Form::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optTableOptions, preserving every other field.
      */
     public function withOptTableOptions(\SqlSemantics\Statement\Model\MySql\Role\OptTableOptionsForm $optTableOptions): self

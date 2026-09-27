@@ -44,6 +44,26 @@ final class OptBinaryWithCharsetCharsetNameOptBinMod_c837abed implements \SqlSem
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->charset, $this->charsetName, $this->optBinMod];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->charset, \SqlSemantics\Statement\Model\MySql\Role\CharsetForm::class, $replace), $this->replacement($this->charsetName, \SqlSemantics\Statement\Model\MySql\Role\CharsetNameForm::class, $replace), $this->replacement($this->optBinMod, \SqlSemantics\Statement\Model\MySql\Role\OptBinModForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new charset, preserving every other field.
      */
     public function withCharset(\SqlSemantics\Statement\Model\MySql\Role\CharsetForm $charset): self

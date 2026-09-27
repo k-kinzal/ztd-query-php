@@ -40,6 +40,26 @@ final class OptRefListWithReferenceList_93f45fe9 implements \SqlSemantics\Statem
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->referenceList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->referenceList, \SqlSemantics\Statement\Model\MySql\Role\ReferenceListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new referenceList, preserving every other field.
      */
     public function withReferenceList(\SqlSemantics\Statement\Model\MySql\Role\ReferenceListForm $referenceList): self

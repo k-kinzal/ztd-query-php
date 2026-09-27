@@ -24,7 +24,7 @@ final class ExprWithNotSymExpr_61d2ec6a implements \SqlSemantics\Statement\Model
         public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 16,  'mysql-5.7.44' => 17,  'mysql-8.0.44' => 23,  'mysql-8.1.0' => 23,  'mysql-8.2.0' => 23,  'mysql-8.3.0' => 23,  'mysql-8.4.7' => 23,  'mysql-9.0.1' => 23,  'mysql-9.1.0' => 23,));
+        $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 16,  'mysql-5.7.44' => 17,  'mysql-8.0.44' => 23,  'mysql-8.1.0' => 23,  'mysql-8.2.0' => 23,  'mysql-8.3.0' => 23,  'mysql-8.4.7' => 23,  'mysql-9.0.1' => 23,  'mysql-9.1.0' => 23,), \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_RULES, 'expr');
     }
 
     /**
@@ -36,6 +36,26 @@ final class ExprWithNotSymExpr_61d2ec6a implements \SqlSemantics\Statement\Model
         $writer->append('NOT');
         $writer->comments($this->comments, 1);
         $this->expr->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->expr];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->comments);
     }
 
     /**
