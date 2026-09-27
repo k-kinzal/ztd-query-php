@@ -29,13 +29,13 @@
 <nav class="breadcrumbs" aria-label="Breadcrumb"><span class="breadcrumb-current">k-kinzal/ztd-query-postgres</span></nav>
 <div class="topbar-tools">
 <input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
-<span class="diff-range" title="Comparing 3a6c7e361a to working tree">3a6c7e361a <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<span class="diff-range" title="Comparing 249944eaed to working tree">249944eaed <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
 <button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
 </div>
 </header>
 <div class="search-results" id="search-results" hidden></div>
 <main class="content" id="content">
-<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 3a6c7e361a and working tree." data-off="This page documents what 3a6c7e361a had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 249944eaed and working tree." data-off="This page documents what 249944eaed had and working tree no longer has. Switch to Diff to read it." hidden></p>
 <div class="symbol-head"><h1><span class="chip chip-kind k-package">package</span>k-kinzal/ztd-query-postgres</h1></div>
 <p class="lede">PostgreSQL platform support for ZTD Query</p>
 <div class="relation-row"><span class="relation-label">Repository</span> <a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com/k-kinzal/ztd-query-php</a></div>
@@ -71,14 +71,6 @@
     }
 }</code></pre>
 <p><code>ZtdPdo::fromPdo($pdo)</code> wraps an existing connection instead of opening a new one, and <code>disableZtd()</code> and <code>enableZtd()</code> switch between the physical database and the session.</p>
-<h3>Platform injection</h3>
-<p>The database package implements the core <code>ZtdQuery\Platform</code> contract. Pass a platform when you need explicit dependency injection; otherwise the adapter selects one from the native driver.</p>
-<pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Adapter\Pdo\ZtdPdo</span>;
-<span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Platform\Postgres\PgSqlPlatform</span>;
-
-<span class="tok-var">$native</span> = <span class="tok-kw">new</span> <span class="tok-id">PDO</span>(<span class="tok-str">&#039;pgsql:host=127.0.0.1;dbname=test&#039;</span>, <span class="tok-str">&#039;postgres&#039;</span>, <span class="tok-str">&#039;postgres&#039;</span>);
-<span class="tok-var">$pdo</span> = <span class="tok-id">ZtdPdo</span>::<span class="tok-id">fromPdo</span>(<span class="tok-var">$native</span>, <span class="tok-id">platform</span>: <span class="tok-kw">new</span> <span class="tok-id">PgSqlPlatform</span>());</code></pre>
-<p>The platform provides schema reflection, SQL rewriting, parameter compilation, and result metadata interpretation. Core creates a separate <code>Session</code> for each wrapper; a platform instance can be reused without sharing virtual tables or transactions.</p>
 <h3>Configuration</h3>
 <pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Adapter\Pdo\ZtdPdo</span>;
 <span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Config\UnknownSchemaBehavior</span>;
