@@ -48,4 +48,25 @@ final class CallSiteIndexTest extends TestCase
         $pending = [];
         self::assertFalse((new \Deriver\Internal\Frontend\Php\CallSiteIndex($index))->contains($source->node, 'sink', $source, $pending, true));
     }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerNamespacedCalls')]
+    public function testOwnersFindsResolvedNamespaceAndImportedNamesWithoutCompilingBodies(string $source, string $selector): void
+    {
+        $index = \Tests\Fake\FrontendFixture::index($source);
+        self::assertSame(['N\\target'], (new \Deriver\Internal\Frontend\Php\CallSiteIndex($index))->owners($selector));
+        self::assertSame(0, $index->graphCount());
+    }
+
+    /**
+     * @return iterable<string,array{string,string}>
+     */
+    public static function providerNamespacedCalls(): iterable
+    {
+        yield 'implicit namespace' => ['<?php namespace N;function target(){sink(1);}', 'N\\sink'];
+        yield 'case-insensitive qualified selector' => ['<?php namespace N;function target(){sink(1);}', '\\n\\SINK'];
+        yield 'qualified syntax' => ['<?php namespace N;function target(){\\N\\sink(1);}', 'N\\sink'];
+        yield 'function import' => ['<?php namespace N;use function M\\sink as alias;function target(){alias(1);}', 'M\\sink'];
+        yield 'namespace-relative syntax' => ['<?php namespace N;function target(){namespace\\sink(1);}', 'N\\sink'];
+        yield 'ordinary method name' => ['<?php namespace N;function target($x){$x->sink(1);}', 'SINK'];
+    }
 }

@@ -82,6 +82,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Completion::class)]
 #[UsesClass(\Deriver\Internal\Solver\Context::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\ObservationLimit::class)]
+#[UsesClass(\Deriver\Internal\Solver\Control\ResidualPaths::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\Resources::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\Unwinding::class)]
 #[UsesClass(\Deriver\Internal\Solver\Demand\Cell::class)]
@@ -139,5 +140,97 @@ final class StateJoinTest extends TestCase
         self::assertCount(1, $states);
         self::assertSame('opaque', $states[0]->completion->value?->kind);
         self::assertCount(2, $context->frontiers);
+    }
+
+    public function testLimitGroupsIndependentProgramPointsBeforeApplyingTheBudget(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context(budget:new \Deriver\Api\Query\Budget(partitions:2));
+        $body = \Tests\Fake\SummaryFixture::body($context);
+        $a = new \Deriver\Internal\Solver\State();
+        $a->block = 1;
+        $b = new \Deriver\Internal\Solver\State();
+        $b->block = 2;
+        $c = new \Deriver\Internal\Solver\State();
+        $c->block = 1;
+        $states = (new \Deriver\Internal\Solver\Control\StateJoin($context))->limit([$a,$b,$c], $body);
+        self::assertSame([$a,$c,$b], $states);
+        self::assertSame([], $context->frontiers);
+    }
+
+    public function testLimitKeepsKnownPartitionsAndSealsEveryRemainingStorageRoot(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context(budget:new \Deriver\Api\Query\Budget(partitions:2));
+        $body = \Tests\Fake\SummaryFixture::body($context);
+        $a = new \Deriver\Internal\Solver\State();
+        $a->observed = true;
+        $a->guard = ['first' => true];
+        $a->locals['a'] = new \Deriver\Internal\Memory\Location('a');
+        $a->memory->cells['a'] = \Deriver\Value\Term::constant(1);
+        $b = new \Deriver\Internal\Solver\State();
+        $b->observed = false;
+        $b->locals['b'] = new \Deriver\Internal\Memory\Location('b');
+        $b->memory->cells['b'] = \Deriver\Value\Term::constant(2);
+        $c = new \Deriver\Internal\Solver\State();
+        $c->observed = true;
+        $states = (new \Deriver\Internal\Solver\Control\StateJoin($context))->limit([$a,$b,$c], $body);
+        self::assertCount(3, $states);
+        self::assertSame($a, $states[0]);
+        self::assertSame(['normal','return','throw'], array_map(static fn ($state) => $state->completion->kind, $states));
+        self::assertFalse($states[1]->observed);
+        self::assertFalse($states[2]->observed);
+        self::assertSame([], $states[1]->guard);
+        self::assertSame([], $states[1]->constraints);
+        self::assertSame(['a','b'], array_keys($states[1]->locals));
+        self::assertSame(['opaque','opaque'], array_column($states[1]->memory->cells, 'kind'));
+        self::assertSame('BUDGET_EXCEEDED', $states[1]->memory->unknownShared);
+        self::assertSame('Throwable', $states[2]->completion->value?->literal);
+        self::assertSame(1, $a->memory->cells['a']->native());
+        self::assertSame(2, $b->memory->cells['b']->native());
+        self::assertContains('CORRELATION_RELAXED', array_column($context->frontiers, 'code'));
+    }
+
+    public function testCompletedKeepsNormalAndExceptionalGroupsIndependentAtTheExactLimit(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context(budget:new \Deriver\Api\Query\Budget(partitions:1));
+        $body = \Tests\Fake\SummaryFixture::body($context);
+        $normal = new \Deriver\Internal\Solver\State();
+        $normal->completion = new \Deriver\Internal\Solver\Completion('return', \Deriver\Value\Term::constant(3));
+        $error = new \Deriver\Internal\Solver\State();
+        $error->completion = new \Deriver\Internal\Solver\Completion('throw', new \Deriver\Value\Term('throwable', 'Error'));
+        $states = (new \Deriver\Internal\Solver\Control\StateJoin($context))->completed([$normal,$error], $body);
+        self::assertSame([$normal,$error], $states);
+        self::assertSame([], $context->frontiers);
+    }
+
+    public function testCompletedRetainsUnobservedExceptionalStateFromLaterPartitions(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context(budget:new \Deriver\Api\Query\Budget(partitions:1));
+        $body = \Tests\Fake\SummaryFixture::body($context);
+        $first = new \Deriver\Internal\Solver\State();
+        $first->completion = new \Deriver\Internal\Solver\Completion('throw', new \Deriver\Value\Term('throwable', 'Error'));
+        $first->observed = true;
+        $first->guard = ['first' => true];
+        $first->constraints = ['n' => ['min' => 1, 'max' => null, 'equal' => null, 'excluded' => []]];
+        $first->locals['a'] = new \Deriver\Internal\Memory\Location('first');
+        $first->memory->cells['first'] = \Deriver\Value\Term::constant(1);
+        $last = new \Deriver\Internal\Solver\State();
+        $last->completion = new \Deriver\Internal\Solver\Completion('throw', new \Deriver\Value\Term('throwable', 'RuntimeException'));
+        $last->locals['z'] = new \Deriver\Internal\Memory\Location('last');
+        $last->memory->cells['last'] = \Deriver\Value\Term::constant(2);
+        $states = (new \Deriver\Internal\Solver\Control\StateJoin($context))->completed([$first,$last], $body);
+        self::assertCount(1, $states);
+        self::assertSame('throw', $states[0]->completion->kind);
+        self::assertSame('Throwable', $states[0]->completion->value?->literal);
+        self::assertSame(['uncertain' => true], $states[0]->completion->value->attributes);
+        self::assertFalse($states[0]->observed);
+        self::assertSame([], $states[0]->guard);
+        self::assertSame([], $states[0]->constraints);
+        self::assertSame(['a','z'], array_keys($states[0]->locals));
+        self::assertSame(['first','last'], array_keys($states[0]->memory->cells));
+        self::assertSame(['opaque','opaque'], array_column($states[0]->memory->cells, 'kind'));
+        self::assertSame('BUDGET_EXCEEDED', $states[0]->memory->unknownShared);
+        self::assertTrue($first->observed);
+        self::assertSame(1, $first->memory->cells['first']->native());
+        self::assertSame(2, $last->memory->cells['last']->native());
     }
 }

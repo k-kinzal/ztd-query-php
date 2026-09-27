@@ -68,7 +68,9 @@ final class CallSiteIndex
         if ($node instanceof Expr\FuncCall || $node instanceof Expr\MethodCall || $node instanceof Expr\NullsafeMethodCall || $node instanceof Expr\StaticCall) {
             $name = $node->name;
             if ($name instanceof Node\Name || $name instanceof Node\Identifier) {
-                $found = (new CallableIdentity())->key($name->toString()) === (new CallableIdentity())->key($selector);
+                $resolved = $name->getAttribute('namespacedName');
+                $spelling = $resolved instanceof Node\Name ? $resolved->toString() : $name->toString();
+                $found = (new CallableIdentity())->key($spelling) === (new CallableIdentity())->key($selector);
             }
         }
         foreach ((new EffectInspection())->children($node) as $child) {

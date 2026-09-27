@@ -54,7 +54,7 @@ final class QueryValidation
             }
             foreach ($query->values as $expression) {
                 $this->reference($expression);
-                if ($expression->callable !== $reference->callable) {
+                if ((new \Deriver\Internal\IR\CallableIdentity())->key($expression->callable) !== (new \Deriver\Internal\IR\CallableIdentity())->key($reference->callable)) {
                     throw new InvalidInputException('Tuple expressions must belong to the observation callable.');
                 }
             }

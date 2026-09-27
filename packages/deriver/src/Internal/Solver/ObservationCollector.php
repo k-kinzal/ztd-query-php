@@ -40,10 +40,10 @@ final class ObservationCollector
     {
         $q = $this->context->query;
         $values = null;
-        if ($q instanceof ValueQuery && $phase === 'after' && $q->expression->callable === $callable->symbol && $q->expression->register === $instruction->result) {
+        if ($q instanceof ValueQuery && $phase === 'after' && (new CallableIdentity())->key($q->expression->callable) === (new CallableIdentity())->key($callable->symbol) && $q->expression->register === $instruction->result) {
             $values = ['value' => $this->project($state->value($instruction->result), $q->projection->path, $state, $q->projection->slot, $instruction->source)];
         }
-        if (($q instanceof StateQuery || $q instanceof TupleQuery) && $q->point->callable === $callable->symbol && $q->point->instruction === $instruction->id && $q->point->phase === $phase) {
+        if (($q instanceof StateQuery || $q instanceof TupleQuery) && (new CallableIdentity())->key($q->point->callable) === (new CallableIdentity())->key($callable->symbol) && $q->point->instruction === $instruction->id && $q->point->phase === $phase) {
             $values = [];
             if ($q instanceof StateQuery) {
                 $values['state'] = $this->project($state->memory->read($state->local($q->variable)), $q->projection->path, $state, $q->projection->slot, $instruction->source);

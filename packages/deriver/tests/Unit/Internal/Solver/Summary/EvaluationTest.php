@@ -401,4 +401,186 @@ final class EvaluationTest extends TestCase
         self::assertSame('frontier', $cell->status);
     }
 
+
+    public function testRunExecutesStatefulBodiesWithoutPublishingReusableOutcomes(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context('<?php function target(){global $x;$x=2;return $x;}');
+        $body = \Tests\Fake\SummaryFixture::body($context);
+        $context->demands[$body] = (new \Deriver\Internal\Solver\Demand\Discovery($context))->instructions($body);
+        $entry = new \Deriver\Internal\Solver\State();
+        $paths = (new \Deriver\Internal\Solver\Summary\Evaluation(new \Deriver\Internal\Solver\Machine($context)))->run($body, $entry);
+        self::assertCount(1, $paths);
+        self::assertSame(2, $paths[0]->completion->value?->native());
+        self::assertSame(2, $paths[0]->memory->cells['global:x']->native());
+        self::assertSame([], $context->summaries->cells);
+        self::assertSame(['target' => false], $context->summaries->isolated);
+    }
+
+    public function testRunSealsAtTheSharedSpecializationBudget(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context(budget:new \Deriver\Api\Query\Budget(nodes:2));
+        $body = \Tests\Fake\SummaryFixture::body($context);
+        $other = new \Deriver\Internal\Solver\Demand\Key('test', 'other', 'entry', 'value', '', '', '', '');
+        $context->summaries->register($other, $body, new \Deriver\Internal\Solver\State());
+        $context->summaries->register(new \Deriver\Internal\Solver\Demand\Key('test', 'another', 'entry', 'value', '', '', '', ''), $body, new \Deriver\Internal\Solver\State());
+        $paths = (new \Deriver\Internal\Solver\Summary\Evaluation(new \Deriver\Internal\Solver\Machine($context)))->run($body, new \Deriver\Internal\Solver\State());
+        self::assertSame(['return','throw'], array_map(static fn ($path) => $path->completion->kind, $paths));
+        self::assertSame(['CORRELATION_RELAXED','BUDGET_EXCEEDED'], array_column($context->frontiers, 'code'));
+        self::assertCount(2, $context->summaries->cells);
+        self::assertArrayNotHasKey('target', $context->summaries->owners);
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerCachedBudget')]
+    public function testRunChargesCachedWorkOnlyWhenItFitsTheRemainingBudget(int $cost, int $hits, int $updates): void
+    {
+        $context = \Tests\Fake\SolverFixture::context(budget:new \Deriver\Api\Query\Budget(transfers:10));
+        $body = \Tests\Fake\SummaryFixture::body($context);
+        $entry = new \Deriver\Internal\Solver\State();
+        $key = (new \Deriver\Internal\Solver\Summary\Invocation())->key($body, $entry, []);
+        $cell = $context->summaries->register($key, $body, $entry);
+        $cell->status = 'stable';
+        $cell->cost = $cost;
+        $state = $entry->fork();
+        $state->completion = new \Deriver\Internal\Solver\Completion('return', \Deriver\Value\Term::constant(1));
+        $record = new \Deriver\Internal\Solver\Summary\CompletionRecord($state, 0);
+        $cell->outcomes[$record->id()] = $record;
+        $context->transfers = 5;
+        $context->demands[$body] = (new \Deriver\Internal\Solver\Demand\Discovery($context))->instructions($body);
+        $paths = (new \Deriver\Internal\Solver\Summary\Evaluation(new \Deriver\Internal\Solver\Machine($context)))->run($body, $entry);
+        self::assertSame($hits, $context->summaries->hits);
+        self::assertSame($updates, $cell->updates);
+        self::assertLessThanOrEqual(10, $context->transfers);
+        self::assertCount(1, $paths);
+        self::assertSame(1, $paths[0]->completion->value?->native());
+        self::assertSame([], $context->frontiers);
+    }
+
+    /**
+     * @return iterable<string,array{int,int,int}>
+     */
+    public static function providerCachedBudget(): iterable
+    {
+        yield 'exact remaining budget' => [5,1,0];
+        yield 'cached cost exceeds remaining budget' => [6,0,1];
+    }
+
+    public function testRunCannotReplayAClosedSummaryAfterTheContextIsSealed(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $body = \Tests\Fake\SummaryFixture::body($context);
+        $entry = new \Deriver\Internal\Solver\State();
+        $cell = $context->summaries->register((new \Deriver\Internal\Solver\Summary\Invocation())->key($body, $entry, []), $body, $entry);
+        $cell->status = 'stable';
+        $context->sealed = true;
+        $paths = (new \Deriver\Internal\Solver\Summary\Evaluation(new \Deriver\Internal\Solver\Machine($context)))->run($body, $entry);
+        self::assertSame('frontier', $cell->status);
+        self::assertSame(0, $cell->updates);
+        self::assertSame(0, $context->summaries->hits);
+        self::assertSame(['return','throw'], array_map(static fn ($path) => $path->completion->kind, $paths));
+    }
+
+    public function testEvaluateMeasuresOnlyItsOwnTransfersAndAllocationEvents(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context(budget:new \Deriver\Api\Query\Budget(partitions:1));
+        $body = \Tests\Fake\SummaryFixture::body($context);
+        $entry = new \Deriver\Internal\Solver\State();
+        $entry->memory->sequence = 9;
+        $cell = $context->summaries->register((new \Deriver\Internal\Solver\Summary\Invocation())->key($body, $entry, []), $body, $entry);
+        $context->demands[$body] = (new \Deriver\Internal\Solver\Demand\Discovery($context))->instructions($body);
+        $context->transfers = 7;
+        $evaluation = new \Deriver\Internal\Solver\Summary\Evaluation(new \Deriver\Internal\Solver\Machine($context));
+        self::assertTrue($evaluation->evaluate($cell));
+        self::assertGreaterThan(0, $cell->cost);
+        self::assertSame($context->transfers - 7, $cell->cost);
+        self::assertCount(1, $cell->outcomes);
+        self::assertSame('stable', $cell->status);
+        self::assertSame(0, array_values($cell->outcomes)[0]->allocations);
+        self::assertFalse(array_values($cell->outcomes)[0]->havoc);
+        self::assertSame(9, $entry->memory->sequence);
+        self::assertSame(9, $evaluation->replay($cell, $entry)[0]->memory->sequence);
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerExistingFrontiers')]
+    public function testEvaluateSealsOnlyWhenPriorFrontiersInvalidateRemainingEffects(string $code, string $status, int $outcomes, bool $havoc): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $body = \Tests\Fake\SummaryFixture::body($context);
+        $entry = new \Deriver\Internal\Solver\State();
+        $cell = $context->summaries->register((new \Deriver\Internal\Solver\Summary\Invocation())->key($body, $entry, []), $body, $entry);
+        $context->demands[$body] = (new \Deriver\Internal\Solver\Demand\Discovery($context))->instructions($body);
+        $context->frontier($code, $body->source, 'earlier-operation');
+        self::assertTrue((new \Deriver\Internal\Solver\Summary\Evaluation(new \Deriver\Internal\Solver\Machine($context)))->evaluate($cell));
+        self::assertSame($status, $cell->status);
+        self::assertCount($outcomes, $cell->outcomes);
+        self::assertSame($havoc, array_values($cell->outcomes)[0]->havoc);
+    }
+
+    /**
+     * @return iterable<string,array{string,string,int,bool}>
+     */
+    public static function providerExistingFrontiers(): iterable
+    {
+        yield 'interrupted effects' => ['BUDGET_EXCEEDED','frontier',3,true];
+        yield 'unrelated warning' => ['PHP_WARNING','stable',1,false];
+    }
+
+    public function testCloseEvaluatesPendingComputationsAndClearsTheSolvingFlag(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $body = \Tests\Fake\SummaryFixture::body($context);
+        $entry = new \Deriver\Internal\Solver\State();
+        $cell = $context->summaries->register((new \Deriver\Internal\Solver\Summary\Invocation())->key($body, $entry, []), $body, $entry);
+        $context->demands[$body] = (new \Deriver\Internal\Solver\Demand\Discovery($context))->instructions($body);
+        $evaluation = new \Deriver\Internal\Solver\Summary\Evaluation(new \Deriver\Internal\Solver\Machine($context));
+        $evaluation->close();
+        self::assertSame('stable', $cell->status);
+        self::assertSame(1, $cell->updates);
+        self::assertFalse($context->summaries->solving);
+        self::assertSame([], $context->summaries->stack);
+        self::assertSame([], $context->frontiers);
+        self::assertSame(1, $evaluation->replay($cell, $entry)[0]->completion->value?->native());
+    }
+
+    public function testCloseSealsARecursiveComponentWithNoProductiveOutcome(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context('<?php function target(){return target();}');
+        $body = \Tests\Fake\SummaryFixture::body($context);
+        $entry = new \Deriver\Internal\Solver\State();
+        $cell = $context->summaries->register((new \Deriver\Internal\Solver\Summary\Invocation())->key($body, $entry, []), $body, $entry);
+        $context->demands[$body] = (new \Deriver\Internal\Solver\Demand\Discovery($context))->instructions($body);
+        $evaluation = new \Deriver\Internal\Solver\Summary\Evaluation(new \Deriver\Internal\Solver\Machine($context));
+        $evaluation->close();
+        self::assertSame('frontier', $cell->status);
+        self::assertFalse($context->summaries->solving);
+        self::assertSame([], $context->summaries->stack);
+        self::assertContains('BUDGET_EXCEEDED', array_column($context->frontiers, 'code'));
+        self::assertSame(['return','throw'], array_map(static fn ($path) => $path->completion->kind, $evaluation->replay($cell, $entry)));
+    }
+
+    public function testEvaluateInvalidatesDependentsOnlyAfterItsApproximationGrows(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context('<?php function target(int $x){return 1;}');
+        $body = \Tests\Fake\SummaryFixture::body($context);
+        $outer = new \Deriver\Internal\Solver\State();
+        $outer->memory->write($outer->local('x'), \Deriver\Value\Term::constant(2));
+        $inner = new \Deriver\Internal\Solver\State();
+        $inner->memory->write($inner->local('x'), \Deriver\Value\Term::constant(1));
+        $outerKey = (new \Deriver\Internal\Solver\Summary\Invocation())->key($body, $outer, []);
+        $parent = $context->summaries->register($outerKey, $body, $outer);
+        $parent->status = 'stable';
+        $context->summaries->stack = [$outerKey->id()];
+        $child = $context->summaries->register((new \Deriver\Internal\Solver\Summary\Invocation())->key($body, $inner, []), $body, $inner);
+        $context->summaries->stack = [];
+        $context->demands[$body] = (new \Deriver\Internal\Solver\Demand\Discovery($context))->instructions($body);
+        $evaluation = new \Deriver\Internal\Solver\Summary\Evaluation(new \Deriver\Internal\Solver\Machine($context));
+        $changed = $evaluation->evaluate($child);
+        $invalidated = $parent->status;
+        $parent->status = 'stable';
+        $unchanged = $evaluation->evaluate($child);
+        self::assertTrue($changed);
+        self::assertSame('pending', $invalidated);
+        self::assertFalse($unchanged);
+        self::assertSame('stable', $parent->status);
+        self::assertSame('stable', $child->status);
+    }
 }

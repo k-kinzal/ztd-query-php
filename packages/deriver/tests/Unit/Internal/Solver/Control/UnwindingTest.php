@@ -4,14 +4,22 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Internal\Solver\Control;
 
+use Deriver\Internal\IR\CatchTarget;
+use Deriver\Internal\IR\ExceptionRegion;
+use Deriver\Internal\Solver\Completion;
+use Deriver\Internal\Solver\Control\Handler;
+use Deriver\Internal\Solver\Control\Unwinding;
+use Deriver\Internal\Solver\State;
+use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Tests\Fake\SolverFixture;
 
-#[CoversClass(\Deriver\Internal\Solver\Control\Unwinding::class)]
+#[CoversClass(Unwinding::class)]
 #[UsesClass(\Deriver\Analyzer::class)]
 #[UsesClass(\Deriver\Api\Execution\ResourceLimits::class)]
 #[UsesClass(\Deriver\Api\Execution\SourceLimits::class)]
@@ -68,10 +76,10 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\IR\BasicBlock::class)]
 #[UsesClass(\Deriver\Internal\IR\CallableIR::class)]
 #[UsesClass(\Deriver\Internal\IR\CallableIdentity::class)]
-#[UsesClass(\Deriver\Internal\IR\CatchTarget::class)]
+#[UsesClass(CatchTarget::class)]
 #[UsesClass(\Deriver\Internal\IR\ClassConstant::class)]
 #[UsesClass(\Deriver\Internal\IR\ClassDeclaration::class)]
-#[UsesClass(\Deriver\Internal\IR\ExceptionRegion::class)]
+#[UsesClass(ExceptionRegion::class)]
 #[UsesClass(\Deriver\Internal\IR\Instruction::class)]
 #[UsesClass(\Deriver\Internal\IR\Parameter::class)]
 #[UsesClass(\Deriver\Internal\IR\PropertyDeclaration::class)]
@@ -113,16 +121,17 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Call\ProviderDispatch::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeBinding::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeCheck::class)]
-#[UsesClass(\Deriver\Internal\Solver\Completion::class)]
+#[UsesClass(Completion::class)]
 #[UsesClass(\Deriver\Internal\Solver\Constant\ClassNames::class)]
 #[UsesClass(\Deriver\Internal\Solver\Context::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\ExceptionChain::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\ExceptionMatch::class)]
-#[UsesClass(\Deriver\Internal\Solver\Control\Handler::class)]
+#[UsesClass(Handler::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\LoopConvergence::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\ObservationLimit::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\Resources::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\StateJoin::class)]
+#[UsesClass(Unwinding::class)]
 #[UsesClass(\Deriver\Internal\Solver\Demand\Cell::class)]
 #[UsesClass(\Deriver\Internal\Solver\Demand\Components::class)]
 #[UsesClass(\Deriver\Internal\Solver\Demand\Discovery::class)]
@@ -136,7 +145,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\ObservationCollector::class)]
 #[UsesClass(\Deriver\Internal\Solver\Operation\Conversions::class)]
 #[UsesClass(\Deriver\Internal\Solver\Operation\ScalarErrors::class)]
-#[UsesClass(\Deriver\Internal\Solver\State::class)]
+#[UsesClass(State::class)]
 #[UsesClass(\Deriver\Internal\Solver\Summary\CompletionRecord::class)]
 #[UsesClass(\Deriver\Internal\Solver\Summary\Evaluation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Summary\Invocation::class)]
@@ -156,7 +165,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Report\JsonText::class)]
 #[UsesClass(\Deriver\Report\QueryEncoding::class)]
 #[UsesClass(\Deriver\Report\ValueGraph::class)]
-#[UsesClass(\Deriver\Value\Term::class)]
+#[UsesClass(Term::class)]
 #[Small]
 final class UnwindingTest extends TestCase
 {
@@ -183,9 +192,9 @@ final class UnwindingTest extends TestCase
     }
     public function testCaptureTurnsRuntimeErrorsIntoInspectableObjects(): void
     {
-        $context = \Tests\Fake\SolverFixture::context();
-        $state = new \Deriver\Internal\Solver\State();
-        $object = (new \Deriver\Internal\Solver\Control\Unwinding($context->program))->capture($state, new \Deriver\Value\Term('throwable', 'TypeError'));
+        $context = SolverFixture::context();
+        $state = new State();
+        $object = (new Unwinding($context->program))->capture($state, new Term('throwable', 'TypeError'));
         self::assertSame('object', $object->kind);
         self::assertSame('TypeError', $object->attributes['class']);
         self::assertSame(0, $state->memory->read(new \Deriver\Internal\Memory\Location('object:'.$object->literal, ['code']))->native());
@@ -193,8 +202,8 @@ final class UnwindingTest extends TestCase
     }
     public function testCaptureDoesNotInventAConcreteClassForAnUnknownThrowable(): void
     {
-        $context = \Tests\Fake\SolverFixture::context();
-        $object = (new \Deriver\Internal\Solver\Control\Unwinding($context->program))->capture(new \Deriver\Internal\Solver\State(), new \Deriver\Value\Term('throwable', 'Throwable', attributes: ['uncertain' => true]));
+        $context = SolverFixture::context();
+        $object = (new Unwinding($context->program))->capture(new State(), new Term('throwable', 'Throwable', attributes: ['uncertain' => true]));
         self::assertSame('object', $object->kind);
         self::assertArrayNotHasKey('class', $object->attributes);
         self::assertTrue($object->attributes['uncertain']);
@@ -268,5 +277,130 @@ final class UnwindingTest extends TestCase
     public static function providerExceptionPrograms(): array
     {
         return \Tests\Fake\Programs\ExceptionPrograms::cases();
+    }
+
+    #[DataProvider('providerPendingCompletion')]
+    public function testResumeSavesThePendingCompletionBeforeEnteringFinally(string $phase, string $kind): void
+    {
+        $context = SolverFixture::context();
+        $state = new State();
+        $region = new ExceptionRegion([], 9, 10);
+        $completion = new Completion($kind, Term::constant(7), 12, 0);
+        $state->handlers = [new Handler($region, $phase)];
+        $state->completion = $completion;
+        self::assertTrue((new Unwinding($context->program))->resume($state));
+        self::assertSame(9, $state->block);
+        self::assertSame('normal', $state->completion->kind);
+        self::assertNull($state->completion->value);
+        self::assertCount(1, $state->handlers);
+        self::assertSame('finally', $state->handlers[0]->phase);
+        self::assertSame($region, $state->handlers[0]->region);
+        self::assertSame($completion, $state->handlers[0]->saved);
+    }
+
+    /**
+     * @return iterable<string,array{string,string}>
+     */
+    public static function providerPendingCompletion(): iterable
+    {
+        foreach (['try', 'catch'] as $phase) {
+            foreach (['return', 'jump', 'normal'] as $kind) {
+                yield $phase . ' ' . $kind => [$phase, $kind];
+            }
+        }
+    }
+
+    public function testResumeStopsAtTheJumpDepthAndDoesNotRepeatAnActiveFinally(): void
+    {
+        $context = SolverFixture::context();
+        $state = new State();
+        $outer = new Handler(new ExceptionRegion([], 20, 21));
+        $state->handlers = [$outer, new Handler(new ExceptionRegion([], 30, 31), 'finally')];
+        $state->block = 8;
+        $state->completion = new Completion('jump', target:15, depth:1);
+        self::assertTrue((new Unwinding($context->program))->resume($state));
+        self::assertSame(8, $state->previous);
+        self::assertSame(15, $state->block);
+        self::assertSame('normal', $state->completion->kind);
+        self::assertSame([$outer], $state->handlers);
+    }
+
+    public function testResumePopsRegionsWithoutFinallyBeforeLeavingTheCallable(): void
+    {
+        $context = SolverFixture::context();
+        $state = new State();
+        $completion = new Completion('return', Term::constant(7));
+        $state->handlers = [new Handler(new ExceptionRegion([], null, 10)), new Handler(new ExceptionRegion([], null, 20))];
+        $state->completion = $completion;
+        self::assertFalse((new Unwinding($context->program))->resume($state));
+        self::assertSame([], $state->handlers);
+        self::assertSame($completion, $state->completion);
+    }
+
+    public function testRoutesPreservesNonthrowingPathsWhileResumingTheirJumps(): void
+    {
+        $context = SolverFixture::context();
+        $state = new State();
+        $state->completion = new Completion('jump', target:7);
+        $paths = (new Unwinding($context->program))->routes($state);
+        self::assertSame([$state], $paths);
+        self::assertSame(7, $state->block);
+        self::assertSame('normal', $state->completion->kind);
+    }
+
+    public function testThrowRoutesPartitionsOrderedCatchesAndSavesOnlyTheRemainingThrowForFinally(): void
+    {
+        $context = SolverFixture::context();
+        $state = new State();
+        $exception = Term::parameter('error', 'Throwable');
+        $region = new ExceptionRegion([new CatchTarget(['RuntimeException'], '', 4), new CatchTarget(['Error'], '', 5)], 8, 10);
+        $state->handlers = [new Handler($region)];
+        $state->completion = new Completion('throw', $exception);
+        $paths = (new Unwinding($context->program))->throwRoutes($state);
+        self::assertCount(3, $paths);
+        self::assertSame([4, 5, 8], array_map(static fn (State $path): int => $path->block, $paths));
+        self::assertSame(['normal', 'normal', 'normal'], array_map(static fn (State $path): string => $path->completion->kind, $paths));
+        self::assertSame(['catch:10:4' => true], $paths[0]->guard);
+        self::assertSame(['catch:10:4' => false, 'catch:10:5' => true], $paths[1]->guard);
+        self::assertSame(['catch:10:4' => false, 'catch:10:5' => false], $paths[2]->guard);
+        self::assertSame('catch', $paths[0]->handlers[0]->phase);
+        self::assertSame('catch', $paths[1]->handlers[0]->phase);
+        self::assertSame('finally', $paths[2]->handlers[0]->phase);
+        self::assertSame('throw', $paths[2]->handlers[0]->saved?->kind);
+        self::assertSame([], $paths[0]->locals);
+        self::assertSame([], $paths[1]->locals);
+        self::assertNotNull($paths[2]->handlers[0]->saved->value);
+    }
+
+    public function testThrowRoutesKeepsAnOuterHandlerWhenTheCompletionStopsAtItsDepth(): void
+    {
+        $context = SolverFixture::context();
+        $state = new State();
+        $outer = new Handler(new ExceptionRegion([new CatchTarget(['Throwable'], 'caught', 10)], 11, 12));
+        $state->handlers = [$outer, new Handler(new ExceptionRegion([], null, 20))];
+        $state->completion = new Completion('throw', new Term('throwable', 'Error'), depth:1);
+        $paths = (new Unwinding($context->program))->throwRoutes($state);
+        self::assertSame([$state], $paths);
+        self::assertSame([$outer], $state->handlers);
+        self::assertSame('throw', $state->completion->kind);
+        self::assertSame('Error', $state->completion->value?->literal);
+        self::assertSame([], $state->locals);
+    }
+
+    public function testCapturePreservesExistingObjectIdentityAndSecretRuntimeErrors(): void
+    {
+        $context = SolverFixture::context();
+        $state = new State();
+        $unwinding = new Unwinding($context->program);
+        $existing = new Term('object', 'exception', attributes:['class' => 'Exception'], secret:true);
+        self::assertSame($existing, $unwinding->capture($state, $existing));
+        self::assertSame([], $state->memory->cells);
+        $state = new State();
+        $captured = $unwinding->capture($state, new Term('throwable', 'TypeError', secret:true));
+        self::assertTrue($captured->isSecret());
+        self::assertIsString($captured->literal);
+        self::assertSame('TypeError', $state->memory->classes[$captured->literal]);
+        self::assertSame('array', $state->memory->cells['object:' . $captured->literal]->kind);
+        self::assertFalse($state->memory->cells['object:' . $captured->literal]->attributes['open']);
     }
 }

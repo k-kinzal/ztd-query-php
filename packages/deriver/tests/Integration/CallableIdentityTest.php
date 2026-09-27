@@ -107,4 +107,54 @@ final class CallableIdentityTest extends TestCase
         self::assertCount(1, $result->normalOutcomes);
         self::assertSame([-1,-1,-1], $result->normalOutcomes[0]->values['return']->native());
     }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerObservationOwners')]
+    public function testAllObservationKindsUseTheResolvedCallableIdentity(string $owner): void
+    {
+        $session = \Tests\Fake\Analysis::session('<?php namespace N;function sink($x){return $x;}function target(){$x=3;return \N\sink($x);}');
+        $call = $session->callsTo('N\\sink')[0];
+        $argument = $call->argument(0);
+        $expression = new \Deriver\Api\Reference\ExpressionRef($argument->source, $owner, $argument->register);
+        $point = new \Deriver\Api\Reference\PointRef($call->source, $owner, $call->instruction, 'invocation');
+        $value = $session->derive(new ValueQuery($expression));
+        $state = $session->derive(new \Deriver\Api\Query\StateQuery($point, 'x'));
+        $tuple = $session->derive(new \Deriver\Api\Query\TupleQuery($point, ['argument' => $argument]));
+        self::assertSame('may-reach', $value->reachability);
+        self::assertSame('may-reach', $state->reachability);
+        self::assertSame('may-reach', $tuple->reachability);
+        self::assertSame([], $value->frontiers);
+        self::assertSame([], $state->frontiers);
+        self::assertSame([], $tuple->frontiers);
+        self::assertSame(3, $value->normalOutcomes[0]->values['value']->native());
+        self::assertSame(3, $state->normalOutcomes[0]->values['state']->native());
+        self::assertSame(3, $tuple->normalOutcomes[0]->values['argument']->native());
+    }
+
+    /**
+     * @return iterable<string,array{string}>
+     */
+    public static function providerObservationOwners(): iterable
+    {
+        yield 'declaration spelling' => ['N\\target'];
+        yield 'case variant' => ['n\\TARGET'];
+        yield 'fully qualified variant' => ['\\N\\TARGET'];
+    }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testNamespacedCallSelectorsUseTheResolvedSourceName(): void
+    {
+        $session = \Tests\Fake\Analysis::session('<?php namespace N;function sink($x){return $x;}function target(){return sink(3);}');
+        $calls = $session->callsTo('\\N\\SINK');
+        self::assertCount(1, $calls);
+        self::assertSame('N\\sink', $calls[0]->target);
+        self::assertSame('N\\target', $calls[0]->callable);
+        $result = $session->derive(new ValueQuery($calls[0]->argument(0)));
+        self::assertSame([], $result->frontiers);
+        self::assertSame(3, $result->normalOutcomes[0]->values['value']->native());
+    }
 }

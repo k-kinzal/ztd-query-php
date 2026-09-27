@@ -8,6 +8,7 @@ use Deriver\Api\Query\ReturnQuery;
 use Deriver\Api\Query\StateQuery;
 use Deriver\Api\Query\TupleQuery;
 use Deriver\Api\Query\ValueQuery;
+use Deriver\Internal\IR\CallableIdentity;
 use Deriver\Internal\IR\CallableIR;
 use Deriver\Internal\IR\Instruction;
 use Deriver\Internal\Solver\Context;
@@ -81,10 +82,10 @@ final class Discovery
             return false;
         }
         if ($query instanceof ValueQuery) {
-            return $query->expression->callable === $callable->symbol && $query->expression->register === $instruction->result;
+            return (new CallableIdentity())->key($query->expression->callable) === (new CallableIdentity())->key($callable->symbol) && $query->expression->register === $instruction->result;
         }
         if ($query instanceof StateQuery || $query instanceof TupleQuery) {
-            if ($query->point->callable !== $callable->symbol) {
+            if ((new CallableIdentity())->key($query->point->callable) !== (new CallableIdentity())->key($callable->symbol)) {
                 return false;
             }
             if ($query->point->instruction === $instruction->id) {

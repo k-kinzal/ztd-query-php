@@ -196,4 +196,26 @@ final class QueryValidationTest extends TestCase
         $this->expectExceptionMessage('Tuple expressions must belong to the observation callable.');
         (new QueryValidation($program, 'snapshot'))->owner($query);
     }
+
+    public function testOwnerAllowsEquivalentNamedOwnersWithinACorrelatedTuple(): void
+    {
+        $source = new SourceRef('snapshot', 'fixture.php', 10, 20);
+        $body = new CallableIR('N\\target', [], [new BasicBlock(0, [new Instruction('instruction', 'constant', $source, 'register')], new Terminator('return'))], $source);
+        $program = self::createStub(Program::class);
+        $program->method('callable')->willReturn($body);
+        $query = new TupleQuery(new PointRef($source, '\\N\\TARGET', 'instruction', 'after'), ['value' => new ExpressionRef($source, 'n\\target', 'register')]);
+        self::assertSame('\\N\\TARGET', (new QueryValidation($program, 'snapshot'))->owner($query));
+    }
+
+    public function testOwnerCannotFoldDifferentScriptPathsIntoTheSameTuple(): void
+    {
+        $source = new SourceRef('snapshot', 'fixture.php', 10, 20);
+        $block = new BasicBlock(0, [new Instruction('instruction', 'constant', $source, 'register')], new Terminator('return'));
+        $program = self::createStub(Program::class);
+        $program->method('callable')->willReturnMap([['script:A.php',new CallableIR('script:A.php', [], [$block], $source)],['script:a.php',new CallableIR('script:a.php', [], [$block], $source)]]);
+        $query = new TupleQuery(new PointRef($source, 'script:A.php', 'instruction', 'after'), ['foreign' => new ExpressionRef($source, 'script:a.php', 'register')]);
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessage('Tuple expressions must belong to the observation callable.');
+        (new QueryValidation($program, 'snapshot'))->owner($query);
+    }
 }

@@ -21,7 +21,7 @@ Open a new session after changing source, models, environment inputs, or world a
 
 `QueryScope::symbolic()` represents arbitrary valid parameters of the queried callable. `QueryScope::fromEntrypoints()` starts from explicit invocations, including supplied arguments and optional receivers. Omitted arguments and unknown arguments have different meanings.
 
-`callsTo()` finds named call sites and returns `Observation` objects. `beforeInvocation()` observes after arguments have been evaluated. `afterInvocation()` observes normal completion of the invocation. A reference includes the source range, owning callable, and register or instruction identity.
+`callsTo()` resolves namespace-qualified names and imported function aliases when finding named call sites, and returns `Observation` objects. `beforeInvocation()` observes after arguments have been evaluated. `afterInvocation()` observes normal completion of the invocation. A reference includes the source range, owning callable, and register or instruction identity. Named function and method owners are matched case-insensitively, with an optional leading backslash. A tuple can combine references using equivalent owner spellings. Synthetic script and closure identities retain their case-sensitive source identity.
 
 `Projection::stateSlot($id, $path)` selects a registered abstract receiver slot, independently of PHP property names. Use it with `StateQuery` or `ValueQuery`; `$path` optionally selects a value inside the slot.
 

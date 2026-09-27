@@ -38,6 +38,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Api\QueryValidation::class)]
 #[UsesClass(\Deriver\Internal\Api\ResultAssessment::class)]
 #[UsesClass(\Deriver\Internal\Api\Session::class)]
+#[UsesClass(\Deriver\Internal\Constraint\Constraints::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\AggregateLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\AssignmentLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\GraphCache::class)]
@@ -48,6 +49,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Frontend\Php\CallLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\CallableCompiler::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\CallableSource::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\Control\ConditionalLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Control\ExceptionLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\DeclarationScanner::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\ExpressionLowering::class)]
@@ -60,6 +62,8 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Frontend\Php\Source\SyntaxSize::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\StatementLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Traits\Composition::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\Traits\LexicalConstants::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\Traits\Members::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\ClassScope::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\TargetSyntax::class)]
 #[UsesClass(\Deriver\Internal\IR\Argument::class)]
@@ -92,6 +96,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Call\Dispatch::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Member\Access::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Member\Invocation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\MethodInvocation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Native\Invocation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Native\Properties::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Native\Signatures::class)]
@@ -99,6 +104,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Call\PassedArgument::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Arguments::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Creation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Methods::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Modes::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Resolution::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Target::class)]
@@ -106,6 +112,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeBinding::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeCheck::class)]
 #[UsesClass(\Deriver\Internal\Solver\Completion::class)]
+#[UsesClass(\Deriver\Internal\Solver\Constant\ClassNames::class)]
 #[UsesClass(\Deriver\Internal\Solver\Context::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\ExceptionChain::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\ExceptionMatch::class)]
@@ -121,6 +128,9 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Model\SlotReference::class)]
 #[UsesClass(\Deriver\Internal\Solver\Model\StateStorage::class)]
 #[UsesClass(\Deriver\Internal\Solver\ObservationCollector::class)]
+#[UsesClass(\Deriver\Internal\Solver\Offset\Address::class)]
+#[UsesClass(\Deriver\Internal\Solver\Offset\Path::class)]
+#[UsesClass(\Deriver\Internal\Solver\Offset\Transfer::class)]
 #[UsesClass(\Deriver\Internal\Solver\Operation\Conversions::class)]
 #[UsesClass(\Deriver\Internal\Solver\Operation\ScalarErrors::class)]
 #[UsesClass(\Deriver\Internal\Solver\State::class)]
@@ -139,7 +149,9 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Value\Identity::class)]
 #[UsesClass(\Deriver\Internal\Value\Increment::class)]
 #[UsesClass(\Deriver\Internal\Value\IntegerConversion::class)]
+#[UsesClass(\Deriver\Internal\Value\NumericString::class)]
 #[UsesClass(\Deriver\Internal\Value\PhpSemantics::class)]
+#[UsesClass(\Deriver\Model\Provider\DispatchDecision::class)]
 #[UsesClass(\Deriver\Report\JsonText::class)]
 #[UsesClass(\Deriver\Report\QueryEncoding::class)]
 #[UsesClass(\Deriver\Report\ValueGraph::class)]
@@ -233,4 +245,169 @@ final class PropertyReferenceTest extends TestCase
         yield 'float pre decrement' => ['float',-1,false];
     }
 
+
+    /**
+     * @throws JsonException If independently observed fixture values cannot be decoded
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerPropertyAliases')]
+    public function testBindPreservesRecordedReferenceAndPropertyMutationSemantics(string $source, string $expected): void
+    {
+        $result = \Tests\Fake\Analysis::returns($source);
+        self::assertSame([], $result->frontiers);
+        self::assertSame([], $result->exceptionalOutcomes);
+        self::assertCount(1, $result->normalOutcomes);
+        self::assertSame(json_decode($expected, true, flags:JSON_THROW_ON_ERROR), $result->normalOutcomes[0]->values['return']->native());
+    }
+
+    /**
+     * @return iterable<string,array{string,string}>
+     */
+    public static function providerPropertyAliases(): iterable
+    {
+        foreach (\Tests\Fake\Programs\PropertyPrograms::cases() as $name => $case) {
+            if (str_contains($name, 'reference') || str_contains($name, 'alias') || str_contains($name, 'increment')) {
+                yield $name => $case;
+            }
+        }
+        foreach (\Tests\Fake\Programs\PromotedReferencePrograms::cases() as $name => $case) {
+            yield 'promotion: ' . $name => $case;
+        }
+    }
+
+    public function testBindSeparatesSymbolicTypeFailuresBeforeMutatingEitherStorage(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $source = new \Deriver\Api\Reference\SourceRef('test', 'a.php', 0, 1);
+        $caller = new \Deriver\Internal\IR\CallableIR('target', [], [], $source);
+        $state = new \Deriver\Internal\Solver\State();
+        $address = new \Deriver\Internal\Memory\Location('object:one', ['x']);
+        $input = new \Deriver\Value\Term('input', 'argument');
+        $origin = $state->memory->allocate($input);
+        $state->addresses['source'] = $origin;
+        $state->memory->write($address, \Deriver\Value\Term::constant(7));
+        $slot = new \Deriver\Internal\Solver\Transfer\PropertySlot(new \Deriver\Value\Term('object', 'one', attributes:['class' => 'B']), 'x', 'B', new \Deriver\Internal\IR\PropertyDeclaration('x', 'B', 'int'));
+        $instruction = new \Deriver\Internal\IR\Instruction('i', 'alias', $source, 'result', ['destination', 'source']);
+        $paths = (new \Deriver\Internal\Solver\Transfer\PropertyReference(new \Deriver\Internal\Solver\Machine($context)))->bind($caller, $instruction, $state, $slot, $address);
+        self::assertCount(2, $paths);
+        self::assertSame(['normal', 'throw'], array_map(static fn (\Deriver\Internal\Solver\State $path): string => $path->completion->kind, $paths));
+        self::assertSame('type-refinement', $paths[0]->registers['result']->kind);
+        self::assertSame('int', $paths[0]->registers['result']->attributes['type']);
+        self::assertSame([$input], $paths[0]->registers['result']->operands);
+        self::assertSame($paths[0]->registers['result'], $paths[0]->memory->read($origin));
+        self::assertSame($paths[0]->registers['result'], $paths[0]->memory->read($address));
+        self::assertSame('TypeError', $paths[1]->completion->value?->literal);
+        self::assertSame(7, $paths[1]->memory->read($address)->literal);
+        self::assertSame($input, $paths[1]->memory->read($origin));
+        self::assertArrayNotHasKey('result', $paths[1]->registers);
+        $paths[0]->memory->write($origin, \Deriver\Value\Term::constant(12));
+        self::assertSame(12, $paths[0]->memory->read($address)->literal);
+        self::assertSame(7, $paths[1]->memory->read($address)->literal);
+        self::assertSame([], $context->frontiers);
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerReferenceCoercion')]
+    public function testBindCoercesTheSharedSourceOnlyWhenEveryDeclarationAcceptsIt(bool $strict, ?string $sourceType, bool $success): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $source = new \Deriver\Api\Reference\SourceRef('test', 'a.php', 0, 1);
+        $caller = new \Deriver\Internal\IR\CallableIR('target', [], [], $source, strict: $strict);
+        $state = new \Deriver\Internal\Solver\State();
+        $address = new \Deriver\Internal\Memory\Location('object:one', ['x']);
+        $origin = new \Deriver\Internal\Memory\Location('object:two', ['y']);
+        $state->addresses['source'] = $origin;
+        $state->memory->write($origin, \Deriver\Value\Term::constant('12'));
+        $state->memory->propertyTypes['object:two'] = $sourceType === null ? [] : ['y' => $sourceType];
+        $state->memory->write($address, \Deriver\Value\Term::constant(7));
+        $slot = new \Deriver\Internal\Solver\Transfer\PropertySlot(new \Deriver\Value\Term('object', 'one', attributes:['class' => 'B']), 'x', 'B', new \Deriver\Internal\IR\PropertyDeclaration('x', 'B', 'int'));
+        $instruction = new \Deriver\Internal\IR\Instruction('i', 'alias', $source, 'result', ['destination', 'source']);
+        $paths = (new \Deriver\Internal\Solver\Transfer\PropertyReference(new \Deriver\Internal\Solver\Machine($context)))->bind($caller, $instruction, $state, $slot, $address);
+        self::assertCount(1, $paths);
+        self::assertSame($success ? 'normal' : 'throw', $paths[0]->completion->kind);
+        self::assertSame($success ? null : 'TypeError', $paths[0]->completion->value?->literal);
+        self::assertSame($success ? 12 : '12', $paths[0]->memory->read($origin)->literal);
+        self::assertSame($success ? 12 : 7, $paths[0]->memory->read($address)->literal);
+        self::assertSame($success ? 12 : null, ($paths[0]->registers['result'] ?? null)?->literal);
+        $paths[0]->memory->write($origin, \Deriver\Value\Term::constant(19));
+        self::assertSame($success ? 19 : 7, $paths[0]->memory->read($address)->literal);
+        self::assertSame([], $context->frontiers);
+    }
+
+    /**
+     * @return iterable<string,array{bool,?string,bool}>
+     */
+    public static function providerReferenceCoercion(): iterable
+    {
+        yield 'untyped source coerced' => [false, null, true];
+        yield 'strict binding rejects numeric string' => [true, null, false];
+        yield 'existing string declaration prevents integer coercion' => [false, 'string', false];
+        yield 'existing union accepts the same integer' => [false, 'int|float', true];
+    }
+
+    public function testBindRejectsReadonlyPropertiesBeforeReadingTheSource(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $source = new \Deriver\Api\Reference\SourceRef('test', 'a.php', 0, 1);
+        $caller = new \Deriver\Internal\IR\CallableIR('target', [], [], $source);
+        $state = new \Deriver\Internal\Solver\State();
+        $address = new \Deriver\Internal\Memory\Location('object:one', ['x']);
+        $state->memory->write($address, \Deriver\Value\Term::constant(7));
+        $slot = new \Deriver\Internal\Solver\Transfer\PropertySlot(new \Deriver\Value\Term('object', 'one', attributes:['class' => 'B']), 'x', 'B', new \Deriver\Internal\IR\PropertyDeclaration('x', 'B', 'int', readonly: true));
+        $instruction = new \Deriver\Internal\IR\Instruction('i', 'alias', $source, 'result', ['destination', 'unavailable']);
+        $paths = (new \Deriver\Internal\Solver\Transfer\PropertyReference(new \Deriver\Internal\Solver\Machine($context)))->bind($caller, $instruction, $state, $slot, $address);
+        self::assertSame([$state], $paths);
+        self::assertSame('throw', $paths[0]->completion->kind);
+        self::assertSame('Error', $paths[0]->completion->value?->literal);
+        self::assertSame(7, $paths[0]->memory->read($address)->literal);
+        self::assertSame([], $paths[0]->registers);
+    }
+
+    public function testReadExposesTheCellOfAnUndeclaredDynamicProperty(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $source = new \Deriver\Api\Reference\SourceRef('test', 'a.php', 0, 1);
+        $caller = new \Deriver\Internal\IR\CallableIR('target', [], [], $source);
+        $state = new \Deriver\Internal\Solver\State();
+        $address = new \Deriver\Internal\Memory\Location('object:one', ['x']);
+        $state->addresses['property'] = $address;
+        $state->memory->write($address, \Deriver\Value\Term::constant(7));
+        $slot = new \Deriver\Internal\Solver\Transfer\PropertySlot(new \Deriver\Value\Term('object', 'one', attributes:['class' => 'B']), 'x', 'B', null);
+        $instruction = new \Deriver\Internal\IR\Instruction('i', 'reference', $source, 'result', ['property']);
+        $paths = (new \Deriver\Internal\Solver\Transfer\PropertyReference(new \Deriver\Internal\Solver\Machine($context)))->read($caller, $instruction, $state, $slot, $address);
+        self::assertSame([$state], $paths);
+        self::assertSame('normal', $paths[0]->completion->kind);
+        self::assertSame('cell', $paths[0]->registers['result']->kind);
+        self::assertIsString($paths[0]->registers['result']->literal);
+        $paths[0]->memory->write(new \Deriver\Internal\Memory\Location($paths[0]->registers['result']->literal), \Deriver\Value\Term::constant(12));
+        self::assertSame(12, $paths[0]->memory->read($address)->literal);
+        self::assertSame([], $context->frontiers);
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerRejectedIncrement')]
+    public function testIncrementLeavesStorageAndResultUntouchedWhenRejected(\Deriver\Value\Term $before, bool $readonly, string $error): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $source = new \Deriver\Api\Reference\SourceRef('test', 'a.php', 0, 1);
+        $caller = new \Deriver\Internal\IR\CallableIR('target', [], [], $source);
+        $state = new \Deriver\Internal\Solver\State();
+        $address = new \Deriver\Internal\Memory\Location('object:one', ['x']);
+        $state->memory->write($address, $before);
+        $slot = new \Deriver\Internal\Solver\Transfer\PropertySlot(new \Deriver\Value\Term('object', 'one', attributes:['class' => 'B']), 'x', 'B', new \Deriver\Internal\IR\PropertyDeclaration('x', 'B', readonly: $readonly));
+        $instruction = new \Deriver\Internal\IR\Instruction('i', 'increment', $source, 'result', ['property'], attributes:['post' => true]);
+        $paths = (new \Deriver\Internal\Solver\Transfer\PropertyReference(new \Deriver\Internal\Solver\Machine($context)))->increment($caller, $instruction, $state, $slot, $address);
+        self::assertSame([$state], $paths);
+        self::assertSame('throw', $paths[0]->completion->kind);
+        self::assertSame($error, $paths[0]->completion->value?->literal);
+        self::assertSame($before, $paths[0]->memory->read($address));
+        self::assertSame([], $paths[0]->registers);
+    }
+
+    /**
+     * @return iterable<string,array{\Deriver\Value\Term,bool,string}>
+     */
+    public static function providerRejectedIncrement(): iterable
+    {
+        yield 'readonly integer' => [\Deriver\Value\Term::constant(1), true, 'Error'];
+        yield 'array is not incrementable' => [\Deriver\Value\Term::array([]), false, 'TypeError'];
+        yield 'object is not incrementable' => [new \Deriver\Value\Term('object', 'other', attributes:['class' => 'B']), false, 'TypeError'];
+    }
 }

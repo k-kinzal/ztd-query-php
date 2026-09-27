@@ -162,6 +162,7 @@ use Tests\Fake\SummaryFixture;
 #[UsesClass(\Deriver\Model\Binding\ArgumentBindings::class)]
 #[UsesClass(\Deriver\Model\Binding\BoundArgument::class)]
 #[UsesClass(\Deriver\Model\CallDescription::class)]
+#[UsesClass(\Deriver\Model\CallModel::class)]
 #[UsesClass(\Deriver\Model\ModelDecision::class)]
 #[UsesClass(\Deriver\Model\ModelDescriptor::class)]
 #[UsesClass(\Deriver\Model\Plan\Action::class)]

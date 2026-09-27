@@ -4,25 +4,35 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Internal\Solver\Model;
 
+use Deriver\Api\Project\Configuration;
+use Deriver\Api\Reference\SourceRef;
+use Deriver\Internal\IR\Instruction;
+use Deriver\Internal\Memory\Location;
+use Deriver\Internal\Solver\Model\StateStorage;
+use Deriver\Internal\Solver\State;
+use Deriver\Model\State\StateSlot;
+use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Tests\Fake\SolverFixture;
 
 /**
  * @covers \Deriver\Internal\Solver\Model\StateStorage
  */
-#[CoversClass(\Deriver\Internal\Solver\Model\StateStorage::class)]
+#[CoversClass(StateStorage::class)]
 #[UsesClass(\Deriver\Api\Execution\ResourceLimits::class)]
 #[UsesClass(\Deriver\Api\Execution\SourceLimits::class)]
-#[UsesClass(\Deriver\Api\Project\Configuration::class)]
+#[UsesClass(Configuration::class)]
 #[UsesClass(\Deriver\Api\Project\ProjectInput::class)]
 #[UsesClass(\Deriver\Api\Project\SourceFile::class)]
 #[UsesClass(\Deriver\Api\Project\TargetProfile::class)]
 #[UsesClass(\Deriver\Api\Query\Budget::class)]
 #[UsesClass(\Deriver\Api\Query\QueryScope::class)]
 #[UsesClass(\Deriver\Api\Query\ReturnQuery::class)]
-#[UsesClass(\Deriver\Api\Reference\SourceRef::class)]
+#[UsesClass(SourceRef::class)]
+#[UsesClass(\Deriver\Api\Result\Frontier::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\SyntaxCache::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\SyntaxTree::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\CallableSource::class)]
@@ -35,8 +45,8 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\ClassScope::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\TargetSyntax::class)]
 #[UsesClass(\Deriver\Internal\IR\CallableIdentity::class)]
-#[UsesClass(\Deriver\Internal\IR\Instruction::class)]
-#[UsesClass(\Deriver\Internal\Memory\Location::class)]
+#[UsesClass(Instruction::class)]
+#[UsesClass(Location::class)]
 #[UsesClass(\Deriver\Internal\Memory\Memory::class)]
 #[UsesClass(\Deriver\Internal\Model\Extensions::class)]
 #[UsesClass(\Deriver\Internal\Model\Registry::class)]
@@ -44,25 +54,26 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Completion::class)]
 #[UsesClass(\Deriver\Internal\Solver\Context::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\Resources::class)]
-#[UsesClass(\Deriver\Internal\Solver\State::class)]
+#[UsesClass(StateStorage::class)]
+#[UsesClass(State::class)]
 #[UsesClass(\Deriver\Internal\Value\Arrays::class)]
 #[UsesClass(\Deriver\Internal\Value\Identity::class)]
 #[UsesClass(\Deriver\Internal\Value\Lattice::class)]
 #[UsesClass(\Deriver\Internal\Value\PhpSemantics::class)]
-#[UsesClass(\Deriver\Model\State\StateSlot::class)]
-#[UsesClass(\Deriver\Value\Term::class)]
+#[UsesClass(StateSlot::class)]
+#[UsesClass(Term::class)]
 #[Small]
 final class StateStorageTest extends TestCase
 {
     public function testAddressDoesNotExposeAnOrdinaryProperty(): void
     {
-        $context = \Tests\Fake\SolverFixture::context(configuration: new \Deriver\Api\Project\Configuration(stateSlots: [new \Deriver\Model\State\StateSlot('example.slot', 'int', \Deriver\Value\Term::constant(1))]));
-        $state = new \Deriver\Internal\Solver\State();
-        $storage = new \Deriver\Internal\Solver\Model\StateStorage($context);
+        $context = SolverFixture::context(configuration: new Configuration(stateSlots: [new StateSlot('example.slot', 'int', Term::constant(1))]));
+        $state = new State();
+        $storage = new StateStorage($context);
 
         $storage->initialize($state, 'object');
-        $state->registers['receiver'] = new \Deriver\Value\Term('object', 'object');
-        $instruction = new \Deriver\Internal\IR\Instruction('slot', 'model-state-address', new \Deriver\Api\Reference\SourceRef('test', 'model:test', 0, 1), 'address', ['receiver'], 'example.slot');
+        $state->registers['receiver'] = new Term('object', 'object');
+        $instruction = new Instruction('slot', 'model-state-address', new SourceRef('test', 'model:test', 0, 1), 'address', ['receiver'], 'example.slot');
         $storage->address($instruction, $state);
         self::assertSame('model:object', $state->addresses['address']->root);
         self::assertSame([], $state->properties);
@@ -70,31 +81,158 @@ final class StateStorageTest extends TestCase
     }
     public function testInitializeDoesNotAssumeAnExternalReceiverHasItsNewObjectDefaults(): void
     {
-        $context = \Tests\Fake\SolverFixture::context(configuration: new \Deriver\Api\Project\Configuration(stateSlots: [new \Deriver\Model\State\StateSlot('example.slot', 'int', \Deriver\Value\Term::constant(1))]));
-        $state = new \Deriver\Internal\Solver\State();
-        $storage = new \Deriver\Internal\Solver\Model\StateStorage($context);
+        $context = SolverFixture::context(configuration: new Configuration(stateSlots: [new StateSlot('example.slot', 'int', Term::constant(1))]));
+        $state = new State();
+        $storage = new StateStorage($context);
 
         $storage->initialize($state, 'external', external: true);
-        self::assertSame('state-input', $state->memory->read(new \Deriver\Internal\Memory\Location('model:external', ['example.slot']))->kind);
+        self::assertSame('state-input', $state->memory->read(new Location('model:external', ['example.slot']))->kind);
         self::assertSame('int', $state->memory->propertyTypes['model:external']['example.slot']);
     }
     public function testInitializeCopiesTheCurrentValueOnClone(): void
     {
-        $context = \Tests\Fake\SolverFixture::context(configuration: new \Deriver\Api\Project\Configuration(stateSlots: [new \Deriver\Model\State\StateSlot('example.slot', 'int', \Deriver\Value\Term::constant(1))]));
-        $state = new \Deriver\Internal\Solver\State();
-        $storage = new \Deriver\Internal\Solver\Model\StateStorage($context);
+        $context = SolverFixture::context(configuration: new Configuration(stateSlots: [new StateSlot('example.slot', 'int', Term::constant(1))]));
+        $state = new State();
+        $storage = new StateStorage($context);
 
         $storage->initialize($state, 'a');
-        $state->memory->write(new \Deriver\Internal\Memory\Location('model:a', ['example.slot']), \Deriver\Value\Term::constant(4));
+        $state->memory->write(new Location('model:a', ['example.slot']), Term::constant(4));
         $storage->initialize($state, 'b', 'a');
-        self::assertSame(4, $state->memory->read(new \Deriver\Internal\Memory\Location('model:b', ['example.slot']))->native());
+        self::assertSame(4, $state->memory->read(new Location('model:b', ['example.slot']))->native());
     }
     public function testObserveSelectsTheRegisteredAbstractRecord(): void
     {
-        $context = \Tests\Fake\SolverFixture::context(configuration: new \Deriver\Api\Project\Configuration(stateSlots: [new \Deriver\Model\State\StateSlot('example.slot', 'int', \Deriver\Value\Term::constant(1))]));
-        $state = new \Deriver\Internal\Solver\State();
-        $storage = new \Deriver\Internal\Solver\Model\StateStorage($context);
+        $context = SolverFixture::context(configuration: new Configuration(stateSlots: [new StateSlot('example.slot', 'int', Term::constant(1))]));
+        $state = new State();
+        $storage = new StateStorage($context);
         $storage->initialize($state, 'a');
-        self::assertSame(1, $storage->observe(new \Deriver\Value\Term('object', 'a'), 'example.slot', $state)->native());
+        self::assertSame(1, $storage->observe(new Term('object', 'a'), 'example.slot', $state)->native());
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerInvalidAddress')]
+    public function testAddressRejectsInvalidReceiversAndUnknownSlots(Term $receiver, string $slot): void
+    {
+        $context = SolverFixture::context(configuration: new Configuration(stateSlots:[new StateSlot('example.slot', 'int', Term::constant(1))]));
+        $state = new State();
+        $state->registers['receiver'] = $receiver;
+        $source = new SourceRef('test', 'model:test', 3, 8);
+        $result = (new StateStorage($context))->address(new Instruction('i', 'model-state-address', $source, 'address', ['receiver'], $slot), $state);
+        self::assertSame('opaque', $result->kind);
+        self::assertSame('MODEL_CONTRACT_VIOLATION', $result->literal);
+        self::assertTrue($state->addresses['address']->unknown);
+        self::assertSame([], $state->memory->cells);
+        self::assertCount(1, $context->frontiers);
+        self::assertSame($source, array_values($context->frontiers)[0]->at);
+        self::assertSame('model-state-address', array_values($context->frontiers)[0]->operation);
+    }
+
+    /**
+     * @return iterable<string,array{Term,string}>
+     */
+    public static function providerInvalidAddress(): iterable
+    {
+        yield 'unregistered slot' => [new Term('object', 'box'), 'example.missing'];
+        yield 'scalar masquerading as identity' => [Term::constant('box'), 'example.slot'];
+        yield 'array' => [Term::array([]), 'example.slot'];
+        yield 'missing object identity' => [new Term('object'), 'example.slot'];
+        yield 'numeric external identity' => [new Term('external', 12), 'example.slot'];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerStateReceivers')]
+    public function testAddressInitializesAcceptedExternalIdentitiesWithSymbolicState(string $kind): void
+    {
+        $slot = new StateSlot('example.slot', 'int', Term::constant(1));
+        $context = SolverFixture::context(configuration: new Configuration(stateSlots:[$slot]));
+        $state = new State();
+        $state->registers['receiver'] = new Term($kind, 'box');
+        $instruction = new Instruction('i', 'model-state-address', new SourceRef('test', 'model:test', 3, 8), 'address', ['receiver'], 'example.slot');
+        $storage = new StateStorage($context);
+        $result = $storage->address($instruction, $state);
+        self::assertSame('location', $result->kind);
+        self::assertSame('model:box', $result->literal);
+        self::assertSame(['example.slot'], $state->addresses['address']->path);
+        self::assertFalse($state->addresses['address']->unknown);
+        $value = $state->memory->read($state->addresses['address']);
+        self::assertSame('state-input', $value->kind);
+        self::assertSame('box:example.slot', $value->literal);
+        self::assertSame('int', $value->attributes['type']);
+        self::assertSame($slot, $state->memory->slotContracts['example.slot']);
+        self::assertSame('int', $state->memory->propertyTypes['model:box']['example.slot']);
+        $state->memory->write($state->addresses['address'], Term::constant(9));
+        $storage->address($instruction, $state);
+        self::assertSame(9, $state->memory->read($state->addresses['address'])->literal);
+        self::assertSame([], $context->frontiers);
+    }
+
+    /**
+     * @return iterable<string,array{string}>
+     */
+    public static function providerStateReceivers(): iterable
+    {
+        yield 'allocated object' => ['object'];
+        yield 'symbolic parameter' => ['parameter'];
+        yield 'external object' => ['external'];
+    }
+
+    public function testInitializeAppliesDistinctCloneRulesAndPreservesCopiedReferences(): void
+    {
+        $copy = new StateSlot('example.copy', 'int', Term::constant(1));
+        $reset = new StateSlot('example.reset', 'int', Term::constant(2), clone:'reset');
+        $symbolic = new StateSlot('example.input', 'string', clone:'reset');
+        $context = SolverFixture::context(configuration: new Configuration(stateSlots:[$copy, $reset, $symbolic]));
+        $state = new State();
+        $storage = new StateStorage($context);
+        $storage->initialize($state, 'original');
+        $cell = $state->memory->allocate(Term::constant(7));
+        $state->memory->write(new Location('model:original', ['example.copy']), new Term('cell', $cell->root));
+        $state->memory->write(new Location('model:original', ['example.reset']), Term::constant(8));
+        $storage->initialize($state, 'clone', 'original');
+        self::assertSame(7, $state->memory->read(new Location('model:clone', ['example.copy']))->literal);
+        self::assertSame(2, $state->memory->read(new Location('model:clone', ['example.reset']))->literal);
+        $input = $state->memory->read(new Location('model:clone', ['example.input']));
+        self::assertSame('state-input', $input->kind);
+        self::assertSame('clone:example.input', $input->literal);
+        self::assertSame('string', $input->attributes['type']);
+        $state->memory->write($cell, Term::constant(12));
+        self::assertSame(12, $state->memory->read(new Location('model:original', ['example.copy']))->literal);
+        self::assertSame(12, $state->memory->read(new Location('model:clone', ['example.copy']))->literal);
+        self::assertSame(8, $state->memory->read(new Location('model:original', ['example.reset']))->literal);
+    }
+
+    public function testInitializeCloningAnUnobservedSourceRetainsItsStateIdentity(): void
+    {
+        $context = SolverFixture::context(configuration: new Configuration(stateSlots:[new StateSlot('example.slot', 'int', Term::constant(1))]));
+        $state = new State();
+        (new StateStorage($context))->initialize($state, 'clone', 'external');
+        $value = $state->memory->read(new Location('model:clone', ['example.slot']));
+        self::assertSame('state-input', $value->kind);
+        self::assertSame('external:example.slot', $value->literal);
+        self::assertSame('int', $value->attributes['type']);
+        self::assertArrayNotHasKey('model:external', $state->memory->cells);
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerInvalidObservation')]
+    public function testObserveRetainsInvalidReceiverDependenciesAndOptionalProvenance(Term $receiver, ?SourceRef $source): void
+    {
+        $context = SolverFixture::context();
+        $state = new State();
+        $result = (new StateStorage($context))->observe($receiver, 'example.slot', $state, $source);
+        self::assertSame('opaque', $result->kind);
+        self::assertSame($source === null ? 'UNKNOWN_STATE_RECEIVER' : 'UNSUPPORTED_MODEL_CASE', $result->literal);
+        self::assertSame([$receiver], $result->operands);
+        self::assertCount($source === null ? 0 : 1, $context->frontiers);
+        self::assertSame($source, (array_values($context->frontiers)[0] ?? null)?->at);
+        self::assertSame([], $state->memory->cells);
+    }
+
+    /**
+     * @return iterable<string,array{Term,?SourceRef}>
+     */
+    public static function providerInvalidObservation(): iterable
+    {
+        foreach ([Term::constant('box'), Term::constant(4), new Term('object'), new Term('parameter', 4)] as $index => $value) {
+            yield $index . ' without source' => [$value, null];
+            yield $index . ' with source' => [$value, new SourceRef('test', 'a.php', 2, 5)];
+        }
     }
 }

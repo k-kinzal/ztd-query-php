@@ -348,6 +348,9 @@ final class ObservationCollectorTest extends TestCase
     {
         $source = new \Deriver\Api\Reference\SourceRef('test', 'fixture.php', 0, 1);
         $point = new \Deriver\Api\Reference\PointRef($source, 'target', 'i', 'before');
+        $qualified = new \Deriver\Api\Reference\PointRef($source, '\\TARGET', 'i', 'before');
+        yield 'qualified state' => [new \Deriver\Api\Query\StateQuery($qualified, 'x', new \Deriver\Value\Projection(['field'])),['state' => 3]];
+        yield 'qualified tuple' => [new \Deriver\Api\Query\TupleQuery($qualified, ['first' => new \Deriver\Api\Reference\ExpressionRef($source, 'TARGET', 'r1')]),['first' => 7]];
         yield 'projected state' => [new \Deriver\Api\Query\StateQuery($point, 'x', new \Deriver\Value\Projection(['field'])),['state' => 3]];
         yield 'correlated tuple' => [new \Deriver\Api\Query\TupleQuery($point, ['first' => new \Deriver\Api\Reference\ExpressionRef($source, 'target', 'r1'),'second' => new \Deriver\Api\Reference\ExpressionRef($source, 'target', 'r2')]),['first' => 7,'second' => 9]];
     }
@@ -419,5 +422,31 @@ final class ObservationCollectorTest extends TestCase
         yield 'other callable' => ['other',\Deriver\Api\Query\QueryScope::symbolic(),1,0];
         yield 'recursive root suppressed' => ['target',\Deriver\Api\Query\QueryScope::symbolic(),2,0];
         yield 'entrypoint nested return' => ['target',\Deriver\Api\Query\QueryScope::fromEntrypoints([new \Deriver\Api\Project\EntryPoint('target')]),2,1];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerNamedOwnerVariants')]
+    public function testInstructionNormalizesNamedOwnersBeforeCapturingValues(string $owner): void
+    {
+        $fixture = \Tests\Fake\SolverFixture::context();
+        $source = new \Deriver\Api\Reference\SourceRef('test', 'fixture.php', 0, 1);
+        $query = new \Deriver\Api\Query\ValueQuery(new \Deriver\Api\Reference\ExpressionRef($source, $owner, 'r1'));
+        $context = new \Deriver\Internal\Solver\Context($fixture->program, $query, $fixture->configuration, $fixture->models);
+        $state = new \Deriver\Internal\Solver\State();
+        $state->registers['r1'] = \Deriver\Value\Term::constant(7);
+        (new \Deriver\Internal\Solver\ObservationCollector($context))->instruction(new \Deriver\Internal\IR\CallableIR('N\\target', [], [], $source), new \Deriver\Internal\IR\Instruction('i', 'constant', $source, 'r1'), $state, 'after');
+        self::assertCount(1, $context->normal);
+        self::assertSame(7, $context->normal[0]->values['value']->native());
+        self::assertTrue($state->observed);
+        self::assertSame('observed', $state->completion->kind);
+    }
+
+    /**
+     * @return iterable<string,array{string}>
+     */
+    public static function providerNamedOwnerVariants(): iterable
+    {
+        yield 'declaration' => ['N\\target'];
+        yield 'case variant' => ['n\\TARGET'];
+        yield 'qualified variant' => ['\\N\\TARGET'];
     }
 }
