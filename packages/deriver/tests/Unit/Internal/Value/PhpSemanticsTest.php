@@ -348,4 +348,54 @@ final class PhpSemanticsTest extends TestCase
         self::assertSame('TypeError', $semantics->numeric('*', \Deriver\Value\Term::constant(1), new \Deriver\Value\Term('object', 'id'))->literal);
         self::assertSame(6, $semantics->numeric('*', \Deriver\Value\Term::constant(2), \Deriver\Value\Term::constant(3))->native());
     }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerArrayUnionLabels')]
+    public function testBinaryPreservesAggregateConfidentialityAndUnknownArrayRemainders(bool $leftSecret, bool $rightSecret, bool $leftOpen, bool $rightOpen): void
+    {
+        $left = new \Deriver\Value\Term('array', operands:['shared' => \Deriver\Value\Term::constant(1), 'left' => \Deriver\Value\Term::constant(2)], attributes:['open' => $leftOpen], secret:$leftSecret);
+        $right = new \Deriver\Value\Term('array', operands:['shared' => \Deriver\Value\Term::constant(9), 'right' => \Deriver\Value\Term::constant(3)], attributes:['open' => $rightOpen], secret:$rightSecret);
+        $result = (new \Deriver\Internal\Value\PhpSemantics())->binary('+', $left, $right);
+        self::assertSame('array', $result->kind);
+        self::assertSame(['shared', 'left', 'right'], array_keys($result->operands));
+        self::assertSame([1, 2, 3], array_column($result->operands, 'literal'));
+        self::assertSame($leftSecret || $rightSecret, $result->isSecret());
+        self::assertSame($leftOpen || $rightOpen, $result->attributes['open']);
+    }
+
+    /**
+     * @return iterable<string,array{bool,bool,bool,bool}>
+     */
+    public static function providerArrayUnionLabels(): iterable
+    {
+        foreach ([false, true] as $leftSecret) {
+            foreach ([false, true] as $rightSecret) {
+                foreach ([false, true] as $leftOpen) {
+                    foreach ([false, true] as $rightOpen) {
+                        yield (int)$leftSecret . ':' . (int)$rightSecret . ':' . (int)$leftOpen . ':' . (int)$rightOpen => [$leftSecret, $rightSecret, $leftOpen, $rightOpen];
+                    }
+                }
+            }
+        }
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerArrayCastLabels')]
+    public function testCastRetainsConfidentialityEvenWhenNoArrayEntriesRemain(int|string|null $value, bool $secret): void
+    {
+        $result = (new \Deriver\Internal\Value\PhpSemantics())->cast('array', \Deriver\Value\Term::constant($value, $secret));
+        self::assertSame('array', $result->kind);
+        self::assertSame($value === null ? [] : [$value], $result->native());
+        self::assertSame($secret, $result->isSecret());
+        self::assertFalse($result->attributes['open']);
+    }
+
+    /**
+     * @return iterable<string,array{int|string|null,bool}>
+     */
+    public static function providerArrayCastLabels(): iterable
+    {
+        foreach ([null, 1, 'value'] as $index => $value) {
+            yield $index . ':public' => [$value, false];
+            yield $index . ':confidential' => [$value, true];
+        }
+    }
 }

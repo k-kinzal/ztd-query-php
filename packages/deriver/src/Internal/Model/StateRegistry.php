@@ -52,7 +52,7 @@ final class StateRegistry
         if (!in_array($slot->clone, ['copy', 'reset'], true) || !in_array($slot->invalidation, ['havoc', 'preserve'], true) || array_diff($types, ['mixed', 'null', 'bool', 'int', 'float', 'string', 'array', 'object']) !== []) {
             throw new InvalidInputException('MODEL_CONTRACT_VIOLATION: invalid state contract ' . $slot->id);
         }
-        if ($slot->initial !== null && !(new Lattice())->contains(Term::opaque('slot-type', $slot->type), $slot->initial)) {
+        if ($slot->initial !== null && !(new Lattice())->contains(new Term('opaque', 'slot-type', attributes: ['type' => $slot->type], secret: true), $slot->initial)) {
             throw new InvalidInputException('MODEL_CONTRACT_VIOLATION: incompatible state initializer ' . $slot->id);
         }
         $this->slots[$slot->id] = $slot;

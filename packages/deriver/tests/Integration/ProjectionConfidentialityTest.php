@@ -53,4 +53,47 @@ final class ProjectionConfidentialityTest extends TestCase
         self::assertStringNotContainsString(base64_encode('projected-private-value'), $result->toJson());
         self::assertStringContainsString(base64_encode('projected-private-value'), $result->toJson(true));
     }
+
+    /**
+     * @throws JsonException If result data cannot be encoded
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerConfidentialOperations')]
+    public function testDerivedArrayOperationsKeepConfidentialPayloadsOutOfDefaultReports(string $expression, Term $input): void
+    {
+        $session = Analysis::session('<?php function target($input){return ' . $expression . ';}');
+        $query = new \Deriver\Api\Query\ReturnQuery('target', scope:QueryScope::fromEntrypoints([new EntryPoint('target', [$input])]));
+        $result = $session->derive($query);
+        self::assertSame([], $result->frontiers);
+        self::assertSame([], $result->exceptionalOutcomes);
+        self::assertCount(1, $result->normalOutcomes);
+        self::assertTrue($result->normalOutcomes[0]->values['return']->isSecret());
+        self::assertStringNotContainsString(base64_encode('private-union-value'), $result->toJson());
+        self::assertStringContainsString(base64_encode('private-union-value'), $result->toJson(true));
+    }
+
+    /**
+     * @return iterable<string,array{string,Term}>
+     */
+    public static function providerConfidentialOperations(): iterable
+    {
+        $array = new Term('array', operands:['secret' => Term::constant('private-union-value')], attributes:['open' => false], secret:true);
+        yield 'left union' => ['$input + []', $array];
+        yield 'right union' => ['[] + $input', $array];
+        yield 'selected left union' => ['($input + [])["secret"]', $array];
+        yield 'selected right union' => ['([] + $input)["secret"]', $array];
+        yield 'scalar cast' => ['(array)$input', Term::constant('private-union-value', true)];
+    }
+
+    /**
+     * @throws JsonException If source metadata cannot be encoded
+     */
+    public function testEmptyArrayConversionRetainsConfidentialAbsence(): void
+    {
+        $session = Analysis::session('<?php function target($input){return (array)$input;}');
+        $result = $session->derive(new \Deriver\Api\Query\ReturnQuery('target', scope:QueryScope::fromEntrypoints([new EntryPoint('target', [Term::constant(null, true)])])));
+        self::assertSame([], $result->frontiers);
+        self::assertCount(1, $result->normalOutcomes);
+        self::assertSame([], $result->normalOutcomes[0]->values['return']->native());
+        self::assertTrue($result->normalOutcomes[0]->values['return']->isSecret());
+    }
 }

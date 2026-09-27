@@ -70,7 +70,7 @@ final class PhpSemantics
             return Term::constant((float) $native, $value->isSecret());
         }
         if ($type === 'array') {
-            return $native === null ? Term::array([]) : Term::array([Term::constant($native, $value->secret)]);
+            return new Term('array', operands: $native === null ? [] : [Term::constant($native, $value->secret)], attributes: ['open' => false], secret: $value->isSecret());
         }
         return Term::opaque('UNSUPPORTED_LANGUAGE_FEATURE', $type, [$value]);
     }
@@ -98,7 +98,7 @@ final class PhpSemantics
             return $a !== null && $b !== null ? Term::constant($a !== $b, $left->isSecret() || $right->isSecret()) : new Term('binary', 'xor', [$left, $right], ['type' => 'bool']);
         }
         if ($operator === '+' && $left->kind === 'array' && $right->kind === 'array') {
-            return Term::array($left->operands + $right->operands, ($left->attributes['open'] ?? false) === true || ($right->attributes['open'] ?? false) === true);
+            return new Term('array', operands: $left->operands + $right->operands, attributes: ['open' => ($left->attributes['open'] ?? false) === true || ($right->attributes['open'] ?? false) === true], secret: $left->isSecret() || $right->isSecret());
         }
         if (in_array($operator, ['===', '!==', '==', '!=', '<', '<=', '>', '>=', '<=>'], true)) {
             return (new Comparison())->apply($operator, $left, $right);

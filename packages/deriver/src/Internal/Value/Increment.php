@@ -21,7 +21,7 @@ final class Increment
     public function apply(Term $before, int $delta): Term
     {
         if ($before->kind === 'uninitialized') {
-            $before = Term::constant(null);
+            $before = Term::constant(null, $before->isSecret());
         }
         if ($before->kind !== 'constant') {
             if (in_array($before->kind, ['array', 'object', 'closure', 'enum'], true)) {
