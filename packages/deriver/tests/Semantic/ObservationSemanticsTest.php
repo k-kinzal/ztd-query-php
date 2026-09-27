@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Semantic;
 
-use Deriver\Api\Project\EntryPoint;
-use Deriver\Api\Query\QueryScope;
-use Deriver\Api\Query\StateQuery;
-use Deriver\Api\Query\TupleQuery;
-use Deriver\Api\Query\ValueQuery;
+use Deriver\Project\EntryPoint;
+use Deriver\Query\QueryScope;
+use Deriver\Query\StateQuery;
+use Deriver\Query\TupleQuery;
+use Deriver\Query\ValueQuery;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Small;

@@ -4,13 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
-use Deriver\Api\AnalysisSession;
-use Deriver\Api\Project\EntryPoint;
-use Deriver\Api\Project\ProjectInput;
-use Deriver\Api\Project\SourceFile;
-use Deriver\Api\Query\Query;
-use Deriver\Api\Query\QueryScope;
-use Deriver\Api\Query\ReturnQuery;
+use Deriver\AnalysisSession;
 use Deriver\Model\Provider\DeclarationProvider;
 use Deriver\Model\Provider\DispatchDecision;
 use Deriver\Model\Provider\DispatchProvider;
@@ -19,6 +13,12 @@ use Deriver\Model\Provider\DispatchTarget;
 use Deriver\Model\Provider\EntryPointProvider;
 use Deriver\Model\Provider\EnvironmentProvider;
 use Deriver\Model\Provider\ObservationProvider;
+use Deriver\Project\EntryPoint;
+use Deriver\Project\ProjectInput;
+use Deriver\Project\SourceFile;
+use Deriver\Query\Query;
+use Deriver\Query\QueryScope;
+use Deriver\Query\ReturnQuery;
 use Deriver\Value\Term;
 use Override;
 

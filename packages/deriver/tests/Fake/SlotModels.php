@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
-use Deriver\Api\Project\Configuration;
 use Deriver\Model\Binding\LocationRef;
 use Deriver\Model\ModelDescriptor;
 use Deriver\Model\Plan\Action;
@@ -13,6 +12,7 @@ use Deriver\Model\Plan\SemanticPlan;
 use Deriver\Model\Signature\Parameter;
 use Deriver\Model\Signature\Signature;
 use Deriver\Model\State\StateSlot;
+use Deriver\Project\Configuration;
 use Deriver\Value\Term;
 
 /**

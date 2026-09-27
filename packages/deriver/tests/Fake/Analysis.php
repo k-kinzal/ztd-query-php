@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
+use Deriver\AnalysisSession;
 use Deriver\Analyzer;
-use Deriver\Api\AnalysisSession;
-use Deriver\Api\Project\Configuration;
-use Deriver\Api\Project\ProjectInput;
-use Deriver\Api\Project\SourceFile;
-use Deriver\Api\Query\ReturnQuery;
-use Deriver\Api\Result\DerivationResult;
+use Deriver\Project\Configuration;
+use Deriver\Project\ProjectInput;
+use Deriver\Project\SourceFile;
+use Deriver\Query\ReturnQuery;
+use Deriver\Result\DerivationResult;
 use JsonException;
 
 /**

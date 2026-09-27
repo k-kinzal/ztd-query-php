@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
-use Deriver\Api\Project\Configuration;
 use Deriver\Model\CallModel;
 use Deriver\Model\ModelDescriptor;
 use Deriver\Model\Plan\Action;
@@ -12,6 +11,7 @@ use Deriver\Model\Plan\Expression;
 use Deriver\Model\Plan\SemanticPlan;
 use Deriver\Model\Signature\Parameter;
 use Deriver\Model\Signature\Signature;
+use Deriver\Project\Configuration;
 
 /**
  * Installs a complete independent model pack using public contracts only.

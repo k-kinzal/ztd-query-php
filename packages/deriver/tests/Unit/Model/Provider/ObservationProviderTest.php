@@ -4,6 +4,42 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Model\Provider;
 
+use Deriver\Analysis\Session;
+use Deriver\Analyzer;
+use Deriver\ControlFlow\CallableIdentity;
+use Deriver\ControlFlow\ClassDeclaration;
+use Deriver\Model\Provider\ObservationProvider;
+use Deriver\Model\Registration\Extensions;
+use Deriver\Model\Registration\ProviderInputs;
+use Deriver\Model\Registration\Registry;
+use Deriver\Model\Registration\StateRegistry;
+use Deriver\Project\Configuration;
+use Deriver\Project\EntryPoint;
+use Deriver\Project\ProjectInput;
+use Deriver\Project\ProjectSnapshot;
+use Deriver\Project\SourceFile;
+use Deriver\Project\SourceLimits;
+use Deriver\Project\TargetProfile;
+use Deriver\Query\Budget;
+use Deriver\Query\QueryScope;
+use Deriver\Query\ResourceLimits;
+use Deriver\Query\ReturnQuery;
+use Deriver\Result\Serialization\JsonText;
+use Deriver\Source\Cache\SyntaxCache;
+use Deriver\Source\Cache\SyntaxTree;
+use Deriver\Source\ConstantSignatures;
+use Deriver\Source\Declaration\CallableSource;
+use Deriver\Source\Declaration\DeclarationScanner;
+use Deriver\Source\Declaration\ProjectIndex;
+use Deriver\Source\Declaration\Traits\Composition;
+use Deriver\Source\LineMap;
+use Deriver\Source\MagicContext;
+use Deriver\Source\SyntaxSize;
+use Deriver\Source\Validation\AssignmentPatterns;
+use Deriver\Source\Validation\ClassScope;
+use Deriver\Source\Validation\TargetSyntax;
+use Deriver\Value\Identity;
+use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
@@ -13,43 +49,42 @@ use PHPUnit\Framework\TestCase;
 /**
  * @covers \Deriver\Model\Provider\ObservationProvider
  */
-#[CoversClass(\Deriver\Model\Provider\ObservationProvider::class)]
-#[UsesClass(\Deriver\Analyzer::class)]
-#[UsesClass(\Deriver\Api\Execution\ResourceLimits::class)]
-#[UsesClass(\Deriver\Api\Execution\SourceLimits::class)]
-#[UsesClass(\Deriver\Api\Project\Configuration::class)]
-#[UsesClass(\Deriver\Api\Project\EntryPoint::class)]
-#[UsesClass(\Deriver\Api\Project\ProjectInput::class)]
-#[UsesClass(\Deriver\Api\Project\ProjectSnapshot::class)]
-#[UsesClass(\Deriver\Api\Project\SourceFile::class)]
-#[UsesClass(\Deriver\Api\Project\TargetProfile::class)]
-#[UsesClass(\Deriver\Api\Query\Budget::class)]
-#[UsesClass(\Deriver\Api\Query\QueryScope::class)]
-#[UsesClass(\Deriver\Api\Query\ReturnQuery::class)]
-#[UsesClass(\Deriver\Internal\Api\Session::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Cache\SyntaxCache::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Cache\SyntaxTree::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\CallableSource::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\DeclarationScanner::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\ProjectIndex::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Source\ConstantSignatures::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Source\LineMap::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Source\MagicContext::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Source\SyntaxSize::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Traits\Composition::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Validation\AssignmentPatterns::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Validation\ClassScope::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Validation\TargetSyntax::class)]
-#[UsesClass(\Deriver\Internal\IR\CallableIdentity::class)]
-#[UsesClass(\Deriver\Internal\IR\ClassDeclaration::class)]
-#[UsesClass(\Deriver\Internal\Model\Extensions::class)]
-#[UsesClass(\Deriver\Internal\Model\ModelBoundary::class)]
-#[UsesClass(\Deriver\Internal\Model\ProviderInputs::class)]
-#[UsesClass(\Deriver\Internal\Model\Registry::class)]
-#[UsesClass(\Deriver\Internal\Model\StateRegistry::class)]
-#[UsesClass(\Deriver\Internal\Value\Identity::class)]
-#[UsesClass(\Deriver\Report\JsonText::class)]
-#[UsesClass(\Deriver\Value\Term::class)]
+#[CoversClass(ObservationProvider::class)]
+#[UsesClass(Session::class)]
+#[UsesClass(Analyzer::class)]
+#[UsesClass(CallableIdentity::class)]
+#[UsesClass(ClassDeclaration::class)]
+#[UsesClass(Extensions::class)]
+#[UsesClass(ProviderInputs::class)]
+#[UsesClass(Registry::class)]
+#[UsesClass(StateRegistry::class)]
+#[UsesClass(Configuration::class)]
+#[UsesClass(EntryPoint::class)]
+#[UsesClass(ProjectInput::class)]
+#[UsesClass(ProjectSnapshot::class)]
+#[UsesClass(SourceFile::class)]
+#[UsesClass(SourceLimits::class)]
+#[UsesClass(TargetProfile::class)]
+#[UsesClass(Budget::class)]
+#[UsesClass(QueryScope::class)]
+#[UsesClass(ResourceLimits::class)]
+#[UsesClass(ReturnQuery::class)]
+#[UsesClass(JsonText::class)]
+#[UsesClass(SyntaxCache::class)]
+#[UsesClass(SyntaxTree::class)]
+#[UsesClass(ConstantSignatures::class)]
+#[UsesClass(CallableSource::class)]
+#[UsesClass(DeclarationScanner::class)]
+#[UsesClass(ProjectIndex::class)]
+#[UsesClass(Composition::class)]
+#[UsesClass(LineMap::class)]
+#[UsesClass(MagicContext::class)]
+#[UsesClass(SyntaxSize::class)]
+#[UsesClass(AssignmentPatterns::class)]
+#[UsesClass(ClassScope::class)]
+#[UsesClass(TargetSyntax::class)]
+#[UsesClass(Identity::class)]
+#[UsesClass(Term::class)]
 #[Small]
 final class ObservationProviderTest extends TestCase
 {
@@ -58,7 +93,7 @@ final class ObservationProviderTest extends TestCase
      */
     public function testQueriesRetainsTheSessionEntryScope(): void
     {
-        $session = \Tests\Fake\Analysis::session('<?php function entry(){return 1;}', new \Deriver\Api\Project\Configuration(providers: [new \Tests\Fake\MiniContainer()]));
+        $session = \Tests\Fake\Analysis::session('<?php function entry(){return 1;}', new Configuration(providers: [new \Tests\Fake\MiniContainer()]));
         $query = (new \Tests\Fake\MiniContainer())->queries($session)['entry-return'];
         self::assertSame($session->entrypoints(), $query->scope()->entries);
     }

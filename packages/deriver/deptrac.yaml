@@ -1,67 +1,77 @@
-# Keep parser nodes inside the frontend and extension contracts outside the evaluator.
+# Source syntax is confined to source capture and graph construction.
 deptrac:
   paths: [./src]
   analyser:
     types: [class, use]
   layers:
-    - name: Facade
+    - name: Analysis
       collectors:
         - type: classLike
-          value: '^Deriver\\(Analyzer$|Internal\\Api\\)'
+          value: '^Deriver\\(Analyzer$|Analysis\\)'
     - name: Contracts
       collectors:
         - type: classLike
-          value: '^Deriver\\(Api|Model|Value)\\'
-    - name: Reporting
+          value: '^Deriver\\(AnalysisSession$|(Project|Query|Reference|Exception)\\|Result\\(?!Serialization\\)|Model\\(?!Compilation\\|Registration\\|Builtin\\|Domain\\DomainOperations$|Intrinsic\\IntrinsicEvaluation$)|Value\\(Term$|Projection$))'
+    - name: Serialization
       collectors:
         - type: classLike
-          value: '^Deriver\\Report\\'
-    - name: Frontend
+          value: '^Deriver\\Result\\Serialization\\'
+    - name: Source
       collectors:
         - type: classLike
-          value: '^Deriver\\Internal\\Frontend\\'
-    - name: IR
+          value: '^Deriver\\Source\\'
+    - name: ControlFlow
       collectors:
         - type: classLike
-          value: '^Deriver\\Internal\\IR\\'
-    - name: Solver
+          value: '^Deriver\\ControlFlow\\'
+    - name: Evaluation
       collectors:
         - type: classLike
-          value: '^Deriver\\Internal\\Solver\\'
+          value: '^Deriver\\Evaluation\\'
     - name: Memory
       collectors:
         - type: classLike
-          value: '^Deriver\\Internal\\Memory\\'
-    - name: Constraints
+          value: '^Deriver\\Memory\\'
+    - name: Constraint
       collectors:
         - type: classLike
-          value: '^Deriver\\Internal\\Constraint\\'
-    - name: ValueSemantics
+          value: '^Deriver\\Constraint\\'
+    - name: ValueOperations
       collectors:
         - type: classLike
-          value: '^Deriver\\Internal\\Value\\'
-    - name: ModelRuntime
+          value: '^Deriver\\Value\\(?!Term$|Projection$)'
+    - name: ModelCompilation
       collectors:
         - type: classLike
-          value: '^Deriver\\Internal\\Model\\'
-    - name: Standard
+          value: '^Deriver\\Model\\Compilation\\'
+    - name: ModelRegistration
       collectors:
         - type: classLike
-          value: '^Deriver\\Standard\\'
+          value: '^Deriver\\Model\\Registration\\'
+    - name: ModelOperations
+      collectors:
+        - type: classLike
+          value: '^Deriver\\Model\\(Domain\\DomainOperations$|Intrinsic\\IntrinsicEvaluation$)'
+    - name: Builtin
+      collectors:
+        - type: classLike
+          value: '^Deriver\\Model\\Builtin\\'
     - name: PhpParser
       collectors:
         - type: classLike
           value: '^PhpParser\\'
   ruleset:
-    Facade: [Contracts, Reporting, Frontend, IR, Solver, ModelRuntime, ValueSemantics]
-    Contracts: [Reporting]
-    Reporting: [Contracts, ValueSemantics]
-    Frontend: [Contracts, IR, PhpParser]
-    IR: [Contracts]
-    Solver: [Contracts, IR, Memory, Constraints, ValueSemantics, ModelRuntime, Standard]
-    Memory: [Contracts, ValueSemantics]
-    Constraints: [Contracts, Solver, ValueSemantics, ModelRuntime]
-    ValueSemantics: [Contracts, ModelRuntime]
-    ModelRuntime: [Contracts, IR, ValueSemantics, Standard]
-    Standard: [Contracts, ValueSemantics]
+    Analysis: [Contracts, Serialization, Source, ControlFlow, Evaluation, ModelRegistration, ValueOperations]
+    Contracts: [Serialization]
+    Serialization: [Contracts, ValueOperations]
+    Source: [Contracts, ControlFlow, PhpParser]
+    ControlFlow: [Contracts]
+    Evaluation: [Contracts, ControlFlow, Memory, Constraint, ValueOperations, ModelCompilation, ModelRegistration, ModelOperations, Builtin]
+    Memory: [Contracts, ValueOperations]
+    Constraint: [Contracts, Evaluation, ValueOperations]
+    ValueOperations: [Contracts, ModelOperations]
+    ModelCompilation: [Contracts, ControlFlow, ValueOperations]
+    ModelRegistration: [Contracts, ControlFlow, ValueOperations, ModelOperations, Builtin]
+    ModelOperations: [Contracts, ValueOperations]
+    Builtin: [Contracts, ValueOperations]
     PhpParser: []

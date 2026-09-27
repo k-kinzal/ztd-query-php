@@ -4,9 +4,20 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
-use Deriver\Api\Project\EntryPoint;
-use Deriver\Api\Query\QueryScope;
-use Deriver\Api\Query\ReturnQuery;
+use Deriver\Model\Intrinsic\IntrinsicDescriptor;
+use Deriver\Model\Intrinsic\PureIntrinsic;
+use Deriver\Model\ModelDescriptor;
+use Deriver\Model\Plan\Action;
+use Deriver\Model\Plan\Expression;
+use Deriver\Model\Plan\SemanticPlan;
+use Deriver\Model\Signature\Parameter;
+use Deriver\Model\Signature\Signature;
+use Deriver\Project\Configuration;
+use Deriver\Project\EntryPoint;
+use Deriver\Query\QueryScope;
+use Deriver\Query\ReturnQuery;
+use Deriver\Result\Serialization\JsonText;
+use Deriver\Result\Serialization\ValueReader;
 use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -58,7 +69,7 @@ final class SerializationContractTest extends TestCase
         $json = json_decode($result->toJson(), true, 512, JSON_THROW_ON_ERROR);
         self::assertIsArray($json);
         self::assertStringContainsString('~b64~' . base64_encode("constant:\xe8"), $result->toJson());
-        self::assertSame("constant:\xe8", (new \Deriver\Report\JsonText())->decode('~b64~' . base64_encode("constant:\xe8")));
+        self::assertSame("constant:\xe8", (new JsonText())->decode('~b64~' . base64_encode("constant:\xe8")));
     }
 
     /**
@@ -74,7 +85,7 @@ final class SerializationContractTest extends TestCase
         self::assertSame(3, $outcome->storage->cells['object:'.$identity]->operands['value']->native());
         self::assertSame($outcome->storage->bindings['x']->literal, $outcome->storage->bindings['y']->literal);
         self::assertTrue(\Tests\Fake\ReportSchema::accepts($result->toJson()));
-        $reader = \Deriver\Report\ValueReader::fromJson($result->toJson());
+        $reader = ValueReader::fromJson($result->toJson());
         self::assertSame('object', $reader->read('v0')->kind);
     }
 
@@ -97,13 +108,13 @@ final class SerializationContractTest extends TestCase
      */
     public function testCustomIntrinsicResultsRetainSecretInputRedaction(): void
     {
-        $intrinsic = self::createStub(\Deriver\Model\Intrinsic\PureIntrinsic::class);
-        $intrinsic->method('descriptor')->willReturn(new \Deriver\Model\Intrinsic\IntrinsicDescriptor('example.private', '1', 'example.private', 1, [0]));
+        $intrinsic = self::createStub(PureIntrinsic::class);
+        $intrinsic->method('descriptor')->willReturn(new IntrinsicDescriptor('example.private', '1', 'example.private', 1, [0]));
         $intrinsic->method('evaluate')->willReturn(Term::constant('derived-confidential-value'));
-        $signature = new \Deriver\Model\Signature\Signature([new \Deriver\Model\Signature\Parameter('value', 'string')]);
-        $plan = new \Deriver\Model\Plan\SemanticPlan([\Deriver\Model\Plan\Action::returns(new \Deriver\Model\Plan\Expression('intrinsic', 'example.private', [\Deriver\Model\Plan\Expression::parameter('value')]))]);
-        $model = new \Tests\Fake\PlanModel(new \Deriver\Model\ModelDescriptor('example.private', '1', 'derive_private', $signature), $plan);
-        $session = Analysis::session('<?php function target(string $input){return derive_private($input);}', new \Deriver\Api\Project\Configuration(models:[$model], intrinsics:[$intrinsic]));
+        $signature = new Signature([new Parameter('value', 'string')]);
+        $plan = new SemanticPlan([Action::returns(new Expression('intrinsic', 'example.private', [Expression::parameter('value')]))]);
+        $model = new \Tests\Fake\PlanModel(new ModelDescriptor('example.private', '1', 'derive_private', $signature), $plan);
+        $session = Analysis::session('<?php function target(string $input){return derive_private($input);}', new Configuration(models:[$model], intrinsics:[$intrinsic]));
         $result = $session->derive(new ReturnQuery('target', QueryScope::fromEntrypoints([new EntryPoint('target', [Term::constant('private-input', true)])])));
         self::assertSame([], $result->frontiers);
         self::assertTrue($result->normalOutcomes[0]->values['return']->isSecret());
@@ -148,13 +159,13 @@ final class SerializationContractTest extends TestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('providerCustomAggregateSelection')]
     public function testCustomAggregateSelectionsRetainSecretInputRedaction(string $body): void
     {
-        $intrinsic = self::createStub(\Deriver\Model\Intrinsic\PureIntrinsic::class);
-        $intrinsic->method('descriptor')->willReturn(new \Deriver\Model\Intrinsic\IntrinsicDescriptor('example.private', '1', 'example.private', 1, [0]));
+        $intrinsic = self::createStub(PureIntrinsic::class);
+        $intrinsic->method('descriptor')->willReturn(new IntrinsicDescriptor('example.private', '1', 'example.private', 1, [0]));
         $intrinsic->method('evaluate')->willReturn(Term::fromNative(['keep' => 'derived-confidential-value','drop' => 'discarded']));
-        $signature = new \Deriver\Model\Signature\Signature([new \Deriver\Model\Signature\Parameter('value', 'string')]);
-        $plan = new \Deriver\Model\Plan\SemanticPlan([\Deriver\Model\Plan\Action::returns(new \Deriver\Model\Plan\Expression('intrinsic', 'example.private', [\Deriver\Model\Plan\Expression::parameter('value')]))]);
-        $model = new \Tests\Fake\PlanModel(new \Deriver\Model\ModelDescriptor('example.private', '1', 'derive_private', $signature), $plan);
-        $session = Analysis::session('<?php function target(string $input){$a=derive_private($input);'.$body.'}', new \Deriver\Api\Project\Configuration(models:[$model], intrinsics:[$intrinsic]));
+        $signature = new Signature([new Parameter('value', 'string')]);
+        $plan = new SemanticPlan([Action::returns(new Expression('intrinsic', 'example.private', [Expression::parameter('value')]))]);
+        $model = new \Tests\Fake\PlanModel(new ModelDescriptor('example.private', '1', 'derive_private', $signature), $plan);
+        $session = Analysis::session('<?php function target(string $input){$a=derive_private($input);'.$body.'}', new Configuration(models:[$model], intrinsics:[$intrinsic]));
         $result = $session->derive(new ReturnQuery('target', QueryScope::fromEntrypoints([new EntryPoint('target', [Term::constant('private-input', true)])])));
         self::assertSame([], $result->frontiers);
         self::assertTrue($result->normalOutcomes[0]->values['return']->isSecret());

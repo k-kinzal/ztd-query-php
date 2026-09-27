@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Model\Provider;
 
+use Deriver\Model\Provider\EntryPointProvider;
+use Deriver\Project\EntryPoint;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -12,8 +14,8 @@ use PHPUnit\Framework\TestCase;
 /**
  * @covers \Deriver\Model\Provider\EntryPointProvider
  */
-#[CoversClass(\Deriver\Model\Provider\EntryPointProvider::class)]
-#[UsesClass(\Deriver\Api\Project\EntryPoint::class)]
+#[CoversClass(EntryPointProvider::class)]
+#[UsesClass(EntryPoint::class)]
 #[Small]
 final class EntryPointProviderTest extends TestCase
 {

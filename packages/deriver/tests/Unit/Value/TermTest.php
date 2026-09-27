@@ -4,6 +4,104 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Value;
 
+use Deriver\Analysis\QueryExecution;
+use Deriver\Analysis\QueryValidation;
+use Deriver\Analysis\ResultAssessment;
+use Deriver\Analysis\Session;
+use Deriver\Analyzer;
+use Deriver\ControlFlow\BasicBlock;
+use Deriver\ControlFlow\CallableGraph;
+use Deriver\ControlFlow\CallableIdentity;
+use Deriver\ControlFlow\Instruction;
+use Deriver\ControlFlow\Terminator;
+use Deriver\Evaluation\Call\ArgumentBinding;
+use Deriver\Evaluation\Call\ArgumentOrder;
+use Deriver\Evaluation\Call\Dispatch;
+use Deriver\Evaluation\Call\TypeBinding;
+use Deriver\Evaluation\Call\TypeCheck;
+use Deriver\Evaluation\Completion;
+use Deriver\Evaluation\Context;
+use Deriver\Evaluation\Control\ObservationLimit;
+use Deriver\Evaluation\Control\Resources;
+use Deriver\Evaluation\Control\StateJoin;
+use Deriver\Evaluation\Control\Unwinding;
+use Deriver\Evaluation\Demand\Discovery;
+use Deriver\Evaluation\Dependencies;
+use Deriver\Evaluation\InstructionTransfer;
+use Deriver\Evaluation\Machine;
+use Deriver\Evaluation\Model\SlotReference;
+use Deriver\Evaluation\ObservationCollector;
+use Deriver\Evaluation\Offset\Address;
+use Deriver\Evaluation\Offset\Path;
+use Deriver\Evaluation\Offset\Reader;
+use Deriver\Evaluation\Offset\Transfer;
+use Deriver\Evaluation\Operation\Conversions;
+use Deriver\Evaluation\Operation\ScalarErrors;
+use Deriver\Evaluation\State;
+use Deriver\Evaluation\Summary\Evaluation;
+use Deriver\Evaluation\Summary\Isolation;
+use Deriver\Evaluation\Transfer\MemoryStep;
+use Deriver\Evaluation\Transfer\PureStep;
+use Deriver\Evaluation\Transfer\ReferenceAssignment;
+use Deriver\Exception\InvalidInputException;
+use Deriver\Memory\Location;
+use Deriver\Memory\Materialization;
+use Deriver\Memory\Memory;
+use Deriver\Memory\ReferenceConstraint;
+use Deriver\Memory\StorageCapture;
+use Deriver\Model\Registration\Extensions;
+use Deriver\Model\Registration\ProviderInputs;
+use Deriver\Model\Registration\Registry;
+use Deriver\Model\Registration\StateRegistry;
+use Deriver\Project\Configuration;
+use Deriver\Project\EntryPoint;
+use Deriver\Project\ProjectInput;
+use Deriver\Project\ProjectSnapshot;
+use Deriver\Project\SourceFile;
+use Deriver\Project\SourceLimits;
+use Deriver\Project\TargetProfile;
+use Deriver\Query\Budget;
+use Deriver\Query\QueryScope;
+use Deriver\Query\ResourceLimits;
+use Deriver\Query\ReturnQuery;
+use Deriver\Reference\ResultRef;
+use Deriver\Reference\SourceRef;
+use Deriver\Result\Alternative;
+use Deriver\Result\Assessment;
+use Deriver\Result\Derivation;
+use Deriver\Result\DerivationResult;
+use Deriver\Result\Serialization\JsonText;
+use Deriver\Result\Serialization\QueryEncoding;
+use Deriver\Result\Serialization\ValueGraph;
+use Deriver\Result\Statistics;
+use Deriver\Result\StorageSnapshot;
+use Deriver\Source\Cache\GraphCache;
+use Deriver\Source\Cache\GraphTemplate;
+use Deriver\Source\Cache\SnapshotRebase;
+use Deriver\Source\Cache\SyntaxCache;
+use Deriver\Source\Cache\SyntaxTree;
+use Deriver\Source\Compilation\AggregateLowering;
+use Deriver\Source\Compilation\AssignmentLowering;
+use Deriver\Source\Compilation\CallableCompiler;
+use Deriver\Source\Compilation\Control\DestructuringLowering;
+use Deriver\Source\Compilation\ExpressionLowering;
+use Deriver\Source\Compilation\GraphBuilder;
+use Deriver\Source\Compilation\Lowering;
+use Deriver\Source\Compilation\StatementLowering;
+use Deriver\Source\Declaration\CallableSource;
+use Deriver\Source\Declaration\DeclarationScanner;
+use Deriver\Source\Declaration\ProjectIndex;
+use Deriver\Source\Declaration\Traits\Composition;
+use Deriver\Source\LineMap;
+use Deriver\Source\MagicContext;
+use Deriver\Source\SyntaxSize;
+use Deriver\Source\Validation\AssignmentPatterns;
+use Deriver\Source\Validation\ClassScope;
+use Deriver\Source\Validation\TargetSyntax;
+use Deriver\Value\Arrays;
+use Deriver\Value\Identity;
+use Deriver\Value\Operations;
+use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
@@ -11,103 +109,103 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 
-#[CoversClass(\Deriver\Value\Term::class)]
-#[UsesClass(\Deriver\Analyzer::class)]
-#[UsesClass(\Deriver\Api\Execution\ResourceLimits::class)]
-#[UsesClass(\Deriver\Api\Execution\SourceLimits::class)]
-#[UsesClass(\Deriver\Api\Project\Configuration::class)]
-#[UsesClass(\Deriver\Api\Project\EntryPoint::class)]
-#[UsesClass(\Deriver\Api\Project\ProjectInput::class)]
-#[UsesClass(\Deriver\Api\Project\ProjectSnapshot::class)]
-#[UsesClass(\Deriver\Api\Project\SourceFile::class)]
-#[UsesClass(\Deriver\Api\Project\TargetProfile::class)]
-#[UsesClass(\Deriver\Api\Query\Budget::class)]
-#[UsesClass(\Deriver\Api\Query\QueryScope::class)]
-#[UsesClass(\Deriver\Api\Query\ReturnQuery::class)]
-#[UsesClass(\Deriver\Api\Reference\ResultRef::class)]
-#[UsesClass(\Deriver\Api\Reference\SourceRef::class)]
-#[UsesClass(\Deriver\Api\Result\Alternative::class)]
-#[UsesClass(\Deriver\Api\Result\Assessment::class)]
-#[UsesClass(\Deriver\Api\Result\Derivation::class)]
-#[UsesClass(\Deriver\Api\Result\DerivationResult::class)]
-#[UsesClass(\Deriver\Api\Result\Statistics::class)]
-#[UsesClass(\Deriver\Api\Result\StorageSnapshot::class)]
-#[UsesClass(\Deriver\Internal\Api\QueryExecution::class)]
-#[UsesClass(\Deriver\Internal\Api\QueryValidation::class)]
-#[UsesClass(\Deriver\Internal\Api\ResultAssessment::class)]
-#[UsesClass(\Deriver\Internal\Api\Session::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\AggregateLowering::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\AssignmentLowering::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Cache\GraphCache::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Cache\GraphTemplate::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Cache\SnapshotRebase::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Cache\SyntaxCache::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Cache\SyntaxTree::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\CallableCompiler::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\CallableSource::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Control\DestructuringLowering::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\DeclarationScanner::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\ExpressionLowering::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\GraphBuilder::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Lowering::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\ProjectIndex::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Source\LineMap::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Source\MagicContext::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Source\SyntaxSize::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\StatementLowering::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Traits\Composition::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Validation\AssignmentPatterns::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Validation\ClassScope::class)]
-#[UsesClass(\Deriver\Internal\Frontend\Php\Validation\TargetSyntax::class)]
-#[UsesClass(\Deriver\Internal\IR\BasicBlock::class)]
-#[UsesClass(\Deriver\Internal\IR\CallableIR::class)]
-#[UsesClass(\Deriver\Internal\IR\CallableIdentity::class)]
-#[UsesClass(\Deriver\Internal\IR\Instruction::class)]
-#[UsesClass(\Deriver\Internal\IR\Terminator::class)]
-#[UsesClass(\Deriver\Internal\Memory\Location::class)]
-#[UsesClass(\Deriver\Internal\Memory\Materialization::class)]
-#[UsesClass(\Deriver\Internal\Memory\Memory::class)]
-#[UsesClass(\Deriver\Internal\Memory\ReferenceConstraint::class)]
-#[UsesClass(\Deriver\Internal\Memory\StorageCapture::class)]
-#[UsesClass(\Deriver\Internal\Model\Extensions::class)]
-#[UsesClass(\Deriver\Internal\Model\ProviderInputs::class)]
-#[UsesClass(\Deriver\Internal\Model\Registry::class)]
-#[UsesClass(\Deriver\Internal\Model\StateRegistry::class)]
-#[UsesClass(\Deriver\Internal\Solver\Call\ArgumentBinding::class)]
-#[UsesClass(\Deriver\Internal\Solver\Call\ArgumentOrder::class)]
-#[UsesClass(\Deriver\Internal\Solver\Call\Dispatch::class)]
-#[UsesClass(\Deriver\Internal\Solver\Call\TypeBinding::class)]
-#[UsesClass(\Deriver\Internal\Solver\Call\TypeCheck::class)]
-#[UsesClass(\Deriver\Internal\Solver\Completion::class)]
-#[UsesClass(\Deriver\Internal\Solver\Context::class)]
-#[UsesClass(\Deriver\Internal\Solver\Control\ObservationLimit::class)]
-#[UsesClass(\Deriver\Internal\Solver\Control\Resources::class)]
-#[UsesClass(\Deriver\Internal\Solver\Control\StateJoin::class)]
-#[UsesClass(\Deriver\Internal\Solver\Control\Unwinding::class)]
-#[UsesClass(\Deriver\Internal\Solver\Demand\Discovery::class)]
-#[UsesClass(\Deriver\Internal\Solver\Dependencies::class)]
-#[UsesClass(\Deriver\Internal\Solver\InstructionTransfer::class)]
-#[UsesClass(\Deriver\Internal\Solver\Machine::class)]
-#[UsesClass(\Deriver\Internal\Solver\Model\SlotReference::class)]
-#[UsesClass(\Deriver\Internal\Solver\ObservationCollector::class)]
-#[UsesClass(\Deriver\Internal\Solver\Offset\Address::class)]
-#[UsesClass(\Deriver\Internal\Solver\Offset\Path::class)]
-#[UsesClass(\Deriver\Internal\Solver\Offset\Reader::class)]
-#[UsesClass(\Deriver\Internal\Solver\Offset\Transfer::class)]
-#[UsesClass(\Deriver\Internal\Solver\Operation\Conversions::class)]
-#[UsesClass(\Deriver\Internal\Solver\Operation\ScalarErrors::class)]
-#[UsesClass(\Deriver\Internal\Solver\State::class)]
-#[UsesClass(\Deriver\Internal\Solver\Summary\Evaluation::class)]
-#[UsesClass(\Deriver\Internal\Solver\Summary\Isolation::class)]
-#[UsesClass(\Deriver\Internal\Solver\Transfer\MemoryStep::class)]
-#[UsesClass(\Deriver\Internal\Solver\Transfer\PureStep::class)]
-#[UsesClass(\Deriver\Internal\Solver\Transfer\ReferenceAssignment::class)]
-#[UsesClass(\Deriver\Internal\Value\Arrays::class)]
-#[UsesClass(\Deriver\Internal\Value\Identity::class)]
-#[UsesClass(\Deriver\Internal\Value\PhpSemantics::class)]
-#[UsesClass(\Deriver\Report\JsonText::class)]
-#[UsesClass(\Deriver\Report\QueryEncoding::class)]
-#[UsesClass(\Deriver\Report\ValueGraph::class)]
+#[CoversClass(Term::class)]
+#[UsesClass(QueryExecution::class)]
+#[UsesClass(QueryValidation::class)]
+#[UsesClass(ResultAssessment::class)]
+#[UsesClass(Session::class)]
+#[UsesClass(Analyzer::class)]
+#[UsesClass(BasicBlock::class)]
+#[UsesClass(CallableGraph::class)]
+#[UsesClass(CallableIdentity::class)]
+#[UsesClass(Instruction::class)]
+#[UsesClass(Terminator::class)]
+#[UsesClass(ArgumentBinding::class)]
+#[UsesClass(ArgumentOrder::class)]
+#[UsesClass(Dispatch::class)]
+#[UsesClass(TypeBinding::class)]
+#[UsesClass(TypeCheck::class)]
+#[UsesClass(Completion::class)]
+#[UsesClass(Context::class)]
+#[UsesClass(ObservationLimit::class)]
+#[UsesClass(Resources::class)]
+#[UsesClass(StateJoin::class)]
+#[UsesClass(Unwinding::class)]
+#[UsesClass(Discovery::class)]
+#[UsesClass(Dependencies::class)]
+#[UsesClass(InstructionTransfer::class)]
+#[UsesClass(Machine::class)]
+#[UsesClass(SlotReference::class)]
+#[UsesClass(ObservationCollector::class)]
+#[UsesClass(Address::class)]
+#[UsesClass(Path::class)]
+#[UsesClass(Reader::class)]
+#[UsesClass(Transfer::class)]
+#[UsesClass(Conversions::class)]
+#[UsesClass(ScalarErrors::class)]
+#[UsesClass(State::class)]
+#[UsesClass(Evaluation::class)]
+#[UsesClass(Isolation::class)]
+#[UsesClass(MemoryStep::class)]
+#[UsesClass(PureStep::class)]
+#[UsesClass(ReferenceAssignment::class)]
+#[UsesClass(Location::class)]
+#[UsesClass(Materialization::class)]
+#[UsesClass(Memory::class)]
+#[UsesClass(ReferenceConstraint::class)]
+#[UsesClass(StorageCapture::class)]
+#[UsesClass(Extensions::class)]
+#[UsesClass(ProviderInputs::class)]
+#[UsesClass(Registry::class)]
+#[UsesClass(StateRegistry::class)]
+#[UsesClass(Configuration::class)]
+#[UsesClass(EntryPoint::class)]
+#[UsesClass(ProjectInput::class)]
+#[UsesClass(ProjectSnapshot::class)]
+#[UsesClass(SourceFile::class)]
+#[UsesClass(SourceLimits::class)]
+#[UsesClass(TargetProfile::class)]
+#[UsesClass(Budget::class)]
+#[UsesClass(QueryScope::class)]
+#[UsesClass(ResourceLimits::class)]
+#[UsesClass(ReturnQuery::class)]
+#[UsesClass(ResultRef::class)]
+#[UsesClass(SourceRef::class)]
+#[UsesClass(Alternative::class)]
+#[UsesClass(Assessment::class)]
+#[UsesClass(Derivation::class)]
+#[UsesClass(DerivationResult::class)]
+#[UsesClass(JsonText::class)]
+#[UsesClass(QueryEncoding::class)]
+#[UsesClass(ValueGraph::class)]
+#[UsesClass(Statistics::class)]
+#[UsesClass(StorageSnapshot::class)]
+#[UsesClass(GraphCache::class)]
+#[UsesClass(GraphTemplate::class)]
+#[UsesClass(SnapshotRebase::class)]
+#[UsesClass(SyntaxCache::class)]
+#[UsesClass(SyntaxTree::class)]
+#[UsesClass(AggregateLowering::class)]
+#[UsesClass(AssignmentLowering::class)]
+#[UsesClass(CallableCompiler::class)]
+#[UsesClass(DestructuringLowering::class)]
+#[UsesClass(ExpressionLowering::class)]
+#[UsesClass(GraphBuilder::class)]
+#[UsesClass(Lowering::class)]
+#[UsesClass(StatementLowering::class)]
+#[UsesClass(CallableSource::class)]
+#[UsesClass(DeclarationScanner::class)]
+#[UsesClass(ProjectIndex::class)]
+#[UsesClass(Composition::class)]
+#[UsesClass(LineMap::class)]
+#[UsesClass(MagicContext::class)]
+#[UsesClass(SyntaxSize::class)]
+#[UsesClass(AssignmentPatterns::class)]
+#[UsesClass(ClassScope::class)]
+#[UsesClass(TargetSyntax::class)]
+#[UsesClass(Arrays::class)]
+#[UsesClass(Identity::class)]
+#[UsesClass(Operations::class)]
 #[Small]
 final class TermTest extends TestCase
 {
@@ -123,14 +221,14 @@ final class TermTest extends TestCase
     }
     public function testConstantPreservesConfidentiality(): void
     {
-        $value = \Deriver\Value\Term::constant('token', true);
+        $value = Term::constant('token', true);
         self::assertTrue($value->isSecret());
         self::assertSame('token', $value->native());
     }
 
     public function testParameterKeepsItsDeclaredType(): void
     {
-        $value = \Deriver\Value\Term::parameter('id', 'int');
+        $value = Term::parameter('id', 'int');
         self::assertSame('parameter', $value->kind);
         self::assertSame('int', $value->attributes['type']);
         self::assertFalse($value->isConcrete());
@@ -138,39 +236,39 @@ final class TermTest extends TestCase
 
     public function testArrayPreservesKeyOrder(): void
     {
-        $value = \Deriver\Value\Term::array(['name' => \Deriver\Value\Term::constant('a'), 4 => \Deriver\Value\Term::constant(2)]);
+        $value = Term::array(['name' => Term::constant('a'), 4 => Term::constant(2)]);
         self::assertSame(['name', 4], array_keys($value->operands));
         self::assertSame(['name' => 'a', 4 => 2], $value->native());
     }
 
     public function testOpaqueRetainsKnownDependencies(): void
     {
-        $input = \Deriver\Value\Term::parameter('input');
-        $value = \Deriver\Value\Term::opaque('MISSING_CALL_MODEL', 'string', [$input]);
+        $input = Term::parameter('input');
+        $value = Term::opaque('MISSING_CALL_MODEL', 'string', [$input]);
         self::assertSame([$input], $value->operands);
         self::assertFalse($value->isConcrete());
     }
 
     public function testFromNativeRejectsApplicationObjects(): void
     {
-        $this->expectException(\Deriver\Api\InvalidInputException::class);
-        \Deriver\Value\Term::fromNative(new stdClass());
+        $this->expectException(InvalidInputException::class);
+        Term::fromNative(new stdClass());
     }
 
     public function testIsConcreteRejectsOpenArrayRemainders(): void
     {
-        self::assertFalse(\Deriver\Value\Term::array(['id' => \Deriver\Value\Term::constant(1)], true)->isConcrete());
+        self::assertFalse(Term::array(['id' => Term::constant(1)], true)->isConcrete());
     }
 
     public function testNativeRejectsSymbolicInputs(): void
     {
-        $this->expectException(\Deriver\Api\InvalidInputException::class);
-        \Deriver\Value\Term::parameter('id')->native();
+        $this->expectException(InvalidInputException::class);
+        Term::parameter('id')->native();
     }
 
     public function testIsSecretPropagatesThroughExpressionOperands(): void
     {
-        $value = new \Deriver\Value\Term('concat', operands: [\Deriver\Value\Term::constant('a'), \Deriver\Value\Term::constant('token', true)]);
+        $value = new Term('concat', operands: [Term::constant('a'), Term::constant('token', true)]);
         self::assertTrue($value->isSecret());
     }
 
@@ -178,22 +276,22 @@ final class TermTest extends TestCase
     {
         $value = [];
         $value['cycle'] = &$value;
-        $this->expectException(\Deriver\Api\InvalidInputException::class);
-        \Deriver\Value\Term::fromNative($value);
+        $this->expectException(InvalidInputException::class);
+        Term::fromNative($value);
     }
     public function testIsConcreteTraversesSharedArraySubgraphsOnce(): void
     {
-        $value = \Tests\Fake\ValueDocument::shared(64, \Deriver\Value\Term::constant(1));
+        $value = \Tests\Fake\ValueDocument::shared(64, Term::constant(1));
         self::assertTrue($value->isConcrete());
     }
     public function testIsSecretTraversesSharedPublicSubgraphsOnce(): void
     {
-        $value = \Tests\Fake\ValueDocument::shared(64, \Deriver\Value\Term::constant(1));
+        $value = \Tests\Fake\ValueDocument::shared(64, Term::constant(1));
         self::assertFalse($value->isSecret());
     }
     public function testNativePreservesCopyOnWriteIsolationForSharedSubgraphs(): void
     {
-        $value = \Tests\Fake\ValueDocument::shared(8, \Deriver\Value\Term::constant(1));
+        $value = \Tests\Fake\ValueDocument::shared(8, Term::constant(1));
         $native = $value->native();
         self::assertIsArray($native);
         self::assertIsArray($native[0]);
@@ -206,18 +304,18 @@ final class TermTest extends TestCase
     }
     public function testNativeMaterializesADeepSharedArrayWithoutExpandingAllPaths(): void
     {
-        $value = \Tests\Fake\ValueDocument::shared(64, \Deriver\Value\Term::constant(1));
+        $value = \Tests\Fake\ValueDocument::shared(64, Term::constant(1));
         self::assertTrue(is_array($value->native()));
     }
     public function testIsConcreteHandlesDeepSharedGraphsWithoutRecursion(): void
     {
-        $value = \Tests\Fake\ValueDocument::shared(2000, \Deriver\Value\Term::constant(1));
+        $value = \Tests\Fake\ValueDocument::shared(2000, Term::constant(1));
         self::assertTrue($value->isConcrete());
         self::assertFalse($value->isSecret());
     }
     public function testIsSecretHandlesDeepSharedGraphsWithoutRecursion(): void
     {
-        $value = \Tests\Fake\ValueDocument::shared(2000, \Deriver\Value\Term::constant('secret', true));
+        $value = \Tests\Fake\ValueDocument::shared(2000, Term::constant('secret', true));
         self::assertTrue($value->isSecret());
     }
 }

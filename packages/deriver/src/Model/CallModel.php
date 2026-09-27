@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Deriver\Model;
 
+use Deriver\Exception\ModelException;
+
 /**
  * Supplies API meaning as a declarative plan; the core binds and evaluates calls.
  *

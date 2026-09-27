@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Deriver\Value;
 
-use Deriver\Api\InvalidInputException;
+use Deriver\Exception\InvalidInputException;
 use WeakMap;
 
 /**

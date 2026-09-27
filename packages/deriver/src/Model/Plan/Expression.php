@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Deriver\Model\Plan;
 
+use Deriver\Model\Binding\LocationRef;
 use Deriver\Value\Term;
 
 /**
@@ -20,9 +21,9 @@ final class Expression
      * @param string $name Parameter, intrinsic, slot, or operator name
      * @param list<self> $operands Ordered subexpressions
      * @param Term|null $constant Literal value
-     * @param \Deriver\Model\Binding\LocationRef|null $location Storage read by a location expression
+     * @param LocationRef|null $location Storage read by a location expression
      */
-    public function __construct(public readonly string $operation, public readonly string $name = '', public readonly array $operands = [], public readonly ?Term $constant = null, public readonly ?\Deriver\Model\Binding\LocationRef $location = null)
+    public function __construct(public readonly string $operation, public readonly string $name = '', public readonly array $operands = [], public readonly ?Term $constant = null, public readonly ?LocationRef $location = null)
     {
     }
 
@@ -80,10 +81,10 @@ final class Expression
 
     /**
      * Reads a parameter, state slot, or array element through core storage semantics.
-     * @param \Deriver\Model\Binding\LocationRef $location Declarative address
+     * @param LocationRef $location Declarative address
      * @return self Storage read expression
      */
-    public static function read(\Deriver\Model\Binding\LocationRef $location): self
+    public static function read(LocationRef $location): self
     {
         return new self('location-read', location: $location);
     }

@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\ModelContract;
 
-use Deriver\Api\Project\Configuration;
-use Deriver\Api\Query\ReturnQuery;
 use Deriver\Model\ModelDescriptor;
 use Deriver\Model\Plan\Action;
 use Deriver\Model\Plan\Expression;
 use Deriver\Model\Plan\SemanticPlan;
 use Deriver\Model\Signature\Parameter;
 use Deriver\Model\Signature\Signature;
+use Deriver\Project\Configuration;
+use Deriver\Query\ReturnQuery;
+use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Small;
@@ -87,10 +88,8 @@ final class ExtensionContractTest extends TestCase
     {
         $model = new PlanModel(new ModelDescriptor('example.broken', '1', 'MiniBuilder::broken'), new SemanticPlan([Action::write('unlisted.slot', Expression::receiver()), Action::returns(Expression::receiver())]));
         $session = Analysis::session('<?php class MiniBuilder{}function target(){return (new MiniBuilder)->broken();}', new Configuration(models: [$model]));
-        $result = $session->derive(new ReturnQuery('target'));
-        self::assertSame('MODEL_CONTRACT_VIOLATION', $result->frontiers[0]->code);
-        self::assertSame('open', $result->assessment->closure);
-        self::assertNotEmpty($result->exceptionalOutcomes);
+        $this->expectException(\Deriver\Exception\ModelContractException::class);
+        $session->derive(new ReturnQuery('target'));
     }
 
     /**
@@ -99,7 +98,7 @@ final class ExtensionContractTest extends TestCase
      */
     public function testReferenceModelInitializesNullablePropertiesThroughItsDeclaredBinding(): void
     {
-        $model = new PlanModel(new ModelDescriptor('example.set', '1', 'set', new Signature([new Parameter('value', byReference: true)])), new SemanticPlan([new Action('write-parameter', [Expression::literal(\Deriver\Value\Term::constant(2))], 'value'), Action::returns(Expression::literal(\Deriver\Value\Term::constant(null)))], writes: ['parameter:value']));
+        $model = new PlanModel(new ModelDescriptor('example.set', '1', 'set', new Signature([new Parameter('value', byReference: true)])), new SemanticPlan([new Action('write-parameter', [Expression::literal(Term::constant(2))], 'value'), Action::returns(Expression::literal(Term::constant(null)))], writes: ['parameter:value']));
         $session = Analysis::session('<?php class Box{public ?int $value;}function target(){$box=new Box;set($box->value);return $box->value;}', new Configuration(models: [$model]));
         $result = $session->derive(new ReturnQuery('target'));
         self::assertSame(2, $result->normalOutcomes[0]->values['return']->native());
@@ -113,7 +112,7 @@ final class ExtensionContractTest extends TestCase
      */
     public function testReplacementSignatureControlsReferencePreparation(): void
     {
-        $model = new PlanModel(new ModelDescriptor('example.set', '1', 'set', new Signature([new Parameter('value', byReference: true)]), replaceSource: true), new SemanticPlan([new Action('write-parameter', [Expression::literal(\Deriver\Value\Term::constant(2))], 'value'), Action::returns(Expression::literal(\Deriver\Value\Term::constant(null)))], writes: ['parameter:value']));
+        $model = new PlanModel(new ModelDescriptor('example.set', '1', 'set', new Signature([new Parameter('value', byReference: true)]), replaceSource: true), new SemanticPlan([new Action('write-parameter', [Expression::literal(Term::constant(2))], 'value'), Action::returns(Expression::literal(Term::constant(null)))], writes: ['parameter:value']));
         $session = Analysis::session('<?php function set($value){}function target(){set($value);return $value;}', new Configuration(models: [$model]));
         $result = $session->derive(new ReturnQuery('target'));
         self::assertSame(2, $result->normalOutcomes[0]->values['return']->native());

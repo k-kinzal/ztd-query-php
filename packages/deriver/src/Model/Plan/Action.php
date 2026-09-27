@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Deriver\Model\Plan;
 
+use Deriver\Model\Binding\LocationRef;
+
 /**
  * An ordered state effect, callback invocation, branch, or completion.
  *
@@ -19,7 +21,7 @@ final class Action
      * @param string $name State slot, call target, or result binding
      * @param list<self> $yes True branch actions
      * @param list<self> $no False branch actions
-     * @param list<\Deriver\Model\Binding\LocationRef> $locations Ordered storage targets
+     * @param list<LocationRef> $locations Ordered storage targets
      * @param list<CallArgument> $arguments Ordered invocation or constructor arguments
      * @param bool $referenceResult Whether to retain a returned reference in the result binding
      * @param bool $mayThrow Whether an explicit havoc may also complete exceptionally
@@ -76,32 +78,32 @@ final class Action
 
     /**
      * Writes a reference parameter, local result, state slot, or array element.
-     * @param \Deriver\Model\Binding\LocationRef $location Destination
+     * @param LocationRef $location Destination
      * @param Expression $value Assigned value
      * @return self Ordered storage update
      */
-    public static function assign(\Deriver\Model\Binding\LocationRef $location, Expression $value): self
+    public static function assign(LocationRef $location, Expression $value): self
     {
         return new self('location-write', [$value], locations: [$location]);
     }
 
     /**
      * Rebinds one address to the cell exposed by another address.
-     * @param \Deriver\Model\Binding\LocationRef $destination Rebound location
-     * @param \Deriver\Model\Binding\LocationRef $source Shared cell
+     * @param LocationRef $destination Rebound location
+     * @param LocationRef $source Shared cell
      * @return self Reference alias action
      */
-    public static function alias(\Deriver\Model\Binding\LocationRef $destination, \Deriver\Model\Binding\LocationRef $source): self
+    public static function alias(LocationRef $destination, LocationRef $source): self
     {
         return new self('alias', locations: [$destination, $source]);
     }
 
     /**
      * Returns a shared cell; the model signature must declare a reference return.
-     * @param \Deriver\Model\Binding\LocationRef $location Returned cell
+     * @param LocationRef $location Returned cell
      * @return self Reference completion
      */
-    public static function returnReference(\Deriver\Model\Binding\LocationRef $location): self
+    public static function returnReference(LocationRef $location): self
     {
         return new self('return-reference', locations: [$location]);
     }
@@ -142,7 +144,7 @@ final class Action
     }
     /**
      * Marks explicitly listed storage effects as unresolved, preserving a possible exceptional exit.
-     * @param list<\Deriver\Model\Binding\LocationRef> $locations Potentially modified storage
+     * @param list<LocationRef> $locations Potentially modified storage
      * @param string $reason Explanation of the unavailable behavior
      * @param bool $mayThrow Whether the behavior can throw after the declared effects
      * @return self Conservative state effect and model frontier

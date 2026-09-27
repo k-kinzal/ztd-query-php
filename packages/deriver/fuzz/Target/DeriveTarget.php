@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace Fuzz\Target;
 
 use Deriver\Analyzer;
-use Deriver\Api\Project\ProjectInput;
-use Deriver\Api\Project\SourceFile;
-use Deriver\Api\Query\Budget;
-use Deriver\Api\Query\ReturnQuery;
+use Deriver\Exception\InvalidInputException;
+use Deriver\Project\ProjectInput;
+use Deriver\Project\SourceFile;
+use Deriver\Query\Budget;
+use Deriver\Query\ReturnQuery;
 use JsonException;
 use RuntimeException;
 
@@ -29,7 +30,7 @@ final class DeriveTarget
         $source = '<?php function target($input) {' . $input . '}';
         try {
             $session = (new Analyzer())->open(new ProjectInput([new SourceFile('fuzz.php', $source)]));
-        } catch (\Deriver\Api\InvalidInputException $failure) {
+        } catch (InvalidInputException $failure) {
             if (str_starts_with($failure->getMessage(), 'SOURCE_LIMIT:')) {
                 return;
             }

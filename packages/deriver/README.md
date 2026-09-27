@@ -18,9 +18,9 @@ composer require k-kinzal/deriver
 
 ```php
 use Deriver\Analyzer;
-use Deriver\Api\Project\ProjectInput;
-use Deriver\Api\Project\SourceFile;
-use Deriver\Api\Query\ReturnQuery;
+use Deriver\Project\ProjectInput;
+use Deriver\Project\SourceFile;
+use Deriver\Query\ReturnQuery;
 
 $session = (new Analyzer())->open(new ProjectInput([
     new SourceFile('app.php', <<<'PHP'
@@ -44,8 +44,8 @@ A symbolic parameter is a valid result. A missing source body, unsupported opera
 ## Supply an entry context
 
 ```php
-use Deriver\Api\Project\EntryPoint;
-use Deriver\Api\Query\QueryScope;
+use Deriver\Project\EntryPoint;
+use Deriver\Query\QueryScope;
 use Deriver\Value\Term;
 
 $query = new ReturnQuery('userKey', QueryScope::fromEntrypoints([
@@ -63,7 +63,7 @@ The default scope represents arbitrary valid inputs. A parameter default is eval
 `callsTo()` returns source references to already evaluated argument registers and to the invocation point. Use `TupleQuery` to keep argument combinations correlated, or `StateQuery` to inspect a local variable or a projection of its object state. Reusing these references does not execute the argument expressions again.
 
 ```php
-use Deriver\Api\Query\TupleQuery;
+use Deriver\Query\TupleQuery;
 
 $sites = $session->callsTo('observe');
 // For a source project containing observe($name, $id):
@@ -76,14 +76,14 @@ $sites = $session->callsTo('observe');
 ## Documentation
 
 - [Queries and result interpretation](docs/api.md)
+- [Derivation algorithm and concepts](docs/algorithm.md)
 - [Semantic contract](docs/design.md)
 - [Capability manifest](docs/capabilities.md)
 - [Acceptance requirements and verification](docs/acceptance.md)
 - [PHP language semantics](docs/language.md)
 - [Writing call models and providers](docs/models.md)
-- [Runnable examples](examples/README.md)
 - [JSON values, metadata, and confidentiality](docs/json.md)
-- [Benchmark corpus and measurements](bench/README.md)
+- [Benchmark corpus and measurements](docs/benchmarks.md)
 
 ## Development checks
 

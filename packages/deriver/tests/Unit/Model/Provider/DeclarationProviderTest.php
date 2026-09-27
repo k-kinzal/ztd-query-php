@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Model\Provider;
 
+use Deriver\Model\Provider\DeclarationProvider;
+use Deriver\Project\ProjectInput;
+use Deriver\Project\SourceFile;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -12,13 +15,9 @@ use PHPUnit\Framework\TestCase;
 /**
  * @covers \Deriver\Model\Provider\DeclarationProvider
  */
-#[CoversClass(\Deriver\Model\Provider\DeclarationProvider::class)]
-#[UsesClass(\Deriver\Api\Project\ProjectInput::class)]
-#[UsesClass(\Deriver\Api\Project\SourceFile::class)]
-#[UsesClass(\Deriver\Model\Provider\DispatchProvider::class)]
-#[UsesClass(\Deriver\Model\Provider\EntryPointProvider::class)]
-#[UsesClass(\Deriver\Model\Provider\EnvironmentProvider::class)]
-#[UsesClass(\Deriver\Model\Provider\ObservationProvider::class)]
+#[CoversClass(DeclarationProvider::class)]
+#[UsesClass(ProjectInput::class)]
+#[UsesClass(SourceFile::class)]
 #[Small]
 final class DeclarationProviderTest extends TestCase
 {

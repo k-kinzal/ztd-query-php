@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Model\Domain;
 
+use Deriver\Model\Domain\AbstractDomain;
+use Deriver\Model\Domain\DomainFact;
+use Deriver\Value\Projection;
+use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -12,10 +16,10 @@ use PHPUnit\Framework\TestCase;
 /**
  * @covers \Deriver\Model\Domain\AbstractDomain
  */
-#[CoversClass(\Deriver\Model\Domain\AbstractDomain::class)]
-#[UsesClass(\Deriver\Model\Domain\DomainFact::class)]
-#[UsesClass(\Deriver\Value\Projection::class)]
-#[UsesClass(\Deriver\Value\Term::class)]
+#[CoversClass(AbstractDomain::class)]
+#[UsesClass(DomainFact::class)]
+#[UsesClass(Projection::class)]
+#[UsesClass(Term::class)]
 #[Small]
 final class AbstractDomainTest extends TestCase
 {
@@ -44,8 +48,8 @@ final class AbstractDomainTest extends TestCase
     public function testJoinPreservesBothDisjointRecords(): void
     {
         $domain = new \Tests\Fake\PolicyDomain();
-        $a = new \Deriver\Model\Domain\DomainFact($domain->id(), \Deriver\Value\Term::fromNative(['ttl' => 1]));
-        $b = new \Deriver\Model\Domain\DomainFact($domain->id(), \Deriver\Value\Term::fromNative(['ttl' => 2]));
+        $a = new DomainFact($domain->id(), Term::fromNative(['ttl' => 1]));
+        $b = new DomainFact($domain->id(), Term::fromNative(['ttl' => 2]));
         $join = $domain->join($a, $b);
         self::assertTrue($domain->lessOrEqual($a, $join));
         self::assertTrue($domain->lessOrEqual($b, $join));
@@ -58,7 +62,7 @@ final class AbstractDomainTest extends TestCase
     public function testProjectSelectsOneKnownPolicyField(): void
     {
         $domain = new \Tests\Fake\PolicyDomain();
-        $fact = new \Deriver\Model\Domain\DomainFact($domain->id(), \Deriver\Value\Term::fromNative(['ttl' => 3]));
-        self::assertSame(3, $domain->project($fact, new \Deriver\Value\Projection(['ttl']))->representation->native());
+        $fact = new DomainFact($domain->id(), Term::fromNative(['ttl' => 3]));
+        self::assertSame(3, $domain->project($fact, new Projection(['ttl']))->representation->native());
     }
 }

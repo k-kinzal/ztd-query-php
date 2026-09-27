@@ -79,13 +79,9 @@
         "test:semantic": "phpunit --testsuite semantic",
         "test:models": "phpunit --testsuite model-contract",
         "test:differential": "phpunit --testsuite differential",
-        "bench": "@php bench/run.php",
+        "bench": "@php bench/Bench.php",
         "fuzz": "@fuzz:smoke",
-        "fuzz:smoke": [
-            "@fuzz:seed",
-            "@php fuzz/run.php 100"
-        ],
-        "fuzz:seed": "@php fuzz/seed.php",
+        "fuzz:smoke": "@php fuzz/run.php 100",
         "fuzz:semantic": "@php fuzz/semantic.php 100"
     },
     "scripts-descriptions": {

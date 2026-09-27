@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Fake\Oracle;
 
 use Closure;
-use Deriver\Api\Project\EntryPoint;
-use Deriver\Api\Query\QueryScope;
-use Deriver\Api\Query\ReturnQuery;
+use Deriver\Project\EntryPoint;
+use Deriver\Query\QueryScope;
+use Deriver\Query\ReturnQuery;
 use Deriver\Value\Term;
 use JsonException;
 use Tests\Fake\Analysis;

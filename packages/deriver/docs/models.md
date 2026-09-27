@@ -29,7 +29,7 @@ $plan = new SemanticPlan([
 ]);
 ```
 
-See the complete [reference model example](../examples/reference-model.php) for registration and invocation.
+Register the model in `Configuration::models` when opening an analysis session.
 
 ## Normalized inputs
 
@@ -88,7 +88,7 @@ For a modeled caller's reference parameter, declare `new Parameter('value', byRe
 Register each slot with `Configuration::stateSlots`:
 
 ```php
-use Deriver\Api\Project\Configuration;
+use Deriver\Project\Configuration;
 use Deriver\Model\State\StateSlot;
 
 $configuration = new Configuration(stateSlots: [
@@ -109,7 +109,7 @@ Slots have separate storage from PHP properties. Reading a slot does not trigger
 
 List direct slot reads in `SemanticPlan::reads` and writes/reference exposure in `SemanticPlan::writes`. Nested element updates also read the containing array. Unregistered slots and undeclared direct effects fail plan validation.
 
-Use `Projection::stateSlot('example.builder.table')` with a `StateQuery` or `ValueQuery` to observe a slot without invoking a getter. A further path selects an entry inside the slot. See [the builder state example](../examples/builder-state.php).
+Use `Projection::stateSlot('example.builder.table')` with a `StateQuery` or `ValueQuery` to observe a slot without invoking a getter. A further path selects an entry inside the slot.
 
 ## Selection and versioning
 
@@ -134,8 +134,8 @@ Change a model's version when its behavior changes. Model signatures, slot contr
 A declaration provider returns `ProjectInput`. Use `SourceFile::declarationsOnly` when implementations are unavailable:
 
 ```php
-use Deriver\Api\Project\ProjectInput;
-use Deriver\Api\Project\SourceFile;
+use Deriver\Project\ProjectInput;
+use Deriver\Project\SourceFile;
 
 $declarations = new ProjectInput([
     new SourceFile('external.stub.php', <<<'PHP'
@@ -161,7 +161,9 @@ Use `AbstractDomain` when an extension needs its own inclusion, join, widening, 
 
 Models and providers are trusted PHP extensions running inside the analyzer. Application files remain data. The SDK does not download extensions or sandbox their implementation.
 
-Plugin callback exceptions, unsupported plan operations, undeclared footprints, and invalid domain results produce explicit contract failures. Plans have finite registration limits and use the same query budgets as source. Model contract fixtures cover [locations and invocation](../tests/ModelContract/LocationContractTest.php), [slot lifecycles](../tests/ModelContract/StateSlotContractTest.php), and [external declarations](../tests/ModelContract/DeclarationContractTest.php).
+Failures in trusted model implementations propagate to the caller as their original exception, preserving the stack and cause. This includes programming errors such as `TypeError`. Operational failures may use `Deriver\Exception\ModelException`. They are not converted to unknown values, unsupported decisions, or exceptions in the analyzed application.
+
+An invalid plan or domain operation raises `Deriver\Exception\ModelContractException`. An unsupported application operation instead uses `ModelDecision::unsupported()` or a declared residual. These cases have distinct handling: fix the model for a contract violation, or inspect the result's frontier for missing analysis semantics. Plans have finite registration limits and use the same query budgets as source. Model contract fixtures cover [locations and invocation](../tests/ModelContract/LocationContractTest.php), [slot lifecycles](../tests/ModelContract/StateSlotContractTest.php), and [external declarations](../tests/ModelContract/DeclarationContractTest.php).
 
 ## Native scalar coercion and overloads
 

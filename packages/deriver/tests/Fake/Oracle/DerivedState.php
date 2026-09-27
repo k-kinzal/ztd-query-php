@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fake\Oracle;
 
-use Deriver\Api\Result\StorageSnapshot;
+use Deriver\Result\StorageSnapshot;
 use Deriver\Value\Term;
 use JsonException;
 

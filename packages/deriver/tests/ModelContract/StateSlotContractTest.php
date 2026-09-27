@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\ModelContract;
 
-use Deriver\Api\Project\Configuration;
-use Deriver\Api\Query\ReturnQuery;
 use Deriver\Model\Binding\LocationRef;
 use Deriver\Model\ModelDescriptor;
 use Deriver\Model\Plan\Action;
@@ -14,6 +12,10 @@ use Deriver\Model\Plan\SemanticPlan;
 use Deriver\Model\Signature\Parameter;
 use Deriver\Model\Signature\Signature;
 use Deriver\Model\State\StateSlot;
+use Deriver\Project\Configuration;
+use Deriver\Query\ReturnQuery;
+use Deriver\Query\StateQuery;
+use Deriver\Value\Projection;
 use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -135,7 +137,7 @@ final class StateSlotContractTest extends TestCase
     {
         $session = Analysis::session('<?php class Box{}function target(){$box=new Box;$box->write(9);observe($box);}', SlotModels::configuration(new StateSlot('example.slot', 'int', Term::constant(1))));
         $point = $session->callsTo('observe')[0]->beforeInvocation();
-        $result = $session->derive(new \Deriver\Api\Query\StateQuery($point, 'box', \Deriver\Value\Projection::stateSlot('example.slot')));
+        $result = $session->derive(new StateQuery($point, 'box', Projection::stateSlot('example.slot')));
         self::assertSame(9, $result->normalOutcomes[0]->values['state']->native());
         self::assertSame([], $result->frontiers);
         self::assertStringContainsString('example.slot', $result->toJson());
@@ -147,7 +149,7 @@ final class StateSlotContractTest extends TestCase
     {
         $session = Analysis::session('<?php function target(){$box=null;observe($box);}', SlotModels::configuration(new StateSlot('example.slot', 'int', Term::constant(1))));
         $point = $session->callsTo('observe')[0]->beforeInvocation();
-        $result = $session->derive(new \Deriver\Api\Query\StateQuery($point, 'box', \Deriver\Value\Projection::stateSlot('example.slot')));
+        $result = $session->derive(new StateQuery($point, 'box', Projection::stateSlot('example.slot')));
         self::assertSame('open', $result->assessment->closure);
         self::assertContains('UNSUPPORTED_MODEL_CASE', array_column($result->frontiers, 'code'));
     }

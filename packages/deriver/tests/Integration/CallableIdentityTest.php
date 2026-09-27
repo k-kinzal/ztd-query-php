@@ -5,10 +5,22 @@ declare(strict_types=1);
 namespace Tests\Integration;
 
 use Deriver\Analyzer;
-use Deriver\Api\Project\ProjectInput;
-use Deriver\Api\Project\SourceFile;
-use Deriver\Api\Query\ReturnQuery;
-use Deriver\Api\Query\ValueQuery;
+use Deriver\Model\ModelDescriptor;
+use Deriver\Model\Plan\Action;
+use Deriver\Model\Plan\Expression;
+use Deriver\Model\Plan\SemanticPlan;
+use Deriver\Model\Signature\Parameter;
+use Deriver\Model\Signature\Signature;
+use Deriver\Project\Configuration;
+use Deriver\Project\ProjectInput;
+use Deriver\Project\SourceFile;
+use Deriver\Query\ReturnQuery;
+use Deriver\Query\StateQuery;
+use Deriver\Query\TupleQuery;
+use Deriver\Query\ValueQuery;
+use Deriver\Reference\ExpressionRef;
+use Deriver\Reference\PointRef;
+use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Small;
@@ -94,13 +106,13 @@ final class CallableIdentityTest extends TestCase
      */
     public function testModelCallsNormalizeQualifiedNamesWithoutMergingParameterDefaults(): void
     {
-        $signature = new \Deriver\Model\Signature\Signature([
-            new \Deriver\Model\Signature\Parameter('X', default: \Deriver\Value\Term::constant(1)),
-            new \Deriver\Model\Signature\Parameter('x', default: \Deriver\Value\Term::constant(2)),
+        $signature = new Signature([
+            new Parameter('X', default: Term::constant(1)),
+            new Parameter('x', default: Term::constant(2)),
         ]);
-        $plan = new \Deriver\Model\Plan\SemanticPlan([\Deriver\Model\Plan\Action::returns(\Deriver\Model\Plan\Expression::binary('-', \Deriver\Model\Plan\Expression::parameter('X'), \Deriver\Model\Plan\Expression::parameter('x')))]);
-        $model = new \Tests\Fake\PlanModel(new \Deriver\Model\ModelDescriptor('example.remote', '1', '\\REMOTE', $signature), $plan);
-        $session = \Tests\Fake\Analysis::session('<?php function target(){$f="\\\\remote";return [remote(),\\remote(),$f()];}', new \Deriver\Api\Project\Configuration(models:[$model]));
+        $plan = new SemanticPlan([Action::returns(Expression::binary('-', Expression::parameter('X'), Expression::parameter('x')))]);
+        $model = new \Tests\Fake\PlanModel(new ModelDescriptor('example.remote', '1', '\\REMOTE', $signature), $plan);
+        $session = \Tests\Fake\Analysis::session('<?php function target(){$f="\\\\remote";return [remote(),\\remote(),$f()];}', new Configuration(models:[$model]));
         $result = $session->derive(new ReturnQuery('target'));
         self::assertSame([], $result->frontiers);
         self::assertSame([], $result->exceptionalOutcomes);
@@ -117,11 +129,11 @@ final class CallableIdentityTest extends TestCase
         $session = \Tests\Fake\Analysis::session('<?php namespace N;function sink($x){return $x;}function target(){$x=3;return \N\sink($x);}');
         $call = $session->callsTo('N\\sink')[0];
         $argument = $call->argument(0);
-        $expression = new \Deriver\Api\Reference\ExpressionRef($argument->source, $owner, $argument->register);
-        $point = new \Deriver\Api\Reference\PointRef($call->source, $owner, $call->instruction, 'invocation');
+        $expression = new ExpressionRef($argument->source, $owner, $argument->register);
+        $point = new PointRef($call->source, $owner, $call->instruction, 'invocation');
         $value = $session->derive(new ValueQuery($expression));
-        $state = $session->derive(new \Deriver\Api\Query\StateQuery($point, 'x'));
-        $tuple = $session->derive(new \Deriver\Api\Query\TupleQuery($point, ['argument' => $argument]));
+        $state = $session->derive(new StateQuery($point, 'x'));
+        $tuple = $session->derive(new TupleQuery($point, ['argument' => $argument]));
         self::assertSame('may-reach', $value->reachability);
         self::assertSame('may-reach', $state->reachability);
         self::assertSame('may-reach', $tuple->reachability);

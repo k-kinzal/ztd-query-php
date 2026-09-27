@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Deriver;
 
-use Deriver\Api\AnalysisSession;
-use Deriver\Api\Project\Configuration;
-use Deriver\Api\Project\ProjectInput;
-use Deriver\Internal\Api\Session;
+use Deriver\Analysis\Session;
+use Deriver\Project\Configuration;
+use Deriver\Project\ProjectInput;
+use Deriver\Source\Cache\GraphCache;
+use Deriver\Source\Cache\SyntaxCache;
 use JsonException;
 
 /**
@@ -15,8 +16,8 @@ use JsonException;
  *
  * @visibility public
  * @example Deriving a function return without running its source
- *     $input = new \Deriver\Api\Project\ProjectInput([new \Deriver\Api\Project\SourceFile('a.php', '<?php function answer() { return 42; }')]);
- *     $result = (new \Deriver\Analyzer())->open($input)->derive(new \Deriver\Api\Query\ReturnQuery('answer'));
+ *     $input = new \Deriver\Project\ProjectInput([new \Deriver\Project\SourceFile('a.php', '<?php function answer() { return 42; }')]);
+ *     $result = (new \Deriver\Analyzer())->open($input)->derive(new \Deriver\Query\ReturnQuery('answer'));
  *     $result->normalOutcomes[0]->values['return']->native() // => 42
  */
 final class Analyzer
@@ -24,16 +25,16 @@ final class Analyzer
     /**
      * Source-only caches are bounded and shared by sessions opened with this analyzer.
      */
-    private readonly Internal\Frontend\Php\Cache\SyntaxCache $syntax;
-    private readonly Internal\Frontend\Php\Cache\GraphCache $lowered;
+    private readonly SyntaxCache $syntax;
+    private readonly GraphCache $lowered;
 
     /**
-     * Creates an analyzer with isolated in-memory frontend caches.
+     * Creates an analyzer with isolated in-memory source and graph caches.
      */
     public function __construct()
     {
-        $this->syntax = new Internal\Frontend\Php\Cache\SyntaxCache();
-        $this->lowered = new Internal\Frontend\Php\Cache\GraphCache();
+        $this->syntax = new SyntaxCache();
+        $this->lowered = new GraphCache();
     }
 
     /**

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Model\Provider;
 
+use Deriver\Model\Provider\EnvironmentProvider;
+use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -12,8 +14,8 @@ use PHPUnit\Framework\TestCase;
 /**
  * @covers \Deriver\Model\Provider\EnvironmentProvider
  */
-#[CoversClass(\Deriver\Model\Provider\EnvironmentProvider::class)]
-#[UsesClass(\Deriver\Value\Term::class)]
+#[CoversClass(EnvironmentProvider::class)]
+#[UsesClass(Term::class)]
 #[Small]
 final class EnvironmentProviderTest extends TestCase
 {

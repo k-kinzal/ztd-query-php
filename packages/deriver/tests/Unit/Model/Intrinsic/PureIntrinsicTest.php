@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Model\Intrinsic;
 
+use Deriver\Model\Intrinsic\IntrinsicDescriptor;
+use Deriver\Model\Intrinsic\PureIntrinsic;
+use Deriver\Project\TargetProfile;
+use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -12,10 +16,10 @@ use PHPUnit\Framework\TestCase;
 /**
  * @covers \Deriver\Model\Intrinsic\PureIntrinsic
  */
-#[CoversClass(\Deriver\Model\Intrinsic\PureIntrinsic::class)]
-#[UsesClass(\Deriver\Api\Project\TargetProfile::class)]
-#[UsesClass(\Deriver\Model\Intrinsic\IntrinsicDescriptor::class)]
-#[UsesClass(\Deriver\Value\Term::class)]
+#[CoversClass(PureIntrinsic::class)]
+#[UsesClass(IntrinsicDescriptor::class)]
+#[UsesClass(TargetProfile::class)]
+#[UsesClass(Term::class)]
 #[Small]
 final class PureIntrinsicTest extends TestCase
 {
@@ -25,9 +29,9 @@ final class PureIntrinsicTest extends TestCase
     }
     public function testEvaluateKeepsPartialInputsAsDependencies(): void
     {
-        $left = \Deriver\Value\Term::parameter('left');
-        $right = \Deriver\Value\Term::parameter('right');
-        $value = (new \Tests\Fake\PolicyOperation('compose'))->evaluate([$left, $right], new \Deriver\Api\Project\TargetProfile());
+        $left = Term::parameter('left');
+        $right = Term::parameter('right');
+        $value = (new \Tests\Fake\PolicyOperation('compose'))->evaluate([$left, $right], new TargetProfile());
         self::assertSame([$left, $right], $value->operands);
         self::assertSame('policy.compose', $value->literal);
     }

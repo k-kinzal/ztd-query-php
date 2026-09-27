@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
-use Deriver\Api\Project\EntryPoint;
-use Deriver\Api\Query\QueryScope;
-use Deriver\Api\Query\StateQuery;
-use Deriver\Api\Query\ValueQuery;
+use Deriver\Project\EntryPoint;
+use Deriver\Query\QueryScope;
+use Deriver\Query\ReturnQuery;
+use Deriver\Query\StateQuery;
+use Deriver\Query\ValueQuery;
 use Deriver\Value\Projection;
 use Deriver\Value\Term;
 use JsonException;
@@ -61,7 +62,7 @@ final class ProjectionConfidentialityTest extends TestCase
     public function testDerivedArrayOperationsKeepConfidentialPayloadsOutOfDefaultReports(string $expression, Term $input): void
     {
         $session = Analysis::session('<?php function target($input){return ' . $expression . ';}');
-        $query = new \Deriver\Api\Query\ReturnQuery('target', scope:QueryScope::fromEntrypoints([new EntryPoint('target', [$input])]));
+        $query = new ReturnQuery('target', scope:QueryScope::fromEntrypoints([new EntryPoint('target', [$input])]));
         $result = $session->derive($query);
         self::assertSame([], $result->frontiers);
         self::assertSame([], $result->exceptionalOutcomes);
@@ -90,7 +91,7 @@ final class ProjectionConfidentialityTest extends TestCase
     public function testEmptyArrayConversionRetainsConfidentialAbsence(): void
     {
         $session = Analysis::session('<?php function target($input){return (array)$input;}');
-        $result = $session->derive(new \Deriver\Api\Query\ReturnQuery('target', scope:QueryScope::fromEntrypoints([new EntryPoint('target', [Term::constant(null, true)])])));
+        $result = $session->derive(new ReturnQuery('target', scope:QueryScope::fromEntrypoints([new EntryPoint('target', [Term::constant(null, true)])])));
         self::assertSame([], $result->frontiers);
         self::assertCount(1, $result->normalOutcomes);
         self::assertSame([], $result->normalOutcomes[0]->values['return']->native());

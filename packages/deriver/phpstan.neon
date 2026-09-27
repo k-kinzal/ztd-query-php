@@ -5,9 +5,6 @@ includes:
 
 parameters:
     toolkit:
-        broadCatchAllowedPaths:
-            - '*/src/Internal/Model/ModelBoundary.php'
-            - '*/src/Internal/Value/SecretFingerprint.php'
         visibilityExemptNamespacePrefixes:
             - 'Tests'
     phpVersion: 80100

@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
-use Deriver\Api\Project\Configuration;
-use Deriver\Api\Project\ProjectInput;
-use Deriver\Api\Project\SourceFile;
-use Deriver\Api\Query\Budget;
-use Deriver\Api\Query\ReturnQuery;
-use Deriver\Internal\Frontend\Php\ProjectIndex;
-use Deriver\Internal\Model\Registry;
-use Deriver\Internal\Solver\Context;
+use Deriver\Evaluation\Context;
+use Deriver\Model\Registration\Registry;
+use Deriver\Project\Configuration;
+use Deriver\Project\ProjectInput;
+use Deriver\Project\SourceFile;
+use Deriver\Query\Budget;
+use Deriver\Query\ReturnQuery;
+use Deriver\Source\Declaration\ProjectIndex;
 
 /**
  * Supplies small captured source worlds for internal contract tests.

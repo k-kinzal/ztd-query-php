@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Model\Provider;
 
+use Deriver\Model\Provider\Provider;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
@@ -11,7 +12,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * @covers \Deriver\Model\Provider\Provider
  */
-#[CoversClass(\Deriver\Model\Provider\Provider::class)]
+#[CoversClass(Provider::class)]
 #[Small]
 final class ProviderTest extends TestCase
 {

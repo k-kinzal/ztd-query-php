@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Deriver\Model\Intrinsic;
 
-use Deriver\Api\Project\TargetProfile;
+use Deriver\Project\TargetProfile;
 use Deriver\Value\Term;
 
 /**
@@ -18,7 +18,7 @@ interface PureIntrinsic
 {
     /**
      * @return IntrinsicDescriptor Version and dependency contract.
-     * @throws \Deriver\Model\ModelException If trusted plugin code fails
+     * @throws \Deriver\Exception\ModelException If trusted plugin code fails
      */
     public function descriptor(): IntrinsicDescriptor;
 
@@ -27,7 +27,7 @@ interface PureIntrinsic
      * @param list<Term> $arguments Immutable abstract inputs
      * @param TargetProfile $target Target PHP semantics
      * @return Term A value containing all results allowed by the inputs
-     * @throws \Deriver\Model\ModelException If trusted plugin code fails
+     * @throws \Deriver\Exception\ModelException If trusted plugin code fails
      */
     public function evaluate(array $arguments, TargetProfile $target): Term;
 }

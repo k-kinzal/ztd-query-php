@@ -2,6 +2,14 @@
 
 `DerivationResult::toJson()` emits schema version `1`. Values are stored once in a graph and referenced by IDs from normal outcomes, exceptional outcomes, residuals, and query entry arguments. The schema is [result-v1.json](../resources/schema/result-v1.json).
 
+## When the schema is used
+
+The schema describes serialized **analysis results**, not application input or a database. `Analyzer::open()` and `AnalysisSession::derive()` do not load it. PHP callers can inspect `DerivationResult` and its values directly without any schema validator.
+
+Use `resources/schema/result-v1.json` when another tool consumes a saved JSON report and needs to validate its fields, enumerations, and record shapes. The development-only `opis/json-schema` dependency checks emitted reports against this file in the serialization and schema contract tests. The runtime package does not depend on that validator.
+
+`ValueReader` separately checks value references, graph limits, and lossless scalar encodings in PHP. JSON Schema describes the record structure; it does not establish every cross-record reference or prove the correctness of an analysis.
+
 ## Lossless scalars
 
 | Scalar tag | Payload |
@@ -23,7 +31,7 @@ Metadata is UTF-8 text when possible. Invalid UTF-8 and text beginning with the 
 The default limits are 20,000 value records, a depth of 128, and 32 MiB of JSON input. Node and depth limits can be lowered with named arguments. The reader validates every value record, including records that no outcome references. Validate the rest of the report against the packaged JSON Schema before consuming query, assessment, or evidence fields.
 
 ```php
-$reader = \Deriver\Report\ValueReader::fromJson($result->toJson());
+$reader = \Deriver\Result\Serialization\ValueReader::fromJson($result->toJson());
 $value = $reader->read('v0');
 ```
 

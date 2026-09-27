@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\ModelContract;
 
-use Deriver\Api\Query\ReturnQuery;
 use Deriver\Model\Contract\DomainLaws;
 use Deriver\Model\Domain\DomainFact;
+use Deriver\Query\ReturnQuery;
 use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversNothing;

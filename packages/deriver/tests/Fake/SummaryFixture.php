@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
-use Deriver\Api\Query\Budget;
-use Deriver\Internal\IR\CallableIR;
-use Deriver\Internal\Solver\Call\ArgumentBinding;
-use Deriver\Internal\Solver\Context;
-use Deriver\Internal\Solver\Machine;
-use Deriver\Internal\Solver\State;
+use Deriver\ControlFlow\CallableGraph;
+use Deriver\Evaluation\Call\ArgumentBinding;
+use Deriver\Evaluation\Context;
+use Deriver\Evaluation\Demand\Key;
+use Deriver\Evaluation\Demand\Table;
+use Deriver\Evaluation\Machine;
+use Deriver\Evaluation\State;
+use Deriver\Query\Budget;
 use LogicException;
 
 /**
@@ -22,10 +24,10 @@ final class SummaryFixture
      * Resolves a required captured source body in a small test world.
      * @param Context $context Fixture world
      * @param string $symbol Required callable
-     * @return CallableIR Source graph
+     * @return CallableGraph Source graph
      * @throws LogicException If the fixture omits the requested symbol
      */
-    public static function body(Context $context, string $symbol = 'target'): CallableIR
+    public static function body(Context $context, string $symbol = 'target'): CallableGraph
     {
         return $context->program->callable($symbol) ?? throw new LogicException('Missing fixture callable.');
     }
@@ -49,16 +51,16 @@ final class SummaryFixture
     /**
      * Builds a declared dependency graph independently of solver discovery.
      * @param array<string, list<string>> $edges Dependents mapped to their dependencies
-     * @return \Deriver\Internal\Solver\Demand\Table Registered graph
+     * @return Table Registered graph
      */
-    public static function graph(array $edges): \Deriver\Internal\Solver\Demand\Table
+    public static function graph(array $edges): Table
     {
         $context = SolverFixture::context();
         $body = self::body($context);
         $table = $context->summaries;
         $keys = [];
         foreach ($edges as $name => $_) {
-            $keys[$name] = new \Deriver\Internal\Solver\Demand\Key('test', $name, 'entry', 'value', '', '', '', '');
+            $keys[$name] = new Key('test', $name, 'entry', 'value', '', '', '', '');
             $table->register($keys[$name], $body, new State());
         }
         foreach ($edges as $name => $dependencies) {

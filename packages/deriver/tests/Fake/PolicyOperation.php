@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
-use Deriver\Api\Project\TargetProfile;
 use Deriver\Model\Intrinsic\IntrinsicDescriptor;
 use Deriver\Model\Intrinsic\PureIntrinsic;
+use Deriver\Project\TargetProfile;
 use Deriver\Value\Term;
 use Override;
 

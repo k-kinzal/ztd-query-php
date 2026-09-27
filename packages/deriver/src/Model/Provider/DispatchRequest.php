@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Deriver\Model\Provider;
 
-use Deriver\Api\Project\TargetProfile;
-use Deriver\Api\Reference\SourceRef;
+use Deriver\Project\TargetProfile;
+use Deriver\Reference\SourceRef;
 use Deriver\Value\Term;
 
 /**

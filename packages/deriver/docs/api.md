@@ -60,8 +60,8 @@ A budget boundary retains residual values and effects. It may widen state and re
 Opening a project that exceeds these limits throws `InvalidInputException` with a `SOURCE_LIMIT` reason. No partial declaration world is returned. Increase a limit explicitly when admitting a larger generated project. These limits apply after source bytes have been supplied; callers remain responsible for bounding their own file capture and trusted provider implementations.
 
 ```php
-$configuration = new \Deriver\Api\Project\Configuration(
-    sourceLimits: new \Deriver\Api\Execution\SourceLimits(nodes: 500000),
+$configuration = new \Deriver\Project\Configuration(
+    sourceLimits: new \Deriver\Project\SourceLimits(nodes: 500000),
 );
 ```
 
@@ -74,9 +74,9 @@ The default host stack allowance is 2,048 PHP frames. Active Xdebug nesting limi
 Set `seconds` to a positive duration to enable a monotonic wall-clock limit. Supply a `CancellationToken` for caller-controlled cancellation, including cancellation from an application signal handler. The analyzer checks the token without invoking application callbacks.
 
 ```php
-$token = new \Deriver\Api\Execution\CancellationToken();
-$configuration = new \Deriver\Api\Project\Configuration(
-    resources: new \Deriver\Api\Execution\ResourceLimits(
+$token = new \Deriver\Query\CancellationToken();
+$configuration = new \Deriver\Project\Configuration(
+    resources: new \Deriver\Query\ResourceLimits(
         memoryBytes: 64 * 1024 * 1024,
         seconds: 10.0,
         cancellation: $token,

@@ -56,10 +56,10 @@ jobs:
 
       - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: packages/deriver/fuzz/corpus/${{ matrix.target.corpus }}
-          key: fuzz-deriver-v2-${{ matrix.target.corpus }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: packages/deriver/build/fuzz/corpus
+          key: fuzz-deriver-v3-${{ matrix.target.corpus }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            fuzz-deriver-v2-${{ matrix.target.corpus }}-
+            fuzz-deriver-v3-${{ matrix.target.corpus }}-
 
       - name: Run the bounded fuzz campaign
         env:
@@ -73,14 +73,13 @@ jobs:
             echo 'max_runs must be between 1 and 99999999.' >&2
             exit 2
           fi
-          composer fuzz:seed
           php fuzz/run.php "$MAX_RUNS"
 
       - if: always()
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: packages/deriver/fuzz/corpus/${{ matrix.target.corpus }}
-          key: fuzz-deriver-v2-${{ matrix.target.corpus }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: packages/deriver/build/fuzz/corpus
+          key: fuzz-deriver-v3-${{ matrix.target.corpus }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - if: ${{ always() && hashFiles('packages/deriver/crash-*', 'packages/deriver/timeout-*', 'packages/deriver/oom-*') != '' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

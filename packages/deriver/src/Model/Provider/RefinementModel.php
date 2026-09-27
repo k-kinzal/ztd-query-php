@@ -18,7 +18,7 @@ interface RefinementModel extends Provider
      * @param Term $predicate Observed condition
      * @param bool $truth Required branch polarity
      * @return Term|null Additional guaranteed predicate, or no refinement
-     * @throws \Deriver\Model\ModelException If trusted plugin code fails
+     * @throws \Deriver\Exception\ModelException If trusted plugin code fails
      */
     public function refine(Term $predicate, bool $truth): ?Term;
 }

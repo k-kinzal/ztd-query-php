@@ -27,7 +27,7 @@ The source index rejects syntax newer than the target, including property hooks,
 
 ## Bundled standard functions
 
-The authoritative parameter names, defaults, reference modes, and variadic declarations are in [Library](../src/Standard/Library.php). Every invocation goes through ordinary signature binding before model evaluation. Known invalid argument forms can therefore throw before reaching the cases below. Unsupported model cases retain `UNSUPPORTED_MODEL_CASE`, possible effects, and exceptional alternatives.
+The authoritative parameter names, defaults, reference modes, and variadic declarations are in [Library](../src/Model/Builtin/Library.php). Every invocation goes through ordinary signature binding before model evaluation. Known invalid argument forms can therefore throw before reaching the cases below. Unsupported model cases retain `UNSUPPORTED_MODEL_CASE`, possible effects, and exceptional alternatives.
 
 | Functions | Implemented cases | Boundaries |
 | --- | --- | --- |
@@ -46,7 +46,7 @@ The authoritative parameter names, defaults, reference modes, and variadic decla
 | `getenv` | Named/all environment lookups, local-only distinction, explicitly supplied environment facts | Host environment is never read as application input. |
 | `time`, `microtime`, `rand`, `mt_rand`, `random_int` | External input identities, stable saved values, random bounds and supported errors | Values stay symbolic; entropy failure remains possible for nondegenerate `random_int`. |
 
-[Standard unit tests](../tests/Unit/Standard/), [native overload tests](../tests/Integration/NativeOverloadContractTest.php), the [generated differential corpus](../tests/Fake/GeneratedPrograms.php), and the [conversion corpus](../tests/Fake/Programs/ConversionPrograms.php) check these contracts. A function absent from this list needs a source body or an explicitly registered model.
+[Standard unit tests](../tests/Unit/Model/Builtin/), [native overload tests](../tests/Integration/NativeOverloadContractTest.php), the [generated differential corpus](../tests/Fake/GeneratedPrograms.php), and the [conversion corpus](../tests/Fake/Programs/ConversionPrograms.php) check these contracts. A function absent from this list needs a source body or an explicitly registered model.
 
 Native `Exception`, `Error`, SPL throwable subclasses, and `ErrorException` have target definitions for construction and supported property/getter behavior. See [native throwable objects](language.md#native-throwable-objects). They do not use host reflection or instantiate application classes.
 

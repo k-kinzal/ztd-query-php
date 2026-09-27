@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
-use Deriver\Internal\Solver\Control\Resources;
+use Deriver\Evaluation\Control\Resources;
 
 /**
  * Exercises host stack capacity without executing captured application code.

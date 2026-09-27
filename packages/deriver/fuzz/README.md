@@ -12,7 +12,6 @@ composer fuzz:semantic
 php fuzz/semantic.php 1000 32
 
 # Mutate PHP source bytes and check parser/solver invariants.
-composer fuzz:seed
 php fuzz/run.php 10000
 ```
 
@@ -21,3 +20,5 @@ The structured generator composes assignments, shared objects, shallow clones, r
 On a mismatch, the runner removes statements while the mismatch remains, producing a fixture for which no single remaining statement can be removed without losing the counterexample. It writes that fixture under `build/semantic-failures/` and prints the seed and concrete input. The fixed setup keeps every removable statement valid. This shrinker does not claim a globally smallest PHP program.
 
 Raw source mutation checks API termination, budgets, result serialization, and invariant failures. It does not treat arbitrary mutated source as safe to execute. Source admission-limit rejection is an expected outcome; other uncaught analyzer failures fail the run. Neither finite generator proves soundness for arbitrary PHP.
+
+The byte fuzzer initializes its generated corpus in `build/fuzz/corpus/` from regression fixtures in `tests/Fixtures/Fuzz/`. Generated inputs and campaign output are not committed.

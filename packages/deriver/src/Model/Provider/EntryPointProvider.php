@@ -8,13 +8,13 @@ namespace Deriver\Model\Provider;
  * Provides explicit application entries and their initial arguments.
  * @visibility public
  * @example Providers are installed explicitly
- *     (new \Deriver\Api\Project\Configuration())->providers // => []
+ *     (new \Deriver\Project\Configuration())->providers // => []
  */
 interface EntryPointProvider extends Provider
 {
     /**
-     * @return list<\Deriver\Api\Project\EntryPoint> Captured provider contribution
-     * @throws \Deriver\Model\ModelException If trusted plugin code fails
+     * @return list<\Deriver\Project\EntryPoint> Captured provider contribution
+     * @throws \Deriver\Exception\ModelException If trusted plugin code fails
      */
     public function entries(): array;
 }

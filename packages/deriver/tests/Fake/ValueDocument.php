@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
-use Deriver\Report\JsonText;
-use Deriver\Report\ValueGraph;
+use Deriver\Result\Serialization\JsonText;
+use Deriver\Result\Serialization\ValueGraph;
 use Deriver\Value\Term;
 use JsonException;
 

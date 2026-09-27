@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Model\Binding;
 
+use Deriver\Model\Binding\ArgumentBindings;
+use Deriver\Model\Binding\BoundArgument;
+use Deriver\Model\Binding\LocationRef;
+use Deriver\Model\Signature\Parameter;
+use Deriver\Model\Signature\Signature;
+use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -12,18 +18,18 @@ use PHPUnit\Framework\TestCase;
 /**
  * @covers \Deriver\Model\Binding\ArgumentBindings
  */
-#[CoversClass(\Deriver\Model\Binding\ArgumentBindings::class)]
-#[UsesClass(\Deriver\Model\Binding\BoundArgument::class)]
-#[UsesClass(\Deriver\Model\Binding\LocationRef::class)]
-#[UsesClass(\Deriver\Model\Signature\Parameter::class)]
-#[UsesClass(\Deriver\Model\Signature\Signature::class)]
-#[UsesClass(\Deriver\Value\Term::class)]
+#[CoversClass(ArgumentBindings::class)]
+#[UsesClass(BoundArgument::class)]
+#[UsesClass(LocationRef::class)]
+#[UsesClass(Parameter::class)]
+#[UsesClass(Signature::class)]
+#[UsesClass(Term::class)]
 #[Small]
 final class ArgumentBindingsTest extends TestCase
 {
     public function testFormalRetainsNamesVariadicsAndReferenceLocations(): void
     {
-        $bindings = \Deriver\Model\Binding\ArgumentBindings::formal(new \Deriver\Model\Signature\Signature([new \Deriver\Model\Signature\Parameter('values', byReference: true, variadic: true)]));
+        $bindings = ArgumentBindings::formal(new Signature([new Parameter('values', byReference: true, variadic: true)]));
         self::assertFalse($bindings->evaluated);
         self::assertNull($bindings->arguments['values']->supplied);
         self::assertSame('values', $bindings->arguments['values']->location?->name);

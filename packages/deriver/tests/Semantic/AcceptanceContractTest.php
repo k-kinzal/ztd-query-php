@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Semantic;
 
-use Deriver\Api\Project\Configuration;
-use Deriver\Api\Query\ReturnQuery;
-use Deriver\Api\Query\StateQuery;
+use Deriver\Project\Configuration;
+use Deriver\Query\ReturnQuery;
+use Deriver\Query\StateQuery;
 use Deriver\Value\Projection;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversNothing;

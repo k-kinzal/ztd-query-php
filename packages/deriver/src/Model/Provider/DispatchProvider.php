@@ -15,7 +15,7 @@ interface DispatchProvider extends Provider
     /**
      * @param DispatchRequest $request Evaluated call metadata
      * @return DispatchDecision Candidates and explicit completeness contract
-     * @throws \Deriver\Model\ModelException If trusted plugin code fails
+     * @throws \Deriver\Exception\ModelException If trusted plugin code fails
      */
     public function resolve(DispatchRequest $request): DispatchDecision;
 }

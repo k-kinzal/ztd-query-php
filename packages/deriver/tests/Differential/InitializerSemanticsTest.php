@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Differential;
 
+use Deriver\Analyzer;
+use Deriver\Project\ProjectInput;
+use Deriver\Project\SourceFile;
+use Deriver\Query\ReturnQuery;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProviderExternal;
@@ -49,8 +53,8 @@ final class InitializerSemanticsTest extends TestCase
         $expected = json_decode($expectedJson, true, 512, JSON_THROW_ON_ERROR);
         $runtimeSource = $application.' eval('.var_export(substr($library, 5), true).');';
         self::assertSame($expected, RuntimeOracle::evaluate($runtimeSource)->native());
-        $session = (new \Deriver\Analyzer())->open(new \Deriver\Api\Project\ProjectInput([new \Deriver\Api\Project\SourceFile('library.php', $library),new \Deriver\Api\Project\SourceFile('app.php', $application)]));
-        $result = $session->derive(new \Deriver\Api\Query\ReturnQuery('target'));
+        $session = (new Analyzer())->open(new ProjectInput([new SourceFile('library.php', $library),new SourceFile('app.php', $application)]));
+        $result = $session->derive(new ReturnQuery('target'));
         self::assertSame([], $result->frontiers);
         self::assertSame([], $result->exceptionalOutcomes);
         self::assertCount(1, $result->normalOutcomes);

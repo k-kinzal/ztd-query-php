@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\ModelContract;
 
-use Deriver\Api\Project\Configuration;
-use Deriver\Api\Query\ReturnQuery;
 use Deriver\Model\Binding\LocationRef;
 use Deriver\Model\ModelDescriptor;
 use Deriver\Model\Plan\Action;
@@ -14,6 +12,8 @@ use Deriver\Model\Plan\Expression;
 use Deriver\Model\Plan\SemanticPlan;
 use Deriver\Model\Signature\Parameter;
 use Deriver\Model\Signature\Signature;
+use Deriver\Project\Configuration;
+use Deriver\Query\ReturnQuery;
 use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -131,9 +131,8 @@ final class LocationContractTest extends TestCase
     public function testUndeclaredReferenceReturnsFailTheModelContract(): void
     {
         $model = new PlanModel(new ModelDescriptor('example.invalid', '1', 'invalid', new Signature([new Parameter('item', byReference: true)])), new SemanticPlan([Action::returnReference(LocationRef::parameter('item'))], writes: ['parameter:item']));
-        $result = Analysis::session('<?php function target(){return invalid($item);}', new Configuration(models: [$model]))->derive(new ReturnQuery('target'));
-        self::assertSame('MODEL_CONTRACT_VIOLATION', $result->frontiers[0]->code);
-        self::assertSame('open', $result->assessment->closure);
+        $this->expectException(\Deriver\Exception\ModelContractException::class);
+        Analysis::session('<?php function target(){return invalid($item);}', new Configuration(models: [$model]))->derive(new ReturnQuery('target'));
     }
 
     /**
