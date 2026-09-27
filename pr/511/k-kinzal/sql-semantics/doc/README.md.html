@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SQL Semantics — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/511/k-kinzal/sql-semantics/doc/README.md.html">
+<meta name="description" content="SQL Semantics, a document of the k-kinzal/sql-semantics package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="SQL Semantics — ZTD Query PHP">
+<meta property="og:description" content="SQL Semantics, a document of the k-kinzal/sql-semantics package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/511/k-kinzal/sql-semantics/doc/README.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/511/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li data-diff="modified"><a href="../../../k-kinzal/sql-semantics/all-items.html">All items</a></li><li data-diff="modified"><a href="../../../k-kinzal/sql-semantics/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Namespaces</div><ul class="sidebar-list"><li data-diff="modified"><a href="../../../k-kinzal/sql-semantics/SqlSemantics/Core/index.html" title="SqlSemantics\Core">SqlSemantics\Core</a></li><li data-diff="modified"><a href="../../../k-kinzal/sql-semantics/SqlSemantics/Core/Analysis/index.html" title="SqlSemantics\Core\Analysis">SqlSemantics\Core\Analysis</a></li><li data-diff="modified"><a href="../../../k-kinzal/sql-semantics/SqlSemantics/Core/Ast/index.html" title="SqlSemantics\Core\Ast">SqlSemantics\Core\Ast</a></li><li data-diff="same"><a href="../../../k-kinzal/sql-semantics/SqlSemantics/Core/Composition/index.html" title="SqlSemantics\Core\Composition">SqlSemantics\Core\Composition</a></li><li data-diff="added"><a href="../../../k-kinzal/sql-semantics/SqlSemantics/Core/Literal/index.html" title="SqlSemantics\Core\Literal">SqlSemantics\Core\Literal</a></li><li data-diff="modified"><a href="../../../k-kinzal/sql-semantics/SqlSemantics/Core/Policy/index.html" title="SqlSemantics\Core\Policy">SqlSemantics\Core\Policy</a></li><li data-diff="modified"><a href="../../../k-kinzal/sql-semantics/SqlSemantics/Facade/index.html" title="SqlSemantics\Facade">SqlSemantics\Facade</a></li><li data-diff="modified"><a href="../../../k-kinzal/sql-semantics/SqlSemantics/Statement/index.html" title="SqlSemantics\Statement">SqlSemantics\Statement</a></li><li data-diff="modified"><a href="../../../k-kinzal/sql-semantics/SqlSemantics/Statement/Declaration/index.html" title="SqlSemantics\Statement\Declaration">SqlSemantics\Statement\Declaration</a></li><li data-diff="added"><a href="../../../k-kinzal/sql-semantics/SqlSemantics/Statement/Literal/index.html" title="SqlSemantics\Statement\Literal">SqlSemantics\Statement\Literal</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">README.md</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 9f2e32e8566 to working tree">9f2e32e8566 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 9f2e32e8566 and working tree." data-off="This page documents what 9f2e32e8566 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>SQL Semantics</h1><div class="symbol-meta"><span class="source-link">README.md</span></div></div>
+<section class="readme prose" data-diff="modified"><div class="doc-block" data-diff="same"><h2>SQL Semantics</h2>
+</div><div class="doc-block" data-diff="same"><p><a href="https://opensource.org/licenses/MIT"><span class="md-target" title="https://img.shields.io/badge/License-MIT-yellow.svg">License: MIT</span></a> <a href="https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics/"><span class="md-target" title="https://img.shields.io/badge/docs-sql--semantics-0969da?logo=php&amp;logoColor=white">Docs</span></a> <a href="https://www.php.net/"><span class="md-target" title="https://img.shields.io/badge/PHP-8.1%2B-blue.svg">PHP Version</span></a> <a href="https://deepwiki.com/k-kinzal/ztd-query-php"><span class="md-target" title="https://deepwiki.com/badge.svg">Ask DeepWiki</span></a></p>
+</div><div class="doc-block" data-diff="same"><p>SQL Semantics is the semantic phase of a database front end for MySQL, PostgreSQL, and SQLite. It reads SQL as the server reads it: with the grammar of one release, under the session settings that change tokenization, and with the parameter markers the statement was written for. Every statement of the shipped grammars becomes an immutable, typed statement model that writes the SQL back, can be walked and rewritten without naming its classes, and can be composed from PHP values under stable names. A statement analyzed with the statements it depends on, the declarations that came before it, also resolves every table name it writes. No database connection is needed. This package is the shared runtime; install it through the package of your database.</p>
+</div><div class="doc-block" data-diff="same"><h3>Requirements</h3>
+</div><div class="doc-block" data-diff="same"><ul><li>PHP 8.1+ with the zlib extension</li></ul>
+</div><div class="doc-block" data-diff="same"><h3>Support Syntax</h3>
+</div><div class="doc-block" data-diff="same"><p>The following grammar versions are supported. Pass the dialect of your database package and, optionally, the version tag to <code>Semantics</code>; omitting the version tag uses the default for that database. Common table expressions in <code>Builder</code> need MySQL 8.0 or later.</p>
+</div><div class="doc-block" data-diff="same"><h4>MySQL</h4>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Version</th><th>Version tag</th><th>Default</th></tr></thead><tbody><tr><td>5.6.51</td><td><code>mysql-5.6.51</code></td><td></td></tr><tr><td>5.7.44</td><td><code>mysql-5.7.44</code></td><td></td></tr><tr><td>8.0.44</td><td><code>mysql-8.0.44</code></td><td></td></tr><tr><td>8.1.0</td><td><code>mysql-8.1.0</code></td><td></td></tr><tr><td>8.2.0</td><td><code>mysql-8.2.0</code></td><td></td></tr><tr><td>8.3.0</td><td><code>mysql-8.3.0</code></td><td></td></tr><tr><td>8.4.7</td><td><code>mysql-8.4.7</code></td><td>Yes</td></tr><tr><td>9.0.1</td><td><code>mysql-9.0.1</code></td><td></td></tr><tr><td>9.1.0</td><td><code>mysql-9.1.0</code></td><td></td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><h4>PostgreSQL</h4>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Version</th><th>Version tag</th><th>Default</th></tr></thead><tbody><tr><td>16.6</td><td><code>pg-16.6</code></td><td></td></tr><tr><td>17.2</td><td><code>pg-17.2</code></td><td>Yes</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><h4>SQLite</h4>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Version</th><th>Version tag</th><th>Default</th></tr></thead><tbody><tr><td>3.47.2</td><td><code>sqlite-3.47.2</code></td><td>Yes</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><h3>Installation</h3>
+</div><div class="doc-block" data-diff="same"><p>Install the package of your database; it installs this runtime.</p>
+</div><div class="doc-block" data-diff="same"><p>MySQL:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>composer require k-kinzal/sql-semantics-mysql</code></pre>
+</div><div class="doc-block" data-diff="same"><p>PostgreSQL:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>composer require k-kinzal/sql-semantics-postgres</code></pre>
+</div><div class="doc-block" data-diff="same"><p>SQLite:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>composer require k-kinzal/sql-semantics-sqlite</code></pre>
+</div><div class="doc-block" data-diff="same"><p>Each package provides its dialect: <code>SqlSemantics\Platform\MySql\Dialect::MySql</code>, <code>SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql</code>, or <code>SqlSemantics\Platform\Sqlite\Dialect::Sqlite</code>.</p>
+</div><div class="doc-block" data-diff="same"><h3>Usage</h3>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Facade\Semantics</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Dialect</span>;
+
+<span class="tok-var">$statement</span> = (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">PostgreSql</span>))-&gt;<span class="tok-id">analyze</span>(&lt;&lt;&lt;&#039;SQL&#039;
+<span class="tok-str">WITH changed AS (</span>
+<span class="tok-str">    UPDATE accounts SET balance = balance + 10 WHERE id = 7 RETURNING id, balance</span>
+<span class="tok-str">)</span>
+<span class="tok-str">SELECT id, balance FROM changed;</span>
+<span class="tok-kw">SQL</span>);
+
+<span class="tok-var">$statement</span>-&gt;<span class="tok-id">command</span>;    <span class="tok-com">// the typed model of the statement</span>
+<span class="tok-var">$statement</span>-&gt;<span class="tok-id">toString</span>(); <span class="tok-com">// &#039;WITH changed AS( UPDATE accounts SET balance = balance + 10 WHERE id = 7 RETURNING id , balance ) SELECT id , balance FROM changed ;&#039;</span></code></pre>
+</div><div class="doc-block" data-diff="removed"><p>A statement means something against the statements before it. Pass those as its dependencies, and every table name resolves to a table one of them declares, to a common table expression, or to a table the statement declares or drops itself; a name no dependency declares is an error. Without dependencies, a statement is structured only.</p>
+</div><div class="doc-block" data-diff="added"><p>A statement means something against the statements before it. Pass those as its dependencies, and every table name resolves to a table one of them declares, to a common table expression, or to a table the statement declares or drops itself; a name no dependency declares is an error. Without dependencies, a statement is structured only. Use <code>ResolutionMode::Partial</code> to inspect an isolated declaration while retaining its unresolved references; see <a href="../../../k-kinzal/sql-semantics/doc/docs/declarations.md.html">reading declarations and literals</a>.</p>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Facade\Semantics</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Dialect</span>;
+
+<span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>);
+<span class="tok-var">$users</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(64) NOT NULL)&#039;</span>);
+<span class="tok-var">$query</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;WITH recent AS (SELECT id FROM users) SELECT u.name FROM users u JOIN recent ON recent.id = u.id&#039;</span>, [<span class="tok-var">$users</span>]);
+
+<span class="tok-var">$query</span>-&gt;<span class="tok-id">resolution</span>-&gt;<span class="tok-id">tables</span>()[<span class="tok-num">0</span>]-&gt;<span class="tok-id">declaration</span> === <span class="tok-var">$users</span>; <span class="tok-com">// true: the reference to users, with the declared columns in -&gt;table</span>
+<span class="tok-var">$query</span>-&gt;<span class="tok-id">resolution</span>-&gt;<span class="tok-id">references</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">kind</span>;                 <span class="tok-com">// ReferenceKind::CommonTableExpression, for recent</span>
+<span class="tok-var">$semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;SELECT 1 FROM orders&#039;</span>, [<span class="tok-var">$users</span>]);     <span class="tok-com">// throws SemanticException: no dependency declares orders</span></code></pre>
+</div><div class="doc-block" data-diff="same"><p>A MySQL session&#039;s <code>sql_mode</code> changes how text is read, and a named placeholder such as <code>:id</code> is not in the server&#039;s language. Both are part of the language a <code>Semantics</code> reads:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Core\Parameters</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Facade\Semantics</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Dialect</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Mode</span>;
+
+<span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>, <span class="tok-str">&#039;mysql-8.4.7&#039;</span>, <span class="tok-id">Mode</span>::<span class="tok-id">fromString</span>(<span class="tok-str">&#039;ANSI_QUOTES,NO_BACKSLASH_ESCAPES&#039;</span>), <span class="tok-id">Parameters</span>::<span class="tok-id">Named</span>);
+
+<span class="tok-var">$semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;SELECT &quot;name&quot; FROM users WHERE id = :id&#039;</span>)-&gt;<span class="tok-id">toString</span>(); <span class="tok-com">// &quot;name&quot; is an identifier, :id a parameter</span>
+<span class="tok-var">$semantics</span>-&gt;<span class="tok-id">split</span>(<span class="tok-str">&quot;SELECT 1; CREATE PROCEDURE p() BEGIN SELECT 1; SELECT 2; END; SELECT 3&quot;</span>);
+<span class="tok-com">// [&#039;SELECT 1;&#039;, &#039; CREATE PROCEDURE p() BEGIN SELECT 1; SELECT 2; END;&#039;, &#039; SELECT 3&#039;]</span></code></pre>
+</div><div class="doc-block" data-diff="same"><p>Walk any statement for the values of a role, rewrite it from the leaves up, and compose new values without naming a generated class:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Facade\Semantics</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Dialect</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Element</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Model\Sqlite\Role\NmForm</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Model\Sqlite\Value\NmWithIdj_a2015ecf</span> <span class="tok-kw">as</span> <span class="tok-id">Name</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Traversal</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Writer</span>;
+
+<span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">Sqlite</span>);
+<span class="tok-var">$statement</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;SELECT id FROM users WHERE active = 1&#039;</span>);
+
+<span class="tok-id">Traversal</span>::<span class="tok-id">find</span>(<span class="tok-var">$statement</span>-&gt;<span class="tok-id">command</span>, <span class="tok-id">NmForm</span>::<span class="tok-kw">class</span>);                <span class="tok-com">// every name in the statement</span>
+<span class="tok-var">$rewritten</span> = <span class="tok-id">Traversal</span>::<span class="tok-id">rewrite</span>(<span class="tok-var">$statement</span>-&gt;<span class="tok-id">command</span>, <span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-id">Element</span> <span class="tok-var">$value</span>): <span class="tok-id">Element</span> =&gt; <span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Name</span> &amp;&amp; <span class="tok-var">$value</span>-&gt;<span class="tok-id">name</span> === <span class="tok-str">&#039;users&#039;</span> ? <span class="tok-var">$value</span>-&gt;<span class="tok-id">withName</span>(<span class="tok-str">&#039;members&#039;</span>) : <span class="tok-var">$value</span>);
+<span class="tok-id">Writer</span>::<span class="tok-id">render</span>(<span class="tok-var">$rewritten</span>);                                         <span class="tok-com">// &#039;SELECT id FROM members WHERE active = 1&#039;</span>
+
+<span class="tok-var">$builder</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">builder</span>();
+<span class="tok-var">$rows</span> = <span class="tok-var">$builder</span>-&gt;<span class="tok-id">unionAll</span>(<span class="tok-var">$semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&quot;SELECT 1 AS id, &#039;a&#039; AS name&quot;</span>)-&gt;<span class="tok-id">command</span>, <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&quot;SELECT 2, &#039;b&#039;&quot;</span>)-&gt;<span class="tok-id">command</span>);
+<span class="tok-id">Writer</span>::<span class="tok-id">render</span>(<span class="tok-var">$builder</span>-&gt;<span class="tok-id">with</span>([<span class="tok-var">$builder</span>-&gt;<span class="tok-id">cte</span>(<span class="tok-str">&#039;users&#039;</span>, <span class="tok-var">$rows</span>)], <span class="tok-var">$statement</span>-&gt;<span class="tok-id">command</span>));
+<span class="tok-com">// &quot;WITH users AS( SELECT 1 AS id , &#039;a&#039; AS name UNION ALL SELECT 2 , &#039;b&#039; ) SELECT id FROM users WHERE active = 1&quot;</span>
+<span class="tok-id">Writer</span>::<span class="tok-id">render</span>(<span class="tok-var">$builder</span>-&gt;<span class="tok-id">compare</span>(<span class="tok-var">$builder</span>-&gt;<span class="tok-id">column</span>(<span class="tok-str">&#039;select&#039;</span>), <span class="tok-str">&#039;=&#039;</span>, <span class="tok-var">$builder</span>-&gt;<span class="tok-id">string</span>(<span class="tok-str">&quot;it&#039;s&quot;</span>)));
+<span class="tok-com">// &quot;\&quot;select\&quot; = &#039;it&#039;&#039;s&#039;&quot;</span></code></pre>
+</div><div class="doc-block" data-diff="removed"><p>See <a href="../../../k-kinzal/sql-semantics/doc/docs/statements.md.html">statement models</a> for the models, traversal, comments, and statement boundaries; <a href="../../../k-kinzal/sql-semantics/doc/docs/dependencies.md.html">dependencies</a> for declarations and what table names resolve to; and <a href="../../../k-kinzal/sql-semantics/doc/docs/composition.md.html">composition</a> for building values from PHP data.</p>
+</div><div class="doc-block" data-diff="added"><p>See <a href="../../../k-kinzal/sql-semantics/doc/docs/statements.md.html">statement models</a> for the models, traversal, comments, and statement boundaries; <a href="../../../k-kinzal/sql-semantics/doc/docs/dependencies.md.html">dependencies</a> for declarations and what table names resolve to; <a href="../../../k-kinzal/sql-semantics/doc/docs/composition.md.html">composition</a> for building values from PHP data; and <a href="../../../k-kinzal/sql-semantics/doc/docs/declarations.md.html">declarations and literals</a> for partial resolution, standalone types, effective numeric sizes, and literal decoding.</p>
+</div><div class="doc-block" data-diff="same"><h3>License</h3>
+</div><div class="doc-block" data-diff="same"><p>MIT License. See <span class="md-target" title="LICENSE">LICENSE</span> for details.</p>
+</div></section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../assets/search-index.js" defer></script>
+<script src="../../../assets/app.js" defer></script>
+</body>
+</html>
