@@ -3091,7 +3091,7 @@
     },
     {
         "sources": {
-            "app.php": "<?php\n\nconst USERS_TABLE = 'users';\ndefine('ORDERS', 'orders');\nfunction k(PDO $pdo) {\n    $pdo->query('SELECT * FROM ' . USERS_TABLE);\n    $pdo->query('SELECT * FROM ' . ORDERS);\n    $pdo->query('SELECT ' . PHP_INT_MAX . ', ' . PHP_EOL . ', ' . PHP_VERSION);\n    $pdo->query('SELECT ' . UNKNOWN_CONST);\n    $pdo->query('SELECT ' . \\PHP_INT_SIZE);\n}\n"
+            "app.php": "<?php\n\nconst USERS_TABLE = 'users';\ndefine('ORDERS', 'orders');\nfunction k(PDO $pdo) {\n    $pdo->query('SELECT * FROM ' . USERS_TABLE);\n    $pdo->query('SELECT * FROM ' . ORDERS);\n    $pdo->query('SELECT ' . PHP_INT_MAX . ', ' . PHP_INT_MIN);\n    $pdo->query('SELECT ' . UNKNOWN_CONST);\n    $pdo->query('SELECT ' . \\PHP_INT_SIZE);\n}\n"
         },
         "options": {
             "extensions": null,
@@ -3163,9 +3163,9 @@
                     ]
                 },
                 {
-                    "id": "62468c52dff0",
+                    "id": "f4be0ca2e9cd",
                     "kind": "select",
-                    "sql": "SELECT 9223372036854775807, \n, 8.5.8",
+                    "sql": "SELECT 9223372036854775807, -9223372036854775808",
                     "exact": true,
                     "resolution": "resolved",
                     "searchClosed": true,
@@ -3237,7 +3237,7 @@
     },
     {
         "sources": {
-            "app.php": "<?php\n\nconst USERS_TABLE = 'users';\ndefine('ORDERS', 'orders');\nfunction k(PDO $pdo) {\n    $pdo->query('SELECT * FROM ' . USERS_TABLE);\n    $pdo->query('SELECT * FROM ' . ORDERS);\n    $pdo->query('SELECT ' . PHP_INT_MAX . ', ' . PHP_EOL . ', ' . PHP_VERSION);\n    $pdo->query('SELECT ' . UNKNOWN_CONST);\n    $pdo->query('SELECT ' . \\PHP_INT_SIZE);\n}\n"
+            "app.php": "<?php\n\nconst USERS_TABLE = 'users';\ndefine('ORDERS', 'orders');\nfunction k(PDO $pdo) {\n    $pdo->query('SELECT * FROM ' . USERS_TABLE);\n    $pdo->query('SELECT * FROM ' . ORDERS);\n    $pdo->query('SELECT ' . PHP_INT_MAX . ', ' . PHP_INT_MIN);\n    $pdo->query('SELECT ' . UNKNOWN_CONST);\n    $pdo->query('SELECT ' . \\PHP_INT_SIZE);\n}\n"
         },
         "options": {
             "extensions": [
@@ -3315,9 +3315,9 @@
                     ]
                 },
                 {
-                    "id": "62468c52dff0",
+                    "id": "f4be0ca2e9cd",
                     "kind": "select",
-                    "sql": "SELECT 9223372036854775807, \n, 8.5.8",
+                    "sql": "SELECT 9223372036854775807, -9223372036854775808",
                     "exact": true,
                     "resolution": "resolved",
                     "searchClosed": true,

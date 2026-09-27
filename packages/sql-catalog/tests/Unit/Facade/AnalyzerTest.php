@@ -8,6 +8,7 @@ use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlCatalog\Core\Analysis\EvaluationBudget;
@@ -161,6 +162,7 @@ use UnexpectedValueException;
 #[UsesClass(\SqlCatalog\Core\Extension\Model\CallContext::class)]
 #[UsesClass(\SqlCatalog\Core\Extension\Model\ModelContext::class)]
 #[UsesClass(\SqlCatalog\Core\Extension\Model\QueryOutput::class)]
+#[Medium]
 final class AnalyzerTest extends TestCase
 {
     #[\PHPUnit\Framework\Attributes\RunInSeparateProcess]
