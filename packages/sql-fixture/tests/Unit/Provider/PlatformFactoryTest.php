@@ -285,7 +285,7 @@ final class PlatformFactoryTest extends TestCase
     #[Test]
     public function testGetSupportedVersionsListsTheTagsOfADriver(): void
     {
-        self::assertSame(['pg-17.2'], PlatformFactory::getSupportedVersions(PlatformFactory::DRIVER_PGSQL));
+        self::assertSame(['pg-16.6', 'pg-17.2'], PlatformFactory::getSupportedVersions(PlatformFactory::DRIVER_PGSQL));
         self::assertContains('mysql-5.6.51', PlatformFactory::getSupportedVersions(PlatformFactory::DRIVER_MYSQL));
         self::assertContains('mysql-9.1.0', PlatformFactory::getSupportedVersions(PlatformFactory::DRIVER_MYSQL));
     }

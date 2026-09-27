@@ -7,6 +7,7 @@
  *   vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_roundtrip.php fuzz/corpus/pg/
  *
  * Environment variables:
+ *   PG_VERSION - PostgreSQL release whose grammar is used (default: 17.2)
  *   SQLFAKER_COVERAGE - Set to 0 to run without recording grammar coverage under fuzz/coverage/pg
  */
 
@@ -25,7 +26,7 @@ use SqlParser\PostgreSql\PostgreSqlParser;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\PostgreSql\Dialect;
 
-$grammarVersion = 'pg-17.2';
+$grammarVersion = 'pg-' . (getenv('PG_VERSION') !== false ? getenv('PG_VERSION') : '17.2');
 $coverage = getenv('SQLFAKER_COVERAGE') === '0' ? null : new GrammarCoverage(__DIR__ . '/coverage/pg');
 $provider = new PostgreSqlProvider(Factory::create(), $grammarVersion, $coverage);
 $parser = new PostgreSqlParser($grammarVersion);

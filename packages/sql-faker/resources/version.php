@@ -25,6 +25,7 @@ return [
     'postgresql' => [
         'default' => 'pg-17.2',
         'versions' => [
+            'pg-16.6' => ['ast' => 'ast/pg-16.6.php'],
             'pg-17.2' => ['ast' => 'ast/pg-17.2.php'],
         ],
     ],

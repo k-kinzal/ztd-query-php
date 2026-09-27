@@ -54,7 +54,7 @@ final class VersionRegistryTest extends TestCase
 
         self::assertSame('mysql-5.6.51', $names[0]);
         self::assertContains('mysql-9.1.0', $names);
-        self::assertSame(['pg-17.2'], (new VersionRegistry())->names('postgresql'));
+        self::assertSame(['pg-16.6', 'pg-17.2'], (new VersionRegistry())->names('postgresql'));
     }
 
     public function testNamesRejectsAnUnknownDialect(): void

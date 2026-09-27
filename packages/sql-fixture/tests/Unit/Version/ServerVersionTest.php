@@ -59,7 +59,8 @@ final class ServerVersionTest extends TestCase
         yield 'newer than every release' => ['mysql', '9.4.0', 'mysql-9.1.0'];
         yield 'older than every release' => ['mysql', '5.5.62', 'mysql-5.6.51'];
         yield 'postgres with a distribution note' => ['pgsql', '17.2 (Debian 17.2-1.pgdg120+1)', 'pg-17.2'];
-        yield 'postgres of an older series' => ['pgsql', '16.6', 'pg-17.2'];
+        yield 'postgres of an older series' => ['pgsql', '16.6', 'pg-16.6'];
+        yield 'postgres older than every release' => ['pgsql', '15.8', 'pg-16.6'];
         yield 'sqlite newer than the release' => ['sqlite', '3.53.3', 'sqlite-3.47.2'];
         yield 'sqlite older than the release' => ['sqlite', '3.45.1', 'sqlite-3.47.2'];
     }
@@ -96,7 +97,7 @@ final class ServerVersionTest extends TestCase
             'mysql-9.0.1',
             'mysql-9.1.0',
         ], Subject::tags('mysql'));
-        self::assertSame(['pg-17.2'], Subject::tags('pgsql'));
+        self::assertSame(['pg-16.6', 'pg-17.2'], Subject::tags('pgsql'));
         self::assertSame(['sqlite-3.47.2'], Subject::tags('sqlite'));
     }
 

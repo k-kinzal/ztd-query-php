@@ -35,6 +35,7 @@ final class Releases
         'pgsql' => [
             'default' => 'pg-17.2',
             'versions' => [
+                'pg-16.6' => '16.6',
                 'pg-17.2' => '17.2',
             ],
         ],
