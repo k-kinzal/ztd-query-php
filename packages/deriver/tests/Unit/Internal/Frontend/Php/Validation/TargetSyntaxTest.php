@@ -19,8 +19,10 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Api\Project\TargetProfile::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\SyntaxCache::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\SyntaxTree::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\Control\DestructuringLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Source\MagicContext::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Source\SyntaxSize::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\Validation\AssignmentPatterns::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\ClassScope::class)]
 #[Small]
 final class TargetSyntaxTest extends TestCase

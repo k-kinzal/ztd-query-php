@@ -47,7 +47,7 @@ final class SyntaxCache
     public function read(SourceFile $file, TargetProfile $profile, \Deriver\Api\Execution\SourceLimits $limits = new \Deriver\Api\Execution\SourceLimits()): SyntaxTree
     {
         $limits->check(new \Deriver\Api\Project\ProjectInput([$file]));
-        $key = hash('sha256', 'syntax-4:' . $profile->id() . ':' . $file->contents);
+        $key = hash('sha256', 'syntax-5:' . $profile->id() . ':' . $file->contents);
         $tree = $this->records[$key] ?? null;
         if ($tree === null) {
             $this->misses++;
@@ -90,7 +90,7 @@ final class SyntaxCache
         [$size, $depth] = (new \Deriver\Internal\Frontend\Php\Source\SyntaxSize())->measure(array_values($parsed), $limits);
         $nodes = [];
         if (!$errors->hasErrors()) {
-            foreach ((new NodeTraverser(new \Deriver\Internal\Frontend\Php\Validation\TargetSyntax($profile, $errors, array_values($parser->getTokens())), new \Deriver\Internal\Frontend\Php\Validation\ClassScope($errors), new NameResolver($errors), new \Deriver\Internal\Frontend\Php\Source\MagicContext()))->traverse($parsed) as $node) {
+            foreach ((new NodeTraverser(new \Deriver\Internal\Frontend\Php\Validation\TargetSyntax($profile, $errors, array_values($parser->getTokens())), new \Deriver\Internal\Frontend\Php\Validation\ClassScope($errors), new \Deriver\Internal\Frontend\Php\Validation\AssignmentPatterns($errors), new NameResolver($errors), new \Deriver\Internal\Frontend\Php\Source\MagicContext()))->traverse($parsed) as $node) {
                 if (!$node instanceof Stmt) {
                     throw new \Deriver\Api\InvalidInputException('The parser returned an invalid top-level node.');
                 }

@@ -42,6 +42,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Frontend\Php\Source\SyntaxSize::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\StatementLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Traits\Composition::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\Validation\AssignmentPatterns::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\ClassScope::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\TargetSyntax::class)]
 #[UsesClass(\Deriver\Internal\IR\BasicBlock::class)]
@@ -108,5 +109,33 @@ final class ReaderTest extends TestCase
         self::assertTrue($reader->plainObject(new \Deriver\Value\Term('object', 'a', attributes: ['class' => 'stdClass'])));
         self::assertFalse($reader->plainObject(new \Deriver\Value\Term('object', 'b', attributes: ['class' => 'A'])));
         self::assertTrue($reader->plainObject(new \Deriver\Value\Term('closure', 'c')));
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerScalarPatterns')]
+    public function testReadTreatsScalarPatternEntriesAsNullWithoutOffsetDiagnostics(\Deriver\Value\Term $container): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $source = new \Deriver\Api\Reference\SourceRef('test', 'a.php', 0, 1);
+        $instruction = new \Deriver\Internal\IR\Instruction('i', 'array-read', $source, 'result', attributes:['destructure' => true]);
+        $result = (new \Deriver\Internal\Solver\Offset\Reader($context))->read($container, \Deriver\Value\Term::constant(1), $instruction, new \Deriver\Internal\Solver\State());
+        self::assertSame('constant', $result->kind);
+        self::assertNull($result->literal);
+        self::assertSame($container->isSecret(), $result->isSecret());
+        self::assertSame([], $context->frontiers);
+    }
+
+    /**
+     * @return iterable<string,array{\Deriver\Value\Term}>
+     */
+    public static function providerScalarPatterns(): iterable
+    {
+        yield 'null' => [\Deriver\Value\Term::constant(null)];
+        yield 'integer' => [\Deriver\Value\Term::constant(42)];
+        yield 'float' => [\Deriver\Value\Term::constant(1.5)];
+        yield 'true' => [\Deriver\Value\Term::constant(true)];
+        yield 'false' => [\Deriver\Value\Term::constant(false)];
+        yield 'string' => [\Deriver\Value\Term::constant('abc')];
+        yield 'secret string' => [\Deriver\Value\Term::constant('secret', true)];
+        yield 'uninitialized' => [new \Deriver\Value\Term('uninitialized')];
     }
 }

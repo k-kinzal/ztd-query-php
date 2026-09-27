@@ -45,8 +45,10 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\SnapshotRebase::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\SyntaxCache::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\SyntaxTree::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\CallLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\CallableCompiler::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\CallableSource::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\Control\DestructuringLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\DeclarationScanner::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\ExpressionLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\GraphBuilder::class)]
@@ -57,6 +59,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Frontend\Php\Source\SyntaxSize::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\StatementLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Traits\Composition::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\Validation\AssignmentPatterns::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\ClassScope::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\TargetSyntax::class)]
 #[UsesClass(\Deriver\Internal\IR\BasicBlock::class)]
@@ -78,7 +81,13 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Model\StateRegistry::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\ArgumentBinding::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\ArgumentOrder::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\CallExecutor::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\CallResolution::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\CallableCheck::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Dispatch::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Resolution::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Target::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Transfer::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeBinding::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeCheck::class)]
 #[UsesClass(\Deriver\Internal\Solver\Completion::class)]
@@ -90,21 +99,32 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Control\Resources::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\StateJoin::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\Unwinding::class)]
+#[UsesClass(\Deriver\Internal\Solver\Demand\Cell::class)]
+#[UsesClass(\Deriver\Internal\Solver\Demand\Components::class)]
 #[UsesClass(\Deriver\Internal\Solver\Demand\Discovery::class)]
+#[UsesClass(\Deriver\Internal\Solver\Demand\Key::class)]
 #[UsesClass(\Deriver\Internal\Solver\Demand\Table::class)]
 #[UsesClass(\Deriver\Internal\Solver\Dependencies::class)]
 #[UsesClass(\Deriver\Internal\Solver\InstructionTransfer::class)]
 #[UsesClass(\Deriver\Internal\Solver\Machine::class)]
 #[UsesClass(\Deriver\Internal\Solver\Model\SlotReference::class)]
 #[UsesClass(\Deriver\Internal\Solver\ObservationCollector::class)]
+#[UsesClass(\Deriver\Internal\Solver\Offset\Address::class)]
+#[UsesClass(\Deriver\Internal\Solver\Offset\Path::class)]
+#[UsesClass(\Deriver\Internal\Solver\Offset\Reader::class)]
+#[UsesClass(\Deriver\Internal\Solver\Offset\Transfer::class)]
 #[UsesClass(\Deriver\Internal\Solver\Operation\Conversions::class)]
 #[UsesClass(\Deriver\Internal\Solver\Operation\ScalarErrors::class)]
 #[UsesClass(\Deriver\Internal\Solver\State::class)]
+#[UsesClass(\Deriver\Internal\Solver\Summary\CompletionRecord::class)]
 #[UsesClass(\Deriver\Internal\Solver\Summary\Evaluation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Summary\Invocation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Summary\Isolation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Transfer\CompoundAssignment::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\MemoryStep::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\PureStep::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\ReferenceAssignment::class)]
+#[UsesClass(\Deriver\Internal\Value\Arithmetic::class)]
 #[UsesClass(\Deriver\Internal\Value\Arrays::class)]
 #[UsesClass(\Deriver\Internal\Value\Identity::class)]
 #[UsesClass(\Deriver\Internal\Value\PhpSemantics::class)]
@@ -153,5 +173,31 @@ final class LoopLoweringTest extends TestCase
         (new \Deriver\Internal\Frontend\Php\Control\LoopLowering($l))->completion(new \PhpParser\Node\Stmt\Continue_(new \PhpParser\Node\Scalar\Int_(2)));
         self::assertSame([7], $l->graph->terminators[0]->targets);
         self::assertSame(1, $l->graph->terminators[0]->handlerDepth);
+    }
+
+    /**
+     * @throws JsonException If recorded observations cannot be decoded
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerForeachSemantics')]
+    public function testBindIterationPreservesRecordedPatternSemantics(string $source, string $normalJson, string $exception, bool $diagnostic): void
+    {
+        $expected = json_decode($normalJson, true, 512, JSON_THROW_ON_ERROR);
+        $result = \Tests\Fake\Analysis::returns($source);
+        self::assertSame($expected, array_map(static fn (\Deriver\Api\Result\Alternative $outcome) => $outcome->values['return']->native(), $result->normalOutcomes));
+        self::assertSame($exception === '' ? [] : [$exception], array_map(static fn (\Deriver\Api\Result\Exceptional $outcome): int|float|string|bool|null => $outcome->exception->literal, $result->exceptionalOutcomes));
+        self::assertSame($diagnostic, in_array('PHP_WARNING', array_column($result->frontiers, 'code'), true));
+        self::assertSame([], array_diff(array_column($result->frontiers, 'code'), ['PHP_WARNING']));
+    }
+
+    /**
+     * @return iterable<string,array{string,string,string,bool}>
+     */
+    public static function providerForeachSemantics(): iterable
+    {
+        foreach (\Tests\Fake\Programs\DestructuringPrograms::cases() as $name => $case) {
+            if (str_starts_with($name, 'foreach')) {
+                yield $name => $case;
+            }
+        }
     }
 }

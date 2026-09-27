@@ -8,6 +8,7 @@ use Deriver\Internal\Frontend\Php\AssignmentLowering;
 use Deriver\Internal\Frontend\Php\Lowering;
 use Deriver\Internal\IR\Terminator;
 use Deriver\Value\Term;
+use PhpParser\Node\Expr;
 use PhpParser\Node\Scalar;
 use PhpParser\Node\Stmt;
 
@@ -75,8 +76,9 @@ final class LoopLowering
             }
         }
         if ($node instanceof Stmt\Foreach_) {
-            $source = $node->byRef ? $this->lowering->location($node->expr) : $this->lowering->expression($node->expr);
-            return $this->lowering->graph->emit($node, 'iterator', [$source], attributes: ['byReference' => $node->byRef]);
+            $byReference = $node->byRef || DestructuringLowering::references($node->valueVar);
+            $source = $byReference ? (new DestructuringLowering($this->lowering))->source($node->expr, false) : $this->lowering->expression($node->expr);
+            return $this->lowering->graph->emit($node, 'iterator', [$source], attributes: ['byReference' => $byReference]);
         }
         return '';
     }
@@ -110,14 +112,19 @@ final class LoopLowering
     public function bindIteration(Stmt\Foreach_ $node, string $iterator): void
     {
         $l = $this->lowering;
-        if ($node->keyVar !== null) {
-            (new AssignmentLowering($l))->assign($node->keyVar, $l->graph->emit($node, 'iterator-key', [$iterator]));
-        }
-        $value = $l->graph->emit($node, $node->byRef ? 'iterator-address' : 'iterator-value', [$iterator]);
-        if ($node->byRef) {
+        $byReference = $node->byRef || DestructuringLowering::references($node->valueVar);
+        $value = $l->graph->emit($node, $byReference ? 'iterator-address' : 'iterator-value', [$iterator]);
+        if ($byReference && ($node->valueVar instanceof Expr\List_ || $node->valueVar instanceof Expr\Array_)) {
+            $reference = $l->graph->emit($node, 'reference', [$value]);
+            $address = $l->graph->emit($node, 'returned-address', [$reference]);
+            (new DestructuringLowering($l))->assign($node->valueVar, '', $address);
+        } elseif ($byReference) {
             $l->graph->emit($node, 'alias', [$l->location($node->valueVar), $value]);
         } else {
             (new AssignmentLowering($l))->assign($node->valueVar, $value);
+        }
+        if ($node->keyVar !== null) {
+            (new AssignmentLowering($l))->assign($node->keyVar, $l->graph->emit($node, 'iterator-key', [$iterator]));
         }
     }
 

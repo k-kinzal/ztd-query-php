@@ -35,6 +35,9 @@ final class Reader
      */
     public function read(Term $container, ?Term $key, Instruction $instruction, State $state, bool $silent = false): Term
     {
+        if (($instruction->attributes['destructure'] ?? false) === true && in_array($container->kind, ['constant', 'uninitialized'], true)) {
+            return Term::constant(null, $container->isSecret());
+        }
         if ($container->kind === 'array') {
             return $this->array($container, $key, $instruction, $state, $silent);
         }

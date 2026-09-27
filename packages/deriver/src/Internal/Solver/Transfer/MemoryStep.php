@@ -119,8 +119,7 @@ final class MemoryStep
     public function address(Instruction $instruction, State $state): Location
     {
         if ($instruction->operation === 'returned-address') {
-            $value = $state->registers[$instruction->operands[0] ?? ''] ?? Term::opaque('INVALID_REFERENCE');
-            return $value->kind === 'cell' && is_string($value->literal) ? new Location($value->literal) : new Location('invalid-reference', unknown: true);
+            return $this->returnedAddress($instruction, $state);
         }
         if ($instruction->operation === 'local') {
             return $state->local($instruction->name);
@@ -198,5 +197,25 @@ final class MemoryStep
             $state->locals[$address->local] = new Location($root);
         }
         return Term::constant(null);
+    }
+    /**
+     * Resolves a returned reference or allocates permitted temporary iteration storage.
+     * @param Instruction $instruction Returned-address operation and diagnostic policy
+     * @param State $state Evaluated return register and reference memory
+     * @return Location Shared cell, temporary storage, or an unresolved reference
+     */
+    public function returnedAddress(Instruction $instruction, State $state): Location
+    {
+        $value = $state->registers[$instruction->operands[0] ?? ''] ?? Term::opaque('INVALID_REFERENCE');
+        if ($value->kind === 'cell' && is_string($value->literal)) {
+            return new Location($value->literal);
+        }
+        if (($instruction->attributes['temporary-reference'] ?? false) === true) {
+            if (($instruction->attributes['temporary-warning'] ?? true) === true) {
+                $this->context->frontier('PHP_WARNING', $instruction->source, 'non-referenceable-return');
+            }
+            return $state->memory->allocate($value);
+        }
+        return new Location('invalid-reference', unknown: true);
     }
 }

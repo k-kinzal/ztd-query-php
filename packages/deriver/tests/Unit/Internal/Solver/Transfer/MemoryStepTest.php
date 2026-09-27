@@ -59,6 +59,7 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Internal\Frontend\Php\CallableCompiler::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\CallableSource::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Control\ConditionalLowering::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\Control\DestructuringLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Control\ExceptionLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\DeclarationScanner::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\ExpressionLowering::class)]
@@ -70,6 +71,7 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Internal\Frontend\Php\Source\SyntaxSize::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\StatementLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Traits\Composition::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\Validation\AssignmentPatterns::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\ClassScope::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\TargetSyntax::class)]
 #[UsesClass(\Deriver\Internal\IR\Argument::class)]
@@ -413,5 +415,47 @@ final class MemoryStepTest extends TestCase
         $array = $state->memory->allocate(Term::fromNative(['a' => 1,'b' => 2]));
         $step->binding($body, new Instruction('unset', 'unset', $source), $state, new Location($array->root, ['a'], local:'array'));
         self::assertSame(['b' => 2], $state->memory->read($array)->native());
+    }
+
+    #[DataProvider('providerTemporaryReferenceDiagnostics')]
+    public function testReturnedAddressAnchorsTemporaryValuesAndReportsOnlyRequiredReferenceNotices(bool $diagnostic): void
+    {
+        $context = SolverFixture::context();
+        $state = new State();
+        $value = Term::fromNative([7]);
+        $state->registers['returned'] = $value;
+        $source = new SourceRef('test', 'a.php', 1, 9);
+        $instruction = new Instruction('i', 'returned-address', $source, 'address', ['returned'], attributes:['temporary-reference' => true, 'temporary-warning' => $diagnostic]);
+        $address = (new MemoryStep($context))->returnedAddress($instruction, $state);
+        self::assertFalse($address->unknown);
+        self::assertSame($value, $state->memory->read($address));
+        self::assertSame($diagnostic ? ['PHP_WARNING'] : [], array_column($context->frontiers, 'code'));
+        self::assertSame($diagnostic ? [$source] : [], array_column($context->frontiers, 'at'));
+        $state->memory->write($address, Term::constant(8));
+        self::assertSame($value, $state->registers['returned']);
+    }
+
+    /**
+     * @return iterable<string,array{bool}>
+     */
+    public static function providerTemporaryReferenceDiagnostics(): iterable
+    {
+        yield 'assignment from ordinary return' => [true];
+        yield 'foreach temporary' => [false];
+    }
+
+    public function testReturnedAddressRetainsAnExistingReturnedCellWithoutAReferenceNotice(): void
+    {
+        $context = SolverFixture::context();
+        $state = new State();
+        $original = $state->memory->allocate(Term::fromNative([7]));
+        $state->registers['returned'] = new Term('cell', $original->root);
+        $instruction = new Instruction('i', 'returned-address', new SourceRef('test', 'a.php', 1, 9), 'address', ['returned'], attributes:['temporary-reference' => true]);
+        $address = (new MemoryStep($context))->returnedAddress($instruction, $state);
+        self::assertSame($original->root, $address->root);
+        self::assertFalse($address->unknown);
+        self::assertSame([], $context->frontiers);
+        $state->memory->write($address, Term::constant(8));
+        self::assertSame(8, $state->memory->read($original)->literal);
     }
 }

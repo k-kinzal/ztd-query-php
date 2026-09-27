@@ -48,6 +48,14 @@ final class StatePrograms
             'if ($n < 0) {$a->value += 2;} else {$c->value += 2;}',
             'try {$a->value++; if ($n === 0) {throw new RuntimeException;}} catch (RuntimeException $e) {$ref += 2;} finally {$c->value += 1;}',
             'bump($ref);',
+            '[&$pattern,$ignored] = $list; $pattern += 2;',
+            '[$list[1],$unused] = $list;',
+            'list(, &$pattern) = $copy; $pattern += 3;',
+            'foreach ([$list,$copy] as [&$pattern]) {$pattern += 1;}',
+            '[$a->value,$c->value] = [$n,4];',
+            '[&$a->value] = $list;',
+            '[[$a->value],$c->value] = [[$n],4];',
+            'foreach ([$n] as $pattern => $pattern) {$c->value += $pattern;}',
         ];
         $bytes = hash('sha256', 'deriver-state:' . $seed, true);
         $operations = [];
