@@ -3,7 +3,7 @@
 
 declare(strict_types=1);
 
-use SqlSemantics\Core\ResolutionMode;
+use SqlSemantics\Core\Declarations;
 use SqlSemantics\Core\SemanticException;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Statement\Declaration\ConstraintKind;
@@ -47,7 +47,7 @@ try {
         }
         $table = null;
         try {
-            $statement = $semantics->analyze($sql, resolutionMode: ResolutionMode::Partial);
+            $statement = $semantics->analyze($sql, dependencies: [], declarations: Declarations::Partial);
             $table = $statement->resolution?->declarations[0] ?? throw new RuntimeException('Missing structured declaration: ' . $name);
         } catch (SemanticException) {
         }

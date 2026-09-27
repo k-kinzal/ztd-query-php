@@ -52,13 +52,15 @@ final class AlterListWithAlterListAlterCommandsModifier_86c99eeb implements \Sql
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->alterList, \SqlSemantics\Statement\Model\MySql\Role\AlterListForm::class, $replace), $this->replacement($this->alterCommandsModifier, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsModifierForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->alterList, \SqlSemantics\Statement\Model\MySql\Role\AlterListForm::class, $replace), $this->replacement($this->alterCommandsModifier, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsModifierForm::class, $replace)];
+
+        return $mapped === [$this->alterList, $this->alterCommandsModifier] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

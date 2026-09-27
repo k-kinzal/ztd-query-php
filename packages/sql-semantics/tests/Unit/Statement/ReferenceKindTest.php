@@ -16,6 +16,7 @@ final class ReferenceKindTest extends TestCase
     public function testCases(): void
     {
         self::assertCount(5, ReferenceKind::cases());
+        self::assertSame('Undeclared', ReferenceKind::Undeclared->name);
         self::assertSame('CommonTableExpression', ReferenceKind::CommonTableExpression->name);
     }
 }

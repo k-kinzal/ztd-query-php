@@ -54,13 +54,15 @@ final class Create2WithOptCreateTableOptionsOptCreatePartitioningCreate3_933517e
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->optCreateTableOptions, \SqlSemantics\Statement\Model\MySql\Role\OptCreateTableOptionsForm::class, $replace), $this->replacement($this->optCreatePartitioning, \SqlSemantics\Statement\Model\MySql\Role\OptCreatePartitioningForm::class, $replace), $this->replacement($this->create3, \SqlSemantics\Statement\Model\MySql\Role\Create3Form::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optCreateTableOptions, \SqlSemantics\Statement\Model\MySql\Role\OptCreateTableOptionsForm::class, $replace), $this->replacement($this->optCreatePartitioning, \SqlSemantics\Statement\Model\MySql\Role\OptCreatePartitioningForm::class, $replace), $this->replacement($this->create3, \SqlSemantics\Statement\Model\MySql\Role\Create3Form::class, $replace)];
+
+        return $mapped === [$this->optCreateTableOptions, $this->optCreatePartitioning, $this->create3] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

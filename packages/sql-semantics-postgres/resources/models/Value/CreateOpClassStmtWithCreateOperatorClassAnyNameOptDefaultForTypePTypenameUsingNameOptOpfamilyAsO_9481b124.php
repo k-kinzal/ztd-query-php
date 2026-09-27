@@ -80,13 +80,15 @@ final class CreateOpClassStmtWithCreateOperatorClassAnyNameOptDefaultForTypePTyp
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->anyName, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm::class, $replace), $this->replacement($this->optDefault, \SqlSemantics\Statement\Model\PostgreSql\Role\OptDefaultForm::class, $replace), $this->replacement($this->typename, \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm::class, $replace), $this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->optOpfamily, \SqlSemantics\Statement\Model\PostgreSql\Role\OptOpfamilyForm::class, $replace), $this->replacement($this->opclassItemList, \SqlSemantics\Statement\Model\PostgreSql\Role\OpclassItemListForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->anyName, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm::class, $replace), $this->replacement($this->optDefault, \SqlSemantics\Statement\Model\PostgreSql\Role\OptDefaultForm::class, $replace), $this->replacement($this->typename, \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm::class, $replace), $this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->optOpfamily, \SqlSemantics\Statement\Model\PostgreSql\Role\OptOpfamilyForm::class, $replace), $this->replacement($this->opclassItemList, \SqlSemantics\Statement\Model\PostgreSql\Role\OpclassItemListForm::class, $replace)];
+
+        return $mapped === [$this->anyName, $this->optDefault, $this->typename, $this->name, $this->optOpfamily, $this->opclassItemList] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $mapped[5], $this->comments);
     }
 
     /**

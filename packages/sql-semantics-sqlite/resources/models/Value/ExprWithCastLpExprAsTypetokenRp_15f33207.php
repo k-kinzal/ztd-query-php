@@ -58,13 +58,15 @@ final class ExprWithCastLpExprAsTypetokenRp_15f33207 implements \SqlSemantics\St
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->expr, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm::class, $replace), $this->replacement($this->typetoken, \SqlSemantics\Statement\Model\Sqlite\Role\TypetokenForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->expr, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm::class, $replace), $this->replacement($this->typetoken, \SqlSemantics\Statement\Model\Sqlite\Role\TypetokenForm::class, $replace)];
+
+        return $mapped === [$this->expr, $this->typetoken] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

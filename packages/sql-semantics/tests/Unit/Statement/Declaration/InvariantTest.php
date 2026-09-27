@@ -93,7 +93,7 @@ final class InvariantTest extends TestCase
 
     public function testNonEmptyNamesAcceptsAQualifiedPath(): void
     {
-        $reference = new \SqlSemantics\Statement\Reference(new \SqlSemantics\Statement\Model\Sqlite\Value\NmWithIdj_a2015ecf('users'), ['app', 'users'], \SqlSemantics\Statement\ReferenceKind::Unresolved);
+        $reference = new \SqlSemantics\Statement\Reference(new \SqlSemantics\Statement\Model\Sqlite\Value\NmWithIdj_a2015ecf('users'), ['app', 'users'], \SqlSemantics\Statement\ReferenceKind::Undeclared);
         self::assertSame(['app', 'users'], $reference->name);
     }
 

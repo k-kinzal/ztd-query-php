@@ -56,13 +56,15 @@ final class XmlexistsArgumentWithPassingXmlPassingMechCExprXmlPassingMech_b4abd2
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->xmlPassingMech, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlPassingMechForm::class, $replace), $this->replacement($this->cExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm::class, $replace), $this->replacement($this->xmlPassingMech2, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlPassingMechForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->xmlPassingMech, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlPassingMechForm::class, $replace), $this->replacement($this->cExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm::class, $replace), $this->replacement($this->xmlPassingMech2, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlPassingMechForm::class, $replace)];
+
+        return $mapped === [$this->xmlPassingMech, $this->cExpr, $this->xmlPassingMech2] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

@@ -56,13 +56,15 @@ final class CommitWithCommitSymOptWorkOptChainOptRelease_b895fd3e implements \Sq
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->optWork, \SqlSemantics\Statement\Model\MySql\Role\OptWorkForm::class, $replace), $this->replacement($this->optChain, \SqlSemantics\Statement\Model\MySql\Role\OptChainForm::class, $replace), $this->replacement($this->optRelease, \SqlSemantics\Statement\Model\MySql\Role\OptReleaseForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optWork, \SqlSemantics\Statement\Model\MySql\Role\OptWorkForm::class, $replace), $this->replacement($this->optChain, \SqlSemantics\Statement\Model\MySql\Role\OptChainForm::class, $replace), $this->replacement($this->optRelease, \SqlSemantics\Statement\Model\MySql\Role\OptReleaseForm::class, $replace)];
+
+        return $mapped === [$this->optWork, $this->optChain, $this->optRelease] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

@@ -9,10 +9,12 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Analysis\NameSite;
+use SqlSemantics\Core\Analysis\Scope;
 use SqlSemantics\Statement\Model\Sqlite\Value\NmWithIdj_a2015ecf as Name;
 use SqlSemantics\Statement\ReferenceKind;
 
 #[CoversClass(NameSite::class)]
+#[UsesClass(Scope::class)]
 #[UsesClass(\SqlSemantics\Statement\Assertion::class)]
 #[UsesClass(\SqlSemantics\Statement\Comments::class)]
 #[Small]
@@ -27,5 +29,7 @@ final class NameSiteTest extends TestCase
         self::assertSame(ReferenceKind::Drop, $site->kind);
         self::assertTrue($site->conditional);
         self::assertFalse((new NameSite($value, ['users'], ReferenceKind::Dependency))->conditional);
+        self::assertSame([], $site->scope->names);
+        self::assertSame(['recent'], (new NameSite($value, ['users'], ReferenceKind::Dependency, false, new Scope(['recent'])))->scope->names);
     }
 }

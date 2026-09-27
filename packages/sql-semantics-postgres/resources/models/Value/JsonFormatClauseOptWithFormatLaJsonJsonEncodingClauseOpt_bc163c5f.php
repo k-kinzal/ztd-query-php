@@ -52,13 +52,15 @@ final class JsonFormatClauseOptWithFormatLaJsonJsonEncodingClauseOpt_bc163c5f im
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->formatLa, $this->replacement($this->jsonEncodingClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonEncodingClauseOptForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->jsonEncodingClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonEncodingClauseOptForm::class, $replace)];
+
+        return $mapped === [$this->jsonEncodingClauseOpt] ? $this : new self($this->formatLa, $mapped[0], $this->comments);
     }
 
     /**

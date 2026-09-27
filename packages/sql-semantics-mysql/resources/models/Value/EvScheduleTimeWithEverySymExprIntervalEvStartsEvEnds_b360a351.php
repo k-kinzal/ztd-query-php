@@ -60,13 +60,15 @@ final class EvScheduleTimeWithEverySymExprIntervalEvStartsEvEnds_b360a351 implem
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->replacement($this->interval, \SqlSemantics\Statement\Model\MySql\Role\IntervalForm::class, $replace), $this->replacement($this->evStarts, \SqlSemantics\Statement\Model\MySql\Role\EvStartsForm::class, $replace), $this->replacement($this->evEnds, \SqlSemantics\Statement\Model\MySql\Role\EvEndsForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->replacement($this->interval, \SqlSemantics\Statement\Model\MySql\Role\IntervalForm::class, $replace), $this->replacement($this->evStarts, \SqlSemantics\Statement\Model\MySql\Role\EvStartsForm::class, $replace), $this->replacement($this->evEnds, \SqlSemantics\Statement\Model\MySql\Role\EvEndsForm::class, $replace)];
+
+        return $mapped === [$this->expr, $this->interval, $this->evStarts, $this->evEnds] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $this->comments);
     }
 
     /**

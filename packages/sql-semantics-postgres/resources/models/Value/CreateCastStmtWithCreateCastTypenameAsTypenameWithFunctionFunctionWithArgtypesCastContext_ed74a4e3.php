@@ -72,13 +72,15 @@ final class CreateCastStmtWithCreateCastTypenameAsTypenameWithFunctionFunctionWi
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->typename, \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm::class, $replace), $this->replacement($this->typename2, \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm::class, $replace), $this->replacement($this->functionWithArgtypes, \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm::class, $replace), $this->replacement($this->castContext, \SqlSemantics\Statement\Model\PostgreSql\Role\CastContextForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->typename, \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm::class, $replace), $this->replacement($this->typename2, \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm::class, $replace), $this->replacement($this->functionWithArgtypes, \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm::class, $replace), $this->replacement($this->castContext, \SqlSemantics\Statement\Model\PostgreSql\Role\CastContextForm::class, $replace)];
+
+        return $mapped === [$this->typename, $this->typename2, $this->functionWithArgtypes, $this->castContext] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $this->comments);
     }
 
     /**

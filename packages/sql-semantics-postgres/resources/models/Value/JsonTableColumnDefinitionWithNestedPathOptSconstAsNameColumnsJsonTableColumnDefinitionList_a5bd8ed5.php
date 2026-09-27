@@ -68,13 +68,15 @@ final class JsonTableColumnDefinitionWithNestedPathOptSconstAsNameColumnsJsonTab
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->pathOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\PathOptForm::class, $replace), $this->replacement($this->sconst, \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm::class, $replace), $this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->jsonTableColumnDefinitionList, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionListForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->pathOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\PathOptForm::class, $replace), $this->replacement($this->sconst, \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm::class, $replace), $this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->jsonTableColumnDefinitionList, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionListForm::class, $replace)];
+
+        return $mapped === [$this->pathOpt, $this->sconst, $this->name, $this->jsonTableColumnDefinitionList] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $this->comments);
     }
 
     /**

@@ -29,6 +29,13 @@ final class ReferenceTest extends TestCase
         self::assertNull($reference->declaration);
         self::assertNull($reference->table);
         self::assertTrue($reference->conditional);
+        self::assertSame([$value], $reference->values);
     }
 
+    public function testKeepsEveryValueThatWritesTheNameStartingWithTheValue(): void
+    {
+        $schema = new Name('main');
+        $table = new Name('users');
+        self::assertSame([$schema, $table], (new Reference($schema, ['main', 'users'], ReferenceKind::Dependency, values: [$schema, $table]))->values);
+    }
 }

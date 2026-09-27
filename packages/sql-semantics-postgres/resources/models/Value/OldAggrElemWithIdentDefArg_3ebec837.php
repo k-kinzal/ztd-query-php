@@ -52,13 +52,15 @@ final class OldAggrElemWithIdentDefArg_3ebec837 implements \SqlSemantics\Stateme
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->name, $this->replacement($this->defArg, \SqlSemantics\Statement\Model\PostgreSql\Role\DefArgForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->defArg, \SqlSemantics\Statement\Model\PostgreSql\Role\DefArgForm::class, $replace)];
+
+        return $mapped === [$this->defArg] ? $this : new self($this->name, $mapped[0], $this->comments);
     }
 
     /**

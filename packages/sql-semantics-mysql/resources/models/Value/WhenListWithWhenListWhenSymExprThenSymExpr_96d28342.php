@@ -58,13 +58,15 @@ final class WhenListWithWhenListWhenSymExprThenSymExpr_96d28342 implements \SqlS
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->whenList, \SqlSemantics\Statement\Model\MySql\Role\WhenListForm::class, $replace), $this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->replacement($this->expr2, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->whenList, \SqlSemantics\Statement\Model\MySql\Role\WhenListForm::class, $replace), $this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->replacement($this->expr2, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace)];
+
+        return $mapped === [$this->whenList, $this->expr, $this->expr2] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

@@ -76,13 +76,15 @@ final class UpsertWithOnConflictLpSortlistRpWhereOptDoUpdateSetSetlistWhereOptUp
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->sortlist, \SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm::class, $replace), $this->replacement($this->setlist, \SqlSemantics\Statement\Model\Sqlite\Role\SetlistForm::class, $replace), $this->replacement($this->where2, \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm::class, $replace), $this->replacement($this->upsert, \SqlSemantics\Statement\Model\Sqlite\Role\UpsertForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->sortlist, \SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm::class, $replace), $this->replacement($this->setlist, \SqlSemantics\Statement\Model\Sqlite\Role\SetlistForm::class, $replace), $this->replacement($this->where2, \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm::class, $replace), $this->replacement($this->upsert, \SqlSemantics\Statement\Model\Sqlite\Role\UpsertForm::class, $replace)];
+
+        return $mapped === [$this->sortlist, $this->where, $this->setlist, $this->where2, $this->upsert] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $this->comments);
     }
 
     /**

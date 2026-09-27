@@ -32,10 +32,10 @@ interface SchemaRules
     public function defaultValue(Node $attribute, ValueReader $values): Element;
 
     /**
-     * Namespaces searched for an unqualified relation, in precedence order.
-     * @return non-empty-list<string>
+     * Implicit namespaces searched before the session path for declared tables.
+     * @return list<string>
      */
-    public function searchSchemas(): array;
+    public function implicitSchemas(): array;
 
     /**
      * Reads key columns without interpreting expression operands as column names.

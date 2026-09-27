@@ -52,13 +52,15 @@ final class HashPartboundWithHashPartboundHashPartboundElem_23e9370c implements 
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->hashPartbound, \SqlSemantics\Statement\Model\PostgreSql\Role\HashPartboundForm::class, $replace), $this->replacement($this->hashPartboundElem, \SqlSemantics\Statement\Model\PostgreSql\Role\HashPartboundElemForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->hashPartbound, \SqlSemantics\Statement\Model\PostgreSql\Role\HashPartboundForm::class, $replace), $this->replacement($this->hashPartboundElem, \SqlSemantics\Statement\Model\PostgreSql\Role\HashPartboundElemForm::class, $replace)];
+
+        return $mapped === [$this->hashPartbound, $this->hashPartboundElem] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

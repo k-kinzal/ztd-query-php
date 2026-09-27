@@ -52,13 +52,15 @@ final class TableWildListWithTableWildListTableWildOne_948d7b57 implements \SqlS
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->tableWildList, \SqlSemantics\Statement\Model\MySql\Role\TableWildListForm::class, $replace), $this->replacement($this->tableWildOne, \SqlSemantics\Statement\Model\MySql\Role\TableWildOneForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->tableWildList, \SqlSemantics\Statement\Model\MySql\Role\TableWildListForm::class, $replace), $this->replacement($this->tableWildOne, \SqlSemantics\Statement\Model\MySql\Role\TableWildOneForm::class, $replace)];
+
+        return $mapped === [$this->tableWildList, $this->tableWildOne] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

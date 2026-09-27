@@ -1,9 +1,9 @@
 # Reading declarations and literals
 
-A DDL reader can inspect a table before its referenced tables are available. Select `ResolutionMode::Partial` to keep absent dependencies as explicit unresolved references. Declaration validation still runs; duplicate columns and invalid key expressions do not become partial results.
+A DDL reader can inspect a table before its referenced tables are available. Pass an empty dependency list and select `Declarations::Partial` to keep absent dependencies as explicit unresolved references. Declaration validation still runs; duplicate columns and invalid key expressions do not become partial results.
 
 ```php
-use SqlSemantics\Core\ResolutionMode;
+use SqlSemantics\Core\Declarations;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Statement\ReferenceKind;
@@ -11,18 +11,18 @@ use SqlSemantics\Statement\ReferenceKind;
 $semantics = new Semantics(Dialect::MySql);
 $statement = $semantics->analyze(
     'CREATE TABLE child (id INT, parent_id INT, FOREIGN KEY (parent_id) REFERENCES parent(id))',
-    resolutionMode: ResolutionMode::Partial,
+    dependencies: [], declarations: Declarations::Partial,
 );
 $table = $statement->resolution->declarations[0];
 $reference = $statement->resolution->references[1];
-$reference->kind === ReferenceKind::Unresolved; // true
+$reference->kind === ReferenceKind::Undeclared; // true
 $reference->name;                             // ['parent']
 $reference->table;                            // null
 ```
 
-Strict resolution remains the default when dependencies are supplied. Pass the parent declaration and analyze the SQL again to resolve the reference; the previous statement stays unchanged. `analyzeAll()` accepts the same mode and applies preceding statements in order. Partial mode also records absent table references in queries. Drops keep their `Drop` kind and can have no known table. Nothing unresolved is inserted into the known schema as a fabricated table.
+Complete declarations remain the default when dependencies are supplied. Pass the parent declaration and analyze the SQL again to resolve the reference; the previous statement stays unchanged. `analyzeAll()` accepts the same declaration policy and applies preceding statements in order. Partial declarations also records absent table references in queries. Drops keep their `Drop` kind and can have no known table. Nothing unresolved is inserted into the known schema as a fabricated table.
 
-SQLite temporary tables have schema `temp`. Unqualified references search `temp` before `main`; explicitly qualified names retain their namespace. All three dialects record foreign table names, including unresolved ones.
+SQLite temporary tables have schema `temp`. Unqualified references search declared tables in `temp` before the configured session path (`main` and any attached databases); explicitly qualified names retain their namespace. All three dialects record foreign table names, including unresolved ones.
 
 ## Declared and effective numeric sizes
 
@@ -73,7 +73,7 @@ A column's `defaultExpression` preserves its whole DEFAULT clause, including a c
 ```php
 $table = $semantics->analyze(
     "CREATE TABLE choices (choice ENUM('a''b', 'second') DEFAULT 'second')",
-    resolutionMode: ResolutionMode::Partial,
+    dependencies: [], declarations: Declarations::Partial,
 )->resolution->declarations[0];
 
 $column = $table->columns[0];

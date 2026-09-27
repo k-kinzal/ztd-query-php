@@ -56,13 +56,15 @@ final class ReplaceWithReplaceReplaceLockOptionInsert2InsertFieldSpec_d77d1c9e i
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->replaceLockOption, \SqlSemantics\Statement\Model\MySql\Role\ReplaceLockOptionForm::class, $replace), $this->replacement($this->insert2, \SqlSemantics\Statement\Model\MySql\Role\Insert2Form::class, $replace), $this->replacement($this->insertFieldSpec, \SqlSemantics\Statement\Model\MySql\Role\InsertFieldSpecForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->replaceLockOption, \SqlSemantics\Statement\Model\MySql\Role\ReplaceLockOptionForm::class, $replace), $this->replacement($this->insert2, \SqlSemantics\Statement\Model\MySql\Role\Insert2Form::class, $replace), $this->replacement($this->insertFieldSpec, \SqlSemantics\Statement\Model\MySql\Role\InsertFieldSpecForm::class, $replace)];
+
+        return $mapped === [$this->replaceLockOption, $this->insert2, $this->insertFieldSpec] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

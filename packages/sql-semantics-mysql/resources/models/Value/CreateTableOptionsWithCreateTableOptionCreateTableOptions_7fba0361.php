@@ -50,13 +50,15 @@ final class CreateTableOptionsWithCreateTableOptionCreateTableOptions_7fba0361 i
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->createTableOption, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionForm::class, $replace), $this->replacement($this->createTableOptions, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->createTableOption, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionForm::class, $replace), $this->replacement($this->createTableOptions, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsForm::class, $replace)];
+
+        return $mapped === [$this->createTableOption, $this->createTableOptions] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

@@ -56,13 +56,15 @@ final class ShowParamWithOptFullTablesOptDbWildAndWhere_7eff897e implements \Sql
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->optFull, \SqlSemantics\Statement\Model\MySql\Role\OptFullForm::class, $replace), $this->replacement($this->optDb, \SqlSemantics\Statement\Model\MySql\Role\OptDbForm::class, $replace), $this->replacement($this->wildAndWhere, \SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optFull, \SqlSemantics\Statement\Model\MySql\Role\OptFullForm::class, $replace), $this->replacement($this->optDb, \SqlSemantics\Statement\Model\MySql\Role\OptDbForm::class, $replace), $this->replacement($this->wildAndWhere, \SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm::class, $replace)];
+
+        return $mapped === [$this->optFull, $this->optDb, $this->wildAndWhere] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

@@ -14,11 +14,6 @@ namespace SqlSemantics\Statement;
 enum ReferenceKind
 {
     /**
-     * A reference whose declaration is absent from a partial analysis.
-     */
-    case Unresolved;
-
-    /**
      * A table declared by one of the statement's dependencies.
      */
     case Dependency;
@@ -37,4 +32,9 @@ enum ReferenceKind
      * A table the statement drops.
      */
     case Drop;
+
+    /**
+     * A table no dependency declares, named in a statement analyzed with partial declarations: the database may have it, and nothing is known of its columns.
+     */
+    case Undeclared;
 }

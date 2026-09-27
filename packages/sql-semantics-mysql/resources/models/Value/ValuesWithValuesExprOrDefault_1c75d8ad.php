@@ -52,13 +52,15 @@ final class ValuesWithValuesExprOrDefault_1c75d8ad implements \SqlSemantics\Stat
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->values, \SqlSemantics\Statement\Model\MySql\Role\ValuesForm::class, $replace), $this->replacement($this->exprOrDefault, \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->values, \SqlSemantics\Statement\Model\MySql\Role\ValuesForm::class, $replace), $this->replacement($this->exprOrDefault, \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm::class, $replace)];
+
+        return $mapped === [$this->values, $this->exprOrDefault] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

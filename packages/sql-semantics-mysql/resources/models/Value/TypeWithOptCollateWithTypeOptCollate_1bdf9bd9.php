@@ -50,13 +50,15 @@ final class TypeWithOptCollateWithTypeOptCollate_1bdf9bd9 implements \SqlSemanti
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->type, \SqlSemantics\Statement\Model\MySql\Role\TypeForm::class, $replace), $this->replacement($this->optCollate, \SqlSemantics\Statement\Model\MySql\Role\OptCollateForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->type, \SqlSemantics\Statement\Model\MySql\Role\TypeForm::class, $replace), $this->replacement($this->optCollate, \SqlSemantics\Statement\Model\MySql\Role\OptCollateForm::class, $replace)];
+
+        return $mapped === [$this->type, $this->optCollate] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

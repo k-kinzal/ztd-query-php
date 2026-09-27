@@ -54,13 +54,15 @@ final class ConslistWithConslistTconscommaTcons_c4260c11 implements \SqlSemantic
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->conslist, \SqlSemantics\Statement\Model\Sqlite\Role\ConslistForm::class, $replace), $this->replacement($this->tconscomma, \SqlSemantics\Statement\Model\Sqlite\Role\TconscommaForm::class, $replace), $this->replacement($this->tcons, \SqlSemantics\Statement\Model\Sqlite\Role\TconsForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->conslist, \SqlSemantics\Statement\Model\Sqlite\Role\ConslistForm::class, $replace), $this->replacement($this->tconscomma, \SqlSemantics\Statement\Model\Sqlite\Role\TconscommaForm::class, $replace), $this->replacement($this->tcons, \SqlSemantics\Statement\Model\Sqlite\Role\TconsForm::class, $replace)];
+
+        return $mapped === [$this->conslist, $this->tconscomma, $this->tcons] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

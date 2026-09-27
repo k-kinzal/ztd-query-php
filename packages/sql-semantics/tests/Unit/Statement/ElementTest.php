@@ -47,12 +47,15 @@ final class ElementTest extends TestCase
         self::assertSame($choice, $choice->map(static fn (\SqlSemantics\Statement\Element $child): \SqlSemantics\Statement\Element => $child));
     }
 
-    public function testMapRebuildsAroundReplacementsAndAnswersLeavesThemselves(): void
+    public function testMapRebuildsAroundReplacementsAndAnswersItselfWhenEveryChildIsKept(): void
     {
         $command = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT a FROM t')->command;
-        $mapped = $command->map(static fn (\SqlSemantics\Statement\Element $child): \SqlSemantics\Statement\Element => $child);
-        self::assertNotSame($command, $mapped);
-        self::assertEquals($command, $mapped);
+        self::assertSame($command, $command->map(static fn (\SqlSemantics\Statement\Element $child): \SqlSemantics\Statement\Element => $child));
+        $select = $command->children()[0];
+        $from = \SqlSemantics\Statement\Traversal::find((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT a FROM u')->command, \SqlSemantics\Statement\Model\Sqlite\Role\FromForm::class)[0];
+        $mapped = $select->map(static fn (\SqlSemantics\Statement\Element $child): \SqlSemantics\Statement\Element => $child instanceof \SqlSemantics\Statement\Model\Sqlite\Role\FromForm ? $from : $child);
+        self::assertNotSame($select, $mapped);
+        self::assertSame('SELECT a FROM u', \SqlSemantics\Statement\Writer::render($mapped));
         $leaf = new \SqlSemantics\Statement\Model\Sqlite\Value\TermWithInteger_298801b2('1');
         self::assertSame($leaf, $leaf->map(static fn (\SqlSemantics\Statement\Element $child): \SqlSemantics\Statement\Element => $child));
         $choice = \SqlSemantics\Statement\Model\Sqlite\Choice\SortorderChoice_01affc0e::from('DESC');

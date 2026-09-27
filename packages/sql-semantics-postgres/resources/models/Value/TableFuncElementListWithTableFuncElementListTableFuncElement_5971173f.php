@@ -52,13 +52,15 @@ final class TableFuncElementListWithTableFuncElementListTableFuncElement_5971173
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->tableFuncElementList, \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncElementListForm::class, $replace), $this->replacement($this->tableFuncElement, \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncElementForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->tableFuncElementList, \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncElementListForm::class, $replace), $this->replacement($this->tableFuncElement, \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncElementForm::class, $replace)];
+
+        return $mapped === [$this->tableFuncElementList, $this->tableFuncElement] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

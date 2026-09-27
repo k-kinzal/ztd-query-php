@@ -54,13 +54,15 @@ final class PreloadKeysWithTableIdentOptCacheKeyListOptIgnoreLeaves_e52fbc81 imp
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->optCacheKeyList, \SqlSemantics\Statement\Model\MySql\Role\OptCacheKeyListForm::class, $replace), $this->replacement($this->optIgnoreLeaves, \SqlSemantics\Statement\Model\MySql\Role\OptIgnoreLeavesForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->optCacheKeyList, \SqlSemantics\Statement\Model\MySql\Role\OptCacheKeyListForm::class, $replace), $this->replacement($this->optIgnoreLeaves, \SqlSemantics\Statement\Model\MySql\Role\OptIgnoreLeavesForm::class, $replace)];
+
+        return $mapped === [$this->tableIdent, $this->optCacheKeyList, $this->optIgnoreLeaves] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

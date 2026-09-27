@@ -74,13 +74,15 @@ final class TriggerCmdWithUpdateOrconfTrnmTridxbySetSetlistFromWhereOptScanpt_a7
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->orconf, \SqlSemantics\Statement\Model\Sqlite\Role\OrconfForm::class, $replace), $this->replacement($this->trnm, \SqlSemantics\Statement\Model\Sqlite\Role\TrnmForm::class, $replace), $this->replacement($this->tridxby, \SqlSemantics\Statement\Model\Sqlite\Role\TridxbyForm::class, $replace), $this->replacement($this->setlist, \SqlSemantics\Statement\Model\Sqlite\Role\SetlistForm::class, $replace), $this->replacement($this->from, \SqlSemantics\Statement\Model\Sqlite\Role\FromForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm::class, $replace), $this->replacement($this->scanpt, \SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->orconf, \SqlSemantics\Statement\Model\Sqlite\Role\OrconfForm::class, $replace), $this->replacement($this->trnm, \SqlSemantics\Statement\Model\Sqlite\Role\TrnmForm::class, $replace), $this->replacement($this->tridxby, \SqlSemantics\Statement\Model\Sqlite\Role\TridxbyForm::class, $replace), $this->replacement($this->setlist, \SqlSemantics\Statement\Model\Sqlite\Role\SetlistForm::class, $replace), $this->replacement($this->from, \SqlSemantics\Statement\Model\Sqlite\Role\FromForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm::class, $replace), $this->replacement($this->scanpt, \SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm::class, $replace)];
+
+        return $mapped === [$this->orconf, $this->trnm, $this->tridxby, $this->setlist, $this->from, $this->where, $this->scanpt] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $mapped[5], $mapped[6], $this->comments);
     }
 
     /**

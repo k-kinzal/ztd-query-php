@@ -19,12 +19,16 @@ final class NameSite
      * @param non-empty-list<string> $name The decoded parts of the name, in writing order
      * @param ReferenceKind $kind How the site uses the name: Declaration declares it, Drop drops it, CommonTableExpression defines it, and Dependency merely refers to it
      * @param bool $conditional Whether the declaration or drop is conditional, as with IF EXISTS
+     * @param Scope $scope The common table expressions visible where the name is written
+     * @param list<Element> $values Every value that writes the name, in writing order, the value first; empty when the value alone writes it
      */
     public function __construct(
         public readonly Element $value,
         public readonly array $name,
         public readonly ReferenceKind $kind,
         public readonly bool $conditional = false,
+        public readonly Scope $scope = new Scope(),
+        public readonly array $values = [],
     ) {
     }
 }

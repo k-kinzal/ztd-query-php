@@ -56,13 +56,15 @@ final class BoolPriWithBoolPriCompOpPredicate_1de7e569 implements \SqlSemantics\
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->boolPri, \SqlSemantics\Statement\Model\MySql\Role\BoolPriForm::class, $replace), $this->replacement($this->compOp, \SqlSemantics\Statement\Model\MySql\Role\CompOpForm::class, $replace), $this->replacement($this->predicate, \SqlSemantics\Statement\Model\MySql\Role\PredicateForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->boolPri, \SqlSemantics\Statement\Model\MySql\Role\BoolPriForm::class, $replace), $this->replacement($this->compOp, \SqlSemantics\Statement\Model\MySql\Role\CompOpForm::class, $replace), $this->replacement($this->predicate, \SqlSemantics\Statement\Model\MySql\Role\PredicateForm::class, $replace)];
+
+        return $mapped === [$this->boolPri, $this->compOp, $this->predicate] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

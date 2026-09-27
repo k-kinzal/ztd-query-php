@@ -82,13 +82,15 @@ final class PLpgSqlExprWithOptDistinctClauseOptTargetListFromClauseWhereClauseGr
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->optDistinctClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OptDistinctClauseForm::class, $replace), $this->replacement($this->projections, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTargetListForm::class, $replace), $this->replacement($this->from, \SqlSemantics\Statement\Model\PostgreSql\Role\FromClauseForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\PostgreSql\Role\WhereClauseForm::class, $replace), $this->replacement($this->groupBy, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupClauseForm::class, $replace), $this->replacement($this->having, \SqlSemantics\Statement\Model\PostgreSql\Role\HavingClauseForm::class, $replace), $this->replacement($this->windowClause, \SqlSemantics\Statement\Model\PostgreSql\Role\WindowClauseForm::class, $replace), $this->replacement($this->optSortClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSortClauseForm::class, $replace), $this->replacement($this->optSelectLimit, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSelectLimitForm::class, $replace), $this->replacement($this->optForLockingClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OptForLockingClauseForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optDistinctClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OptDistinctClauseForm::class, $replace), $this->replacement($this->projections, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTargetListForm::class, $replace), $this->replacement($this->from, \SqlSemantics\Statement\Model\PostgreSql\Role\FromClauseForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\PostgreSql\Role\WhereClauseForm::class, $replace), $this->replacement($this->groupBy, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupClauseForm::class, $replace), $this->replacement($this->having, \SqlSemantics\Statement\Model\PostgreSql\Role\HavingClauseForm::class, $replace), $this->replacement($this->windowClause, \SqlSemantics\Statement\Model\PostgreSql\Role\WindowClauseForm::class, $replace), $this->replacement($this->optSortClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSortClauseForm::class, $replace), $this->replacement($this->optSelectLimit, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSelectLimitForm::class, $replace), $this->replacement($this->optForLockingClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OptForLockingClauseForm::class, $replace)];
+
+        return $mapped === [$this->optDistinctClause, $this->projections, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause, $this->optSortClause, $this->optSelectLimit, $this->optForLockingClause] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $mapped[5], $mapped[6], $mapped[7], $mapped[8], $mapped[9], $this->comments);
     }
 
     /**

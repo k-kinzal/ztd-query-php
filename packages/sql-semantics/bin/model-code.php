@@ -276,10 +276,18 @@ function traversalMethods(array $types, array $children): string
     if ($children === []) {
         return $methods . "\n\n    /**\n     * This form holds no values to replace.\n     *\n     * @param callable({$element}): {$element} \$replace\n     */\n    public function map(callable \$replace): static\n    {\n        return \$this;\n    }";
     }
+    $mapped = [];
+    $current = [];
     $arguments = [];
     foreach ($types as $field => $type) {
-        $arguments[] = isset($children[$field]) ? "\$this->replacement(\$this->{$field}, {$type}::class, \$replace)" : '$this->' . $field;
+        if (isset($children[$field])) {
+            $arguments[] = '$mapped[' . count($mapped) . ']';
+            $mapped[] = "\$this->replacement(\$this->{$field}, {$type}::class, \$replace)";
+            $current[] = '$this->' . $field;
+        } else {
+            $arguments[] = '$this->' . $field;
+        }
     }
 
-    return $methods . "\n\n    /**\n     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.\n     *\n     * @param callable({$element}): {$element} \$replace\n     */\n    public function map(callable \$replace): static\n    {\n        return new self(" . implode(', ', $arguments) . ");\n    }";
+    return $methods . "\n\n    /**\n     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.\n     *\n     * @param callable({$element}): {$element} \$replace\n     */\n    public function map(callable \$replace): static\n    {\n        \$mapped = [" . implode(', ', $mapped) . "];\n\n        return \$mapped === [" . implode(', ', $current) . '] ? $this : new self(' . implode(', ', $arguments) . ");\n    }";
 }

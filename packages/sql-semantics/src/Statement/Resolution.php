@@ -13,7 +13,7 @@ use SqlSemantics\Statement\Declaration\TableDefinition;
  * before it, in order. The resolution keeps those dependencies, the tables
  * the statement itself declares, and every table name it writes with what
  * that name resolves to. Partial analysis records missing references with
- * ReferenceKind::Unresolved; strict analysis rejects them.
+ * ReferenceKind::Undeclared; strict analysis rejects them.
  *
  * @visibility public
  * @example Reading what a declaration declares

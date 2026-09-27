@@ -50,13 +50,15 @@ final class DropTsOptionsWithDropTsOptionsDropTsOption_1faef5ac implements \SqlS
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->dropTsOptions, \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionsForm::class, $replace), $this->replacement($this->dropTsOption, \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->dropTsOptions, \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionsForm::class, $replace), $this->replacement($this->dropTsOption, \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionForm::class, $replace)];
+
+        return $mapped === [$this->dropTsOptions, $this->dropTsOption] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

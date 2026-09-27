@@ -57,13 +57,15 @@ final class PredicateWithBitExprLikeSimpleExprOptEscape_2697d22c implements \Sql
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->bitExpr, \SqlSemantics\Statement\Model\MySql\Role\BitExprForm::class, $replace), $this->replacement($this->simpleExpr, \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm::class, $replace), $this->replacement($this->optEscape, \SqlSemantics\Statement\Model\MySql\Role\OptEscapeForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->bitExpr, \SqlSemantics\Statement\Model\MySql\Role\BitExprForm::class, $replace), $this->replacement($this->simpleExpr, \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm::class, $replace), $this->replacement($this->optEscape, \SqlSemantics\Statement\Model\MySql\Role\OptEscapeForm::class, $replace)];
+
+        return $mapped === [$this->bitExpr, $this->simpleExpr, $this->optEscape] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

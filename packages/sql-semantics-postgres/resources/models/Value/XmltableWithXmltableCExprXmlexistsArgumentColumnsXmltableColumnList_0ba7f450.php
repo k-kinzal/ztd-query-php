@@ -62,13 +62,15 @@ final class XmltableWithXmltableCExprXmlexistsArgumentColumnsXmltableColumnList_
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->cExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm::class, $replace), $this->replacement($this->xmlexistsArgument, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlexistsArgumentForm::class, $replace), $this->replacement($this->xmltableColumnList, \SqlSemantics\Statement\Model\PostgreSql\Role\XmltableColumnListForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->cExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm::class, $replace), $this->replacement($this->xmlexistsArgument, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlexistsArgumentForm::class, $replace), $this->replacement($this->xmltableColumnList, \SqlSemantics\Statement\Model\PostgreSql\Role\XmltableColumnListForm::class, $replace)];
+
+        return $mapped === [$this->cExpr, $this->xmlexistsArgument, $this->xmltableColumnList] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

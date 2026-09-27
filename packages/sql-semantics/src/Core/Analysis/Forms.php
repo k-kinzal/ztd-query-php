@@ -47,6 +47,23 @@ final class Forms
     }
 
     /**
+     * Answers the child index of a symbol position, counting only the symbols that are rules before it.
+     *
+     * @param list<string> $symbols
+     */
+    public function index(array $symbols, int $position): int
+    {
+        $index = 0;
+        foreach (array_slice($symbols, 0, $position) as $symbol) {
+            if ($this->vocabulary->isRule($symbol)) {
+                $index++;
+            }
+        }
+
+        return $index;
+    }
+
+    /**
      * Answers the child value at a symbol position, counting only the symbols that are rules.
      *
      * @param list<string> $symbols

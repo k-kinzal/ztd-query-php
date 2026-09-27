@@ -84,13 +84,15 @@ final class TriggerTailWithTriggerSymRememberNameSpNameTrgActionTimeTrgEventOnRe
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->rememberName, \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm::class, $replace), $this->replacement($this->spName, \SqlSemantics\Statement\Model\MySql\Role\SpNameForm::class, $replace), $this->replacement($this->trgActionTime, \SqlSemantics\Statement\Model\MySql\Role\TrgActionTimeForm::class, $replace), $this->replacement($this->trgEvent, \SqlSemantics\Statement\Model\MySql\Role\TrgEventForm::class, $replace), $this->replacement($this->rememberName2, \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm::class, $replace), $this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->rememberName3, \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm::class, $replace), $this->replacement($this->spProcStmt, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->rememberName, \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm::class, $replace), $this->replacement($this->spName, \SqlSemantics\Statement\Model\MySql\Role\SpNameForm::class, $replace), $this->replacement($this->trgActionTime, \SqlSemantics\Statement\Model\MySql\Role\TrgActionTimeForm::class, $replace), $this->replacement($this->trgEvent, \SqlSemantics\Statement\Model\MySql\Role\TrgEventForm::class, $replace), $this->replacement($this->rememberName2, \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm::class, $replace), $this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->rememberName3, \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm::class, $replace), $this->replacement($this->spProcStmt, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm::class, $replace)];
+
+        return $mapped === [$this->rememberName, $this->spName, $this->trgActionTime, $this->trgEvent, $this->rememberName2, $this->tableIdent, $this->rememberName3, $this->spProcStmt] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $mapped[5], $mapped[6], $mapped[7], $this->comments);
     }
 
     /**

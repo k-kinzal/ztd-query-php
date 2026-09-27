@@ -54,13 +54,15 @@ final class EidlistWithNmCollateSortorder_b27838a9 implements \SqlSemantics\Stat
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->nm, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace), $this->replacement($this->collate, \SqlSemantics\Statement\Model\Sqlite\Role\CollateForm::class, $replace), $this->replacement($this->sortorder, \SqlSemantics\Statement\Model\Sqlite\Role\SortorderForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->nm, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace), $this->replacement($this->collate, \SqlSemantics\Statement\Model\Sqlite\Role\CollateForm::class, $replace), $this->replacement($this->sortorder, \SqlSemantics\Statement\Model\Sqlite\Role\SortorderForm::class, $replace)];
+
+        return $mapped === [$this->nm, $this->collate, $this->sortorder] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

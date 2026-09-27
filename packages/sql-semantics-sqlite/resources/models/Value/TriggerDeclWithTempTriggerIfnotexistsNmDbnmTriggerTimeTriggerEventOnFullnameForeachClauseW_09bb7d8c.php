@@ -82,13 +82,15 @@ final class TriggerDeclWithTempTriggerIfnotexistsNmDbnmTriggerTimeTriggerEventOn
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->temp, \SqlSemantics\Statement\Model\Sqlite\Role\TempForm::class, $replace), $this->replacement($this->ifnotexists, \SqlSemantics\Statement\Model\Sqlite\Role\IfnotexistsForm::class, $replace), $this->replacement($this->nm, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace), $this->replacement($this->dbnm, \SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm::class, $replace), $this->replacement($this->triggerTime, \SqlSemantics\Statement\Model\Sqlite\Role\TriggerTimeForm::class, $replace), $this->replacement($this->triggerEvent, \SqlSemantics\Statement\Model\Sqlite\Role\TriggerEventForm::class, $replace), $this->replacement($this->fullname, \SqlSemantics\Statement\Model\Sqlite\Role\FullnameForm::class, $replace), $this->replacement($this->foreachClause, \SqlSemantics\Statement\Model\Sqlite\Role\ForeachClauseForm::class, $replace), $this->replacement($this->whenClause, \SqlSemantics\Statement\Model\Sqlite\Role\WhenClauseForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->temp, \SqlSemantics\Statement\Model\Sqlite\Role\TempForm::class, $replace), $this->replacement($this->ifnotexists, \SqlSemantics\Statement\Model\Sqlite\Role\IfnotexistsForm::class, $replace), $this->replacement($this->nm, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace), $this->replacement($this->dbnm, \SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm::class, $replace), $this->replacement($this->triggerTime, \SqlSemantics\Statement\Model\Sqlite\Role\TriggerTimeForm::class, $replace), $this->replacement($this->triggerEvent, \SqlSemantics\Statement\Model\Sqlite\Role\TriggerEventForm::class, $replace), $this->replacement($this->fullname, \SqlSemantics\Statement\Model\Sqlite\Role\FullnameForm::class, $replace), $this->replacement($this->foreachClause, \SqlSemantics\Statement\Model\Sqlite\Role\ForeachClauseForm::class, $replace), $this->replacement($this->whenClause, \SqlSemantics\Statement\Model\Sqlite\Role\WhenClauseForm::class, $replace)];
+
+        return $mapped === [$this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->triggerTime, $this->triggerEvent, $this->fullname, $this->foreachClause, $this->whenClause] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $mapped[5], $mapped[6], $mapped[7], $mapped[8], $this->comments);
     }
 
     /**

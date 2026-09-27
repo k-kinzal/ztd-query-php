@@ -56,13 +56,15 @@ final class AlterUserStmtWithAlterUserCommandUserDefaultSymRoleSymNoneSym_66879c
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->alterUserCommand, \SqlSemantics\Statement\Model\MySql\Role\AlterUserCommandForm::class, $replace), $this->replacement($this->user, \SqlSemantics\Statement\Model\MySql\Role\UserForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->alterUserCommand, \SqlSemantics\Statement\Model\MySql\Role\AlterUserCommandForm::class, $replace), $this->replacement($this->user, \SqlSemantics\Statement\Model\MySql\Role\UserForm::class, $replace)];
+
+        return $mapped === [$this->alterUserCommand, $this->user] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

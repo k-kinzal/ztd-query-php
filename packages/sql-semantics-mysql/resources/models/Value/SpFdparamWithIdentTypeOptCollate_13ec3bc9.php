@@ -54,13 +54,15 @@ final class SpFdparamWithIdentTypeOptCollate_13ec3bc9 implements \SqlSemantics\S
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->ident, \SqlSemantics\Statement\Model\MySql\Role\IdentForm::class, $replace), $this->replacement($this->type, \SqlSemantics\Statement\Model\MySql\Role\TypeForm::class, $replace), $this->replacement($this->optCollate, \SqlSemantics\Statement\Model\MySql\Role\OptCollateForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->ident, \SqlSemantics\Statement\Model\MySql\Role\IdentForm::class, $replace), $this->replacement($this->type, \SqlSemantics\Statement\Model\MySql\Role\TypeForm::class, $replace), $this->replacement($this->optCollate, \SqlSemantics\Statement\Model\MySql\Role\OptCollateForm::class, $replace)];
+
+        return $mapped === [$this->ident, $this->type, $this->optCollate] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

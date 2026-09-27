@@ -52,13 +52,15 @@ final class SubPartFieldListWithSubPartFieldListSubPartFieldItem_f02497fe implem
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->subPartFieldList, \SqlSemantics\Statement\Model\MySql\Role\SubPartFieldListForm::class, $replace), $this->replacement($this->subPartFieldItem, \SqlSemantics\Statement\Model\MySql\Role\SubPartFieldItemForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->subPartFieldList, \SqlSemantics\Statement\Model\MySql\Role\SubPartFieldListForm::class, $replace), $this->replacement($this->subPartFieldItem, \SqlSemantics\Statement\Model\MySql\Role\SubPartFieldItemForm::class, $replace)];
+
+        return $mapped === [$this->subPartFieldList, $this->subPartFieldItem] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

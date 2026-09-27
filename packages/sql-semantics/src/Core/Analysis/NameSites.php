@@ -16,10 +16,11 @@ use SqlSemantics\Statement\Writer;
 /**
  * Finds every place a statement writes a table name, using the relation rules of its grammar.
  *
- * The statement is walked once. At each value, the sites the relation
- * rules describe for its form are read first, so a declaration, drop,
- * definition or ignored name is not read again as a plain reference; then
- * every remaining name symbol of the form is a reference.
+ * The statement is walked once, with the common table expressions visible
+ * at each value. At each value, the sites the relation rules describe for
+ * its form are read first, so a declaration, drop, definition or ignored
+ * name is not read again as a plain reference; then every remaining name
+ * symbol of the form is a reference.
  *
  * @phpstan-import-type Site from RelationRules
  * @visibility SqlSemantics
@@ -28,15 +29,21 @@ final class NameSites
 {
     private const KINDS = ['declarations' => ReferenceKind::Declaration, 'drops' => ReferenceKind::Drop, 'commonTableExpressions' => ReferenceKind::CommonTableExpression, 'ignored' => null, 'pairs' => ReferenceKind::Dependency];
 
+    private readonly Scopes $scopes;
+
     /**
      * Finds name sites in statements of a vocabulary under its relation rules.
      */
     public function __construct(private readonly Vocabulary $vocabulary, private readonly RelationRules $rules, private readonly NameRules $names, private readonly Forms $forms)
     {
+        $this->scopes = new Scopes($vocabulary, $rules, $names, $forms);
     }
 
     /**
-     * Finds the name sites of a command, in walking order.
+     * Finds the name sites of a command, in writing order.
+     *
+     * A site read at a form is ordered by the value it names, so a target
+     * written after a WITH clause comes after the names inside the clause.
      *
      * @return list<NameSite>
      *
@@ -46,12 +53,15 @@ final class NameSites
     {
         $sites = [];
         $consumed = [];
-        foreach (Traversal::walk($command) as $value) {
+        $order = [];
+        foreach ($this->scopes->walk($command) as [$value, $scope]) {
+            $order[spl_object_id($value)] ??= count($order);
             $shape = $this->vocabulary->shape($value);
             if ($shape === null || isset($consumed[spl_object_id($value)])) {
                 continue;
             }
             $children = $value->children();
+            $scopes = $this->scopes->children($value, $scope);
             $taken = [];
             foreach (self::KINDS as $group => $kind) {
                 foreach (RelationRules::matching($this->rules->{$group}, $shape['rule'], $shape['symbols']) as $site) {
@@ -59,9 +69,9 @@ final class NameSites
                         continue;
                     }
                     $conditional = isset($site['conditional']) && $this->forms->conditional($shape['symbols'], $children, $site['conditional']);
-                    foreach ($this->named($shape['symbols'], $children, $site, $taken, $consumed) as [$named, $parts]) {
+                    foreach ($this->named($shape['symbols'], $children, $site, $taken, $consumed) as [$values, $parts, $position]) {
                         if ($kind !== null) {
-                            $sites[] = new NameSite($named, $parts, $kind, $conditional);
+                            $sites[] = new NameSite($values[0], $parts, $kind, $conditional, $scopes[$this->forms->index($shape['symbols'], $position)], $values);
                         }
                     }
                 }
@@ -78,23 +88,27 @@ final class NameSites
                 $this->consume($consumed, $child);
                 $parts = $this->parts($child);
                 if ($parts !== []) {
-                    $sites[] = new NameSite($child, $parts, ReferenceKind::Dependency);
+                    $sites[] = new NameSite($child, $parts, ReferenceKind::Dependency, false, $scopes[$this->forms->index($shape['symbols'], $position)]);
                 }
             }
         }
+        usort($sites, static fn (NameSite $left, NameSite $right): int => $order[spl_object_id($left->value)] <=> $order[spl_object_id($right->value)]);
 
         return $sites;
     }
 
     /**
-     * Answers the values a site names with their decoded parts, marking the symbol positions it takes and the values it reads.
+     * Answers the names a site reads, each as the values that write it with its decoded parts and the symbol position it is written at, marking the positions it takes and the values it reads.
+     *
+     * A pair writes one name as separate values; the values that write
+     * nothing, such as an absent schema, are left out.
      *
      * @param list<string> $symbols
      * @param list<Element> $children
      * @param Site $site
      * @param array<int, true> $taken
      * @param array<int, true> $consumed
-     * @return list<array{Element, non-empty-list<string>}>
+     * @return list<array{non-empty-list<Element>, non-empty-list<string>, int}>
      *
      * @throws LogicException When the site names a symbol the form does not have
      */
@@ -102,15 +116,19 @@ final class NameSites
     {
         if (isset($site['pair'])) {
             $values = [];
+            $first = null;
             foreach ($site['pair'] as $symbol) {
                 $position = $this->forms->position($symbols, $symbol, $taken);
+                $first ??= $position;
                 $taken[$position] = true;
                 $values[] = $this->forms->child($symbols, $children, $position);
                 $this->consume($consumed, $values[count($values) - 1]);
             }
             $parts = array_merge(...array_map($this->parts(...), $values));
 
-            return $parts === [] ? [] : [[$values[0], $parts]];
+            $written = array_values(array_filter($values, static fn (Element $value): bool => Writer::render($value) !== ''));
+
+            return $parts === [] || $first === null || $written === [] ? [] : [[$written, $parts, $first]];
         }
         if (isset($site['name'])) {
             $position = $this->forms->position($symbols, $site['name'], $taken);
@@ -119,7 +137,7 @@ final class NameSites
             $this->consume($consumed, $value);
             $parts = $this->parts($value);
 
-            return $parts === [] ? [] : [[$value, $parts]];
+            return $parts === [] ? [] : [[[$value], $parts, $position]];
         }
         $position = $this->forms->position($symbols, $site['names'] ?? '', $taken);
         $taken[$position] = true;
@@ -127,7 +145,7 @@ final class NameSites
         $this->consume($consumed, $list);
         $items = isset($site['list']) ? $this->forms->unfold($list, $site['list'][0], $site['list'][1]) : [$list];
 
-        return array_values(array_filter(array_map(fn (Element $item): array => [$item, $this->parts($item)], $items), static fn (array $pair): bool => $pair[1] !== []));
+        return array_values(array_filter(array_map(fn (Element $item): array => [[$item], $this->parts($item), $position], $items), static fn (array $named): bool => $named[1] !== []));
     }
 
     /**

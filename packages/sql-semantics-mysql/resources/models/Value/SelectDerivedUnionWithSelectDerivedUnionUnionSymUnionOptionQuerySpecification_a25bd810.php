@@ -56,13 +56,15 @@ final class SelectDerivedUnionWithSelectDerivedUnionUnionSymUnionOptionQuerySpec
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->selectDerivedUnion, \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedUnionForm::class, $replace), $this->replacement($this->unionOption, \SqlSemantics\Statement\Model\MySql\Role\UnionOptionForm::class, $replace), $this->replacement($this->query, \SqlSemantics\Statement\Model\MySql\Role\QuerySpecificationForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->selectDerivedUnion, \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedUnionForm::class, $replace), $this->replacement($this->unionOption, \SqlSemantics\Statement\Model\MySql\Role\UnionOptionForm::class, $replace), $this->replacement($this->query, \SqlSemantics\Statement\Model\MySql\Role\QuerySpecificationForm::class, $replace)];
+
+        return $mapped === [$this->selectDerivedUnion, $this->unionOption, $this->query] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

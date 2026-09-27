@@ -50,13 +50,15 @@ final class VtabargWithVtabargVtabargtoken_627d8ccd implements \SqlSemantics\Sta
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->vtabarg, \SqlSemantics\Statement\Model\Sqlite\Role\VtabargForm::class, $replace), $this->replacement($this->vtabargtoken, \SqlSemantics\Statement\Model\Sqlite\Role\VtabargtokenForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->vtabarg, \SqlSemantics\Statement\Model\Sqlite\Role\VtabargForm::class, $replace), $this->replacement($this->vtabargtoken, \SqlSemantics\Statement\Model\Sqlite\Role\VtabargtokenForm::class, $replace)];
+
+        return $mapped === [$this->vtabarg, $this->vtabargtoken] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

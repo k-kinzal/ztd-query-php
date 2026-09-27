@@ -120,9 +120,9 @@ final class SchemaRulesTest extends TestCase
         $table = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t(a INT, b INT, PRIMARY KEY(b,a))', [])->resolution?->declarations[0];
         self::assertSame(['b', 'a'], $table?->constraints[0]->columns);
     }
-    public function testSearchSchemasDefinesUnqualifiedLookupOrder(): void
+    public function testImplicitSchemasDefinesUnqualifiedLookupOrder(): void
     {
-        self::assertSame(['temp', 'main'], (new Semantics(Dialect::Sqlite))->language()->dialect->platform()->schema()->searchSchemas());
+        self::assertSame(['temp'], (new Semantics(Dialect::Sqlite))->language()->dialect->platform()->schema()->implicitSchemas());
     }
 
 

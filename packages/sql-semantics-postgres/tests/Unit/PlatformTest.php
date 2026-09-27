@@ -65,9 +65,14 @@ final class PlatformTest extends TestCase
         self::assertSame('SELECT 1', $parser->parse('SELECT 1')->toString());
     }
 
-    public function testDefaultSchemaUsesTheLanguageNamespace(): void
+    public function testSearchPathDefaultsToTheServersSchemas(): void
     {
-        self::assertSame('public', Dialect::PostgreSql->platform()->defaultSchema());
+        self::assertSame(['public'], Dialect::PostgreSql->platform()->searchPath());
+    }
+
+    public function testSearchPathIsTheSessionsSearchPath(): void
+    {
+        self::assertSame(['app', 'public'], Dialect::PostgreSql->platform()->searchPath(new \SqlSemantics\Core\SearchPath('app', 'public')));
     }
 
     public function testStatementNamesIdentifyTheParserRoot(): void
@@ -112,6 +117,18 @@ final class PlatformTest extends TestCase
         self::assertNotEmpty($rules->declarations);
         self::assertNotEmpty($rules->drops);
         self::assertNotEmpty($rules->commonTableExpressions);
+        self::assertNotEmpty($rules->withClauses);
+        self::assertSame(\SqlSemantics\Core\Policy\WithVisibility::Preceding, $rules->visibility);
+        self::assertSame(\SqlSemantics\Core\Policy\WithVisibility::All, $rules->recursiveVisibility);
+    }
+
+    public function testRelationsScopeCommonTableExpressionsAsTheServerDoes(): void
+    {
+        $semantics = new Semantics(Dialect::PostgreSql);
+        $users = $semantics->analyze('CREATE TABLE users (id INTEGER)');
+        $kinds = static fn (string $sql): string => implode(' ', array_map(static fn (\SqlSemantics\Statement\Reference $reference): string => implode('.', $reference->name) . ':' . $reference->kind->name, $semantics->analyze($sql, [$users])->resolution->references ?? []));
+        self::assertSame('users:CommonTableExpression users:Dependency users:CommonTableExpression', $kinds('WITH users AS (SELECT * FROM users WHERE id > 1) SELECT * FROM users'));
+        self::assertSame('users:CommonTableExpression users:Dependency users:CommonTableExpression', $kinds('WITH users AS (SELECT 9 AS id) DELETE FROM users WHERE id IN (SELECT id FROM users)'));
     }
 
     public function testBuilderComposesThisDatabasesValues(): void

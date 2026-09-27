@@ -62,13 +62,15 @@ final class SingleTableWithTableIdentOptUsePartitionOptTableAliasOptKeyDefinitio
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->optUsePartition, \SqlSemantics\Statement\Model\MySql\Role\OptUsePartitionForm::class, $replace), $this->replacement($this->optTableAlias, \SqlSemantics\Statement\Model\MySql\Role\OptTableAliasForm::class, $replace), $this->replacement($this->optKeyDefinition, \SqlSemantics\Statement\Model\MySql\Role\OptKeyDefinitionForm::class, $replace), $this->replacement($this->optTablesampleClause, \SqlSemantics\Statement\Model\MySql\Role\OptTablesampleClauseForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->optUsePartition, \SqlSemantics\Statement\Model\MySql\Role\OptUsePartitionForm::class, $replace), $this->replacement($this->optTableAlias, \SqlSemantics\Statement\Model\MySql\Role\OptTableAliasForm::class, $replace), $this->replacement($this->optKeyDefinition, \SqlSemantics\Statement\Model\MySql\Role\OptKeyDefinitionForm::class, $replace), $this->replacement($this->optTablesampleClause, \SqlSemantics\Statement\Model\MySql\Role\OptTablesampleClauseForm::class, $replace)];
+
+        return $mapped === [$this->tableIdent, $this->optUsePartition, $this->optTableAlias, $this->optKeyDefinition, $this->optTablesampleClause] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $this->comments);
     }
 
     /**

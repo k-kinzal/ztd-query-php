@@ -131,9 +131,9 @@ final class SchemaRulesTest extends TestCase
         $table = (new Semantics(PostgreSqlDialect::PostgreSql))->analyze('CREATE TABLE t(a INT, b INT, PRIMARY KEY(b,a))', [])->resolution?->declarations[0];
         self::assertSame(['b', 'a'], $table?->constraints[0]->columns);
     }
-    public function testSearchSchemasDefinesUnqualifiedLookupOrder(): void
+    public function testImplicitSchemasDefinesUnqualifiedLookupOrder(): void
     {
-        self::assertSame(['public'], (new Semantics(PostgreSqlDialect::PostgreSql))->language()->dialect->platform()->schema()->searchSchemas());
+        self::assertSame([], (new Semantics(PostgreSqlDialect::PostgreSql))->language()->dialect->platform()->schema()->implicitSchemas());
     }
 
 }

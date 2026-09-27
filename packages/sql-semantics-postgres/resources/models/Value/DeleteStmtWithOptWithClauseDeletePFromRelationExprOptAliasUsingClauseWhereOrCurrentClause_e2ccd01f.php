@@ -66,13 +66,15 @@ final class DeleteStmtWithOptWithClauseDeletePFromRelationExprOptAliasUsingClaus
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->with, \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithClauseForm::class, $replace), $this->replacement($this->relationExprOptAlias, \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprOptAliasForm::class, $replace), $this->replacement($this->usingClause, \SqlSemantics\Statement\Model\PostgreSql\Role\UsingClauseForm::class, $replace), $this->replacement($this->whereOrCurrentClause, \SqlSemantics\Statement\Model\PostgreSql\Role\WhereOrCurrentClauseForm::class, $replace), $this->replacement($this->returningClause, \SqlSemantics\Statement\Model\PostgreSql\Role\ReturningClauseForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->with, \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithClauseForm::class, $replace), $this->replacement($this->relationExprOptAlias, \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprOptAliasForm::class, $replace), $this->replacement($this->usingClause, \SqlSemantics\Statement\Model\PostgreSql\Role\UsingClauseForm::class, $replace), $this->replacement($this->whereOrCurrentClause, \SqlSemantics\Statement\Model\PostgreSql\Role\WhereOrCurrentClauseForm::class, $replace), $this->replacement($this->returningClause, \SqlSemantics\Statement\Model\PostgreSql\Role\ReturningClauseForm::class, $replace)];
+
+        return $mapped === [$this->with, $this->relationExprOptAlias, $this->usingClause, $this->whereOrCurrentClause, $this->returningClause] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $this->comments);
     }
 
     /**

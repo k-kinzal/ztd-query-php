@@ -54,13 +54,15 @@ final class InsertRestWithInsertColumnListSelectStmt_a320fd9d implements \SqlSem
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->insertColumnList, \SqlSemantics\Statement\Model\PostgreSql\Role\InsertColumnListForm::class, $replace), $this->replacement($this->selectStmt, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->insertColumnList, \SqlSemantics\Statement\Model\PostgreSql\Role\InsertColumnListForm::class, $replace), $this->replacement($this->selectStmt, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm::class, $replace)];
+
+        return $mapped === [$this->insertColumnList, $this->selectStmt] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

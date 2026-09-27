@@ -56,13 +56,15 @@ final class MvaluesWithValuesCommaLpNexprlistRp_cd8c14f9 implements \SqlSemantic
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->values, \SqlSemantics\Statement\Model\Sqlite\Role\ValuesForm::class, $replace), $this->replacement($this->nexprlist, \SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->values, \SqlSemantics\Statement\Model\Sqlite\Role\ValuesForm::class, $replace), $this->replacement($this->nexprlist, \SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm::class, $replace)];
+
+        return $mapped === [$this->values, $this->nexprlist] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

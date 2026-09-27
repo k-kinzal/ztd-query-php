@@ -52,13 +52,15 @@ final class TableLockListWithTableLockListTableLock_991e923d implements \SqlSema
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->tableLockList, \SqlSemantics\Statement\Model\MySql\Role\TableLockListForm::class, $replace), $this->replacement($this->tableLock, \SqlSemantics\Statement\Model\MySql\Role\TableLockForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->tableLockList, \SqlSemantics\Statement\Model\MySql\Role\TableLockListForm::class, $replace), $this->replacement($this->tableLock, \SqlSemantics\Statement\Model\MySql\Role\TableLockForm::class, $replace)];
+
+        return $mapped === [$this->tableLockList, $this->tableLock] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

@@ -54,13 +54,15 @@ final class ThreadIdListWithThreadIdListOptCommaRealUlongNum_d6a4389c implements
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->threadIdList, \SqlSemantics\Statement\Model\MySql\Role\ThreadIdListForm::class, $replace), $this->replacement($this->optComma, \SqlSemantics\Statement\Model\MySql\Role\OptCommaForm::class, $replace), $this->replacement($this->realUlongNum, \SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->threadIdList, \SqlSemantics\Statement\Model\MySql\Role\ThreadIdListForm::class, $replace), $this->replacement($this->optComma, \SqlSemantics\Statement\Model\MySql\Role\OptCommaForm::class, $replace), $this->replacement($this->realUlongNum, \SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm::class, $replace)];
+
+        return $mapped === [$this->threadIdList, $this->optComma, $this->realUlongNum] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

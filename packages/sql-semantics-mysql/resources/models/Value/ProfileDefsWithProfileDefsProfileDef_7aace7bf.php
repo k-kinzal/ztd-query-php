@@ -52,13 +52,15 @@ final class ProfileDefsWithProfileDefsProfileDef_7aace7bf implements \SqlSemanti
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->profileDefs, \SqlSemantics\Statement\Model\MySql\Role\ProfileDefsForm::class, $replace), $this->replacement($this->profileDef, \SqlSemantics\Statement\Model\MySql\Role\ProfileDefForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->profileDefs, \SqlSemantics\Statement\Model\MySql\Role\ProfileDefsForm::class, $replace), $this->replacement($this->profileDef, \SqlSemantics\Statement\Model\MySql\Role\ProfileDefForm::class, $replace)];
+
+        return $mapped === [$this->profileDefs, $this->profileDef] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

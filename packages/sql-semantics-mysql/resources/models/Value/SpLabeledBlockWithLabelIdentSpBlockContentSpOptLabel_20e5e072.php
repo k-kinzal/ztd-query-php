@@ -56,13 +56,15 @@ final class SpLabeledBlockWithLabelIdentSpBlockContentSpOptLabel_20e5e072 implem
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->labelIdent, \SqlSemantics\Statement\Model\MySql\Role\LabelIdentForm::class, $replace), $this->replacement($this->spBlockContent, \SqlSemantics\Statement\Model\MySql\Role\SpBlockContentForm::class, $replace), $this->replacement($this->spOptLabel, \SqlSemantics\Statement\Model\MySql\Role\SpOptLabelForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->labelIdent, \SqlSemantics\Statement\Model\MySql\Role\LabelIdentForm::class, $replace), $this->replacement($this->spBlockContent, \SqlSemantics\Statement\Model\MySql\Role\SpBlockContentForm::class, $replace), $this->replacement($this->spOptLabel, \SqlSemantics\Statement\Model\MySql\Role\SpOptLabelForm::class, $replace)];
+
+        return $mapped === [$this->labelIdent, $this->spBlockContent, $this->spOptLabel] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

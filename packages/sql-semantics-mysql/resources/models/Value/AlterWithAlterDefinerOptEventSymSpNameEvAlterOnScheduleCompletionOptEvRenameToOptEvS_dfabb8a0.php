@@ -74,13 +74,15 @@ final class AlterWithAlterDefinerOptEventSymSpNameEvAlterOnScheduleCompletionOpt
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->definerOpt, \SqlSemantics\Statement\Model\MySql\Role\DefinerOptForm::class, $replace), $this->replacement($this->spName, \SqlSemantics\Statement\Model\MySql\Role\SpNameForm::class, $replace), $this->replacement($this->evAlterOnScheduleCompletion, \SqlSemantics\Statement\Model\MySql\Role\EvAlterOnScheduleCompletionForm::class, $replace), $this->replacement($this->optEvRenameTo, \SqlSemantics\Statement\Model\MySql\Role\OptEvRenameToForm::class, $replace), $this->replacement($this->optEvStatus, \SqlSemantics\Statement\Model\MySql\Role\OptEvStatusForm::class, $replace), $this->replacement($this->optEvComment, \SqlSemantics\Statement\Model\MySql\Role\OptEvCommentForm::class, $replace), $this->replacement($this->optEvSqlStmt, \SqlSemantics\Statement\Model\MySql\Role\OptEvSqlStmtForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->definerOpt, \SqlSemantics\Statement\Model\MySql\Role\DefinerOptForm::class, $replace), $this->replacement($this->spName, \SqlSemantics\Statement\Model\MySql\Role\SpNameForm::class, $replace), $this->replacement($this->evAlterOnScheduleCompletion, \SqlSemantics\Statement\Model\MySql\Role\EvAlterOnScheduleCompletionForm::class, $replace), $this->replacement($this->optEvRenameTo, \SqlSemantics\Statement\Model\MySql\Role\OptEvRenameToForm::class, $replace), $this->replacement($this->optEvStatus, \SqlSemantics\Statement\Model\MySql\Role\OptEvStatusForm::class, $replace), $this->replacement($this->optEvComment, \SqlSemantics\Statement\Model\MySql\Role\OptEvCommentForm::class, $replace), $this->replacement($this->optEvSqlStmt, \SqlSemantics\Statement\Model\MySql\Role\OptEvSqlStmtForm::class, $replace)];
+
+        return $mapped === [$this->definerOpt, $this->spName, $this->evAlterOnScheduleCompletion, $this->optEvRenameTo, $this->optEvStatus, $this->optEvComment, $this->optEvSqlStmt] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $mapped[5], $mapped[6], $this->comments);
     }
 
     /**

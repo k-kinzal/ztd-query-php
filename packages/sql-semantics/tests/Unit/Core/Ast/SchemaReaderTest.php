@@ -152,7 +152,7 @@ final class SchemaReaderTest extends TestCase
     #[DataProvider('providerAcceptedCorpus')]
     public function testTableMatchesServerCorpus(Dialect $dialect, string $sql, bool $nullable, bool $automatic, ?int $precision, ?int $scale, bool $unique, string $version): void
     {
-        $table = (new Semantics($dialect, $version))->analyze($sql, resolutionMode: \SqlSemantics\Core\ResolutionMode::Partial)->resolution?->declarations[0] ?? self::fail('Missing declaration');
+        $table = (new Semantics($dialect, $version))->analyze($sql, dependencies: [], declarations: \SqlSemantics\Core\Declarations::Partial)->resolution?->declarations[0] ?? self::fail('Missing declaration');
         $column = $table->columns[0];
         self::assertSame($nullable, $column->nullability === Nullability::MaybeNull);
         self::assertSame($automatic, $column->autoIncrement);
@@ -164,7 +164,7 @@ final class SchemaReaderTest extends TestCase
     public function testTableRejectsServerRejectedCorpus(Dialect $dialect, string $sql, string $version): void
     {
         $this->expectException(SemanticException::class);
-        (new Semantics($dialect, $version))->analyze($sql, resolutionMode: \SqlSemantics\Core\ResolutionMode::Partial);
+        (new Semantics($dialect, $version))->analyze($sql, dependencies: [], declarations: \SqlSemantics\Core\Declarations::Partial);
     }
 
 }

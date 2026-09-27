@@ -37,8 +37,10 @@ interface Element
     /**
      * Returns this value rebuilt around what the function answers for each child, keeping every other field.
      *
-     * A value without children returns itself. The replacement for a child
-     * must be a value the child's position accepts.
+     * A value returns itself when the function answers every child with the
+     * child itself, so a value keeps its identity until something below it
+     * is replaced. The replacement for a child must be a value the child's
+     * position accepts.
      *
      * @param callable(Element): Element $replace
      */

@@ -62,13 +62,15 @@ final class WqitemWithWithnmEidlistOptWqasLpSelectRp_ba45400b implements \SqlSem
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->withnm, \SqlSemantics\Statement\Model\Sqlite\Role\WithnmForm::class, $replace), $this->replacement($this->eidlistOpt, \SqlSemantics\Statement\Model\Sqlite\Role\EidlistOptForm::class, $replace), $this->replacement($this->wqas, \SqlSemantics\Statement\Model\Sqlite\Role\WqasForm::class, $replace), $this->replacement($this->select, \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->withnm, \SqlSemantics\Statement\Model\Sqlite\Role\WithnmForm::class, $replace), $this->replacement($this->eidlistOpt, \SqlSemantics\Statement\Model\Sqlite\Role\EidlistOptForm::class, $replace), $this->replacement($this->wqas, \SqlSemantics\Statement\Model\Sqlite\Role\WqasForm::class, $replace), $this->replacement($this->select, \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm::class, $replace)];
+
+        return $mapped === [$this->withnm, $this->eidlistOpt, $this->wqas, $this->select] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $this->comments);
     }
 
     /**

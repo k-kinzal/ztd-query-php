@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Core\Analysis;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -12,14 +13,19 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Analysis\NameSite;
 use SqlSemantics\Core\Analysis\Relations;
 use SqlSemantics\Core\Analysis\Resolver;
+use SqlSemantics\Core\Analysis\Scope;
+use SqlSemantics\Core\Declarations;
 use SqlSemantics\Core\Dialect;
+use SqlSemantics\Core\SearchPath;
 use SqlSemantics\Core\SemanticException;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
 use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
+use SqlSemantics\Statement\Element;
 use SqlSemantics\Statement\Reference;
 use SqlSemantics\Statement\ReferenceKind;
+use SqlSemantics\Statement\Traversal;
 use SqlSemantics\Statement\Writer;
 use Tests\Contract\Resolved;
 use Tests\Contract\Resolving;
@@ -44,6 +50,10 @@ use Tests\Contract\Resolving;
 #[UsesClass(\SqlSemantics\Core\Policy\RelationRules::class)]
 #[UsesClass(NameSite::class)]
 #[UsesClass(Relations::class)]
+#[UsesClass(Scope::class)]
+#[UsesClass(SearchPath::class)]
+#[UsesClass(\SqlSemantics\Core\Analysis\Scopes::class)]
+#[UsesClass(\SqlSemantics\Core\Policy\WithVisibility::class)]
 #[UsesClass(\SqlSemantics\Core\Analysis\NameSites::class)]
 #[UsesClass(\SqlSemantics\Core\Analysis\Forms::class)]
 #[UsesClass(\SqlSemantics\Core\Policy\SyntaxRules::class)]
@@ -53,7 +63,7 @@ use Tests\Contract\Resolving;
 #[UsesClass(Reference::class)]
 #[UsesClass(\SqlSemantics\Statement\Comments::class)]
 #[UsesClass(Writer::class)]
-#[UsesClass(\SqlSemantics\Statement\Traversal::class)]
+#[UsesClass(Traversal::class)]
 #[UsesClass(\SqlSemantics\Statement\Assertion::class)]
 #[UsesClass(\SqlSemantics\Statement\ImmutableGraph::class)]
 #[UsesClass(\SqlSemantics\Statement\Declaration\TableDefinition::class)]
@@ -99,6 +109,66 @@ final class ResolverTest extends TestCase
         self::assertSame('users', Resolved::of($query)->tables()[0]->table?->name);
         self::assertSame('users', Writer::render(Resolved::of($query)->tables()[0]->value));
         self::assertSame([$users], Resolved::of($query)->dependencies);
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, string, string}>
+     */
+    public static function providerScopedStatements(): iterable
+    {
+        $selfReference = 'WITH users AS (SELECT * FROM users WHERE id > 1) SELECT * FROM users';
+        yield 'mysql: a plain expression does not see itself' => [MySqlDialect::MySql, $selfReference, 'users:CTE users:Dependency users:CTE'];
+        yield 'postgresql: a plain expression does not see itself' => [PostgreSqlDialect::PostgreSql, $selfReference, 'users:CTE users:Dependency users:CTE'];
+        yield 'sqlite: an expression always sees itself' => [SqliteDialect::Sqlite, $selfReference, 'users:CTE users:CTE users:CTE'];
+        $forward = "WITH a AS (SELECT * FROM b), b AS (SELECT 'x' AS x) SELECT * FROM a";
+        yield 'mysql: a later expression is not visible' => [MySqlDialect::MySql, $forward, 'a:CTE b:Dependency b:CTE a:CTE'];
+        yield 'postgresql: a later expression is not visible in a plain clause' => [PostgreSqlDialect::PostgreSql, $forward, 'a:CTE b:Dependency b:CTE a:CTE'];
+        yield 'sqlite: a later expression is visible' => [SqliteDialect::Sqlite, $forward, 'a:CTE b:CTE b:CTE a:CTE'];
+        $recursiveForward = "WITH RECURSIVE a AS (SELECT * FROM b), b AS (SELECT 'x' AS x) SELECT * FROM a";
+        yield 'mysql: a later expression is not visible in a recursive clause' => [MySqlDialect::MySql, $recursiveForward, 'a:CTE b:Dependency b:CTE a:CTE'];
+        yield 'postgresql: a later expression is visible in a recursive clause' => [PostgreSqlDialect::PostgreSql, $recursiveForward, 'a:CTE b:CTE b:CTE a:CTE'];
+        yield 'sqlite: a later expression is visible in a recursive clause' => [SqliteDialect::Sqlite, $recursiveForward, 'a:CTE b:CTE b:CTE a:CTE'];
+        $recursive = 'WITH RECURSIVE r AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM r WHERE n < 3) SELECT * FROM r';
+        $preceding = "WITH b AS (SELECT 'x' AS x), a AS (SELECT * FROM b) SELECT * FROM a";
+        $shadowed = "WITH b AS (SELECT 'outer' AS x) SELECT * FROM (WITH b AS (SELECT 'inner' AS x) SELECT * FROM b) AS s, b";
+        $subquery = "WITH b AS (SELECT 'outer' AS x) SELECT (SELECT x FROM b) AS y";
+        $inner = "SELECT * FROM (WITH b AS (SELECT 'inner' AS x) SELECT * FROM b) AS s WHERE EXISTS (SELECT * FROM b)";
+        $insertQuery = "INSERT INTO users WITH users AS (SELECT 8 AS id, 'y' AS v) SELECT * FROM users";
+        foreach ([MySqlDialect::MySql, PostgreSqlDialect::PostgreSql, SqliteDialect::Sqlite] as $dialect) {
+            yield $dialect->name . ': a recursive expression sees itself' => [$dialect, $recursive, 'r:CTE r:CTE r:CTE'];
+            yield $dialect->name . ': an earlier expression is visible' => [$dialect, $preceding, 'b:CTE a:CTE b:CTE a:CTE'];
+            yield $dialect->name . ': an inner expression shadows an outer one' => [$dialect, $shadowed, 'b:CTE b:CTE b:CTE b:CTE'];
+            yield $dialect->name . ': a subquery sees the clause of its query' => [$dialect, $subquery, 'b:CTE b:CTE'];
+            yield $dialect->name . ': an inner clause is not visible outside its query' => [$dialect, $inner, 'b:CTE b:CTE b:Dependency'];
+            yield $dialect->name . ': a clause of the inserted query does not reach the target' => [$dialect, $insertQuery, 'users:Dependency users:CTE users:CTE'];
+        }
+        $delete = 'WITH users AS (SELECT 9 AS id) DELETE FROM users WHERE id IN (SELECT id FROM users)';
+        $update = "WITH users AS (SELECT 1 AS id) UPDATE users SET v = 'u' WHERE id IN (SELECT id FROM users)";
+        yield 'mysql: the target of DELETE sees the clause' => [MySqlDialect::MySql, $delete, 'users:CTE users:CTE users:CTE'];
+        yield 'mysql: the target of UPDATE sees the clause' => [MySqlDialect::MySql, $update, 'users:CTE users:CTE users:CTE'];
+        foreach ([PostgreSqlDialect::PostgreSql, SqliteDialect::Sqlite] as $dialect) {
+            yield $dialect->name . ': the target of DELETE is a table' => [$dialect, $delete, 'users:CTE users:Dependency users:CTE'];
+            yield $dialect->name . ': the target of UPDATE is a table' => [$dialect, $update, 'users:CTE users:Dependency users:CTE'];
+            yield $dialect->name . ': the target of INSERT is a table' => [$dialect, 'WITH users AS (SELECT 9 AS id, 1 AS v) INSERT INTO users SELECT * FROM users', 'users:CTE users:Dependency users:CTE'];
+        }
+        yield 'postgresql: the target of MERGE is a table and its source sees the clause' => [PostgreSqlDialect::PostgreSql, 'WITH users AS (SELECT 7 AS id) MERGE INTO users USING users AS s ON users.id = s.id WHEN MATCHED THEN DO NOTHING', 'users:CTE users:Dependency users:CTE'];
+        yield 'mysql: an expression name compares as a table name' => [MySqlDialect::MySql, 'WITH B AS (SELECT 1 AS x) SELECT * FROM b', 'B:CTE b:Dependency'];
+        yield 'sqlite: an expression name compares as a table name' => [SqliteDialect::Sqlite, 'WITH B AS (SELECT 1 AS x) SELECT * FROM b', 'B:CTE b:CTE'];
+        yield 'mysql: a qualified name is never an expression' => [MySqlDialect::MySql, 'WITH b AS (SELECT 1 AS x) SELECT * FROM other.b', 'b:CTE other.b:Dependency'];
+    }
+
+    #[DataProvider('providerScopedStatements')]
+    public function testResolveScopesCommonTableExpressionsAsTheServerDoes(Dialect $dialect, string $sql, string $expected): void
+    {
+        $semantics = new Semantics($dialect);
+        $dependencies = [
+            $semantics->analyze('CREATE TABLE users (id INTEGER, v VARCHAR(20))'),
+            $semantics->analyze('CREATE TABLE b (x VARCHAR(20))'),
+            $semantics->analyze('CREATE TABLE other.b (x VARCHAR(20))'),
+        ];
+        $references = Resolved::of($semantics->analyze($sql, $dependencies))->references;
+        $kinds = array_map(static fn (Reference $reference): string => implode('.', $reference->name) . ':' . ($reference->kind === ReferenceKind::CommonTableExpression ? 'CTE' : $reference->kind->name), $references);
+        self::assertSame($expected, implode(' ', $kinds));
     }
 
     #[TestWith([MySqlDialect::MySql, 'INSERT INTO users (id) VALUES (1)'])]
@@ -232,6 +302,69 @@ final class ResolverTest extends TestCase
         self::assertSame('id', Resolved::of($query)->references[0]->table?->columns[0]->name);
     }
 
+    #[TestWith([MySqlDialect::MySql, 'app.users', 'WITH users AS( SELECT 1 ) SELECT * FROM users , shadow'])]
+    #[TestWith([PostgreSqlDialect::PostgreSql, 'app.users', 'WITH users AS( SELECT 1 ) SELECT * FROM users , shadow'])]
+    public function testResolveAnswersNamesARewriteRecognizesByIdentity(Dialect $dialect, string $table, string $expected): void
+    {
+        $semantics = new Semantics($dialect);
+        $users = $semantics->analyze('CREATE TABLE ' . $table . ' (id INTEGER)');
+        $query = $semantics->analyze('WITH users AS (SELECT 1) SELECT * FROM users, ' . $table, [$users]);
+        $table = Resolved::of($query)->tables()[0]->value;
+        $shadow = $semantics->builder()->table('shadow');
+        self::assertSame($expected, Writer::render(Traversal::rewrite($query->command, static fn (Element $value): Element => $value === $table ? $shadow : $value)));
+    }
+
+    public function testResolveAnswersEveryValueOfANameAFormWritesAsSeparateValues(): void
+    {
+        $semantics = new Semantics(SqliteDialect::Sqlite);
+        $users = $semantics->analyze('CREATE TABLE main.users (id INTEGER)');
+        $query = $semantics->analyze('SELECT * FROM users, main.users', [$users]);
+        [$plain, $qualified] = Resolved::of($query)->tables();
+        self::assertSame([$plain->value], $plain->values);
+        self::assertSame(['main', '.users'], array_map(Writer::render(...), $qualified->values));
+        self::assertSame($qualified->value, $qualified->values[0]);
+        self::assertSame($qualified->values, array_values(array_filter(Traversal::find($query->command, Element::class), static fn (Element $value): bool => in_array($value, $qualified->values, true))));
+    }
+
+    #[TestWith([MySqlDialect::MySql, 'app', 'app'])]
+    #[TestWith([PostgreSqlDialect::PostgreSql, 'app', 'app'])]
+    #[TestWith([SqliteDialect::Sqlite, 'main', 'main'])]
+    public function testResolveReadsAnUnqualifiedNameInTheSearchPath(Dialect $dialect, string $schema, string $expected): void
+    {
+        $semantics = new Semantics($dialect, searchPath: new SearchPath($schema));
+        $users = $semantics->analyze('CREATE TABLE users (id INTEGER)');
+        $query = $semantics->analyze('SELECT * FROM users, ' . $schema . '.users', [$users]);
+        self::assertSame([$expected, $expected], array_map(static fn (Reference $reference): ?string => $reference->table?->schema, Resolved::of($query)->tables()));
+        self::assertSame([$users, $users], array_map(static fn (Reference $reference): ?\SqlSemantics\Statement\Statement => $reference->declaration, Resolved::of($query)->tables()));
+    }
+
+    public function testResolveReadsAnUnqualifiedNameInTheFirstSchemaOfThePathThatHasIt(): void
+    {
+        $semantics = new Semantics(PostgreSqlDialect::PostgreSql, searchPath: new SearchPath('app', 'public'));
+        $public = $semantics->analyze('CREATE TABLE public.users (id INTEGER)');
+        $app = $semantics->analyze('CREATE TABLE users (id INTEGER)', [$public]);
+        self::assertSame('app', Resolved::of($app)->declarations[0]->schema);
+        $query = $semantics->analyze('SELECT * FROM users, public.users', [$public, $app]);
+        self::assertSame([$app, $public], array_map(static fn (Reference $reference): ?\SqlSemantics\Statement\Statement => $reference->declaration, Resolved::of($query)->tables()));
+    }
+
+    #[TestWith([MySqlDialect::MySql])]
+    #[TestWith([PostgreSqlDialect::PostgreSql])]
+    #[TestWith([SqliteDialect::Sqlite])]
+    public function testResolveNamesUndeclaredTablesUnderPartialDeclarations(Dialect $dialect): void
+    {
+        $semantics = new Semantics($dialect);
+        $users = $semantics->analyze('CREATE TABLE users (id INTEGER)');
+        $query = $semantics->analyze('WITH recent AS (SELECT 1) SELECT * FROM users JOIN audit_log ON 1 = 1 JOIN recent ON 1 = 1', [$users], Declarations::Partial);
+        $kinds = array_map(static fn (Reference $reference): string => implode('.', $reference->name) . ':' . $reference->kind->name, Resolved::of($query)->references);
+        self::assertSame(['recent:CommonTableExpression', 'users:Dependency', 'audit_log:Undeclared', 'recent:CommonTableExpression'], $kinds);
+        self::assertNull(Resolved::of($query)->references[2]->table);
+        $drop = $semantics->analyze('DROP TABLE audit_log', [$users], Declarations::Partial);
+        self::assertSame(ReferenceKind::Drop, Resolved::of($drop)->references[0]->kind);
+        $this->expectException(SemanticException::class);
+        $semantics->analyze('SELECT * FROM audit_log', [$users, $drop], Declarations::Partial);
+    }
+
     public function testDeclarePutsANewTableInForceAndRefersToAConditionalDuplicate(): void
     {
         [$resolver, $tree, $command, $relations] = Resolving::of(MySqlDialect::MySql, 'CREATE TABLE users (id INT)');
@@ -250,7 +383,8 @@ final class ResolverTest extends TestCase
         [$resolver, $tree, $command, $relations] = Resolving::of(MySqlDialect::MySql, 'SELECT 1');
         $relations->declare('', 'users', null, null);
         self::assertSame(ReferenceKind::CommonTableExpression, $resolver->refer(new NameSite($command, ['recent'], ReferenceKind::CommonTableExpression), $relations, $tree)->kind);
-        self::assertSame(ReferenceKind::CommonTableExpression, $resolver->refer(new NameSite($command, ['recent'], ReferenceKind::Dependency), $relations, $tree)->kind);
+        self::assertSame(ReferenceKind::CommonTableExpression, $resolver->refer(new NameSite($command, ['recent'], ReferenceKind::Dependency, false, new Scope(['recent'])), $relations, $tree)->kind);
+        self::assertSame(ReferenceKind::Declaration, $resolver->refer(new NameSite($command, ['users'], ReferenceKind::Dependency, false, new Scope(['recent'])), $relations, $tree)->kind);
         self::assertSame(ReferenceKind::Declaration, $resolver->refer(new NameSite($command, ['users'], ReferenceKind::Dependency), $relations, $tree)->kind);
         self::assertSame(ReferenceKind::Drop, $resolver->refer(new NameSite($command, ['users'], ReferenceKind::Drop), $relations, $tree)->kind);
         self::assertTrue($resolver->refer(new NameSite($command, ['nope'], ReferenceKind::Drop, true), $relations, $tree)->conditional);

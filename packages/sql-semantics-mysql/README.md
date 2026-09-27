@@ -13,7 +13,7 @@ SQL Semantics for MySQL adds MySQL to [SQL Semantics](https://github.com/k-kinza
 
 ## Support Syntax
 
-The following grammar versions are supported. Pass the version tag as the second argument of `Semantics`; omitting it uses the default. State declarations and composition support all listed versions; common table expressions in `Builder` need MySQL 8.0 or later.
+The following grammar versions are supported. Pass the version tag as the second argument of `Semantics`; omitting it uses the default. State declarations and composition support all listed versions; common table expressions in `Builder` need MySQL 8.0 or later, as does a `select()` with a condition but no table, and `cast()` to `FLOAT` needs 8.0.17 and to `YEAR` 8.0.22.
 
 | Version | Version tag | Default |
 |---------|-------------|---------|

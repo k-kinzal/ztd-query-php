@@ -60,13 +60,15 @@ final class OptCycleClauseWithCycleColumnListSetColIdUsingColId_d6acad95 impleme
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->columnList, \SqlSemantics\Statement\Model\PostgreSql\Role\ColumnListForm::class, $replace), $this->replacement($this->colId, \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm::class, $replace), $this->replacement($this->colId2, \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->columnList, \SqlSemantics\Statement\Model\PostgreSql\Role\ColumnListForm::class, $replace), $this->replacement($this->colId, \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm::class, $replace), $this->replacement($this->colId2, \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm::class, $replace)];
+
+        return $mapped === [$this->columnList, $this->colId, $this->colId2] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

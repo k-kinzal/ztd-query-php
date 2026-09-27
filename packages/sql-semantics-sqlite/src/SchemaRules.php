@@ -27,12 +27,12 @@ use SqlSemantics\Statement\Element;
 final class SchemaRules implements Contract
 {
     /**
-     * Namespaces searched for an unqualified table.
-     * @return non-empty-list<string>
+     * Implicit namespaces searched before the session path for declared tables.
+     * @return list<string>
      */
-    public function searchSchemas(): array
+    public function implicitSchemas(): array
     {
-        return ['temp', 'main'];
+        return ['temp'];
     }
 
     /**

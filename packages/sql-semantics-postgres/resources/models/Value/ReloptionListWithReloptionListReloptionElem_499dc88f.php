@@ -52,13 +52,15 @@ final class ReloptionListWithReloptionListReloptionElem_499dc88f implements \Sql
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->reloptionList, \SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionListForm::class, $replace), $this->replacement($this->reloptionElem, \SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionElemForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->reloptionList, \SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionListForm::class, $replace), $this->replacement($this->reloptionElem, \SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionElemForm::class, $replace)];
+
+        return $mapped === [$this->reloptionList, $this->reloptionElem] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

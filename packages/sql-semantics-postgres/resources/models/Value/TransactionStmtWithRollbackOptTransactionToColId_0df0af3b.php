@@ -54,13 +54,15 @@ final class TransactionStmtWithRollbackOptTransactionToColId_0df0af3b implements
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->optTransaction, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTransactionForm::class, $replace), $this->replacement($this->colId, \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optTransaction, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTransactionForm::class, $replace), $this->replacement($this->colId, \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm::class, $replace)];
+
+        return $mapped === [$this->optTransaction, $this->colId] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

@@ -79,6 +79,6 @@ final class SemanticsBench
     #[Benchmark\Iterations(5)]
     public function benchDeclaration(): void
     {
-        $this->semantics->analyze('CREATE TABLE items (id INTEGER PRIMARY KEY, parent_id INTEGER REFERENCES parent(id), amount NUMERIC(7) DEFAULT 1.25)', resolutionMode: \SqlSemantics\Core\ResolutionMode::Partial);
+        $this->semantics->analyze('CREATE TABLE items (id INTEGER PRIMARY KEY, parent_id INTEGER REFERENCES parent(id), amount NUMERIC(7) DEFAULT 1.25)', dependencies: [], declarations: \SqlSemantics\Core\Declarations::Partial);
     }
 }

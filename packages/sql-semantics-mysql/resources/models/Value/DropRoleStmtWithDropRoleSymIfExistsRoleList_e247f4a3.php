@@ -54,13 +54,15 @@ final class DropRoleStmtWithDropRoleSymIfExistsRoleList_e247f4a3 implements \Sql
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->ifExists, \SqlSemantics\Statement\Model\MySql\Role\IfExistsForm::class, $replace), $this->replacement($this->roleList, \SqlSemantics\Statement\Model\MySql\Role\RoleListForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->ifExists, \SqlSemantics\Statement\Model\MySql\Role\IfExistsForm::class, $replace), $this->replacement($this->roleList, \SqlSemantics\Statement\Model\MySql\Role\RoleListForm::class, $replace)];
+
+        return $mapped === [$this->ifExists, $this->roleList] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

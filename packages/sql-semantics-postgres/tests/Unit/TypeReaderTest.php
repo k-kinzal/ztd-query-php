@@ -244,4 +244,11 @@ final class TypeReaderTest extends TestCase
         self::assertSame(0, $type->effectiveNumericSize?->scale);
     }
 
+    public function testSupportsTellsPostgreSqlTypesFromOthers(): void
+    {
+        self::assertTrue(TypeReader::supports(Builtin::Integer));
+        self::assertTrue(TypeReader::supports(Builtin::TimestampTz));
+        self::assertFalse(TypeReader::supports(Builtin::TinyInt));
+        self::assertFalse(TypeReader::supports(Builtin::Any));
+    }
 }

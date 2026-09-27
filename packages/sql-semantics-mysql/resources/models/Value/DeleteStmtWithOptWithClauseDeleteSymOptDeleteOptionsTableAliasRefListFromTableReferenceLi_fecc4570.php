@@ -66,13 +66,15 @@ final class DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsTableAliasRefLis
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->with, \SqlSemantics\Statement\Model\MySql\Role\OptWithClauseForm::class, $replace), $this->replacement($this->optDeleteOptions, \SqlSemantics\Statement\Model\MySql\Role\OptDeleteOptionsForm::class, $replace), $this->replacement($this->tableAliasRefList, \SqlSemantics\Statement\Model\MySql\Role\TableAliasRefListForm::class, $replace), $this->replacement($this->tableReferenceList, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->with, \SqlSemantics\Statement\Model\MySql\Role\OptWithClauseForm::class, $replace), $this->replacement($this->optDeleteOptions, \SqlSemantics\Statement\Model\MySql\Role\OptDeleteOptionsForm::class, $replace), $this->replacement($this->tableAliasRefList, \SqlSemantics\Statement\Model\MySql\Role\TableAliasRefListForm::class, $replace), $this->replacement($this->tableReferenceList, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm::class, $replace)];
+
+        return $mapped === [$this->with, $this->optDeleteOptions, $this->tableAliasRefList, $this->tableReferenceList, $this->where] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $this->comments);
     }
 
     /**

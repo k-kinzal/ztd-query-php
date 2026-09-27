@@ -68,13 +68,15 @@ final class ShowKeysStmtWithShowOptExtendedKeysOrIndexFromOrInTableIdentOptDbOpt
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->optExtended, \SqlSemantics\Statement\Model\MySql\Role\OptExtendedForm::class, $replace), $this->replacement($this->keysOrIndex, \SqlSemantics\Statement\Model\MySql\Role\KeysOrIndexForm::class, $replace), $this->replacement($this->fromOrIn, \SqlSemantics\Statement\Model\MySql\Role\FromOrInForm::class, $replace), $this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->optDb, \SqlSemantics\Statement\Model\MySql\Role\OptDbForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optExtended, \SqlSemantics\Statement\Model\MySql\Role\OptExtendedForm::class, $replace), $this->replacement($this->keysOrIndex, \SqlSemantics\Statement\Model\MySql\Role\KeysOrIndexForm::class, $replace), $this->replacement($this->fromOrIn, \SqlSemantics\Statement\Model\MySql\Role\FromOrInForm::class, $replace), $this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->optDb, \SqlSemantics\Statement\Model\MySql\Role\OptDbForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm::class, $replace)];
+
+        return $mapped === [$this->optExtended, $this->keysOrIndex, $this->fromOrIn, $this->tableIdent, $this->optDb, $this->where] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $mapped[5], $this->comments);
     }
 
     /**

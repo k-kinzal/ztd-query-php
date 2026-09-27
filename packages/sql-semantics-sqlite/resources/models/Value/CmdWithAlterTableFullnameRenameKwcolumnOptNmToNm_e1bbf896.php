@@ -66,13 +66,15 @@ final class CmdWithAlterTableFullnameRenameKwcolumnOptNmToNm_e1bbf896 implements
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->fullname, \SqlSemantics\Statement\Model\Sqlite\Role\FullnameForm::class, $replace), $this->replacement($this->kwcolumnOpt, \SqlSemantics\Statement\Model\Sqlite\Role\KwcolumnOptForm::class, $replace), $this->replacement($this->nm, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace), $this->replacement($this->nm2, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->fullname, \SqlSemantics\Statement\Model\Sqlite\Role\FullnameForm::class, $replace), $this->replacement($this->kwcolumnOpt, \SqlSemantics\Statement\Model\Sqlite\Role\KwcolumnOptForm::class, $replace), $this->replacement($this->nm, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace), $this->replacement($this->nm2, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace)];
+
+        return $mapped === [$this->fullname, $this->kwcolumnOpt, $this->nm, $this->nm2] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $this->comments);
     }
 
     /**

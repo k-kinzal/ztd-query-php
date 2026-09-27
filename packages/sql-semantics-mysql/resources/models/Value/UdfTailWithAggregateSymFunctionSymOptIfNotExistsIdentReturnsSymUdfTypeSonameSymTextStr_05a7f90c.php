@@ -66,13 +66,15 @@ final class UdfTailWithAggregateSymFunctionSymOptIfNotExistsIdentReturnsSymUdfTy
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->optIfNotExists, \SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm::class, $replace), $this->replacement($this->ident, \SqlSemantics\Statement\Model\MySql\Role\IdentForm::class, $replace), $this->replacement($this->udfType, \SqlSemantics\Statement\Model\MySql\Role\UdfTypeForm::class, $replace), $this->replacement($this->textStringSys, \SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->optIfNotExists, \SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm::class, $replace), $this->replacement($this->ident, \SqlSemantics\Statement\Model\MySql\Role\IdentForm::class, $replace), $this->replacement($this->udfType, \SqlSemantics\Statement\Model\MySql\Role\UdfTypeForm::class, $replace), $this->replacement($this->textStringSys, \SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm::class, $replace)];
+
+        return $mapped === [$this->optIfNotExists, $this->ident, $this->udfType, $this->textStringSys] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $this->comments);
     }
 
     /**

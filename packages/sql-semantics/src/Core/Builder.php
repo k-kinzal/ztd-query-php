@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Core;
 
+use SqlSemantics\Statement\Declaration\TypeDescriptor;
 use SqlSemantics\Statement\Element;
 
 /**
@@ -57,7 +58,10 @@ interface Builder
     public function integer(int $value): Element;
 
     /**
-     * A numeric literal that the language reads as a non-integer number.
+     * A numeric literal that the language reads as a non-integer number and that reads back as exactly the double.
+     *
+     * The digits are the fewest that denote the same double, whatever the
+     * `precision` settings, and negative zero is written negated.
      *
      * @throws CompositionException When the value is not finite
      */
@@ -111,6 +115,65 @@ interface Builder
      * An expression in parentheses.
      */
     public function parenthesized(Element $expression): Element;
+
+    /**
+     * `IS NULL`, or `IS NOT NULL` when negated.
+     */
+    public function isNull(Element $operand, bool $negated = false): Element;
+
+    /**
+     * Membership in a list of values: `IN`, or `NOT IN` when negated.
+     *
+     * @param list<Element> $values
+     *
+     * @throws CompositionException When the release reads no such list, such as an empty one
+     */
+    public function in(Element $operand, array $values, bool $negated = false): Element;
+
+    /**
+     * A searched CASE: the result of the first condition that holds, else the default, else NULL.
+     *
+     * @param list<array{Element, Element}> $whens Each condition with its result, in order; at least one
+     *
+     * @throws CompositionException When there is no condition
+     */
+    public function case(array $whens, ?Element $else = null): Element;
+
+    /**
+     * A call of a function by its name, spelled bare when the release reads it as that name and quoted otherwise.
+     *
+     * A bare name the grammar gives its own form, such as COALESCE where it
+     * is a keyword, is written in that form.
+     *
+     * @param list<Element> $arguments
+     *
+     * @throws CompositionException When the name is empty or the release reads no call of it with these arguments
+     */
+    public function call(string $name, array $arguments = []): Element;
+
+    /**
+     * `CAST` of an operand to a type, spelled as the release's CAST names that type.
+     *
+     * The target names exactly the type: a type CAST has no target for, or a
+     * fact of the type the target cannot state, is an error, never a nearby
+     * type.
+     *
+     * @throws CompositionException When the release's CAST has no target of exactly this type
+     */
+    public function cast(Element $operand, TypeDescriptor $type): Element;
+
+    /**
+     * A SELECT of columns, from a table when one is given, keeping the rows a condition holds for when one is given.
+     *
+     * The query is a complete command, like one analyzed from SQL.
+     *
+     * @param list<array{Element, string|null}> $columns Each expression with its alias, or null for none; at least one
+     * @param Element|null $from A table, such as one answered by table()
+     * @param Element|null $where The condition
+     *
+     * @throws CompositionException When there is no column or the release reads no such query
+     */
+    public function select(array $columns, ?Element $from = null, ?Element $where = null): Element;
 
     /**
      * The rows of both queries, duplicates kept.

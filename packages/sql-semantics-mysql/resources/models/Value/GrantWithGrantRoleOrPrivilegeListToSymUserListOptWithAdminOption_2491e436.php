@@ -58,13 +58,15 @@ final class GrantWithGrantRoleOrPrivilegeListToSymUserListOptWithAdminOption_249
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->roleOrPrivilegeList, \SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeListForm::class, $replace), $this->replacement($this->userList, \SqlSemantics\Statement\Model\MySql\Role\UserListForm::class, $replace), $this->replacement($this->optWithAdminOption, \SqlSemantics\Statement\Model\MySql\Role\OptWithAdminOptionForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->roleOrPrivilegeList, \SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeListForm::class, $replace), $this->replacement($this->userList, \SqlSemantics\Statement\Model\MySql\Role\UserListForm::class, $replace), $this->replacement($this->optWithAdminOption, \SqlSemantics\Statement\Model\MySql\Role\OptWithAdminOptionForm::class, $replace)];
+
+        return $mapped === [$this->roleOrPrivilegeList, $this->userList, $this->optWithAdminOption] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

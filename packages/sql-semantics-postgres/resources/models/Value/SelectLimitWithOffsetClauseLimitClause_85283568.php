@@ -50,13 +50,15 @@ final class SelectLimitWithOffsetClauseLimitClause_85283568 implements \SqlSeman
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->offsetClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OffsetClauseForm::class, $replace), $this->replacement($this->limitClause, \SqlSemantics\Statement\Model\PostgreSql\Role\LimitClauseForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->offsetClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OffsetClauseForm::class, $replace), $this->replacement($this->limitClause, \SqlSemantics\Statement\Model\PostgreSql\Role\LimitClauseForm::class, $replace)];
+
+        return $mapped === [$this->offsetClause, $this->limitClause] ? $this : new self($mapped[0], $mapped[1], $this->comments);
     }
 
     /**

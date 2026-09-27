@@ -66,13 +66,15 @@ final class AlterUserStmtWithAlterUserCommandAlterUserListRequireClauseConnectOp
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->alterUserCommand, \SqlSemantics\Statement\Model\MySql\Role\AlterUserCommandForm::class, $replace), $this->replacement($this->alterUserList, \SqlSemantics\Statement\Model\MySql\Role\AlterUserListForm::class, $replace), $this->replacement($this->requireClause, \SqlSemantics\Statement\Model\MySql\Role\RequireClauseForm::class, $replace), $this->replacement($this->connectOptions, \SqlSemantics\Statement\Model\MySql\Role\ConnectOptionsForm::class, $replace), $this->replacement($this->optAccountLockPasswordExpireOptions, \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionsForm::class, $replace), $this->replacement($this->optUserAttribute, \SqlSemantics\Statement\Model\MySql\Role\OptUserAttributeForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->alterUserCommand, \SqlSemantics\Statement\Model\MySql\Role\AlterUserCommandForm::class, $replace), $this->replacement($this->alterUserList, \SqlSemantics\Statement\Model\MySql\Role\AlterUserListForm::class, $replace), $this->replacement($this->requireClause, \SqlSemantics\Statement\Model\MySql\Role\RequireClauseForm::class, $replace), $this->replacement($this->connectOptions, \SqlSemantics\Statement\Model\MySql\Role\ConnectOptionsForm::class, $replace), $this->replacement($this->optAccountLockPasswordExpireOptions, \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionsForm::class, $replace), $this->replacement($this->optUserAttribute, \SqlSemantics\Statement\Model\MySql\Role\OptUserAttributeForm::class, $replace)];
+
+        return $mapped === [$this->alterUserCommand, $this->alterUserList, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $mapped[5], $this->comments);
     }
 
     /**

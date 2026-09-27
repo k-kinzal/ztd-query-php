@@ -58,13 +58,15 @@ final class SelectPart2WithSelectOptionsSelectItemListSelectIntoSelectLockType_5
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->options, \SqlSemantics\Statement\Model\MySql\Role\SelectOptionsForm::class, $replace), $this->replacement($this->projections, \SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm::class, $replace), $this->replacement($this->selectInto, \SqlSemantics\Statement\Model\MySql\Role\SelectIntoForm::class, $replace), $this->replacement($this->selectLockType, \SqlSemantics\Statement\Model\MySql\Role\SelectLockTypeForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->options, \SqlSemantics\Statement\Model\MySql\Role\SelectOptionsForm::class, $replace), $this->replacement($this->projections, \SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm::class, $replace), $this->replacement($this->selectInto, \SqlSemantics\Statement\Model\MySql\Role\SelectIntoForm::class, $replace), $this->replacement($this->selectLockType, \SqlSemantics\Statement\Model\MySql\Role\SelectLockTypeForm::class, $replace)];
+
+        return $mapped === [$this->options, $this->projections, $this->selectInto, $this->selectLockType] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $this->comments);
     }
 
     /**

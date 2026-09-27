@@ -70,13 +70,15 @@ final class KeyDefWithFulltextOptKeyOrIndexOptIdentInitKeyOptionsKeyListFulltext
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->fulltext, \SqlSemantics\Statement\Model\MySql\Role\FulltextForm::class, $replace), $this->replacement($this->optKeyOrIndex, \SqlSemantics\Statement\Model\MySql\Role\OptKeyOrIndexForm::class, $replace), $this->replacement($this->optIdent, \SqlSemantics\Statement\Model\MySql\Role\OptIdentForm::class, $replace), $this->replacement($this->initKeyOptions, \SqlSemantics\Statement\Model\MySql\Role\InitKeyOptionsForm::class, $replace), $this->replacement($this->keyList, \SqlSemantics\Statement\Model\MySql\Role\KeyListForm::class, $replace), $this->replacement($this->fulltextKeyOptions, \SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptionsForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->fulltext, \SqlSemantics\Statement\Model\MySql\Role\FulltextForm::class, $replace), $this->replacement($this->optKeyOrIndex, \SqlSemantics\Statement\Model\MySql\Role\OptKeyOrIndexForm::class, $replace), $this->replacement($this->optIdent, \SqlSemantics\Statement\Model\MySql\Role\OptIdentForm::class, $replace), $this->replacement($this->initKeyOptions, \SqlSemantics\Statement\Model\MySql\Role\InitKeyOptionsForm::class, $replace), $this->replacement($this->keyList, \SqlSemantics\Statement\Model\MySql\Role\KeyListForm::class, $replace), $this->replacement($this->fulltextKeyOptions, \SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptionsForm::class, $replace)];
+
+        return $mapped === [$this->fulltext, $this->optKeyOrIndex, $this->optIdent, $this->initKeyOptions, $this->keyList, $this->fulltextKeyOptions] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $mapped[3], $mapped[4], $mapped[5], $this->comments);
     }
 
     /**

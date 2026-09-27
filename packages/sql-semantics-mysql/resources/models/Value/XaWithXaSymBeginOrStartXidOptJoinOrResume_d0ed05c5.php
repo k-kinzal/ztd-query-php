@@ -56,13 +56,15 @@ final class XaWithXaSymBeginOrStartXidOptJoinOrResume_d0ed05c5 implements \SqlSe
     }
 
     /**
-     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     * Returns this value rebuilt around what the function answers for each value, keeping lexical fields and comments; itself when every answer is the value it was given.
      *
      * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
      */
     public function map(callable $replace): static
     {
-        return new self($this->replacement($this->beginOrStart, \SqlSemantics\Statement\Model\MySql\Role\BeginOrStartForm::class, $replace), $this->replacement($this->xid, \SqlSemantics\Statement\Model\MySql\Role\XidForm::class, $replace), $this->replacement($this->optJoinOrResume, \SqlSemantics\Statement\Model\MySql\Role\OptJoinOrResumeForm::class, $replace), $this->comments);
+        $mapped = [$this->replacement($this->beginOrStart, \SqlSemantics\Statement\Model\MySql\Role\BeginOrStartForm::class, $replace), $this->replacement($this->xid, \SqlSemantics\Statement\Model\MySql\Role\XidForm::class, $replace), $this->replacement($this->optJoinOrResume, \SqlSemantics\Statement\Model\MySql\Role\OptJoinOrResumeForm::class, $replace)];
+
+        return $mapped === [$this->beginOrStart, $this->xid, $this->optJoinOrResume] ? $this : new self($mapped[0], $mapped[1], $mapped[2], $this->comments);
     }
 
     /**

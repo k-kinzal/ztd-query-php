@@ -18,6 +18,7 @@ use SqlSemantics\Statement\Writer;
 use Tests\Contract\Composed;
 
 #[CoversClass(Builder::class)]
+#[UsesClass(\SqlSemantics\Platform\Sqlite\Casts::class)]
 #[UsesClass(\SqlSemantics\Platform\Sqlite\Platform::class)]
 #[UsesClass(\SqlSemantics\Platform\Sqlite\Expressions::class)]
 #[Medium]
@@ -71,7 +72,10 @@ final class BuilderTest extends TestCase
     }
 
     #[TestWith([0.5, '0.5'])]
+    #[TestWith([0.1 + 0.2, '0.30000000000000004'])]
     #[TestWith([-2.0, '- 2.0'])]
+    #[TestWith([-0.0, '- 0.0'])]
+    #[TestWith([1e25, '1e25'])]
     public function testFloatIsReadAsAFloat(float $value, string $expected): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
@@ -202,5 +206,67 @@ final class BuilderTest extends TestCase
         self::assertSame(Writer::render($merged), $semantics->analyze(Writer::render($merged))->toString());
         $this->expectException(CompositionException::class);
         $builder->with([], $semantics->analyze('SELECT 1')->command);
+    }
+
+    public function testIsNullIsAnExpressionOfThisDatabase(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $builder = $semantics->builder();
+        $condition = $builder->isNull($builder->and($builder->column('a'), $builder->column('b')), true);
+        self::assertSame('( a AND b ) IS NOT NULL', Writer::render($condition));
+        Composed::assertExpressionRoundTrips($semantics, $condition);
+    }
+
+    public function testInIsAnExpressionOfThisDatabase(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $builder = $semantics->builder();
+        $membership = $builder->in($builder->column('a'), [$builder->integer(1), $builder->string('x')]);
+        self::assertSame("a IN( 1 , 'x' )", Writer::render($membership));
+        Composed::assertExpressionRoundTrips($semantics, $membership);
+        self::assertSame('a IN( )', Writer::render($builder->in($builder->column('a'), [])));
+    }
+
+    public function testCaseIsAnExpressionOfThisDatabase(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $builder = $semantics->builder();
+        $case = $builder->case([[$builder->isNull($builder->column('a')), $builder->string('none')]], $builder->column('a'));
+        self::assertSame("CASE WHEN a IS NULL THEN 'none' ELSE a END", Writer::render($case));
+        Composed::assertExpressionRoundTrips($semantics, $case);
+    }
+
+    public function testCallWritesAKeywordFunctionInItsOwnForm(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $builder = $semantics->builder();
+        $call = $builder->call('coalesce', [$builder->column('a'), $builder->integer(0)]);
+        self::assertSame('coalesce ( a , 0 )', Writer::render($call));
+        Composed::assertExpressionRoundTrips($semantics, $call);
+        self::assertSame('"My Func" ( a )', Writer::render($builder->call('My Func', [$builder->column('a')])));
+    }
+
+    public function testCastIsAnExpressionOfThisDatabase(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $builder = $semantics->builder();
+        $cast = $builder->cast($builder->or($builder->column('a'), $builder->column('b')), new \SqlSemantics\Statement\Declaration\TypeDescriptor(\SqlSemantics\Statement\Declaration\Builtin::DoublePrecision));
+        self::assertSame('CAST( a OR b AS DOUBLE PRECISION )', Writer::render($cast));
+        Composed::assertExpressionRoundTrips($semantics, $cast);
+    }
+
+    public function testSelectComposesShadowRowsWithoutSql(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $builder = $semantics->builder();
+        $type = new \SqlSemantics\Statement\Declaration\TypeDescriptor(\SqlSemantics\Statement\Declaration\Builtin::DoublePrecision);
+        $rows = $builder->unionAll($builder->select([[$builder->cast($builder->integer(1), $type), 'id']]), $builder->select([[$builder->cast($builder->integer(2), $type), 'id']]));
+        $empty = $builder->select([[$builder->cast($builder->null(), $type), 'id']], null, $builder->boolean(false));
+        Composed::assertQueryRoundTrips($semantics, $rows);
+        Composed::assertQueryRoundTrips($semantics, $empty);
+        self::assertSame('SELECT CAST( NULL AS DOUBLE PRECISION ) AS id WHERE FALSE', Writer::render($empty));
+        $shadowed = $builder->with([$builder->cte('users', $rows)], $semantics->analyze('SELECT id FROM users')->command);
+        Composed::assertQueryRoundTrips($semantics, $shadowed);
+        self::assertSame('SELECT 1 AS "select" FROM app.users WHERE a', Writer::render($builder->select([[$builder->integer(1), 'select']], $builder->table('app', 'users'), $builder->column('a'))));
     }
 }
