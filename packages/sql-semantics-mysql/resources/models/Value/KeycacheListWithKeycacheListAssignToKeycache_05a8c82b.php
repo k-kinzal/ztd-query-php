@@ -17,11 +17,12 @@ final class KeycacheListWithKeycacheListAssignToKeycache_05a8c82b implements \Sq
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeycacheListForm $keycacheList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AssignToKeycacheForm $assignToKeycache,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keycacheList), 'The keycacheList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($assignToKeycache), 'The assignToKeycache must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class KeycacheListWithKeycacheListAssignToKeycache_05a8c82b implements \Sq
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->keycacheList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->assignToKeycache->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->keycacheList, $this->assignToKeycache];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->keycacheList, \SqlSemantics\Statement\Model\MySql\Role\KeycacheListForm::class, $replace), $this->replacement($this->assignToKeycache, \SqlSemantics\Statement\Model\MySql\Role\AssignToKeycacheForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class KeycacheListWithKeycacheListAssignToKeycache_05a8c82b implements \Sq
      */
     public function withKeycacheList(\SqlSemantics\Statement\Model\MySql\Role\KeycacheListForm $keycacheList): self
     {
-        return new self($keycacheList, $this->assignToKeycache);
+        return new self($keycacheList, $this->assignToKeycache, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class KeycacheListWithKeycacheListAssignToKeycache_05a8c82b implements \Sq
      */
     public function withAssignToKeycache(\SqlSemantics\Statement\Model\MySql\Role\AssignToKeycacheForm $assignToKeycache): self
     {
-        return new self($this->keycacheList, $assignToKeycache);
+        return new self($this->keycacheList, $assignToKeycache, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->keycacheList, $this->assignToKeycache, $comments);
     }
 }

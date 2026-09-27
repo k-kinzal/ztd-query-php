@@ -17,10 +17,11 @@ final class ExprWithIdjLpStarRp_41781688 implements \SqlSemantics\Statement\Mode
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $idj,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($idj, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['idj'], 'The idj must be a complete idj lexical spelling.');
     }
@@ -30,10 +31,34 @@ final class ExprWithIdjLpStarRp_41781688 implements \SqlSemantics\Statement\Mode
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
-        $writer->append($this->idj);
+        $writer->comments($this->comments, 0);
+        $writer->append($this->idj, true);
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $writer->append('*');
+        $writer->comments($this->comments, 3);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [];
+    }
+
+    /**
+     * This form holds no values to replace.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return $this;
     }
 
     /**
@@ -41,6 +66,14 @@ final class ExprWithIdjLpStarRp_41781688 implements \SqlSemantics\Statement\Mode
      */
     public function withIdj(string $idj): self
     {
-        return new self($idj);
+        return new self($idj, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->idj, $comments);
     }
 }

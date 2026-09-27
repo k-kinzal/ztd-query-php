@@ -17,11 +17,12 @@ final class SelectDerivedUnionWithSelectDerivedOptUnionOrderOrLimit_4467bcad imp
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedForm $selectDerived,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUnionOrderOrLimitForm $optUnionOrderOrLimit,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectDerived), 'The selectDerived must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUnionOrderOrLimit), 'The optUnionOrderOrLimit must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class SelectDerivedUnionWithSelectDerivedOptUnionOrderOrLimit_4467bcad imp
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->selectDerived->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optUnionOrderOrLimit->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->selectDerived, $this->optUnionOrderOrLimit];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->selectDerived, \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedForm::class, $replace), $this->replacement($this->optUnionOrderOrLimit, \SqlSemantics\Statement\Model\MySql\Role\OptUnionOrderOrLimitForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class SelectDerivedUnionWithSelectDerivedOptUnionOrderOrLimit_4467bcad imp
      */
     public function withSelectDerived(\SqlSemantics\Statement\Model\MySql\Role\SelectDerivedForm $selectDerived): self
     {
-        return new self($selectDerived, $this->optUnionOrderOrLimit);
+        return new self($selectDerived, $this->optUnionOrderOrLimit, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class SelectDerivedUnionWithSelectDerivedOptUnionOrderOrLimit_4467bcad imp
      */
     public function withOptUnionOrderOrLimit(\SqlSemantics\Statement\Model\MySql\Role\OptUnionOrderOrLimitForm $optUnionOrderOrLimit): self
     {
-        return new self($this->selectDerived, $optUnionOrderOrLimit);
+        return new self($this->selectDerived, $optUnionOrderOrLimit, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->selectDerived, $this->optUnionOrderOrLimit, $comments);
     }
 }

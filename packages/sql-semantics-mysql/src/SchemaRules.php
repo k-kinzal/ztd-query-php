@@ -8,9 +8,9 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Core\Ast\Identifiers;
 use SqlSemantics\Core\Ast\Tree;
 use SqlSemantics\Core\Policy\SchemaRules as Contract;
-use SqlSemantics\Core\Schema\ColumnDefinition;
-use SqlSemantics\Core\Schema\TableConstraint;
-use SqlSemantics\Core\Schema\TableDefinition;
+use SqlSemantics\Statement\Declaration\ColumnDefinition;
+use SqlSemantics\Statement\Declaration\TableConstraint;
+use SqlSemantics\Statement\Declaration\TableDefinition;
 
 /**
  * MySql SchemaRules implementation.
@@ -60,10 +60,12 @@ final class SchemaRules implements Contract
     }
 
     /**
+     * Primary key columns are always nonnullable, whatever their declaration.
+     *
      * @param list<string> $primary
      * @param list<TableConstraint> $constraints
      */
-    public function primaryNotNull(ColumnDefinition $column, array $primary, array $constraints): bool
+    public function primaryNotNull(ColumnDefinition $column, Node $declaration, array $primary, array $constraints): bool
     {
         return true;
     }

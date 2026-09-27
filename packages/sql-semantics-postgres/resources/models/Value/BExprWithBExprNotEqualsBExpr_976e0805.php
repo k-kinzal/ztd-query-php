@@ -17,18 +17,19 @@ final class BExprWithBExprNotEqualsBExpr_976e0805 implements \SqlSemantics\State
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr,
         public readonly string $notEquals,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($bExpr), 'The bExpr must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($bExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 8,));
+        $this->assertOperandBindingStrength($bExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-16.6' => 9,  'pg-17.2' => 8,), \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_RULES, 'b_expr');
         $this->assertMatchesPattern($notEquals, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['NOT_EQUALS'], 'The notEquals must be a complete NOT_EQUALS lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($bExpr2), 'The bExpr2 must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($bExpr2, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 8,));
+        $this->assertOperandBindingStrength($bExpr2, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-16.6' => 9,  'pg-17.2' => 8,), \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_RULES, 'b_expr');
     }
 
     /**
@@ -36,9 +37,32 @@ final class BExprWithBExprNotEqualsBExpr_976e0805 implements \SqlSemantics\State
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->bExpr->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append($this->notEquals);
+        $writer->comments($this->comments, 2);
         $this->bExpr2->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->bExpr, $this->bExpr2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->bExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm::class, $replace), $this->notEquals, $this->replacement($this->bExpr2, \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm::class, $replace), $this->comments);
     }
 
     /**
@@ -46,7 +70,7 @@ final class BExprWithBExprNotEqualsBExpr_976e0805 implements \SqlSemantics\State
      */
     public function withBExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr): self
     {
-        return new self($bExpr, $this->notEquals, $this->bExpr2);
+        return new self($bExpr, $this->notEquals, $this->bExpr2, $this->comments);
     }
 
     /**
@@ -54,7 +78,7 @@ final class BExprWithBExprNotEqualsBExpr_976e0805 implements \SqlSemantics\State
      */
     public function withNotEquals(string $notEquals): self
     {
-        return new self($this->bExpr, $notEquals, $this->bExpr2);
+        return new self($this->bExpr, $notEquals, $this->bExpr2, $this->comments);
     }
 
     /**
@@ -62,6 +86,14 @@ final class BExprWithBExprNotEqualsBExpr_976e0805 implements \SqlSemantics\State
      */
     public function withBExpr2(\SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr2): self
     {
-        return new self($this->bExpr, $this->notEquals, $bExpr2);
+        return new self($this->bExpr, $this->notEquals, $bExpr2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->bExpr, $this->notEquals, $this->bExpr2, $comments);
     }
 }

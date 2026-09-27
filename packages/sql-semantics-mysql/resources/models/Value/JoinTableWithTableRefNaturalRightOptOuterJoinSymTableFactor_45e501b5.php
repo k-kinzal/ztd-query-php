@@ -17,12 +17,13 @@ final class JoinTableWithTableRefNaturalRightOptOuterJoinSymTableFactor_45e501b5
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableRefForm $tableRef,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptOuterForm $optOuter,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableFactorForm $tableFactor,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableRef), 'The tableRef must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optOuter), 'The optOuter must be a generated immutable SQL value.');
@@ -34,12 +35,38 @@ final class JoinTableWithTableRefNaturalRightOptOuterJoinSymTableFactor_45e501b5
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableRef->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('NATURAL');
+        $writer->comments($this->comments, 2);
         $writer->append('RIGHT');
+        $writer->comments($this->comments, 3);
         $this->optOuter->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('JOIN');
+        $writer->comments($this->comments, 5);
         $this->tableFactor->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableRef, $this->optOuter, $this->tableFactor];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableRef, \SqlSemantics\Statement\Model\MySql\Role\TableRefForm::class, $replace), $this->replacement($this->optOuter, \SqlSemantics\Statement\Model\MySql\Role\OptOuterForm::class, $replace), $this->replacement($this->tableFactor, \SqlSemantics\Statement\Model\MySql\Role\TableFactorForm::class, $replace), $this->comments);
     }
 
     /**
@@ -47,7 +74,7 @@ final class JoinTableWithTableRefNaturalRightOptOuterJoinSymTableFactor_45e501b5
      */
     public function withTableRef(\SqlSemantics\Statement\Model\MySql\Role\TableRefForm $tableRef): self
     {
-        return new self($tableRef, $this->optOuter, $this->tableFactor);
+        return new self($tableRef, $this->optOuter, $this->tableFactor, $this->comments);
     }
 
     /**
@@ -55,7 +82,7 @@ final class JoinTableWithTableRefNaturalRightOptOuterJoinSymTableFactor_45e501b5
      */
     public function withOptOuter(\SqlSemantics\Statement\Model\MySql\Role\OptOuterForm $optOuter): self
     {
-        return new self($this->tableRef, $optOuter, $this->tableFactor);
+        return new self($this->tableRef, $optOuter, $this->tableFactor, $this->comments);
     }
 
     /**
@@ -63,6 +90,14 @@ final class JoinTableWithTableRefNaturalRightOptOuterJoinSymTableFactor_45e501b5
      */
     public function withTableFactor(\SqlSemantics\Statement\Model\MySql\Role\TableFactorForm $tableFactor): self
     {
-        return new self($this->tableRef, $this->optOuter, $tableFactor);
+        return new self($this->tableRef, $this->optOuter, $tableFactor, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableRef, $this->optOuter, $this->tableFactor, $comments);
     }
 }

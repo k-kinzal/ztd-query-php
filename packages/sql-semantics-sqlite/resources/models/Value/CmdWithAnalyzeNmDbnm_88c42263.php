@@ -17,11 +17,12 @@ final class CmdWithAnalyzeNmDbnm_88c42263 implements \SqlSemantics\Statement\Mod
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($dbnm), 'The dbnm must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class CmdWithAnalyzeNmDbnm_88c42263 implements \SqlSemantics\Statement\Mod
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ANALYZE');
+        $writer->comments($this->comments, 1);
         $this->nm->write($writer);
+        $writer->comments($this->comments, 2);
         $this->dbnm->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->nm, $this->dbnm];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->nm, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace), $this->replacement($this->dbnm, \SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class CmdWithAnalyzeNmDbnm_88c42263 implements \SqlSemantics\Statement\Mod
      */
     public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
     {
-        return new self($nm, $this->dbnm);
+        return new self($nm, $this->dbnm, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class CmdWithAnalyzeNmDbnm_88c42263 implements \SqlSemantics\Statement\Mod
      */
     public function withDbnm(\SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm): self
     {
-        return new self($this->nm, $dbnm);
+        return new self($this->nm, $dbnm, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->nm, $this->dbnm, $comments);
     }
 }

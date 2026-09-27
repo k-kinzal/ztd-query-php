@@ -17,11 +17,12 @@ final class InsertUpdateListWithInsertUpdateListInsertUpdateElem_22c65a33 implem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertUpdateListForm $insertUpdateList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertUpdateElemForm $insertUpdateElem,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($insertUpdateList), 'The insertUpdateList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($insertUpdateElem), 'The insertUpdateElem must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class InsertUpdateListWithInsertUpdateListInsertUpdateElem_22c65a33 implem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->insertUpdateList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->insertUpdateElem->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->insertUpdateList, $this->insertUpdateElem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->insertUpdateList, \SqlSemantics\Statement\Model\MySql\Role\InsertUpdateListForm::class, $replace), $this->replacement($this->insertUpdateElem, \SqlSemantics\Statement\Model\MySql\Role\InsertUpdateElemForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class InsertUpdateListWithInsertUpdateListInsertUpdateElem_22c65a33 implem
      */
     public function withInsertUpdateList(\SqlSemantics\Statement\Model\MySql\Role\InsertUpdateListForm $insertUpdateList): self
     {
-        return new self($insertUpdateList, $this->insertUpdateElem);
+        return new self($insertUpdateList, $this->insertUpdateElem, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class InsertUpdateListWithInsertUpdateListInsertUpdateElem_22c65a33 implem
      */
     public function withInsertUpdateElem(\SqlSemantics\Statement\Model\MySql\Role\InsertUpdateElemForm $insertUpdateElem): self
     {
-        return new self($this->insertUpdateList, $insertUpdateElem);
+        return new self($this->insertUpdateList, $insertUpdateElem, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->insertUpdateList, $this->insertUpdateElem, $comments);
     }
 }

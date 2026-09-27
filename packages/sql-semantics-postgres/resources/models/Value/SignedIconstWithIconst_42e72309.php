@@ -17,10 +17,11 @@ final class SignedIconstWithIconst_42e72309 implements \SqlSemantics\Statement\M
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($iconst), 'The iconst must be a generated immutable SQL value.');
     }
@@ -30,8 +31,30 @@ final class SignedIconstWithIconst_42e72309 implements \SqlSemantics\Statement\M
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('-');
+        $writer->comments($this->comments, 1);
         $this->iconst->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->iconst];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->iconst, \SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm::class, $replace), $this->comments);
     }
 
     /**
@@ -39,6 +62,14 @@ final class SignedIconstWithIconst_42e72309 implements \SqlSemantics\Statement\M
      */
     public function withIconst(\SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst): self
     {
-        return new self($iconst);
+        return new self($iconst, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->iconst, $comments);
     }
 }

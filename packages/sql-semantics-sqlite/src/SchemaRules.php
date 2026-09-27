@@ -8,10 +8,10 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Core\Ast\Identifiers;
 use SqlSemantics\Core\Ast\Tree;
 use SqlSemantics\Core\Policy\SchemaRules as Contract;
-use SqlSemantics\Core\Schema\ColumnDefinition;
-use SqlSemantics\Core\Schema\ConstraintKind;
-use SqlSemantics\Core\Schema\TableConstraint;
-use SqlSemantics\Core\Schema\TableDefinition;
+use SqlSemantics\Statement\Declaration\ColumnDefinition;
+use SqlSemantics\Statement\Declaration\ConstraintKind;
+use SqlSemantics\Statement\Declaration\TableConstraint;
+use SqlSemantics\Statement\Declaration\TableDefinition;
 
 /**
  * Sqlite SchemaRules implementation.
@@ -73,12 +73,14 @@ final class SchemaRules implements Contract
     }
 
     /**
+     * A sole primary key spelled exactly INTEGER, not sorted descending, aliases the rowid and is never NULL.
+     *
      * @param list<string> $primary
      * @param list<TableConstraint> $constraints
      */
-    public function primaryNotNull(ColumnDefinition $column, array $primary, array $constraints): bool
+    public function primaryNotNull(ColumnDefinition $column, Node $declaration, array $primary, array $constraints): bool
     {
-        if ($column->type->name !== 'integer' || count($primary) !== 1) {
+        if (count($primary) !== 1 || !TypeReader::rowidAlias($declaration)) {
             return false;
         }
         foreach ($constraints as $constraint) {

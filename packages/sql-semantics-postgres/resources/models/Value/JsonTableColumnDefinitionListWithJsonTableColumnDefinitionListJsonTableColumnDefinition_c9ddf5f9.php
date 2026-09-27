@@ -17,11 +17,12 @@ final class JsonTableColumnDefinitionListWithJsonTableColumnDefinitionListJsonTa
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionListForm $jsonTableColumnDefinitionList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionForm $jsonTableColumnDefinition,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonTableColumnDefinitionList), 'The jsonTableColumnDefinitionList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonTableColumnDefinition), 'The jsonTableColumnDefinition must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class JsonTableColumnDefinitionListWithJsonTableColumnDefinitionListJsonTa
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->jsonTableColumnDefinitionList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->jsonTableColumnDefinition->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->jsonTableColumnDefinitionList, $this->jsonTableColumnDefinition];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->jsonTableColumnDefinitionList, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionListForm::class, $replace), $this->replacement($this->jsonTableColumnDefinition, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class JsonTableColumnDefinitionListWithJsonTableColumnDefinitionListJsonTa
      */
     public function withJsonTableColumnDefinitionList(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionListForm $jsonTableColumnDefinitionList): self
     {
-        return new self($jsonTableColumnDefinitionList, $this->jsonTableColumnDefinition);
+        return new self($jsonTableColumnDefinitionList, $this->jsonTableColumnDefinition, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class JsonTableColumnDefinitionListWithJsonTableColumnDefinitionListJsonTa
      */
     public function withJsonTableColumnDefinition(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionForm $jsonTableColumnDefinition): self
     {
-        return new self($this->jsonTableColumnDefinitionList, $jsonTableColumnDefinition);
+        return new self($this->jsonTableColumnDefinitionList, $jsonTableColumnDefinition, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->jsonTableColumnDefinitionList, $this->jsonTableColumnDefinition, $comments);
     }
 }

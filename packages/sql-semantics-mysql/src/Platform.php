@@ -4,9 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql;
 
+use InvalidArgumentException;
 use SqlParser\MySql\MySqlParser;
+use SqlParser\MySql\MySqlVersion;
 use SqlParser\Parser\SqlParser;
-use SqlSemantics\Core\Dialect;
+use SqlSemantics\Core\Analysis\TriviaReader;
+use SqlSemantics\Core\Builder as Composer;
+use SqlSemantics\Core\Language;
+use SqlSemantics\Core\Mode as SessionMode;
+use SqlSemantics\Core\Parameters;
 use SqlSemantics\Core\Platform as Contract;
 use SqlSemantics\Core\Policy;
 
@@ -18,18 +24,25 @@ use SqlSemantics\Core\Policy;
 final class Platform implements Contract
 {
     /**
-     * Retains the public language identity in all semantic types.
+     * Configures the selected grammar release under the session's `sql_mode` and parameter syntax.
+     *
+     * @throws InvalidArgumentException When the mode is not this database's Mode
      */
-    public function __construct(private readonly Dialect $dialect)
+    public function parser(?string $version = null, ?SessionMode $mode = null, Parameters $parameters = Parameters::Native): SqlParser
     {
+        if ($mode !== null && !$mode instanceof Mode) {
+            throw new InvalidArgumentException('The mode must be a ' . Mode::class . ', ' . $mode::class . ' given.');
+        }
+
+        return new MySqlParser($version, $mode === null ? new \SqlParser\MySql\SqlMode() : $mode->sqlMode, parameters: $parameters->syntax());
     }
 
     /**
-     * Configures the selected grammar release.
+     * Composes this database's values for a language.
      */
-    public function parser(?string $version = null): SqlParser
+    public function builder(Language $language): Composer
     {
-        return new MySqlParser($version);
+        return new Builder($language);
     }
 
     /**
@@ -37,7 +50,7 @@ final class Platform implements Contract
      */
     public function values(string $version): \SqlSemantics\Core\Analysis\ValueReader
     {
-        return \SqlSemantics\Core\Analysis\ValueReader::fromFile(dirname(__DIR__) . '/resources/mapping/' . basename($version) . '.php');
+        return \SqlSemantics\Core\Analysis\ValueReader::fromFile(dirname(__DIR__) . '/resources/mapping/' . basename($version) . '.php', new TriviaReader(executableVersion: MySqlVersion::resolve($version)->id()));
     }
 
     /**
@@ -63,10 +76,8 @@ final class Platform implements Contract
     {
         return new Policy\SyntaxRules([
             'autoIncrement' => [],
-            'dropTableName' => ['table_ident'],
             'generationStorage' => ['opt_stored_attribute'],
             'generationClause' => ['field_def'],
-            'statementRoot' => ['query'],
             'statement' => ['statement'],
             'columnName' => ['field_ident', 'ident'],
             'declaredType' => ['type'],
@@ -76,30 +87,33 @@ final class Platform implements Contract
             'createHeader' => [],
             'tableName' => ['table_ident'],
             'tableConstraint' => ['table_constraint_def'],
-            'columnReference' => ['simple_ident'],
-            'identifierToken' => ['IDENT', 'IDENT_QUOTED'],
-            'parameterToken' => ['PARAM_MARKER'],
-            'projectionList' => ['select_item_list'],
-            'projectionExpression' => ['expr', 'table_wild'],
-            'projectionAlias' => ['select_alias'],
-            'selectStatement' => ['select_stmt', 'select'],
-            'selectBody' => ['query_specification'],
-            'from' => ['from_clause'],
-            'where' => ['where_clause'],
-            'selectOptions' => ['select_options'],
-            'orderingChildren' => ['expr', 'opt_ordering_direction', 'ordering_direction'],
-            'orderingDirection' => ['opt_ordering_direction', 'ordering_direction'],
-            'nullsOrder' => [],
-            'stringToken' => ['TEXT_STRING'],
-            'limit' => ['limit_clause'],
-            'offset' => [],
-            'paginationExpression' => ['expr', 'limit_option'],
-            'selectChildren' => ['from_clause', 'where_clause', 'select_options', 'select_item_list', 'opt_from_clause', 'opt_where_clause'],
-            'unsupportedModifier' => ['with_clause', 'into_clause', 'opt_into', 'locking_clause', 'locking_clause_list'],
-            'relation' => ['table_ref', 'table_reference'],
-            'qualifiedExpression' => ['expr'],
-            'qualifiedPart' => [],
         ]);
+    }
+
+    /**
+     * Names the positions where the grammar writes table names, and the forms that declare, drop, or merely name tables.
+     */
+    public function relations(): Policy\RelationRules
+    {
+        return new Policy\RelationRules(
+            nameSymbols: ['table_ident', 'table_name', 'table_list'],
+            declarations: [
+                ['rule' => 'create_table_stmt', 'name' => 'table_ident', 'conditional' => 'opt_if_not_exists'],
+                ['rule' => 'create', 'requires' => ['TABLE_SYM'], 'name' => 'table_ident', 'conditional' => 'opt_if_not_exists'],
+            ],
+            drops: [
+                ['rule' => 'drop_table_stmt', 'names' => 'table_list', 'list' => ['table_list', ['table_list', ',', 'table_ident']], 'conditional' => 'if_exists'],
+                ['rule' => 'drop', 'requires' => ['table_or_tables'], 'names' => 'table_list', 'list' => ['table_list', ['table_list', ',', 'table_name']], 'conditional' => 'if_exists'],
+            ],
+            commonTableExpressions: [['rule' => 'common_table_expr', 'name' => 'ident']],
+            ignored: [
+                ['rule' => 'view_tail', 'name' => 'table_ident'],
+                ['rule' => 'drop_view_stmt', 'name' => 'table_list'],
+                ['rule' => 'drop', 'requires' => ['VIEW_SYM'], 'name' => 'table_list'],
+                ['rule' => 'table_to_table', 'pair' => ['table_ident', 'table_ident']],
+                ['rule' => 'alter_list_item', 'requires' => ['RENAME', 'table_ident'], 'name' => 'table_ident'],
+            ],
+        );
     }
 
     /**
@@ -115,7 +129,7 @@ final class Platform implements Contract
      */
     public function types(): Policy\TypeRules
     {
-        return new TypeRules($this->dialect);
+        return new TypeRules();
     }
 
     /**
@@ -126,11 +140,4 @@ final class Platform implements Contract
         return new SchemaRules();
     }
 
-    /**
-     * Supplies query semantics.
-     */
-    public function query(): Policy\QueryRules
-    {
-        return new QueryRules();
-    }
 }

@@ -17,11 +17,12 @@ final class AlterDatabaseOptionsWithAlterDatabaseOptionsAlterDatabaseOption_6104
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseOptionsForm $alterDatabaseOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseOptionForm $alterDatabaseOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterDatabaseOptions), 'The alterDatabaseOptions must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterDatabaseOption), 'The alterDatabaseOption must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class AlterDatabaseOptionsWithAlterDatabaseOptionsAlterDatabaseOption_6104
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->alterDatabaseOptions->write($writer);
+        $writer->comments($this->comments, 1);
         $this->alterDatabaseOption->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->alterDatabaseOptions, $this->alterDatabaseOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->alterDatabaseOptions, \SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseOptionsForm::class, $replace), $this->replacement($this->alterDatabaseOption, \SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseOptionForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class AlterDatabaseOptionsWithAlterDatabaseOptionsAlterDatabaseOption_6104
      */
     public function withAlterDatabaseOptions(\SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseOptionsForm $alterDatabaseOptions): self
     {
-        return new self($alterDatabaseOptions, $this->alterDatabaseOption);
+        return new self($alterDatabaseOptions, $this->alterDatabaseOption, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class AlterDatabaseOptionsWithAlterDatabaseOptionsAlterDatabaseOption_6104
      */
     public function withAlterDatabaseOption(\SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseOptionForm $alterDatabaseOption): self
     {
-        return new self($this->alterDatabaseOptions, $alterDatabaseOption);
+        return new self($this->alterDatabaseOptions, $alterDatabaseOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->alterDatabaseOptions, $this->alterDatabaseOption, $comments);
     }
 }

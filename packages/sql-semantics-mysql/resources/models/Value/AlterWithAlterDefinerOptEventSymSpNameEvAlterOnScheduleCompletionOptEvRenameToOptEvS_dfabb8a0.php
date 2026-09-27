@@ -12,12 +12,12 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterWithAlterDefinerOptEventSymSpNameEvAlterOnScheduleCompletionOptEvRenameToOptEvS_dfabb8a0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterWithAlterDefinerOptEventSymSpNameEvAlterOnScheduleCompletionOptEvRenameToOptEvS_dfabb8a0 implements \SqlSemantics\Statement\Model\MySql\Role\AlterForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class AlterWithAlterDefinerOptEventSymSpNameEvAlterOnScheduleCompletionOptEvRenameToOptEvS_dfabb8a0 implements \SqlSemantics\Statement\Model\MySql\Role\AlterForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DefinerOptForm $definerOpt,
@@ -27,6 +27,7 @@ final class AlterWithAlterDefinerOptEventSymSpNameEvAlterOnScheduleCompletionOpt
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEvStatusForm $optEvStatus,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEvCommentForm $optEvComment,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEvSqlStmtForm $optEvSqlStmt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($definerOpt), 'The definerOpt must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spName), 'The spName must be a generated immutable SQL value.');
@@ -42,15 +43,44 @@ final class AlterWithAlterDefinerOptEventSymSpNameEvAlterOnScheduleCompletionOpt
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $this->definerOpt->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('EVENT');
+        $writer->comments($this->comments, 3);
         $this->spName->write($writer);
+        $writer->comments($this->comments, 4);
         $this->evAlterOnScheduleCompletion->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optEvRenameTo->write($writer);
+        $writer->comments($this->comments, 6);
         $this->optEvStatus->write($writer);
+        $writer->comments($this->comments, 7);
         $this->optEvComment->write($writer);
+        $writer->comments($this->comments, 8);
         $this->optEvSqlStmt->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->definerOpt, $this->spName, $this->evAlterOnScheduleCompletion, $this->optEvRenameTo, $this->optEvStatus, $this->optEvComment, $this->optEvSqlStmt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->definerOpt, \SqlSemantics\Statement\Model\MySql\Role\DefinerOptForm::class, $replace), $this->replacement($this->spName, \SqlSemantics\Statement\Model\MySql\Role\SpNameForm::class, $replace), $this->replacement($this->evAlterOnScheduleCompletion, \SqlSemantics\Statement\Model\MySql\Role\EvAlterOnScheduleCompletionForm::class, $replace), $this->replacement($this->optEvRenameTo, \SqlSemantics\Statement\Model\MySql\Role\OptEvRenameToForm::class, $replace), $this->replacement($this->optEvStatus, \SqlSemantics\Statement\Model\MySql\Role\OptEvStatusForm::class, $replace), $this->replacement($this->optEvComment, \SqlSemantics\Statement\Model\MySql\Role\OptEvCommentForm::class, $replace), $this->replacement($this->optEvSqlStmt, \SqlSemantics\Statement\Model\MySql\Role\OptEvSqlStmtForm::class, $replace), $this->comments);
     }
 
     /**
@@ -58,7 +88,7 @@ final class AlterWithAlterDefinerOptEventSymSpNameEvAlterOnScheduleCompletionOpt
      */
     public function withDefinerOpt(\SqlSemantics\Statement\Model\MySql\Role\DefinerOptForm $definerOpt): self
     {
-        return new self($definerOpt, $this->spName, $this->evAlterOnScheduleCompletion, $this->optEvRenameTo, $this->optEvStatus, $this->optEvComment, $this->optEvSqlStmt);
+        return new self($definerOpt, $this->spName, $this->evAlterOnScheduleCompletion, $this->optEvRenameTo, $this->optEvStatus, $this->optEvComment, $this->optEvSqlStmt, $this->comments);
     }
 
     /**
@@ -66,7 +96,7 @@ final class AlterWithAlterDefinerOptEventSymSpNameEvAlterOnScheduleCompletionOpt
      */
     public function withSpName(\SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName): self
     {
-        return new self($this->definerOpt, $spName, $this->evAlterOnScheduleCompletion, $this->optEvRenameTo, $this->optEvStatus, $this->optEvComment, $this->optEvSqlStmt);
+        return new self($this->definerOpt, $spName, $this->evAlterOnScheduleCompletion, $this->optEvRenameTo, $this->optEvStatus, $this->optEvComment, $this->optEvSqlStmt, $this->comments);
     }
 
     /**
@@ -74,7 +104,7 @@ final class AlterWithAlterDefinerOptEventSymSpNameEvAlterOnScheduleCompletionOpt
      */
     public function withEvAlterOnScheduleCompletion(\SqlSemantics\Statement\Model\MySql\Role\EvAlterOnScheduleCompletionForm $evAlterOnScheduleCompletion): self
     {
-        return new self($this->definerOpt, $this->spName, $evAlterOnScheduleCompletion, $this->optEvRenameTo, $this->optEvStatus, $this->optEvComment, $this->optEvSqlStmt);
+        return new self($this->definerOpt, $this->spName, $evAlterOnScheduleCompletion, $this->optEvRenameTo, $this->optEvStatus, $this->optEvComment, $this->optEvSqlStmt, $this->comments);
     }
 
     /**
@@ -82,7 +112,7 @@ final class AlterWithAlterDefinerOptEventSymSpNameEvAlterOnScheduleCompletionOpt
      */
     public function withOptEvRenameTo(\SqlSemantics\Statement\Model\MySql\Role\OptEvRenameToForm $optEvRenameTo): self
     {
-        return new self($this->definerOpt, $this->spName, $this->evAlterOnScheduleCompletion, $optEvRenameTo, $this->optEvStatus, $this->optEvComment, $this->optEvSqlStmt);
+        return new self($this->definerOpt, $this->spName, $this->evAlterOnScheduleCompletion, $optEvRenameTo, $this->optEvStatus, $this->optEvComment, $this->optEvSqlStmt, $this->comments);
     }
 
     /**
@@ -90,7 +120,7 @@ final class AlterWithAlterDefinerOptEventSymSpNameEvAlterOnScheduleCompletionOpt
      */
     public function withOptEvStatus(\SqlSemantics\Statement\Model\MySql\Role\OptEvStatusForm $optEvStatus): self
     {
-        return new self($this->definerOpt, $this->spName, $this->evAlterOnScheduleCompletion, $this->optEvRenameTo, $optEvStatus, $this->optEvComment, $this->optEvSqlStmt);
+        return new self($this->definerOpt, $this->spName, $this->evAlterOnScheduleCompletion, $this->optEvRenameTo, $optEvStatus, $this->optEvComment, $this->optEvSqlStmt, $this->comments);
     }
 
     /**
@@ -98,7 +128,7 @@ final class AlterWithAlterDefinerOptEventSymSpNameEvAlterOnScheduleCompletionOpt
      */
     public function withOptEvComment(\SqlSemantics\Statement\Model\MySql\Role\OptEvCommentForm $optEvComment): self
     {
-        return new self($this->definerOpt, $this->spName, $this->evAlterOnScheduleCompletion, $this->optEvRenameTo, $this->optEvStatus, $optEvComment, $this->optEvSqlStmt);
+        return new self($this->definerOpt, $this->spName, $this->evAlterOnScheduleCompletion, $this->optEvRenameTo, $this->optEvStatus, $optEvComment, $this->optEvSqlStmt, $this->comments);
     }
 
     /**
@@ -106,6 +136,14 @@ final class AlterWithAlterDefinerOptEventSymSpNameEvAlterOnScheduleCompletionOpt
      */
     public function withOptEvSqlStmt(\SqlSemantics\Statement\Model\MySql\Role\OptEvSqlStmtForm $optEvSqlStmt): self
     {
-        return new self($this->definerOpt, $this->spName, $this->evAlterOnScheduleCompletion, $this->optEvRenameTo, $this->optEvStatus, $this->optEvComment, $optEvSqlStmt);
+        return new self($this->definerOpt, $this->spName, $this->evAlterOnScheduleCompletion, $this->optEvRenameTo, $this->optEvStatus, $this->optEvComment, $optEvSqlStmt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->definerOpt, $this->spName, $this->evAlterOnScheduleCompletion, $this->optEvRenameTo, $this->optEvStatus, $this->optEvComment, $this->optEvSqlStmt, $comments);
     }
 }

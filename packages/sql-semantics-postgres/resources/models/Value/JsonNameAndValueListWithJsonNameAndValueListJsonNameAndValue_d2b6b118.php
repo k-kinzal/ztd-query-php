@@ -17,11 +17,12 @@ final class JsonNameAndValueListWithJsonNameAndValueListJsonNameAndValue_d2b6b11
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonNameAndValueListForm $jsonNameAndValueList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonNameAndValueForm $jsonNameAndValue,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonNameAndValueList), 'The jsonNameAndValueList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonNameAndValue), 'The jsonNameAndValue must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class JsonNameAndValueListWithJsonNameAndValueListJsonNameAndValue_d2b6b11
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->jsonNameAndValueList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->jsonNameAndValue->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->jsonNameAndValueList, $this->jsonNameAndValue];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->jsonNameAndValueList, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonNameAndValueListForm::class, $replace), $this->replacement($this->jsonNameAndValue, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonNameAndValueForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class JsonNameAndValueListWithJsonNameAndValueListJsonNameAndValue_d2b6b11
      */
     public function withJsonNameAndValueList(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonNameAndValueListForm $jsonNameAndValueList): self
     {
-        return new self($jsonNameAndValueList, $this->jsonNameAndValue);
+        return new self($jsonNameAndValueList, $this->jsonNameAndValue, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class JsonNameAndValueListWithJsonNameAndValueListJsonNameAndValue_d2b6b11
      */
     public function withJsonNameAndValue(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonNameAndValueForm $jsonNameAndValue): self
     {
-        return new self($this->jsonNameAndValueList, $jsonNameAndValue);
+        return new self($this->jsonNameAndValueList, $jsonNameAndValue, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->jsonNameAndValueList, $this->jsonNameAndValue, $comments);
     }
 }

@@ -49,6 +49,8 @@ final class DefaultExpressionTest extends TestCase
             ["TEXT DEFAULT 'a'::character varying", 'a'],
             ['NUMERIC DEFAULT 1::numeric(10, 2)', 1],
             ['TEXT DEFAULT NULL::text', null],
+            ["VARCHAR(20) DEFAULT 'none'::character varying", 'none'],
+            ['TEXT DEFAULT NULL::character varying', null],
             ["TEXT DEFAULT 'a'::text::varchar", "'a'::text::varchar"],
             ['TIMESTAMP DEFAULT now()', 'now()'],
             ['TIMESTAMP DEFAULT CURRENT_TIMESTAMP', 'CURRENT_TIMESTAMP'],

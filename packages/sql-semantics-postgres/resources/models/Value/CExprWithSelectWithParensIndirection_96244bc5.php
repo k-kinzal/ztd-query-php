@@ -17,11 +17,12 @@ final class CExprWithSelectWithParensIndirection_96244bc5 implements \SqlSemanti
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectWithParensForm $selectWithParens,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IndirectionForm $indirection,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($selectWithParens), 'The selectWithParens must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($indirection), 'The indirection must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class CExprWithSelectWithParensIndirection_96244bc5 implements \SqlSemanti
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->selectWithParens->write($writer);
+        $writer->comments($this->comments, 1);
         $this->indirection->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->selectWithParens, $this->indirection];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->selectWithParens, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectWithParensForm::class, $replace), $this->replacement($this->indirection, \SqlSemantics\Statement\Model\PostgreSql\Role\IndirectionForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class CExprWithSelectWithParensIndirection_96244bc5 implements \SqlSemanti
      */
     public function withSelectWithParens(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectWithParensForm $selectWithParens): self
     {
-        return new self($selectWithParens, $this->indirection);
+        return new self($selectWithParens, $this->indirection, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class CExprWithSelectWithParensIndirection_96244bc5 implements \SqlSemanti
      */
     public function withIndirection(\SqlSemantics\Statement\Model\PostgreSql\Role\IndirectionForm $indirection): self
     {
-        return new self($this->selectWithParens, $indirection);
+        return new self($this->selectWithParens, $indirection, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->selectWithParens, $this->indirection, $comments);
     }
 }

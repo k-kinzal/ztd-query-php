@@ -17,10 +17,11 @@ final class CreateWithCreateTablespaceSymTablespaceInfo_5b42b356 implements \Sql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TablespaceInfoForm $tablespaceInfo,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tablespaceInfo), 'The tablespaceInfo must be a generated immutable SQL value.');
     }
@@ -30,9 +31,32 @@ final class CreateWithCreateTablespaceSymTablespaceInfo_5b42b356 implements \Sql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $writer->append('TABLESPACE');
+        $writer->comments($this->comments, 2);
         $this->tablespaceInfo->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tablespaceInfo];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tablespaceInfo, \SqlSemantics\Statement\Model\MySql\Role\TablespaceInfoForm::class, $replace), $this->comments);
     }
 
     /**
@@ -40,6 +64,14 @@ final class CreateWithCreateTablespaceSymTablespaceInfo_5b42b356 implements \Sql
      */
     public function withTablespaceInfo(\SqlSemantics\Statement\Model\MySql\Role\TablespaceInfoForm $tablespaceInfo): self
     {
-        return new self($tablespaceInfo);
+        return new self($tablespaceInfo, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tablespaceInfo, $comments);
     }
 }

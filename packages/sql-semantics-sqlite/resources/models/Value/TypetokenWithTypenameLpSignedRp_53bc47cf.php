@@ -17,11 +17,12 @@ final class TypetokenWithTypenameLpSignedRp_53bc47cf implements \SqlSemantics\St
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TypenameForm $typename,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SignedForm $signed,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($signed), 'The signed must be a generated immutable SQL value.');
@@ -32,10 +33,34 @@ final class TypetokenWithTypenameLpSignedRp_53bc47cf implements \SqlSemantics\St
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->typename->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->signed->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->typename, $this->signed];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->typename, \SqlSemantics\Statement\Model\Sqlite\Role\TypenameForm::class, $replace), $this->replacement($this->signed, \SqlSemantics\Statement\Model\Sqlite\Role\SignedForm::class, $replace), $this->comments);
     }
 
     /**
@@ -43,7 +68,7 @@ final class TypetokenWithTypenameLpSignedRp_53bc47cf implements \SqlSemantics\St
      */
     public function withTypename(\SqlSemantics\Statement\Model\Sqlite\Role\TypenameForm $typename): self
     {
-        return new self($typename, $this->signed);
+        return new self($typename, $this->signed, $this->comments);
     }
 
     /**
@@ -51,6 +76,14 @@ final class TypetokenWithTypenameLpSignedRp_53bc47cf implements \SqlSemantics\St
      */
     public function withSigned(\SqlSemantics\Statement\Model\Sqlite\Role\SignedForm $signed): self
     {
-        return new self($this->typename, $signed);
+        return new self($this->typename, $signed, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->typename, $this->signed, $comments);
     }
 }

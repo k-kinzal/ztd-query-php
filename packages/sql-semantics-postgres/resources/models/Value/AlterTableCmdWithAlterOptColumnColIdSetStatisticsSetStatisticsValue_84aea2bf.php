@@ -17,12 +17,13 @@ final class AlterTableCmdWithAlterOptColumnColIdSetStatisticsSetStatisticsValue_
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnForm $optColumn,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetStatisticsValueForm $setStatisticsValue,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optColumn), 'The optColumn must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
@@ -34,12 +35,38 @@ final class AlterTableCmdWithAlterOptColumnColIdSetStatisticsSetStatisticsValue_
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $this->optColumn->write($writer);
+        $writer->comments($this->comments, 2);
         $this->colId->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('SET');
+        $writer->comments($this->comments, 4);
         $writer->append('STATISTICS');
+        $writer->comments($this->comments, 5);
         $this->setStatisticsValue->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optColumn, $this->colId, $this->setStatisticsValue];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optColumn, \SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnForm::class, $replace), $this->replacement($this->colId, \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm::class, $replace), $this->replacement($this->setStatisticsValue, \SqlSemantics\Statement\Model\PostgreSql\Role\SetStatisticsValueForm::class, $replace), $this->comments);
     }
 
     /**
@@ -47,7 +74,7 @@ final class AlterTableCmdWithAlterOptColumnColIdSetStatisticsSetStatisticsValue_
      */
     public function withOptColumn(\SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnForm $optColumn): self
     {
-        return new self($optColumn, $this->colId, $this->setStatisticsValue);
+        return new self($optColumn, $this->colId, $this->setStatisticsValue, $this->comments);
     }
 
     /**
@@ -55,7 +82,7 @@ final class AlterTableCmdWithAlterOptColumnColIdSetStatisticsSetStatisticsValue_
      */
     public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
     {
-        return new self($this->optColumn, $colId, $this->setStatisticsValue);
+        return new self($this->optColumn, $colId, $this->setStatisticsValue, $this->comments);
     }
 
     /**
@@ -63,6 +90,14 @@ final class AlterTableCmdWithAlterOptColumnColIdSetStatisticsSetStatisticsValue_
      */
     public function withSetStatisticsValue(\SqlSemantics\Statement\Model\PostgreSql\Role\SetStatisticsValueForm $setStatisticsValue): self
     {
-        return new self($this->optColumn, $this->colId, $setStatisticsValue);
+        return new self($this->optColumn, $this->colId, $setStatisticsValue, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optColumn, $this->colId, $this->setStatisticsValue, $comments);
     }
 }

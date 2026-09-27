@@ -17,18 +17,19 @@ final class BoolPriWithBoolPriCompOpPredicate_1de7e569 implements \SqlSemantics\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BoolPriForm $boolPri,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CompOpForm $compOp,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PredicateForm $predicate,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($boolPri), 'The boolPri must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($boolPri, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 8,  'mysql-5.7.44' => 9,));
+        $this->assertOperandBindingStrength($boolPri, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 8,  'mysql-5.7.44' => 9,), \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_RULES, 'bool_pri');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($compOp), 'The compOp must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($predicate), 'The predicate must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($predicate, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 9,  'mysql-5.7.44' => 10,));
+        $this->assertOperandBindingStrength($predicate, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 9,  'mysql-5.7.44' => 10,), \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_RULES, 'predicate');
     }
 
     /**
@@ -36,9 +37,32 @@ final class BoolPriWithBoolPriCompOpPredicate_1de7e569 implements \SqlSemantics\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->boolPri->write($writer);
+        $writer->comments($this->comments, 1);
         $this->compOp->write($writer);
+        $writer->comments($this->comments, 2);
         $this->predicate->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->boolPri, $this->compOp, $this->predicate];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->boolPri, \SqlSemantics\Statement\Model\MySql\Role\BoolPriForm::class, $replace), $this->replacement($this->compOp, \SqlSemantics\Statement\Model\MySql\Role\CompOpForm::class, $replace), $this->replacement($this->predicate, \SqlSemantics\Statement\Model\MySql\Role\PredicateForm::class, $replace), $this->comments);
     }
 
     /**
@@ -46,7 +70,7 @@ final class BoolPriWithBoolPriCompOpPredicate_1de7e569 implements \SqlSemantics\
      */
     public function withBoolPri(\SqlSemantics\Statement\Model\MySql\Role\BoolPriForm $boolPri): self
     {
-        return new self($boolPri, $this->compOp, $this->predicate);
+        return new self($boolPri, $this->compOp, $this->predicate, $this->comments);
     }
 
     /**
@@ -54,7 +78,7 @@ final class BoolPriWithBoolPriCompOpPredicate_1de7e569 implements \SqlSemantics\
      */
     public function withCompOp(\SqlSemantics\Statement\Model\MySql\Role\CompOpForm $compOp): self
     {
-        return new self($this->boolPri, $compOp, $this->predicate);
+        return new self($this->boolPri, $compOp, $this->predicate, $this->comments);
     }
 
     /**
@@ -62,6 +86,14 @@ final class BoolPriWithBoolPriCompOpPredicate_1de7e569 implements \SqlSemantics\
      */
     public function withPredicate(\SqlSemantics\Statement\Model\MySql\Role\PredicateForm $predicate): self
     {
-        return new self($this->boolPri, $this->compOp, $predicate);
+        return new self($this->boolPri, $this->compOp, $predicate, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->boolPri, $this->compOp, $this->predicate, $comments);
     }
 }

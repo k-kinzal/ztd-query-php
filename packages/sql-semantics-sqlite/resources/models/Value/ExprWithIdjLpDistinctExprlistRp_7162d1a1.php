@@ -17,12 +17,13 @@ final class ExprWithIdjLpDistinctExprlistRp_7162d1a1 implements \SqlSemantics\St
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $idj,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\DistinctForm $distinct,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm $exprlist,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($idj, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['idj'], 'The idj must be a complete idj lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($distinct), 'The distinct must be a generated immutable SQL value.');
@@ -34,11 +35,36 @@ final class ExprWithIdjLpDistinctExprlistRp_7162d1a1 implements \SqlSemantics\St
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
-        $writer->append($this->idj);
+        $writer->comments($this->comments, 0);
+        $writer->append($this->idj, true);
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->distinct->write($writer);
+        $writer->comments($this->comments, 3);
         $this->exprlist->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->distinct, $this->exprlist];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->idj, $this->replacement($this->distinct, \SqlSemantics\Statement\Model\Sqlite\Role\DistinctForm::class, $replace), $this->replacement($this->exprlist, \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm::class, $replace), $this->comments);
     }
 
     /**
@@ -46,7 +72,7 @@ final class ExprWithIdjLpDistinctExprlistRp_7162d1a1 implements \SqlSemantics\St
      */
     public function withIdj(string $idj): self
     {
-        return new self($idj, $this->distinct, $this->exprlist);
+        return new self($idj, $this->distinct, $this->exprlist, $this->comments);
     }
 
     /**
@@ -54,7 +80,7 @@ final class ExprWithIdjLpDistinctExprlistRp_7162d1a1 implements \SqlSemantics\St
      */
     public function withDistinct(\SqlSemantics\Statement\Model\Sqlite\Role\DistinctForm $distinct): self
     {
-        return new self($this->idj, $distinct, $this->exprlist);
+        return new self($this->idj, $distinct, $this->exprlist, $this->comments);
     }
 
     /**
@@ -62,6 +88,14 @@ final class ExprWithIdjLpDistinctExprlistRp_7162d1a1 implements \SqlSemantics\St
      */
     public function withExprlist(\SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm $exprlist): self
     {
-        return new self($this->idj, $this->distinct, $exprlist);
+        return new self($this->idj, $this->distinct, $exprlist, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->idj, $this->distinct, $this->exprlist, $comments);
     }
 }

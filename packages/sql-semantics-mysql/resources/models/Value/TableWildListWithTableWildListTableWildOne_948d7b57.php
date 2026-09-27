@@ -17,11 +17,12 @@ final class TableWildListWithTableWildListTableWildOne_948d7b57 implements \SqlS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableWildListForm $tableWildList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableWildOneForm $tableWildOne,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableWildList), 'The tableWildList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableWildOne), 'The tableWildOne must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class TableWildListWithTableWildListTableWildOne_948d7b57 implements \SqlS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableWildList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->tableWildOne->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableWildList, $this->tableWildOne];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableWildList, \SqlSemantics\Statement\Model\MySql\Role\TableWildListForm::class, $replace), $this->replacement($this->tableWildOne, \SqlSemantics\Statement\Model\MySql\Role\TableWildOneForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class TableWildListWithTableWildListTableWildOne_948d7b57 implements \SqlS
      */
     public function withTableWildList(\SqlSemantics\Statement\Model\MySql\Role\TableWildListForm $tableWildList): self
     {
-        return new self($tableWildList, $this->tableWildOne);
+        return new self($tableWildList, $this->tableWildOne, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class TableWildListWithTableWildListTableWildOne_948d7b57 implements \SqlS
      */
     public function withTableWildOne(\SqlSemantics\Statement\Model\MySql\Role\TableWildOneForm $tableWildOne): self
     {
-        return new self($this->tableWildList, $tableWildOne);
+        return new self($this->tableWildList, $tableWildOne, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableWildList, $this->tableWildOne, $comments);
     }
 }

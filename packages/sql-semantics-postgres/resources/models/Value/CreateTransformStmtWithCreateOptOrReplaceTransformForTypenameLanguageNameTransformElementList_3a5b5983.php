@@ -17,13 +17,14 @@ final class CreateTransformStmtWithCreateOptOrReplaceTransformForTypenameLanguag
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm $optOrReplace,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TransformElementListForm $transformElementList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optOrReplace), 'The optOrReplace must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
@@ -36,16 +37,46 @@ final class CreateTransformStmtWithCreateOptOrReplaceTransformForTypenameLanguag
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $this->optOrReplace->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('TRANSFORM');
+        $writer->comments($this->comments, 3);
         $writer->append('FOR');
+        $writer->comments($this->comments, 4);
         $this->typename->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('LANGUAGE');
+        $writer->comments($this->comments, 6);
         $this->name->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append('(');
+        $writer->comments($this->comments, 8);
         $this->transformElementList->write($writer);
+        $writer->comments($this->comments, 9);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optOrReplace, $this->typename, $this->name, $this->transformElementList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optOrReplace, \SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm::class, $replace), $this->replacement($this->typename, \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm::class, $replace), $this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->transformElementList, \SqlSemantics\Statement\Model\PostgreSql\Role\TransformElementListForm::class, $replace), $this->comments);
     }
 
     /**
@@ -53,7 +84,7 @@ final class CreateTransformStmtWithCreateOptOrReplaceTransformForTypenameLanguag
      */
     public function withOptOrReplace(\SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm $optOrReplace): self
     {
-        return new self($optOrReplace, $this->typename, $this->name, $this->transformElementList);
+        return new self($optOrReplace, $this->typename, $this->name, $this->transformElementList, $this->comments);
     }
 
     /**
@@ -61,7 +92,7 @@ final class CreateTransformStmtWithCreateOptOrReplaceTransformForTypenameLanguag
      */
     public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
     {
-        return new self($this->optOrReplace, $typename, $this->name, $this->transformElementList);
+        return new self($this->optOrReplace, $typename, $this->name, $this->transformElementList, $this->comments);
     }
 
     /**
@@ -69,7 +100,7 @@ final class CreateTransformStmtWithCreateOptOrReplaceTransformForTypenameLanguag
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($this->optOrReplace, $this->typename, $name, $this->transformElementList);
+        return new self($this->optOrReplace, $this->typename, $name, $this->transformElementList, $this->comments);
     }
 
     /**
@@ -77,6 +108,14 @@ final class CreateTransformStmtWithCreateOptOrReplaceTransformForTypenameLanguag
      */
     public function withTransformElementList(\SqlSemantics\Statement\Model\PostgreSql\Role\TransformElementListForm $transformElementList): self
     {
-        return new self($this->optOrReplace, $this->typename, $this->name, $transformElementList);
+        return new self($this->optOrReplace, $this->typename, $this->name, $transformElementList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optOrReplace, $this->typename, $this->name, $this->transformElementList, $comments);
     }
 }

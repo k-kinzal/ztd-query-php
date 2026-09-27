@@ -17,10 +17,11 @@ final class FunctionSetResetClauseWithSetSetRestMore_e33c04aa implements \SqlSem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetRestMoreForm $setRestMore,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setRestMore), 'The setRestMore must be a generated immutable SQL value.');
     }
@@ -30,8 +31,30 @@ final class FunctionSetResetClauseWithSetSetRestMore_e33c04aa implements \SqlSem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SET');
+        $writer->comments($this->comments, 1);
         $this->setRestMore->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->setRestMore];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->setRestMore, \SqlSemantics\Statement\Model\PostgreSql\Role\SetRestMoreForm::class, $replace), $this->comments);
     }
 
     /**
@@ -39,6 +62,14 @@ final class FunctionSetResetClauseWithSetSetRestMore_e33c04aa implements \SqlSem
      */
     public function withSetRestMore(\SqlSemantics\Statement\Model\PostgreSql\Role\SetRestMoreForm $setRestMore): self
     {
-        return new self($setRestMore);
+        return new self($setRestMore, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->setRestMore, $comments);
     }
 }

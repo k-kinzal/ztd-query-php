@@ -4,11 +4,11 @@
  * PHP-Fuzzer entry point for CREATE TABLE parsing validation.
  *
  * Usage:
- *   MYSQL_VERSION=mysql-8.4.7 vendor/bin/php-fuzzer fuzz fuzz/fuzz_create_table.php fuzz/corpus/create-table/
+ *   MYSQL_VERSION=9.1.0 vendor/bin/php-fuzzer fuzz fuzz/fuzz_create_table.php fuzz/corpus/create-table/
  *
  * Environment variables:
- *   MYSQL_VERSION - MySQL grammar version (default: mysql-8.4.7)
- *   MAX_EXPANSIONS     - Grammar expansion budget (default: 128)
+ *   MYSQL_VERSION  - MySQL release, as `9.1.0` or `mysql-9.1.0` (default: 8.4.7)
+ *   MAX_EXPANSIONS - Grammar expansion budget (default: 128)
  */
 
 declare(strict_types=1);
@@ -16,7 +16,7 @@ declare(strict_types=1);
 use Fuzz\Target\CreateTableTarget;
 
 $grammarVersionEnv = getenv('MYSQL_VERSION');
-$grammarVersion = $grammarVersionEnv !== false ? $grammarVersionEnv : 'mysql-8.4.7';
+$grammarVersion = $grammarVersionEnv === false || $grammarVersionEnv === '' ? 'mysql-8.4.7' : 'mysql-' . preg_replace('/^mysql-/', '', $grammarVersionEnv);
 $maxExpansionsEnv = getenv('MAX_EXPANSIONS');
 $maxExpansions = (int) ($maxExpansionsEnv !== false ? $maxExpansionsEnv : 128);
 

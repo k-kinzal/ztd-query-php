@@ -17,7 +17,7 @@ final class AlterTsConfigurationStmtWithAlterTextPSearchConfigurationAnyNameAlte
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName,
@@ -25,6 +25,7 @@ final class AlterTsConfigurationStmtWithAlterTextPSearchConfigurationAnyNameAlte
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName2,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyWithForm $anyWith,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName3,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($nameList), 'The nameList must be a generated immutable SQL value.');
@@ -38,19 +39,52 @@ final class AlterTsConfigurationStmtWithAlterTextPSearchConfigurationAnyNameAlte
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('TEXT');
+        $writer->comments($this->comments, 2);
         $writer->append('SEARCH');
+        $writer->comments($this->comments, 3);
         $writer->append('CONFIGURATION');
+        $writer->comments($this->comments, 4);
         $this->anyName->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 6);
         $writer->append('MAPPING');
+        $writer->comments($this->comments, 7);
         $writer->append('FOR');
+        $writer->comments($this->comments, 8);
         $this->nameList->write($writer);
+        $writer->comments($this->comments, 9);
         $writer->append('REPLACE');
+        $writer->comments($this->comments, 10);
         $this->anyName2->write($writer);
+        $writer->comments($this->comments, 11);
         $this->anyWith->write($writer);
+        $writer->comments($this->comments, 12);
         $this->anyName3->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->anyName, $this->nameList, $this->anyName2, $this->anyWith, $this->anyName3];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->anyName, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm::class, $replace), $this->replacement($this->nameList, \SqlSemantics\Statement\Model\PostgreSql\Role\NameListForm::class, $replace), $this->replacement($this->anyName2, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm::class, $replace), $this->replacement($this->anyWith, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyWithForm::class, $replace), $this->replacement($this->anyName3, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm::class, $replace), $this->comments);
     }
 
     /**
@@ -58,7 +92,7 @@ final class AlterTsConfigurationStmtWithAlterTextPSearchConfigurationAnyNameAlte
      */
     public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
     {
-        return new self($anyName, $this->nameList, $this->anyName2, $this->anyWith, $this->anyName3);
+        return new self($anyName, $this->nameList, $this->anyName2, $this->anyWith, $this->anyName3, $this->comments);
     }
 
     /**
@@ -66,7 +100,7 @@ final class AlterTsConfigurationStmtWithAlterTextPSearchConfigurationAnyNameAlte
      */
     public function withNameList(\SqlSemantics\Statement\Model\PostgreSql\Role\NameListForm $nameList): self
     {
-        return new self($this->anyName, $nameList, $this->anyName2, $this->anyWith, $this->anyName3);
+        return new self($this->anyName, $nameList, $this->anyName2, $this->anyWith, $this->anyName3, $this->comments);
     }
 
     /**
@@ -74,7 +108,7 @@ final class AlterTsConfigurationStmtWithAlterTextPSearchConfigurationAnyNameAlte
      */
     public function withAnyName2(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName2): self
     {
-        return new self($this->anyName, $this->nameList, $anyName2, $this->anyWith, $this->anyName3);
+        return new self($this->anyName, $this->nameList, $anyName2, $this->anyWith, $this->anyName3, $this->comments);
     }
 
     /**
@@ -82,7 +116,7 @@ final class AlterTsConfigurationStmtWithAlterTextPSearchConfigurationAnyNameAlte
      */
     public function withAnyWith(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyWithForm $anyWith): self
     {
-        return new self($this->anyName, $this->nameList, $this->anyName2, $anyWith, $this->anyName3);
+        return new self($this->anyName, $this->nameList, $this->anyName2, $anyWith, $this->anyName3, $this->comments);
     }
 
     /**
@@ -90,6 +124,14 @@ final class AlterTsConfigurationStmtWithAlterTextPSearchConfigurationAnyNameAlte
      */
     public function withAnyName3(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName3): self
     {
-        return new self($this->anyName, $this->nameList, $this->anyName2, $this->anyWith, $anyName3);
+        return new self($this->anyName, $this->nameList, $this->anyName2, $this->anyWith, $anyName3, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->anyName, $this->nameList, $this->anyName2, $this->anyWith, $this->anyName3, $comments);
     }
 }

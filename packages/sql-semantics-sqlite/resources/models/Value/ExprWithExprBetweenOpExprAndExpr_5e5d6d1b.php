@@ -17,20 +17,21 @@ final class ExprWithExprBetweenOpExprAndExpr_5e5d6d1b implements \SqlSemantics\S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\BetweenOpForm $betweenOp,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr2,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr3,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 4,));
+        $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 4,), \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_RULES, 'expr');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($betweenOp), 'The betweenOp must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr2), 'The expr2 must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr3), 'The expr3 must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($expr3, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 5,));
+        $this->assertOperandBindingStrength($expr3, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 5,), \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_RULES, 'expr');
     }
 
     /**
@@ -38,11 +39,36 @@ final class ExprWithExprBetweenOpExprAndExpr_5e5d6d1b implements \SqlSemantics\S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 1);
         $this->betweenOp->write($writer);
+        $writer->comments($this->comments, 2);
         $this->expr2->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('AND');
+        $writer->comments($this->comments, 4);
         $this->expr3->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->expr, $this->betweenOp, $this->expr2, $this->expr3];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->expr, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm::class, $replace), $this->replacement($this->betweenOp, \SqlSemantics\Statement\Model\Sqlite\Role\BetweenOpForm::class, $replace), $this->replacement($this->expr2, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm::class, $replace), $this->replacement($this->expr3, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm::class, $replace), $this->comments);
     }
 
     /**
@@ -50,7 +76,7 @@ final class ExprWithExprBetweenOpExprAndExpr_5e5d6d1b implements \SqlSemantics\S
      */
     public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
     {
-        return new self($expr, $this->betweenOp, $this->expr2, $this->expr3);
+        return new self($expr, $this->betweenOp, $this->expr2, $this->expr3, $this->comments);
     }
 
     /**
@@ -58,7 +84,7 @@ final class ExprWithExprBetweenOpExprAndExpr_5e5d6d1b implements \SqlSemantics\S
      */
     public function withBetweenOp(\SqlSemantics\Statement\Model\Sqlite\Role\BetweenOpForm $betweenOp): self
     {
-        return new self($this->expr, $betweenOp, $this->expr2, $this->expr3);
+        return new self($this->expr, $betweenOp, $this->expr2, $this->expr3, $this->comments);
     }
 
     /**
@@ -66,7 +92,7 @@ final class ExprWithExprBetweenOpExprAndExpr_5e5d6d1b implements \SqlSemantics\S
      */
     public function withExpr2(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr2): self
     {
-        return new self($this->expr, $this->betweenOp, $expr2, $this->expr3);
+        return new self($this->expr, $this->betweenOp, $expr2, $this->expr3, $this->comments);
     }
 
     /**
@@ -74,6 +100,14 @@ final class ExprWithExprBetweenOpExprAndExpr_5e5d6d1b implements \SqlSemantics\S
      */
     public function withExpr3(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr3): self
     {
-        return new self($this->expr, $this->betweenOp, $this->expr2, $expr3);
+        return new self($this->expr, $this->betweenOp, $this->expr2, $expr3, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->expr, $this->betweenOp, $this->expr2, $this->expr3, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class VtabarglistWithVtabarglistCommaVtabarg_297de28e implements \SqlSeman
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\VtabarglistForm $vtabarglist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\VtabargForm $vtabarg,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($vtabarglist), 'The vtabarglist must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($vtabarg), 'The vtabarg must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class VtabarglistWithVtabarglistCommaVtabarg_297de28e implements \SqlSeman
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->vtabarglist->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->vtabarg->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->vtabarglist, $this->vtabarg];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->vtabarglist, \SqlSemantics\Statement\Model\Sqlite\Role\VtabarglistForm::class, $replace), $this->replacement($this->vtabarg, \SqlSemantics\Statement\Model\Sqlite\Role\VtabargForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class VtabarglistWithVtabarglistCommaVtabarg_297de28e implements \SqlSeman
      */
     public function withVtabarglist(\SqlSemantics\Statement\Model\Sqlite\Role\VtabarglistForm $vtabarglist): self
     {
-        return new self($vtabarglist, $this->vtabarg);
+        return new self($vtabarglist, $this->vtabarg, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class VtabarglistWithVtabarglistCommaVtabarg_297de28e implements \SqlSeman
      */
     public function withVtabarg(\SqlSemantics\Statement\Model\Sqlite\Role\VtabargForm $vtabarg): self
     {
-        return new self($this->vtabarglist, $vtabarg);
+        return new self($this->vtabarglist, $vtabarg, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->vtabarglist, $this->vtabarg, $comments);
     }
 }

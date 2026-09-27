@@ -17,11 +17,12 @@ final class ShowCharacterSetStmtWithShowCharacterSetOptWildOrWhere_de91fc05 impl
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharacterSetForm $characterSet,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForm $optWildOrWhere,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($characterSet), 'The characterSet must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWildOrWhere), 'The optWildOrWhere must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class ShowCharacterSetStmtWithShowCharacterSetOptWildOrWhere_de91fc05 impl
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SHOW');
+        $writer->comments($this->comments, 1);
         $this->characterSet->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optWildOrWhere->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->characterSet, $this->optWildOrWhere];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->characterSet, \SqlSemantics\Statement\Model\MySql\Role\CharacterSetForm::class, $replace), $this->replacement($this->optWildOrWhere, \SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class ShowCharacterSetStmtWithShowCharacterSetOptWildOrWhere_de91fc05 impl
      */
     public function withCharacterSet(\SqlSemantics\Statement\Model\MySql\Role\CharacterSetForm $characterSet): self
     {
-        return new self($characterSet, $this->optWildOrWhere);
+        return new self($characterSet, $this->optWildOrWhere, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class ShowCharacterSetStmtWithShowCharacterSetOptWildOrWhere_de91fc05 impl
      */
     public function withOptWildOrWhere(\SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForm $optWildOrWhere): self
     {
-        return new self($this->characterSet, $optWildOrWhere);
+        return new self($this->characterSet, $optWildOrWhere, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->characterSet, $this->optWildOrWhere, $comments);
     }
 }

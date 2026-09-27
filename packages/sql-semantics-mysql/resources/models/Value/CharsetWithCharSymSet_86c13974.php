@@ -17,10 +17,11 @@ final class CharsetWithCharSymSet_86c13974 implements \SqlSemantics\Statement\Mo
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $charSym,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($charSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['CHAR_SYM'], 'The charSym must be a complete CHAR_SYM lexical spelling.');
     }
@@ -30,8 +31,30 @@ final class CharsetWithCharSymSet_86c13974 implements \SqlSemantics\Statement\Mo
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->charSym);
+        $writer->comments($this->comments, 1);
         $writer->append('SET');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [];
+    }
+
+    /**
+     * This form holds no values to replace.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return $this;
     }
 
     /**
@@ -39,6 +62,14 @@ final class CharsetWithCharSymSet_86c13974 implements \SqlSemantics\Statement\Mo
      */
     public function withCharSym(string $charSym): self
     {
-        return new self($charSym);
+        return new self($charSym, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->charSym, $comments);
     }
 }

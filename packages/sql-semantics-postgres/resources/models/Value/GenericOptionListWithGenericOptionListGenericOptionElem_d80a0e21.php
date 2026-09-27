@@ -17,11 +17,12 @@ final class GenericOptionListWithGenericOptionListGenericOptionElem_d80a0e21 imp
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionListForm $genericOptionList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionElemForm $genericOptionElem,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($genericOptionList), 'The genericOptionList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($genericOptionElem), 'The genericOptionElem must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class GenericOptionListWithGenericOptionListGenericOptionElem_d80a0e21 imp
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->genericOptionList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->genericOptionElem->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->genericOptionList, $this->genericOptionElem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->genericOptionList, \SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionListForm::class, $replace), $this->replacement($this->genericOptionElem, \SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionElemForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class GenericOptionListWithGenericOptionListGenericOptionElem_d80a0e21 imp
      */
     public function withGenericOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionListForm $genericOptionList): self
     {
-        return new self($genericOptionList, $this->genericOptionElem);
+        return new self($genericOptionList, $this->genericOptionElem, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class GenericOptionListWithGenericOptionListGenericOptionElem_d80a0e21 imp
      */
     public function withGenericOptionElem(\SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionElemForm $genericOptionElem): self
     {
-        return new self($this->genericOptionList, $genericOptionElem);
+        return new self($this->genericOptionList, $genericOptionElem, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->genericOptionList, $this->genericOptionElem, $comments);
     }
 }

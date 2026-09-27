@@ -17,12 +17,13 @@ final class TconsWithPrimaryKeyLpSortlistAutoincRpOnconf_724fc4cd implements \Sq
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm $sortlist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\AutoincForm $autoinc,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\OnconfForm $onconf,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($sortlist), 'The sortlist must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($autoinc), 'The autoinc must be a generated immutable SQL value.');
@@ -34,13 +35,40 @@ final class TconsWithPrimaryKeyLpSortlistAutoincRpOnconf_724fc4cd implements \Sq
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('PRIMARY');
+        $writer->comments($this->comments, 1);
         $writer->append('KEY');
+        $writer->comments($this->comments, 2);
         $writer->append('(');
+        $writer->comments($this->comments, 3);
         $this->sortlist->write($writer);
+        $writer->comments($this->comments, 4);
         $this->autoinc->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
+        $writer->comments($this->comments, 6);
         $this->onconf->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->sortlist, $this->autoinc, $this->onconf];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->sortlist, \SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm::class, $replace), $this->replacement($this->autoinc, \SqlSemantics\Statement\Model\Sqlite\Role\AutoincForm::class, $replace), $this->replacement($this->onconf, \SqlSemantics\Statement\Model\Sqlite\Role\OnconfForm::class, $replace), $this->comments);
     }
 
     /**
@@ -48,7 +76,7 @@ final class TconsWithPrimaryKeyLpSortlistAutoincRpOnconf_724fc4cd implements \Sq
      */
     public function withSortlist(\SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm $sortlist): self
     {
-        return new self($sortlist, $this->autoinc, $this->onconf);
+        return new self($sortlist, $this->autoinc, $this->onconf, $this->comments);
     }
 
     /**
@@ -56,7 +84,7 @@ final class TconsWithPrimaryKeyLpSortlistAutoincRpOnconf_724fc4cd implements \Sq
      */
     public function withAutoinc(\SqlSemantics\Statement\Model\Sqlite\Role\AutoincForm $autoinc): self
     {
-        return new self($this->sortlist, $autoinc, $this->onconf);
+        return new self($this->sortlist, $autoinc, $this->onconf, $this->comments);
     }
 
     /**
@@ -64,6 +92,14 @@ final class TconsWithPrimaryKeyLpSortlistAutoincRpOnconf_724fc4cd implements \Sq
      */
     public function withOnconf(\SqlSemantics\Statement\Model\Sqlite\Role\OnconfForm $onconf): self
     {
-        return new self($this->sortlist, $this->autoinc, $onconf);
+        return new self($this->sortlist, $this->autoinc, $onconf, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->sortlist, $this->autoinc, $this->onconf, $comments);
     }
 }

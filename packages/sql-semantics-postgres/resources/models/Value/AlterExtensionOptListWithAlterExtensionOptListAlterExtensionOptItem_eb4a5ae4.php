@@ -17,11 +17,12 @@ final class AlterExtensionOptListWithAlterExtensionOptListAlterExtensionOptItem_
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AlterExtensionOptListForm $alterExtensionOptList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AlterExtensionOptItemForm $alterExtensionOptItem,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($alterExtensionOptList), 'The alterExtensionOptList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($alterExtensionOptItem), 'The alterExtensionOptItem must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class AlterExtensionOptListWithAlterExtensionOptListAlterExtensionOptItem_
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->alterExtensionOptList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->alterExtensionOptItem->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->alterExtensionOptList, $this->alterExtensionOptItem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->alterExtensionOptList, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterExtensionOptListForm::class, $replace), $this->replacement($this->alterExtensionOptItem, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterExtensionOptItemForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class AlterExtensionOptListWithAlterExtensionOptListAlterExtensionOptItem_
      */
     public function withAlterExtensionOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\AlterExtensionOptListForm $alterExtensionOptList): self
     {
-        return new self($alterExtensionOptList, $this->alterExtensionOptItem);
+        return new self($alterExtensionOptList, $this->alterExtensionOptItem, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class AlterExtensionOptListWithAlterExtensionOptListAlterExtensionOptItem_
      */
     public function withAlterExtensionOptItem(\SqlSemantics\Statement\Model\PostgreSql\Role\AlterExtensionOptItemForm $alterExtensionOptItem): self
     {
-        return new self($this->alterExtensionOptList, $alterExtensionOptItem);
+        return new self($this->alterExtensionOptList, $alterExtensionOptItem, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->alterExtensionOptList, $this->alterExtensionOptItem, $comments);
     }
 }

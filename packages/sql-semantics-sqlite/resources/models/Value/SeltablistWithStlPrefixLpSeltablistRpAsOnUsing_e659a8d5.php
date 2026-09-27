@@ -17,13 +17,14 @@ final class SeltablistWithStlPrefixLpSeltablistRpAsOnUsing_e659a8d5 implements \
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\StlPrefixForm $stlPrefix,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SeltablistForm $seltablist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\AsForm $as,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\OnUsingForm $onUsing,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($stlPrefix), 'The stlPrefix must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($seltablist), 'The seltablist must be a generated immutable SQL value.');
@@ -36,12 +37,38 @@ final class SeltablistWithStlPrefixLpSeltablistRpAsOnUsing_e659a8d5 implements \
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->stlPrefix->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->seltablist->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
+        $writer->comments($this->comments, 4);
         $this->as->write($writer);
+        $writer->comments($this->comments, 5);
         $this->onUsing->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->stlPrefix, $this->seltablist, $this->as, $this->onUsing];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->stlPrefix, \SqlSemantics\Statement\Model\Sqlite\Role\StlPrefixForm::class, $replace), $this->replacement($this->seltablist, \SqlSemantics\Statement\Model\Sqlite\Role\SeltablistForm::class, $replace), $this->replacement($this->as, \SqlSemantics\Statement\Model\Sqlite\Role\AsForm::class, $replace), $this->replacement($this->onUsing, \SqlSemantics\Statement\Model\Sqlite\Role\OnUsingForm::class, $replace), $this->comments);
     }
 
     /**
@@ -49,7 +76,7 @@ final class SeltablistWithStlPrefixLpSeltablistRpAsOnUsing_e659a8d5 implements \
      */
     public function withStlPrefix(\SqlSemantics\Statement\Model\Sqlite\Role\StlPrefixForm $stlPrefix): self
     {
-        return new self($stlPrefix, $this->seltablist, $this->as, $this->onUsing);
+        return new self($stlPrefix, $this->seltablist, $this->as, $this->onUsing, $this->comments);
     }
 
     /**
@@ -57,7 +84,7 @@ final class SeltablistWithStlPrefixLpSeltablistRpAsOnUsing_e659a8d5 implements \
      */
     public function withSeltablist(\SqlSemantics\Statement\Model\Sqlite\Role\SeltablistForm $seltablist): self
     {
-        return new self($this->stlPrefix, $seltablist, $this->as, $this->onUsing);
+        return new self($this->stlPrefix, $seltablist, $this->as, $this->onUsing, $this->comments);
     }
 
     /**
@@ -65,7 +92,7 @@ final class SeltablistWithStlPrefixLpSeltablistRpAsOnUsing_e659a8d5 implements \
      */
     public function withAs(\SqlSemantics\Statement\Model\Sqlite\Role\AsForm $as): self
     {
-        return new self($this->stlPrefix, $this->seltablist, $as, $this->onUsing);
+        return new self($this->stlPrefix, $this->seltablist, $as, $this->onUsing, $this->comments);
     }
 
     /**
@@ -73,6 +100,14 @@ final class SeltablistWithStlPrefixLpSeltablistRpAsOnUsing_e659a8d5 implements \
      */
     public function withOnUsing(\SqlSemantics\Statement\Model\Sqlite\Role\OnUsingForm $onUsing): self
     {
-        return new self($this->stlPrefix, $this->seltablist, $this->as, $onUsing);
+        return new self($this->stlPrefix, $this->seltablist, $this->as, $onUsing, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->stlPrefix, $this->seltablist, $this->as, $this->onUsing, $comments);
     }
 }

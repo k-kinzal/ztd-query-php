@@ -17,7 +17,7 @@ final class UpdateStmtWithOptWithClauseUpdateSymOptLowPriorityOptIgnoreTableRefe
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWithClauseForm $with,
@@ -28,6 +28,7 @@ final class UpdateStmtWithOptWithClauseUpdateSymOptLowPriorityOptIgnoreTableRefe
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm $where,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm $orderBy,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSimpleLimitForm $optSimpleLimit,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($with), 'The with must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLowPriority), 'The optLowPriority must be a generated immutable SQL value.');
@@ -44,16 +45,46 @@ final class UpdateStmtWithOptWithClauseUpdateSymOptLowPriorityOptIgnoreTableRefe
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->with->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('UPDATE');
+        $writer->comments($this->comments, 2);
         $this->optLowPriority->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optIgnore->write($writer);
+        $writer->comments($this->comments, 4);
         $this->tableReferenceList->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('SET');
+        $writer->comments($this->comments, 6);
         $this->updateList->write($writer);
+        $writer->comments($this->comments, 7);
         $this->where->write($writer);
+        $writer->comments($this->comments, 8);
         $this->orderBy->write($writer);
+        $writer->comments($this->comments, 9);
         $this->optSimpleLimit->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->with, $this->optLowPriority, $this->optIgnore, $this->tableReferenceList, $this->updateList, $this->where, $this->orderBy, $this->optSimpleLimit];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->with, \SqlSemantics\Statement\Model\MySql\Role\OptWithClauseForm::class, $replace), $this->replacement($this->optLowPriority, \SqlSemantics\Statement\Model\MySql\Role\OptLowPriorityForm::class, $replace), $this->replacement($this->optIgnore, \SqlSemantics\Statement\Model\MySql\Role\OptIgnoreForm::class, $replace), $this->replacement($this->tableReferenceList, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm::class, $replace), $this->replacement($this->updateList, \SqlSemantics\Statement\Model\MySql\Role\UpdateListForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm::class, $replace), $this->replacement($this->orderBy, \SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm::class, $replace), $this->replacement($this->optSimpleLimit, \SqlSemantics\Statement\Model\MySql\Role\OptSimpleLimitForm::class, $replace), $this->comments);
     }
 
     /**
@@ -61,7 +92,7 @@ final class UpdateStmtWithOptWithClauseUpdateSymOptLowPriorityOptIgnoreTableRefe
      */
     public function withWith(\SqlSemantics\Statement\Model\MySql\Role\OptWithClauseForm $with): self
     {
-        return new self($with, $this->optLowPriority, $this->optIgnore, $this->tableReferenceList, $this->updateList, $this->where, $this->orderBy, $this->optSimpleLimit);
+        return new self($with, $this->optLowPriority, $this->optIgnore, $this->tableReferenceList, $this->updateList, $this->where, $this->orderBy, $this->optSimpleLimit, $this->comments);
     }
 
     /**
@@ -69,7 +100,7 @@ final class UpdateStmtWithOptWithClauseUpdateSymOptLowPriorityOptIgnoreTableRefe
      */
     public function withOptLowPriority(\SqlSemantics\Statement\Model\MySql\Role\OptLowPriorityForm $optLowPriority): self
     {
-        return new self($this->with, $optLowPriority, $this->optIgnore, $this->tableReferenceList, $this->updateList, $this->where, $this->orderBy, $this->optSimpleLimit);
+        return new self($this->with, $optLowPriority, $this->optIgnore, $this->tableReferenceList, $this->updateList, $this->where, $this->orderBy, $this->optSimpleLimit, $this->comments);
     }
 
     /**
@@ -77,7 +108,7 @@ final class UpdateStmtWithOptWithClauseUpdateSymOptLowPriorityOptIgnoreTableRefe
      */
     public function withOptIgnore(\SqlSemantics\Statement\Model\MySql\Role\OptIgnoreForm $optIgnore): self
     {
-        return new self($this->with, $this->optLowPriority, $optIgnore, $this->tableReferenceList, $this->updateList, $this->where, $this->orderBy, $this->optSimpleLimit);
+        return new self($this->with, $this->optLowPriority, $optIgnore, $this->tableReferenceList, $this->updateList, $this->where, $this->orderBy, $this->optSimpleLimit, $this->comments);
     }
 
     /**
@@ -85,7 +116,7 @@ final class UpdateStmtWithOptWithClauseUpdateSymOptLowPriorityOptIgnoreTableRefe
      */
     public function withTableReferenceList(\SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm $tableReferenceList): self
     {
-        return new self($this->with, $this->optLowPriority, $this->optIgnore, $tableReferenceList, $this->updateList, $this->where, $this->orderBy, $this->optSimpleLimit);
+        return new self($this->with, $this->optLowPriority, $this->optIgnore, $tableReferenceList, $this->updateList, $this->where, $this->orderBy, $this->optSimpleLimit, $this->comments);
     }
 
     /**
@@ -93,7 +124,7 @@ final class UpdateStmtWithOptWithClauseUpdateSymOptLowPriorityOptIgnoreTableRefe
      */
     public function withUpdateList(\SqlSemantics\Statement\Model\MySql\Role\UpdateListForm $updateList): self
     {
-        return new self($this->with, $this->optLowPriority, $this->optIgnore, $this->tableReferenceList, $updateList, $this->where, $this->orderBy, $this->optSimpleLimit);
+        return new self($this->with, $this->optLowPriority, $this->optIgnore, $this->tableReferenceList, $updateList, $this->where, $this->orderBy, $this->optSimpleLimit, $this->comments);
     }
 
     /**
@@ -101,7 +132,7 @@ final class UpdateStmtWithOptWithClauseUpdateSymOptLowPriorityOptIgnoreTableRefe
      */
     public function withWhere(\SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm $where): self
     {
-        return new self($this->with, $this->optLowPriority, $this->optIgnore, $this->tableReferenceList, $this->updateList, $where, $this->orderBy, $this->optSimpleLimit);
+        return new self($this->with, $this->optLowPriority, $this->optIgnore, $this->tableReferenceList, $this->updateList, $where, $this->orderBy, $this->optSimpleLimit, $this->comments);
     }
 
     /**
@@ -109,7 +140,7 @@ final class UpdateStmtWithOptWithClauseUpdateSymOptLowPriorityOptIgnoreTableRefe
      */
     public function withOrderBy(\SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm $orderBy): self
     {
-        return new self($this->with, $this->optLowPriority, $this->optIgnore, $this->tableReferenceList, $this->updateList, $this->where, $orderBy, $this->optSimpleLimit);
+        return new self($this->with, $this->optLowPriority, $this->optIgnore, $this->tableReferenceList, $this->updateList, $this->where, $orderBy, $this->optSimpleLimit, $this->comments);
     }
 
     /**
@@ -117,6 +148,14 @@ final class UpdateStmtWithOptWithClauseUpdateSymOptLowPriorityOptIgnoreTableRefe
      */
     public function withOptSimpleLimit(\SqlSemantics\Statement\Model\MySql\Role\OptSimpleLimitForm $optSimpleLimit): self
     {
-        return new self($this->with, $this->optLowPriority, $this->optIgnore, $this->tableReferenceList, $this->updateList, $this->where, $this->orderBy, $optSimpleLimit);
+        return new self($this->with, $this->optLowPriority, $this->optIgnore, $this->tableReferenceList, $this->updateList, $this->where, $this->orderBy, $optSimpleLimit, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->with, $this->optLowPriority, $this->optIgnore, $this->tableReferenceList, $this->updateList, $this->where, $this->orderBy, $this->optSimpleLimit, $comments);
     }
 }

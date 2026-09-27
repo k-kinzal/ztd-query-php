@@ -17,11 +17,12 @@ final class PubObjListWithPubObjListPublicationObjSpec_0f6aac6e implements \SqlS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PubObjListForm $pubObjList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PublicationObjSpecForm $publicationObjSpec,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($pubObjList), 'The pubObjList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($publicationObjSpec), 'The publicationObjSpec must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class PubObjListWithPubObjListPublicationObjSpec_0f6aac6e implements \SqlS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->pubObjList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->publicationObjSpec->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->pubObjList, $this->publicationObjSpec];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->pubObjList, \SqlSemantics\Statement\Model\PostgreSql\Role\PubObjListForm::class, $replace), $this->replacement($this->publicationObjSpec, \SqlSemantics\Statement\Model\PostgreSql\Role\PublicationObjSpecForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class PubObjListWithPubObjListPublicationObjSpec_0f6aac6e implements \SqlS
      */
     public function withPubObjList(\SqlSemantics\Statement\Model\PostgreSql\Role\PubObjListForm $pubObjList): self
     {
-        return new self($pubObjList, $this->publicationObjSpec);
+        return new self($pubObjList, $this->publicationObjSpec, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class PubObjListWithPubObjListPublicationObjSpec_0f6aac6e implements \SqlS
      */
     public function withPublicationObjSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\PublicationObjSpecForm $publicationObjSpec): self
     {
-        return new self($this->pubObjList, $publicationObjSpec);
+        return new self($this->pubObjList, $publicationObjSpec, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->pubObjList, $this->publicationObjSpec, $comments);
     }
 }

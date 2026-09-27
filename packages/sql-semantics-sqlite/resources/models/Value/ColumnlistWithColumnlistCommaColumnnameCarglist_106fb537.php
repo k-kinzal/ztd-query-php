@@ -17,12 +17,13 @@ final class ColumnlistWithColumnlistCommaColumnnameCarglist_106fb537 implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ColumnlistForm $columnlist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ColumnnameForm $columnname,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CarglistForm $carglist,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($columnlist), 'The columnlist must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($columnname), 'The columnname must be a generated immutable SQL value.');
@@ -34,10 +35,34 @@ final class ColumnlistWithColumnlistCommaColumnnameCarglist_106fb537 implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->columnlist->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->columnname->write($writer);
+        $writer->comments($this->comments, 3);
         $this->carglist->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->columnlist, $this->columnname, $this->carglist];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->columnlist, \SqlSemantics\Statement\Model\Sqlite\Role\ColumnlistForm::class, $replace), $this->replacement($this->columnname, \SqlSemantics\Statement\Model\Sqlite\Role\ColumnnameForm::class, $replace), $this->replacement($this->carglist, \SqlSemantics\Statement\Model\Sqlite\Role\CarglistForm::class, $replace), $this->comments);
     }
 
     /**
@@ -45,7 +70,7 @@ final class ColumnlistWithColumnlistCommaColumnnameCarglist_106fb537 implements 
      */
     public function withColumnlist(\SqlSemantics\Statement\Model\Sqlite\Role\ColumnlistForm $columnlist): self
     {
-        return new self($columnlist, $this->columnname, $this->carglist);
+        return new self($columnlist, $this->columnname, $this->carglist, $this->comments);
     }
 
     /**
@@ -53,7 +78,7 @@ final class ColumnlistWithColumnlistCommaColumnnameCarglist_106fb537 implements 
      */
     public function withColumnname(\SqlSemantics\Statement\Model\Sqlite\Role\ColumnnameForm $columnname): self
     {
-        return new self($this->columnlist, $columnname, $this->carglist);
+        return new self($this->columnlist, $columnname, $this->carglist, $this->comments);
     }
 
     /**
@@ -61,6 +86,14 @@ final class ColumnlistWithColumnlistCommaColumnnameCarglist_106fb537 implements 
      */
     public function withCarglist(\SqlSemantics\Statement\Model\Sqlite\Role\CarglistForm $carglist): self
     {
-        return new self($this->columnlist, $this->columnname, $carglist);
+        return new self($this->columnlist, $this->columnname, $carglist, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->columnlist, $this->columnname, $this->carglist, $comments);
     }
 }

@@ -17,7 +17,7 @@ final class TriggerTailWithTriggerSymRememberNameSpNameTrgActionTimeTrgEventOnRe
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm $rememberName,
@@ -28,6 +28,7 @@ final class TriggerTailWithTriggerSymRememberNameSpNameTrgActionTimeTrgEventOnRe
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm $rememberName3,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm $spProcStmt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($rememberName), 'The rememberName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spName), 'The spName must be a generated immutable SQL value.');
@@ -44,19 +45,52 @@ final class TriggerTailWithTriggerSymRememberNameSpNameTrgActionTimeTrgEventOnRe
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('TRIGGER');
+        $writer->comments($this->comments, 1);
         $this->rememberName->write($writer);
+        $writer->comments($this->comments, 2);
         $this->spName->write($writer);
+        $writer->comments($this->comments, 3);
         $this->trgActionTime->write($writer);
+        $writer->comments($this->comments, 4);
         $this->trgEvent->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('ON');
+        $writer->comments($this->comments, 6);
         $this->rememberName2->write($writer);
+        $writer->comments($this->comments, 7);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 8);
         $writer->append('FOR');
+        $writer->comments($this->comments, 9);
         $this->rememberName3->write($writer);
+        $writer->comments($this->comments, 10);
         $writer->append('EACH');
+        $writer->comments($this->comments, 11);
         $writer->append('ROW');
+        $writer->comments($this->comments, 12);
         $this->spProcStmt->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->rememberName, $this->spName, $this->trgActionTime, $this->trgEvent, $this->rememberName2, $this->tableIdent, $this->rememberName3, $this->spProcStmt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->rememberName, \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm::class, $replace), $this->replacement($this->spName, \SqlSemantics\Statement\Model\MySql\Role\SpNameForm::class, $replace), $this->replacement($this->trgActionTime, \SqlSemantics\Statement\Model\MySql\Role\TrgActionTimeForm::class, $replace), $this->replacement($this->trgEvent, \SqlSemantics\Statement\Model\MySql\Role\TrgEventForm::class, $replace), $this->replacement($this->rememberName2, \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm::class, $replace), $this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->rememberName3, \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm::class, $replace), $this->replacement($this->spProcStmt, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm::class, $replace), $this->comments);
     }
 
     /**
@@ -64,7 +98,7 @@ final class TriggerTailWithTriggerSymRememberNameSpNameTrgActionTimeTrgEventOnRe
      */
     public function withRememberName(\SqlSemantics\Statement\Model\MySql\Role\RememberNameForm $rememberName): self
     {
-        return new self($rememberName, $this->spName, $this->trgActionTime, $this->trgEvent, $this->rememberName2, $this->tableIdent, $this->rememberName3, $this->spProcStmt);
+        return new self($rememberName, $this->spName, $this->trgActionTime, $this->trgEvent, $this->rememberName2, $this->tableIdent, $this->rememberName3, $this->spProcStmt, $this->comments);
     }
 
     /**
@@ -72,7 +106,7 @@ final class TriggerTailWithTriggerSymRememberNameSpNameTrgActionTimeTrgEventOnRe
      */
     public function withSpName(\SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName): self
     {
-        return new self($this->rememberName, $spName, $this->trgActionTime, $this->trgEvent, $this->rememberName2, $this->tableIdent, $this->rememberName3, $this->spProcStmt);
+        return new self($this->rememberName, $spName, $this->trgActionTime, $this->trgEvent, $this->rememberName2, $this->tableIdent, $this->rememberName3, $this->spProcStmt, $this->comments);
     }
 
     /**
@@ -80,7 +114,7 @@ final class TriggerTailWithTriggerSymRememberNameSpNameTrgActionTimeTrgEventOnRe
      */
     public function withTrgActionTime(\SqlSemantics\Statement\Model\MySql\Role\TrgActionTimeForm $trgActionTime): self
     {
-        return new self($this->rememberName, $this->spName, $trgActionTime, $this->trgEvent, $this->rememberName2, $this->tableIdent, $this->rememberName3, $this->spProcStmt);
+        return new self($this->rememberName, $this->spName, $trgActionTime, $this->trgEvent, $this->rememberName2, $this->tableIdent, $this->rememberName3, $this->spProcStmt, $this->comments);
     }
 
     /**
@@ -88,7 +122,7 @@ final class TriggerTailWithTriggerSymRememberNameSpNameTrgActionTimeTrgEventOnRe
      */
     public function withTrgEvent(\SqlSemantics\Statement\Model\MySql\Role\TrgEventForm $trgEvent): self
     {
-        return new self($this->rememberName, $this->spName, $this->trgActionTime, $trgEvent, $this->rememberName2, $this->tableIdent, $this->rememberName3, $this->spProcStmt);
+        return new self($this->rememberName, $this->spName, $this->trgActionTime, $trgEvent, $this->rememberName2, $this->tableIdent, $this->rememberName3, $this->spProcStmt, $this->comments);
     }
 
     /**
@@ -96,7 +130,7 @@ final class TriggerTailWithTriggerSymRememberNameSpNameTrgActionTimeTrgEventOnRe
      */
     public function withRememberName2(\SqlSemantics\Statement\Model\MySql\Role\RememberNameForm $rememberName2): self
     {
-        return new self($this->rememberName, $this->spName, $this->trgActionTime, $this->trgEvent, $rememberName2, $this->tableIdent, $this->rememberName3, $this->spProcStmt);
+        return new self($this->rememberName, $this->spName, $this->trgActionTime, $this->trgEvent, $rememberName2, $this->tableIdent, $this->rememberName3, $this->spProcStmt, $this->comments);
     }
 
     /**
@@ -104,7 +138,7 @@ final class TriggerTailWithTriggerSymRememberNameSpNameTrgActionTimeTrgEventOnRe
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($this->rememberName, $this->spName, $this->trgActionTime, $this->trgEvent, $this->rememberName2, $tableIdent, $this->rememberName3, $this->spProcStmt);
+        return new self($this->rememberName, $this->spName, $this->trgActionTime, $this->trgEvent, $this->rememberName2, $tableIdent, $this->rememberName3, $this->spProcStmt, $this->comments);
     }
 
     /**
@@ -112,7 +146,7 @@ final class TriggerTailWithTriggerSymRememberNameSpNameTrgActionTimeTrgEventOnRe
      */
     public function withRememberName3(\SqlSemantics\Statement\Model\MySql\Role\RememberNameForm $rememberName3): self
     {
-        return new self($this->rememberName, $this->spName, $this->trgActionTime, $this->trgEvent, $this->rememberName2, $this->tableIdent, $rememberName3, $this->spProcStmt);
+        return new self($this->rememberName, $this->spName, $this->trgActionTime, $this->trgEvent, $this->rememberName2, $this->tableIdent, $rememberName3, $this->spProcStmt, $this->comments);
     }
 
     /**
@@ -120,6 +154,14 @@ final class TriggerTailWithTriggerSymRememberNameSpNameTrgActionTimeTrgEventOnRe
      */
     public function withSpProcStmt(\SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm $spProcStmt): self
     {
-        return new self($this->rememberName, $this->spName, $this->trgActionTime, $this->trgEvent, $this->rememberName2, $this->tableIdent, $this->rememberName3, $spProcStmt);
+        return new self($this->rememberName, $this->spName, $this->trgActionTime, $this->trgEvent, $this->rememberName2, $this->tableIdent, $this->rememberName3, $spProcStmt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->rememberName, $this->spName, $this->trgActionTime, $this->trgEvent, $this->rememberName2, $this->tableIdent, $this->rememberName3, $this->spProcStmt, $comments);
     }
 }

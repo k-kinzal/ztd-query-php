@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration\PostgreSql;
 
 use Container\Endpoint;
-use Container\PostgreSql16Container;
+use Container\PostgreSqlRelease;
 use PDO;
 use PDOStatement;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -24,7 +24,7 @@ final class MergeTest extends TestCase
 {
     public function testMergeSimulatesEveryActionSourceShapeAndPreparedParameter(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $pdo */
         $pdo = new PDO(
             $endpoint->dsn(),

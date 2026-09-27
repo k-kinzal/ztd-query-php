@@ -17,11 +17,12 @@ final class TableListWithTableListTableName_8f8b1905 implements \SqlSemantics\St
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableListForm $tableList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableNameForm $tableName,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableList), 'The tableList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableName), 'The tableName must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class TableListWithTableListTableName_8f8b1905 implements \SqlSemantics\St
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->tableName->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableList, $this->tableName];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableList, \SqlSemantics\Statement\Model\MySql\Role\TableListForm::class, $replace), $this->replacement($this->tableName, \SqlSemantics\Statement\Model\MySql\Role\TableNameForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class TableListWithTableListTableName_8f8b1905 implements \SqlSemantics\St
      */
     public function withTableList(\SqlSemantics\Statement\Model\MySql\Role\TableListForm $tableList): self
     {
-        return new self($tableList, $this->tableName);
+        return new self($tableList, $this->tableName, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class TableListWithTableListTableName_8f8b1905 implements \SqlSemantics\St
      */
     public function withTableName(\SqlSemantics\Statement\Model\MySql\Role\TableNameForm $tableName): self
     {
-        return new self($this->tableList, $tableName);
+        return new self($this->tableList, $tableName, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableList, $this->tableName, $comments);
     }
 }

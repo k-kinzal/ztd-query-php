@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Tests\Integration;
 
 use Container\Endpoint;
-use Container\PostgreSql16Container;
+use Container\PostgreSqlRelease;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 use ZtdQuery\Config\ZtdConfig;
-use ZtdQuery\Platform\Postgres\PgSqlSessionFactory;
+use ZtdQuery\Platform\Postgres\PgSqlPlatform;
 
 /**
  * @requires extension pdo_pgsql
@@ -25,7 +25,7 @@ final class PostgreSqlDriverDetectionTest extends TestCase
 {
     public function testAutoDetectionCreatesPgSqlSession(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -48,9 +48,9 @@ final class PostgreSqlDriverDetectionTest extends TestCase
         }
     }
 
-    public function testExplicitSessionFactoryInjection(): void
+    public function testExplicitPlatformInjection(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -65,8 +65,8 @@ final class PostgreSqlDriverDetectionTest extends TestCase
 
 
         try {
-            $factory = new PgSqlSessionFactory();
-            $ztdPdo = ZtdPdo::fromPdo($rawPdo, null, $factory);
+            $platform = new PgSqlPlatform();
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo, null, $platform);
 
             self::assertTrue($ztdPdo->isZtdEnabled());
         } finally {
@@ -76,7 +76,7 @@ final class PostgreSqlDriverDetectionTest extends TestCase
 
     public function testCustomConfigPassedToSession(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),

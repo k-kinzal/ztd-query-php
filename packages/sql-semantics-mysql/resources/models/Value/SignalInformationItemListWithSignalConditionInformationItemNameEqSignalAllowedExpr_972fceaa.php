@@ -17,11 +17,12 @@ final class SignalInformationItemListWithSignalConditionInformationItemNameEqSig
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SignalConditionInformationItemNameForm $signalConditionInformationItemName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SignalAllowedExprForm $signalAllowedExpr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($signalConditionInformationItemName), 'The signalConditionInformationItemName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($signalAllowedExpr), 'The signalAllowedExpr must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class SignalInformationItemListWithSignalConditionInformationItemNameEqSig
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->signalConditionInformationItemName->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('=');
+        $writer->comments($this->comments, 2);
         $this->signalAllowedExpr->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->signalConditionInformationItemName, $this->signalAllowedExpr];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->signalConditionInformationItemName, \SqlSemantics\Statement\Model\MySql\Role\SignalConditionInformationItemNameForm::class, $replace), $this->replacement($this->signalAllowedExpr, \SqlSemantics\Statement\Model\MySql\Role\SignalAllowedExprForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class SignalInformationItemListWithSignalConditionInformationItemNameEqSig
      */
     public function withSignalConditionInformationItemName(\SqlSemantics\Statement\Model\MySql\Role\SignalConditionInformationItemNameForm $signalConditionInformationItemName): self
     {
-        return new self($signalConditionInformationItemName, $this->signalAllowedExpr);
+        return new self($signalConditionInformationItemName, $this->signalAllowedExpr, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class SignalInformationItemListWithSignalConditionInformationItemNameEqSig
      */
     public function withSignalAllowedExpr(\SqlSemantics\Statement\Model\MySql\Role\SignalAllowedExprForm $signalAllowedExpr): self
     {
-        return new self($this->signalConditionInformationItemName, $signalAllowedExpr);
+        return new self($this->signalConditionInformationItemName, $signalAllowedExpr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->signalConditionInformationItemName, $this->signalAllowedExpr, $comments);
     }
 }

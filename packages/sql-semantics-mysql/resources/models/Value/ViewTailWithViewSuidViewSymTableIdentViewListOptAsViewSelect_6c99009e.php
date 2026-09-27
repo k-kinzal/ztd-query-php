@@ -17,13 +17,14 @@ final class ViewTailWithViewSuidViewSymTableIdentViewListOptAsViewSelect_6c99009
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ViewSuidForm $viewSuid,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ViewListOptForm $viewListOpt,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ViewSelectForm $viewSelect,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($viewSuid), 'The viewSuid must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
@@ -36,12 +37,38 @@ final class ViewTailWithViewSuidViewSymTableIdentViewListOptAsViewSelect_6c99009
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->viewSuid->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('VIEW');
+        $writer->comments($this->comments, 2);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 3);
         $this->viewListOpt->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('AS');
+        $writer->comments($this->comments, 5);
         $this->viewSelect->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->viewSuid, $this->tableIdent, $this->viewListOpt, $this->viewSelect];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->viewSuid, \SqlSemantics\Statement\Model\MySql\Role\ViewSuidForm::class, $replace), $this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->viewListOpt, \SqlSemantics\Statement\Model\MySql\Role\ViewListOptForm::class, $replace), $this->replacement($this->viewSelect, \SqlSemantics\Statement\Model\MySql\Role\ViewSelectForm::class, $replace), $this->comments);
     }
 
     /**
@@ -49,7 +76,7 @@ final class ViewTailWithViewSuidViewSymTableIdentViewListOptAsViewSelect_6c99009
      */
     public function withViewSuid(\SqlSemantics\Statement\Model\MySql\Role\ViewSuidForm $viewSuid): self
     {
-        return new self($viewSuid, $this->tableIdent, $this->viewListOpt, $this->viewSelect);
+        return new self($viewSuid, $this->tableIdent, $this->viewListOpt, $this->viewSelect, $this->comments);
     }
 
     /**
@@ -57,7 +84,7 @@ final class ViewTailWithViewSuidViewSymTableIdentViewListOptAsViewSelect_6c99009
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($this->viewSuid, $tableIdent, $this->viewListOpt, $this->viewSelect);
+        return new self($this->viewSuid, $tableIdent, $this->viewListOpt, $this->viewSelect, $this->comments);
     }
 
     /**
@@ -65,7 +92,7 @@ final class ViewTailWithViewSuidViewSymTableIdentViewListOptAsViewSelect_6c99009
      */
     public function withViewListOpt(\SqlSemantics\Statement\Model\MySql\Role\ViewListOptForm $viewListOpt): self
     {
-        return new self($this->viewSuid, $this->tableIdent, $viewListOpt, $this->viewSelect);
+        return new self($this->viewSuid, $this->tableIdent, $viewListOpt, $this->viewSelect, $this->comments);
     }
 
     /**
@@ -73,6 +100,14 @@ final class ViewTailWithViewSuidViewSymTableIdentViewListOptAsViewSelect_6c99009
      */
     public function withViewSelect(\SqlSemantics\Statement\Model\MySql\Role\ViewSelectForm $viewSelect): self
     {
-        return new self($this->viewSuid, $this->tableIdent, $this->viewListOpt, $viewSelect);
+        return new self($this->viewSuid, $this->tableIdent, $this->viewListOpt, $viewSelect, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->viewSuid, $this->tableIdent, $this->viewListOpt, $this->viewSelect, $comments);
     }
 }

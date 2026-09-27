@@ -17,10 +17,11 @@ final class NvarcharWithNcharSymVarchar_30b2f5f7 implements \SqlSemantics\Statem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $varchar,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($varchar, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['VARCHAR'], 'The varchar must be a complete VARCHAR lexical spelling.');
     }
@@ -30,8 +31,30 @@ final class NvarcharWithNcharSymVarchar_30b2f5f7 implements \SqlSemantics\Statem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('NCHAR');
+        $writer->comments($this->comments, 1);
         $writer->append($this->varchar);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [];
+    }
+
+    /**
+     * This form holds no values to replace.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return $this;
     }
 
     /**
@@ -39,6 +62,14 @@ final class NvarcharWithNcharSymVarchar_30b2f5f7 implements \SqlSemantics\Statem
      */
     public function withVarchar(string $varchar): self
     {
-        return new self($varchar);
+        return new self($varchar, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->varchar, $comments);
     }
 }

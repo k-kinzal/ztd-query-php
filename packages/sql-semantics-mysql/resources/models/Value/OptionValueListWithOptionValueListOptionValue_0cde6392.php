@@ -17,11 +17,12 @@ final class OptionValueListWithOptionValueListOptionValue_0cde6392 implements \S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptionValueListForm $optionValueList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptionValueForm $optionValue,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optionValueList), 'The optionValueList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optionValue), 'The optionValue must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class OptionValueListWithOptionValueListOptionValue_0cde6392 implements \S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optionValueList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->optionValue->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optionValueList, $this->optionValue];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optionValueList, \SqlSemantics\Statement\Model\MySql\Role\OptionValueListForm::class, $replace), $this->replacement($this->optionValue, \SqlSemantics\Statement\Model\MySql\Role\OptionValueForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class OptionValueListWithOptionValueListOptionValue_0cde6392 implements \S
      */
     public function withOptionValueList(\SqlSemantics\Statement\Model\MySql\Role\OptionValueListForm $optionValueList): self
     {
-        return new self($optionValueList, $this->optionValue);
+        return new self($optionValueList, $this->optionValue, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class OptionValueListWithOptionValueListOptionValue_0cde6392 implements \S
      */
     public function withOptionValue(\SqlSemantics\Statement\Model\MySql\Role\OptionValueForm $optionValue): self
     {
-        return new self($this->optionValueList, $optionValue);
+        return new self($this->optionValueList, $optionValue, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optionValueList, $this->optionValue, $comments);
     }
 }

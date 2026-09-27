@@ -17,10 +17,11 @@ final class OptUserAttributeWithCommentSymTextStringLiteral_054d4c9e implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringLiteralForm $textStringLiteral,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringLiteral), 'The textStringLiteral must be a generated immutable SQL value.');
     }
@@ -30,8 +31,30 @@ final class OptUserAttributeWithCommentSymTextStringLiteral_054d4c9e implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('COMMENT');
+        $writer->comments($this->comments, 1);
         $this->textStringLiteral->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->textStringLiteral];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->textStringLiteral, \SqlSemantics\Statement\Model\MySql\Role\TextStringLiteralForm::class, $replace), $this->comments);
     }
 
     /**
@@ -39,6 +62,14 @@ final class OptUserAttributeWithCommentSymTextStringLiteral_054d4c9e implements 
      */
     public function withTextStringLiteral(\SqlSemantics\Statement\Model\MySql\Role\TextStringLiteralForm $textStringLiteral): self
     {
-        return new self($textStringLiteral);
+        return new self($textStringLiteral, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->textStringLiteral, $comments);
     }
 }

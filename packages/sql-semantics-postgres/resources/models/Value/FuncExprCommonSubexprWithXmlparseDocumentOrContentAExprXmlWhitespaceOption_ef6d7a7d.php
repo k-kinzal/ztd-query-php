@@ -17,12 +17,13 @@ final class FuncExprCommonSubexprWithXmlparseDocumentOrContentAExprXmlWhitespace
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DocumentOrContentForm $documentOrContent,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\XmlWhitespaceOptionForm $xmlWhitespaceOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($documentOrContent), 'The documentOrContent must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
@@ -34,12 +35,38 @@ final class FuncExprCommonSubexprWithXmlparseDocumentOrContentAExprXmlWhitespace
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('XMLPARSE');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->documentOrContent->write($writer);
+        $writer->comments($this->comments, 3);
         $this->aExpr->write($writer);
+        $writer->comments($this->comments, 4);
         $this->xmlWhitespaceOption->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->documentOrContent, $this->aExpr, $this->xmlWhitespaceOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->documentOrContent, \SqlSemantics\Statement\Model\PostgreSql\Role\DocumentOrContentForm::class, $replace), $this->replacement($this->aExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm::class, $replace), $this->replacement($this->xmlWhitespaceOption, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlWhitespaceOptionForm::class, $replace), $this->comments);
     }
 
     /**
@@ -47,7 +74,7 @@ final class FuncExprCommonSubexprWithXmlparseDocumentOrContentAExprXmlWhitespace
      */
     public function withDocumentOrContent(\SqlSemantics\Statement\Model\PostgreSql\Role\DocumentOrContentForm $documentOrContent): self
     {
-        return new self($documentOrContent, $this->aExpr, $this->xmlWhitespaceOption);
+        return new self($documentOrContent, $this->aExpr, $this->xmlWhitespaceOption, $this->comments);
     }
 
     /**
@@ -55,7 +82,7 @@ final class FuncExprCommonSubexprWithXmlparseDocumentOrContentAExprXmlWhitespace
      */
     public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
     {
-        return new self($this->documentOrContent, $aExpr, $this->xmlWhitespaceOption);
+        return new self($this->documentOrContent, $aExpr, $this->xmlWhitespaceOption, $this->comments);
     }
 
     /**
@@ -63,6 +90,14 @@ final class FuncExprCommonSubexprWithXmlparseDocumentOrContentAExprXmlWhitespace
      */
     public function withXmlWhitespaceOption(\SqlSemantics\Statement\Model\PostgreSql\Role\XmlWhitespaceOptionForm $xmlWhitespaceOption): self
     {
-        return new self($this->documentOrContent, $this->aExpr, $xmlWhitespaceOption);
+        return new self($this->documentOrContent, $this->aExpr, $xmlWhitespaceOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->documentOrContent, $this->aExpr, $this->xmlWhitespaceOption, $comments);
     }
 }

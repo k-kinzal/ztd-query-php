@@ -17,12 +17,13 @@ final class OptSubPartWithSubpartitionSymByOptLinearHashSymSubPartFuncOptNumSubp
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLinearForm $optLinear,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SubPartFuncForm $subPartFunc,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptNumSubpartsForm $optNumSubparts,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLinear), 'The optLinear must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($subPartFunc), 'The subPartFunc must be a generated immutable SQL value.');
@@ -34,12 +35,38 @@ final class OptSubPartWithSubpartitionSymByOptLinearHashSymSubPartFuncOptNumSubp
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SUBPARTITION');
+        $writer->comments($this->comments, 1);
         $writer->append('BY');
+        $writer->comments($this->comments, 2);
         $this->optLinear->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('HASH');
+        $writer->comments($this->comments, 4);
         $this->subPartFunc->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optNumSubparts->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optLinear, $this->subPartFunc, $this->optNumSubparts];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optLinear, \SqlSemantics\Statement\Model\MySql\Role\OptLinearForm::class, $replace), $this->replacement($this->subPartFunc, \SqlSemantics\Statement\Model\MySql\Role\SubPartFuncForm::class, $replace), $this->replacement($this->optNumSubparts, \SqlSemantics\Statement\Model\MySql\Role\OptNumSubpartsForm::class, $replace), $this->comments);
     }
 
     /**
@@ -47,7 +74,7 @@ final class OptSubPartWithSubpartitionSymByOptLinearHashSymSubPartFuncOptNumSubp
      */
     public function withOptLinear(\SqlSemantics\Statement\Model\MySql\Role\OptLinearForm $optLinear): self
     {
-        return new self($optLinear, $this->subPartFunc, $this->optNumSubparts);
+        return new self($optLinear, $this->subPartFunc, $this->optNumSubparts, $this->comments);
     }
 
     /**
@@ -55,7 +82,7 @@ final class OptSubPartWithSubpartitionSymByOptLinearHashSymSubPartFuncOptNumSubp
      */
     public function withSubPartFunc(\SqlSemantics\Statement\Model\MySql\Role\SubPartFuncForm $subPartFunc): self
     {
-        return new self($this->optLinear, $subPartFunc, $this->optNumSubparts);
+        return new self($this->optLinear, $subPartFunc, $this->optNumSubparts, $this->comments);
     }
 
     /**
@@ -63,6 +90,14 @@ final class OptSubPartWithSubpartitionSymByOptLinearHashSymSubPartFuncOptNumSubp
      */
     public function withOptNumSubparts(\SqlSemantics\Statement\Model\MySql\Role\OptNumSubpartsForm $optNumSubparts): self
     {
-        return new self($this->optLinear, $this->subPartFunc, $optNumSubparts);
+        return new self($this->optLinear, $this->subPartFunc, $optNumSubparts, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optLinear, $this->subPartFunc, $this->optNumSubparts, $comments);
     }
 }

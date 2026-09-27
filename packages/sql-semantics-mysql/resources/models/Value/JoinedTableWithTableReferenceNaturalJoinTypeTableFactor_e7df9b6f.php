@@ -17,12 +17,13 @@ final class JoinedTableWithTableReferenceNaturalJoinTypeTableFactor_e7df9b6f imp
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NaturalJoinTypeForm $naturalJoinType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableFactorForm $tableFactor,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableReference), 'The tableReference must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($naturalJoinType), 'The naturalJoinType must be a generated immutable SQL value.');
@@ -34,9 +35,32 @@ final class JoinedTableWithTableReferenceNaturalJoinTypeTableFactor_e7df9b6f imp
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableReference->write($writer);
+        $writer->comments($this->comments, 1);
         $this->naturalJoinType->write($writer);
+        $writer->comments($this->comments, 2);
         $this->tableFactor->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableReference, $this->naturalJoinType, $this->tableFactor];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableReference, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm::class, $replace), $this->replacement($this->naturalJoinType, \SqlSemantics\Statement\Model\MySql\Role\NaturalJoinTypeForm::class, $replace), $this->replacement($this->tableFactor, \SqlSemantics\Statement\Model\MySql\Role\TableFactorForm::class, $replace), $this->comments);
     }
 
     /**
@@ -44,7 +68,7 @@ final class JoinedTableWithTableReferenceNaturalJoinTypeTableFactor_e7df9b6f imp
      */
     public function withTableReference(\SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference): self
     {
-        return new self($tableReference, $this->naturalJoinType, $this->tableFactor);
+        return new self($tableReference, $this->naturalJoinType, $this->tableFactor, $this->comments);
     }
 
     /**
@@ -52,7 +76,7 @@ final class JoinedTableWithTableReferenceNaturalJoinTypeTableFactor_e7df9b6f imp
      */
     public function withNaturalJoinType(\SqlSemantics\Statement\Model\MySql\Role\NaturalJoinTypeForm $naturalJoinType): self
     {
-        return new self($this->tableReference, $naturalJoinType, $this->tableFactor);
+        return new self($this->tableReference, $naturalJoinType, $this->tableFactor, $this->comments);
     }
 
     /**
@@ -60,6 +84,14 @@ final class JoinedTableWithTableReferenceNaturalJoinTypeTableFactor_e7df9b6f imp
      */
     public function withTableFactor(\SqlSemantics\Statement\Model\MySql\Role\TableFactorForm $tableFactor): self
     {
-        return new self($this->tableReference, $this->naturalJoinType, $tableFactor);
+        return new self($this->tableReference, $this->naturalJoinType, $tableFactor, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableReference, $this->naturalJoinType, $this->tableFactor, $comments);
     }
 }

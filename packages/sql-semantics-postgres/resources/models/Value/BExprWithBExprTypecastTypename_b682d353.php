@@ -17,15 +17,16 @@ final class BExprWithBExprTypecastTypename_b682d353 implements \SqlSemantics\Sta
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr,
         public readonly string $typecast,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($bExpr), 'The bExpr must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($bExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 21,));
+        $this->assertOperandBindingStrength($bExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-16.6' => 25,  'pg-17.2' => 21,), \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_RULES, 'b_expr');
         $this->assertMatchesPattern($typecast, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['TYPECAST'], 'The typecast must be a complete TYPECAST lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
     }
@@ -35,9 +36,32 @@ final class BExprWithBExprTypecastTypename_b682d353 implements \SqlSemantics\Sta
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->bExpr->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append($this->typecast);
+        $writer->comments($this->comments, 2);
         $this->typename->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->bExpr, $this->typename];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->bExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm::class, $replace), $this->typecast, $this->replacement($this->typename, \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm::class, $replace), $this->comments);
     }
 
     /**
@@ -45,7 +69,7 @@ final class BExprWithBExprTypecastTypename_b682d353 implements \SqlSemantics\Sta
      */
     public function withBExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr): self
     {
-        return new self($bExpr, $this->typecast, $this->typename);
+        return new self($bExpr, $this->typecast, $this->typename, $this->comments);
     }
 
     /**
@@ -53,7 +77,7 @@ final class BExprWithBExprTypecastTypename_b682d353 implements \SqlSemantics\Sta
      */
     public function withTypecast(string $typecast): self
     {
-        return new self($this->bExpr, $typecast, $this->typename);
+        return new self($this->bExpr, $typecast, $this->typename, $this->comments);
     }
 
     /**
@@ -61,6 +85,14 @@ final class BExprWithBExprTypecastTypename_b682d353 implements \SqlSemantics\Sta
      */
     public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
     {
-        return new self($this->bExpr, $this->typecast, $typename);
+        return new self($this->bExpr, $this->typecast, $typename, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->bExpr, $this->typecast, $this->typename, $comments);
     }
 }

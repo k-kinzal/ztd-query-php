@@ -17,11 +17,12 @@ final class ConditionInformationItemWithSimpleTargetSpecificationEqConditionInfo
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleTargetSpecificationForm $simpleTargetSpecification,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ConditionInformationItemNameForm $conditionInformationItemName,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleTargetSpecification), 'The simpleTargetSpecification must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($conditionInformationItemName), 'The conditionInformationItemName must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class ConditionInformationItemWithSimpleTargetSpecificationEqConditionInfo
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->simpleTargetSpecification->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('=');
+        $writer->comments($this->comments, 2);
         $this->conditionInformationItemName->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->simpleTargetSpecification, $this->conditionInformationItemName];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->simpleTargetSpecification, \SqlSemantics\Statement\Model\MySql\Role\SimpleTargetSpecificationForm::class, $replace), $this->replacement($this->conditionInformationItemName, \SqlSemantics\Statement\Model\MySql\Role\ConditionInformationItemNameForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class ConditionInformationItemWithSimpleTargetSpecificationEqConditionInfo
      */
     public function withSimpleTargetSpecification(\SqlSemantics\Statement\Model\MySql\Role\SimpleTargetSpecificationForm $simpleTargetSpecification): self
     {
-        return new self($simpleTargetSpecification, $this->conditionInformationItemName);
+        return new self($simpleTargetSpecification, $this->conditionInformationItemName, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class ConditionInformationItemWithSimpleTargetSpecificationEqConditionInfo
      */
     public function withConditionInformationItemName(\SqlSemantics\Statement\Model\MySql\Role\ConditionInformationItemNameForm $conditionInformationItemName): self
     {
-        return new self($this->simpleTargetSpecification, $conditionInformationItemName);
+        return new self($this->simpleTargetSpecification, $conditionInformationItemName, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->simpleTargetSpecification, $this->conditionInformationItemName, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class SimpleTypenameWithConstIntervalOptInterval_95bc3378 implements \SqlS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ConstIntervalForm $constInterval,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptIntervalForm $optInterval,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($constInterval), 'The constInterval must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optInterval), 'The optInterval must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class SimpleTypenameWithConstIntervalOptInterval_95bc3378 implements \SqlS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->constInterval->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optInterval->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->constInterval, $this->optInterval];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->constInterval, \SqlSemantics\Statement\Model\PostgreSql\Role\ConstIntervalForm::class, $replace), $this->replacement($this->optInterval, \SqlSemantics\Statement\Model\PostgreSql\Role\OptIntervalForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class SimpleTypenameWithConstIntervalOptInterval_95bc3378 implements \SqlS
      */
     public function withConstInterval(\SqlSemantics\Statement\Model\PostgreSql\Role\ConstIntervalForm $constInterval): self
     {
-        return new self($constInterval, $this->optInterval);
+        return new self($constInterval, $this->optInterval, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class SimpleTypenameWithConstIntervalOptInterval_95bc3378 implements \SqlS
      */
     public function withOptInterval(\SqlSemantics\Statement\Model\PostgreSql\Role\OptIntervalForm $optInterval): self
     {
-        return new self($this->constInterval, $optInterval);
+        return new self($this->constInterval, $optInterval, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->constInterval, $this->optInterval, $comments);
     }
 }

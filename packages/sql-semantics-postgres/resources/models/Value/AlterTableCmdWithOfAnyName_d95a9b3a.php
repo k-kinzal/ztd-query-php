@@ -17,10 +17,11 @@ final class AlterTableCmdWithOfAnyName_d95a9b3a implements \SqlSemantics\Stateme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
     }
@@ -30,8 +31,30 @@ final class AlterTableCmdWithOfAnyName_d95a9b3a implements \SqlSemantics\Stateme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('OF');
+        $writer->comments($this->comments, 1);
         $this->anyName->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->anyName];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->anyName, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm::class, $replace), $this->comments);
     }
 
     /**
@@ -39,6 +62,14 @@ final class AlterTableCmdWithOfAnyName_d95a9b3a implements \SqlSemantics\Stateme
      */
     public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
     {
-        return new self($anyName);
+        return new self($anyName, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->anyName, $comments);
     }
 }

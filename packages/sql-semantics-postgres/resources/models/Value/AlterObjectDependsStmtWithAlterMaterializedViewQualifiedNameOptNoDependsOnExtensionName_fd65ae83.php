@@ -17,12 +17,13 @@ final class AlterObjectDependsStmtWithAlterMaterializedViewQualifiedNameOptNoDep
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptNoForm $optNo,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optNo), 'The optNo must be a generated immutable SQL value.');
@@ -34,15 +35,44 @@ final class AlterObjectDependsStmtWithAlterMaterializedViewQualifiedNameOptNoDep
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('MATERIALIZED');
+        $writer->comments($this->comments, 2);
         $writer->append('VIEW');
+        $writer->comments($this->comments, 3);
         $this->qualifiedName->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optNo->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('DEPENDS');
+        $writer->comments($this->comments, 6);
         $writer->append('ON');
+        $writer->comments($this->comments, 7);
         $writer->append('EXTENSION');
+        $writer->comments($this->comments, 8);
         $this->name->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->qualifiedName, $this->optNo, $this->name];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->optNo, \SqlSemantics\Statement\Model\PostgreSql\Role\OptNoForm::class, $replace), $this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->comments);
     }
 
     /**
@@ -50,7 +80,7 @@ final class AlterObjectDependsStmtWithAlterMaterializedViewQualifiedNameOptNoDep
      */
     public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
     {
-        return new self($qualifiedName, $this->optNo, $this->name);
+        return new self($qualifiedName, $this->optNo, $this->name, $this->comments);
     }
 
     /**
@@ -58,7 +88,7 @@ final class AlterObjectDependsStmtWithAlterMaterializedViewQualifiedNameOptNoDep
      */
     public function withOptNo(\SqlSemantics\Statement\Model\PostgreSql\Role\OptNoForm $optNo): self
     {
-        return new self($this->qualifiedName, $optNo, $this->name);
+        return new self($this->qualifiedName, $optNo, $this->name, $this->comments);
     }
 
     /**
@@ -66,6 +96,14 @@ final class AlterObjectDependsStmtWithAlterMaterializedViewQualifiedNameOptNoDep
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($this->qualifiedName, $this->optNo, $name);
+        return new self($this->qualifiedName, $this->optNo, $name, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->qualifiedName, $this->optNo, $this->name, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class FetchArgsWithFromInCursorName_95a6a6c1 implements \SqlSemantics\Stat
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FromInForm $fromIn,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CursorNameForm $cursorName,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($fromIn), 'The fromIn must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($cursorName), 'The cursorName must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class FetchArgsWithFromInCursorName_95a6a6c1 implements \SqlSemantics\Stat
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->fromIn->write($writer);
+        $writer->comments($this->comments, 1);
         $this->cursorName->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->fromIn, $this->cursorName];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->fromIn, \SqlSemantics\Statement\Model\PostgreSql\Role\FromInForm::class, $replace), $this->replacement($this->cursorName, \SqlSemantics\Statement\Model\PostgreSql\Role\CursorNameForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class FetchArgsWithFromInCursorName_95a6a6c1 implements \SqlSemantics\Stat
      */
     public function withFromIn(\SqlSemantics\Statement\Model\PostgreSql\Role\FromInForm $fromIn): self
     {
-        return new self($fromIn, $this->cursorName);
+        return new self($fromIn, $this->cursorName, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class FetchArgsWithFromInCursorName_95a6a6c1 implements \SqlSemantics\Stat
      */
     public function withCursorName(\SqlSemantics\Statement\Model\PostgreSql\Role\CursorNameForm $cursorName): self
     {
-        return new self($this->fromIn, $cursorName);
+        return new self($this->fromIn, $cursorName, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->fromIn, $this->cursorName, $comments);
     }
 }

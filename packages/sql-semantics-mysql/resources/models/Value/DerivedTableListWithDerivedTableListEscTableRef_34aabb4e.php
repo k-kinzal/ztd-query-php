@@ -17,11 +17,12 @@ final class DerivedTableListWithDerivedTableListEscTableRef_34aabb4e implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DerivedTableListForm $derivedTableList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EscTableRefForm $escTableRef,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($derivedTableList), 'The derivedTableList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($escTableRef), 'The escTableRef must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class DerivedTableListWithDerivedTableListEscTableRef_34aabb4e implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->derivedTableList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->escTableRef->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->derivedTableList, $this->escTableRef];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->derivedTableList, \SqlSemantics\Statement\Model\MySql\Role\DerivedTableListForm::class, $replace), $this->replacement($this->escTableRef, \SqlSemantics\Statement\Model\MySql\Role\EscTableRefForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class DerivedTableListWithDerivedTableListEscTableRef_34aabb4e implements 
      */
     public function withDerivedTableList(\SqlSemantics\Statement\Model\MySql\Role\DerivedTableListForm $derivedTableList): self
     {
-        return new self($derivedTableList, $this->escTableRef);
+        return new self($derivedTableList, $this->escTableRef, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class DerivedTableListWithDerivedTableListEscTableRef_34aabb4e implements 
      */
     public function withEscTableRef(\SqlSemantics\Statement\Model\MySql\Role\EscTableRefForm $escTableRef): self
     {
-        return new self($this->derivedTableList, $escTableRef);
+        return new self($this->derivedTableList, $escTableRef, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->derivedTableList, $this->escTableRef, $comments);
     }
 }

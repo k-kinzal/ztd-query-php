@@ -17,11 +17,12 @@ final class ColumnsListWithColumnsListJtColumn_8107f4d4 implements \SqlSemantics
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ColumnsListForm $columnsList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\JtColumnForm $jtColumn,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($columnsList), 'The columnsList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($jtColumn), 'The jtColumn must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class ColumnsListWithColumnsListJtColumn_8107f4d4 implements \SqlSemantics
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->columnsList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->jtColumn->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->columnsList, $this->jtColumn];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->columnsList, \SqlSemantics\Statement\Model\MySql\Role\ColumnsListForm::class, $replace), $this->replacement($this->jtColumn, \SqlSemantics\Statement\Model\MySql\Role\JtColumnForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class ColumnsListWithColumnsListJtColumn_8107f4d4 implements \SqlSemantics
      */
     public function withColumnsList(\SqlSemantics\Statement\Model\MySql\Role\ColumnsListForm $columnsList): self
     {
-        return new self($columnsList, $this->jtColumn);
+        return new self($columnsList, $this->jtColumn, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class ColumnsListWithColumnsListJtColumn_8107f4d4 implements \SqlSemantics
      */
     public function withJtColumn(\SqlSemantics\Statement\Model\MySql\Role\JtColumnForm $jtColumn): self
     {
-        return new self($this->columnsList, $jtColumn);
+        return new self($this->columnsList, $jtColumn, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->columnsList, $this->jtColumn, $comments);
     }
 }

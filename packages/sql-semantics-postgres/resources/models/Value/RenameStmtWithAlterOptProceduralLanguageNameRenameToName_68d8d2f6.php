@@ -17,12 +17,13 @@ final class RenameStmtWithAlterOptProceduralLanguageNameRenameToName_68d8d2f6 im
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptProceduralForm $optProcedural,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optProcedural), 'The optProcedural must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
@@ -34,13 +35,40 @@ final class RenameStmtWithAlterOptProceduralLanguageNameRenameToName_68d8d2f6 im
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $this->optProcedural->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('LANGUAGE');
+        $writer->comments($this->comments, 3);
         $this->name->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('RENAME');
+        $writer->comments($this->comments, 5);
         $writer->append('TO');
+        $writer->comments($this->comments, 6);
         $this->name2->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optProcedural, $this->name, $this->name2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optProcedural, \SqlSemantics\Statement\Model\PostgreSql\Role\OptProceduralForm::class, $replace), $this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->name2, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->comments);
     }
 
     /**
@@ -48,7 +76,7 @@ final class RenameStmtWithAlterOptProceduralLanguageNameRenameToName_68d8d2f6 im
      */
     public function withOptProcedural(\SqlSemantics\Statement\Model\PostgreSql\Role\OptProceduralForm $optProcedural): self
     {
-        return new self($optProcedural, $this->name, $this->name2);
+        return new self($optProcedural, $this->name, $this->name2, $this->comments);
     }
 
     /**
@@ -56,7 +84,7 @@ final class RenameStmtWithAlterOptProceduralLanguageNameRenameToName_68d8d2f6 im
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($this->optProcedural, $name, $this->name2);
+        return new self($this->optProcedural, $name, $this->name2, $this->comments);
     }
 
     /**
@@ -64,6 +92,14 @@ final class RenameStmtWithAlterOptProceduralLanguageNameRenameToName_68d8d2f6 im
      */
     public function withName2(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name2): self
     {
-        return new self($this->optProcedural, $this->name, $name2);
+        return new self($this->optProcedural, $this->name, $name2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optProcedural, $this->name, $this->name2, $comments);
     }
 }

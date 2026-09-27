@@ -17,11 +17,12 @@ final class LockingClauseListWithLockingClauseListLockingClause_f112f1b9 impleme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LockingClauseListForm $lockingClauseList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LockingClauseForm $lockingClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($lockingClauseList), 'The lockingClauseList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($lockingClause), 'The lockingClause must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class LockingClauseListWithLockingClauseListLockingClause_f112f1b9 impleme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->lockingClauseList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->lockingClause->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->lockingClauseList, $this->lockingClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->lockingClauseList, \SqlSemantics\Statement\Model\MySql\Role\LockingClauseListForm::class, $replace), $this->replacement($this->lockingClause, \SqlSemantics\Statement\Model\MySql\Role\LockingClauseForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class LockingClauseListWithLockingClauseListLockingClause_f112f1b9 impleme
      */
     public function withLockingClauseList(\SqlSemantics\Statement\Model\MySql\Role\LockingClauseListForm $lockingClauseList): self
     {
-        return new self($lockingClauseList, $this->lockingClause);
+        return new self($lockingClauseList, $this->lockingClause, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class LockingClauseListWithLockingClauseListLockingClause_f112f1b9 impleme
      */
     public function withLockingClause(\SqlSemantics\Statement\Model\MySql\Role\LockingClauseForm $lockingClause): self
     {
-        return new self($this->lockingClauseList, $lockingClause);
+        return new self($this->lockingClauseList, $lockingClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->lockingClauseList, $this->lockingClause, $comments);
     }
 }

@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlParser\Lexer\LexicalException;
+use SqlParser\Lexer\ParameterSyntax;
 use SqlParser\Lexer\Token;
 use SqlParser\MySql\MySqlParser;
 use SqlParser\MySql\MySqlVersion;
@@ -19,6 +20,7 @@ use SqlParser\Parser\SyntaxException;
 #[CoversClass(MySqlParser::class)]
 #[UsesClass(MySqlVersion::class)]
 #[UsesClass(SqlMode::class)]
+#[UsesClass(ParameterSyntax::class)]
 #[UsesClass(SyntaxException::class)]
 #[UsesClass(LexicalException::class)]
 #[UsesClass(Token::class)]
@@ -82,6 +84,18 @@ final class MySqlParserTest extends TestCase
         $this->expectException(LexicalException::class);
 
         (new MySqlParser())->tokenize("SELECT 'abc");
+    }
+
+    public function testParseReadsNamedParametersUnderTheNamedSyntax(): void
+    {
+        $sql = 'UPDATE users SET name = :name WHERE id = :id AND status = ?';
+
+        self::assertSame($sql, (new MySqlParser(parameters: ParameterSyntax::Named))->parse($sql)->toString());
+        self::assertSame(3, count(array_filter((new MySqlParser(parameters: ParameterSyntax::Named))->tokenize($sql), static fn (Token $token): bool => $token->name === 'PARAM_MARKER')));
+
+        $this->expectException(SyntaxException::class);
+
+        (new MySqlParser())->parse($sql);
     }
 
     public function testParse(): void

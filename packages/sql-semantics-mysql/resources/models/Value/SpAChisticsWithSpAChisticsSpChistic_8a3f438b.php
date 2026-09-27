@@ -17,11 +17,12 @@ final class SpAChisticsWithSpAChisticsSpChistic_8a3f438b implements \SqlSemantic
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpAChisticsForm $spAChistics,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpChisticForm $spChistic,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spAChistics), 'The spAChistics must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spChistic), 'The spChistic must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class SpAChisticsWithSpAChisticsSpChistic_8a3f438b implements \SqlSemantic
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->spAChistics->write($writer);
+        $writer->comments($this->comments, 1);
         $this->spChistic->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->spAChistics, $this->spChistic];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->spAChistics, \SqlSemantics\Statement\Model\MySql\Role\SpAChisticsForm::class, $replace), $this->replacement($this->spChistic, \SqlSemantics\Statement\Model\MySql\Role\SpChisticForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class SpAChisticsWithSpAChisticsSpChistic_8a3f438b implements \SqlSemantic
      */
     public function withSpAChistics(\SqlSemantics\Statement\Model\MySql\Role\SpAChisticsForm $spAChistics): self
     {
-        return new self($spAChistics, $this->spChistic);
+        return new self($spAChistics, $this->spChistic, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class SpAChisticsWithSpAChisticsSpChistic_8a3f438b implements \SqlSemantic
      */
     public function withSpChistic(\SqlSemantics\Statement\Model\MySql\Role\SpChisticForm $spChistic): self
     {
-        return new self($this->spAChistics, $spChistic);
+        return new self($this->spAChistics, $spChistic, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->spAChistics, $this->spChistic, $comments);
     }
 }

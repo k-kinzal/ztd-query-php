@@ -17,11 +17,12 @@ final class StartOptionValueListWithPasswordEqualPasswordPassword_98df9734 imple
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PasswordForm $password,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($equal), 'The equal must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($password), 'The password must be a generated immutable SQL value.');
@@ -32,12 +33,38 @@ final class StartOptionValueListWithPasswordEqualPasswordPassword_98df9734 imple
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('PASSWORD');
+        $writer->comments($this->comments, 1);
         $this->equal->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('PASSWORD');
+        $writer->comments($this->comments, 3);
         $writer->append('(');
+        $writer->comments($this->comments, 4);
         $this->password->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->equal, $this->password];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->equal, \SqlSemantics\Statement\Model\MySql\Role\EqualForm::class, $replace), $this->replacement($this->password, \SqlSemantics\Statement\Model\MySql\Role\PasswordForm::class, $replace), $this->comments);
     }
 
     /**
@@ -45,7 +72,7 @@ final class StartOptionValueListWithPasswordEqualPasswordPassword_98df9734 imple
      */
     public function withEqual(\SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal): self
     {
-        return new self($equal, $this->password);
+        return new self($equal, $this->password, $this->comments);
     }
 
     /**
@@ -53,6 +80,14 @@ final class StartOptionValueListWithPasswordEqualPasswordPassword_98df9734 imple
      */
     public function withPassword(\SqlSemantics\Statement\Model\MySql\Role\PasswordForm $password): self
     {
-        return new self($this->equal, $password);
+        return new self($this->equal, $password, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->equal, $this->password, $comments);
     }
 }

@@ -17,20 +17,21 @@ final class AExprWithAExprNotLaLikeAExprEscapeAExpr_a57ce8bd implements \SqlSema
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
         public readonly string $notLa,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr2,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr3,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($aExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 9,));
+        $this->assertOperandBindingStrength($aExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-16.6' => 10,  'pg-17.2' => 9,), \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_RULES, 'a_expr');
         $this->assertMatchesPattern($notLa, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['NOT_LA'], 'The notLa must be a complete NOT_LA lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr2), 'The aExpr2 must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr3), 'The aExpr3 must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($aExpr3, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 9,));
+        $this->assertOperandBindingStrength($aExpr3, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-16.6' => 10,  'pg-17.2' => 9,), \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_RULES, 'a_expr');
     }
 
     /**
@@ -38,12 +39,38 @@ final class AExprWithAExprNotLaLikeAExprEscapeAExpr_a57ce8bd implements \SqlSema
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->aExpr->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append($this->notLa);
+        $writer->comments($this->comments, 2);
         $writer->append('LIKE');
+        $writer->comments($this->comments, 3);
         $this->aExpr2->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('ESCAPE');
+        $writer->comments($this->comments, 5);
         $this->aExpr3->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->aExpr, $this->aExpr2, $this->aExpr3];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->aExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm::class, $replace), $this->notLa, $this->replacement($this->aExpr2, \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm::class, $replace), $this->replacement($this->aExpr3, \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm::class, $replace), $this->comments);
     }
 
     /**
@@ -51,7 +78,7 @@ final class AExprWithAExprNotLaLikeAExprEscapeAExpr_a57ce8bd implements \SqlSema
      */
     public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
     {
-        return new self($aExpr, $this->notLa, $this->aExpr2, $this->aExpr3);
+        return new self($aExpr, $this->notLa, $this->aExpr2, $this->aExpr3, $this->comments);
     }
 
     /**
@@ -59,7 +86,7 @@ final class AExprWithAExprNotLaLikeAExprEscapeAExpr_a57ce8bd implements \SqlSema
      */
     public function withNotLa(string $notLa): self
     {
-        return new self($this->aExpr, $notLa, $this->aExpr2, $this->aExpr3);
+        return new self($this->aExpr, $notLa, $this->aExpr2, $this->aExpr3, $this->comments);
     }
 
     /**
@@ -67,7 +94,7 @@ final class AExprWithAExprNotLaLikeAExprEscapeAExpr_a57ce8bd implements \SqlSema
      */
     public function withAExpr2(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr2): self
     {
-        return new self($this->aExpr, $this->notLa, $aExpr2, $this->aExpr3);
+        return new self($this->aExpr, $this->notLa, $aExpr2, $this->aExpr3, $this->comments);
     }
 
     /**
@@ -75,6 +102,14 @@ final class AExprWithAExprNotLaLikeAExprEscapeAExpr_a57ce8bd implements \SqlSema
      */
     public function withAExpr3(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr3): self
     {
-        return new self($this->aExpr, $this->notLa, $this->aExpr2, $aExpr3);
+        return new self($this->aExpr, $this->notLa, $this->aExpr2, $aExpr3, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->aExpr, $this->notLa, $this->aExpr2, $this->aExpr3, $comments);
     }
 }

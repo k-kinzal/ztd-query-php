@@ -17,7 +17,7 @@ final class DeleteStmtWithOptWithClauseDeletePFromRelationExprOptAliasUsingClaus
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithClauseForm $with,
@@ -25,6 +25,7 @@ final class DeleteStmtWithOptWithClauseDeletePFromRelationExprOptAliasUsingClaus
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\UsingClauseForm $usingClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\WhereOrCurrentClauseForm $whereOrCurrentClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ReturningClauseForm $returningClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($with), 'The with must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($relationExprOptAlias), 'The relationExprOptAlias must be a generated immutable SQL value.');
@@ -38,13 +39,40 @@ final class DeleteStmtWithOptWithClauseDeletePFromRelationExprOptAliasUsingClaus
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->with->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('DELETE');
+        $writer->comments($this->comments, 2);
         $writer->append('FROM');
+        $writer->comments($this->comments, 3);
         $this->relationExprOptAlias->write($writer);
+        $writer->comments($this->comments, 4);
         $this->usingClause->write($writer);
+        $writer->comments($this->comments, 5);
         $this->whereOrCurrentClause->write($writer);
+        $writer->comments($this->comments, 6);
         $this->returningClause->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->with, $this->relationExprOptAlias, $this->usingClause, $this->whereOrCurrentClause, $this->returningClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->with, \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithClauseForm::class, $replace), $this->replacement($this->relationExprOptAlias, \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprOptAliasForm::class, $replace), $this->replacement($this->usingClause, \SqlSemantics\Statement\Model\PostgreSql\Role\UsingClauseForm::class, $replace), $this->replacement($this->whereOrCurrentClause, \SqlSemantics\Statement\Model\PostgreSql\Role\WhereOrCurrentClauseForm::class, $replace), $this->replacement($this->returningClause, \SqlSemantics\Statement\Model\PostgreSql\Role\ReturningClauseForm::class, $replace), $this->comments);
     }
 
     /**
@@ -52,7 +80,7 @@ final class DeleteStmtWithOptWithClauseDeletePFromRelationExprOptAliasUsingClaus
      */
     public function withWith(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithClauseForm $with): self
     {
-        return new self($with, $this->relationExprOptAlias, $this->usingClause, $this->whereOrCurrentClause, $this->returningClause);
+        return new self($with, $this->relationExprOptAlias, $this->usingClause, $this->whereOrCurrentClause, $this->returningClause, $this->comments);
     }
 
     /**
@@ -60,7 +88,7 @@ final class DeleteStmtWithOptWithClauseDeletePFromRelationExprOptAliasUsingClaus
      */
     public function withRelationExprOptAlias(\SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprOptAliasForm $relationExprOptAlias): self
     {
-        return new self($this->with, $relationExprOptAlias, $this->usingClause, $this->whereOrCurrentClause, $this->returningClause);
+        return new self($this->with, $relationExprOptAlias, $this->usingClause, $this->whereOrCurrentClause, $this->returningClause, $this->comments);
     }
 
     /**
@@ -68,7 +96,7 @@ final class DeleteStmtWithOptWithClauseDeletePFromRelationExprOptAliasUsingClaus
      */
     public function withUsingClause(\SqlSemantics\Statement\Model\PostgreSql\Role\UsingClauseForm $usingClause): self
     {
-        return new self($this->with, $this->relationExprOptAlias, $usingClause, $this->whereOrCurrentClause, $this->returningClause);
+        return new self($this->with, $this->relationExprOptAlias, $usingClause, $this->whereOrCurrentClause, $this->returningClause, $this->comments);
     }
 
     /**
@@ -76,7 +104,7 @@ final class DeleteStmtWithOptWithClauseDeletePFromRelationExprOptAliasUsingClaus
      */
     public function withWhereOrCurrentClause(\SqlSemantics\Statement\Model\PostgreSql\Role\WhereOrCurrentClauseForm $whereOrCurrentClause): self
     {
-        return new self($this->with, $this->relationExprOptAlias, $this->usingClause, $whereOrCurrentClause, $this->returningClause);
+        return new self($this->with, $this->relationExprOptAlias, $this->usingClause, $whereOrCurrentClause, $this->returningClause, $this->comments);
     }
 
     /**
@@ -84,6 +112,14 @@ final class DeleteStmtWithOptWithClauseDeletePFromRelationExprOptAliasUsingClaus
      */
     public function withReturningClause(\SqlSemantics\Statement\Model\PostgreSql\Role\ReturningClauseForm $returningClause): self
     {
-        return new self($this->with, $this->relationExprOptAlias, $this->usingClause, $this->whereOrCurrentClause, $returningClause);
+        return new self($this->with, $this->relationExprOptAlias, $this->usingClause, $this->whereOrCurrentClause, $returningClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->with, $this->relationExprOptAlias, $this->usingClause, $this->whereOrCurrentClause, $this->returningClause, $comments);
     }
 }

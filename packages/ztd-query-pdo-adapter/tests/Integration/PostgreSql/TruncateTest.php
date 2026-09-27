@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration\PostgreSql;
 
 use Container\Endpoint;
-use Container\PostgreSql16Container;
+use Container\PostgreSqlRelease;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
@@ -25,7 +25,7 @@ final class TruncateTest extends TestCase
 {
     public function testTruncateTable(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -69,7 +69,7 @@ final class TruncateTest extends TestCase
 
     public function testTruncateWithoutTableKeyword(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -113,7 +113,7 @@ final class TruncateTest extends TestCase
 
     public function testTruncateDoesNotModifyPhysicalDatabase(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -151,7 +151,7 @@ final class TruncateTest extends TestCase
 
     public function testTruncateMultipleTables(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),

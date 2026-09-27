@@ -17,11 +17,12 @@ final class AlterUserStmtWithAlterUserCommandUserFuncDiscardSymOldSymPassword_7b
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterUserCommandForm $alterUserCommand,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserFuncForm $userFunc,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterUserCommand), 'The alterUserCommand must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($userFunc), 'The userFunc must be a generated immutable SQL value.');
@@ -32,11 +33,36 @@ final class AlterUserStmtWithAlterUserCommandUserFuncDiscardSymOldSymPassword_7b
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->alterUserCommand->write($writer);
+        $writer->comments($this->comments, 1);
         $this->userFunc->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('DISCARD');
+        $writer->comments($this->comments, 3);
         $writer->append('OLD');
+        $writer->comments($this->comments, 4);
         $writer->append('PASSWORD');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->alterUserCommand, $this->userFunc];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->alterUserCommand, \SqlSemantics\Statement\Model\MySql\Role\AlterUserCommandForm::class, $replace), $this->replacement($this->userFunc, \SqlSemantics\Statement\Model\MySql\Role\UserFuncForm::class, $replace), $this->comments);
     }
 
     /**
@@ -44,7 +70,7 @@ final class AlterUserStmtWithAlterUserCommandUserFuncDiscardSymOldSymPassword_7b
      */
     public function withAlterUserCommand(\SqlSemantics\Statement\Model\MySql\Role\AlterUserCommandForm $alterUserCommand): self
     {
-        return new self($alterUserCommand, $this->userFunc);
+        return new self($alterUserCommand, $this->userFunc, $this->comments);
     }
 
     /**
@@ -52,6 +78,14 @@ final class AlterUserStmtWithAlterUserCommandUserFuncDiscardSymOldSymPassword_7b
      */
     public function withUserFunc(\SqlSemantics\Statement\Model\MySql\Role\UserFuncForm $userFunc): self
     {
-        return new self($this->alterUserCommand, $userFunc);
+        return new self($this->alterUserCommand, $userFunc, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->alterUserCommand, $this->userFunc, $comments);
     }
 }

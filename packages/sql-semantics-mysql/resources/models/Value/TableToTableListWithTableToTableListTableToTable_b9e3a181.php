@@ -17,11 +17,12 @@ final class TableToTableListWithTableToTableListTableToTable_b9e3a181 implements
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableToTableListForm $tableToTableList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableToTableForm $tableToTable,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableToTableList), 'The tableToTableList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableToTable), 'The tableToTable must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class TableToTableListWithTableToTableListTableToTable_b9e3a181 implements
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableToTableList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->tableToTable->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableToTableList, $this->tableToTable];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableToTableList, \SqlSemantics\Statement\Model\MySql\Role\TableToTableListForm::class, $replace), $this->replacement($this->tableToTable, \SqlSemantics\Statement\Model\MySql\Role\TableToTableForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class TableToTableListWithTableToTableListTableToTable_b9e3a181 implements
      */
     public function withTableToTableList(\SqlSemantics\Statement\Model\MySql\Role\TableToTableListForm $tableToTableList): self
     {
-        return new self($tableToTableList, $this->tableToTable);
+        return new self($tableToTableList, $this->tableToTable, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class TableToTableListWithTableToTableListTableToTable_b9e3a181 implements
      */
     public function withTableToTable(\SqlSemantics\Statement\Model\MySql\Role\TableToTableForm $tableToTable): self
     {
-        return new self($this->tableToTableList, $tableToTable);
+        return new self($this->tableToTableList, $tableToTable, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableToTableList, $this->tableToTable, $comments);
     }
 }

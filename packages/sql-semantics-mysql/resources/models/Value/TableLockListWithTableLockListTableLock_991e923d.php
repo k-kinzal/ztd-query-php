@@ -17,11 +17,12 @@ final class TableLockListWithTableLockListTableLock_991e923d implements \SqlSema
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableLockListForm $tableLockList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableLockForm $tableLock,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableLockList), 'The tableLockList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableLock), 'The tableLock must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class TableLockListWithTableLockListTableLock_991e923d implements \SqlSema
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableLockList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->tableLock->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableLockList, $this->tableLock];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableLockList, \SqlSemantics\Statement\Model\MySql\Role\TableLockListForm::class, $replace), $this->replacement($this->tableLock, \SqlSemantics\Statement\Model\MySql\Role\TableLockForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class TableLockListWithTableLockListTableLock_991e923d implements \SqlSema
      */
     public function withTableLockList(\SqlSemantics\Statement\Model\MySql\Role\TableLockListForm $tableLockList): self
     {
-        return new self($tableLockList, $this->tableLock);
+        return new self($tableLockList, $this->tableLock, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class TableLockListWithTableLockListTableLock_991e923d implements \SqlSema
      */
     public function withTableLock(\SqlSemantics\Statement\Model\MySql\Role\TableLockForm $tableLock): self
     {
-        return new self($this->tableLockList, $tableLock);
+        return new self($this->tableLockList, $tableLock, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableLockList, $this->tableLock, $comments);
     }
 }

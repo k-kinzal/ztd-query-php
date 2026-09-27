@@ -17,12 +17,13 @@ final class AlterListItemWithConvertSymToSymCharacterSetCharsetNameOptCollate_1c
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharacterSetForm $characterSet,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharsetNameForm $charsetName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCollateForm $optCollate,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($characterSet), 'The characterSet must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($charsetName), 'The charsetName must be a generated immutable SQL value.');
@@ -34,11 +35,36 @@ final class AlterListItemWithConvertSymToSymCharacterSetCharsetNameOptCollate_1c
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CONVERT');
+        $writer->comments($this->comments, 1);
         $writer->append('TO');
+        $writer->comments($this->comments, 2);
         $this->characterSet->write($writer);
+        $writer->comments($this->comments, 3);
         $this->charsetName->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optCollate->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->characterSet, $this->charsetName, $this->optCollate];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->characterSet, \SqlSemantics\Statement\Model\MySql\Role\CharacterSetForm::class, $replace), $this->replacement($this->charsetName, \SqlSemantics\Statement\Model\MySql\Role\CharsetNameForm::class, $replace), $this->replacement($this->optCollate, \SqlSemantics\Statement\Model\MySql\Role\OptCollateForm::class, $replace), $this->comments);
     }
 
     /**
@@ -46,7 +72,7 @@ final class AlterListItemWithConvertSymToSymCharacterSetCharsetNameOptCollate_1c
      */
     public function withCharacterSet(\SqlSemantics\Statement\Model\MySql\Role\CharacterSetForm $characterSet): self
     {
-        return new self($characterSet, $this->charsetName, $this->optCollate);
+        return new self($characterSet, $this->charsetName, $this->optCollate, $this->comments);
     }
 
     /**
@@ -54,7 +80,7 @@ final class AlterListItemWithConvertSymToSymCharacterSetCharsetNameOptCollate_1c
      */
     public function withCharsetName(\SqlSemantics\Statement\Model\MySql\Role\CharsetNameForm $charsetName): self
     {
-        return new self($this->characterSet, $charsetName, $this->optCollate);
+        return new self($this->characterSet, $charsetName, $this->optCollate, $this->comments);
     }
 
     /**
@@ -62,6 +88,14 @@ final class AlterListItemWithConvertSymToSymCharacterSetCharsetNameOptCollate_1c
      */
     public function withOptCollate(\SqlSemantics\Statement\Model\MySql\Role\OptCollateForm $optCollate): self
     {
-        return new self($this->characterSet, $this->charsetName, $optCollate);
+        return new self($this->characterSet, $this->charsetName, $optCollate, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->characterSet, $this->charsetName, $this->optCollate, $comments);
     }
 }

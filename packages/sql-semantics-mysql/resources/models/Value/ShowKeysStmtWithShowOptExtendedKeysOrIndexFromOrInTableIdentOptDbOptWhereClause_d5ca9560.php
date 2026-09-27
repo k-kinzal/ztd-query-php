@@ -17,7 +17,7 @@ final class ShowKeysStmtWithShowOptExtendedKeysOrIndexFromOrInTableIdentOptDbOpt
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptExtendedForm $optExtended,
@@ -26,6 +26,7 @@ final class ShowKeysStmtWithShowOptExtendedKeysOrIndexFromOrInTableIdentOptDbOpt
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptDbForm $optDb,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm $where,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optExtended), 'The optExtended must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keysOrIndex), 'The keysOrIndex must be a generated immutable SQL value.');
@@ -40,13 +41,40 @@ final class ShowKeysStmtWithShowOptExtendedKeysOrIndexFromOrInTableIdentOptDbOpt
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SHOW');
+        $writer->comments($this->comments, 1);
         $this->optExtended->write($writer);
+        $writer->comments($this->comments, 2);
         $this->keysOrIndex->write($writer);
+        $writer->comments($this->comments, 3);
         $this->fromOrIn->write($writer);
+        $writer->comments($this->comments, 4);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optDb->write($writer);
+        $writer->comments($this->comments, 6);
         $this->where->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optExtended, $this->keysOrIndex, $this->fromOrIn, $this->tableIdent, $this->optDb, $this->where];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optExtended, \SqlSemantics\Statement\Model\MySql\Role\OptExtendedForm::class, $replace), $this->replacement($this->keysOrIndex, \SqlSemantics\Statement\Model\MySql\Role\KeysOrIndexForm::class, $replace), $this->replacement($this->fromOrIn, \SqlSemantics\Statement\Model\MySql\Role\FromOrInForm::class, $replace), $this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->optDb, \SqlSemantics\Statement\Model\MySql\Role\OptDbForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm::class, $replace), $this->comments);
     }
 
     /**
@@ -54,7 +82,7 @@ final class ShowKeysStmtWithShowOptExtendedKeysOrIndexFromOrInTableIdentOptDbOpt
      */
     public function withOptExtended(\SqlSemantics\Statement\Model\MySql\Role\OptExtendedForm $optExtended): self
     {
-        return new self($optExtended, $this->keysOrIndex, $this->fromOrIn, $this->tableIdent, $this->optDb, $this->where);
+        return new self($optExtended, $this->keysOrIndex, $this->fromOrIn, $this->tableIdent, $this->optDb, $this->where, $this->comments);
     }
 
     /**
@@ -62,7 +90,7 @@ final class ShowKeysStmtWithShowOptExtendedKeysOrIndexFromOrInTableIdentOptDbOpt
      */
     public function withKeysOrIndex(\SqlSemantics\Statement\Model\MySql\Role\KeysOrIndexForm $keysOrIndex): self
     {
-        return new self($this->optExtended, $keysOrIndex, $this->fromOrIn, $this->tableIdent, $this->optDb, $this->where);
+        return new self($this->optExtended, $keysOrIndex, $this->fromOrIn, $this->tableIdent, $this->optDb, $this->where, $this->comments);
     }
 
     /**
@@ -70,7 +98,7 @@ final class ShowKeysStmtWithShowOptExtendedKeysOrIndexFromOrInTableIdentOptDbOpt
      */
     public function withFromOrIn(\SqlSemantics\Statement\Model\MySql\Role\FromOrInForm $fromOrIn): self
     {
-        return new self($this->optExtended, $this->keysOrIndex, $fromOrIn, $this->tableIdent, $this->optDb, $this->where);
+        return new self($this->optExtended, $this->keysOrIndex, $fromOrIn, $this->tableIdent, $this->optDb, $this->where, $this->comments);
     }
 
     /**
@@ -78,7 +106,7 @@ final class ShowKeysStmtWithShowOptExtendedKeysOrIndexFromOrInTableIdentOptDbOpt
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($this->optExtended, $this->keysOrIndex, $this->fromOrIn, $tableIdent, $this->optDb, $this->where);
+        return new self($this->optExtended, $this->keysOrIndex, $this->fromOrIn, $tableIdent, $this->optDb, $this->where, $this->comments);
     }
 
     /**
@@ -86,7 +114,7 @@ final class ShowKeysStmtWithShowOptExtendedKeysOrIndexFromOrInTableIdentOptDbOpt
      */
     public function withOptDb(\SqlSemantics\Statement\Model\MySql\Role\OptDbForm $optDb): self
     {
-        return new self($this->optExtended, $this->keysOrIndex, $this->fromOrIn, $this->tableIdent, $optDb, $this->where);
+        return new self($this->optExtended, $this->keysOrIndex, $this->fromOrIn, $this->tableIdent, $optDb, $this->where, $this->comments);
     }
 
     /**
@@ -94,6 +122,14 @@ final class ShowKeysStmtWithShowOptExtendedKeysOrIndexFromOrInTableIdentOptDbOpt
      */
     public function withWhere(\SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm $where): self
     {
-        return new self($this->optExtended, $this->keysOrIndex, $this->fromOrIn, $this->tableIdent, $this->optDb, $where);
+        return new self($this->optExtended, $this->keysOrIndex, $this->fromOrIn, $this->tableIdent, $this->optDb, $where, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optExtended, $this->keysOrIndex, $this->fromOrIn, $this->tableIdent, $this->optDb, $this->where, $comments);
     }
 }

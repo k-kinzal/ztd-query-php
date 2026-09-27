@@ -17,7 +17,7 @@ final class ImportForeignSchemaStmtWithImportPForeignSchemaNameImportQualificati
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
@@ -25,6 +25,7 @@ final class ImportForeignSchemaStmtWithImportPForeignSchemaNameImportQualificati
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name2,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name3,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreateGenericOptionsForm $createGenericOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($importQualification), 'The importQualification must be a generated immutable SQL value.');
@@ -38,17 +39,48 @@ final class ImportForeignSchemaStmtWithImportPForeignSchemaNameImportQualificati
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('IMPORT');
+        $writer->comments($this->comments, 1);
         $writer->append('FOREIGN');
+        $writer->comments($this->comments, 2);
         $writer->append('SCHEMA');
+        $writer->comments($this->comments, 3);
         $this->name->write($writer);
+        $writer->comments($this->comments, 4);
         $this->importQualification->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('FROM');
+        $writer->comments($this->comments, 6);
         $writer->append('SERVER');
+        $writer->comments($this->comments, 7);
         $this->name2->write($writer);
+        $writer->comments($this->comments, 8);
         $writer->append('INTO');
+        $writer->comments($this->comments, 9);
         $this->name3->write($writer);
+        $writer->comments($this->comments, 10);
         $this->createGenericOptions->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->name, $this->importQualification, $this->name2, $this->name3, $this->createGenericOptions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->importQualification, \SqlSemantics\Statement\Model\PostgreSql\Role\ImportQualificationForm::class, $replace), $this->replacement($this->name2, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->name3, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->createGenericOptions, \SqlSemantics\Statement\Model\PostgreSql\Role\CreateGenericOptionsForm::class, $replace), $this->comments);
     }
 
     /**
@@ -56,7 +88,7 @@ final class ImportForeignSchemaStmtWithImportPForeignSchemaNameImportQualificati
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($name, $this->importQualification, $this->name2, $this->name3, $this->createGenericOptions);
+        return new self($name, $this->importQualification, $this->name2, $this->name3, $this->createGenericOptions, $this->comments);
     }
 
     /**
@@ -64,7 +96,7 @@ final class ImportForeignSchemaStmtWithImportPForeignSchemaNameImportQualificati
      */
     public function withImportQualification(\SqlSemantics\Statement\Model\PostgreSql\Role\ImportQualificationForm $importQualification): self
     {
-        return new self($this->name, $importQualification, $this->name2, $this->name3, $this->createGenericOptions);
+        return new self($this->name, $importQualification, $this->name2, $this->name3, $this->createGenericOptions, $this->comments);
     }
 
     /**
@@ -72,7 +104,7 @@ final class ImportForeignSchemaStmtWithImportPForeignSchemaNameImportQualificati
      */
     public function withName2(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name2): self
     {
-        return new self($this->name, $this->importQualification, $name2, $this->name3, $this->createGenericOptions);
+        return new self($this->name, $this->importQualification, $name2, $this->name3, $this->createGenericOptions, $this->comments);
     }
 
     /**
@@ -80,7 +112,7 @@ final class ImportForeignSchemaStmtWithImportPForeignSchemaNameImportQualificati
      */
     public function withName3(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name3): self
     {
-        return new self($this->name, $this->importQualification, $this->name2, $name3, $this->createGenericOptions);
+        return new self($this->name, $this->importQualification, $this->name2, $name3, $this->createGenericOptions, $this->comments);
     }
 
     /**
@@ -88,6 +120,14 @@ final class ImportForeignSchemaStmtWithImportPForeignSchemaNameImportQualificati
      */
     public function withCreateGenericOptions(\SqlSemantics\Statement\Model\PostgreSql\Role\CreateGenericOptionsForm $createGenericOptions): self
     {
-        return new self($this->name, $this->importQualification, $this->name2, $this->name3, $createGenericOptions);
+        return new self($this->name, $this->importQualification, $this->name2, $this->name3, $createGenericOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->name, $this->importQualification, $this->name2, $this->name3, $this->createGenericOptions, $comments);
     }
 }

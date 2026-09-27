@@ -17,10 +17,11 @@ final class EvAlterOnScheduleCompletionWithOnScheduleSymEvScheduleTime_14c40bfc 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EvScheduleTimeForm $evScheduleTime,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($evScheduleTime), 'The evScheduleTime must be a generated immutable SQL value.');
     }
@@ -30,9 +31,32 @@ final class EvAlterOnScheduleCompletionWithOnScheduleSymEvScheduleTime_14c40bfc 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ON');
+        $writer->comments($this->comments, 1);
         $writer->append('SCHEDULE');
+        $writer->comments($this->comments, 2);
         $this->evScheduleTime->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->evScheduleTime];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->evScheduleTime, \SqlSemantics\Statement\Model\MySql\Role\EvScheduleTimeForm::class, $replace), $this->comments);
     }
 
     /**
@@ -40,6 +64,14 @@ final class EvAlterOnScheduleCompletionWithOnScheduleSymEvScheduleTime_14c40bfc 
      */
     public function withEvScheduleTime(\SqlSemantics\Statement\Model\MySql\Role\EvScheduleTimeForm $evScheduleTime): self
     {
-        return new self($evScheduleTime);
+        return new self($evScheduleTime, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->evScheduleTime, $comments);
     }
 }

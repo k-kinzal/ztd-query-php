@@ -17,13 +17,14 @@ final class CreateSubscriptionStmtWithCreateSubscriptionNameConnectionSconstPubl
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameListForm $nameList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptDefinitionForm $optDefinition,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($sconst), 'The sconst must be a generated immutable SQL value.');
@@ -36,14 +37,42 @@ final class CreateSubscriptionStmtWithCreateSubscriptionNameConnectionSconstPubl
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $writer->append('SUBSCRIPTION');
+        $writer->comments($this->comments, 2);
         $this->name->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('CONNECTION');
+        $writer->comments($this->comments, 4);
         $this->sconst->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('PUBLICATION');
+        $writer->comments($this->comments, 6);
         $this->nameList->write($writer);
+        $writer->comments($this->comments, 7);
         $this->optDefinition->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->name, $this->sconst, $this->nameList, $this->optDefinition];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->sconst, \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm::class, $replace), $this->replacement($this->nameList, \SqlSemantics\Statement\Model\PostgreSql\Role\NameListForm::class, $replace), $this->replacement($this->optDefinition, \SqlSemantics\Statement\Model\PostgreSql\Role\OptDefinitionForm::class, $replace), $this->comments);
     }
 
     /**
@@ -51,7 +80,7 @@ final class CreateSubscriptionStmtWithCreateSubscriptionNameConnectionSconstPubl
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($name, $this->sconst, $this->nameList, $this->optDefinition);
+        return new self($name, $this->sconst, $this->nameList, $this->optDefinition, $this->comments);
     }
 
     /**
@@ -59,7 +88,7 @@ final class CreateSubscriptionStmtWithCreateSubscriptionNameConnectionSconstPubl
      */
     public function withSconst(\SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst): self
     {
-        return new self($this->name, $sconst, $this->nameList, $this->optDefinition);
+        return new self($this->name, $sconst, $this->nameList, $this->optDefinition, $this->comments);
     }
 
     /**
@@ -67,7 +96,7 @@ final class CreateSubscriptionStmtWithCreateSubscriptionNameConnectionSconstPubl
      */
     public function withNameList(\SqlSemantics\Statement\Model\PostgreSql\Role\NameListForm $nameList): self
     {
-        return new self($this->name, $this->sconst, $nameList, $this->optDefinition);
+        return new self($this->name, $this->sconst, $nameList, $this->optDefinition, $this->comments);
     }
 
     /**
@@ -75,6 +104,14 @@ final class CreateSubscriptionStmtWithCreateSubscriptionNameConnectionSconstPubl
      */
     public function withOptDefinition(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDefinitionForm $optDefinition): self
     {
-        return new self($this->name, $this->sconst, $this->nameList, $optDefinition);
+        return new self($this->name, $this->sconst, $this->nameList, $optDefinition, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->name, $this->sconst, $this->nameList, $this->optDefinition, $comments);
     }
 }

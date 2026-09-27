@@ -17,11 +17,12 @@ final class SqlstateWithSqlstateSymOptValueTextStringLiteral_c5b1b0d5 implements
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptValueForm $optValue,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringLiteralForm $textStringLiteral,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optValue), 'The optValue must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringLiteral), 'The textStringLiteral must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class SqlstateWithSqlstateSymOptValueTextStringLiteral_c5b1b0d5 implements
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SQLSTATE');
+        $writer->comments($this->comments, 1);
         $this->optValue->write($writer);
+        $writer->comments($this->comments, 2);
         $this->textStringLiteral->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optValue, $this->textStringLiteral];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optValue, \SqlSemantics\Statement\Model\MySql\Role\OptValueForm::class, $replace), $this->replacement($this->textStringLiteral, \SqlSemantics\Statement\Model\MySql\Role\TextStringLiteralForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class SqlstateWithSqlstateSymOptValueTextStringLiteral_c5b1b0d5 implements
      */
     public function withOptValue(\SqlSemantics\Statement\Model\MySql\Role\OptValueForm $optValue): self
     {
-        return new self($optValue, $this->textStringLiteral);
+        return new self($optValue, $this->textStringLiteral, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class SqlstateWithSqlstateSymOptValueTextStringLiteral_c5b1b0d5 implements
      */
     public function withTextStringLiteral(\SqlSemantics\Statement\Model\MySql\Role\TextStringLiteralForm $textStringLiteral): self
     {
-        return new self($this->optValue, $textStringLiteral);
+        return new self($this->optValue, $textStringLiteral, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optValue, $this->textStringLiteral, $comments);
     }
 }

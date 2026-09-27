@@ -17,7 +17,7 @@ final class CopyStmtWithCopyOptBinaryQualifiedNameOptColumnListCopyFromOptProgra
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptBinaryForm $optBinary,
@@ -30,6 +30,7 @@ final class CopyStmtWithCopyOptBinaryQualifiedNameOptColumnListCopyFromOptProgra
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CopyOptionsForm $copyOptions,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\WhereClauseForm $where,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optBinary), 'The optBinary must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
@@ -48,17 +49,48 @@ final class CopyStmtWithCopyOptBinaryQualifiedNameOptColumnListCopyFromOptProgra
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('COPY');
+        $writer->comments($this->comments, 1);
         $this->optBinary->write($writer);
+        $writer->comments($this->comments, 2);
         $this->qualifiedName->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optColumnList->write($writer);
+        $writer->comments($this->comments, 4);
         $this->copyFrom->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optProgram->write($writer);
+        $writer->comments($this->comments, 6);
         $this->copyFileName->write($writer);
+        $writer->comments($this->comments, 7);
         $this->copyDelimiter->write($writer);
+        $writer->comments($this->comments, 8);
         $this->optWith->write($writer);
+        $writer->comments($this->comments, 9);
         $this->copyOptions->write($writer);
+        $writer->comments($this->comments, 10);
         $this->where->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optBinary, $this->qualifiedName, $this->optColumnList, $this->copyFrom, $this->optProgram, $this->copyFileName, $this->copyDelimiter, $this->optWith, $this->copyOptions, $this->where];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optBinary, \SqlSemantics\Statement\Model\PostgreSql\Role\OptBinaryForm::class, $replace), $this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->optColumnList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnListForm::class, $replace), $this->replacement($this->copyFrom, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyFromForm::class, $replace), $this->replacement($this->optProgram, \SqlSemantics\Statement\Model\PostgreSql\Role\OptProgramForm::class, $replace), $this->replacement($this->copyFileName, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyFileNameForm::class, $replace), $this->replacement($this->copyDelimiter, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyDelimiterForm::class, $replace), $this->replacement($this->optWith, \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm::class, $replace), $this->replacement($this->copyOptions, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyOptionsForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\PostgreSql\Role\WhereClauseForm::class, $replace), $this->comments);
     }
 
     /**
@@ -66,7 +98,7 @@ final class CopyStmtWithCopyOptBinaryQualifiedNameOptColumnListCopyFromOptProgra
      */
     public function withOptBinary(\SqlSemantics\Statement\Model\PostgreSql\Role\OptBinaryForm $optBinary): self
     {
-        return new self($optBinary, $this->qualifiedName, $this->optColumnList, $this->copyFrom, $this->optProgram, $this->copyFileName, $this->copyDelimiter, $this->optWith, $this->copyOptions, $this->where);
+        return new self($optBinary, $this->qualifiedName, $this->optColumnList, $this->copyFrom, $this->optProgram, $this->copyFileName, $this->copyDelimiter, $this->optWith, $this->copyOptions, $this->where, $this->comments);
     }
 
     /**
@@ -74,7 +106,7 @@ final class CopyStmtWithCopyOptBinaryQualifiedNameOptColumnListCopyFromOptProgra
      */
     public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
     {
-        return new self($this->optBinary, $qualifiedName, $this->optColumnList, $this->copyFrom, $this->optProgram, $this->copyFileName, $this->copyDelimiter, $this->optWith, $this->copyOptions, $this->where);
+        return new self($this->optBinary, $qualifiedName, $this->optColumnList, $this->copyFrom, $this->optProgram, $this->copyFileName, $this->copyDelimiter, $this->optWith, $this->copyOptions, $this->where, $this->comments);
     }
 
     /**
@@ -82,7 +114,7 @@ final class CopyStmtWithCopyOptBinaryQualifiedNameOptColumnListCopyFromOptProgra
      */
     public function withOptColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnListForm $optColumnList): self
     {
-        return new self($this->optBinary, $this->qualifiedName, $optColumnList, $this->copyFrom, $this->optProgram, $this->copyFileName, $this->copyDelimiter, $this->optWith, $this->copyOptions, $this->where);
+        return new self($this->optBinary, $this->qualifiedName, $optColumnList, $this->copyFrom, $this->optProgram, $this->copyFileName, $this->copyDelimiter, $this->optWith, $this->copyOptions, $this->where, $this->comments);
     }
 
     /**
@@ -90,7 +122,7 @@ final class CopyStmtWithCopyOptBinaryQualifiedNameOptColumnListCopyFromOptProgra
      */
     public function withCopyFrom(\SqlSemantics\Statement\Model\PostgreSql\Role\CopyFromForm $copyFrom): self
     {
-        return new self($this->optBinary, $this->qualifiedName, $this->optColumnList, $copyFrom, $this->optProgram, $this->copyFileName, $this->copyDelimiter, $this->optWith, $this->copyOptions, $this->where);
+        return new self($this->optBinary, $this->qualifiedName, $this->optColumnList, $copyFrom, $this->optProgram, $this->copyFileName, $this->copyDelimiter, $this->optWith, $this->copyOptions, $this->where, $this->comments);
     }
 
     /**
@@ -98,7 +130,7 @@ final class CopyStmtWithCopyOptBinaryQualifiedNameOptColumnListCopyFromOptProgra
      */
     public function withOptProgram(\SqlSemantics\Statement\Model\PostgreSql\Role\OptProgramForm $optProgram): self
     {
-        return new self($this->optBinary, $this->qualifiedName, $this->optColumnList, $this->copyFrom, $optProgram, $this->copyFileName, $this->copyDelimiter, $this->optWith, $this->copyOptions, $this->where);
+        return new self($this->optBinary, $this->qualifiedName, $this->optColumnList, $this->copyFrom, $optProgram, $this->copyFileName, $this->copyDelimiter, $this->optWith, $this->copyOptions, $this->where, $this->comments);
     }
 
     /**
@@ -106,7 +138,7 @@ final class CopyStmtWithCopyOptBinaryQualifiedNameOptColumnListCopyFromOptProgra
      */
     public function withCopyFileName(\SqlSemantics\Statement\Model\PostgreSql\Role\CopyFileNameForm $copyFileName): self
     {
-        return new self($this->optBinary, $this->qualifiedName, $this->optColumnList, $this->copyFrom, $this->optProgram, $copyFileName, $this->copyDelimiter, $this->optWith, $this->copyOptions, $this->where);
+        return new self($this->optBinary, $this->qualifiedName, $this->optColumnList, $this->copyFrom, $this->optProgram, $copyFileName, $this->copyDelimiter, $this->optWith, $this->copyOptions, $this->where, $this->comments);
     }
 
     /**
@@ -114,7 +146,7 @@ final class CopyStmtWithCopyOptBinaryQualifiedNameOptColumnListCopyFromOptProgra
      */
     public function withCopyDelimiter(\SqlSemantics\Statement\Model\PostgreSql\Role\CopyDelimiterForm $copyDelimiter): self
     {
-        return new self($this->optBinary, $this->qualifiedName, $this->optColumnList, $this->copyFrom, $this->optProgram, $this->copyFileName, $copyDelimiter, $this->optWith, $this->copyOptions, $this->where);
+        return new self($this->optBinary, $this->qualifiedName, $this->optColumnList, $this->copyFrom, $this->optProgram, $this->copyFileName, $copyDelimiter, $this->optWith, $this->copyOptions, $this->where, $this->comments);
     }
 
     /**
@@ -122,7 +154,7 @@ final class CopyStmtWithCopyOptBinaryQualifiedNameOptColumnListCopyFromOptProgra
      */
     public function withOptWith(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith): self
     {
-        return new self($this->optBinary, $this->qualifiedName, $this->optColumnList, $this->copyFrom, $this->optProgram, $this->copyFileName, $this->copyDelimiter, $optWith, $this->copyOptions, $this->where);
+        return new self($this->optBinary, $this->qualifiedName, $this->optColumnList, $this->copyFrom, $this->optProgram, $this->copyFileName, $this->copyDelimiter, $optWith, $this->copyOptions, $this->where, $this->comments);
     }
 
     /**
@@ -130,7 +162,7 @@ final class CopyStmtWithCopyOptBinaryQualifiedNameOptColumnListCopyFromOptProgra
      */
     public function withCopyOptions(\SqlSemantics\Statement\Model\PostgreSql\Role\CopyOptionsForm $copyOptions): self
     {
-        return new self($this->optBinary, $this->qualifiedName, $this->optColumnList, $this->copyFrom, $this->optProgram, $this->copyFileName, $this->copyDelimiter, $this->optWith, $copyOptions, $this->where);
+        return new self($this->optBinary, $this->qualifiedName, $this->optColumnList, $this->copyFrom, $this->optProgram, $this->copyFileName, $this->copyDelimiter, $this->optWith, $copyOptions, $this->where, $this->comments);
     }
 
     /**
@@ -138,6 +170,14 @@ final class CopyStmtWithCopyOptBinaryQualifiedNameOptColumnListCopyFromOptProgra
      */
     public function withWhere(\SqlSemantics\Statement\Model\PostgreSql\Role\WhereClauseForm $where): self
     {
-        return new self($this->optBinary, $this->qualifiedName, $this->optColumnList, $this->copyFrom, $this->optProgram, $this->copyFileName, $this->copyDelimiter, $this->optWith, $this->copyOptions, $where);
+        return new self($this->optBinary, $this->qualifiedName, $this->optColumnList, $this->copyFrom, $this->optProgram, $this->copyFileName, $this->copyDelimiter, $this->optWith, $this->copyOptions, $where, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optBinary, $this->qualifiedName, $this->optColumnList, $this->copyFrom, $this->optProgram, $this->copyFileName, $this->copyDelimiter, $this->optWith, $this->copyOptions, $this->where, $comments);
     }
 }

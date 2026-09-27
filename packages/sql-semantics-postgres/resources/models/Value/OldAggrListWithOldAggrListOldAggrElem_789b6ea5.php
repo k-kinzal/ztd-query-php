@@ -17,11 +17,12 @@ final class OldAggrListWithOldAggrListOldAggrElem_789b6ea5 implements \SqlSemant
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OldAggrListForm $oldAggrList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OldAggrElemForm $oldAggrElem,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($oldAggrList), 'The oldAggrList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($oldAggrElem), 'The oldAggrElem must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class OldAggrListWithOldAggrListOldAggrElem_789b6ea5 implements \SqlSemant
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->oldAggrList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->oldAggrElem->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->oldAggrList, $this->oldAggrElem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->oldAggrList, \SqlSemantics\Statement\Model\PostgreSql\Role\OldAggrListForm::class, $replace), $this->replacement($this->oldAggrElem, \SqlSemantics\Statement\Model\PostgreSql\Role\OldAggrElemForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class OldAggrListWithOldAggrListOldAggrElem_789b6ea5 implements \SqlSemant
      */
     public function withOldAggrList(\SqlSemantics\Statement\Model\PostgreSql\Role\OldAggrListForm $oldAggrList): self
     {
-        return new self($oldAggrList, $this->oldAggrElem);
+        return new self($oldAggrList, $this->oldAggrElem, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class OldAggrListWithOldAggrListOldAggrElem_789b6ea5 implements \SqlSemant
      */
     public function withOldAggrElem(\SqlSemantics\Statement\Model\PostgreSql\Role\OldAggrElemForm $oldAggrElem): self
     {
-        return new self($this->oldAggrList, $oldAggrElem);
+        return new self($this->oldAggrList, $oldAggrElem, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->oldAggrList, $this->oldAggrElem, $comments);
     }
 }

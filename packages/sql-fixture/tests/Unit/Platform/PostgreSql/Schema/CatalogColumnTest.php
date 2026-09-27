@@ -23,7 +23,8 @@ final class CatalogColumnTest extends TestCase
     public function testResolveTypeUppercasesAndExpandsArraysAndUserTypes(): void
     {
         self::assertSame('CHARACTER VARYING', (new Subject())->resolveType(['data_type' => 'character varying', 'udt_name' => 'varchar']));
-        self::assertSame('INT4_ARRAY', (new Subject())->resolveType(['data_type' => 'ARRAY', 'udt_name' => '_int4']));
+        self::assertSame('INTEGER_ARRAY', (new Subject())->resolveType(['data_type' => 'ARRAY', 'udt_name' => '_int4']));
+        self::assertSame('TEXT_ARRAY', (new Subject())->resolveType(['data_type' => 'ARRAY', 'udt_name' => '_text']));
         self::assertSame('MOOD', (new Subject())->resolveType(['data_type' => 'USER-DEFINED', 'udt_name' => 'mood']));
     }
 
@@ -68,5 +69,20 @@ final class CatalogColumnTest extends TestCase
         self::assertTrue((new Subject())->parse($generated, $expressions, false)->generated);
         self::assertFalse((new Subject())->parse($generated, $expressions, false)->autoIncrement);
         self::assertFalse((new Subject())->parse($generated, $expressions, true)->nullable);
+    }
+
+    public function testElementTypeNamesTheDeclaredType(): void
+    {
+        $column = new Subject();
+        self::assertSame('INTEGER', $column->elementType('_int4'));
+        self::assertSame('BIGINT', $column->elementType('_int8'));
+        self::assertSame('SMALLINT', $column->elementType('_int2'));
+        self::assertSame('REAL', $column->elementType('_float4'));
+        self::assertSame('DOUBLE PRECISION', $column->elementType('_float8'));
+        self::assertSame('BOOLEAN', $column->elementType('_bool'));
+        self::assertSame('VARCHAR', $column->elementType('_varchar'));
+        self::assertSame('CHAR', $column->elementType('_bpchar'));
+        self::assertSame('TEXT', $column->elementType('_text'));
+        self::assertSame('UUID', $column->elementType('_uuid'));
     }
 }

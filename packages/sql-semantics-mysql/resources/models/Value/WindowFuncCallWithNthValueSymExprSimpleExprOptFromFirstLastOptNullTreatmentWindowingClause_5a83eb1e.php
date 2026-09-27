@@ -17,7 +17,7 @@ final class WindowFuncCallWithNthValueSymExprSimpleExprOptFromFirstLastOptNullTr
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
@@ -25,6 +25,7 @@ final class WindowFuncCallWithNthValueSymExprSimpleExprOptFromFirstLastOptNullTr
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptFromFirstLastForm $optFromFirstLast,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptNullTreatmentForm $optNullTreatment,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WindowingClauseForm $windowingClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleExpr), 'The simpleExpr must be a generated immutable SQL value.');
@@ -38,15 +39,44 @@ final class WindowFuncCallWithNthValueSymExprSimpleExprOptFromFirstLastOptNullTr
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('NTH_VALUE');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(',');
+        $writer->comments($this->comments, 4);
         $this->simpleExpr->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
+        $writer->comments($this->comments, 6);
         $this->optFromFirstLast->write($writer);
+        $writer->comments($this->comments, 7);
         $this->optNullTreatment->write($writer);
+        $writer->comments($this->comments, 8);
         $this->windowingClause->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->expr, $this->simpleExpr, $this->optFromFirstLast, $this->optNullTreatment, $this->windowingClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->replacement($this->simpleExpr, \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm::class, $replace), $this->replacement($this->optFromFirstLast, \SqlSemantics\Statement\Model\MySql\Role\OptFromFirstLastForm::class, $replace), $this->replacement($this->optNullTreatment, \SqlSemantics\Statement\Model\MySql\Role\OptNullTreatmentForm::class, $replace), $this->replacement($this->windowingClause, \SqlSemantics\Statement\Model\MySql\Role\WindowingClauseForm::class, $replace), $this->comments);
     }
 
     /**
@@ -54,7 +84,7 @@ final class WindowFuncCallWithNthValueSymExprSimpleExprOptFromFirstLastOptNullTr
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($expr, $this->simpleExpr, $this->optFromFirstLast, $this->optNullTreatment, $this->windowingClause);
+        return new self($expr, $this->simpleExpr, $this->optFromFirstLast, $this->optNullTreatment, $this->windowingClause, $this->comments);
     }
 
     /**
@@ -62,7 +92,7 @@ final class WindowFuncCallWithNthValueSymExprSimpleExprOptFromFirstLastOptNullTr
      */
     public function withSimpleExpr(\SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm $simpleExpr): self
     {
-        return new self($this->expr, $simpleExpr, $this->optFromFirstLast, $this->optNullTreatment, $this->windowingClause);
+        return new self($this->expr, $simpleExpr, $this->optFromFirstLast, $this->optNullTreatment, $this->windowingClause, $this->comments);
     }
 
     /**
@@ -70,7 +100,7 @@ final class WindowFuncCallWithNthValueSymExprSimpleExprOptFromFirstLastOptNullTr
      */
     public function withOptFromFirstLast(\SqlSemantics\Statement\Model\MySql\Role\OptFromFirstLastForm $optFromFirstLast): self
     {
-        return new self($this->expr, $this->simpleExpr, $optFromFirstLast, $this->optNullTreatment, $this->windowingClause);
+        return new self($this->expr, $this->simpleExpr, $optFromFirstLast, $this->optNullTreatment, $this->windowingClause, $this->comments);
     }
 
     /**
@@ -78,7 +108,7 @@ final class WindowFuncCallWithNthValueSymExprSimpleExprOptFromFirstLastOptNullTr
      */
     public function withOptNullTreatment(\SqlSemantics\Statement\Model\MySql\Role\OptNullTreatmentForm $optNullTreatment): self
     {
-        return new self($this->expr, $this->simpleExpr, $this->optFromFirstLast, $optNullTreatment, $this->windowingClause);
+        return new self($this->expr, $this->simpleExpr, $this->optFromFirstLast, $optNullTreatment, $this->windowingClause, $this->comments);
     }
 
     /**
@@ -86,6 +116,14 @@ final class WindowFuncCallWithNthValueSymExprSimpleExprOptFromFirstLastOptNullTr
      */
     public function withWindowingClause(\SqlSemantics\Statement\Model\MySql\Role\WindowingClauseForm $windowingClause): self
     {
-        return new self($this->expr, $this->simpleExpr, $this->optFromFirstLast, $this->optNullTreatment, $windowingClause);
+        return new self($this->expr, $this->simpleExpr, $this->optFromFirstLast, $this->optNullTreatment, $windowingClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->expr, $this->simpleExpr, $this->optFromFirstLast, $this->optNullTreatment, $this->windowingClause, $comments);
     }
 }

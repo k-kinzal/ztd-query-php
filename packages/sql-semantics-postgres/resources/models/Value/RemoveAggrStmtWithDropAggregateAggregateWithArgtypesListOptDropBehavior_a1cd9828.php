@@ -17,11 +17,12 @@ final class RemoveAggrStmtWithDropAggregateAggregateWithArgtypesListOptDropBehav
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AggregateWithArgtypesListForm $aggregateWithArgtypesList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aggregateWithArgtypesList), 'The aggregateWithArgtypesList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optDropBehavior), 'The optDropBehavior must be a generated immutable SQL value.');
@@ -32,10 +33,34 @@ final class RemoveAggrStmtWithDropAggregateAggregateWithArgtypesListOptDropBehav
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('DROP');
+        $writer->comments($this->comments, 1);
         $writer->append('AGGREGATE');
+        $writer->comments($this->comments, 2);
         $this->aggregateWithArgtypesList->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optDropBehavior->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->aggregateWithArgtypesList, $this->optDropBehavior];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->aggregateWithArgtypesList, \SqlSemantics\Statement\Model\PostgreSql\Role\AggregateWithArgtypesListForm::class, $replace), $this->replacement($this->optDropBehavior, \SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm::class, $replace), $this->comments);
     }
 
     /**
@@ -43,7 +68,7 @@ final class RemoveAggrStmtWithDropAggregateAggregateWithArgtypesListOptDropBehav
      */
     public function withAggregateWithArgtypesList(\SqlSemantics\Statement\Model\PostgreSql\Role\AggregateWithArgtypesListForm $aggregateWithArgtypesList): self
     {
-        return new self($aggregateWithArgtypesList, $this->optDropBehavior);
+        return new self($aggregateWithArgtypesList, $this->optDropBehavior, $this->comments);
     }
 
     /**
@@ -51,6 +76,14 @@ final class RemoveAggrStmtWithDropAggregateAggregateWithArgtypesListOptDropBehav
      */
     public function withOptDropBehavior(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior): self
     {
-        return new self($this->aggregateWithArgtypesList, $optDropBehavior);
+        return new self($this->aggregateWithArgtypesList, $optDropBehavior, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->aggregateWithArgtypesList, $this->optDropBehavior, $comments);
     }
 }

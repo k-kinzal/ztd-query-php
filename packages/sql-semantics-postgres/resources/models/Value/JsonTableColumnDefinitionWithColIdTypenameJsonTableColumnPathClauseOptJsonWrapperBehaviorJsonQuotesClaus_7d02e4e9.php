@@ -17,7 +17,7 @@ final class JsonTableColumnDefinitionWithColIdTypenameJsonTableColumnPathClauseO
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
@@ -26,6 +26,7 @@ final class JsonTableColumnDefinitionWithColIdTypenameJsonTableColumnPathClauseO
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonWrapperBehaviorForm $jsonWrapperBehavior,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonQuotesClauseOptForm $jsonQuotesClauseOpt,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorClauseOptForm $jsonBehaviorClauseOpt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
@@ -40,12 +41,38 @@ final class JsonTableColumnDefinitionWithColIdTypenameJsonTableColumnPathClauseO
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->colId->write($writer);
+        $writer->comments($this->comments, 1);
         $this->typename->write($writer);
+        $writer->comments($this->comments, 2);
         $this->jsonTableColumnPathClauseOpt->write($writer);
+        $writer->comments($this->comments, 3);
         $this->jsonWrapperBehavior->write($writer);
+        $writer->comments($this->comments, 4);
         $this->jsonQuotesClauseOpt->write($writer);
+        $writer->comments($this->comments, 5);
         $this->jsonBehaviorClauseOpt->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->colId, $this->typename, $this->jsonTableColumnPathClauseOpt, $this->jsonWrapperBehavior, $this->jsonQuotesClauseOpt, $this->jsonBehaviorClauseOpt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->colId, \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm::class, $replace), $this->replacement($this->typename, \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm::class, $replace), $this->replacement($this->jsonTableColumnPathClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnPathClauseOptForm::class, $replace), $this->replacement($this->jsonWrapperBehavior, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonWrapperBehaviorForm::class, $replace), $this->replacement($this->jsonQuotesClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonQuotesClauseOptForm::class, $replace), $this->replacement($this->jsonBehaviorClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorClauseOptForm::class, $replace), $this->comments);
     }
 
     /**
@@ -53,7 +80,7 @@ final class JsonTableColumnDefinitionWithColIdTypenameJsonTableColumnPathClauseO
      */
     public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
     {
-        return new self($colId, $this->typename, $this->jsonTableColumnPathClauseOpt, $this->jsonWrapperBehavior, $this->jsonQuotesClauseOpt, $this->jsonBehaviorClauseOpt);
+        return new self($colId, $this->typename, $this->jsonTableColumnPathClauseOpt, $this->jsonWrapperBehavior, $this->jsonQuotesClauseOpt, $this->jsonBehaviorClauseOpt, $this->comments);
     }
 
     /**
@@ -61,7 +88,7 @@ final class JsonTableColumnDefinitionWithColIdTypenameJsonTableColumnPathClauseO
      */
     public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
     {
-        return new self($this->colId, $typename, $this->jsonTableColumnPathClauseOpt, $this->jsonWrapperBehavior, $this->jsonQuotesClauseOpt, $this->jsonBehaviorClauseOpt);
+        return new self($this->colId, $typename, $this->jsonTableColumnPathClauseOpt, $this->jsonWrapperBehavior, $this->jsonQuotesClauseOpt, $this->jsonBehaviorClauseOpt, $this->comments);
     }
 
     /**
@@ -69,7 +96,7 @@ final class JsonTableColumnDefinitionWithColIdTypenameJsonTableColumnPathClauseO
      */
     public function withJsonTableColumnPathClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnPathClauseOptForm $jsonTableColumnPathClauseOpt): self
     {
-        return new self($this->colId, $this->typename, $jsonTableColumnPathClauseOpt, $this->jsonWrapperBehavior, $this->jsonQuotesClauseOpt, $this->jsonBehaviorClauseOpt);
+        return new self($this->colId, $this->typename, $jsonTableColumnPathClauseOpt, $this->jsonWrapperBehavior, $this->jsonQuotesClauseOpt, $this->jsonBehaviorClauseOpt, $this->comments);
     }
 
     /**
@@ -77,7 +104,7 @@ final class JsonTableColumnDefinitionWithColIdTypenameJsonTableColumnPathClauseO
      */
     public function withJsonWrapperBehavior(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonWrapperBehaviorForm $jsonWrapperBehavior): self
     {
-        return new self($this->colId, $this->typename, $this->jsonTableColumnPathClauseOpt, $jsonWrapperBehavior, $this->jsonQuotesClauseOpt, $this->jsonBehaviorClauseOpt);
+        return new self($this->colId, $this->typename, $this->jsonTableColumnPathClauseOpt, $jsonWrapperBehavior, $this->jsonQuotesClauseOpt, $this->jsonBehaviorClauseOpt, $this->comments);
     }
 
     /**
@@ -85,7 +112,7 @@ final class JsonTableColumnDefinitionWithColIdTypenameJsonTableColumnPathClauseO
      */
     public function withJsonQuotesClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonQuotesClauseOptForm $jsonQuotesClauseOpt): self
     {
-        return new self($this->colId, $this->typename, $this->jsonTableColumnPathClauseOpt, $this->jsonWrapperBehavior, $jsonQuotesClauseOpt, $this->jsonBehaviorClauseOpt);
+        return new self($this->colId, $this->typename, $this->jsonTableColumnPathClauseOpt, $this->jsonWrapperBehavior, $jsonQuotesClauseOpt, $this->jsonBehaviorClauseOpt, $this->comments);
     }
 
     /**
@@ -93,6 +120,14 @@ final class JsonTableColumnDefinitionWithColIdTypenameJsonTableColumnPathClauseO
      */
     public function withJsonBehaviorClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorClauseOptForm $jsonBehaviorClauseOpt): self
     {
-        return new self($this->colId, $this->typename, $this->jsonTableColumnPathClauseOpt, $this->jsonWrapperBehavior, $this->jsonQuotesClauseOpt, $jsonBehaviorClauseOpt);
+        return new self($this->colId, $this->typename, $this->jsonTableColumnPathClauseOpt, $this->jsonWrapperBehavior, $this->jsonQuotesClauseOpt, $jsonBehaviorClauseOpt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->colId, $this->typename, $this->jsonTableColumnPathClauseOpt, $this->jsonWrapperBehavior, $this->jsonQuotesClauseOpt, $this->jsonBehaviorClauseOpt, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class CreateDatabaseOptionsWithCreateDatabaseOptionsCreateDatabaseOption_d
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateDatabaseOptionsForm $createDatabaseOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateDatabaseOptionForm $createDatabaseOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createDatabaseOptions), 'The createDatabaseOptions must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createDatabaseOption), 'The createDatabaseOption must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class CreateDatabaseOptionsWithCreateDatabaseOptionsCreateDatabaseOption_d
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->createDatabaseOptions->write($writer);
+        $writer->comments($this->comments, 1);
         $this->createDatabaseOption->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->createDatabaseOptions, $this->createDatabaseOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->createDatabaseOptions, \SqlSemantics\Statement\Model\MySql\Role\CreateDatabaseOptionsForm::class, $replace), $this->replacement($this->createDatabaseOption, \SqlSemantics\Statement\Model\MySql\Role\CreateDatabaseOptionForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class CreateDatabaseOptionsWithCreateDatabaseOptionsCreateDatabaseOption_d
      */
     public function withCreateDatabaseOptions(\SqlSemantics\Statement\Model\MySql\Role\CreateDatabaseOptionsForm $createDatabaseOptions): self
     {
-        return new self($createDatabaseOptions, $this->createDatabaseOption);
+        return new self($createDatabaseOptions, $this->createDatabaseOption, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class CreateDatabaseOptionsWithCreateDatabaseOptionsCreateDatabaseOption_d
      */
     public function withCreateDatabaseOption(\SqlSemantics\Statement\Model\MySql\Role\CreateDatabaseOptionForm $createDatabaseOption): self
     {
-        return new self($this->createDatabaseOptions, $createDatabaseOption);
+        return new self($this->createDatabaseOptions, $createDatabaseOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->createDatabaseOptions, $this->createDatabaseOption, $comments);
     }
 }

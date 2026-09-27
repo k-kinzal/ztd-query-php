@@ -17,12 +17,13 @@ final class EidlistWithNmCollateSortorder_b27838a9 implements \SqlSemantics\Stat
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CollateForm $collate,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SortorderForm $sortorder,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($collate), 'The collate must be a generated immutable SQL value.');
@@ -34,9 +35,32 @@ final class EidlistWithNmCollateSortorder_b27838a9 implements \SqlSemantics\Stat
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->nm->write($writer);
+        $writer->comments($this->comments, 1);
         $this->collate->write($writer);
+        $writer->comments($this->comments, 2);
         $this->sortorder->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->nm, $this->collate, $this->sortorder];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->nm, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace), $this->replacement($this->collate, \SqlSemantics\Statement\Model\Sqlite\Role\CollateForm::class, $replace), $this->replacement($this->sortorder, \SqlSemantics\Statement\Model\Sqlite\Role\SortorderForm::class, $replace), $this->comments);
     }
 
     /**
@@ -44,7 +68,7 @@ final class EidlistWithNmCollateSortorder_b27838a9 implements \SqlSemantics\Stat
      */
     public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
     {
-        return new self($nm, $this->collate, $this->sortorder);
+        return new self($nm, $this->collate, $this->sortorder, $this->comments);
     }
 
     /**
@@ -52,7 +76,7 @@ final class EidlistWithNmCollateSortorder_b27838a9 implements \SqlSemantics\Stat
      */
     public function withCollate(\SqlSemantics\Statement\Model\Sqlite\Role\CollateForm $collate): self
     {
-        return new self($this->nm, $collate, $this->sortorder);
+        return new self($this->nm, $collate, $this->sortorder, $this->comments);
     }
 
     /**
@@ -60,6 +84,14 @@ final class EidlistWithNmCollateSortorder_b27838a9 implements \SqlSemantics\Stat
      */
     public function withSortorder(\SqlSemantics\Statement\Model\Sqlite\Role\SortorderForm $sortorder): self
     {
-        return new self($this->nm, $this->collate, $sortorder);
+        return new self($this->nm, $this->collate, $sortorder, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->nm, $this->collate, $this->sortorder, $comments);
     }
 }

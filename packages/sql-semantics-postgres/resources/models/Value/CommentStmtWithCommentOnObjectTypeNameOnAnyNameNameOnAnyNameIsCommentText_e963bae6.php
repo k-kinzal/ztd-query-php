@@ -17,13 +17,14 @@ final class CommentStmtWithCommentOnObjectTypeNameOnAnyNameNameOnAnyNameIsCommen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ObjectTypeNameOnAnyNameForm $objectTypeNameOnAnyName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CommentTextForm $commentText,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($objectTypeNameOnAnyName), 'The objectTypeNameOnAnyName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
@@ -36,14 +37,42 @@ final class CommentStmtWithCommentOnObjectTypeNameOnAnyNameNameOnAnyNameIsCommen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('COMMENT');
+        $writer->comments($this->comments, 1);
         $writer->append('ON');
+        $writer->comments($this->comments, 2);
         $this->objectTypeNameOnAnyName->write($writer);
+        $writer->comments($this->comments, 3);
         $this->name->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('ON');
+        $writer->comments($this->comments, 5);
         $this->anyName->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append('IS');
+        $writer->comments($this->comments, 7);
         $this->commentText->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->objectTypeNameOnAnyName, $this->name, $this->anyName, $this->commentText];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->objectTypeNameOnAnyName, \SqlSemantics\Statement\Model\PostgreSql\Role\ObjectTypeNameOnAnyNameForm::class, $replace), $this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->anyName, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm::class, $replace), $this->replacement($this->commentText, \SqlSemantics\Statement\Model\PostgreSql\Role\CommentTextForm::class, $replace), $this->comments);
     }
 
     /**
@@ -51,7 +80,7 @@ final class CommentStmtWithCommentOnObjectTypeNameOnAnyNameNameOnAnyNameIsCommen
      */
     public function withObjectTypeNameOnAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\ObjectTypeNameOnAnyNameForm $objectTypeNameOnAnyName): self
     {
-        return new self($objectTypeNameOnAnyName, $this->name, $this->anyName, $this->commentText);
+        return new self($objectTypeNameOnAnyName, $this->name, $this->anyName, $this->commentText, $this->comments);
     }
 
     /**
@@ -59,7 +88,7 @@ final class CommentStmtWithCommentOnObjectTypeNameOnAnyNameNameOnAnyNameIsCommen
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($this->objectTypeNameOnAnyName, $name, $this->anyName, $this->commentText);
+        return new self($this->objectTypeNameOnAnyName, $name, $this->anyName, $this->commentText, $this->comments);
     }
 
     /**
@@ -67,7 +96,7 @@ final class CommentStmtWithCommentOnObjectTypeNameOnAnyNameNameOnAnyNameIsCommen
      */
     public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
     {
-        return new self($this->objectTypeNameOnAnyName, $this->name, $anyName, $this->commentText);
+        return new self($this->objectTypeNameOnAnyName, $this->name, $anyName, $this->commentText, $this->comments);
     }
 
     /**
@@ -75,6 +104,14 @@ final class CommentStmtWithCommentOnObjectTypeNameOnAnyNameNameOnAnyNameIsCommen
      */
     public function withCommentText(\SqlSemantics\Statement\Model\PostgreSql\Role\CommentTextForm $commentText): self
     {
-        return new self($this->objectTypeNameOnAnyName, $this->name, $this->anyName, $commentText);
+        return new self($this->objectTypeNameOnAnyName, $this->name, $this->anyName, $commentText, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->objectTypeNameOnAnyName, $this->name, $this->anyName, $this->commentText, $comments);
     }
 }

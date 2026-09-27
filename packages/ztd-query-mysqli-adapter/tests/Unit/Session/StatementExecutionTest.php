@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Session;
 
 use Container\Endpoint;
-use Container\MySql80Container;
-use Container\MySql84Container;
+use Container\MySqlRelease;
 use mysqli;
 use mysqli_result;
 use mysqli_stmt;
@@ -35,17 +34,17 @@ final class StatementExecutionTest extends TestCase
 {
     public function testNativeReturnsThePreparedStatement(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
-            $session = (new ConnectionExecution($native))->session();
-            $plan = $session->rewrite('INSERT INTO items VALUES (7)');
+            $executor = (new ConnectionExecution($native))->executor();
+            $plan = $executor->rewrite('INSERT INTO items VALUES (7)');
             $statement = $native->prepare($plan->sql());
             self::assertInstanceOf(mysqli_stmt::class, $statement);
-            $execution = new StatementExecution($statement, $session, $plan);
+            $execution = new StatementExecution($statement, $executor, $plan);
 
             self::assertSame($statement, $execution->native());
         } finally {
@@ -55,17 +54,17 @@ final class StatementExecutionTest extends TestCase
 
     public function testResultTracksSimulatedWrites(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
-            $session = (new ConnectionExecution($native))->session();
-            $plan = $session->rewrite('INSERT INTO items VALUES (7)');
+            $executor = (new ConnectionExecution($native))->executor();
+            $plan = $executor->rewrite('INSERT INTO items VALUES (7)');
             $statement = $native->prepare($plan->sql());
             self::assertInstanceOf(mysqli_stmt::class, $statement);
-            $execution = new StatementExecution($statement, $session, $plan);
+            $execution = new StatementExecution($statement, $executor, $plan);
 
             self::assertNull($execution->result());
             self::assertTrue($execution->execute());
@@ -78,17 +77,17 @@ final class StatementExecutionTest extends TestCase
 
     public function testAffectedRowsReturnsTheSimulatedCount(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
-            $session = (new ConnectionExecution($native))->session();
-            $plan = $session->rewrite('INSERT INTO items VALUES (7)');
+            $executor = (new ConnectionExecution($native))->executor();
+            $plan = $executor->rewrite('INSERT INTO items VALUES (7)');
             $statement = $native->prepare($plan->sql());
             self::assertInstanceOf(mysqli_stmt::class, $statement);
-            $execution = new StatementExecution($statement, $session, $plan);
+            $execution = new StatementExecution($statement, $executor, $plan);
 
             self::assertTrue($execution->execute());
             self::assertSame(1, $execution->affectedRows());
@@ -99,17 +98,17 @@ final class StatementExecutionTest extends TestCase
 
     public function testExecuteDoesNotWriteThePhysicalTable(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
-            $session = (new ConnectionExecution($native))->session();
-            $plan = $session->rewrite('INSERT INTO items VALUES (7)');
+            $executor = (new ConnectionExecution($native))->executor();
+            $plan = $executor->rewrite('INSERT INTO items VALUES (7)');
             $statement = $native->prepare($plan->sql());
             self::assertInstanceOf(mysqli_stmt::class, $statement);
-            $execution = new StatementExecution($statement, $session, $plan);
+            $execution = new StatementExecution($statement, $executor, $plan);
 
             self::assertTrue($execution->execute());
             $result = $native->query('SELECT COUNT(*) FROM items');
@@ -122,17 +121,17 @@ final class StatementExecutionTest extends TestCase
 
     public function testGetResultReturnsTheBufferedSelect(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
-            $session = (new ConnectionExecution($native))->session();
-            $plan = $session->rewrite('SELECT 7 AS id');
+            $executor = (new ConnectionExecution($native))->executor();
+            $plan = $executor->rewrite('SELECT 7 AS id');
             $statement = $native->prepare($plan->sql());
             self::assertInstanceOf(mysqli_stmt::class, $statement);
-            $execution = new StatementExecution($statement, $session, $plan);
+            $execution = new StatementExecution($statement, $executor, $plan);
 
             self::assertTrue($execution->execute());
             $result = $execution->getResult();
@@ -145,17 +144,17 @@ final class StatementExecutionTest extends TestCase
 
     public function testFetchReturnsNullForAWritingStatement(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
-            $session = (new ConnectionExecution($native))->session();
-            $plan = $session->rewrite('INSERT INTO items VALUES (7)');
+            $executor = (new ConnectionExecution($native))->executor();
+            $plan = $executor->rewrite('INSERT INTO items VALUES (7)');
             $statement = $native->prepare($plan->sql());
             self::assertInstanceOf(mysqli_stmt::class, $statement);
-            $execution = new StatementExecution($statement, $session, $plan);
+            $execution = new StatementExecution($statement, $executor, $plan);
 
             self::assertTrue($execution->execute());
             self::assertNull($execution->fetch());
@@ -166,17 +165,17 @@ final class StatementExecutionTest extends TestCase
 
     public function testResetDiscardsTheSimulatedResult(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
-            $session = (new ConnectionExecution($native))->session();
-            $plan = $session->rewrite('INSERT INTO items VALUES (7)');
+            $executor = (new ConnectionExecution($native))->executor();
+            $plan = $executor->rewrite('INSERT INTO items VALUES (7)');
             $statement = $native->prepare($plan->sql());
             self::assertInstanceOf(mysqli_stmt::class, $statement);
-            $execution = new StatementExecution($statement, $session, $plan);
+            $execution = new StatementExecution($statement, $executor, $plan);
 
             self::assertTrue($execution->execute());
             self::assertNotNull($execution->result());

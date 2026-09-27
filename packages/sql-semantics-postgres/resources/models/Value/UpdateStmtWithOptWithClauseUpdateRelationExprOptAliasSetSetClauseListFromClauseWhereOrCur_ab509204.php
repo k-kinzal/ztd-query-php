@@ -17,7 +17,7 @@ final class UpdateStmtWithOptWithClauseUpdateRelationExprOptAliasSetSetClauseLis
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithClauseForm $with,
@@ -26,6 +26,7 @@ final class UpdateStmtWithOptWithClauseUpdateRelationExprOptAliasSetSetClauseLis
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FromClauseForm $from,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\WhereOrCurrentClauseForm $whereOrCurrentClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ReturningClauseForm $returningClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($with), 'The with must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($relationExprOptAlias), 'The relationExprOptAlias must be a generated immutable SQL value.');
@@ -40,14 +41,42 @@ final class UpdateStmtWithOptWithClauseUpdateRelationExprOptAliasSetSetClauseLis
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->with->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('UPDATE');
+        $writer->comments($this->comments, 2);
         $this->relationExprOptAlias->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('SET');
+        $writer->comments($this->comments, 4);
         $this->setClauseList->write($writer);
+        $writer->comments($this->comments, 5);
         $this->from->write($writer);
+        $writer->comments($this->comments, 6);
         $this->whereOrCurrentClause->write($writer);
+        $writer->comments($this->comments, 7);
         $this->returningClause->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->with, $this->relationExprOptAlias, $this->setClauseList, $this->from, $this->whereOrCurrentClause, $this->returningClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->with, \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithClauseForm::class, $replace), $this->replacement($this->relationExprOptAlias, \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprOptAliasForm::class, $replace), $this->replacement($this->setClauseList, \SqlSemantics\Statement\Model\PostgreSql\Role\SetClauseListForm::class, $replace), $this->replacement($this->from, \SqlSemantics\Statement\Model\PostgreSql\Role\FromClauseForm::class, $replace), $this->replacement($this->whereOrCurrentClause, \SqlSemantics\Statement\Model\PostgreSql\Role\WhereOrCurrentClauseForm::class, $replace), $this->replacement($this->returningClause, \SqlSemantics\Statement\Model\PostgreSql\Role\ReturningClauseForm::class, $replace), $this->comments);
     }
 
     /**
@@ -55,7 +84,7 @@ final class UpdateStmtWithOptWithClauseUpdateRelationExprOptAliasSetSetClauseLis
      */
     public function withWith(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithClauseForm $with): self
     {
-        return new self($with, $this->relationExprOptAlias, $this->setClauseList, $this->from, $this->whereOrCurrentClause, $this->returningClause);
+        return new self($with, $this->relationExprOptAlias, $this->setClauseList, $this->from, $this->whereOrCurrentClause, $this->returningClause, $this->comments);
     }
 
     /**
@@ -63,7 +92,7 @@ final class UpdateStmtWithOptWithClauseUpdateRelationExprOptAliasSetSetClauseLis
      */
     public function withRelationExprOptAlias(\SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprOptAliasForm $relationExprOptAlias): self
     {
-        return new self($this->with, $relationExprOptAlias, $this->setClauseList, $this->from, $this->whereOrCurrentClause, $this->returningClause);
+        return new self($this->with, $relationExprOptAlias, $this->setClauseList, $this->from, $this->whereOrCurrentClause, $this->returningClause, $this->comments);
     }
 
     /**
@@ -71,7 +100,7 @@ final class UpdateStmtWithOptWithClauseUpdateRelationExprOptAliasSetSetClauseLis
      */
     public function withSetClauseList(\SqlSemantics\Statement\Model\PostgreSql\Role\SetClauseListForm $setClauseList): self
     {
-        return new self($this->with, $this->relationExprOptAlias, $setClauseList, $this->from, $this->whereOrCurrentClause, $this->returningClause);
+        return new self($this->with, $this->relationExprOptAlias, $setClauseList, $this->from, $this->whereOrCurrentClause, $this->returningClause, $this->comments);
     }
 
     /**
@@ -79,7 +108,7 @@ final class UpdateStmtWithOptWithClauseUpdateRelationExprOptAliasSetSetClauseLis
      */
     public function withFrom(\SqlSemantics\Statement\Model\PostgreSql\Role\FromClauseForm $from): self
     {
-        return new self($this->with, $this->relationExprOptAlias, $this->setClauseList, $from, $this->whereOrCurrentClause, $this->returningClause);
+        return new self($this->with, $this->relationExprOptAlias, $this->setClauseList, $from, $this->whereOrCurrentClause, $this->returningClause, $this->comments);
     }
 
     /**
@@ -87,7 +116,7 @@ final class UpdateStmtWithOptWithClauseUpdateRelationExprOptAliasSetSetClauseLis
      */
     public function withWhereOrCurrentClause(\SqlSemantics\Statement\Model\PostgreSql\Role\WhereOrCurrentClauseForm $whereOrCurrentClause): self
     {
-        return new self($this->with, $this->relationExprOptAlias, $this->setClauseList, $this->from, $whereOrCurrentClause, $this->returningClause);
+        return new self($this->with, $this->relationExprOptAlias, $this->setClauseList, $this->from, $whereOrCurrentClause, $this->returningClause, $this->comments);
     }
 
     /**
@@ -95,6 +124,14 @@ final class UpdateStmtWithOptWithClauseUpdateRelationExprOptAliasSetSetClauseLis
      */
     public function withReturningClause(\SqlSemantics\Statement\Model\PostgreSql\Role\ReturningClauseForm $returningClause): self
     {
-        return new self($this->with, $this->relationExprOptAlias, $this->setClauseList, $this->from, $this->whereOrCurrentClause, $returningClause);
+        return new self($this->with, $this->relationExprOptAlias, $this->setClauseList, $this->from, $this->whereOrCurrentClause, $returningClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->with, $this->relationExprOptAlias, $this->setClauseList, $this->from, $this->whereOrCurrentClause, $this->returningClause, $comments);
     }
 }

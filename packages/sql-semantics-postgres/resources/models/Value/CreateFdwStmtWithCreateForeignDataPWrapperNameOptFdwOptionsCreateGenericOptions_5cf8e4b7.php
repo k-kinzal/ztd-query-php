@@ -17,12 +17,13 @@ final class CreateFdwStmtWithCreateForeignDataPWrapperNameOptFdwOptionsCreateGen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptFdwOptionsForm $optFdwOptions,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreateGenericOptionsForm $createGenericOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optFdwOptions), 'The optFdwOptions must be a generated immutable SQL value.');
@@ -34,13 +35,40 @@ final class CreateFdwStmtWithCreateForeignDataPWrapperNameOptFdwOptionsCreateGen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $writer->append('FOREIGN');
+        $writer->comments($this->comments, 2);
         $writer->append('DATA');
+        $writer->comments($this->comments, 3);
         $writer->append('WRAPPER');
+        $writer->comments($this->comments, 4);
         $this->name->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optFdwOptions->write($writer);
+        $writer->comments($this->comments, 6);
         $this->createGenericOptions->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->name, $this->optFdwOptions, $this->createGenericOptions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->optFdwOptions, \SqlSemantics\Statement\Model\PostgreSql\Role\OptFdwOptionsForm::class, $replace), $this->replacement($this->createGenericOptions, \SqlSemantics\Statement\Model\PostgreSql\Role\CreateGenericOptionsForm::class, $replace), $this->comments);
     }
 
     /**
@@ -48,7 +76,7 @@ final class CreateFdwStmtWithCreateForeignDataPWrapperNameOptFdwOptionsCreateGen
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($name, $this->optFdwOptions, $this->createGenericOptions);
+        return new self($name, $this->optFdwOptions, $this->createGenericOptions, $this->comments);
     }
 
     /**
@@ -56,7 +84,7 @@ final class CreateFdwStmtWithCreateForeignDataPWrapperNameOptFdwOptionsCreateGen
      */
     public function withOptFdwOptions(\SqlSemantics\Statement\Model\PostgreSql\Role\OptFdwOptionsForm $optFdwOptions): self
     {
-        return new self($this->name, $optFdwOptions, $this->createGenericOptions);
+        return new self($this->name, $optFdwOptions, $this->createGenericOptions, $this->comments);
     }
 
     /**
@@ -64,6 +92,14 @@ final class CreateFdwStmtWithCreateForeignDataPWrapperNameOptFdwOptionsCreateGen
      */
     public function withCreateGenericOptions(\SqlSemantics\Statement\Model\PostgreSql\Role\CreateGenericOptionsForm $createGenericOptions): self
     {
-        return new self($this->name, $this->optFdwOptions, $createGenericOptions);
+        return new self($this->name, $this->optFdwOptions, $createGenericOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->name, $this->optFdwOptions, $this->createGenericOptions, $comments);
     }
 }

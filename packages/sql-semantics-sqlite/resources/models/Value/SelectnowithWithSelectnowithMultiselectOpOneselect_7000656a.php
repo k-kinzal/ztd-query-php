@@ -17,12 +17,13 @@ final class SelectnowithWithSelectnowithMultiselectOpOneselect_7000656a implemen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SelectnowithForm $selectnowith,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\MultiselectOpForm $multiselectOp,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\OneselectForm $oneselect,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($selectnowith), 'The selectnowith must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($multiselectOp), 'The multiselectOp must be a generated immutable SQL value.');
@@ -34,9 +35,32 @@ final class SelectnowithWithSelectnowithMultiselectOpOneselect_7000656a implemen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->selectnowith->write($writer);
+        $writer->comments($this->comments, 1);
         $this->multiselectOp->write($writer);
+        $writer->comments($this->comments, 2);
         $this->oneselect->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->selectnowith, $this->multiselectOp, $this->oneselect];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->selectnowith, \SqlSemantics\Statement\Model\Sqlite\Role\SelectnowithForm::class, $replace), $this->replacement($this->multiselectOp, \SqlSemantics\Statement\Model\Sqlite\Role\MultiselectOpForm::class, $replace), $this->replacement($this->oneselect, \SqlSemantics\Statement\Model\Sqlite\Role\OneselectForm::class, $replace), $this->comments);
     }
 
     /**
@@ -44,7 +68,7 @@ final class SelectnowithWithSelectnowithMultiselectOpOneselect_7000656a implemen
      */
     public function withSelectnowith(\SqlSemantics\Statement\Model\Sqlite\Role\SelectnowithForm $selectnowith): self
     {
-        return new self($selectnowith, $this->multiselectOp, $this->oneselect);
+        return new self($selectnowith, $this->multiselectOp, $this->oneselect, $this->comments);
     }
 
     /**
@@ -52,7 +76,7 @@ final class SelectnowithWithSelectnowithMultiselectOpOneselect_7000656a implemen
      */
     public function withMultiselectOp(\SqlSemantics\Statement\Model\Sqlite\Role\MultiselectOpForm $multiselectOp): self
     {
-        return new self($this->selectnowith, $multiselectOp, $this->oneselect);
+        return new self($this->selectnowith, $multiselectOp, $this->oneselect, $this->comments);
     }
 
     /**
@@ -60,6 +84,14 @@ final class SelectnowithWithSelectnowithMultiselectOpOneselect_7000656a implemen
      */
     public function withOneselect(\SqlSemantics\Statement\Model\Sqlite\Role\OneselectForm $oneselect): self
     {
-        return new self($this->selectnowith, $this->multiselectOp, $oneselect);
+        return new self($this->selectnowith, $this->multiselectOp, $oneselect, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->selectnowith, $this->multiselectOp, $this->oneselect, $comments);
     }
 }

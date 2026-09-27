@@ -17,12 +17,13 @@ final class LogfileGroupOptionListWithLogfileGroupOptionListOptCommaLogfileGroup
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LogfileGroupOptionListForm $logfileGroupOptionList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCommaForm $optComma,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LogfileGroupOptionForm $logfileGroupOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($logfileGroupOptionList), 'The logfileGroupOptionList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optComma), 'The optComma must be a generated immutable SQL value.');
@@ -34,9 +35,32 @@ final class LogfileGroupOptionListWithLogfileGroupOptionListOptCommaLogfileGroup
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->logfileGroupOptionList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optComma->write($writer);
+        $writer->comments($this->comments, 2);
         $this->logfileGroupOption->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->logfileGroupOptionList, $this->optComma, $this->logfileGroupOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->logfileGroupOptionList, \SqlSemantics\Statement\Model\MySql\Role\LogfileGroupOptionListForm::class, $replace), $this->replacement($this->optComma, \SqlSemantics\Statement\Model\MySql\Role\OptCommaForm::class, $replace), $this->replacement($this->logfileGroupOption, \SqlSemantics\Statement\Model\MySql\Role\LogfileGroupOptionForm::class, $replace), $this->comments);
     }
 
     /**
@@ -44,7 +68,7 @@ final class LogfileGroupOptionListWithLogfileGroupOptionListOptCommaLogfileGroup
      */
     public function withLogfileGroupOptionList(\SqlSemantics\Statement\Model\MySql\Role\LogfileGroupOptionListForm $logfileGroupOptionList): self
     {
-        return new self($logfileGroupOptionList, $this->optComma, $this->logfileGroupOption);
+        return new self($logfileGroupOptionList, $this->optComma, $this->logfileGroupOption, $this->comments);
     }
 
     /**
@@ -52,7 +76,7 @@ final class LogfileGroupOptionListWithLogfileGroupOptionListOptCommaLogfileGroup
      */
     public function withOptComma(\SqlSemantics\Statement\Model\MySql\Role\OptCommaForm $optComma): self
     {
-        return new self($this->logfileGroupOptionList, $optComma, $this->logfileGroupOption);
+        return new self($this->logfileGroupOptionList, $optComma, $this->logfileGroupOption, $this->comments);
     }
 
     /**
@@ -60,6 +84,14 @@ final class LogfileGroupOptionListWithLogfileGroupOptionListOptCommaLogfileGroup
      */
     public function withLogfileGroupOption(\SqlSemantics\Statement\Model\MySql\Role\LogfileGroupOptionForm $logfileGroupOption): self
     {
-        return new self($this->logfileGroupOptionList, $this->optComma, $logfileGroupOption);
+        return new self($this->logfileGroupOptionList, $this->optComma, $logfileGroupOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->logfileGroupOptionList, $this->optComma, $this->logfileGroupOption, $comments);
     }
 }

@@ -17,10 +17,11 @@ final class UpsertWithOnConflictDoNothingReturning_162a31bb implements \SqlSeman
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ReturningForm $returning,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($returning), 'The returning must be a generated immutable SQL value.');
     }
@@ -30,11 +31,36 @@ final class UpsertWithOnConflictDoNothingReturning_162a31bb implements \SqlSeman
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ON');
+        $writer->comments($this->comments, 1);
         $writer->append('CONFLICT');
+        $writer->comments($this->comments, 2);
         $writer->append('DO');
+        $writer->comments($this->comments, 3);
         $writer->append('NOTHING');
+        $writer->comments($this->comments, 4);
         $this->returning->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->returning];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->returning, \SqlSemantics\Statement\Model\Sqlite\Role\ReturningForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,6 +68,14 @@ final class UpsertWithOnConflictDoNothingReturning_162a31bb implements \SqlSeman
      */
     public function withReturning(\SqlSemantics\Statement\Model\Sqlite\Role\ReturningForm $returning): self
     {
-        return new self($returning);
+        return new self($returning, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->returning, $comments);
     }
 }

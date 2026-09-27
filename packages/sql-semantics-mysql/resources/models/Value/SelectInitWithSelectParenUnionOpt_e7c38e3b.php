@@ -12,16 +12,17 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectInitWithSelectParenUnionOpt_e7c38e3b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class SelectInitWithSelectParenUnionOpt_e7c38e3b implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainableCommandForm, \SqlSemantics\Statement\Model\MySql\Role\ExplanableCommandForm, \SqlSemantics\Statement\Model\MySql\Role\SelectForm, \SqlSemantics\Statement\Model\MySql\Role\SelectInitForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class SelectInitWithSelectParenUnionOpt_e7c38e3b implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainableCommandForm, \SqlSemantics\Statement\Model\MySql\Role\ExplanableCommandForm, \SqlSemantics\Statement\Model\MySql\Role\SelectForm, \SqlSemantics\Statement\Model\MySql\Role\SelectInitForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectParenForm $selectParen,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UnionOptForm $unionOpt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectParen), 'The selectParen must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($unionOpt), 'The unionOpt must be a generated immutable SQL value.');
@@ -32,10 +33,34 @@ final class SelectInitWithSelectParenUnionOpt_e7c38e3b implements \SqlSemantics\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->selectParen->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(')');
+        $writer->comments($this->comments, 3);
         $this->unionOpt->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->selectParen, $this->unionOpt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->selectParen, \SqlSemantics\Statement\Model\MySql\Role\SelectParenForm::class, $replace), $this->replacement($this->unionOpt, \SqlSemantics\Statement\Model\MySql\Role\UnionOptForm::class, $replace), $this->comments);
     }
 
     /**
@@ -43,7 +68,7 @@ final class SelectInitWithSelectParenUnionOpt_e7c38e3b implements \SqlSemantics\
      */
     public function withSelectParen(\SqlSemantics\Statement\Model\MySql\Role\SelectParenForm $selectParen): self
     {
-        return new self($selectParen, $this->unionOpt);
+        return new self($selectParen, $this->unionOpt, $this->comments);
     }
 
     /**
@@ -51,6 +76,14 @@ final class SelectInitWithSelectParenUnionOpt_e7c38e3b implements \SqlSemantics\
      */
     public function withUnionOpt(\SqlSemantics\Statement\Model\MySql\Role\UnionOptForm $unionOpt): self
     {
-        return new self($this->selectParen, $unionOpt);
+        return new self($this->selectParen, $unionOpt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->selectParen, $this->unionOpt, $comments);
     }
 }

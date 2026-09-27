@@ -17,11 +17,12 @@ final class AssignToKeycacheWithTableIdentCacheKeysSpec_c5871e0f implements \Sql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CacheKeysSpecForm $cacheKeysSpec,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($cacheKeysSpec), 'The cacheKeysSpec must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class AssignToKeycacheWithTableIdentCacheKeysSpec_c5871e0f implements \Sql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 1);
         $this->cacheKeysSpec->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableIdent, $this->cacheKeysSpec];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->cacheKeysSpec, \SqlSemantics\Statement\Model\MySql\Role\CacheKeysSpecForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class AssignToKeycacheWithTableIdentCacheKeysSpec_c5871e0f implements \Sql
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($tableIdent, $this->cacheKeysSpec);
+        return new self($tableIdent, $this->cacheKeysSpec, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class AssignToKeycacheWithTableIdentCacheKeysSpec_c5871e0f implements \Sql
      */
     public function withCacheKeysSpec(\SqlSemantics\Statement\Model\MySql\Role\CacheKeysSpecForm $cacheKeysSpec): self
     {
-        return new self($this->tableIdent, $cacheKeysSpec);
+        return new self($this->tableIdent, $cacheKeysSpec, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableIdent, $this->cacheKeysSpec, $comments);
     }
 }

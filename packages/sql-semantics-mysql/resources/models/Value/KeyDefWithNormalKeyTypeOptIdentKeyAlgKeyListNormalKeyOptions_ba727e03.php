@@ -17,7 +17,7 @@ final class KeyDefWithNormalKeyTypeOptIdentKeyAlgKeyListNormalKeyOptions_ba727e0
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NormalKeyTypeForm $normalKeyType,
@@ -25,6 +25,7 @@ final class KeyDefWithNormalKeyTypeOptIdentKeyAlgKeyListNormalKeyOptions_ba727e0
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyAlgForm $keyAlg,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyListForm $keyList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptionsForm $normalKeyOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($normalKeyType), 'The normalKeyType must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIdent), 'The optIdent must be a generated immutable SQL value.');
@@ -38,13 +39,40 @@ final class KeyDefWithNormalKeyTypeOptIdentKeyAlgKeyListNormalKeyOptions_ba727e0
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->normalKeyType->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optIdent->write($writer);
+        $writer->comments($this->comments, 2);
         $this->keyAlg->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('(');
+        $writer->comments($this->comments, 4);
         $this->keyList->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
+        $writer->comments($this->comments, 6);
         $this->normalKeyOptions->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->normalKeyType, $this->optIdent, $this->keyAlg, $this->keyList, $this->normalKeyOptions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->normalKeyType, \SqlSemantics\Statement\Model\MySql\Role\NormalKeyTypeForm::class, $replace), $this->replacement($this->optIdent, \SqlSemantics\Statement\Model\MySql\Role\OptIdentForm::class, $replace), $this->replacement($this->keyAlg, \SqlSemantics\Statement\Model\MySql\Role\KeyAlgForm::class, $replace), $this->replacement($this->keyList, \SqlSemantics\Statement\Model\MySql\Role\KeyListForm::class, $replace), $this->replacement($this->normalKeyOptions, \SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptionsForm::class, $replace), $this->comments);
     }
 
     /**
@@ -52,7 +80,7 @@ final class KeyDefWithNormalKeyTypeOptIdentKeyAlgKeyListNormalKeyOptions_ba727e0
      */
     public function withNormalKeyType(\SqlSemantics\Statement\Model\MySql\Role\NormalKeyTypeForm $normalKeyType): self
     {
-        return new self($normalKeyType, $this->optIdent, $this->keyAlg, $this->keyList, $this->normalKeyOptions);
+        return new self($normalKeyType, $this->optIdent, $this->keyAlg, $this->keyList, $this->normalKeyOptions, $this->comments);
     }
 
     /**
@@ -60,7 +88,7 @@ final class KeyDefWithNormalKeyTypeOptIdentKeyAlgKeyListNormalKeyOptions_ba727e0
      */
     public function withOptIdent(\SqlSemantics\Statement\Model\MySql\Role\OptIdentForm $optIdent): self
     {
-        return new self($this->normalKeyType, $optIdent, $this->keyAlg, $this->keyList, $this->normalKeyOptions);
+        return new self($this->normalKeyType, $optIdent, $this->keyAlg, $this->keyList, $this->normalKeyOptions, $this->comments);
     }
 
     /**
@@ -68,7 +96,7 @@ final class KeyDefWithNormalKeyTypeOptIdentKeyAlgKeyListNormalKeyOptions_ba727e0
      */
     public function withKeyAlg(\SqlSemantics\Statement\Model\MySql\Role\KeyAlgForm $keyAlg): self
     {
-        return new self($this->normalKeyType, $this->optIdent, $keyAlg, $this->keyList, $this->normalKeyOptions);
+        return new self($this->normalKeyType, $this->optIdent, $keyAlg, $this->keyList, $this->normalKeyOptions, $this->comments);
     }
 
     /**
@@ -76,7 +104,7 @@ final class KeyDefWithNormalKeyTypeOptIdentKeyAlgKeyListNormalKeyOptions_ba727e0
      */
     public function withKeyList(\SqlSemantics\Statement\Model\MySql\Role\KeyListForm $keyList): self
     {
-        return new self($this->normalKeyType, $this->optIdent, $this->keyAlg, $keyList, $this->normalKeyOptions);
+        return new self($this->normalKeyType, $this->optIdent, $this->keyAlg, $keyList, $this->normalKeyOptions, $this->comments);
     }
 
     /**
@@ -84,6 +112,14 @@ final class KeyDefWithNormalKeyTypeOptIdentKeyAlgKeyListNormalKeyOptions_ba727e0
      */
     public function withNormalKeyOptions(\SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptionsForm $normalKeyOptions): self
     {
-        return new self($this->normalKeyType, $this->optIdent, $this->keyAlg, $this->keyList, $normalKeyOptions);
+        return new self($this->normalKeyType, $this->optIdent, $this->keyAlg, $this->keyList, $normalKeyOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->normalKeyType, $this->optIdent, $this->keyAlg, $this->keyList, $this->normalKeyOptions, $comments);
     }
 }

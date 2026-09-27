@@ -17,13 +17,14 @@ final class CmdWithWithDeleteFromXfullnameIndexedOptWhereOptRet_9ab314d3 impleme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WithForm $with,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\XfullnameForm $xfullname,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\IndexedOptForm $indexedOpt,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptRetForm $whereOptRet,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($with), 'The with must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($xfullname), 'The xfullname must be a generated immutable SQL value.');
@@ -36,12 +37,38 @@ final class CmdWithWithDeleteFromXfullnameIndexedOptWhereOptRet_9ab314d3 impleme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->with->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('DELETE');
+        $writer->comments($this->comments, 2);
         $writer->append('FROM');
+        $writer->comments($this->comments, 3);
         $this->xfullname->write($writer);
+        $writer->comments($this->comments, 4);
         $this->indexedOpt->write($writer);
+        $writer->comments($this->comments, 5);
         $this->whereOptRet->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->with, $this->xfullname, $this->indexedOpt, $this->whereOptRet];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->with, \SqlSemantics\Statement\Model\Sqlite\Role\WithForm::class, $replace), $this->replacement($this->xfullname, \SqlSemantics\Statement\Model\Sqlite\Role\XfullnameForm::class, $replace), $this->replacement($this->indexedOpt, \SqlSemantics\Statement\Model\Sqlite\Role\IndexedOptForm::class, $replace), $this->replacement($this->whereOptRet, \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptRetForm::class, $replace), $this->comments);
     }
 
     /**
@@ -49,7 +76,7 @@ final class CmdWithWithDeleteFromXfullnameIndexedOptWhereOptRet_9ab314d3 impleme
      */
     public function withWith(\SqlSemantics\Statement\Model\Sqlite\Role\WithForm $with): self
     {
-        return new self($with, $this->xfullname, $this->indexedOpt, $this->whereOptRet);
+        return new self($with, $this->xfullname, $this->indexedOpt, $this->whereOptRet, $this->comments);
     }
 
     /**
@@ -57,7 +84,7 @@ final class CmdWithWithDeleteFromXfullnameIndexedOptWhereOptRet_9ab314d3 impleme
      */
     public function withXfullname(\SqlSemantics\Statement\Model\Sqlite\Role\XfullnameForm $xfullname): self
     {
-        return new self($this->with, $xfullname, $this->indexedOpt, $this->whereOptRet);
+        return new self($this->with, $xfullname, $this->indexedOpt, $this->whereOptRet, $this->comments);
     }
 
     /**
@@ -65,7 +92,7 @@ final class CmdWithWithDeleteFromXfullnameIndexedOptWhereOptRet_9ab314d3 impleme
      */
     public function withIndexedOpt(\SqlSemantics\Statement\Model\Sqlite\Role\IndexedOptForm $indexedOpt): self
     {
-        return new self($this->with, $this->xfullname, $indexedOpt, $this->whereOptRet);
+        return new self($this->with, $this->xfullname, $indexedOpt, $this->whereOptRet, $this->comments);
     }
 
     /**
@@ -73,6 +100,14 @@ final class CmdWithWithDeleteFromXfullnameIndexedOptWhereOptRet_9ab314d3 impleme
      */
     public function withWhereOptRet(\SqlSemantics\Statement\Model\Sqlite\Role\WhereOptRetForm $whereOptRet): self
     {
-        return new self($this->with, $this->xfullname, $this->indexedOpt, $whereOptRet);
+        return new self($this->with, $this->xfullname, $this->indexedOpt, $whereOptRet, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->with, $this->xfullname, $this->indexedOpt, $this->whereOptRet, $comments);
     }
 }

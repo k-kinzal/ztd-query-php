@@ -17,7 +17,7 @@ final class SfTailWithFunctionSymSpNameSpFdparamListReturnsSymTypeWithOptCollate
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName,
@@ -25,6 +25,7 @@ final class SfTailWithFunctionSymSpNameSpFdparamListReturnsSymTypeWithOptCollate
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TypeWithOptCollateForm $typeWithOptCollate,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpCChisticsForm $spCChistics,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm $spProcStmt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spName), 'The spName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spFdparamList), 'The spFdparamList must be a generated immutable SQL value.');
@@ -38,15 +39,44 @@ final class SfTailWithFunctionSymSpNameSpFdparamListReturnsSymTypeWithOptCollate
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('FUNCTION');
+        $writer->comments($this->comments, 1);
         $this->spName->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('(');
+        $writer->comments($this->comments, 3);
         $this->spFdparamList->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
+        $writer->comments($this->comments, 5);
         $writer->append('RETURNS');
+        $writer->comments($this->comments, 6);
         $this->typeWithOptCollate->write($writer);
+        $writer->comments($this->comments, 7);
         $this->spCChistics->write($writer);
+        $writer->comments($this->comments, 8);
         $this->spProcStmt->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->spName, $this->spFdparamList, $this->typeWithOptCollate, $this->spCChistics, $this->spProcStmt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->spName, \SqlSemantics\Statement\Model\MySql\Role\SpNameForm::class, $replace), $this->replacement($this->spFdparamList, \SqlSemantics\Statement\Model\MySql\Role\SpFdparamListForm::class, $replace), $this->replacement($this->typeWithOptCollate, \SqlSemantics\Statement\Model\MySql\Role\TypeWithOptCollateForm::class, $replace), $this->replacement($this->spCChistics, \SqlSemantics\Statement\Model\MySql\Role\SpCChisticsForm::class, $replace), $this->replacement($this->spProcStmt, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm::class, $replace), $this->comments);
     }
 
     /**
@@ -54,7 +84,7 @@ final class SfTailWithFunctionSymSpNameSpFdparamListReturnsSymTypeWithOptCollate
      */
     public function withSpName(\SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName): self
     {
-        return new self($spName, $this->spFdparamList, $this->typeWithOptCollate, $this->spCChistics, $this->spProcStmt);
+        return new self($spName, $this->spFdparamList, $this->typeWithOptCollate, $this->spCChistics, $this->spProcStmt, $this->comments);
     }
 
     /**
@@ -62,7 +92,7 @@ final class SfTailWithFunctionSymSpNameSpFdparamListReturnsSymTypeWithOptCollate
      */
     public function withSpFdparamList(\SqlSemantics\Statement\Model\MySql\Role\SpFdparamListForm $spFdparamList): self
     {
-        return new self($this->spName, $spFdparamList, $this->typeWithOptCollate, $this->spCChistics, $this->spProcStmt);
+        return new self($this->spName, $spFdparamList, $this->typeWithOptCollate, $this->spCChistics, $this->spProcStmt, $this->comments);
     }
 
     /**
@@ -70,7 +100,7 @@ final class SfTailWithFunctionSymSpNameSpFdparamListReturnsSymTypeWithOptCollate
      */
     public function withTypeWithOptCollate(\SqlSemantics\Statement\Model\MySql\Role\TypeWithOptCollateForm $typeWithOptCollate): self
     {
-        return new self($this->spName, $this->spFdparamList, $typeWithOptCollate, $this->spCChistics, $this->spProcStmt);
+        return new self($this->spName, $this->spFdparamList, $typeWithOptCollate, $this->spCChistics, $this->spProcStmt, $this->comments);
     }
 
     /**
@@ -78,7 +108,7 @@ final class SfTailWithFunctionSymSpNameSpFdparamListReturnsSymTypeWithOptCollate
      */
     public function withSpCChistics(\SqlSemantics\Statement\Model\MySql\Role\SpCChisticsForm $spCChistics): self
     {
-        return new self($this->spName, $this->spFdparamList, $this->typeWithOptCollate, $spCChistics, $this->spProcStmt);
+        return new self($this->spName, $this->spFdparamList, $this->typeWithOptCollate, $spCChistics, $this->spProcStmt, $this->comments);
     }
 
     /**
@@ -86,6 +116,14 @@ final class SfTailWithFunctionSymSpNameSpFdparamListReturnsSymTypeWithOptCollate
      */
     public function withSpProcStmt(\SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm $spProcStmt): self
     {
-        return new self($this->spName, $this->spFdparamList, $this->typeWithOptCollate, $this->spCChistics, $spProcStmt);
+        return new self($this->spName, $this->spFdparamList, $this->typeWithOptCollate, $this->spCChistics, $spProcStmt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->spName, $this->spFdparamList, $this->typeWithOptCollate, $this->spCChistics, $this->spProcStmt, $comments);
     }
 }

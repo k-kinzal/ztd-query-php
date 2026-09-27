@@ -17,13 +17,14 @@ final class SimpleExprWithSimpleExpr_9ba2b450 implements \SqlSemantics\Statement
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm $simpleExpr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleExpr), 'The simpleExpr must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($simpleExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 16,  'mysql-5.7.44' => 17,  'mysql-8.0.44' => 23,  'mysql-8.1.0' => 23,  'mysql-8.2.0' => 23,  'mysql-8.3.0' => 23,  'mysql-8.4.7' => 23,  'mysql-9.0.1' => 23,  'mysql-9.1.0' => 23,));
+        $this->assertOperandBindingStrength($simpleExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 16,  'mysql-5.7.44' => 17,  'mysql-8.0.44' => 23,  'mysql-8.1.0' => 23,  'mysql-8.2.0' => 23,  'mysql-8.3.0' => 23,  'mysql-8.4.7' => 23,  'mysql-9.0.1' => 23,  'mysql-9.1.0' => 23,), \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_RULES, 'simple_expr');
     }
 
     /**
@@ -31,8 +32,30 @@ final class SimpleExprWithSimpleExpr_9ba2b450 implements \SqlSemantics\Statement
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('+');
+        $writer->comments($this->comments, 1);
         $this->simpleExpr->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->simpleExpr];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->simpleExpr, \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm::class, $replace), $this->comments);
     }
 
     /**
@@ -40,6 +63,14 @@ final class SimpleExprWithSimpleExpr_9ba2b450 implements \SqlSemantics\Statement
      */
     public function withSimpleExpr(\SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm $simpleExpr): self
     {
-        return new self($simpleExpr);
+        return new self($simpleExpr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->simpleExpr, $comments);
     }
 }

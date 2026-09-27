@@ -17,11 +17,12 @@ final class ChangeWithChangeMasterSymToSymMasterDefsOptChannel_8448ccc1 implemen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\MasterDefsForm $masterDefs,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($masterDefs), 'The masterDefs must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optChannel), 'The optChannel must be a generated immutable SQL value.');
@@ -32,11 +33,36 @@ final class ChangeWithChangeMasterSymToSymMasterDefsOptChannel_8448ccc1 implemen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CHANGE');
+        $writer->comments($this->comments, 1);
         $writer->append('MASTER');
+        $writer->comments($this->comments, 2);
         $writer->append('TO');
+        $writer->comments($this->comments, 3);
         $this->masterDefs->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optChannel->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->masterDefs, $this->optChannel];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->masterDefs, \SqlSemantics\Statement\Model\MySql\Role\MasterDefsForm::class, $replace), $this->replacement($this->optChannel, \SqlSemantics\Statement\Model\MySql\Role\OptChannelForm::class, $replace), $this->comments);
     }
 
     /**
@@ -44,7 +70,7 @@ final class ChangeWithChangeMasterSymToSymMasterDefsOptChannel_8448ccc1 implemen
      */
     public function withMasterDefs(\SqlSemantics\Statement\Model\MySql\Role\MasterDefsForm $masterDefs): self
     {
-        return new self($masterDefs, $this->optChannel);
+        return new self($masterDefs, $this->optChannel, $this->comments);
     }
 
     /**
@@ -52,6 +78,14 @@ final class ChangeWithChangeMasterSymToSymMasterDefsOptChannel_8448ccc1 implemen
      */
     public function withOptChannel(\SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel): self
     {
-        return new self($this->masterDefs, $optChannel);
+        return new self($this->masterDefs, $optChannel, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->masterDefs, $this->optChannel, $comments);
     }
 }

@@ -17,7 +17,7 @@ final class TriggerDeclWithTempTriggerIfnotexistsNmDbnmTriggerTimeTriggerEventOn
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TempForm $temp,
@@ -29,6 +29,7 @@ final class TriggerDeclWithTempTriggerIfnotexistsNmDbnmTriggerTimeTriggerEventOn
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\FullnameForm $fullname,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ForeachClauseForm $foreachClause,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WhenClauseForm $whenClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($temp), 'The temp must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($ifnotexists), 'The ifnotexists must be a generated immutable SQL value.');
@@ -46,17 +47,48 @@ final class TriggerDeclWithTempTriggerIfnotexistsNmDbnmTriggerTimeTriggerEventOn
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->temp->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('TRIGGER');
+        $writer->comments($this->comments, 2);
         $this->ifnotexists->write($writer);
+        $writer->comments($this->comments, 3);
         $this->nm->write($writer);
+        $writer->comments($this->comments, 4);
         $this->dbnm->write($writer);
+        $writer->comments($this->comments, 5);
         $this->triggerTime->write($writer);
+        $writer->comments($this->comments, 6);
         $this->triggerEvent->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append('ON');
+        $writer->comments($this->comments, 8);
         $this->fullname->write($writer);
+        $writer->comments($this->comments, 9);
         $this->foreachClause->write($writer);
+        $writer->comments($this->comments, 10);
         $this->whenClause->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->triggerTime, $this->triggerEvent, $this->fullname, $this->foreachClause, $this->whenClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->temp, \SqlSemantics\Statement\Model\Sqlite\Role\TempForm::class, $replace), $this->replacement($this->ifnotexists, \SqlSemantics\Statement\Model\Sqlite\Role\IfnotexistsForm::class, $replace), $this->replacement($this->nm, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace), $this->replacement($this->dbnm, \SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm::class, $replace), $this->replacement($this->triggerTime, \SqlSemantics\Statement\Model\Sqlite\Role\TriggerTimeForm::class, $replace), $this->replacement($this->triggerEvent, \SqlSemantics\Statement\Model\Sqlite\Role\TriggerEventForm::class, $replace), $this->replacement($this->fullname, \SqlSemantics\Statement\Model\Sqlite\Role\FullnameForm::class, $replace), $this->replacement($this->foreachClause, \SqlSemantics\Statement\Model\Sqlite\Role\ForeachClauseForm::class, $replace), $this->replacement($this->whenClause, \SqlSemantics\Statement\Model\Sqlite\Role\WhenClauseForm::class, $replace), $this->comments);
     }
 
     /**
@@ -64,7 +96,7 @@ final class TriggerDeclWithTempTriggerIfnotexistsNmDbnmTriggerTimeTriggerEventOn
      */
     public function withTemp(\SqlSemantics\Statement\Model\Sqlite\Role\TempForm $temp): self
     {
-        return new self($temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->triggerTime, $this->triggerEvent, $this->fullname, $this->foreachClause, $this->whenClause);
+        return new self($temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->triggerTime, $this->triggerEvent, $this->fullname, $this->foreachClause, $this->whenClause, $this->comments);
     }
 
     /**
@@ -72,7 +104,7 @@ final class TriggerDeclWithTempTriggerIfnotexistsNmDbnmTriggerTimeTriggerEventOn
      */
     public function withIfnotexists(\SqlSemantics\Statement\Model\Sqlite\Role\IfnotexistsForm $ifnotexists): self
     {
-        return new self($this->temp, $ifnotexists, $this->nm, $this->dbnm, $this->triggerTime, $this->triggerEvent, $this->fullname, $this->foreachClause, $this->whenClause);
+        return new self($this->temp, $ifnotexists, $this->nm, $this->dbnm, $this->triggerTime, $this->triggerEvent, $this->fullname, $this->foreachClause, $this->whenClause, $this->comments);
     }
 
     /**
@@ -80,7 +112,7 @@ final class TriggerDeclWithTempTriggerIfnotexistsNmDbnmTriggerTimeTriggerEventOn
      */
     public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
     {
-        return new self($this->temp, $this->ifnotexists, $nm, $this->dbnm, $this->triggerTime, $this->triggerEvent, $this->fullname, $this->foreachClause, $this->whenClause);
+        return new self($this->temp, $this->ifnotexists, $nm, $this->dbnm, $this->triggerTime, $this->triggerEvent, $this->fullname, $this->foreachClause, $this->whenClause, $this->comments);
     }
 
     /**
@@ -88,7 +120,7 @@ final class TriggerDeclWithTempTriggerIfnotexistsNmDbnmTriggerTimeTriggerEventOn
      */
     public function withDbnm(\SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm): self
     {
-        return new self($this->temp, $this->ifnotexists, $this->nm, $dbnm, $this->triggerTime, $this->triggerEvent, $this->fullname, $this->foreachClause, $this->whenClause);
+        return new self($this->temp, $this->ifnotexists, $this->nm, $dbnm, $this->triggerTime, $this->triggerEvent, $this->fullname, $this->foreachClause, $this->whenClause, $this->comments);
     }
 
     /**
@@ -96,7 +128,7 @@ final class TriggerDeclWithTempTriggerIfnotexistsNmDbnmTriggerTimeTriggerEventOn
      */
     public function withTriggerTime(\SqlSemantics\Statement\Model\Sqlite\Role\TriggerTimeForm $triggerTime): self
     {
-        return new self($this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $triggerTime, $this->triggerEvent, $this->fullname, $this->foreachClause, $this->whenClause);
+        return new self($this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $triggerTime, $this->triggerEvent, $this->fullname, $this->foreachClause, $this->whenClause, $this->comments);
     }
 
     /**
@@ -104,7 +136,7 @@ final class TriggerDeclWithTempTriggerIfnotexistsNmDbnmTriggerTimeTriggerEventOn
      */
     public function withTriggerEvent(\SqlSemantics\Statement\Model\Sqlite\Role\TriggerEventForm $triggerEvent): self
     {
-        return new self($this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->triggerTime, $triggerEvent, $this->fullname, $this->foreachClause, $this->whenClause);
+        return new self($this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->triggerTime, $triggerEvent, $this->fullname, $this->foreachClause, $this->whenClause, $this->comments);
     }
 
     /**
@@ -112,7 +144,7 @@ final class TriggerDeclWithTempTriggerIfnotexistsNmDbnmTriggerTimeTriggerEventOn
      */
     public function withFullname(\SqlSemantics\Statement\Model\Sqlite\Role\FullnameForm $fullname): self
     {
-        return new self($this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->triggerTime, $this->triggerEvent, $fullname, $this->foreachClause, $this->whenClause);
+        return new self($this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->triggerTime, $this->triggerEvent, $fullname, $this->foreachClause, $this->whenClause, $this->comments);
     }
 
     /**
@@ -120,7 +152,7 @@ final class TriggerDeclWithTempTriggerIfnotexistsNmDbnmTriggerTimeTriggerEventOn
      */
     public function withForeachClause(\SqlSemantics\Statement\Model\Sqlite\Role\ForeachClauseForm $foreachClause): self
     {
-        return new self($this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->triggerTime, $this->triggerEvent, $this->fullname, $foreachClause, $this->whenClause);
+        return new self($this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->triggerTime, $this->triggerEvent, $this->fullname, $foreachClause, $this->whenClause, $this->comments);
     }
 
     /**
@@ -128,6 +160,14 @@ final class TriggerDeclWithTempTriggerIfnotexistsNmDbnmTriggerTimeTriggerEventOn
      */
     public function withWhenClause(\SqlSemantics\Statement\Model\Sqlite\Role\WhenClauseForm $whenClause): self
     {
-        return new self($this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->triggerTime, $this->triggerEvent, $this->fullname, $this->foreachClause, $whenClause);
+        return new self($this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->triggerTime, $this->triggerEvent, $this->fullname, $this->foreachClause, $whenClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->triggerTime, $this->triggerEvent, $this->fullname, $this->foreachClause, $this->whenClause, $comments);
     }
 }

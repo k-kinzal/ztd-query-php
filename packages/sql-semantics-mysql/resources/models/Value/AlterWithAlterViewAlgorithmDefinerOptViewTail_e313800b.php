@@ -12,17 +12,18 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterWithAlterViewAlgorithmDefinerOptViewTail_e313800b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterWithAlterViewAlgorithmDefinerOptViewTail_e313800b implements \SqlSemantics\Statement\Model\MySql\Role\AlterForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class AlterWithAlterViewAlgorithmDefinerOptViewTail_e313800b implements \SqlSemantics\Statement\Model\MySql\Role\AlterForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ViewAlgorithmForm $viewAlgorithm,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DefinerOptForm $definerOpt,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ViewTailForm $viewTail,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($viewAlgorithm), 'The viewAlgorithm must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($definerOpt), 'The definerOpt must be a generated immutable SQL value.');
@@ -34,10 +35,34 @@ final class AlterWithAlterViewAlgorithmDefinerOptViewTail_e313800b implements \S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $this->viewAlgorithm->write($writer);
+        $writer->comments($this->comments, 2);
         $this->definerOpt->write($writer);
+        $writer->comments($this->comments, 3);
         $this->viewTail->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->viewAlgorithm, $this->definerOpt, $this->viewTail];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->viewAlgorithm, \SqlSemantics\Statement\Model\MySql\Role\ViewAlgorithmForm::class, $replace), $this->replacement($this->definerOpt, \SqlSemantics\Statement\Model\MySql\Role\DefinerOptForm::class, $replace), $this->replacement($this->viewTail, \SqlSemantics\Statement\Model\MySql\Role\ViewTailForm::class, $replace), $this->comments);
     }
 
     /**
@@ -45,7 +70,7 @@ final class AlterWithAlterViewAlgorithmDefinerOptViewTail_e313800b implements \S
      */
     public function withViewAlgorithm(\SqlSemantics\Statement\Model\MySql\Role\ViewAlgorithmForm $viewAlgorithm): self
     {
-        return new self($viewAlgorithm, $this->definerOpt, $this->viewTail);
+        return new self($viewAlgorithm, $this->definerOpt, $this->viewTail, $this->comments);
     }
 
     /**
@@ -53,7 +78,7 @@ final class AlterWithAlterViewAlgorithmDefinerOptViewTail_e313800b implements \S
      */
     public function withDefinerOpt(\SqlSemantics\Statement\Model\MySql\Role\DefinerOptForm $definerOpt): self
     {
-        return new self($this->viewAlgorithm, $definerOpt, $this->viewTail);
+        return new self($this->viewAlgorithm, $definerOpt, $this->viewTail, $this->comments);
     }
 
     /**
@@ -61,6 +86,14 @@ final class AlterWithAlterViewAlgorithmDefinerOptViewTail_e313800b implements \S
      */
     public function withViewTail(\SqlSemantics\Statement\Model\MySql\Role\ViewTailForm $viewTail): self
     {
-        return new self($this->viewAlgorithm, $this->definerOpt, $viewTail);
+        return new self($this->viewAlgorithm, $this->definerOpt, $viewTail, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->viewAlgorithm, $this->definerOpt, $this->viewTail, $comments);
     }
 }

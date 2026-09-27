@@ -17,12 +17,13 @@ final class AlterTablespaceStmtWithAlterTablespaceSymIdentAddTsDatafileOptAlterT
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TsDatafileForm $tsDatafile,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptAlterTablespaceOptionsForm $optAlterTablespaceOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tsDatafile), 'The tsDatafile must be a generated immutable SQL value.');
@@ -34,12 +35,38 @@ final class AlterTablespaceStmtWithAlterTablespaceSymIdentAddTsDatafileOptAlterT
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('TABLESPACE');
+        $writer->comments($this->comments, 2);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('ADD');
+        $writer->comments($this->comments, 4);
         $this->tsDatafile->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optAlterTablespaceOptions->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->ident, $this->tsDatafile, $this->optAlterTablespaceOptions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->ident, \SqlSemantics\Statement\Model\MySql\Role\IdentForm::class, $replace), $this->replacement($this->tsDatafile, \SqlSemantics\Statement\Model\MySql\Role\TsDatafileForm::class, $replace), $this->replacement($this->optAlterTablespaceOptions, \SqlSemantics\Statement\Model\MySql\Role\OptAlterTablespaceOptionsForm::class, $replace), $this->comments);
     }
 
     /**
@@ -47,7 +74,7 @@ final class AlterTablespaceStmtWithAlterTablespaceSymIdentAddTsDatafileOptAlterT
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($ident, $this->tsDatafile, $this->optAlterTablespaceOptions);
+        return new self($ident, $this->tsDatafile, $this->optAlterTablespaceOptions, $this->comments);
     }
 
     /**
@@ -55,7 +82,7 @@ final class AlterTablespaceStmtWithAlterTablespaceSymIdentAddTsDatafileOptAlterT
      */
     public function withTsDatafile(\SqlSemantics\Statement\Model\MySql\Role\TsDatafileForm $tsDatafile): self
     {
-        return new self($this->ident, $tsDatafile, $this->optAlterTablespaceOptions);
+        return new self($this->ident, $tsDatafile, $this->optAlterTablespaceOptions, $this->comments);
     }
 
     /**
@@ -63,6 +90,14 @@ final class AlterTablespaceStmtWithAlterTablespaceSymIdentAddTsDatafileOptAlterT
      */
     public function withOptAlterTablespaceOptions(\SqlSemantics\Statement\Model\MySql\Role\OptAlterTablespaceOptionsForm $optAlterTablespaceOptions): self
     {
-        return new self($this->ident, $this->tsDatafile, $optAlterTablespaceOptions);
+        return new self($this->ident, $this->tsDatafile, $optAlterTablespaceOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ident, $this->tsDatafile, $this->optAlterTablespaceOptions, $comments);
     }
 }

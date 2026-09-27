@@ -17,11 +17,12 @@ final class RenameWithRenameUserRenameList_33d6cb0f implements \SqlSemantics\Sta
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $user,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RenameListForm $renameList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($user, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['USER'], 'The user must be a complete USER lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($renameList), 'The renameList must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class RenameWithRenameUserRenameList_33d6cb0f implements \SqlSemantics\Sta
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('RENAME');
+        $writer->comments($this->comments, 1);
         $writer->append($this->user);
+        $writer->comments($this->comments, 2);
         $this->renameList->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->renameList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->user, $this->replacement($this->renameList, \SqlSemantics\Statement\Model\MySql\Role\RenameListForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class RenameWithRenameUserRenameList_33d6cb0f implements \SqlSemantics\Sta
      */
     public function withUser(string $user): self
     {
-        return new self($user, $this->renameList);
+        return new self($user, $this->renameList, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class RenameWithRenameUserRenameList_33d6cb0f implements \SqlSemantics\Sta
      */
     public function withRenameList(\SqlSemantics\Statement\Model\MySql\Role\RenameListForm $renameList): self
     {
-        return new self($this->user, $renameList);
+        return new self($this->user, $renameList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->user, $this->renameList, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class TableFactorWithSelectDerivedUnionOptTableAlias_804f1e0c implements \
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedUnionForm $selectDerivedUnion,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptTableAliasForm $optTableAlias,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectDerivedUnion), 'The selectDerivedUnion must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optTableAlias), 'The optTableAlias must be a generated immutable SQL value.');
@@ -32,10 +33,34 @@ final class TableFactorWithSelectDerivedUnionOptTableAlias_804f1e0c implements \
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->selectDerivedUnion->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(')');
+        $writer->comments($this->comments, 3);
         $this->optTableAlias->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->selectDerivedUnion, $this->optTableAlias];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->selectDerivedUnion, \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedUnionForm::class, $replace), $this->replacement($this->optTableAlias, \SqlSemantics\Statement\Model\MySql\Role\OptTableAliasForm::class, $replace), $this->comments);
     }
 
     /**
@@ -43,7 +68,7 @@ final class TableFactorWithSelectDerivedUnionOptTableAlias_804f1e0c implements \
      */
     public function withSelectDerivedUnion(\SqlSemantics\Statement\Model\MySql\Role\SelectDerivedUnionForm $selectDerivedUnion): self
     {
-        return new self($selectDerivedUnion, $this->optTableAlias);
+        return new self($selectDerivedUnion, $this->optTableAlias, $this->comments);
     }
 
     /**
@@ -51,6 +76,14 @@ final class TableFactorWithSelectDerivedUnionOptTableAlias_804f1e0c implements \
      */
     public function withOptTableAlias(\SqlSemantics\Statement\Model\MySql\Role\OptTableAliasForm $optTableAlias): self
     {
-        return new self($this->selectDerivedUnion, $optTableAlias);
+        return new self($this->selectDerivedUnion, $optTableAlias, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->selectDerivedUnion, $this->optTableAlias, $comments);
     }
 }

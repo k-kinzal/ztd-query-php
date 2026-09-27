@@ -17,12 +17,13 @@ final class AlterUserWithUserIdentifiedWithPluginAsAuthOptRetainCurrentPassword_
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserForm $user,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentifiedWithPluginAsAuthForm $identifiedWithPluginAsAuth,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptRetainCurrentPasswordForm $optRetainCurrentPassword,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identifiedWithPluginAsAuth), 'The identifiedWithPluginAsAuth must be a generated immutable SQL value.');
@@ -34,9 +35,32 @@ final class AlterUserWithUserIdentifiedWithPluginAsAuthOptRetainCurrentPassword_
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->user->write($writer);
+        $writer->comments($this->comments, 1);
         $this->identifiedWithPluginAsAuth->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optRetainCurrentPassword->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->user, $this->identifiedWithPluginAsAuth, $this->optRetainCurrentPassword];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->user, \SqlSemantics\Statement\Model\MySql\Role\UserForm::class, $replace), $this->replacement($this->identifiedWithPluginAsAuth, \SqlSemantics\Statement\Model\MySql\Role\IdentifiedWithPluginAsAuthForm::class, $replace), $this->replacement($this->optRetainCurrentPassword, \SqlSemantics\Statement\Model\MySql\Role\OptRetainCurrentPasswordForm::class, $replace), $this->comments);
     }
 
     /**
@@ -44,7 +68,7 @@ final class AlterUserWithUserIdentifiedWithPluginAsAuthOptRetainCurrentPassword_
      */
     public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
     {
-        return new self($user, $this->identifiedWithPluginAsAuth, $this->optRetainCurrentPassword);
+        return new self($user, $this->identifiedWithPluginAsAuth, $this->optRetainCurrentPassword, $this->comments);
     }
 
     /**
@@ -52,7 +76,7 @@ final class AlterUserWithUserIdentifiedWithPluginAsAuthOptRetainCurrentPassword_
      */
     public function withIdentifiedWithPluginAsAuth(\SqlSemantics\Statement\Model\MySql\Role\IdentifiedWithPluginAsAuthForm $identifiedWithPluginAsAuth): self
     {
-        return new self($this->user, $identifiedWithPluginAsAuth, $this->optRetainCurrentPassword);
+        return new self($this->user, $identifiedWithPluginAsAuth, $this->optRetainCurrentPassword, $this->comments);
     }
 
     /**
@@ -60,6 +84,14 @@ final class AlterUserWithUserIdentifiedWithPluginAsAuthOptRetainCurrentPassword_
      */
     public function withOptRetainCurrentPassword(\SqlSemantics\Statement\Model\MySql\Role\OptRetainCurrentPasswordForm $optRetainCurrentPassword): self
     {
-        return new self($this->user, $this->identifiedWithPluginAsAuth, $optRetainCurrentPassword);
+        return new self($this->user, $this->identifiedWithPluginAsAuth, $optRetainCurrentPassword, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->user, $this->identifiedWithPluginAsAuth, $this->optRetainCurrentPassword, $comments);
     }
 }

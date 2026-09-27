@@ -17,7 +17,7 @@ final class TriggerTailWithTriggerSymOptIfNotExistsSpNameTrgActionTimeTrgEventOn
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists,
@@ -27,6 +27,7 @@ final class TriggerTailWithTriggerSymOptIfNotExistsSpNameTrgActionTimeTrgEventOn
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TriggerFollowsPrecedesClauseForm $triggerFollowsPrecedesClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm $spProcStmt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIfNotExists), 'The optIfNotExists must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spName), 'The spName must be a generated immutable SQL value.');
@@ -42,18 +43,50 @@ final class TriggerTailWithTriggerSymOptIfNotExistsSpNameTrgActionTimeTrgEventOn
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('TRIGGER');
+        $writer->comments($this->comments, 1);
         $this->optIfNotExists->write($writer);
+        $writer->comments($this->comments, 2);
         $this->spName->write($writer);
+        $writer->comments($this->comments, 3);
         $this->trgActionTime->write($writer);
+        $writer->comments($this->comments, 4);
         $this->trgEvent->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('ON');
+        $writer->comments($this->comments, 6);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append('FOR');
+        $writer->comments($this->comments, 8);
         $writer->append('EACH');
+        $writer->comments($this->comments, 9);
         $writer->append('ROW');
+        $writer->comments($this->comments, 10);
         $this->triggerFollowsPrecedesClause->write($writer);
+        $writer->comments($this->comments, 11);
         $this->spProcStmt->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optIfNotExists, $this->spName, $this->trgActionTime, $this->trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optIfNotExists, \SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm::class, $replace), $this->replacement($this->spName, \SqlSemantics\Statement\Model\MySql\Role\SpNameForm::class, $replace), $this->replacement($this->trgActionTime, \SqlSemantics\Statement\Model\MySql\Role\TrgActionTimeForm::class, $replace), $this->replacement($this->trgEvent, \SqlSemantics\Statement\Model\MySql\Role\TrgEventForm::class, $replace), $this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->triggerFollowsPrecedesClause, \SqlSemantics\Statement\Model\MySql\Role\TriggerFollowsPrecedesClauseForm::class, $replace), $this->replacement($this->spProcStmt, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm::class, $replace), $this->comments);
     }
 
     /**
@@ -61,7 +94,7 @@ final class TriggerTailWithTriggerSymOptIfNotExistsSpNameTrgActionTimeTrgEventOn
      */
     public function withOptIfNotExists(\SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists): self
     {
-        return new self($optIfNotExists, $this->spName, $this->trgActionTime, $this->trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt);
+        return new self($optIfNotExists, $this->spName, $this->trgActionTime, $this->trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt, $this->comments);
     }
 
     /**
@@ -69,7 +102,7 @@ final class TriggerTailWithTriggerSymOptIfNotExistsSpNameTrgActionTimeTrgEventOn
      */
     public function withSpName(\SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName): self
     {
-        return new self($this->optIfNotExists, $spName, $this->trgActionTime, $this->trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt);
+        return new self($this->optIfNotExists, $spName, $this->trgActionTime, $this->trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt, $this->comments);
     }
 
     /**
@@ -77,7 +110,7 @@ final class TriggerTailWithTriggerSymOptIfNotExistsSpNameTrgActionTimeTrgEventOn
      */
     public function withTrgActionTime(\SqlSemantics\Statement\Model\MySql\Role\TrgActionTimeForm $trgActionTime): self
     {
-        return new self($this->optIfNotExists, $this->spName, $trgActionTime, $this->trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt);
+        return new self($this->optIfNotExists, $this->spName, $trgActionTime, $this->trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt, $this->comments);
     }
 
     /**
@@ -85,7 +118,7 @@ final class TriggerTailWithTriggerSymOptIfNotExistsSpNameTrgActionTimeTrgEventOn
      */
     public function withTrgEvent(\SqlSemantics\Statement\Model\MySql\Role\TrgEventForm $trgEvent): self
     {
-        return new self($this->optIfNotExists, $this->spName, $this->trgActionTime, $trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt);
+        return new self($this->optIfNotExists, $this->spName, $this->trgActionTime, $trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt, $this->comments);
     }
 
     /**
@@ -93,7 +126,7 @@ final class TriggerTailWithTriggerSymOptIfNotExistsSpNameTrgActionTimeTrgEventOn
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($this->optIfNotExists, $this->spName, $this->trgActionTime, $this->trgEvent, $tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt);
+        return new self($this->optIfNotExists, $this->spName, $this->trgActionTime, $this->trgEvent, $tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt, $this->comments);
     }
 
     /**
@@ -101,7 +134,7 @@ final class TriggerTailWithTriggerSymOptIfNotExistsSpNameTrgActionTimeTrgEventOn
      */
     public function withTriggerFollowsPrecedesClause(\SqlSemantics\Statement\Model\MySql\Role\TriggerFollowsPrecedesClauseForm $triggerFollowsPrecedesClause): self
     {
-        return new self($this->optIfNotExists, $this->spName, $this->trgActionTime, $this->trgEvent, $this->tableIdent, $triggerFollowsPrecedesClause, $this->spProcStmt);
+        return new self($this->optIfNotExists, $this->spName, $this->trgActionTime, $this->trgEvent, $this->tableIdent, $triggerFollowsPrecedesClause, $this->spProcStmt, $this->comments);
     }
 
     /**
@@ -109,6 +142,14 @@ final class TriggerTailWithTriggerSymOptIfNotExistsSpNameTrgActionTimeTrgEventOn
      */
     public function withSpProcStmt(\SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm $spProcStmt): self
     {
-        return new self($this->optIfNotExists, $this->spName, $this->trgActionTime, $this->trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $spProcStmt);
+        return new self($this->optIfNotExists, $this->spName, $this->trgActionTime, $this->trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $spProcStmt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optIfNotExists, $this->spName, $this->trgActionTime, $this->trgEvent, $this->tableIdent, $this->triggerFollowsPrecedesClause, $this->spProcStmt, $comments);
     }
 }

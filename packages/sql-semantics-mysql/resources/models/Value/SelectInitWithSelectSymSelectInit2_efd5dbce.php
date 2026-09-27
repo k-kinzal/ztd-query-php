@@ -12,15 +12,16 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectInitWithSelectSymSelectInit2_efd5dbce $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class SelectInitWithSelectSymSelectInit2_efd5dbce implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainableCommandForm, \SqlSemantics\Statement\Model\MySql\Role\ExplanableCommandForm, \SqlSemantics\Statement\Model\MySql\Role\SelectForm, \SqlSemantics\Statement\Model\MySql\Role\SelectInitForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class SelectInitWithSelectSymSelectInit2_efd5dbce implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainableCommandForm, \SqlSemantics\Statement\Model\MySql\Role\ExplanableCommandForm, \SqlSemantics\Statement\Model\MySql\Role\SelectForm, \SqlSemantics\Statement\Model\MySql\Role\SelectInitForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectInit2Form $selectInit2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectInit2), 'The selectInit2 must be a generated immutable SQL value.');
     }
@@ -30,8 +31,30 @@ final class SelectInitWithSelectSymSelectInit2_efd5dbce implements \SqlSemantics
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SELECT');
+        $writer->comments($this->comments, 1);
         $this->selectInit2->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->selectInit2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->selectInit2, \SqlSemantics\Statement\Model\MySql\Role\SelectInit2Form::class, $replace), $this->comments);
     }
 
     /**
@@ -39,6 +62,14 @@ final class SelectInitWithSelectSymSelectInit2_efd5dbce implements \SqlSemantics
      */
     public function withSelectInit2(\SqlSemantics\Statement\Model\MySql\Role\SelectInit2Form $selectInit2): self
     {
-        return new self($selectInit2);
+        return new self($selectInit2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->selectInit2, $comments);
     }
 }

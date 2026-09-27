@@ -17,10 +17,11 @@ final class ShowParamWithOptFullProcesslistSym_c7fcc52e implements \SqlSemantics
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptFullForm $optFull,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optFull), 'The optFull must be a generated immutable SQL value.');
     }
@@ -30,8 +31,30 @@ final class ShowParamWithOptFullProcesslistSym_c7fcc52e implements \SqlSemantics
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optFull->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('PROCESSLIST');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optFull];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optFull, \SqlSemantics\Statement\Model\MySql\Role\OptFullForm::class, $replace), $this->comments);
     }
 
     /**
@@ -39,6 +62,14 @@ final class ShowParamWithOptFullProcesslistSym_c7fcc52e implements \SqlSemantics
      */
     public function withOptFull(\SqlSemantics\Statement\Model\MySql\Role\OptFullForm $optFull): self
     {
-        return new self($optFull);
+        return new self($optFull, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optFull, $comments);
     }
 }

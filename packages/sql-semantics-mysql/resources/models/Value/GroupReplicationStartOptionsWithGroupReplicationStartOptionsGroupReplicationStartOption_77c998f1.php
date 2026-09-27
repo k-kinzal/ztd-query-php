@@ -17,11 +17,12 @@ final class GroupReplicationStartOptionsWithGroupReplicationStartOptionsGroupRep
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GroupReplicationStartOptionsForm $groupReplicationStartOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GroupReplicationStartOptionForm $groupReplicationStartOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($groupReplicationStartOptions), 'The groupReplicationStartOptions must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($groupReplicationStartOption), 'The groupReplicationStartOption must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class GroupReplicationStartOptionsWithGroupReplicationStartOptionsGroupRep
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->groupReplicationStartOptions->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->groupReplicationStartOption->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->groupReplicationStartOptions, $this->groupReplicationStartOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->groupReplicationStartOptions, \SqlSemantics\Statement\Model\MySql\Role\GroupReplicationStartOptionsForm::class, $replace), $this->replacement($this->groupReplicationStartOption, \SqlSemantics\Statement\Model\MySql\Role\GroupReplicationStartOptionForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class GroupReplicationStartOptionsWithGroupReplicationStartOptionsGroupRep
      */
     public function withGroupReplicationStartOptions(\SqlSemantics\Statement\Model\MySql\Role\GroupReplicationStartOptionsForm $groupReplicationStartOptions): self
     {
-        return new self($groupReplicationStartOptions, $this->groupReplicationStartOption);
+        return new self($groupReplicationStartOptions, $this->groupReplicationStartOption, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class GroupReplicationStartOptionsWithGroupReplicationStartOptionsGroupRep
      */
     public function withGroupReplicationStartOption(\SqlSemantics\Statement\Model\MySql\Role\GroupReplicationStartOptionForm $groupReplicationStartOption): self
     {
-        return new self($this->groupReplicationStartOptions, $groupReplicationStartOption);
+        return new self($this->groupReplicationStartOptions, $groupReplicationStartOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->groupReplicationStartOptions, $this->groupReplicationStartOption, $comments);
     }
 }

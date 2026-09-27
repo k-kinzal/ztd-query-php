@@ -17,12 +17,13 @@ final class OptDatadirSslWithDataSymDirectorySymOptEqualTextStringFilesystemOptS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringFilesystemForm $textStringFilesystem,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSslForm $optSsl,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringFilesystem), 'The textStringFilesystem must be a generated immutable SQL value.');
@@ -34,11 +35,36 @@ final class OptDatadirSslWithDataSymDirectorySymOptEqualTextStringFilesystemOptS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('DATA');
+        $writer->comments($this->comments, 1);
         $writer->append('DIRECTORY');
+        $writer->comments($this->comments, 2);
         $this->optEqual->write($writer);
+        $writer->comments($this->comments, 3);
         $this->textStringFilesystem->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optSsl->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optEqual, $this->textStringFilesystem, $this->optSsl];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optEqual, \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm::class, $replace), $this->replacement($this->textStringFilesystem, \SqlSemantics\Statement\Model\MySql\Role\TextStringFilesystemForm::class, $replace), $this->replacement($this->optSsl, \SqlSemantics\Statement\Model\MySql\Role\OptSslForm::class, $replace), $this->comments);
     }
 
     /**
@@ -46,7 +72,7 @@ final class OptDatadirSslWithDataSymDirectorySymOptEqualTextStringFilesystemOptS
      */
     public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
     {
-        return new self($optEqual, $this->textStringFilesystem, $this->optSsl);
+        return new self($optEqual, $this->textStringFilesystem, $this->optSsl, $this->comments);
     }
 
     /**
@@ -54,7 +80,7 @@ final class OptDatadirSslWithDataSymDirectorySymOptEqualTextStringFilesystemOptS
      */
     public function withTextStringFilesystem(\SqlSemantics\Statement\Model\MySql\Role\TextStringFilesystemForm $textStringFilesystem): self
     {
-        return new self($this->optEqual, $textStringFilesystem, $this->optSsl);
+        return new self($this->optEqual, $textStringFilesystem, $this->optSsl, $this->comments);
     }
 
     /**
@@ -62,6 +88,14 @@ final class OptDatadirSslWithDataSymDirectorySymOptEqualTextStringFilesystemOptS
      */
     public function withOptSsl(\SqlSemantics\Statement\Model\MySql\Role\OptSslForm $optSsl): self
     {
-        return new self($this->optEqual, $this->textStringFilesystem, $optSsl);
+        return new self($this->optEqual, $this->textStringFilesystem, $optSsl, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optEqual, $this->textStringFilesystem, $this->optSsl, $comments);
     }
 }

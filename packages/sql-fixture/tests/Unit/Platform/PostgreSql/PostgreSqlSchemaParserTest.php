@@ -1088,7 +1088,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function testParseDefaultTypeCastIsPreserved(): void
+    public function testParseDefaultTypeCastIsStripped(): void
     {
         $sql = "CREATE TABLE test (val TEXT DEFAULT 'hello'::text)";
         $schema = (new PostgreSqlSchemaParser())->parse($sql);

@@ -17,7 +17,7 @@ final class CreateStmtWithCreateOptTempTableIfPNotExistsQualifiedNamePartitionOf
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm $optTemp,
@@ -30,6 +30,7 @@ final class CreateStmtWithCreateOptTempTableIfPNotExistsQualifiedNamePartitionOf
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OnCommitOptionForm $onCommitOption,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTableSpaceForm $optTableSpace,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTemp), 'The optTemp must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
@@ -48,23 +49,60 @@ final class CreateStmtWithCreateOptTempTableIfPNotExistsQualifiedNamePartitionOf
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $this->optTemp->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('TABLE');
+        $writer->comments($this->comments, 3);
         $writer->append('IF');
+        $writer->comments($this->comments, 4);
         $writer->append('NOT');
+        $writer->comments($this->comments, 5);
         $writer->append('EXISTS');
+        $writer->comments($this->comments, 6);
         $this->qualifiedName->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append('PARTITION');
+        $writer->comments($this->comments, 8);
         $writer->append('OF');
+        $writer->comments($this->comments, 9);
         $this->qualifiedName2->write($writer);
+        $writer->comments($this->comments, 10);
         $this->optTypedTableElementList->write($writer);
+        $writer->comments($this->comments, 11);
         $this->partitionBoundSpec->write($writer);
+        $writer->comments($this->comments, 12);
         $this->optPartitionSpec->write($writer);
+        $writer->comments($this->comments, 13);
         $this->tableAccessMethodClause->write($writer);
+        $writer->comments($this->comments, 14);
         $this->optWith->write($writer);
+        $writer->comments($this->comments, 15);
         $this->onCommitOption->write($writer);
+        $writer->comments($this->comments, 16);
         $this->optTableSpace->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optTemp, $this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optTemp, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm::class, $replace), $this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->qualifiedName2, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->optTypedTableElementList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTypedTableElementListForm::class, $replace), $this->replacement($this->partitionBoundSpec, \SqlSemantics\Statement\Model\PostgreSql\Role\PartitionBoundSpecForm::class, $replace), $this->replacement($this->optPartitionSpec, \SqlSemantics\Statement\Model\PostgreSql\Role\OptPartitionSpecForm::class, $replace), $this->replacement($this->tableAccessMethodClause, \SqlSemantics\Statement\Model\PostgreSql\Role\TableAccessMethodClauseForm::class, $replace), $this->replacement($this->optWith, \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm::class, $replace), $this->replacement($this->onCommitOption, \SqlSemantics\Statement\Model\PostgreSql\Role\OnCommitOptionForm::class, $replace), $this->replacement($this->optTableSpace, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTableSpaceForm::class, $replace), $this->comments);
     }
 
     /**
@@ -72,7 +110,7 @@ final class CreateStmtWithCreateOptTempTableIfPNotExistsQualifiedNamePartitionOf
      */
     public function withOptTemp(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm $optTemp): self
     {
-        return new self($optTemp, $this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace);
+        return new self($optTemp, $this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace, $this->comments);
     }
 
     /**
@@ -80,7 +118,7 @@ final class CreateStmtWithCreateOptTempTableIfPNotExistsQualifiedNamePartitionOf
      */
     public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
     {
-        return new self($this->optTemp, $qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace);
+        return new self($this->optTemp, $qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace, $this->comments);
     }
 
     /**
@@ -88,7 +126,7 @@ final class CreateStmtWithCreateOptTempTableIfPNotExistsQualifiedNamePartitionOf
      */
     public function withQualifiedName2(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName2): self
     {
-        return new self($this->optTemp, $this->qualifiedName, $qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace);
+        return new self($this->optTemp, $this->qualifiedName, $qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace, $this->comments);
     }
 
     /**
@@ -96,7 +134,7 @@ final class CreateStmtWithCreateOptTempTableIfPNotExistsQualifiedNamePartitionOf
      */
     public function withOptTypedTableElementList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTypedTableElementListForm $optTypedTableElementList): self
     {
-        return new self($this->optTemp, $this->qualifiedName, $this->qualifiedName2, $optTypedTableElementList, $this->partitionBoundSpec, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace);
+        return new self($this->optTemp, $this->qualifiedName, $this->qualifiedName2, $optTypedTableElementList, $this->partitionBoundSpec, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace, $this->comments);
     }
 
     /**
@@ -104,7 +142,7 @@ final class CreateStmtWithCreateOptTempTableIfPNotExistsQualifiedNamePartitionOf
      */
     public function withPartitionBoundSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\PartitionBoundSpecForm $partitionBoundSpec): self
     {
-        return new self($this->optTemp, $this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $partitionBoundSpec, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace);
+        return new self($this->optTemp, $this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $partitionBoundSpec, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace, $this->comments);
     }
 
     /**
@@ -112,7 +150,7 @@ final class CreateStmtWithCreateOptTempTableIfPNotExistsQualifiedNamePartitionOf
      */
     public function withOptPartitionSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\OptPartitionSpecForm $optPartitionSpec): self
     {
-        return new self($this->optTemp, $this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace);
+        return new self($this->optTemp, $this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace, $this->comments);
     }
 
     /**
@@ -120,7 +158,7 @@ final class CreateStmtWithCreateOptTempTableIfPNotExistsQualifiedNamePartitionOf
      */
     public function withTableAccessMethodClause(\SqlSemantics\Statement\Model\PostgreSql\Role\TableAccessMethodClauseForm $tableAccessMethodClause): self
     {
-        return new self($this->optTemp, $this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->optPartitionSpec, $tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace);
+        return new self($this->optTemp, $this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->optPartitionSpec, $tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace, $this->comments);
     }
 
     /**
@@ -128,7 +166,7 @@ final class CreateStmtWithCreateOptTempTableIfPNotExistsQualifiedNamePartitionOf
      */
     public function withOptWith(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith): self
     {
-        return new self($this->optTemp, $this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->optPartitionSpec, $this->tableAccessMethodClause, $optWith, $this->onCommitOption, $this->optTableSpace);
+        return new self($this->optTemp, $this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->optPartitionSpec, $this->tableAccessMethodClause, $optWith, $this->onCommitOption, $this->optTableSpace, $this->comments);
     }
 
     /**
@@ -136,7 +174,7 @@ final class CreateStmtWithCreateOptTempTableIfPNotExistsQualifiedNamePartitionOf
      */
     public function withOnCommitOption(\SqlSemantics\Statement\Model\PostgreSql\Role\OnCommitOptionForm $onCommitOption): self
     {
-        return new self($this->optTemp, $this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $onCommitOption, $this->optTableSpace);
+        return new self($this->optTemp, $this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $onCommitOption, $this->optTableSpace, $this->comments);
     }
 
     /**
@@ -144,6 +182,14 @@ final class CreateStmtWithCreateOptTempTableIfPNotExistsQualifiedNamePartitionOf
      */
     public function withOptTableSpace(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTableSpaceForm $optTableSpace): self
     {
-        return new self($this->optTemp, $this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $optTableSpace);
+        return new self($this->optTemp, $this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $optTableSpace, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optTemp, $this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace, $comments);
     }
 }

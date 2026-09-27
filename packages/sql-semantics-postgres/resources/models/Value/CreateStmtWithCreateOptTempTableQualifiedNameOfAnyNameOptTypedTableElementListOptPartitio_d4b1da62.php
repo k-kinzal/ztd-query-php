@@ -17,7 +17,7 @@ final class CreateStmtWithCreateOptTempTableQualifiedNameOfAnyNameOptTypedTableE
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm $optTemp,
@@ -29,6 +29,7 @@ final class CreateStmtWithCreateOptTempTableQualifiedNameOfAnyNameOptTypedTableE
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OnCommitOptionForm $onCommitOption,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTableSpaceForm $optTableSpace,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTemp), 'The optTemp must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
@@ -46,18 +47,50 @@ final class CreateStmtWithCreateOptTempTableQualifiedNameOfAnyNameOptTypedTableE
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $this->optTemp->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('TABLE');
+        $writer->comments($this->comments, 3);
         $this->qualifiedName->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('OF');
+        $writer->comments($this->comments, 5);
         $this->anyName->write($writer);
+        $writer->comments($this->comments, 6);
         $this->optTypedTableElementList->write($writer);
+        $writer->comments($this->comments, 7);
         $this->optPartitionSpec->write($writer);
+        $writer->comments($this->comments, 8);
         $this->tableAccessMethodClause->write($writer);
+        $writer->comments($this->comments, 9);
         $this->optWith->write($writer);
+        $writer->comments($this->comments, 10);
         $this->onCommitOption->write($writer);
+        $writer->comments($this->comments, 11);
         $this->optTableSpace->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optTemp, $this->qualifiedName, $this->anyName, $this->optTypedTableElementList, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optTemp, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm::class, $replace), $this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->anyName, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm::class, $replace), $this->replacement($this->optTypedTableElementList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTypedTableElementListForm::class, $replace), $this->replacement($this->optPartitionSpec, \SqlSemantics\Statement\Model\PostgreSql\Role\OptPartitionSpecForm::class, $replace), $this->replacement($this->tableAccessMethodClause, \SqlSemantics\Statement\Model\PostgreSql\Role\TableAccessMethodClauseForm::class, $replace), $this->replacement($this->optWith, \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm::class, $replace), $this->replacement($this->onCommitOption, \SqlSemantics\Statement\Model\PostgreSql\Role\OnCommitOptionForm::class, $replace), $this->replacement($this->optTableSpace, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTableSpaceForm::class, $replace), $this->comments);
     }
 
     /**
@@ -65,7 +98,7 @@ final class CreateStmtWithCreateOptTempTableQualifiedNameOfAnyNameOptTypedTableE
      */
     public function withOptTemp(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm $optTemp): self
     {
-        return new self($optTemp, $this->qualifiedName, $this->anyName, $this->optTypedTableElementList, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace);
+        return new self($optTemp, $this->qualifiedName, $this->anyName, $this->optTypedTableElementList, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace, $this->comments);
     }
 
     /**
@@ -73,7 +106,7 @@ final class CreateStmtWithCreateOptTempTableQualifiedNameOfAnyNameOptTypedTableE
      */
     public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
     {
-        return new self($this->optTemp, $qualifiedName, $this->anyName, $this->optTypedTableElementList, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace);
+        return new self($this->optTemp, $qualifiedName, $this->anyName, $this->optTypedTableElementList, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace, $this->comments);
     }
 
     /**
@@ -81,7 +114,7 @@ final class CreateStmtWithCreateOptTempTableQualifiedNameOfAnyNameOptTypedTableE
      */
     public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
     {
-        return new self($this->optTemp, $this->qualifiedName, $anyName, $this->optTypedTableElementList, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace);
+        return new self($this->optTemp, $this->qualifiedName, $anyName, $this->optTypedTableElementList, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace, $this->comments);
     }
 
     /**
@@ -89,7 +122,7 @@ final class CreateStmtWithCreateOptTempTableQualifiedNameOfAnyNameOptTypedTableE
      */
     public function withOptTypedTableElementList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTypedTableElementListForm $optTypedTableElementList): self
     {
-        return new self($this->optTemp, $this->qualifiedName, $this->anyName, $optTypedTableElementList, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace);
+        return new self($this->optTemp, $this->qualifiedName, $this->anyName, $optTypedTableElementList, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace, $this->comments);
     }
 
     /**
@@ -97,7 +130,7 @@ final class CreateStmtWithCreateOptTempTableQualifiedNameOfAnyNameOptTypedTableE
      */
     public function withOptPartitionSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\OptPartitionSpecForm $optPartitionSpec): self
     {
-        return new self($this->optTemp, $this->qualifiedName, $this->anyName, $this->optTypedTableElementList, $optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace);
+        return new self($this->optTemp, $this->qualifiedName, $this->anyName, $this->optTypedTableElementList, $optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace, $this->comments);
     }
 
     /**
@@ -105,7 +138,7 @@ final class CreateStmtWithCreateOptTempTableQualifiedNameOfAnyNameOptTypedTableE
      */
     public function withTableAccessMethodClause(\SqlSemantics\Statement\Model\PostgreSql\Role\TableAccessMethodClauseForm $tableAccessMethodClause): self
     {
-        return new self($this->optTemp, $this->qualifiedName, $this->anyName, $this->optTypedTableElementList, $this->optPartitionSpec, $tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace);
+        return new self($this->optTemp, $this->qualifiedName, $this->anyName, $this->optTypedTableElementList, $this->optPartitionSpec, $tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace, $this->comments);
     }
 
     /**
@@ -113,7 +146,7 @@ final class CreateStmtWithCreateOptTempTableQualifiedNameOfAnyNameOptTypedTableE
      */
     public function withOptWith(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith): self
     {
-        return new self($this->optTemp, $this->qualifiedName, $this->anyName, $this->optTypedTableElementList, $this->optPartitionSpec, $this->tableAccessMethodClause, $optWith, $this->onCommitOption, $this->optTableSpace);
+        return new self($this->optTemp, $this->qualifiedName, $this->anyName, $this->optTypedTableElementList, $this->optPartitionSpec, $this->tableAccessMethodClause, $optWith, $this->onCommitOption, $this->optTableSpace, $this->comments);
     }
 
     /**
@@ -121,7 +154,7 @@ final class CreateStmtWithCreateOptTempTableQualifiedNameOfAnyNameOptTypedTableE
      */
     public function withOnCommitOption(\SqlSemantics\Statement\Model\PostgreSql\Role\OnCommitOptionForm $onCommitOption): self
     {
-        return new self($this->optTemp, $this->qualifiedName, $this->anyName, $this->optTypedTableElementList, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $onCommitOption, $this->optTableSpace);
+        return new self($this->optTemp, $this->qualifiedName, $this->anyName, $this->optTypedTableElementList, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $onCommitOption, $this->optTableSpace, $this->comments);
     }
 
     /**
@@ -129,6 +162,14 @@ final class CreateStmtWithCreateOptTempTableQualifiedNameOfAnyNameOptTypedTableE
      */
     public function withOptTableSpace(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTableSpaceForm $optTableSpace): self
     {
-        return new self($this->optTemp, $this->qualifiedName, $this->anyName, $this->optTypedTableElementList, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $optTableSpace);
+        return new self($this->optTemp, $this->qualifiedName, $this->anyName, $this->optTypedTableElementList, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $optTableSpace, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optTemp, $this->qualifiedName, $this->anyName, $this->optTypedTableElementList, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace, $comments);
     }
 }

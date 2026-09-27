@@ -17,11 +17,12 @@ final class AlterTableStmtWithAlterSequenceQualifiedNameAlterTableCmds_3729ba22 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdsForm $alterTableCmds,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($alterTableCmds), 'The alterTableCmds must be a generated immutable SQL value.');
@@ -32,10 +33,34 @@ final class AlterTableStmtWithAlterSequenceQualifiedNameAlterTableCmds_3729ba22 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('SEQUENCE');
+        $writer->comments($this->comments, 2);
         $this->qualifiedName->write($writer);
+        $writer->comments($this->comments, 3);
         $this->alterTableCmds->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->qualifiedName, $this->alterTableCmds];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->alterTableCmds, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdsForm::class, $replace), $this->comments);
     }
 
     /**
@@ -43,7 +68,7 @@ final class AlterTableStmtWithAlterSequenceQualifiedNameAlterTableCmds_3729ba22 
      */
     public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
     {
-        return new self($qualifiedName, $this->alterTableCmds);
+        return new self($qualifiedName, $this->alterTableCmds, $this->comments);
     }
 
     /**
@@ -51,6 +76,14 @@ final class AlterTableStmtWithAlterSequenceQualifiedNameAlterTableCmds_3729ba22 
      */
     public function withAlterTableCmds(\SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdsForm $alterTableCmds): self
     {
-        return new self($this->qualifiedName, $alterTableCmds);
+        return new self($this->qualifiedName, $alterTableCmds, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->qualifiedName, $this->alterTableCmds, $comments);
     }
 }

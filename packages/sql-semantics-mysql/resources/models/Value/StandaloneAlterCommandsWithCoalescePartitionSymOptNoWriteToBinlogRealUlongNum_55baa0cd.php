@@ -17,11 +17,12 @@ final class StandaloneAlterCommandsWithCoalescePartitionSymOptNoWriteToBinlogRea
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm $realUlongNum,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optNoWriteToBinlog), 'The optNoWriteToBinlog must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($realUlongNum), 'The realUlongNum must be a generated immutable SQL value.');
@@ -32,10 +33,34 @@ final class StandaloneAlterCommandsWithCoalescePartitionSymOptNoWriteToBinlogRea
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('COALESCE');
+        $writer->comments($this->comments, 1);
         $writer->append('PARTITION');
+        $writer->comments($this->comments, 2);
         $this->optNoWriteToBinlog->write($writer);
+        $writer->comments($this->comments, 3);
         $this->realUlongNum->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optNoWriteToBinlog, $this->realUlongNum];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optNoWriteToBinlog, \SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm::class, $replace), $this->replacement($this->realUlongNum, \SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm::class, $replace), $this->comments);
     }
 
     /**
@@ -43,7 +68,7 @@ final class StandaloneAlterCommandsWithCoalescePartitionSymOptNoWriteToBinlogRea
      */
     public function withOptNoWriteToBinlog(\SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog): self
     {
-        return new self($optNoWriteToBinlog, $this->realUlongNum);
+        return new self($optNoWriteToBinlog, $this->realUlongNum, $this->comments);
     }
 
     /**
@@ -51,6 +76,14 @@ final class StandaloneAlterCommandsWithCoalescePartitionSymOptNoWriteToBinlogRea
      */
     public function withRealUlongNum(\SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm $realUlongNum): self
     {
-        return new self($this->optNoWriteToBinlog, $realUlongNum);
+        return new self($this->optNoWriteToBinlog, $realUlongNum, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optNoWriteToBinlog, $this->realUlongNum, $comments);
     }
 }

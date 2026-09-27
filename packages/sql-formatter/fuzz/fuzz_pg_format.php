@@ -7,6 +7,7 @@
  *   vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_format.php fuzz/corpus/format-pg/
  *
  * The first input byte selects the layout preset and indentation, the rest is the SQL text.
+ * PG_VERSION selects the PostgreSQL release whose grammar parses the text (default: 17.2).
  */
 
 declare(strict_types=1);
@@ -14,7 +15,7 @@ declare(strict_types=1);
 use Fuzz\Target\FormatTarget;
 use SqlParser\PostgreSql\PostgreSqlParser;
 
-$grammarVersion = 'pg-17.2';
+$grammarVersion = 'pg-' . (getenv('PG_VERSION') !== false ? getenv('PG_VERSION') : '17.2');
 $target = new FormatTarget(new PostgreSqlParser($grammarVersion), $grammarVersion);
 
 /**

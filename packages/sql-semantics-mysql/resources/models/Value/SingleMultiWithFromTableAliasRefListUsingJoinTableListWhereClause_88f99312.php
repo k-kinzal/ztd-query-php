@@ -17,12 +17,13 @@ final class SingleMultiWithFromTableAliasRefListUsingJoinTableListWhereClause_88
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableAliasRefListForm $tableAliasRefList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm $joinTableList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WhereClauseForm $where,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableAliasRefList), 'The tableAliasRefList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($joinTableList), 'The joinTableList must be a generated immutable SQL value.');
@@ -34,11 +35,36 @@ final class SingleMultiWithFromTableAliasRefListUsingJoinTableListWhereClause_88
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('FROM');
+        $writer->comments($this->comments, 1);
         $this->tableAliasRefList->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('USING');
+        $writer->comments($this->comments, 3);
         $this->joinTableList->write($writer);
+        $writer->comments($this->comments, 4);
         $this->where->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableAliasRefList, $this->joinTableList, $this->where];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableAliasRefList, \SqlSemantics\Statement\Model\MySql\Role\TableAliasRefListForm::class, $replace), $this->replacement($this->joinTableList, \SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\MySql\Role\WhereClauseForm::class, $replace), $this->comments);
     }
 
     /**
@@ -46,7 +72,7 @@ final class SingleMultiWithFromTableAliasRefListUsingJoinTableListWhereClause_88
      */
     public function withTableAliasRefList(\SqlSemantics\Statement\Model\MySql\Role\TableAliasRefListForm $tableAliasRefList): self
     {
-        return new self($tableAliasRefList, $this->joinTableList, $this->where);
+        return new self($tableAliasRefList, $this->joinTableList, $this->where, $this->comments);
     }
 
     /**
@@ -54,7 +80,7 @@ final class SingleMultiWithFromTableAliasRefListUsingJoinTableListWhereClause_88
      */
     public function withJoinTableList(\SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm $joinTableList): self
     {
-        return new self($this->tableAliasRefList, $joinTableList, $this->where);
+        return new self($this->tableAliasRefList, $joinTableList, $this->where, $this->comments);
     }
 
     /**
@@ -62,6 +88,14 @@ final class SingleMultiWithFromTableAliasRefListUsingJoinTableListWhereClause_88
      */
     public function withWhere(\SqlSemantics\Statement\Model\MySql\Role\WhereClauseForm $where): self
     {
-        return new self($this->tableAliasRefList, $this->joinTableList, $where);
+        return new self($this->tableAliasRefList, $this->joinTableList, $where, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableAliasRefList, $this->joinTableList, $this->where, $comments);
     }
 }

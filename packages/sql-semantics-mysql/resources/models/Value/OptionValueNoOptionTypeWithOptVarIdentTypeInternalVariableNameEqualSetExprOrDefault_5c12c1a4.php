@@ -17,13 +17,14 @@ final class OptionValueNoOptionTypeWithOptVarIdentTypeInternalVariableNameEqualS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptVarIdentTypeForm $optVarIdentType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InternalVariableNameForm $internalVariableName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm $setExprOrDefault,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optVarIdentType), 'The optVarIdentType must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($internalVariableName), 'The internalVariableName must be a generated immutable SQL value.');
@@ -36,12 +37,38 @@ final class OptionValueNoOptionTypeWithOptVarIdentTypeInternalVariableNameEqualS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
-        $writer->append('@');
-        $writer->append('@');
+        $writer->comments($this->comments, 0);
+        $writer->append('@', prefix: true);
+        $writer->comments($this->comments, 1);
+        $writer->append('@', prefix: true);
+        $writer->comments($this->comments, 2);
         $this->optVarIdentType->write($writer);
+        $writer->comments($this->comments, 3);
         $this->internalVariableName->write($writer);
+        $writer->comments($this->comments, 4);
         $this->equal->write($writer);
+        $writer->comments($this->comments, 5);
         $this->setExprOrDefault->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optVarIdentType, $this->internalVariableName, $this->equal, $this->setExprOrDefault];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optVarIdentType, \SqlSemantics\Statement\Model\MySql\Role\OptVarIdentTypeForm::class, $replace), $this->replacement($this->internalVariableName, \SqlSemantics\Statement\Model\MySql\Role\InternalVariableNameForm::class, $replace), $this->replacement($this->equal, \SqlSemantics\Statement\Model\MySql\Role\EqualForm::class, $replace), $this->replacement($this->setExprOrDefault, \SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm::class, $replace), $this->comments);
     }
 
     /**
@@ -49,7 +76,7 @@ final class OptionValueNoOptionTypeWithOptVarIdentTypeInternalVariableNameEqualS
      */
     public function withOptVarIdentType(\SqlSemantics\Statement\Model\MySql\Role\OptVarIdentTypeForm $optVarIdentType): self
     {
-        return new self($optVarIdentType, $this->internalVariableName, $this->equal, $this->setExprOrDefault);
+        return new self($optVarIdentType, $this->internalVariableName, $this->equal, $this->setExprOrDefault, $this->comments);
     }
 
     /**
@@ -57,7 +84,7 @@ final class OptionValueNoOptionTypeWithOptVarIdentTypeInternalVariableNameEqualS
      */
     public function withInternalVariableName(\SqlSemantics\Statement\Model\MySql\Role\InternalVariableNameForm $internalVariableName): self
     {
-        return new self($this->optVarIdentType, $internalVariableName, $this->equal, $this->setExprOrDefault);
+        return new self($this->optVarIdentType, $internalVariableName, $this->equal, $this->setExprOrDefault, $this->comments);
     }
 
     /**
@@ -65,7 +92,7 @@ final class OptionValueNoOptionTypeWithOptVarIdentTypeInternalVariableNameEqualS
      */
     public function withEqual(\SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal): self
     {
-        return new self($this->optVarIdentType, $this->internalVariableName, $equal, $this->setExprOrDefault);
+        return new self($this->optVarIdentType, $this->internalVariableName, $equal, $this->setExprOrDefault, $this->comments);
     }
 
     /**
@@ -73,6 +100,14 @@ final class OptionValueNoOptionTypeWithOptVarIdentTypeInternalVariableNameEqualS
      */
     public function withSetExprOrDefault(\SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm $setExprOrDefault): self
     {
-        return new self($this->optVarIdentType, $this->internalVariableName, $this->equal, $setExprOrDefault);
+        return new self($this->optVarIdentType, $this->internalVariableName, $this->equal, $setExprOrDefault, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optVarIdentType, $this->internalVariableName, $this->equal, $this->setExprOrDefault, $comments);
     }
 }

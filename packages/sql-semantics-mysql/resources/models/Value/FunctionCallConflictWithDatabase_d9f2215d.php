@@ -17,10 +17,11 @@ final class FunctionCallConflictWithDatabase_d9f2215d implements \SqlSemantics\S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $database,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($database, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DATABASE'], 'The database must be a complete DATABASE lexical spelling.');
     }
@@ -30,9 +31,32 @@ final class FunctionCallConflictWithDatabase_d9f2215d implements \SqlSemantics\S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->database);
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [];
+    }
+
+    /**
+     * This form holds no values to replace.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return $this;
     }
 
     /**
@@ -40,6 +64,14 @@ final class FunctionCallConflictWithDatabase_d9f2215d implements \SqlSemantics\S
      */
     public function withDatabase(string $database): self
     {
-        return new self($database);
+        return new self($database, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->database, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class TransformElementListWithFromSqlPWithFunctionFunctionWithArgtypesToSq
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm $functionWithArgtypes,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm $functionWithArgtypes2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($functionWithArgtypes), 'The functionWithArgtypes must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($functionWithArgtypes2), 'The functionWithArgtypes2 must be a generated immutable SQL value.');
@@ -32,17 +33,48 @@ final class TransformElementListWithFromSqlPWithFunctionFunctionWithArgtypesToSq
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('FROM');
+        $writer->comments($this->comments, 1);
         $writer->append('SQL');
+        $writer->comments($this->comments, 2);
         $writer->append('WITH');
+        $writer->comments($this->comments, 3);
         $writer->append('FUNCTION');
+        $writer->comments($this->comments, 4);
         $this->functionWithArgtypes->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(',');
+        $writer->comments($this->comments, 6);
         $writer->append('TO');
+        $writer->comments($this->comments, 7);
         $writer->append('SQL');
+        $writer->comments($this->comments, 8);
         $writer->append('WITH');
+        $writer->comments($this->comments, 9);
         $writer->append('FUNCTION');
+        $writer->comments($this->comments, 10);
         $this->functionWithArgtypes2->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->functionWithArgtypes, $this->functionWithArgtypes2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->functionWithArgtypes, \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm::class, $replace), $this->replacement($this->functionWithArgtypes2, \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm::class, $replace), $this->comments);
     }
 
     /**
@@ -50,7 +82,7 @@ final class TransformElementListWithFromSqlPWithFunctionFunctionWithArgtypesToSq
      */
     public function withFunctionWithArgtypes(\SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm $functionWithArgtypes): self
     {
-        return new self($functionWithArgtypes, $this->functionWithArgtypes2);
+        return new self($functionWithArgtypes, $this->functionWithArgtypes2, $this->comments);
     }
 
     /**
@@ -58,6 +90,14 @@ final class TransformElementListWithFromSqlPWithFunctionFunctionWithArgtypesToSq
      */
     public function withFunctionWithArgtypes2(\SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm $functionWithArgtypes2): self
     {
-        return new self($this->functionWithArgtypes, $functionWithArgtypes2);
+        return new self($this->functionWithArgtypes, $functionWithArgtypes2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->functionWithArgtypes, $this->functionWithArgtypes2, $comments);
     }
 }

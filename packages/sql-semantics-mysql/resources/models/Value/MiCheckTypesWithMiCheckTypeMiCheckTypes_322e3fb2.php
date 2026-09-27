@@ -17,11 +17,12 @@ final class MiCheckTypesWithMiCheckTypeMiCheckTypes_322e3fb2 implements \SqlSema
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\MiCheckTypeForm $miCheckType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\MiCheckTypesForm $miCheckTypes,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($miCheckType), 'The miCheckType must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($miCheckTypes), 'The miCheckTypes must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class MiCheckTypesWithMiCheckTypeMiCheckTypes_322e3fb2 implements \SqlSema
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->miCheckType->write($writer);
+        $writer->comments($this->comments, 1);
         $this->miCheckTypes->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->miCheckType, $this->miCheckTypes];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->miCheckType, \SqlSemantics\Statement\Model\MySql\Role\MiCheckTypeForm::class, $replace), $this->replacement($this->miCheckTypes, \SqlSemantics\Statement\Model\MySql\Role\MiCheckTypesForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class MiCheckTypesWithMiCheckTypeMiCheckTypes_322e3fb2 implements \SqlSema
      */
     public function withMiCheckType(\SqlSemantics\Statement\Model\MySql\Role\MiCheckTypeForm $miCheckType): self
     {
-        return new self($miCheckType, $this->miCheckTypes);
+        return new self($miCheckType, $this->miCheckTypes, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class MiCheckTypesWithMiCheckTypeMiCheckTypes_322e3fb2 implements \SqlSema
      */
     public function withMiCheckTypes(\SqlSemantics\Statement\Model\MySql\Role\MiCheckTypesForm $miCheckTypes): self
     {
-        return new self($this->miCheckType, $miCheckTypes);
+        return new self($this->miCheckType, $miCheckTypes, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->miCheckType, $this->miCheckTypes, $comments);
     }
 }

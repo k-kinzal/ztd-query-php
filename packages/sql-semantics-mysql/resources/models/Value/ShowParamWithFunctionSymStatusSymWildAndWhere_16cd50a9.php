@@ -17,10 +17,11 @@ final class ShowParamWithFunctionSymStatusSymWildAndWhere_16cd50a9 implements \S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm $wildAndWhere,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($wildAndWhere), 'The wildAndWhere must be a generated immutable SQL value.');
     }
@@ -30,9 +31,32 @@ final class ShowParamWithFunctionSymStatusSymWildAndWhere_16cd50a9 implements \S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('FUNCTION');
+        $writer->comments($this->comments, 1);
         $writer->append('STATUS');
+        $writer->comments($this->comments, 2);
         $this->wildAndWhere->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->wildAndWhere];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->wildAndWhere, \SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm::class, $replace), $this->comments);
     }
 
     /**
@@ -40,6 +64,14 @@ final class ShowParamWithFunctionSymStatusSymWildAndWhere_16cd50a9 implements \S
      */
     public function withWildAndWhere(\SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm $wildAndWhere): self
     {
-        return new self($wildAndWhere);
+        return new self($wildAndWhere, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->wildAndWhere, $comments);
     }
 }

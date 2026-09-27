@@ -17,11 +17,12 @@ final class TableIdentOptWildWithIdentOptWild_85c7920f implements \SqlSemantics\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWildForm $optWild,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWild), 'The optWild must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class TableIdentOptWildWithIdentOptWild_85c7920f implements \SqlSemantics\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optWild->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->ident, $this->optWild];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->ident, \SqlSemantics\Statement\Model\MySql\Role\IdentForm::class, $replace), $this->replacement($this->optWild, \SqlSemantics\Statement\Model\MySql\Role\OptWildForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class TableIdentOptWildWithIdentOptWild_85c7920f implements \SqlSemantics\
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($ident, $this->optWild);
+        return new self($ident, $this->optWild, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class TableIdentOptWildWithIdentOptWild_85c7920f implements \SqlSemantics\
      */
     public function withOptWild(\SqlSemantics\Statement\Model\MySql\Role\OptWildForm $optWild): self
     {
-        return new self($this->ident, $optWild);
+        return new self($this->ident, $optWild, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ident, $this->optWild, $comments);
     }
 }

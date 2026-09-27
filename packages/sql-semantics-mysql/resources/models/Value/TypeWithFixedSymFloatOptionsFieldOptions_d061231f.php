@@ -17,11 +17,12 @@ final class TypeWithFixedSymFloatOptionsFieldOptions_d061231f implements \SqlSem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FloatOptionsForm $floatOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldOptionsForm $fieldOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($floatOptions), 'The floatOptions must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldOptions), 'The fieldOptions must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class TypeWithFixedSymFloatOptionsFieldOptions_d061231f implements \SqlSem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('FIXED');
+        $writer->comments($this->comments, 1);
         $this->floatOptions->write($writer);
+        $writer->comments($this->comments, 2);
         $this->fieldOptions->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->floatOptions, $this->fieldOptions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->floatOptions, \SqlSemantics\Statement\Model\MySql\Role\FloatOptionsForm::class, $replace), $this->replacement($this->fieldOptions, \SqlSemantics\Statement\Model\MySql\Role\FieldOptionsForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class TypeWithFixedSymFloatOptionsFieldOptions_d061231f implements \SqlSem
      */
     public function withFloatOptions(\SqlSemantics\Statement\Model\MySql\Role\FloatOptionsForm $floatOptions): self
     {
-        return new self($floatOptions, $this->fieldOptions);
+        return new self($floatOptions, $this->fieldOptions, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class TypeWithFixedSymFloatOptionsFieldOptions_d061231f implements \SqlSem
      */
     public function withFieldOptions(\SqlSemantics\Statement\Model\MySql\Role\FieldOptionsForm $fieldOptions): self
     {
-        return new self($this->floatOptions, $fieldOptions);
+        return new self($this->floatOptions, $fieldOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->floatOptions, $this->fieldOptions, $comments);
     }
 }

@@ -17,13 +17,14 @@ final class WqitemWithWithnmEidlistOptWqasLpSelectRp_ba45400b implements \SqlSem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WithnmForm $withnm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\EidlistOptForm $eidlistOpt,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WqasForm $wqas,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm $select,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($withnm), 'The withnm must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($eidlistOpt), 'The eidlistOpt must be a generated immutable SQL value.');
@@ -36,12 +37,38 @@ final class WqitemWithWithnmEidlistOptWqasLpSelectRp_ba45400b implements \SqlSem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->withnm->write($writer);
+        $writer->comments($this->comments, 1);
         $this->eidlistOpt->write($writer);
+        $writer->comments($this->comments, 2);
         $this->wqas->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('(');
+        $writer->comments($this->comments, 4);
         $this->select->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->withnm, $this->eidlistOpt, $this->wqas, $this->select];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->withnm, \SqlSemantics\Statement\Model\Sqlite\Role\WithnmForm::class, $replace), $this->replacement($this->eidlistOpt, \SqlSemantics\Statement\Model\Sqlite\Role\EidlistOptForm::class, $replace), $this->replacement($this->wqas, \SqlSemantics\Statement\Model\Sqlite\Role\WqasForm::class, $replace), $this->replacement($this->select, \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm::class, $replace), $this->comments);
     }
 
     /**
@@ -49,7 +76,7 @@ final class WqitemWithWithnmEidlistOptWqasLpSelectRp_ba45400b implements \SqlSem
      */
     public function withWithnm(\SqlSemantics\Statement\Model\Sqlite\Role\WithnmForm $withnm): self
     {
-        return new self($withnm, $this->eidlistOpt, $this->wqas, $this->select);
+        return new self($withnm, $this->eidlistOpt, $this->wqas, $this->select, $this->comments);
     }
 
     /**
@@ -57,7 +84,7 @@ final class WqitemWithWithnmEidlistOptWqasLpSelectRp_ba45400b implements \SqlSem
      */
     public function withEidlistOpt(\SqlSemantics\Statement\Model\Sqlite\Role\EidlistOptForm $eidlistOpt): self
     {
-        return new self($this->withnm, $eidlistOpt, $this->wqas, $this->select);
+        return new self($this->withnm, $eidlistOpt, $this->wqas, $this->select, $this->comments);
     }
 
     /**
@@ -65,7 +92,7 @@ final class WqitemWithWithnmEidlistOptWqasLpSelectRp_ba45400b implements \SqlSem
      */
     public function withWqas(\SqlSemantics\Statement\Model\Sqlite\Role\WqasForm $wqas): self
     {
-        return new self($this->withnm, $this->eidlistOpt, $wqas, $this->select);
+        return new self($this->withnm, $this->eidlistOpt, $wqas, $this->select, $this->comments);
     }
 
     /**
@@ -73,6 +100,14 @@ final class WqitemWithWithnmEidlistOptWqasLpSelectRp_ba45400b implements \SqlSem
      */
     public function withSelect(\SqlSemantics\Statement\Model\Sqlite\Role\SelectForm $select): self
     {
-        return new self($this->withnm, $this->eidlistOpt, $this->wqas, $select);
+        return new self($this->withnm, $this->eidlistOpt, $this->wqas, $select, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->withnm, $this->eidlistOpt, $this->wqas, $this->select, $comments);
     }
 }

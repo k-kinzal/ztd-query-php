@@ -12,16 +12,17 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TruncateWithTruncateSymOptTableSymTableName_7a93bd0e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class TruncateWithTruncateSymOptTableSymTableName_7a93bd0e implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\TruncateForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class TruncateWithTruncateSymOptTableSymTableName_7a93bd0e implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\TruncateForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptTableSymForm $optTableSym,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableNameForm $tableName,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optTableSym), 'The optTableSym must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableName), 'The tableName must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class TruncateWithTruncateSymOptTableSymTableName_7a93bd0e implements \Sql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('TRUNCATE');
+        $writer->comments($this->comments, 1);
         $this->optTableSym->write($writer);
+        $writer->comments($this->comments, 2);
         $this->tableName->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optTableSym, $this->tableName];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optTableSym, \SqlSemantics\Statement\Model\MySql\Role\OptTableSymForm::class, $replace), $this->replacement($this->tableName, \SqlSemantics\Statement\Model\MySql\Role\TableNameForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class TruncateWithTruncateSymOptTableSymTableName_7a93bd0e implements \Sql
      */
     public function withOptTableSym(\SqlSemantics\Statement\Model\MySql\Role\OptTableSymForm $optTableSym): self
     {
-        return new self($optTableSym, $this->tableName);
+        return new self($optTableSym, $this->tableName, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class TruncateWithTruncateSymOptTableSymTableName_7a93bd0e implements \Sql
      */
     public function withTableName(\SqlSemantics\Statement\Model\MySql\Role\TableNameForm $tableName): self
     {
-        return new self($this->optTableSym, $tableName);
+        return new self($this->optTableSym, $tableName, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optTableSym, $this->tableName, $comments);
     }
 }

@@ -17,7 +17,7 @@ final class SeltablistWithStlPrefixNmDbnmAsIndexedByOnUsing_cb25a795 implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\StlPrefixForm $stlPrefix,
@@ -26,6 +26,7 @@ final class SeltablistWithStlPrefixNmDbnmAsIndexedByOnUsing_cb25a795 implements 
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\AsForm $as,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\IndexedByForm $indexedBy,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\OnUsingForm $onUsing,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($stlPrefix), 'The stlPrefix must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
@@ -40,12 +41,38 @@ final class SeltablistWithStlPrefixNmDbnmAsIndexedByOnUsing_cb25a795 implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->stlPrefix->write($writer);
+        $writer->comments($this->comments, 1);
         $this->nm->write($writer);
+        $writer->comments($this->comments, 2);
         $this->dbnm->write($writer);
+        $writer->comments($this->comments, 3);
         $this->as->write($writer);
+        $writer->comments($this->comments, 4);
         $this->indexedBy->write($writer);
+        $writer->comments($this->comments, 5);
         $this->onUsing->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->stlPrefix, $this->nm, $this->dbnm, $this->as, $this->indexedBy, $this->onUsing];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->stlPrefix, \SqlSemantics\Statement\Model\Sqlite\Role\StlPrefixForm::class, $replace), $this->replacement($this->nm, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace), $this->replacement($this->dbnm, \SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm::class, $replace), $this->replacement($this->as, \SqlSemantics\Statement\Model\Sqlite\Role\AsForm::class, $replace), $this->replacement($this->indexedBy, \SqlSemantics\Statement\Model\Sqlite\Role\IndexedByForm::class, $replace), $this->replacement($this->onUsing, \SqlSemantics\Statement\Model\Sqlite\Role\OnUsingForm::class, $replace), $this->comments);
     }
 
     /**
@@ -53,7 +80,7 @@ final class SeltablistWithStlPrefixNmDbnmAsIndexedByOnUsing_cb25a795 implements 
      */
     public function withStlPrefix(\SqlSemantics\Statement\Model\Sqlite\Role\StlPrefixForm $stlPrefix): self
     {
-        return new self($stlPrefix, $this->nm, $this->dbnm, $this->as, $this->indexedBy, $this->onUsing);
+        return new self($stlPrefix, $this->nm, $this->dbnm, $this->as, $this->indexedBy, $this->onUsing, $this->comments);
     }
 
     /**
@@ -61,7 +88,7 @@ final class SeltablistWithStlPrefixNmDbnmAsIndexedByOnUsing_cb25a795 implements 
      */
     public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
     {
-        return new self($this->stlPrefix, $nm, $this->dbnm, $this->as, $this->indexedBy, $this->onUsing);
+        return new self($this->stlPrefix, $nm, $this->dbnm, $this->as, $this->indexedBy, $this->onUsing, $this->comments);
     }
 
     /**
@@ -69,7 +96,7 @@ final class SeltablistWithStlPrefixNmDbnmAsIndexedByOnUsing_cb25a795 implements 
      */
     public function withDbnm(\SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm): self
     {
-        return new self($this->stlPrefix, $this->nm, $dbnm, $this->as, $this->indexedBy, $this->onUsing);
+        return new self($this->stlPrefix, $this->nm, $dbnm, $this->as, $this->indexedBy, $this->onUsing, $this->comments);
     }
 
     /**
@@ -77,7 +104,7 @@ final class SeltablistWithStlPrefixNmDbnmAsIndexedByOnUsing_cb25a795 implements 
      */
     public function withAs(\SqlSemantics\Statement\Model\Sqlite\Role\AsForm $as): self
     {
-        return new self($this->stlPrefix, $this->nm, $this->dbnm, $as, $this->indexedBy, $this->onUsing);
+        return new self($this->stlPrefix, $this->nm, $this->dbnm, $as, $this->indexedBy, $this->onUsing, $this->comments);
     }
 
     /**
@@ -85,7 +112,7 @@ final class SeltablistWithStlPrefixNmDbnmAsIndexedByOnUsing_cb25a795 implements 
      */
     public function withIndexedBy(\SqlSemantics\Statement\Model\Sqlite\Role\IndexedByForm $indexedBy): self
     {
-        return new self($this->stlPrefix, $this->nm, $this->dbnm, $this->as, $indexedBy, $this->onUsing);
+        return new self($this->stlPrefix, $this->nm, $this->dbnm, $this->as, $indexedBy, $this->onUsing, $this->comments);
     }
 
     /**
@@ -93,6 +120,14 @@ final class SeltablistWithStlPrefixNmDbnmAsIndexedByOnUsing_cb25a795 implements 
      */
     public function withOnUsing(\SqlSemantics\Statement\Model\Sqlite\Role\OnUsingForm $onUsing): self
     {
-        return new self($this->stlPrefix, $this->nm, $this->dbnm, $this->as, $this->indexedBy, $onUsing);
+        return new self($this->stlPrefix, $this->nm, $this->dbnm, $this->as, $this->indexedBy, $onUsing, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->stlPrefix, $this->nm, $this->dbnm, $this->as, $this->indexedBy, $this->onUsing, $comments);
     }
 }

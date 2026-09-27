@@ -17,11 +17,12 @@ final class SeqOptListWithSeqOptListSeqOptElem_b85c544d implements \SqlSemantics
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SeqOptListForm $seqOptList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SeqOptElemForm $seqOptElem,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($seqOptList), 'The seqOptList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($seqOptElem), 'The seqOptElem must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class SeqOptListWithSeqOptListSeqOptElem_b85c544d implements \SqlSemantics
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->seqOptList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->seqOptElem->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->seqOptList, $this->seqOptElem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->seqOptList, \SqlSemantics\Statement\Model\PostgreSql\Role\SeqOptListForm::class, $replace), $this->replacement($this->seqOptElem, \SqlSemantics\Statement\Model\PostgreSql\Role\SeqOptElemForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class SeqOptListWithSeqOptListSeqOptElem_b85c544d implements \SqlSemantics
      */
     public function withSeqOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\SeqOptListForm $seqOptList): self
     {
-        return new self($seqOptList, $this->seqOptElem);
+        return new self($seqOptList, $this->seqOptElem, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class SeqOptListWithSeqOptListSeqOptElem_b85c544d implements \SqlSemantics
      */
     public function withSeqOptElem(\SqlSemantics\Statement\Model\PostgreSql\Role\SeqOptElemForm $seqOptElem): self
     {
-        return new self($this->seqOptList, $seqOptElem);
+        return new self($this->seqOptList, $seqOptElem, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->seqOptList, $this->seqOptElem, $comments);
     }
 }

@@ -14,7 +14,8 @@ use SqlParser\Lexer\LexicalException;
  * does not start a comment. A run that ends in `+` or `-` gives those up
  * unless it also holds a character that only user-defined operators use, so
  * that `a<-1` reads as `a < -1`. A single character that stands for itself
- * and the few two-character comparisons have terminals of their own.
+ * and the few two-character comparisons have terminals of their own. Under
+ * the named parameter syntax, `:name` is a parameter.
  *
  * @visibility root
  */
@@ -60,6 +61,12 @@ final class OperatorScanner
                 $cursor->take(2);
 
                 return $scan->lexeme(self::FIXED[$pair], $start);
+            }
+            $named = $scan->parameters->namedLength($cursor->source, $start);
+            if ($named > 0) {
+                $cursor->take($named);
+
+                return $scan->lexeme('PARAM', $start);
             }
             $character = $cursor->peek();
             if (str_contains(self::SELF, $character) && $character !== '') {

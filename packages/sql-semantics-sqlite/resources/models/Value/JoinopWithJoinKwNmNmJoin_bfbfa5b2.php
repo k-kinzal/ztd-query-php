@@ -17,12 +17,13 @@ final class JoinopWithJoinKwNmNmJoin_bfbfa5b2 implements \SqlSemantics\Statement
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $joinKw,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($joinKw, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['JOIN_KW'], 'The joinKw must be a complete JOIN_KW lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
@@ -34,10 +35,34 @@ final class JoinopWithJoinKwNmNmJoin_bfbfa5b2 implements \SqlSemantics\Statement
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->joinKw);
+        $writer->comments($this->comments, 1);
         $this->nm->write($writer);
+        $writer->comments($this->comments, 2);
         $this->nm2->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('JOIN');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->nm, $this->nm2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->joinKw, $this->replacement($this->nm, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace), $this->replacement($this->nm2, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace), $this->comments);
     }
 
     /**
@@ -45,7 +70,7 @@ final class JoinopWithJoinKwNmNmJoin_bfbfa5b2 implements \SqlSemantics\Statement
      */
     public function withJoinKw(string $joinKw): self
     {
-        return new self($joinKw, $this->nm, $this->nm2);
+        return new self($joinKw, $this->nm, $this->nm2, $this->comments);
     }
 
     /**
@@ -53,7 +78,7 @@ final class JoinopWithJoinKwNmNmJoin_bfbfa5b2 implements \SqlSemantics\Statement
      */
     public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
     {
-        return new self($this->joinKw, $nm, $this->nm2);
+        return new self($this->joinKw, $nm, $this->nm2, $this->comments);
     }
 
     /**
@@ -61,6 +86,14 @@ final class JoinopWithJoinKwNmNmJoin_bfbfa5b2 implements \SqlSemantics\Statement
      */
     public function withNm2(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm2): self
     {
-        return new self($this->joinKw, $this->nm, $nm2);
+        return new self($this->joinKw, $this->nm, $nm2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->joinKw, $this->nm, $this->nm2, $comments);
     }
 }

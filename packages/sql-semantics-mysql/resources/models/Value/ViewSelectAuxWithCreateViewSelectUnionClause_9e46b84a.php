@@ -17,11 +17,12 @@ final class ViewSelectAuxWithCreateViewSelectUnionClause_9e46b84a implements \Sq
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateViewSelectForm $createViewSelect,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UnionClauseForm $unionClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createViewSelect), 'The createViewSelect must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($unionClause), 'The unionClause must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class ViewSelectAuxWithCreateViewSelectUnionClause_9e46b84a implements \Sq
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->createViewSelect->write($writer);
+        $writer->comments($this->comments, 1);
         $this->unionClause->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->createViewSelect, $this->unionClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->createViewSelect, \SqlSemantics\Statement\Model\MySql\Role\CreateViewSelectForm::class, $replace), $this->replacement($this->unionClause, \SqlSemantics\Statement\Model\MySql\Role\UnionClauseForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class ViewSelectAuxWithCreateViewSelectUnionClause_9e46b84a implements \Sq
      */
     public function withCreateViewSelect(\SqlSemantics\Statement\Model\MySql\Role\CreateViewSelectForm $createViewSelect): self
     {
-        return new self($createViewSelect, $this->unionClause);
+        return new self($createViewSelect, $this->unionClause, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class ViewSelectAuxWithCreateViewSelectUnionClause_9e46b84a implements \Sq
      */
     public function withUnionClause(\SqlSemantics\Statement\Model\MySql\Role\UnionClauseForm $unionClause): self
     {
-        return new self($this->createViewSelect, $unionClause);
+        return new self($this->createViewSelect, $unionClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->createViewSelect, $this->unionClause, $comments);
     }
 }

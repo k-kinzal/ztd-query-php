@@ -17,11 +17,12 @@ final class IdentEqListWithIdentEqListIdentEqValue_6bad7419 implements \SqlSeman
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentEqListForm $identEqList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentEqValueForm $identEqValue,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identEqList), 'The identEqList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identEqValue), 'The identEqValue must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class IdentEqListWithIdentEqListIdentEqValue_6bad7419 implements \SqlSeman
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->identEqList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->identEqValue->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->identEqList, $this->identEqValue];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->identEqList, \SqlSemantics\Statement\Model\MySql\Role\IdentEqListForm::class, $replace), $this->replacement($this->identEqValue, \SqlSemantics\Statement\Model\MySql\Role\IdentEqValueForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class IdentEqListWithIdentEqListIdentEqValue_6bad7419 implements \SqlSeman
      */
     public function withIdentEqList(\SqlSemantics\Statement\Model\MySql\Role\IdentEqListForm $identEqList): self
     {
-        return new self($identEqList, $this->identEqValue);
+        return new self($identEqList, $this->identEqValue, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class IdentEqListWithIdentEqListIdentEqValue_6bad7419 implements \SqlSeman
      */
     public function withIdentEqValue(\SqlSemantics\Statement\Model\MySql\Role\IdentEqValueForm $identEqValue): self
     {
-        return new self($this->identEqList, $identEqValue);
+        return new self($this->identEqList, $identEqValue, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->identEqList, $this->identEqValue, $comments);
     }
 }

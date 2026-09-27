@@ -17,12 +17,13 @@ final class JsonTableColumnDefinitionWithNestedPathOptSconstColumnsJsonTableColu
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PathOptForm $pathOpt,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionListForm $jsonTableColumnDefinitionList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($pathOpt), 'The pathOpt must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($sconst), 'The sconst must be a generated immutable SQL value.');
@@ -34,13 +35,40 @@ final class JsonTableColumnDefinitionWithNestedPathOptSconstColumnsJsonTableColu
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('NESTED');
+        $writer->comments($this->comments, 1);
         $this->pathOpt->write($writer);
+        $writer->comments($this->comments, 2);
         $this->sconst->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('COLUMNS');
+        $writer->comments($this->comments, 4);
         $writer->append('(');
+        $writer->comments($this->comments, 5);
         $this->jsonTableColumnDefinitionList->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->pathOpt, $this->sconst, $this->jsonTableColumnDefinitionList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->pathOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\PathOptForm::class, $replace), $this->replacement($this->sconst, \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm::class, $replace), $this->replacement($this->jsonTableColumnDefinitionList, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionListForm::class, $replace), $this->comments);
     }
 
     /**
@@ -48,7 +76,7 @@ final class JsonTableColumnDefinitionWithNestedPathOptSconstColumnsJsonTableColu
      */
     public function withPathOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\PathOptForm $pathOpt): self
     {
-        return new self($pathOpt, $this->sconst, $this->jsonTableColumnDefinitionList);
+        return new self($pathOpt, $this->sconst, $this->jsonTableColumnDefinitionList, $this->comments);
     }
 
     /**
@@ -56,7 +84,7 @@ final class JsonTableColumnDefinitionWithNestedPathOptSconstColumnsJsonTableColu
      */
     public function withSconst(\SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst): self
     {
-        return new self($this->pathOpt, $sconst, $this->jsonTableColumnDefinitionList);
+        return new self($this->pathOpt, $sconst, $this->jsonTableColumnDefinitionList, $this->comments);
     }
 
     /**
@@ -64,6 +92,14 @@ final class JsonTableColumnDefinitionWithNestedPathOptSconstColumnsJsonTableColu
      */
     public function withJsonTableColumnDefinitionList(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionListForm $jsonTableColumnDefinitionList): self
     {
-        return new self($this->pathOpt, $this->sconst, $jsonTableColumnDefinitionList);
+        return new self($this->pathOpt, $this->sconst, $jsonTableColumnDefinitionList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->pathOpt, $this->sconst, $this->jsonTableColumnDefinitionList, $comments);
     }
 }

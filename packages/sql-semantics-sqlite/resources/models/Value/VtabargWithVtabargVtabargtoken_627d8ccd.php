@@ -17,11 +17,12 @@ final class VtabargWithVtabargVtabargtoken_627d8ccd implements \SqlSemantics\Sta
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\VtabargForm $vtabarg,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\VtabargtokenForm $vtabargtoken,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($vtabarg), 'The vtabarg must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($vtabargtoken), 'The vtabargtoken must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class VtabargWithVtabargVtabargtoken_627d8ccd implements \SqlSemantics\Sta
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->vtabarg->write($writer);
+        $writer->comments($this->comments, 1);
         $this->vtabargtoken->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->vtabarg, $this->vtabargtoken];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->vtabarg, \SqlSemantics\Statement\Model\Sqlite\Role\VtabargForm::class, $replace), $this->replacement($this->vtabargtoken, \SqlSemantics\Statement\Model\Sqlite\Role\VtabargtokenForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class VtabargWithVtabargVtabargtoken_627d8ccd implements \SqlSemantics\Sta
      */
     public function withVtabarg(\SqlSemantics\Statement\Model\Sqlite\Role\VtabargForm $vtabarg): self
     {
-        return new self($vtabarg, $this->vtabargtoken);
+        return new self($vtabarg, $this->vtabargtoken, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class VtabargWithVtabargVtabargtoken_627d8ccd implements \SqlSemantics\Sta
      */
     public function withVtabargtoken(\SqlSemantics\Statement\Model\Sqlite\Role\VtabargtokenForm $vtabargtoken): self
     {
-        return new self($this->vtabarg, $vtabargtoken);
+        return new self($this->vtabarg, $vtabargtoken, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->vtabarg, $this->vtabargtoken, $comments);
     }
 }

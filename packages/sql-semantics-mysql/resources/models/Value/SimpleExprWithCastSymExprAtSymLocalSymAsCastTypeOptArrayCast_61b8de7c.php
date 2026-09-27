@@ -17,12 +17,13 @@ final class SimpleExprWithCastSymExprAtSymLocalSymAsCastTypeOptArrayCast_61b8de7
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CastTypeForm $castType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptArrayCastForm $optArrayCast,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($castType), 'The castType must be a generated immutable SQL value.');
@@ -34,15 +35,44 @@ final class SimpleExprWithCastSymExprAtSymLocalSymAsCastTypeOptArrayCast_61b8de7
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CAST');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('AT');
+        $writer->comments($this->comments, 4);
         $writer->append('LOCAL');
+        $writer->comments($this->comments, 5);
         $writer->append('AS');
+        $writer->comments($this->comments, 6);
         $this->castType->write($writer);
+        $writer->comments($this->comments, 7);
         $this->optArrayCast->write($writer);
+        $writer->comments($this->comments, 8);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->expr, $this->castType, $this->optArrayCast];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->replacement($this->castType, \SqlSemantics\Statement\Model\MySql\Role\CastTypeForm::class, $replace), $this->replacement($this->optArrayCast, \SqlSemantics\Statement\Model\MySql\Role\OptArrayCastForm::class, $replace), $this->comments);
     }
 
     /**
@@ -50,7 +80,7 @@ final class SimpleExprWithCastSymExprAtSymLocalSymAsCastTypeOptArrayCast_61b8de7
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($expr, $this->castType, $this->optArrayCast);
+        return new self($expr, $this->castType, $this->optArrayCast, $this->comments);
     }
 
     /**
@@ -58,7 +88,7 @@ final class SimpleExprWithCastSymExprAtSymLocalSymAsCastTypeOptArrayCast_61b8de7
      */
     public function withCastType(\SqlSemantics\Statement\Model\MySql\Role\CastTypeForm $castType): self
     {
-        return new self($this->expr, $castType, $this->optArrayCast);
+        return new self($this->expr, $castType, $this->optArrayCast, $this->comments);
     }
 
     /**
@@ -66,6 +96,14 @@ final class SimpleExprWithCastSymExprAtSymLocalSymAsCastTypeOptArrayCast_61b8de7
      */
     public function withOptArrayCast(\SqlSemantics\Statement\Model\MySql\Role\OptArrayCastForm $optArrayCast): self
     {
-        return new self($this->expr, $this->castType, $optArrayCast);
+        return new self($this->expr, $this->castType, $optArrayCast, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->expr, $this->castType, $this->optArrayCast, $comments);
     }
 }

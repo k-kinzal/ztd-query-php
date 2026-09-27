@@ -17,7 +17,7 @@ final class ConstraintElemWithUniqueOptUniqueNullTreatmentColumnListOptCIncludeO
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptUniqueNullTreatmentForm $optUniqueNullTreatment,
@@ -26,6 +26,7 @@ final class ConstraintElemWithUniqueOptUniqueNullTreatmentColumnListOptCIncludeO
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptDefinitionForm $optDefinition,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptConsTableSpaceForm $optConsTableSpace,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeSpecForm $constraintAttributeSpec,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optUniqueNullTreatment), 'The optUniqueNullTreatment must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($columnList), 'The columnList must be a generated immutable SQL value.');
@@ -40,15 +41,44 @@ final class ConstraintElemWithUniqueOptUniqueNullTreatmentColumnListOptCIncludeO
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('UNIQUE');
+        $writer->comments($this->comments, 1);
         $this->optUniqueNullTreatment->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('(');
+        $writer->comments($this->comments, 3);
         $this->columnList->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
+        $writer->comments($this->comments, 5);
         $this->optCInclude->write($writer);
+        $writer->comments($this->comments, 6);
         $this->optDefinition->write($writer);
+        $writer->comments($this->comments, 7);
         $this->optConsTableSpace->write($writer);
+        $writer->comments($this->comments, 8);
         $this->constraintAttributeSpec->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optUniqueNullTreatment, $this->columnList, $this->optCInclude, $this->optDefinition, $this->optConsTableSpace, $this->constraintAttributeSpec];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optUniqueNullTreatment, \SqlSemantics\Statement\Model\PostgreSql\Role\OptUniqueNullTreatmentForm::class, $replace), $this->replacement($this->columnList, \SqlSemantics\Statement\Model\PostgreSql\Role\ColumnListForm::class, $replace), $this->replacement($this->optCInclude, \SqlSemantics\Statement\Model\PostgreSql\Role\OptCIncludeForm::class, $replace), $this->replacement($this->optDefinition, \SqlSemantics\Statement\Model\PostgreSql\Role\OptDefinitionForm::class, $replace), $this->replacement($this->optConsTableSpace, \SqlSemantics\Statement\Model\PostgreSql\Role\OptConsTableSpaceForm::class, $replace), $this->replacement($this->constraintAttributeSpec, \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeSpecForm::class, $replace), $this->comments);
     }
 
     /**
@@ -56,7 +86,7 @@ final class ConstraintElemWithUniqueOptUniqueNullTreatmentColumnListOptCIncludeO
      */
     public function withOptUniqueNullTreatment(\SqlSemantics\Statement\Model\PostgreSql\Role\OptUniqueNullTreatmentForm $optUniqueNullTreatment): self
     {
-        return new self($optUniqueNullTreatment, $this->columnList, $this->optCInclude, $this->optDefinition, $this->optConsTableSpace, $this->constraintAttributeSpec);
+        return new self($optUniqueNullTreatment, $this->columnList, $this->optCInclude, $this->optDefinition, $this->optConsTableSpace, $this->constraintAttributeSpec, $this->comments);
     }
 
     /**
@@ -64,7 +94,7 @@ final class ConstraintElemWithUniqueOptUniqueNullTreatmentColumnListOptCIncludeO
      */
     public function withColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\ColumnListForm $columnList): self
     {
-        return new self($this->optUniqueNullTreatment, $columnList, $this->optCInclude, $this->optDefinition, $this->optConsTableSpace, $this->constraintAttributeSpec);
+        return new self($this->optUniqueNullTreatment, $columnList, $this->optCInclude, $this->optDefinition, $this->optConsTableSpace, $this->constraintAttributeSpec, $this->comments);
     }
 
     /**
@@ -72,7 +102,7 @@ final class ConstraintElemWithUniqueOptUniqueNullTreatmentColumnListOptCIncludeO
      */
     public function withOptCInclude(\SqlSemantics\Statement\Model\PostgreSql\Role\OptCIncludeForm $optCInclude): self
     {
-        return new self($this->optUniqueNullTreatment, $this->columnList, $optCInclude, $this->optDefinition, $this->optConsTableSpace, $this->constraintAttributeSpec);
+        return new self($this->optUniqueNullTreatment, $this->columnList, $optCInclude, $this->optDefinition, $this->optConsTableSpace, $this->constraintAttributeSpec, $this->comments);
     }
 
     /**
@@ -80,7 +110,7 @@ final class ConstraintElemWithUniqueOptUniqueNullTreatmentColumnListOptCIncludeO
      */
     public function withOptDefinition(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDefinitionForm $optDefinition): self
     {
-        return new self($this->optUniqueNullTreatment, $this->columnList, $this->optCInclude, $optDefinition, $this->optConsTableSpace, $this->constraintAttributeSpec);
+        return new self($this->optUniqueNullTreatment, $this->columnList, $this->optCInclude, $optDefinition, $this->optConsTableSpace, $this->constraintAttributeSpec, $this->comments);
     }
 
     /**
@@ -88,7 +118,7 @@ final class ConstraintElemWithUniqueOptUniqueNullTreatmentColumnListOptCIncludeO
      */
     public function withOptConsTableSpace(\SqlSemantics\Statement\Model\PostgreSql\Role\OptConsTableSpaceForm $optConsTableSpace): self
     {
-        return new self($this->optUniqueNullTreatment, $this->columnList, $this->optCInclude, $this->optDefinition, $optConsTableSpace, $this->constraintAttributeSpec);
+        return new self($this->optUniqueNullTreatment, $this->columnList, $this->optCInclude, $this->optDefinition, $optConsTableSpace, $this->constraintAttributeSpec, $this->comments);
     }
 
     /**
@@ -96,6 +126,14 @@ final class ConstraintElemWithUniqueOptUniqueNullTreatmentColumnListOptCIncludeO
      */
     public function withConstraintAttributeSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeSpecForm $constraintAttributeSpec): self
     {
-        return new self($this->optUniqueNullTreatment, $this->columnList, $this->optCInclude, $this->optDefinition, $this->optConsTableSpace, $constraintAttributeSpec);
+        return new self($this->optUniqueNullTreatment, $this->columnList, $this->optCInclude, $this->optDefinition, $this->optConsTableSpace, $constraintAttributeSpec, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optUniqueNullTreatment, $this->columnList, $this->optCInclude, $this->optDefinition, $this->optConsTableSpace, $this->constraintAttributeSpec, $comments);
     }
 }

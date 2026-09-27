@@ -17,12 +17,13 @@ final class TypeWithDecimalSymFloatOptionsFieldOptions_e596a6f5 implements \SqlS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $decimalSym,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FloatOptionsForm $floatOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldOptionsForm $fieldOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($decimalSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DECIMAL_SYM'], 'The decimalSym must be a complete DECIMAL_SYM lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($floatOptions), 'The floatOptions must be a generated immutable SQL value.');
@@ -34,9 +35,32 @@ final class TypeWithDecimalSymFloatOptionsFieldOptions_e596a6f5 implements \SqlS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->decimalSym);
+        $writer->comments($this->comments, 1);
         $this->floatOptions->write($writer);
+        $writer->comments($this->comments, 2);
         $this->fieldOptions->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->floatOptions, $this->fieldOptions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->decimalSym, $this->replacement($this->floatOptions, \SqlSemantics\Statement\Model\MySql\Role\FloatOptionsForm::class, $replace), $this->replacement($this->fieldOptions, \SqlSemantics\Statement\Model\MySql\Role\FieldOptionsForm::class, $replace), $this->comments);
     }
 
     /**
@@ -44,7 +68,7 @@ final class TypeWithDecimalSymFloatOptionsFieldOptions_e596a6f5 implements \SqlS
      */
     public function withDecimalSym(string $decimalSym): self
     {
-        return new self($decimalSym, $this->floatOptions, $this->fieldOptions);
+        return new self($decimalSym, $this->floatOptions, $this->fieldOptions, $this->comments);
     }
 
     /**
@@ -52,7 +76,7 @@ final class TypeWithDecimalSymFloatOptionsFieldOptions_e596a6f5 implements \SqlS
      */
     public function withFloatOptions(\SqlSemantics\Statement\Model\MySql\Role\FloatOptionsForm $floatOptions): self
     {
-        return new self($this->decimalSym, $floatOptions, $this->fieldOptions);
+        return new self($this->decimalSym, $floatOptions, $this->fieldOptions, $this->comments);
     }
 
     /**
@@ -60,6 +84,14 @@ final class TypeWithDecimalSymFloatOptionsFieldOptions_e596a6f5 implements \SqlS
      */
     public function withFieldOptions(\SqlSemantics\Statement\Model\MySql\Role\FieldOptionsForm $fieldOptions): self
     {
-        return new self($this->decimalSym, $this->floatOptions, $fieldOptions);
+        return new self($this->decimalSym, $this->floatOptions, $fieldOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->decimalSym, $this->floatOptions, $this->fieldOptions, $comments);
     }
 }

@@ -17,12 +17,13 @@ final class TypeWithCharFieldLengthOptBinary_41d21526 implements \SqlSemantics\S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharForm $char,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldLengthForm $fieldLength,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm $optBinary,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($char), 'The char must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldLength), 'The fieldLength must be a generated immutable SQL value.');
@@ -34,9 +35,32 @@ final class TypeWithCharFieldLengthOptBinary_41d21526 implements \SqlSemantics\S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->char->write($writer);
+        $writer->comments($this->comments, 1);
         $this->fieldLength->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optBinary->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->char, $this->fieldLength, $this->optBinary];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->char, \SqlSemantics\Statement\Model\MySql\Role\CharForm::class, $replace), $this->replacement($this->fieldLength, \SqlSemantics\Statement\Model\MySql\Role\FieldLengthForm::class, $replace), $this->replacement($this->optBinary, \SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm::class, $replace), $this->comments);
     }
 
     /**
@@ -44,7 +68,7 @@ final class TypeWithCharFieldLengthOptBinary_41d21526 implements \SqlSemantics\S
      */
     public function withChar(\SqlSemantics\Statement\Model\MySql\Role\CharForm $char): self
     {
-        return new self($char, $this->fieldLength, $this->optBinary);
+        return new self($char, $this->fieldLength, $this->optBinary, $this->comments);
     }
 
     /**
@@ -52,7 +76,7 @@ final class TypeWithCharFieldLengthOptBinary_41d21526 implements \SqlSemantics\S
      */
     public function withFieldLength(\SqlSemantics\Statement\Model\MySql\Role\FieldLengthForm $fieldLength): self
     {
-        return new self($this->char, $fieldLength, $this->optBinary);
+        return new self($this->char, $fieldLength, $this->optBinary, $this->comments);
     }
 
     /**
@@ -60,6 +84,14 @@ final class TypeWithCharFieldLengthOptBinary_41d21526 implements \SqlSemantics\S
      */
     public function withOptBinary(\SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm $optBinary): self
     {
-        return new self($this->char, $this->fieldLength, $optBinary);
+        return new self($this->char, $this->fieldLength, $optBinary, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->char, $this->fieldLength, $this->optBinary, $comments);
     }
 }

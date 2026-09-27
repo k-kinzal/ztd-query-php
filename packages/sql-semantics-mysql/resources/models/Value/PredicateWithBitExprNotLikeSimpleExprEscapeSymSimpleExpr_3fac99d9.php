@@ -17,20 +17,21 @@ final class PredicateWithBitExprNotLikeSimpleExprEscapeSymSimpleExpr_3fac99d9 im
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NotForm $not,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm $simpleExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm $simpleExpr2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($bitExpr), 'The bitExpr must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($bitExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-8.0.44' => 14,  'mysql-8.1.0' => 14,  'mysql-8.2.0' => 14,  'mysql-8.3.0' => 14,  'mysql-8.4.7' => 14,  'mysql-9.0.1' => 14,  'mysql-9.1.0' => 14,));
+        $this->assertOperandBindingStrength($bitExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-8.0.44' => 14,  'mysql-8.1.0' => 14,  'mysql-8.2.0' => 14,  'mysql-8.3.0' => 14,  'mysql-8.4.7' => 14,  'mysql-9.0.1' => 14,  'mysql-9.1.0' => 14,), \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_RULES, 'bit_expr');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($not), 'The not must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleExpr), 'The simpleExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleExpr2), 'The simpleExpr2 must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($simpleExpr2, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-8.0.44' => 15,  'mysql-8.1.0' => 15,  'mysql-8.2.0' => 15,  'mysql-8.3.0' => 15,  'mysql-8.4.7' => 15,  'mysql-9.0.1' => 15,  'mysql-9.1.0' => 15,));
+        $this->assertOperandBindingStrength($simpleExpr2, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-8.0.44' => 15,  'mysql-8.1.0' => 15,  'mysql-8.2.0' => 15,  'mysql-8.3.0' => 15,  'mysql-8.4.7' => 15,  'mysql-9.0.1' => 15,  'mysql-9.1.0' => 15,), \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_RULES, 'simple_expr');
     }
 
     /**
@@ -38,12 +39,38 @@ final class PredicateWithBitExprNotLikeSimpleExprEscapeSymSimpleExpr_3fac99d9 im
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->bitExpr->write($writer);
+        $writer->comments($this->comments, 1);
         $this->not->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('LIKE');
+        $writer->comments($this->comments, 3);
         $this->simpleExpr->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('ESCAPE');
+        $writer->comments($this->comments, 5);
         $this->simpleExpr2->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->bitExpr, $this->not, $this->simpleExpr, $this->simpleExpr2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->bitExpr, \SqlSemantics\Statement\Model\MySql\Role\BitExprForm::class, $replace), $this->replacement($this->not, \SqlSemantics\Statement\Model\MySql\Role\NotForm::class, $replace), $this->replacement($this->simpleExpr, \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm::class, $replace), $this->replacement($this->simpleExpr2, \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm::class, $replace), $this->comments);
     }
 
     /**
@@ -51,7 +78,7 @@ final class PredicateWithBitExprNotLikeSimpleExprEscapeSymSimpleExpr_3fac99d9 im
      */
     public function withBitExpr(\SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr): self
     {
-        return new self($bitExpr, $this->not, $this->simpleExpr, $this->simpleExpr2);
+        return new self($bitExpr, $this->not, $this->simpleExpr, $this->simpleExpr2, $this->comments);
     }
 
     /**
@@ -59,7 +86,7 @@ final class PredicateWithBitExprNotLikeSimpleExprEscapeSymSimpleExpr_3fac99d9 im
      */
     public function withNot(\SqlSemantics\Statement\Model\MySql\Role\NotForm $not): self
     {
-        return new self($this->bitExpr, $not, $this->simpleExpr, $this->simpleExpr2);
+        return new self($this->bitExpr, $not, $this->simpleExpr, $this->simpleExpr2, $this->comments);
     }
 
     /**
@@ -67,7 +94,7 @@ final class PredicateWithBitExprNotLikeSimpleExprEscapeSymSimpleExpr_3fac99d9 im
      */
     public function withSimpleExpr(\SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm $simpleExpr): self
     {
-        return new self($this->bitExpr, $this->not, $simpleExpr, $this->simpleExpr2);
+        return new self($this->bitExpr, $this->not, $simpleExpr, $this->simpleExpr2, $this->comments);
     }
 
     /**
@@ -75,6 +102,14 @@ final class PredicateWithBitExprNotLikeSimpleExprEscapeSymSimpleExpr_3fac99d9 im
      */
     public function withSimpleExpr2(\SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm $simpleExpr2): self
     {
-        return new self($this->bitExpr, $this->not, $this->simpleExpr, $simpleExpr2);
+        return new self($this->bitExpr, $this->not, $this->simpleExpr, $simpleExpr2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->bitExpr, $this->not, $this->simpleExpr, $this->simpleExpr2, $comments);
     }
 }

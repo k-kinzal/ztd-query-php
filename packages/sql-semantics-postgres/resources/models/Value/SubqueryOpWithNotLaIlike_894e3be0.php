@@ -17,10 +17,11 @@ final class SubqueryOpWithNotLaIlike_894e3be0 implements \SqlSemantics\Statement
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $notLa,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($notLa, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['NOT_LA'], 'The notLa must be a complete NOT_LA lexical spelling.');
     }
@@ -30,8 +31,30 @@ final class SubqueryOpWithNotLaIlike_894e3be0 implements \SqlSemantics\Statement
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->notLa);
+        $writer->comments($this->comments, 1);
         $writer->append('ILIKE');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [];
+    }
+
+    /**
+     * This form holds no values to replace.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return $this;
     }
 
     /**
@@ -39,6 +62,14 @@ final class SubqueryOpWithNotLaIlike_894e3be0 implements \SqlSemantics\Statement
      */
     public function withNotLa(string $notLa): self
     {
-        return new self($notLa);
+        return new self($notLa, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->notLa, $comments);
     }
 }

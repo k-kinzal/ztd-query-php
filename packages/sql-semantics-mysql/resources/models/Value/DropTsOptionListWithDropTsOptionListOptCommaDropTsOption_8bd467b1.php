@@ -17,12 +17,13 @@ final class DropTsOptionListWithDropTsOptionListOptCommaDropTsOption_8bd467b1 im
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionListForm $dropTsOptionList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCommaForm $optComma,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionForm $dropTsOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($dropTsOptionList), 'The dropTsOptionList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optComma), 'The optComma must be a generated immutable SQL value.');
@@ -34,9 +35,32 @@ final class DropTsOptionListWithDropTsOptionListOptCommaDropTsOption_8bd467b1 im
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->dropTsOptionList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optComma->write($writer);
+        $writer->comments($this->comments, 2);
         $this->dropTsOption->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->dropTsOptionList, $this->optComma, $this->dropTsOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->dropTsOptionList, \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionListForm::class, $replace), $this->replacement($this->optComma, \SqlSemantics\Statement\Model\MySql\Role\OptCommaForm::class, $replace), $this->replacement($this->dropTsOption, \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionForm::class, $replace), $this->comments);
     }
 
     /**
@@ -44,7 +68,7 @@ final class DropTsOptionListWithDropTsOptionListOptCommaDropTsOption_8bd467b1 im
      */
     public function withDropTsOptionList(\SqlSemantics\Statement\Model\MySql\Role\DropTsOptionListForm $dropTsOptionList): self
     {
-        return new self($dropTsOptionList, $this->optComma, $this->dropTsOption);
+        return new self($dropTsOptionList, $this->optComma, $this->dropTsOption, $this->comments);
     }
 
     /**
@@ -52,7 +76,7 @@ final class DropTsOptionListWithDropTsOptionListOptCommaDropTsOption_8bd467b1 im
      */
     public function withOptComma(\SqlSemantics\Statement\Model\MySql\Role\OptCommaForm $optComma): self
     {
-        return new self($this->dropTsOptionList, $optComma, $this->dropTsOption);
+        return new self($this->dropTsOptionList, $optComma, $this->dropTsOption, $this->comments);
     }
 
     /**
@@ -60,6 +84,14 @@ final class DropTsOptionListWithDropTsOptionListOptCommaDropTsOption_8bd467b1 im
      */
     public function withDropTsOption(\SqlSemantics\Statement\Model\MySql\Role\DropTsOptionForm $dropTsOption): self
     {
-        return new self($this->dropTsOptionList, $this->optComma, $dropTsOption);
+        return new self($this->dropTsOptionList, $this->optComma, $dropTsOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->dropTsOptionList, $this->optComma, $this->dropTsOption, $comments);
     }
 }

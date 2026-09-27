@@ -17,11 +17,12 @@ final class TransactionCharacteristicsWithIsolationLevelTransactionAccessMode_a9
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IsolationLevelForm $isolationLevel,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TransactionAccessModeForm $transactionAccessMode,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($isolationLevel), 'The isolationLevel must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($transactionAccessMode), 'The transactionAccessMode must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class TransactionCharacteristicsWithIsolationLevelTransactionAccessMode_a9
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->isolationLevel->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->transactionAccessMode->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->isolationLevel, $this->transactionAccessMode];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->isolationLevel, \SqlSemantics\Statement\Model\MySql\Role\IsolationLevelForm::class, $replace), $this->replacement($this->transactionAccessMode, \SqlSemantics\Statement\Model\MySql\Role\TransactionAccessModeForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class TransactionCharacteristicsWithIsolationLevelTransactionAccessMode_a9
      */
     public function withIsolationLevel(\SqlSemantics\Statement\Model\MySql\Role\IsolationLevelForm $isolationLevel): self
     {
-        return new self($isolationLevel, $this->transactionAccessMode);
+        return new self($isolationLevel, $this->transactionAccessMode, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class TransactionCharacteristicsWithIsolationLevelTransactionAccessMode_a9
      */
     public function withTransactionAccessMode(\SqlSemantics\Statement\Model\MySql\Role\TransactionAccessModeForm $transactionAccessMode): self
     {
-        return new self($this->isolationLevel, $transactionAccessMode);
+        return new self($this->isolationLevel, $transactionAccessMode, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->isolationLevel, $this->transactionAccessMode, $comments);
     }
 }

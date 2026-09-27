@@ -12,8 +12,8 @@ use SqlFaker\Generation\Choice\PlanBuilder;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\Generation\Plan\ProductionPattern;
 use SqlFaker\MySql\MySqlProvider;
-use SqlFixture\Platform\MySql\MySqlSchemaParser;
 use SqlFixture\Provider\FixtureGenerator;
+use SqlFixture\Provider\PlatformFactory;
 
 /**
  * Mutates SQL structure and lexical choices, then checks schema acceptance and the generated row contract.
@@ -23,7 +23,6 @@ final class CreateTableTarget
     private readonly Generator $faker;
     private readonly MySqlProvider $sqlProvider;
     private readonly PlanBuilder $planner;
-    private readonly MySqlSchemaParser $schemaParser;
 
     /**
      * @var GenerationPlan<bool>
@@ -38,7 +37,6 @@ final class CreateTableTarget
         $this->faker = Factory::create();
         $this->sqlProvider = new MySqlProvider($this->faker, $grammarVersion);
         $this->planner = $this->sqlProvider->planner();
-        $this->schemaParser = new MySqlSchemaParser();
         $this->constraints = GenerationPlan::constrained('create_table_stmt', [
             'create_table_stmt' => [ProductionPattern::containing('table_element_list')],
         ])->requiringNonEmpty()->withExpansionBudget($maxExpansions);
@@ -53,7 +51,7 @@ final class CreateTableTarget
     {
         $plan = (new BytePlanCompiler())->compile($input, $this->planner, $this->constraints);
         $sql = $this->sqlProvider->generate($plan);
-        $schema = $this->schemaParser->parse($sql);
+        $schema = PlatformFactory::createSchemaParser(PlatformFactory::DRIVER_MYSQL, $this->grammarVersion)->parse($sql);
         $this->faker->seed(crc32(str_pad($input, 4, "\0")));
         $generator = new FixtureGenerator($this->faker);
         $row = $generator->generate($schema);

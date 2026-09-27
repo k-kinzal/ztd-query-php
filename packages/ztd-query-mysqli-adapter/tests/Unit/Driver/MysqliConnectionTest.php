@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Driver;
 
 use Container\Endpoint;
-use Container\MySql80Container;
-use Container\MySql84Container;
+use Container\MySqlRelease;
 use mysqli;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Large;
@@ -24,7 +23,7 @@ final class MysqliConnectionTest extends TestCase
 {
     public function testQueryReturnsTheNativeRows(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $mysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -40,7 +39,7 @@ final class MysqliConnectionTest extends TestCase
 
     public function testQueryWrapsAnExecutedWrite(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $mysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -57,7 +56,7 @@ final class MysqliConnectionTest extends TestCase
 
     public function testQueryTranslatesNativeFailureWhenReportingIsDisabled(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $mysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);

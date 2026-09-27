@@ -17,13 +17,14 @@ final class WindowSpecificationWithOptExistingWindowNameOptPartitionClauseOptSor
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptExistingWindowNameForm $optExistingWindowName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptPartitionClauseForm $optPartitionClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptSortClauseForm $optSortClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptFrameClauseForm $optFrameClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optExistingWindowName), 'The optExistingWindowName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optPartitionClause), 'The optPartitionClause must be a generated immutable SQL value.');
@@ -36,12 +37,38 @@ final class WindowSpecificationWithOptExistingWindowNameOptPartitionClauseOptSor
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->optExistingWindowName->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optPartitionClause->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optSortClause->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optFrameClause->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optExistingWindowName, $this->optPartitionClause, $this->optSortClause, $this->optFrameClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optExistingWindowName, \SqlSemantics\Statement\Model\PostgreSql\Role\OptExistingWindowNameForm::class, $replace), $this->replacement($this->optPartitionClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OptPartitionClauseForm::class, $replace), $this->replacement($this->optSortClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSortClauseForm::class, $replace), $this->replacement($this->optFrameClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OptFrameClauseForm::class, $replace), $this->comments);
     }
 
     /**
@@ -49,7 +76,7 @@ final class WindowSpecificationWithOptExistingWindowNameOptPartitionClauseOptSor
      */
     public function withOptExistingWindowName(\SqlSemantics\Statement\Model\PostgreSql\Role\OptExistingWindowNameForm $optExistingWindowName): self
     {
-        return new self($optExistingWindowName, $this->optPartitionClause, $this->optSortClause, $this->optFrameClause);
+        return new self($optExistingWindowName, $this->optPartitionClause, $this->optSortClause, $this->optFrameClause, $this->comments);
     }
 
     /**
@@ -57,7 +84,7 @@ final class WindowSpecificationWithOptExistingWindowNameOptPartitionClauseOptSor
      */
     public function withOptPartitionClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptPartitionClauseForm $optPartitionClause): self
     {
-        return new self($this->optExistingWindowName, $optPartitionClause, $this->optSortClause, $this->optFrameClause);
+        return new self($this->optExistingWindowName, $optPartitionClause, $this->optSortClause, $this->optFrameClause, $this->comments);
     }
 
     /**
@@ -65,7 +92,7 @@ final class WindowSpecificationWithOptExistingWindowNameOptPartitionClauseOptSor
      */
     public function withOptSortClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSortClauseForm $optSortClause): self
     {
-        return new self($this->optExistingWindowName, $this->optPartitionClause, $optSortClause, $this->optFrameClause);
+        return new self($this->optExistingWindowName, $this->optPartitionClause, $optSortClause, $this->optFrameClause, $this->comments);
     }
 
     /**
@@ -73,6 +100,14 @@ final class WindowSpecificationWithOptExistingWindowNameOptPartitionClauseOptSor
      */
     public function withOptFrameClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptFrameClauseForm $optFrameClause): self
     {
-        return new self($this->optExistingWindowName, $this->optPartitionClause, $this->optSortClause, $optFrameClause);
+        return new self($this->optExistingWindowName, $this->optPartitionClause, $this->optSortClause, $optFrameClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optExistingWindowName, $this->optPartitionClause, $this->optSortClause, $this->optFrameClause, $comments);
     }
 }

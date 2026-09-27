@@ -17,7 +17,7 @@ final class AlterPolicyStmtWithAlterPolicyNameOnQualifiedNameRowSecurityOptional
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
@@ -25,6 +25,7 @@ final class AlterPolicyStmtWithAlterPolicyNameOnQualifiedNameRowSecurityOptional
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityOptionalToRoleForm $rowSecurityOptionalToRole,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityOptionalExprForm $rowSecurityOptionalExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityOptionalWithCheckForm $rowSecurityOptionalWithCheck,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
@@ -38,14 +39,42 @@ final class AlterPolicyStmtWithAlterPolicyNameOnQualifiedNameRowSecurityOptional
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('POLICY');
+        $writer->comments($this->comments, 2);
         $this->name->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('ON');
+        $writer->comments($this->comments, 4);
         $this->qualifiedName->write($writer);
+        $writer->comments($this->comments, 5);
         $this->rowSecurityOptionalToRole->write($writer);
+        $writer->comments($this->comments, 6);
         $this->rowSecurityOptionalExpr->write($writer);
+        $writer->comments($this->comments, 7);
         $this->rowSecurityOptionalWithCheck->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->name, $this->qualifiedName, $this->rowSecurityOptionalToRole, $this->rowSecurityOptionalExpr, $this->rowSecurityOptionalWithCheck];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->rowSecurityOptionalToRole, \SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityOptionalToRoleForm::class, $replace), $this->replacement($this->rowSecurityOptionalExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityOptionalExprForm::class, $replace), $this->replacement($this->rowSecurityOptionalWithCheck, \SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityOptionalWithCheckForm::class, $replace), $this->comments);
     }
 
     /**
@@ -53,7 +82,7 @@ final class AlterPolicyStmtWithAlterPolicyNameOnQualifiedNameRowSecurityOptional
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($name, $this->qualifiedName, $this->rowSecurityOptionalToRole, $this->rowSecurityOptionalExpr, $this->rowSecurityOptionalWithCheck);
+        return new self($name, $this->qualifiedName, $this->rowSecurityOptionalToRole, $this->rowSecurityOptionalExpr, $this->rowSecurityOptionalWithCheck, $this->comments);
     }
 
     /**
@@ -61,7 +90,7 @@ final class AlterPolicyStmtWithAlterPolicyNameOnQualifiedNameRowSecurityOptional
      */
     public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
     {
-        return new self($this->name, $qualifiedName, $this->rowSecurityOptionalToRole, $this->rowSecurityOptionalExpr, $this->rowSecurityOptionalWithCheck);
+        return new self($this->name, $qualifiedName, $this->rowSecurityOptionalToRole, $this->rowSecurityOptionalExpr, $this->rowSecurityOptionalWithCheck, $this->comments);
     }
 
     /**
@@ -69,7 +98,7 @@ final class AlterPolicyStmtWithAlterPolicyNameOnQualifiedNameRowSecurityOptional
      */
     public function withRowSecurityOptionalToRole(\SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityOptionalToRoleForm $rowSecurityOptionalToRole): self
     {
-        return new self($this->name, $this->qualifiedName, $rowSecurityOptionalToRole, $this->rowSecurityOptionalExpr, $this->rowSecurityOptionalWithCheck);
+        return new self($this->name, $this->qualifiedName, $rowSecurityOptionalToRole, $this->rowSecurityOptionalExpr, $this->rowSecurityOptionalWithCheck, $this->comments);
     }
 
     /**
@@ -77,7 +106,7 @@ final class AlterPolicyStmtWithAlterPolicyNameOnQualifiedNameRowSecurityOptional
      */
     public function withRowSecurityOptionalExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityOptionalExprForm $rowSecurityOptionalExpr): self
     {
-        return new self($this->name, $this->qualifiedName, $this->rowSecurityOptionalToRole, $rowSecurityOptionalExpr, $this->rowSecurityOptionalWithCheck);
+        return new self($this->name, $this->qualifiedName, $this->rowSecurityOptionalToRole, $rowSecurityOptionalExpr, $this->rowSecurityOptionalWithCheck, $this->comments);
     }
 
     /**
@@ -85,6 +114,14 @@ final class AlterPolicyStmtWithAlterPolicyNameOnQualifiedNameRowSecurityOptional
      */
     public function withRowSecurityOptionalWithCheck(\SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityOptionalWithCheckForm $rowSecurityOptionalWithCheck): self
     {
-        return new self($this->name, $this->qualifiedName, $this->rowSecurityOptionalToRole, $this->rowSecurityOptionalExpr, $rowSecurityOptionalWithCheck);
+        return new self($this->name, $this->qualifiedName, $this->rowSecurityOptionalToRole, $this->rowSecurityOptionalExpr, $rowSecurityOptionalWithCheck, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->name, $this->qualifiedName, $this->rowSecurityOptionalToRole, $this->rowSecurityOptionalExpr, $this->rowSecurityOptionalWithCheck, $comments);
     }
 }

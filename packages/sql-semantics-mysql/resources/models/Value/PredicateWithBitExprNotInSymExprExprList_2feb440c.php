@@ -17,16 +17,17 @@ final class PredicateWithBitExprNotInSymExprExprList_2feb440c implements \SqlSem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NotForm $not,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprListForm $exprList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($bitExpr), 'The bitExpr must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($bitExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-8.0.44' => 27,  'mysql-8.1.0' => 27,  'mysql-8.2.0' => 27,  'mysql-8.3.0' => 27,  'mysql-8.4.7' => 27,  'mysql-9.0.1' => 27,  'mysql-9.1.0' => 27,));
+        $this->assertOperandBindingStrength($bitExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-8.0.44' => 27,  'mysql-8.1.0' => 27,  'mysql-8.2.0' => 27,  'mysql-8.3.0' => 27,  'mysql-8.4.7' => 27,  'mysql-9.0.1' => 27,  'mysql-9.1.0' => 27,), \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_RULES, 'bit_expr');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($not), 'The not must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($exprList), 'The exprList must be a generated immutable SQL value.');
@@ -37,14 +38,42 @@ final class PredicateWithBitExprNotInSymExprExprList_2feb440c implements \SqlSem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->bitExpr->write($writer);
+        $writer->comments($this->comments, 1);
         $this->not->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('IN');
+        $writer->comments($this->comments, 3);
         $writer->append('(');
+        $writer->comments($this->comments, 4);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(',');
+        $writer->comments($this->comments, 6);
         $this->exprList->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->bitExpr, $this->not, $this->expr, $this->exprList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->bitExpr, \SqlSemantics\Statement\Model\MySql\Role\BitExprForm::class, $replace), $this->replacement($this->not, \SqlSemantics\Statement\Model\MySql\Role\NotForm::class, $replace), $this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->replacement($this->exprList, \SqlSemantics\Statement\Model\MySql\Role\ExprListForm::class, $replace), $this->comments);
     }
 
     /**
@@ -52,7 +81,7 @@ final class PredicateWithBitExprNotInSymExprExprList_2feb440c implements \SqlSem
      */
     public function withBitExpr(\SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr): self
     {
-        return new self($bitExpr, $this->not, $this->expr, $this->exprList);
+        return new self($bitExpr, $this->not, $this->expr, $this->exprList, $this->comments);
     }
 
     /**
@@ -60,7 +89,7 @@ final class PredicateWithBitExprNotInSymExprExprList_2feb440c implements \SqlSem
      */
     public function withNot(\SqlSemantics\Statement\Model\MySql\Role\NotForm $not): self
     {
-        return new self($this->bitExpr, $not, $this->expr, $this->exprList);
+        return new self($this->bitExpr, $not, $this->expr, $this->exprList, $this->comments);
     }
 
     /**
@@ -68,7 +97,7 @@ final class PredicateWithBitExprNotInSymExprExprList_2feb440c implements \SqlSem
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($this->bitExpr, $this->not, $expr, $this->exprList);
+        return new self($this->bitExpr, $this->not, $expr, $this->exprList, $this->comments);
     }
 
     /**
@@ -76,6 +105,14 @@ final class PredicateWithBitExprNotInSymExprExprList_2feb440c implements \SqlSem
      */
     public function withExprList(\SqlSemantics\Statement\Model\MySql\Role\ExprListForm $exprList): self
     {
-        return new self($this->bitExpr, $this->not, $this->expr, $exprList);
+        return new self($this->bitExpr, $this->not, $this->expr, $exprList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->bitExpr, $this->not, $this->expr, $this->exprList, $comments);
     }
 }

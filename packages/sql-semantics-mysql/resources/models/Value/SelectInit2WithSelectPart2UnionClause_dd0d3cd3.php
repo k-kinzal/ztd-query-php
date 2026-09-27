@@ -17,11 +17,12 @@ final class SelectInit2WithSelectPart2UnionClause_dd0d3cd3 implements \SqlSemant
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectPart2Form $selectPart2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UnionClauseForm $unionClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectPart2), 'The selectPart2 must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($unionClause), 'The unionClause must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class SelectInit2WithSelectPart2UnionClause_dd0d3cd3 implements \SqlSemant
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->selectPart2->write($writer);
+        $writer->comments($this->comments, 1);
         $this->unionClause->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->selectPart2, $this->unionClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->selectPart2, \SqlSemantics\Statement\Model\MySql\Role\SelectPart2Form::class, $replace), $this->replacement($this->unionClause, \SqlSemantics\Statement\Model\MySql\Role\UnionClauseForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class SelectInit2WithSelectPart2UnionClause_dd0d3cd3 implements \SqlSemant
      */
     public function withSelectPart2(\SqlSemantics\Statement\Model\MySql\Role\SelectPart2Form $selectPart2): self
     {
-        return new self($selectPart2, $this->unionClause);
+        return new self($selectPart2, $this->unionClause, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class SelectInit2WithSelectPart2UnionClause_dd0d3cd3 implements \SqlSemant
      */
     public function withUnionClause(\SqlSemantics\Statement\Model\MySql\Role\UnionClauseForm $unionClause): self
     {
-        return new self($this->selectPart2, $unionClause);
+        return new self($this->selectPart2, $unionClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->selectPart2, $this->unionClause, $comments);
     }
 }

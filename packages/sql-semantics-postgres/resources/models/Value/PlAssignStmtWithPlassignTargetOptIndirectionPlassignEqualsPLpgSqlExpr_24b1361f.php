@@ -17,13 +17,14 @@ final class PlAssignStmtWithPlassignTargetOptIndirectionPlassignEqualsPLpgSqlExp
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PlassignTargetForm $plassignTarget,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptIndirectionForm $optIndirection,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PlassignEqualsForm $plassignEquals,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PLpgSqlExprForm $pLpgSqlExpr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($plassignTarget), 'The plassignTarget must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optIndirection), 'The optIndirection must be a generated immutable SQL value.');
@@ -36,10 +37,34 @@ final class PlAssignStmtWithPlassignTargetOptIndirectionPlassignEqualsPLpgSqlExp
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->plassignTarget->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optIndirection->write($writer);
+        $writer->comments($this->comments, 2);
         $this->plassignEquals->write($writer);
+        $writer->comments($this->comments, 3);
         $this->pLpgSqlExpr->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->plassignTarget, $this->optIndirection, $this->plassignEquals, $this->pLpgSqlExpr];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->plassignTarget, \SqlSemantics\Statement\Model\PostgreSql\Role\PlassignTargetForm::class, $replace), $this->replacement($this->optIndirection, \SqlSemantics\Statement\Model\PostgreSql\Role\OptIndirectionForm::class, $replace), $this->replacement($this->plassignEquals, \SqlSemantics\Statement\Model\PostgreSql\Role\PlassignEqualsForm::class, $replace), $this->replacement($this->pLpgSqlExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\PLpgSqlExprForm::class, $replace), $this->comments);
     }
 
     /**
@@ -47,7 +72,7 @@ final class PlAssignStmtWithPlassignTargetOptIndirectionPlassignEqualsPLpgSqlExp
      */
     public function withPlassignTarget(\SqlSemantics\Statement\Model\PostgreSql\Role\PlassignTargetForm $plassignTarget): self
     {
-        return new self($plassignTarget, $this->optIndirection, $this->plassignEquals, $this->pLpgSqlExpr);
+        return new self($plassignTarget, $this->optIndirection, $this->plassignEquals, $this->pLpgSqlExpr, $this->comments);
     }
 
     /**
@@ -55,7 +80,7 @@ final class PlAssignStmtWithPlassignTargetOptIndirectionPlassignEqualsPLpgSqlExp
      */
     public function withOptIndirection(\SqlSemantics\Statement\Model\PostgreSql\Role\OptIndirectionForm $optIndirection): self
     {
-        return new self($this->plassignTarget, $optIndirection, $this->plassignEquals, $this->pLpgSqlExpr);
+        return new self($this->plassignTarget, $optIndirection, $this->plassignEquals, $this->pLpgSqlExpr, $this->comments);
     }
 
     /**
@@ -63,7 +88,7 @@ final class PlAssignStmtWithPlassignTargetOptIndirectionPlassignEqualsPLpgSqlExp
      */
     public function withPlassignEquals(\SqlSemantics\Statement\Model\PostgreSql\Role\PlassignEqualsForm $plassignEquals): self
     {
-        return new self($this->plassignTarget, $this->optIndirection, $plassignEquals, $this->pLpgSqlExpr);
+        return new self($this->plassignTarget, $this->optIndirection, $plassignEquals, $this->pLpgSqlExpr, $this->comments);
     }
 
     /**
@@ -71,6 +96,14 @@ final class PlAssignStmtWithPlassignTargetOptIndirectionPlassignEqualsPLpgSqlExp
      */
     public function withPLpgSqlExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\PLpgSqlExprForm $pLpgSqlExpr): self
     {
-        return new self($this->plassignTarget, $this->optIndirection, $this->plassignEquals, $pLpgSqlExpr);
+        return new self($this->plassignTarget, $this->optIndirection, $this->plassignEquals, $pLpgSqlExpr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->plassignTarget, $this->optIndirection, $this->plassignEquals, $this->pLpgSqlExpr, $comments);
     }
 }

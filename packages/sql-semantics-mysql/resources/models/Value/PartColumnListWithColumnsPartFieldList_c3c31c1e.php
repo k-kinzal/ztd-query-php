@@ -17,11 +17,12 @@ final class PartColumnListWithColumnsPartFieldList_c3c31c1e implements \SqlSeman
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $columns,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartFieldListForm $partFieldList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($columns, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['COLUMNS'], 'The columns must be a complete COLUMNS lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partFieldList), 'The partFieldList must be a generated immutable SQL value.');
@@ -32,10 +33,34 @@ final class PartColumnListWithColumnsPartFieldList_c3c31c1e implements \SqlSeman
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->columns);
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->partFieldList->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->partFieldList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->columns, $this->replacement($this->partFieldList, \SqlSemantics\Statement\Model\MySql\Role\PartFieldListForm::class, $replace), $this->comments);
     }
 
     /**
@@ -43,7 +68,7 @@ final class PartColumnListWithColumnsPartFieldList_c3c31c1e implements \SqlSeman
      */
     public function withColumns(string $columns): self
     {
-        return new self($columns, $this->partFieldList);
+        return new self($columns, $this->partFieldList, $this->comments);
     }
 
     /**
@@ -51,6 +76,14 @@ final class PartColumnListWithColumnsPartFieldList_c3c31c1e implements \SqlSeman
      */
     public function withPartFieldList(\SqlSemantics\Statement\Model\MySql\Role\PartFieldListForm $partFieldList): self
     {
-        return new self($this->columns, $partFieldList);
+        return new self($this->columns, $partFieldList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->columns, $this->partFieldList, $comments);
     }
 }

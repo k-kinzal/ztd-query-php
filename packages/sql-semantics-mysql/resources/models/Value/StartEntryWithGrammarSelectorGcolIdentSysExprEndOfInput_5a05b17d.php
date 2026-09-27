@@ -17,12 +17,13 @@ final class StartEntryWithGrammarSelectorGcolIdentSysExprEndOfInput_5a05b17d imp
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $grammarSelectorGcol,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentSysForm $identSys,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($grammarSelectorGcol, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['GRAMMAR_SELECTOR_GCOL'], 'The grammarSelectorGcol must be a complete GRAMMAR_SELECTOR_GCOL lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identSys), 'The identSys must be a generated immutable SQL value.');
@@ -34,11 +35,37 @@ final class StartEntryWithGrammarSelectorGcolIdentSysExprEndOfInput_5a05b17d imp
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->grammarSelectorGcol);
+        $writer->comments($this->comments, 1);
         $this->identSys->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('(');
+        $writer->comments($this->comments, 3);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
+        $writer->comments($this->comments, 5);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->identSys, $this->expr];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->grammarSelectorGcol, $this->replacement($this->identSys, \SqlSemantics\Statement\Model\MySql\Role\IdentSysForm::class, $replace), $this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->comments);
     }
 
     /**
@@ -46,7 +73,7 @@ final class StartEntryWithGrammarSelectorGcolIdentSysExprEndOfInput_5a05b17d imp
      */
     public function withGrammarSelectorGcol(string $grammarSelectorGcol): self
     {
-        return new self($grammarSelectorGcol, $this->identSys, $this->expr);
+        return new self($grammarSelectorGcol, $this->identSys, $this->expr, $this->comments);
     }
 
     /**
@@ -54,7 +81,7 @@ final class StartEntryWithGrammarSelectorGcolIdentSysExprEndOfInput_5a05b17d imp
      */
     public function withIdentSys(\SqlSemantics\Statement\Model\MySql\Role\IdentSysForm $identSys): self
     {
-        return new self($this->grammarSelectorGcol, $identSys, $this->expr);
+        return new self($this->grammarSelectorGcol, $identSys, $this->expr, $this->comments);
     }
 
     /**
@@ -62,6 +89,14 @@ final class StartEntryWithGrammarSelectorGcolIdentSysExprEndOfInput_5a05b17d imp
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($this->grammarSelectorGcol, $this->identSys, $expr);
+        return new self($this->grammarSelectorGcol, $this->identSys, $expr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->grammarSelectorGcol, $this->identSys, $this->expr, $comments);
     }
 }

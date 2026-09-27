@@ -17,11 +17,12 @@ final class TriggerTransitionsWithTriggerTransitionsTriggerTransition_70089326 i
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerTransitionsForm $triggerTransitions,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerTransitionForm $triggerTransition,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($triggerTransitions), 'The triggerTransitions must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($triggerTransition), 'The triggerTransition must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class TriggerTransitionsWithTriggerTransitionsTriggerTransition_70089326 i
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->triggerTransitions->write($writer);
+        $writer->comments($this->comments, 1);
         $this->triggerTransition->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->triggerTransitions, $this->triggerTransition];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->triggerTransitions, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerTransitionsForm::class, $replace), $this->replacement($this->triggerTransition, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerTransitionForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class TriggerTransitionsWithTriggerTransitionsTriggerTransition_70089326 i
      */
     public function withTriggerTransitions(\SqlSemantics\Statement\Model\PostgreSql\Role\TriggerTransitionsForm $triggerTransitions): self
     {
-        return new self($triggerTransitions, $this->triggerTransition);
+        return new self($triggerTransitions, $this->triggerTransition, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class TriggerTransitionsWithTriggerTransitionsTriggerTransition_70089326 i
      */
     public function withTriggerTransition(\SqlSemantics\Statement\Model\PostgreSql\Role\TriggerTransitionForm $triggerTransition): self
     {
-        return new self($this->triggerTransitions, $triggerTransition);
+        return new self($this->triggerTransitions, $triggerTransition, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->triggerTransitions, $this->triggerTransition, $comments);
     }
 }

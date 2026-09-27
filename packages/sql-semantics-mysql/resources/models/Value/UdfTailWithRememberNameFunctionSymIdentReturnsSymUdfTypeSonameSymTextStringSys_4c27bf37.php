@@ -17,13 +17,14 @@ final class UdfTailWithRememberNameFunctionSymIdentReturnsSymUdfTypeSonameSymTex
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm $rememberName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UdfTypeForm $udfType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($rememberName), 'The rememberName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
@@ -36,13 +37,40 @@ final class UdfTailWithRememberNameFunctionSymIdentReturnsSymUdfTypeSonameSymTex
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->rememberName->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('FUNCTION');
+        $writer->comments($this->comments, 2);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('RETURNS');
+        $writer->comments($this->comments, 4);
         $this->udfType->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('SONAME');
+        $writer->comments($this->comments, 6);
         $this->textStringSys->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->rememberName, $this->ident, $this->udfType, $this->textStringSys];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->rememberName, \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm::class, $replace), $this->replacement($this->ident, \SqlSemantics\Statement\Model\MySql\Role\IdentForm::class, $replace), $this->replacement($this->udfType, \SqlSemantics\Statement\Model\MySql\Role\UdfTypeForm::class, $replace), $this->replacement($this->textStringSys, \SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm::class, $replace), $this->comments);
     }
 
     /**
@@ -50,7 +78,7 @@ final class UdfTailWithRememberNameFunctionSymIdentReturnsSymUdfTypeSonameSymTex
      */
     public function withRememberName(\SqlSemantics\Statement\Model\MySql\Role\RememberNameForm $rememberName): self
     {
-        return new self($rememberName, $this->ident, $this->udfType, $this->textStringSys);
+        return new self($rememberName, $this->ident, $this->udfType, $this->textStringSys, $this->comments);
     }
 
     /**
@@ -58,7 +86,7 @@ final class UdfTailWithRememberNameFunctionSymIdentReturnsSymUdfTypeSonameSymTex
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($this->rememberName, $ident, $this->udfType, $this->textStringSys);
+        return new self($this->rememberName, $ident, $this->udfType, $this->textStringSys, $this->comments);
     }
 
     /**
@@ -66,7 +94,7 @@ final class UdfTailWithRememberNameFunctionSymIdentReturnsSymUdfTypeSonameSymTex
      */
     public function withUdfType(\SqlSemantics\Statement\Model\MySql\Role\UdfTypeForm $udfType): self
     {
-        return new self($this->rememberName, $this->ident, $udfType, $this->textStringSys);
+        return new self($this->rememberName, $this->ident, $udfType, $this->textStringSys, $this->comments);
     }
 
     /**
@@ -74,6 +102,14 @@ final class UdfTailWithRememberNameFunctionSymIdentReturnsSymUdfTypeSonameSymTex
      */
     public function withTextStringSys(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys): self
     {
-        return new self($this->rememberName, $this->ident, $this->udfType, $textStringSys);
+        return new self($this->rememberName, $this->ident, $this->udfType, $textStringSys, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->rememberName, $this->ident, $this->udfType, $this->textStringSys, $comments);
     }
 }

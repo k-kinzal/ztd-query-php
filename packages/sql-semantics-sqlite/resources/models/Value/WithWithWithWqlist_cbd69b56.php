@@ -17,10 +17,11 @@ final class WithWithWithWqlist_cbd69b56 implements \SqlSemantics\Statement\Model
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WqlistForm $wqlist,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($wqlist), 'The wqlist must be a generated immutable SQL value.');
     }
@@ -30,8 +31,30 @@ final class WithWithWithWqlist_cbd69b56 implements \SqlSemantics\Statement\Model
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('WITH');
+        $writer->comments($this->comments, 1);
         $this->wqlist->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->wqlist];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->wqlist, \SqlSemantics\Statement\Model\Sqlite\Role\WqlistForm::class, $replace), $this->comments);
     }
 
     /**
@@ -39,6 +62,14 @@ final class WithWithWithWqlist_cbd69b56 implements \SqlSemantics\Statement\Model
      */
     public function withWqlist(\SqlSemantics\Statement\Model\Sqlite\Role\WqlistForm $wqlist): self
     {
-        return new self($wqlist);
+        return new self($wqlist, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->wqlist, $comments);
     }
 }

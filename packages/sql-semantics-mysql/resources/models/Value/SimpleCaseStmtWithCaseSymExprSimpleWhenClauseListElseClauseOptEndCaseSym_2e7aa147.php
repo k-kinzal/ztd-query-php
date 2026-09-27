@@ -17,12 +17,13 @@ final class SimpleCaseStmtWithCaseSymExprSimpleWhenClauseListElseClauseOptEndCas
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleWhenClauseListForm $simpleWhenClauseList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ElseClauseOptForm $elseClauseOpt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleWhenClauseList), 'The simpleWhenClauseList must be a generated immutable SQL value.');
@@ -34,12 +35,38 @@ final class SimpleCaseStmtWithCaseSymExprSimpleWhenClauseListElseClauseOptEndCas
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CASE');
+        $writer->comments($this->comments, 1);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 2);
         $this->simpleWhenClauseList->write($writer);
+        $writer->comments($this->comments, 3);
         $this->elseClauseOpt->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('END');
+        $writer->comments($this->comments, 5);
         $writer->append('CASE');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->expr, $this->simpleWhenClauseList, $this->elseClauseOpt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->replacement($this->simpleWhenClauseList, \SqlSemantics\Statement\Model\MySql\Role\SimpleWhenClauseListForm::class, $replace), $this->replacement($this->elseClauseOpt, \SqlSemantics\Statement\Model\MySql\Role\ElseClauseOptForm::class, $replace), $this->comments);
     }
 
     /**
@@ -47,7 +74,7 @@ final class SimpleCaseStmtWithCaseSymExprSimpleWhenClauseListElseClauseOptEndCas
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($expr, $this->simpleWhenClauseList, $this->elseClauseOpt);
+        return new self($expr, $this->simpleWhenClauseList, $this->elseClauseOpt, $this->comments);
     }
 
     /**
@@ -55,7 +82,7 @@ final class SimpleCaseStmtWithCaseSymExprSimpleWhenClauseListElseClauseOptEndCas
      */
     public function withSimpleWhenClauseList(\SqlSemantics\Statement\Model\MySql\Role\SimpleWhenClauseListForm $simpleWhenClauseList): self
     {
-        return new self($this->expr, $simpleWhenClauseList, $this->elseClauseOpt);
+        return new self($this->expr, $simpleWhenClauseList, $this->elseClauseOpt, $this->comments);
     }
 
     /**
@@ -63,6 +90,14 @@ final class SimpleCaseStmtWithCaseSymExprSimpleWhenClauseListElseClauseOptEndCas
      */
     public function withElseClauseOpt(\SqlSemantics\Statement\Model\MySql\Role\ElseClauseOptForm $elseClauseOpt): self
     {
-        return new self($this->expr, $this->simpleWhenClauseList, $elseClauseOpt);
+        return new self($this->expr, $this->simpleWhenClauseList, $elseClauseOpt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->expr, $this->simpleWhenClauseList, $this->elseClauseOpt, $comments);
     }
 }

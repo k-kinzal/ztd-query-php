@@ -12,16 +12,17 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterWithAlterFunctionSymSpNameSpAChistics_5e89a1f4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterWithAlterFunctionSymSpNameSpAChistics_5e89a1f4 implements \SqlSemantics\Statement\Model\MySql\Role\AlterForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class AlterWithAlterFunctionSymSpNameSpAChistics_5e89a1f4 implements \SqlSemantics\Statement\Model\MySql\Role\AlterForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpAChisticsForm $spAChistics,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spName), 'The spName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spAChistics), 'The spAChistics must be a generated immutable SQL value.');
@@ -32,10 +33,34 @@ final class AlterWithAlterFunctionSymSpNameSpAChistics_5e89a1f4 implements \SqlS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('FUNCTION');
+        $writer->comments($this->comments, 2);
         $this->spName->write($writer);
+        $writer->comments($this->comments, 3);
         $this->spAChistics->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->spName, $this->spAChistics];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->spName, \SqlSemantics\Statement\Model\MySql\Role\SpNameForm::class, $replace), $this->replacement($this->spAChistics, \SqlSemantics\Statement\Model\MySql\Role\SpAChisticsForm::class, $replace), $this->comments);
     }
 
     /**
@@ -43,7 +68,7 @@ final class AlterWithAlterFunctionSymSpNameSpAChistics_5e89a1f4 implements \SqlS
      */
     public function withSpName(\SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName): self
     {
-        return new self($spName, $this->spAChistics);
+        return new self($spName, $this->spAChistics, $this->comments);
     }
 
     /**
@@ -51,6 +76,14 @@ final class AlterWithAlterFunctionSymSpNameSpAChistics_5e89a1f4 implements \SqlS
      */
     public function withSpAChistics(\SqlSemantics\Statement\Model\MySql\Role\SpAChisticsForm $spAChistics): self
     {
-        return new self($this->spName, $spAChistics);
+        return new self($this->spName, $spAChistics, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->spName, $this->spAChistics, $comments);
     }
 }

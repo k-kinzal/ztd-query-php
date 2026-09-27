@@ -17,11 +17,12 @@ final class KillWithKillSymKillOptionExpr_677f0c68 implements \SqlSemantics\Stat
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KillOptionForm $killOption,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($killOption), 'The killOption must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class KillWithKillSymKillOptionExpr_677f0c68 implements \SqlSemantics\Stat
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('KILL');
+        $writer->comments($this->comments, 1);
         $this->killOption->write($writer);
+        $writer->comments($this->comments, 2);
         $this->expr->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->killOption, $this->expr];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->killOption, \SqlSemantics\Statement\Model\MySql\Role\KillOptionForm::class, $replace), $this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class KillWithKillSymKillOptionExpr_677f0c68 implements \SqlSemantics\Stat
      */
     public function withKillOption(\SqlSemantics\Statement\Model\MySql\Role\KillOptionForm $killOption): self
     {
-        return new self($killOption, $this->expr);
+        return new self($killOption, $this->expr, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class KillWithKillSymKillOptionExpr_677f0c68 implements \SqlSemantics\Stat
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($this->killOption, $expr);
+        return new self($this->killOption, $expr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->killOption, $this->expr, $comments);
     }
 }

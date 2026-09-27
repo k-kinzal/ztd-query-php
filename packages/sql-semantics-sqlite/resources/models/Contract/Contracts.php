@@ -503,6 +503,236 @@ final class Contracts
     'sqlite-3.47.2' => 12,
   ),
 );
+    /**
+     * Generated construction facts; no parser is consulted by a value.
+     *
+     * @var array<class-string<\SqlSemantics\Statement\Element>, array<string, array<int, int>>>
+     */
+    public const BINDING_OPERANDS = array (
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithBitnotExpr_fb4e23b4' =>
+  array (
+    'sqlite-3.47.2' =>
+    array (
+      1 => 12,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprAndExpr_33592aae' =>
+  array (
+    'sqlite-3.47.2' =>
+    array (
+      0 => 2,
+      2 => 3,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprBetweenOpExprAndExpr_5e5d6d1b' =>
+  array (
+    'sqlite-3.47.2' =>
+    array (
+      0 => 4,
+      4 => 5,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprBitandBitorLshiftRshiftExpr_67d895c2' =>
+  array (
+    'sqlite-3.47.2' =>
+    array (
+      0 => 7,
+      2 => 8,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprCollateIds_f6a2b322' =>
+  array (
+    'sqlite-3.47.2' =>
+    array (
+      0 => 11,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprConcatExpr_2239f2bc' =>
+  array (
+    'sqlite-3.47.2' =>
+    array (
+      0 => 10,
+      2 => 11,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprEqNeExpr_49d16f16' =>
+  array (
+    'sqlite-3.47.2' =>
+    array (
+      0 => 4,
+      2 => 5,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprInOpLpExprlistRp_a0b7c2b5' =>
+  array (
+    'sqlite-3.47.2' =>
+    array (
+      0 => 4,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprInOpLpSelectRp_a20110e2' =>
+  array (
+    'sqlite-3.47.2' =>
+    array (
+      0 => 4,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprInOpNmDbnmParenExprlist_be04cc02' =>
+  array (
+    'sqlite-3.47.2' =>
+    array (
+      0 => 4,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprIsDistinctFromExpr_2d05c076' =>
+  array (
+    'sqlite-3.47.2' =>
+    array (
+      0 => 4,
+      4 => 5,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprIsExpr_cfeb7fba' =>
+  array (
+    'sqlite-3.47.2' =>
+    array (
+      0 => 4,
+      2 => 5,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprIsNotDistinctFromExpr_06cc5755' =>
+  array (
+    'sqlite-3.47.2' =>
+    array (
+      0 => 4,
+      5 => 5,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprIsNotExpr_a631d709' =>
+  array (
+    'sqlite-3.47.2' =>
+    array (
+      0 => 4,
+      3 => 5,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprIsnullNotnull_b1183766' =>
+  array (
+    'sqlite-3.47.2' =>
+    array (
+      0 => 4,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprLikeopExprEscapeExpr_5d4dd842' =>
+  array (
+    'sqlite-3.47.2' =>
+    array (
+      0 => 4,
+      4 => 5,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprLikeopExpr_e761ed21' =>
+  array (
+    'sqlite-3.47.2' =>
+    array (
+      0 => 4,
+      2 => 5,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprLtGtGeLeExpr_c64bb14c' =>
+  array (
+    'sqlite-3.47.2' =>
+    array (
+      0 => 5,
+      2 => 6,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprNotNull_025d71af' =>
+  array (
+    'sqlite-3.47.2' =>
+    array (
+      0 => 4,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprOrExpr_fcc306b3' =>
+  array (
+    'sqlite-3.47.2' =>
+    array (
+      0 => 1,
+      2 => 2,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprPlusMinusExpr_82e360dc' =>
+  array (
+    'sqlite-3.47.2' =>
+    array (
+      0 => 8,
+      2 => 9,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprPtrExpr_6dab14bf' =>
+  array (
+    'sqlite-3.47.2' =>
+    array (
+      0 => 10,
+      2 => 11,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprStarSlashRemExpr_6ca99fe8' =>
+  array (
+    'sqlite-3.47.2' =>
+    array (
+      0 => 9,
+      2 => 10,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithNotExpr_22095ba5' =>
+  array (
+    'sqlite-3.47.2' =>
+    array (
+      1 => 3,
+    ),
+  ),
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithPlusMinusExpr_657f0f03' =>
+  array (
+    'sqlite-3.47.2' =>
+    array (
+      1 => 12,
+    ),
+  ),
+);
+    /**
+     * Generated construction facts; no parser is consulted by a value.
+     *
+     * @var array<class-string<\SqlSemantics\Statement\Element>, string>
+     */
+    public const BINDING_RULES = array (
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithBitnotExpr_fb4e23b4' => 'expr',
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprAndExpr_33592aae' => 'expr',
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprBetweenOpExprAndExpr_5e5d6d1b' => 'expr',
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprBitandBitorLshiftRshiftExpr_67d895c2' => 'expr',
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprCollateIds_f6a2b322' => 'expr',
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprConcatExpr_2239f2bc' => 'expr',
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprEqNeExpr_49d16f16' => 'expr',
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprInOpLpExprlistRp_a0b7c2b5' => 'expr',
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprInOpLpSelectRp_a20110e2' => 'expr',
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprInOpNmDbnmParenExprlist_be04cc02' => 'expr',
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprIsDistinctFromExpr_2d05c076' => 'expr',
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprIsExpr_cfeb7fba' => 'expr',
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprIsNotDistinctFromExpr_06cc5755' => 'expr',
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprIsNotExpr_a631d709' => 'expr',
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprIsnullNotnull_b1183766' => 'expr',
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprLikeopExprEscapeExpr_5d4dd842' => 'expr',
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprLikeopExpr_e761ed21' => 'expr',
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprLtGtGeLeExpr_c64bb14c' => 'expr',
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprNotNull_025d71af' => 'expr',
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprOrExpr_fcc306b3' => 'expr',
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprPlusMinusExpr_82e360dc' => 'expr',
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprPtrExpr_6dab14bf' => 'expr',
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithExprStarSlashRemExpr_6ca99fe8' => 'expr',
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithNotExpr_22095ba5' => 'expr',
+  'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExprWithPlusMinusExpr_657f0f03' => 'expr',
+);
 
     /**
      * Answers whether a child belongs to this generated immutable vocabulary.

@@ -17,11 +17,12 @@ final class TableOptionSetWithTableOptionSetCommaTableOption_ffea1324 implements
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TableOptionSetForm $tableOptionSet,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TableOptionForm $tableOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($tableOptionSet), 'The tableOptionSet must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($tableOption), 'The tableOption must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class TableOptionSetWithTableOptionSetCommaTableOption_ffea1324 implements
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableOptionSet->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->tableOption->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableOptionSet, $this->tableOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableOptionSet, \SqlSemantics\Statement\Model\Sqlite\Role\TableOptionSetForm::class, $replace), $this->replacement($this->tableOption, \SqlSemantics\Statement\Model\Sqlite\Role\TableOptionForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class TableOptionSetWithTableOptionSetCommaTableOption_ffea1324 implements
      */
     public function withTableOptionSet(\SqlSemantics\Statement\Model\Sqlite\Role\TableOptionSetForm $tableOptionSet): self
     {
-        return new self($tableOptionSet, $this->tableOption);
+        return new self($tableOptionSet, $this->tableOption, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class TableOptionSetWithTableOptionSetCommaTableOption_ffea1324 implements
      */
     public function withTableOption(\SqlSemantics\Statement\Model\Sqlite\Role\TableOptionForm $tableOption): self
     {
-        return new self($this->tableOptionSet, $tableOption);
+        return new self($this->tableOptionSet, $tableOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableOptionSet, $this->tableOption, $comments);
     }
 }

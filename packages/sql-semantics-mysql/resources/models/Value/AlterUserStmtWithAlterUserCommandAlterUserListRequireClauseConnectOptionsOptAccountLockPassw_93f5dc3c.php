@@ -17,7 +17,7 @@ final class AlterUserStmtWithAlterUserCommandAlterUserListRequireClauseConnectOp
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterUserCommandForm $alterUserCommand,
@@ -26,6 +26,7 @@ final class AlterUserStmtWithAlterUserCommandAlterUserListRequireClauseConnectOp
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ConnectOptionsForm $connectOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionsForm $optAccountLockPasswordExpireOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUserAttributeForm $optUserAttribute,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterUserCommand), 'The alterUserCommand must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterUserList), 'The alterUserList must be a generated immutable SQL value.');
@@ -40,12 +41,38 @@ final class AlterUserStmtWithAlterUserCommandAlterUserListRequireClauseConnectOp
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->alterUserCommand->write($writer);
+        $writer->comments($this->comments, 1);
         $this->alterUserList->write($writer);
+        $writer->comments($this->comments, 2);
         $this->requireClause->write($writer);
+        $writer->comments($this->comments, 3);
         $this->connectOptions->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optAccountLockPasswordExpireOptions->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optUserAttribute->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->alterUserCommand, $this->alterUserList, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->alterUserCommand, \SqlSemantics\Statement\Model\MySql\Role\AlterUserCommandForm::class, $replace), $this->replacement($this->alterUserList, \SqlSemantics\Statement\Model\MySql\Role\AlterUserListForm::class, $replace), $this->replacement($this->requireClause, \SqlSemantics\Statement\Model\MySql\Role\RequireClauseForm::class, $replace), $this->replacement($this->connectOptions, \SqlSemantics\Statement\Model\MySql\Role\ConnectOptionsForm::class, $replace), $this->replacement($this->optAccountLockPasswordExpireOptions, \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionsForm::class, $replace), $this->replacement($this->optUserAttribute, \SqlSemantics\Statement\Model\MySql\Role\OptUserAttributeForm::class, $replace), $this->comments);
     }
 
     /**
@@ -53,7 +80,7 @@ final class AlterUserStmtWithAlterUserCommandAlterUserListRequireClauseConnectOp
      */
     public function withAlterUserCommand(\SqlSemantics\Statement\Model\MySql\Role\AlterUserCommandForm $alterUserCommand): self
     {
-        return new self($alterUserCommand, $this->alterUserList, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute);
+        return new self($alterUserCommand, $this->alterUserList, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute, $this->comments);
     }
 
     /**
@@ -61,7 +88,7 @@ final class AlterUserStmtWithAlterUserCommandAlterUserListRequireClauseConnectOp
      */
     public function withAlterUserList(\SqlSemantics\Statement\Model\MySql\Role\AlterUserListForm $alterUserList): self
     {
-        return new self($this->alterUserCommand, $alterUserList, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute);
+        return new self($this->alterUserCommand, $alterUserList, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute, $this->comments);
     }
 
     /**
@@ -69,7 +96,7 @@ final class AlterUserStmtWithAlterUserCommandAlterUserListRequireClauseConnectOp
      */
     public function withRequireClause(\SqlSemantics\Statement\Model\MySql\Role\RequireClauseForm $requireClause): self
     {
-        return new self($this->alterUserCommand, $this->alterUserList, $requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute);
+        return new self($this->alterUserCommand, $this->alterUserList, $requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute, $this->comments);
     }
 
     /**
@@ -77,7 +104,7 @@ final class AlterUserStmtWithAlterUserCommandAlterUserListRequireClauseConnectOp
      */
     public function withConnectOptions(\SqlSemantics\Statement\Model\MySql\Role\ConnectOptionsForm $connectOptions): self
     {
-        return new self($this->alterUserCommand, $this->alterUserList, $this->requireClause, $connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute);
+        return new self($this->alterUserCommand, $this->alterUserList, $this->requireClause, $connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute, $this->comments);
     }
 
     /**
@@ -85,7 +112,7 @@ final class AlterUserStmtWithAlterUserCommandAlterUserListRequireClauseConnectOp
      */
     public function withOptAccountLockPasswordExpireOptions(\SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionsForm $optAccountLockPasswordExpireOptions): self
     {
-        return new self($this->alterUserCommand, $this->alterUserList, $this->requireClause, $this->connectOptions, $optAccountLockPasswordExpireOptions, $this->optUserAttribute);
+        return new self($this->alterUserCommand, $this->alterUserList, $this->requireClause, $this->connectOptions, $optAccountLockPasswordExpireOptions, $this->optUserAttribute, $this->comments);
     }
 
     /**
@@ -93,6 +120,14 @@ final class AlterUserStmtWithAlterUserCommandAlterUserListRequireClauseConnectOp
      */
     public function withOptUserAttribute(\SqlSemantics\Statement\Model\MySql\Role\OptUserAttributeForm $optUserAttribute): self
     {
-        return new self($this->alterUserCommand, $this->alterUserList, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $optUserAttribute);
+        return new self($this->alterUserCommand, $this->alterUserList, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $optUserAttribute, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->alterUserCommand, $this->alterUserList, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute, $comments);
     }
 }

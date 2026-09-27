@@ -17,11 +17,12 @@ final class AlterTableStmtWithAlterTableRelationExprPartitionCmd_8e587fbe implem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm $relationExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PartitionCmdForm $partitionCmd,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($relationExpr), 'The relationExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($partitionCmd), 'The partitionCmd must be a generated immutable SQL value.');
@@ -32,10 +33,34 @@ final class AlterTableStmtWithAlterTableRelationExprPartitionCmd_8e587fbe implem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('TABLE');
+        $writer->comments($this->comments, 2);
         $this->relationExpr->write($writer);
+        $writer->comments($this->comments, 3);
         $this->partitionCmd->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->relationExpr, $this->partitionCmd];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->relationExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm::class, $replace), $this->replacement($this->partitionCmd, \SqlSemantics\Statement\Model\PostgreSql\Role\PartitionCmdForm::class, $replace), $this->comments);
     }
 
     /**
@@ -43,7 +68,7 @@ final class AlterTableStmtWithAlterTableRelationExprPartitionCmd_8e587fbe implem
      */
     public function withRelationExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm $relationExpr): self
     {
-        return new self($relationExpr, $this->partitionCmd);
+        return new self($relationExpr, $this->partitionCmd, $this->comments);
     }
 
     /**
@@ -51,6 +76,14 @@ final class AlterTableStmtWithAlterTableRelationExprPartitionCmd_8e587fbe implem
      */
     public function withPartitionCmd(\SqlSemantics\Statement\Model\PostgreSql\Role\PartitionCmdForm $partitionCmd): self
     {
-        return new self($this->relationExpr, $partitionCmd);
+        return new self($this->relationExpr, $partitionCmd, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->relationExpr, $this->partitionCmd, $comments);
     }
 }

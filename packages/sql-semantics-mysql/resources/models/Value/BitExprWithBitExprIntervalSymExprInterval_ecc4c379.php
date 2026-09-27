@@ -17,15 +17,16 @@ final class BitExprWithBitExprIntervalSymExprInterval_ecc4c379 implements \SqlSe
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IntervalForm $interval,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($bitExpr), 'The bitExpr must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($bitExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 12,  'mysql-5.7.44' => 13,  'mysql-8.0.44' => 18,  'mysql-8.1.0' => 18,  'mysql-8.2.0' => 18,  'mysql-8.3.0' => 18,  'mysql-8.4.7' => 18,  'mysql-9.0.1' => 18,  'mysql-9.1.0' => 18,));
+        $this->assertOperandBindingStrength($bitExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 12,  'mysql-5.7.44' => 13,  'mysql-8.0.44' => 18,  'mysql-8.1.0' => 18,  'mysql-8.2.0' => 18,  'mysql-8.3.0' => 18,  'mysql-8.4.7' => 18,  'mysql-9.0.1' => 18,  'mysql-9.1.0' => 18,), \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_RULES, 'bit_expr');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($interval), 'The interval must be a generated immutable SQL value.');
     }
@@ -35,11 +36,36 @@ final class BitExprWithBitExprIntervalSymExprInterval_ecc4c379 implements \SqlSe
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->bitExpr->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('-');
+        $writer->comments($this->comments, 2);
         $writer->append('INTERVAL');
+        $writer->comments($this->comments, 3);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 4);
         $this->interval->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->bitExpr, $this->expr, $this->interval];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->bitExpr, \SqlSemantics\Statement\Model\MySql\Role\BitExprForm::class, $replace), $this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->replacement($this->interval, \SqlSemantics\Statement\Model\MySql\Role\IntervalForm::class, $replace), $this->comments);
     }
 
     /**
@@ -47,7 +73,7 @@ final class BitExprWithBitExprIntervalSymExprInterval_ecc4c379 implements \SqlSe
      */
     public function withBitExpr(\SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr): self
     {
-        return new self($bitExpr, $this->expr, $this->interval);
+        return new self($bitExpr, $this->expr, $this->interval, $this->comments);
     }
 
     /**
@@ -55,7 +81,7 @@ final class BitExprWithBitExprIntervalSymExprInterval_ecc4c379 implements \SqlSe
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($this->bitExpr, $expr, $this->interval);
+        return new self($this->bitExpr, $expr, $this->interval, $this->comments);
     }
 
     /**
@@ -63,6 +89,14 @@ final class BitExprWithBitExprIntervalSymExprInterval_ecc4c379 implements \SqlSe
      */
     public function withInterval(\SqlSemantics\Statement\Model\MySql\Role\IntervalForm $interval): self
     {
-        return new self($this->bitExpr, $this->expr, $interval);
+        return new self($this->bitExpr, $this->expr, $interval, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->bitExpr, $this->expr, $this->interval, $comments);
     }
 }

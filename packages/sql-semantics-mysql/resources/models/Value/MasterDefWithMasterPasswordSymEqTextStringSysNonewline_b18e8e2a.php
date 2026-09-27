@@ -17,10 +17,11 @@ final class MasterDefWithMasterPasswordSymEqTextStringSysNonewline_b18e8e2a impl
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSysNonewline), 'The textStringSysNonewline must be a generated immutable SQL value.');
     }
@@ -30,9 +31,32 @@ final class MasterDefWithMasterPasswordSymEqTextStringSysNonewline_b18e8e2a impl
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('MASTER_PASSWORD');
+        $writer->comments($this->comments, 1);
         $writer->append('=');
+        $writer->comments($this->comments, 2);
         $this->textStringSysNonewline->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->textStringSysNonewline];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->textStringSysNonewline, \SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm::class, $replace), $this->comments);
     }
 
     /**
@@ -40,6 +64,14 @@ final class MasterDefWithMasterPasswordSymEqTextStringSysNonewline_b18e8e2a impl
      */
     public function withTextStringSysNonewline(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline): self
     {
-        return new self($textStringSysNonewline);
+        return new self($textStringSysNonewline, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->textStringSysNonewline, $comments);
     }
 }

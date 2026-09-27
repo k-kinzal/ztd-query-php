@@ -17,10 +17,11 @@ final class KeyUsingAlgWithTypeSymBtreeOrRtree_16fe46ac implements \SqlSemantics
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BtreeOrRtreeForm $btreeOrRtree,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($btreeOrRtree), 'The btreeOrRtree must be a generated immutable SQL value.');
     }
@@ -30,8 +31,30 @@ final class KeyUsingAlgWithTypeSymBtreeOrRtree_16fe46ac implements \SqlSemantics
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('TYPE');
+        $writer->comments($this->comments, 1);
         $this->btreeOrRtree->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->btreeOrRtree];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->btreeOrRtree, \SqlSemantics\Statement\Model\MySql\Role\BtreeOrRtreeForm::class, $replace), $this->comments);
     }
 
     /**
@@ -39,6 +62,14 @@ final class KeyUsingAlgWithTypeSymBtreeOrRtree_16fe46ac implements \SqlSemantics
      */
     public function withBtreeOrRtree(\SqlSemantics\Statement\Model\MySql\Role\BtreeOrRtreeForm $btreeOrRtree): self
     {
-        return new self($btreeOrRtree);
+        return new self($btreeOrRtree, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->btreeOrRtree, $comments);
     }
 }

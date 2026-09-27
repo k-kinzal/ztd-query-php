@@ -17,11 +17,12 @@ final class PartitioningWithPartitionSymHavePartitioningPartition_67c48bad imple
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\HavePartitioningForm $havePartitioning,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartitionForm $partition,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($havePartitioning), 'The havePartitioning must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partition), 'The partition must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class PartitioningWithPartitionSymHavePartitioningPartition_67c48bad imple
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('PARTITION');
+        $writer->comments($this->comments, 1);
         $this->havePartitioning->write($writer);
+        $writer->comments($this->comments, 2);
         $this->partition->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->havePartitioning, $this->partition];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->havePartitioning, \SqlSemantics\Statement\Model\MySql\Role\HavePartitioningForm::class, $replace), $this->replacement($this->partition, \SqlSemantics\Statement\Model\MySql\Role\PartitionForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class PartitioningWithPartitionSymHavePartitioningPartition_67c48bad imple
      */
     public function withHavePartitioning(\SqlSemantics\Statement\Model\MySql\Role\HavePartitioningForm $havePartitioning): self
     {
-        return new self($havePartitioning, $this->partition);
+        return new self($havePartitioning, $this->partition, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class PartitioningWithPartitionSymHavePartitioningPartition_67c48bad imple
      */
     public function withPartition(\SqlSemantics\Statement\Model\MySql\Role\PartitionForm $partition): self
     {
-        return new self($this->havePartitioning, $partition);
+        return new self($this->havePartitioning, $partition, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->havePartitioning, $this->partition, $comments);
     }
 }

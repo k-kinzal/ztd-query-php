@@ -12,10 +12,10 @@ use ZtdQuery\Adapter\Mysqli\Driver\MysqliConnection;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqliException;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\Exception\DatabaseException;
-use ZtdQuery\Platform\MySql\MySqlSessionFactory;
-use ZtdQuery\Platform\SessionFactory;
+use ZtdQuery\Platform;
+use ZtdQuery\Platform\MySql\MySqlPlatform;
+use ZtdQuery\QueryExecutor;
 use ZtdQuery\Rewrite\RewritePlan;
-use ZtdQuery\Session;
 use ZtdQuery\Sql\TransactionStatement;
 
 /**
@@ -25,17 +25,17 @@ use ZtdQuery\Sql\TransactionStatement;
  */
 final class ConnectionExecution
 {
-    private readonly Session $session;
+    private readonly QueryExecutor $executor;
 
     private ?int $ztdAffectedRowCount = null;
 
     /**
      * Create a shadow session for the supplied native connection.
      */
-    public function __construct(private readonly mysqli $mysqli, ?ZtdConfig $config = null, ?SessionFactory $factory = null)
+    public function __construct(private readonly mysqli $mysqli, ?ZtdConfig $config = null, ?Platform $platform = null)
     {
-        $resolvedFactory = $factory ?? new MySqlSessionFactory();
-        $this->session = $resolvedFactory->create(new MysqliConnection($mysqli), $config ?? ZtdConfig::default());
+        $resolvedPlatform = $platform ?? new MySqlPlatform();
+        $this->executor = new QueryExecutor(new MysqliConnection($mysqli), $resolvedPlatform, $config ?? ZtdConfig::default());
     }
 
     /**
@@ -47,11 +47,11 @@ final class ConnectionExecution
     }
 
     /**
-     * Return the session shared by statements on this connection.
+     * Return the core executor shared by statements on this connection.
      */
-    public function session(): Session
+    public function executor(): QueryExecutor
     {
-        return $this->session;
+        return $this->executor;
     }
 
     /**
@@ -65,18 +65,18 @@ final class ConnectionExecution
     /**
      * Prepare rewritten SQL and let the facade wrap the native statement.
      *
-     * @param Closure(mysqli_stmt, Session, RewritePlan): mysqli_stmt $wrap
+     * @param Closure(mysqli_stmt, QueryExecutor, RewritePlan): mysqli_stmt $wrap
      *
      * @throws ZtdMysqliException When ZTD-specific exception occurs (wraps DatabaseException).
      */
     public function prepare(string $query, Closure $wrap): mysqli_stmt|false
     {
-        if (!$this->session->isEnabled()) {
+        if (!$this->executor->session()->isEnabled()) {
             return $this->mysqli->prepare($query);
         }
 
         try {
-            $plan = $this->session->rewrite($query);
+            $plan = $this->executor->rewrite($query);
         } catch (DatabaseException $e) {
             throw new ZtdMysqliException($e->getMessage(), 0, $e);
         }
@@ -86,7 +86,7 @@ final class ConnectionExecution
             return false;
         }
 
-        return $wrap($stmt, $this->session, $plan);
+        return $wrap($stmt, $this->executor, $plan);
     }
 
     /**
@@ -97,16 +97,16 @@ final class ConnectionExecution
      */
     public function query(string $query, int $resultMode, Closure $execute): mysqli_result|bool
     {
-        if (!$this->session->isEnabled()) {
+        if (!$this->executor->session()->isEnabled()) {
             $this->ztdAffectedRowCount = null;
             return $this->mysqli->query($query, $resultMode);
         }
 
-        $transactionStatement = $this->session->transactionStatement($query);
+        $transactionStatement = $this->executor->transactionStatement($query);
         if ($transactionStatement !== null) {
             $result = $this->mysqli->query($query, $resultMode);
             if ($result !== false) {
-                $this->session->applyTransactionStatement($transactionStatement);
+                $this->executor->session()->applyTransactionStatement($transactionStatement);
             }
 
             return $result;
@@ -123,15 +123,15 @@ final class ConnectionExecution
      */
     public function realQuery(string $query, Closure $prepare): bool
     {
-        if (!$this->session->isEnabled()) {
+        if (!$this->executor->session()->isEnabled()) {
             return $this->mysqli->real_query($query);
         }
 
-        $transactionStatement = $this->session->transactionStatement($query);
+        $transactionStatement = $this->executor->transactionStatement($query);
         if ($transactionStatement !== null) {
             $result = $this->mysqli->real_query($query);
             if ($result) {
-                $this->session->applyTransactionStatement($transactionStatement);
+                $this->executor->session()->applyTransactionStatement($transactionStatement);
             }
 
             return $result;
@@ -148,7 +148,7 @@ final class ConnectionExecution
     {
         $result = $this->mysqli->begin_transaction($flags, $name);
         if ($result) {
-            $this->session->beginTransaction();
+            $this->executor->session()->beginTransaction();
         }
 
         return $result;
@@ -161,7 +161,7 @@ final class ConnectionExecution
     {
         $result = $this->mysqli->commit($flags, $name);
         if ($result) {
-            $this->session->commitTransaction();
+            $this->executor->session()->commitTransaction();
         }
 
         return $result;
@@ -174,7 +174,7 @@ final class ConnectionExecution
     {
         $result = $this->mysqli->rollback($flags, $name);
         if ($result) {
-            $this->session->rollBackTransaction();
+            $this->executor->session()->rollBackTransaction();
         }
 
         return $result;
@@ -188,9 +188,9 @@ final class ConnectionExecution
         $result = $this->mysqli->autocommit($enable);
         if ($result) {
             if ($enable) {
-                $this->session->commitTransaction();
+                $this->executor->session()->commitTransaction();
             } else {
-                $this->session->beginTransaction();
+                $this->executor->session()->beginTransaction();
             }
         }
 
@@ -204,7 +204,7 @@ final class ConnectionExecution
     {
         $result = $this->mysqli->release_savepoint($name);
         if ($result) {
-            $this->session->applyTransactionStatement(TransactionStatement::release($name));
+            $this->executor->session()->applyTransactionStatement(TransactionStatement::release($name));
         }
 
         return $result;
@@ -217,7 +217,7 @@ final class ConnectionExecution
     {
         $result = $this->mysqli->savepoint($name);
         if ($result) {
-            $this->session->applyTransactionStatement(TransactionStatement::savepoint($name));
+            $this->executor->session()->applyTransactionStatement(TransactionStatement::savepoint($name));
         }
 
         return $result;

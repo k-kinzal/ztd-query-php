@@ -17,18 +17,19 @@ final class ExprWithExprStarSlashRemExpr_6ca99fe8 implements \SqlSemantics\State
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
         public readonly string $starSlashRem,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 9,));
+        $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 9,), \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_RULES, 'expr');
         $this->assertMatchesPattern($starSlashRem, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['STAR|SLASH|REM'], 'The starSlashRem must be a complete STAR|SLASH|REM lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr2), 'The expr2 must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($expr2, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 10,));
+        $this->assertOperandBindingStrength($expr2, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 10,), \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_RULES, 'expr');
     }
 
     /**
@@ -36,9 +37,32 @@ final class ExprWithExprStarSlashRemExpr_6ca99fe8 implements \SqlSemantics\State
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append($this->starSlashRem);
+        $writer->comments($this->comments, 2);
         $this->expr2->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->expr, $this->expr2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->expr, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm::class, $replace), $this->starSlashRem, $this->replacement($this->expr2, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm::class, $replace), $this->comments);
     }
 
     /**
@@ -46,7 +70,7 @@ final class ExprWithExprStarSlashRemExpr_6ca99fe8 implements \SqlSemantics\State
      */
     public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
     {
-        return new self($expr, $this->starSlashRem, $this->expr2);
+        return new self($expr, $this->starSlashRem, $this->expr2, $this->comments);
     }
 
     /**
@@ -54,7 +78,7 @@ final class ExprWithExprStarSlashRemExpr_6ca99fe8 implements \SqlSemantics\State
      */
     public function withStarSlashRem(string $starSlashRem): self
     {
-        return new self($this->expr, $starSlashRem, $this->expr2);
+        return new self($this->expr, $starSlashRem, $this->expr2, $this->comments);
     }
 
     /**
@@ -62,6 +86,14 @@ final class ExprWithExprStarSlashRemExpr_6ca99fe8 implements \SqlSemantics\State
      */
     public function withExpr2(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr2): self
     {
-        return new self($this->expr, $this->starSlashRem, $expr2);
+        return new self($this->expr, $this->starSlashRem, $expr2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->expr, $this->starSlashRem, $this->expr2, $comments);
     }
 }

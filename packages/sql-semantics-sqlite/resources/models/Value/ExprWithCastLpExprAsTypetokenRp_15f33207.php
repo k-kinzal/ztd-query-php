@@ -17,11 +17,12 @@ final class ExprWithCastLpExprAsTypetokenRp_15f33207 implements \SqlSemantics\St
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TypetokenForm $typetoken,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($typetoken), 'The typetoken must be a generated immutable SQL value.');
@@ -32,12 +33,38 @@ final class ExprWithCastLpExprAsTypetokenRp_15f33207 implements \SqlSemantics\St
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CAST');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('AS');
+        $writer->comments($this->comments, 4);
         $this->typetoken->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->expr, $this->typetoken];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->expr, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm::class, $replace), $this->replacement($this->typetoken, \SqlSemantics\Statement\Model\Sqlite\Role\TypetokenForm::class, $replace), $this->comments);
     }
 
     /**
@@ -45,7 +72,7 @@ final class ExprWithCastLpExprAsTypetokenRp_15f33207 implements \SqlSemantics\St
      */
     public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
     {
-        return new self($expr, $this->typetoken);
+        return new self($expr, $this->typetoken, $this->comments);
     }
 
     /**
@@ -53,6 +80,14 @@ final class ExprWithCastLpExprAsTypetokenRp_15f33207 implements \SqlSemantics\St
      */
     public function withTypetoken(\SqlSemantics\Statement\Model\Sqlite\Role\TypetokenForm $typetoken): self
     {
-        return new self($this->expr, $typetoken);
+        return new self($this->expr, $typetoken, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->expr, $this->typetoken, $comments);
     }
 }

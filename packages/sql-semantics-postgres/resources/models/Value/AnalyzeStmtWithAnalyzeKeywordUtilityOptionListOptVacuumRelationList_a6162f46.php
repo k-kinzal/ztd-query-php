@@ -17,12 +17,13 @@ final class AnalyzeStmtWithAnalyzeKeywordUtilityOptionListOptVacuumRelationList_
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnalyzeKeywordForm $analyzeKeyword,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionListForm $utilityOptionList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptVacuumRelationListForm $optVacuumRelationList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($analyzeKeyword), 'The analyzeKeyword must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($utilityOptionList), 'The utilityOptionList must be a generated immutable SQL value.');
@@ -34,11 +35,36 @@ final class AnalyzeStmtWithAnalyzeKeywordUtilityOptionListOptVacuumRelationList_
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->analyzeKeyword->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->utilityOptionList->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
+        $writer->comments($this->comments, 4);
         $this->optVacuumRelationList->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->analyzeKeyword, $this->utilityOptionList, $this->optVacuumRelationList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->analyzeKeyword, \SqlSemantics\Statement\Model\PostgreSql\Role\AnalyzeKeywordForm::class, $replace), $this->replacement($this->utilityOptionList, \SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionListForm::class, $replace), $this->replacement($this->optVacuumRelationList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptVacuumRelationListForm::class, $replace), $this->comments);
     }
 
     /**
@@ -46,7 +72,7 @@ final class AnalyzeStmtWithAnalyzeKeywordUtilityOptionListOptVacuumRelationList_
      */
     public function withAnalyzeKeyword(\SqlSemantics\Statement\Model\PostgreSql\Role\AnalyzeKeywordForm $analyzeKeyword): self
     {
-        return new self($analyzeKeyword, $this->utilityOptionList, $this->optVacuumRelationList);
+        return new self($analyzeKeyword, $this->utilityOptionList, $this->optVacuumRelationList, $this->comments);
     }
 
     /**
@@ -54,7 +80,7 @@ final class AnalyzeStmtWithAnalyzeKeywordUtilityOptionListOptVacuumRelationList_
      */
     public function withUtilityOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionListForm $utilityOptionList): self
     {
-        return new self($this->analyzeKeyword, $utilityOptionList, $this->optVacuumRelationList);
+        return new self($this->analyzeKeyword, $utilityOptionList, $this->optVacuumRelationList, $this->comments);
     }
 
     /**
@@ -62,6 +88,14 @@ final class AnalyzeStmtWithAnalyzeKeywordUtilityOptionListOptVacuumRelationList_
      */
     public function withOptVacuumRelationList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptVacuumRelationListForm $optVacuumRelationList): self
     {
-        return new self($this->analyzeKeyword, $this->utilityOptionList, $optVacuumRelationList);
+        return new self($this->analyzeKeyword, $this->utilityOptionList, $optVacuumRelationList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->analyzeKeyword, $this->utilityOptionList, $this->optVacuumRelationList, $comments);
     }
 }

@@ -12,17 +12,18 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DropWithDropDatabaseIfExistsIdent_8fe4a9e9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class DropWithDropDatabaseIfExistsIdent_8fe4a9e9 implements \SqlSemantics\Statement\Model\MySql\Role\DropForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class DropWithDropDatabaseIfExistsIdent_8fe4a9e9 implements \SqlSemantics\Statement\Model\MySql\Role\DropForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $database,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($database, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DATABASE'], 'The database must be a complete DATABASE lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ifExists), 'The ifExists must be a generated immutable SQL value.');
@@ -34,10 +35,34 @@ final class DropWithDropDatabaseIfExistsIdent_8fe4a9e9 implements \SqlSemantics\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('DROP');
+        $writer->comments($this->comments, 1);
         $writer->append($this->database);
+        $writer->comments($this->comments, 2);
         $this->ifExists->write($writer);
+        $writer->comments($this->comments, 3);
         $this->ident->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->ifExists, $this->ident];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->database, $this->replacement($this->ifExists, \SqlSemantics\Statement\Model\MySql\Role\IfExistsForm::class, $replace), $this->replacement($this->ident, \SqlSemantics\Statement\Model\MySql\Role\IdentForm::class, $replace), $this->comments);
     }
 
     /**
@@ -45,7 +70,7 @@ final class DropWithDropDatabaseIfExistsIdent_8fe4a9e9 implements \SqlSemantics\
      */
     public function withDatabase(string $database): self
     {
-        return new self($database, $this->ifExists, $this->ident);
+        return new self($database, $this->ifExists, $this->ident, $this->comments);
     }
 
     /**
@@ -53,7 +78,7 @@ final class DropWithDropDatabaseIfExistsIdent_8fe4a9e9 implements \SqlSemantics\
      */
     public function withIfExists(\SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists): self
     {
-        return new self($this->database, $ifExists, $this->ident);
+        return new self($this->database, $ifExists, $this->ident, $this->comments);
     }
 
     /**
@@ -61,6 +86,14 @@ final class DropWithDropDatabaseIfExistsIdent_8fe4a9e9 implements \SqlSemantics\
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($this->database, $this->ifExists, $ident);
+        return new self($this->database, $this->ifExists, $ident, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->database, $this->ifExists, $this->ident, $comments);
     }
 }

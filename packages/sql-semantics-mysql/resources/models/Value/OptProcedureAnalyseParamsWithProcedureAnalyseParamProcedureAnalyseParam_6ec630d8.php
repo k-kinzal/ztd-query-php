@@ -17,11 +17,12 @@ final class OptProcedureAnalyseParamsWithProcedureAnalyseParamProcedureAnalysePa
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ProcedureAnalyseParamForm $procedureAnalyseParam,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ProcedureAnalyseParamForm $procedureAnalyseParam2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($procedureAnalyseParam), 'The procedureAnalyseParam must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($procedureAnalyseParam2), 'The procedureAnalyseParam2 must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class OptProcedureAnalyseParamsWithProcedureAnalyseParamProcedureAnalysePa
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->procedureAnalyseParam->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->procedureAnalyseParam2->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->procedureAnalyseParam, $this->procedureAnalyseParam2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->procedureAnalyseParam, \SqlSemantics\Statement\Model\MySql\Role\ProcedureAnalyseParamForm::class, $replace), $this->replacement($this->procedureAnalyseParam2, \SqlSemantics\Statement\Model\MySql\Role\ProcedureAnalyseParamForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class OptProcedureAnalyseParamsWithProcedureAnalyseParamProcedureAnalysePa
      */
     public function withProcedureAnalyseParam(\SqlSemantics\Statement\Model\MySql\Role\ProcedureAnalyseParamForm $procedureAnalyseParam): self
     {
-        return new self($procedureAnalyseParam, $this->procedureAnalyseParam2);
+        return new self($procedureAnalyseParam, $this->procedureAnalyseParam2, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class OptProcedureAnalyseParamsWithProcedureAnalyseParamProcedureAnalysePa
      */
     public function withProcedureAnalyseParam2(\SqlSemantics\Statement\Model\MySql\Role\ProcedureAnalyseParamForm $procedureAnalyseParam2): self
     {
-        return new self($this->procedureAnalyseParam, $procedureAnalyseParam2);
+        return new self($this->procedureAnalyseParam, $procedureAnalyseParam2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->procedureAnalyseParam, $this->procedureAnalyseParam2, $comments);
     }
 }

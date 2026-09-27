@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Bench;
 
 use Container\Endpoint;
-use Container\MySql80Container;
+use Container\MySqlRelease;
 use mysqli;
 use mysqli_result;
 use PhpBench\Attributes as Bench;
@@ -35,7 +35,7 @@ final class ResultMetadataBench
      */
     public function setUp(array $params): void
     {
-        $container = Testcontainers::run(MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         $this->connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
         $this->connection->set_charset('utf8mb4');

@@ -17,11 +17,12 @@ final class SelectParenDerivedWithSelectSymSelectPart2DerivedTableExpression_050
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectPart2DerivedForm $selectPart2Derived,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableExpressionForm $tableExpression,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectPart2Derived), 'The selectPart2Derived must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableExpression), 'The tableExpression must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class SelectParenDerivedWithSelectSymSelectPart2DerivedTableExpression_050
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SELECT');
+        $writer->comments($this->comments, 1);
         $this->selectPart2Derived->write($writer);
+        $writer->comments($this->comments, 2);
         $this->tableExpression->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->selectPart2Derived, $this->tableExpression];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->selectPart2Derived, \SqlSemantics\Statement\Model\MySql\Role\SelectPart2DerivedForm::class, $replace), $this->replacement($this->tableExpression, \SqlSemantics\Statement\Model\MySql\Role\TableExpressionForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class SelectParenDerivedWithSelectSymSelectPart2DerivedTableExpression_050
      */
     public function withSelectPart2Derived(\SqlSemantics\Statement\Model\MySql\Role\SelectPart2DerivedForm $selectPart2Derived): self
     {
-        return new self($selectPart2Derived, $this->tableExpression);
+        return new self($selectPart2Derived, $this->tableExpression, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class SelectParenDerivedWithSelectSymSelectPart2DerivedTableExpression_050
      */
     public function withTableExpression(\SqlSemantics\Statement\Model\MySql\Role\TableExpressionForm $tableExpression): self
     {
-        return new self($this->selectPart2Derived, $tableExpression);
+        return new self($this->selectPart2Derived, $tableExpression, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->selectPart2Derived, $this->tableExpression, $comments);
     }
 }

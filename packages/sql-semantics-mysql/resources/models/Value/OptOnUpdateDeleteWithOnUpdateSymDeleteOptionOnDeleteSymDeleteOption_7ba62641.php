@@ -17,11 +17,12 @@ final class OptOnUpdateDeleteWithOnUpdateSymDeleteOptionOnDeleteSymDeleteOption_
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DeleteOptionForm $deleteOption,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DeleteOptionForm $deleteOption2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($deleteOption), 'The deleteOption must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($deleteOption2), 'The deleteOption2 must be a generated immutable SQL value.');
@@ -32,12 +33,38 @@ final class OptOnUpdateDeleteWithOnUpdateSymDeleteOptionOnDeleteSymDeleteOption_
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ON');
+        $writer->comments($this->comments, 1);
         $writer->append('UPDATE');
+        $writer->comments($this->comments, 2);
         $this->deleteOption->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('ON');
+        $writer->comments($this->comments, 4);
         $writer->append('DELETE');
+        $writer->comments($this->comments, 5);
         $this->deleteOption2->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->deleteOption, $this->deleteOption2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->deleteOption, \SqlSemantics\Statement\Model\MySql\Role\DeleteOptionForm::class, $replace), $this->replacement($this->deleteOption2, \SqlSemantics\Statement\Model\MySql\Role\DeleteOptionForm::class, $replace), $this->comments);
     }
 
     /**
@@ -45,7 +72,7 @@ final class OptOnUpdateDeleteWithOnUpdateSymDeleteOptionOnDeleteSymDeleteOption_
      */
     public function withDeleteOption(\SqlSemantics\Statement\Model\MySql\Role\DeleteOptionForm $deleteOption): self
     {
-        return new self($deleteOption, $this->deleteOption2);
+        return new self($deleteOption, $this->deleteOption2, $this->comments);
     }
 
     /**
@@ -53,6 +80,14 @@ final class OptOnUpdateDeleteWithOnUpdateSymDeleteOptionOnDeleteSymDeleteOption_
      */
     public function withDeleteOption2(\SqlSemantics\Statement\Model\MySql\Role\DeleteOptionForm $deleteOption2): self
     {
-        return new self($this->deleteOption, $deleteOption2);
+        return new self($this->deleteOption, $deleteOption2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->deleteOption, $this->deleteOption2, $comments);
     }
 }

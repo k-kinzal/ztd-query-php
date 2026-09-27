@@ -17,11 +17,12 @@ final class ImplicitRowWithExprListAExpr_27ad717c implements \SqlSemantics\State
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm $exprList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($exprList), 'The exprList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
@@ -32,11 +33,36 @@ final class ImplicitRowWithExprListAExpr_27ad717c implements \SqlSemantics\State
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->exprList->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(',');
+        $writer->comments($this->comments, 3);
         $this->aExpr->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->exprList, $this->aExpr];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->exprList, \SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm::class, $replace), $this->replacement($this->aExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm::class, $replace), $this->comments);
     }
 
     /**
@@ -44,7 +70,7 @@ final class ImplicitRowWithExprListAExpr_27ad717c implements \SqlSemantics\State
      */
     public function withExprList(\SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm $exprList): self
     {
-        return new self($exprList, $this->aExpr);
+        return new self($exprList, $this->aExpr, $this->comments);
     }
 
     /**
@@ -52,6 +78,14 @@ final class ImplicitRowWithExprListAExpr_27ad717c implements \SqlSemantics\State
      */
     public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
     {
-        return new self($this->exprList, $aExpr);
+        return new self($this->exprList, $aExpr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->exprList, $this->aExpr, $comments);
     }
 }

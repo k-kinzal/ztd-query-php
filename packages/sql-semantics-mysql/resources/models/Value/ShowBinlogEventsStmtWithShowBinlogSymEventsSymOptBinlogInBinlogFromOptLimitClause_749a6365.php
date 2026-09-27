@@ -17,12 +17,13 @@ final class ShowBinlogEventsStmtWithShowBinlogSymEventsSymOptBinlogInBinlogFromO
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptBinlogInForm $optBinlogIn,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BinlogFromForm $binlogFrom,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optBinlogIn), 'The optBinlogIn must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($binlogFrom), 'The binlogFrom must be a generated immutable SQL value.');
@@ -34,12 +35,38 @@ final class ShowBinlogEventsStmtWithShowBinlogSymEventsSymOptBinlogInBinlogFromO
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SHOW');
+        $writer->comments($this->comments, 1);
         $writer->append('BINLOG');
+        $writer->comments($this->comments, 2);
         $writer->append('EVENTS');
+        $writer->comments($this->comments, 3);
         $this->optBinlogIn->write($writer);
+        $writer->comments($this->comments, 4);
         $this->binlogFrom->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optLimitClause->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optBinlogIn, $this->binlogFrom, $this->optLimitClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optBinlogIn, \SqlSemantics\Statement\Model\MySql\Role\OptBinlogInForm::class, $replace), $this->replacement($this->binlogFrom, \SqlSemantics\Statement\Model\MySql\Role\BinlogFromForm::class, $replace), $this->replacement($this->optLimitClause, \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm::class, $replace), $this->comments);
     }
 
     /**
@@ -47,7 +74,7 @@ final class ShowBinlogEventsStmtWithShowBinlogSymEventsSymOptBinlogInBinlogFromO
      */
     public function withOptBinlogIn(\SqlSemantics\Statement\Model\MySql\Role\OptBinlogInForm $optBinlogIn): self
     {
-        return new self($optBinlogIn, $this->binlogFrom, $this->optLimitClause);
+        return new self($optBinlogIn, $this->binlogFrom, $this->optLimitClause, $this->comments);
     }
 
     /**
@@ -55,7 +82,7 @@ final class ShowBinlogEventsStmtWithShowBinlogSymEventsSymOptBinlogInBinlogFromO
      */
     public function withBinlogFrom(\SqlSemantics\Statement\Model\MySql\Role\BinlogFromForm $binlogFrom): self
     {
-        return new self($this->optBinlogIn, $binlogFrom, $this->optLimitClause);
+        return new self($this->optBinlogIn, $binlogFrom, $this->optLimitClause, $this->comments);
     }
 
     /**
@@ -63,6 +90,14 @@ final class ShowBinlogEventsStmtWithShowBinlogSymEventsSymOptBinlogInBinlogFromO
      */
     public function withOptLimitClause(\SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause): self
     {
-        return new self($this->optBinlogIn, $this->binlogFrom, $optLimitClause);
+        return new self($this->optBinlogIn, $this->binlogFrom, $optLimitClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optBinlogIn, $this->binlogFrom, $this->optLimitClause, $comments);
     }
 }

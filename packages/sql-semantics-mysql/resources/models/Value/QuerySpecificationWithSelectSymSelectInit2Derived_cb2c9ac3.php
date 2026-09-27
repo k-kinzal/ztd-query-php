@@ -17,10 +17,11 @@ final class QuerySpecificationWithSelectSymSelectInit2Derived_cb2c9ac3 implement
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectInit2DerivedForm $selectInit2Derived,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectInit2Derived), 'The selectInit2Derived must be a generated immutable SQL value.');
     }
@@ -30,8 +31,30 @@ final class QuerySpecificationWithSelectSymSelectInit2Derived_cb2c9ac3 implement
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SELECT');
+        $writer->comments($this->comments, 1);
         $this->selectInit2Derived->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->selectInit2Derived];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->selectInit2Derived, \SqlSemantics\Statement\Model\MySql\Role\SelectInit2DerivedForm::class, $replace), $this->comments);
     }
 
     /**
@@ -39,6 +62,14 @@ final class QuerySpecificationWithSelectSymSelectInit2Derived_cb2c9ac3 implement
      */
     public function withSelectInit2Derived(\SqlSemantics\Statement\Model\MySql\Role\SelectInit2DerivedForm $selectInit2Derived): self
     {
-        return new self($selectInit2Derived);
+        return new self($selectInit2Derived, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->selectInit2Derived, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class ReplicaThreadOptionListWithReplicaThreadOptionListReplicaThreadOptio
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ReplicaThreadOptionListForm $replicaThreadOptionList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ReplicaThreadOptionForm $replicaThreadOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($replicaThreadOptionList), 'The replicaThreadOptionList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($replicaThreadOption), 'The replicaThreadOption must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class ReplicaThreadOptionListWithReplicaThreadOptionListReplicaThreadOptio
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->replicaThreadOptionList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->replicaThreadOption->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->replicaThreadOptionList, $this->replicaThreadOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->replicaThreadOptionList, \SqlSemantics\Statement\Model\MySql\Role\ReplicaThreadOptionListForm::class, $replace), $this->replacement($this->replicaThreadOption, \SqlSemantics\Statement\Model\MySql\Role\ReplicaThreadOptionForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class ReplicaThreadOptionListWithReplicaThreadOptionListReplicaThreadOptio
      */
     public function withReplicaThreadOptionList(\SqlSemantics\Statement\Model\MySql\Role\ReplicaThreadOptionListForm $replicaThreadOptionList): self
     {
-        return new self($replicaThreadOptionList, $this->replicaThreadOption);
+        return new self($replicaThreadOptionList, $this->replicaThreadOption, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class ReplicaThreadOptionListWithReplicaThreadOptionListReplicaThreadOptio
      */
     public function withReplicaThreadOption(\SqlSemantics\Statement\Model\MySql\Role\ReplicaThreadOptionForm $replicaThreadOption): self
     {
-        return new self($this->replicaThreadOptionList, $replicaThreadOption);
+        return new self($this->replicaThreadOptionList, $replicaThreadOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->replicaThreadOptionList, $this->replicaThreadOption, $comments);
     }
 }

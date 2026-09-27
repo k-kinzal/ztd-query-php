@@ -17,13 +17,14 @@ final class CmdWithPragmaNmDbnmEqMinusNum_88ca56f4 implements \SqlSemantics\Stat
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm,
         public readonly string $eq,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\MinusNumForm $minusNum,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($dbnm), 'The dbnm must be a generated immutable SQL value.');
@@ -36,11 +37,36 @@ final class CmdWithPragmaNmDbnmEqMinusNum_88ca56f4 implements \SqlSemantics\Stat
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('PRAGMA');
+        $writer->comments($this->comments, 1);
         $this->nm->write($writer);
+        $writer->comments($this->comments, 2);
         $this->dbnm->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append($this->eq);
+        $writer->comments($this->comments, 4);
         $this->minusNum->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->nm, $this->dbnm, $this->minusNum];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->nm, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace), $this->replacement($this->dbnm, \SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm::class, $replace), $this->eq, $this->replacement($this->minusNum, \SqlSemantics\Statement\Model\Sqlite\Role\MinusNumForm::class, $replace), $this->comments);
     }
 
     /**
@@ -48,7 +74,7 @@ final class CmdWithPragmaNmDbnmEqMinusNum_88ca56f4 implements \SqlSemantics\Stat
      */
     public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
     {
-        return new self($nm, $this->dbnm, $this->eq, $this->minusNum);
+        return new self($nm, $this->dbnm, $this->eq, $this->minusNum, $this->comments);
     }
 
     /**
@@ -56,7 +82,7 @@ final class CmdWithPragmaNmDbnmEqMinusNum_88ca56f4 implements \SqlSemantics\Stat
      */
     public function withDbnm(\SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm): self
     {
-        return new self($this->nm, $dbnm, $this->eq, $this->minusNum);
+        return new self($this->nm, $dbnm, $this->eq, $this->minusNum, $this->comments);
     }
 
     /**
@@ -64,7 +90,7 @@ final class CmdWithPragmaNmDbnmEqMinusNum_88ca56f4 implements \SqlSemantics\Stat
      */
     public function withEq(string $eq): self
     {
-        return new self($this->nm, $this->dbnm, $eq, $this->minusNum);
+        return new self($this->nm, $this->dbnm, $eq, $this->minusNum, $this->comments);
     }
 
     /**
@@ -72,6 +98,14 @@ final class CmdWithPragmaNmDbnmEqMinusNum_88ca56f4 implements \SqlSemantics\Stat
      */
     public function withMinusNum(\SqlSemantics\Statement\Model\Sqlite\Role\MinusNumForm $minusNum): self
     {
-        return new self($this->nm, $this->dbnm, $this->eq, $minusNum);
+        return new self($this->nm, $this->dbnm, $this->eq, $minusNum, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->nm, $this->dbnm, $this->eq, $this->minusNum, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class ResetOptionWithReplicaSymOptReplicaResetOptionsOptChannel_e0ce5717 i
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptReplicaResetOptionsForm $optReplicaResetOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optReplicaResetOptions), 'The optReplicaResetOptions must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optChannel), 'The optChannel must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class ResetOptionWithReplicaSymOptReplicaResetOptionsOptChannel_e0ce5717 i
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('REPLICA');
+        $writer->comments($this->comments, 1);
         $this->optReplicaResetOptions->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optChannel->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optReplicaResetOptions, $this->optChannel];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optReplicaResetOptions, \SqlSemantics\Statement\Model\MySql\Role\OptReplicaResetOptionsForm::class, $replace), $this->replacement($this->optChannel, \SqlSemantics\Statement\Model\MySql\Role\OptChannelForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class ResetOptionWithReplicaSymOptReplicaResetOptionsOptChannel_e0ce5717 i
      */
     public function withOptReplicaResetOptions(\SqlSemantics\Statement\Model\MySql\Role\OptReplicaResetOptionsForm $optReplicaResetOptions): self
     {
-        return new self($optReplicaResetOptions, $this->optChannel);
+        return new self($optReplicaResetOptions, $this->optChannel, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class ResetOptionWithReplicaSymOptReplicaResetOptionsOptChannel_e0ce5717 i
      */
     public function withOptChannel(\SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel): self
     {
-        return new self($this->optReplicaResetOptions, $optChannel);
+        return new self($this->optReplicaResetOptions, $optChannel, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optReplicaResetOptions, $this->optChannel, $comments);
     }
 }

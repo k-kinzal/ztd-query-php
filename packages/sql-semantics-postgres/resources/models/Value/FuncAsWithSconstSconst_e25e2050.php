@@ -17,11 +17,12 @@ final class FuncAsWithSconstSconst_e25e2050 implements \SqlSemantics\Statement\M
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($sconst), 'The sconst must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($sconst2), 'The sconst2 must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class FuncAsWithSconstSconst_e25e2050 implements \SqlSemantics\Statement\M
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->sconst->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->sconst2->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->sconst, $this->sconst2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->sconst, \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm::class, $replace), $this->replacement($this->sconst2, \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class FuncAsWithSconstSconst_e25e2050 implements \SqlSemantics\Statement\M
      */
     public function withSconst(\SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst): self
     {
-        return new self($sconst, $this->sconst2);
+        return new self($sconst, $this->sconst2, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class FuncAsWithSconstSconst_e25e2050 implements \SqlSemantics\Statement\M
      */
     public function withSconst2(\SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst2): self
     {
-        return new self($this->sconst, $sconst2);
+        return new self($this->sconst, $sconst2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->sconst, $this->sconst2, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class TableListWithTableListTableIdent_07896ede implements \SqlSemantics\S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableListForm $tableList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableList), 'The tableList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class TableListWithTableListTableIdent_07896ede implements \SqlSemantics\S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->tableIdent->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableList, $this->tableIdent];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableList, \SqlSemantics\Statement\Model\MySql\Role\TableListForm::class, $replace), $this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class TableListWithTableListTableIdent_07896ede implements \SqlSemantics\S
      */
     public function withTableList(\SqlSemantics\Statement\Model\MySql\Role\TableListForm $tableList): self
     {
-        return new self($tableList, $this->tableIdent);
+        return new self($tableList, $this->tableIdent, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class TableListWithTableListTableIdent_07896ede implements \SqlSemantics\S
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($this->tableList, $tableIdent);
+        return new self($this->tableList, $tableIdent, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableList, $this->tableIdent, $comments);
     }
 }

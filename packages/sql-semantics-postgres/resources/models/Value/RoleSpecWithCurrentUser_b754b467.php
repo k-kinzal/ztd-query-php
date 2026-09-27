@@ -15,10 +15,47 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
 final class RoleSpecWithCurrentUser_b754b467 implements \SqlSemantics\Statement\Model\PostgreSql\Role\RoleIdForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AuthIdentForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GranteeForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GranteeListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoleListForm
 {
     /**
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
+     */
+    public function __construct(
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
+    ) {
+    }
+
+    /**
      * Writes SQL entirely from this value's fields.
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CURRENT_USER');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [];
+    }
+
+    /**
+     * This form holds no values to replace.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return $this;
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($comments);
     }
 }

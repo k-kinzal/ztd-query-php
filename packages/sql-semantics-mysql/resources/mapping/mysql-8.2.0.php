@@ -3,12 +3,16 @@
 declare(strict_types=1);
 
 /** Generated construction recipes; never retained by a Statement. */
-return new \SqlSemantics\Core\Analysis\ValueReader(array (
+return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   'start_entry' =>
   array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sql_statement',
+      ),
     ),
     1 =>
     array (
@@ -18,6 +22,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'GRAMMAR_SELECTOR_EXPR',
+        1 => 'bit_expr',
+        2 => 'END_OF_INPUT',
+      ),
     ),
     2 =>
     array (
@@ -26,6 +36,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'GRAMMAR_SELECTOR_PART',
+        1 => 'partition_clause',
+        2 => 'END_OF_INPUT',
       ),
     ),
     3 =>
@@ -37,6 +53,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'GRAMMAR_SELECTOR_GCOL',
+        1 => 'IDENT_sys',
+        2 => '(',
+        3 => 'expr',
+        4 => ')',
+        5 => 'END_OF_INPUT',
+      ),
     ),
     4 =>
     array (
@@ -46,6 +71,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'GRAMMAR_SELECTOR_CTE',
+        1 => 'table_subquery',
+        2 => 'END_OF_INPUT',
+      ),
     ),
     5 =>
     array (
@@ -54,6 +85,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'GRAMMAR_SELECTOR_DERIVED_EXPR',
+        1 => 'expr',
+        2 => 'END_OF_INPUT',
       ),
     ),
   ),
@@ -65,6 +102,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'END_OF_INPUT',
+      ),
     ),
     1 =>
     array (
@@ -74,6 +115,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'simple_statement_or_begin',
+        1 => ';',
+        2 => 'opt_end_of_input',
+      ),
     ),
     2 =>
     array (
@@ -82,6 +129,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'simple_statement_or_begin',
+        1 => 'END_OF_INPUT',
+      ),
     ),
   ),
   'opt_end_of_input' =>
@@ -89,10 +141,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptEndOfInputChoice_439083f3::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptEndOfInputChoice_439083f3::Use_e3b0c442',
+      'symbols' =>
+      array (
+        0 => 'END_OF_INPUT',
+      ),
     ),
   ),
   'simple_statement_or_begin' =>
@@ -100,10 +159,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'simple_statement',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'begin_stmt',
+      ),
     ),
   ),
   'simple_statement' =>
@@ -111,550 +178,1098 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_database_stmt',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_event_stmt',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_function_stmt',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_instance_stmt',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_logfile_stmt',
+      ),
     ),
     5 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_procedure_stmt',
+      ),
     ),
     6 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_resource_group_stmt',
+      ),
     ),
     7 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_server_stmt',
+      ),
     ),
     8 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_tablespace_stmt',
+      ),
     ),
     9 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_undo_tablespace_stmt',
+      ),
     ),
     10 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_table_stmt',
+      ),
     ),
     11 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_user_stmt',
+      ),
     ),
     12 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_view_stmt',
+      ),
     ),
     13 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'analyze_table_stmt',
+      ),
     ),
     14 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'binlog_base64_event',
+      ),
     ),
     15 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'call_stmt',
+      ),
     ),
     16 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'change',
+      ),
     ),
     17 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'check_table_stmt',
+      ),
     ),
     18 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'checksum',
+      ),
     ),
     19 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'clone_stmt',
+      ),
     ),
     20 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'commit',
+      ),
     ),
     21 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'create',
+      ),
     ),
     22 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'create_index_stmt',
+      ),
     ),
     23 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'create_resource_group_stmt',
+      ),
     ),
     24 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'create_role_stmt',
+      ),
     ),
     25 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'create_srs_stmt',
+      ),
     ),
     26 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'create_table_stmt',
+      ),
     ),
     27 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'deallocate',
+      ),
     ),
     28 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'delete_stmt',
+      ),
     ),
     29 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'describe_stmt',
+      ),
     ),
     30 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'do_stmt',
+      ),
     ),
     31 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'drop_database_stmt',
+      ),
     ),
     32 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'drop_event_stmt',
+      ),
     ),
     33 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'drop_function_stmt',
+      ),
     ),
     34 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'drop_index_stmt',
+      ),
     ),
     35 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'drop_logfile_stmt',
+      ),
     ),
     36 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'drop_procedure_stmt',
+      ),
     ),
     37 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'drop_resource_group_stmt',
+      ),
     ),
     38 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'drop_role_stmt',
+      ),
     ),
     39 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'drop_server_stmt',
+      ),
     ),
     40 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'drop_srs_stmt',
+      ),
     ),
     41 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'drop_tablespace_stmt',
+      ),
     ),
     42 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'drop_undo_tablespace_stmt',
+      ),
     ),
     43 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'drop_table_stmt',
+      ),
     ),
     44 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'drop_trigger_stmt',
+      ),
     ),
     45 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'drop_user_stmt',
+      ),
     ),
     46 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'drop_view_stmt',
+      ),
     ),
     47 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'execute',
+      ),
     ),
     48 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'explain_stmt',
+      ),
     ),
     49 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'flush',
+      ),
     ),
     50 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'get_diagnostics',
+      ),
     ),
     51 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'group_replication',
+      ),
     ),
     52 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'grant',
+      ),
     ),
     53 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'handler_stmt',
+      ),
     ),
     54 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'help',
+      ),
     ),
     55 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'import_stmt',
+      ),
     ),
     56 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'insert_stmt',
+      ),
     ),
     57 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'install_stmt',
+      ),
     ),
     58 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'kill',
+      ),
     ),
     59 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'load_stmt',
+      ),
     ),
     60 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'lock',
+      ),
     ),
     61 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'optimize_table_stmt',
+      ),
     ),
     62 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'keycache_stmt',
+      ),
     ),
     63 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'preload_stmt',
+      ),
     ),
     64 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'prepare',
+      ),
     ),
     65 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'purge',
+      ),
     ),
     66 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'release',
+      ),
     ),
     67 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'rename',
+      ),
     ),
     68 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'repair_table_stmt',
+      ),
     ),
     69 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'replace_stmt',
+      ),
     ),
     70 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'reset',
+      ),
     ),
     71 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'resignal_stmt',
+      ),
     ),
     72 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'restart_server_stmt',
+      ),
     ),
     73 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'revoke',
+      ),
     ),
     74 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'rollback',
+      ),
     ),
     75 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'savepoint',
+      ),
     ),
     76 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'select_stmt',
+      ),
     ),
     77 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'set',
+      ),
     ),
     78 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'set_resource_group_stmt',
+      ),
     ),
     79 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'set_role_stmt',
+      ),
     ),
     80 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_binary_log_status_stmt',
+      ),
     ),
     81 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_binary_logs_stmt',
+      ),
     ),
     82 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_binlog_events_stmt',
+      ),
     ),
     83 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_character_set_stmt',
+      ),
     ),
     84 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_collation_stmt',
+      ),
     ),
     85 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_columns_stmt',
+      ),
     ),
     86 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_count_errors_stmt',
+      ),
     ),
     87 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_count_warnings_stmt',
+      ),
     ),
     88 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_create_database_stmt',
+      ),
     ),
     89 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_create_event_stmt',
+      ),
     ),
     90 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_create_function_stmt',
+      ),
     ),
     91 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_create_procedure_stmt',
+      ),
     ),
     92 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_create_table_stmt',
+      ),
     ),
     93 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_create_trigger_stmt',
+      ),
     ),
     94 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_create_user_stmt',
+      ),
     ),
     95 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_create_view_stmt',
+      ),
     ),
     96 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_databases_stmt',
+      ),
     ),
     97 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_engine_logs_stmt',
+      ),
     ),
     98 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_engine_mutex_stmt',
+      ),
     ),
     99 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_engine_status_stmt',
+      ),
     ),
     100 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_engines_stmt',
+      ),
     ),
     101 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_errors_stmt',
+      ),
     ),
     102 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_events_stmt',
+      ),
     ),
     103 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_function_code_stmt',
+      ),
     ),
     104 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_function_status_stmt',
+      ),
     ),
     105 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_grants_stmt',
+      ),
     ),
     106 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_keys_stmt',
+      ),
     ),
     107 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_master_status_stmt',
+      ),
     ),
     108 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_open_tables_stmt',
+      ),
     ),
     109 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_parse_tree_stmt',
+      ),
     ),
     110 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_plugins_stmt',
+      ),
     ),
     111 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_privileges_stmt',
+      ),
     ),
     112 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_procedure_code_stmt',
+      ),
     ),
     113 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_procedure_status_stmt',
+      ),
     ),
     114 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_processlist_stmt',
+      ),
     ),
     115 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_profile_stmt',
+      ),
     ),
     116 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_profiles_stmt',
+      ),
     ),
     117 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_relaylog_events_stmt',
+      ),
     ),
     118 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_replica_status_stmt',
+      ),
     ),
     119 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_replicas_stmt',
+      ),
     ),
     120 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_status_stmt',
+      ),
     ),
     121 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_table_status_stmt',
+      ),
     ),
     122 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_tables_stmt',
+      ),
     ),
     123 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_triggers_stmt',
+      ),
     ),
     124 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_variables_stmt',
+      ),
     ),
     125 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'show_warnings_stmt',
+      ),
     ),
     126 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'shutdown_stmt',
+      ),
     ),
     127 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'signal_stmt',
+      ),
     ),
     128 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'start',
+      ),
     ),
     129 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'start_replica_stmt',
+      ),
     ),
     130 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'stop_replica_stmt',
+      ),
     ),
     131 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'truncate_stmt',
+      ),
     ),
     132 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'uninstall',
+      ),
     ),
     133 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'unlock',
+      ),
     ),
     134 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'update_stmt',
+      ),
     ),
     135 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'use',
+      ),
     ),
     136 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'xa',
+      ),
     ),
   ),
   'deallocate' =>
@@ -667,6 +1282,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'deallocate_or_drop',
+        1 => 'PREPARE_SYM',
+        2 => 'ident',
+      ),
     ),
   ),
   'deallocate_or_drop' =>
@@ -674,10 +1295,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\DeallocateOrDropChoice_c47ac3ab::UseDeallocate_e349f57b',
+      'symbols' =>
+      array (
+        0 => 'DEALLOCATE_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\DeallocateOrDropChoice_c47ac3ab::UseDrop_f3062ed5',
+      'symbols' =>
+      array (
+        0 => 'DROP',
+      ),
     ),
   ),
   'prepare' =>
@@ -690,6 +1319,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'PREPARE_SYM',
+        1 => 'ident',
+        2 => 'FROM',
+        3 => 'prepare_src',
+      ),
     ),
   ),
   'prepare_src' =>
@@ -697,6 +1333,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'TEXT_STRING_sys',
+      ),
     ),
     1 =>
     array (
@@ -704,6 +1344,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '@',
+        1 => 'ident_or_text',
       ),
     ),
   ),
@@ -717,6 +1362,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'EXECUTE_SYM',
+        1 => 'ident',
+        2 => 'execute_using',
+      ),
     ),
   ),
   'execute_using' =>
@@ -727,6 +1378,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -734,6 +1388,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'USING',
+        1 => 'execute_var_list',
       ),
     ),
   ),
@@ -747,10 +1406,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'execute_var_list',
+        1 => ',',
+        2 => 'execute_var_ident',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'execute_var_ident',
+      ),
     ),
   ),
   'execute_var_ident' =>
@@ -761,6 +1430,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '@',
+        1 => 'ident_or_text',
       ),
     ),
   ),
@@ -773,6 +1447,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'HELP_SYM',
+        1 => 'ident_or_text',
+      ),
     ),
   ),
   'change_replication_source' =>
@@ -780,10 +1459,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceChoice_3c418e5d::UseMaster_30e77240',
+      'symbols' =>
+      array (
+        0 => 'MASTER_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceChoice_3c418e5d::UseReplicationSource_ca44d9ee',
+      'symbols' =>
+      array (
+        0 => 'REPLICATION',
+        1 => 'SOURCE_SYM',
+      ),
     ),
   ),
   'change' =>
@@ -797,6 +1485,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'CHANGE',
+        1 => 'change_replication_source',
+        2 => 'TO_SYM',
+        3 => 'source_defs',
+        4 => 'opt_channel',
+      ),
     ),
     1 =>
     array (
@@ -806,6 +1502,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'CHANGE',
+        1 => 'REPLICATION',
+        2 => 'FILTER_SYM',
+        3 => 'filter_defs',
+        4 => 'opt_channel',
+      ),
     ),
   ),
   'filter_defs' =>
@@ -813,6 +1517,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'filter_def',
+      ),
     ),
     1 =>
     array (
@@ -821,6 +1529,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'filter_defs',
+        1 => ',',
+        2 => 'filter_def',
       ),
     ),
   ),
@@ -833,6 +1547,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'REPLICATE_DO_DB',
+        1 => 'EQ',
+        2 => 'opt_filter_db_list',
+      ),
     ),
     1 =>
     array (
@@ -840,6 +1560,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REPLICATE_IGNORE_DB',
+        1 => 'EQ',
+        2 => 'opt_filter_db_list',
       ),
     ),
     2 =>
@@ -849,6 +1575,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'REPLICATE_DO_TABLE',
+        1 => 'EQ',
+        2 => 'opt_filter_table_list',
+      ),
     ),
     3 =>
     array (
@@ -856,6 +1588,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REPLICATE_IGNORE_TABLE',
+        1 => 'EQ',
+        2 => 'opt_filter_table_list',
       ),
     ),
     4 =>
@@ -865,6 +1603,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'REPLICATE_WILD_DO_TABLE',
+        1 => 'EQ',
+        2 => 'opt_filter_string_list',
+      ),
     ),
     5 =>
     array (
@@ -873,6 +1617,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'REPLICATE_WILD_IGNORE_TABLE',
+        1 => 'EQ',
+        2 => 'opt_filter_string_list',
+      ),
     ),
     6 =>
     array (
@@ -880,6 +1630,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REPLICATE_REWRITE_DB',
+        1 => 'EQ',
+        2 => 'opt_filter_db_pair_list',
       ),
     ),
   ),
@@ -891,6 +1647,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => ')',
+      ),
     ),
     1 =>
     array (
@@ -899,6 +1660,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'filter_db_list',
+        2 => ')',
+      ),
     ),
   ),
   'filter_db_list' =>
@@ -906,6 +1673,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'filter_db_ident',
+      ),
     ),
     1 =>
     array (
@@ -915,6 +1686,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'filter_db_list',
+        1 => ',',
+        2 => 'filter_db_ident',
+      ),
     ),
   ),
   'filter_db_ident' =>
@@ -922,6 +1699,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
   ),
   'opt_filter_db_pair_list' =>
@@ -932,6 +1713,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => ')',
+      ),
     ),
     1 =>
     array (
@@ -939,6 +1725,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'filter_db_pair_list',
+        2 => ')',
       ),
     ),
   ),
@@ -952,6 +1744,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'filter_db_ident',
+        2 => ',',
+        3 => 'filter_db_ident',
+        4 => ')',
+      ),
     ),
     1 =>
     array (
@@ -961,6 +1761,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 3,
         2 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'filter_db_pair_list',
+        1 => ',',
+        2 => '(',
+        3 => 'filter_db_ident',
+        4 => ',',
+        5 => 'filter_db_ident',
+        6 => ')',
       ),
     ),
   ),
@@ -972,6 +1782,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => ')',
+      ),
     ),
     1 =>
     array (
@@ -980,6 +1795,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'filter_table_list',
+        2 => ')',
+      ),
     ),
   ),
   'filter_table_list' =>
@@ -987,6 +1808,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'filter_table_ident',
+      ),
     ),
     1 =>
     array (
@@ -995,6 +1820,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'filter_table_list',
+        1 => ',',
+        2 => 'filter_table_ident',
       ),
     ),
   ),
@@ -1008,6 +1839,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'schema',
+        1 => '.',
+        2 => 'ident',
+      ),
     ),
   ),
   'opt_filter_string_list' =>
@@ -1018,6 +1855,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => ')',
+      ),
     ),
     1 =>
     array (
@@ -1026,6 +1868,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'filter_string_list',
+        2 => ')',
+      ),
     ),
   ),
   'filter_string_list' =>
@@ -1033,6 +1881,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'filter_string',
+      ),
     ),
     1 =>
     array (
@@ -1042,6 +1894,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'filter_string_list',
+        1 => ',',
+        2 => 'filter_string',
+      ),
     ),
   ),
   'filter_string' =>
@@ -1049,6 +1907,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'filter_wild_db_table_string',
+      ),
     ),
   ),
   'source_defs' =>
@@ -1056,6 +1918,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'source_def',
+      ),
     ),
     1 =>
     array (
@@ -1065,6 +1931,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'source_defs',
+        1 => ',',
+        2 => 'source_def',
+      ),
     ),
   ),
   'change_replication_source_auto_position' =>
@@ -1072,10 +1944,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceAutoPositionChoice_05740ac9::UseMasterAutoPosition_fb73bc1d',
+      'symbols' =>
+      array (
+        0 => 'MASTER_AUTO_POSITION_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceAutoPositionChoice_05740ac9::UseSourceAutoPosition_8c283d8d',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_AUTO_POSITION_SYM',
+      ),
     ),
   ),
   'change_replication_source_host' =>
@@ -1083,10 +1963,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceHostChoice_dd9b573d::UseMasterHost_6243f77d',
+      'symbols' =>
+      array (
+        0 => 'MASTER_HOST_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceHostChoice_dd9b573d::UseSourceHost_6a686af5',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_HOST_SYM',
+      ),
     ),
   ),
   'change_replication_source_bind' =>
@@ -1094,10 +1982,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceBindChoice_9a547d6e::UseMasterBind_9365e0c1',
+      'symbols' =>
+      array (
+        0 => 'MASTER_BIND_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceBindChoice_9a547d6e::UseSourceBind_a5b81c2f',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_BIND_SYM',
+      ),
     ),
   ),
   'change_replication_source_user' =>
@@ -1105,10 +2001,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceUserChoice_2b662003::UseMasterUser_69910c29',
+      'symbols' =>
+      array (
+        0 => 'MASTER_USER_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceUserChoice_2b662003::UseSourceUser_0af213fc',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_USER_SYM',
+      ),
     ),
   ),
   'change_replication_source_password' =>
@@ -1116,10 +2020,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourcePasswordChoice_5f715a45::UseMasterPassword_9ba29272',
+      'symbols' =>
+      array (
+        0 => 'MASTER_PASSWORD_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourcePasswordChoice_5f715a45::UseSourcePassword_cb455082',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_PASSWORD_SYM',
+      ),
     ),
   ),
   'change_replication_source_port' =>
@@ -1127,10 +2039,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourcePortChoice_317b5084::UseMasterPort_9bd4c62c',
+      'symbols' =>
+      array (
+        0 => 'MASTER_PORT_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourcePortChoice_317b5084::UseSourcePort_68734bd9',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_PORT_SYM',
+      ),
     ),
   ),
   'change_replication_source_connect_retry' =>
@@ -1138,10 +2058,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceConnectRetryChoice_bbf0e642::UseMasterConnectRetry_dd62b4b4',
+      'symbols' =>
+      array (
+        0 => 'MASTER_CONNECT_RETRY_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceConnectRetryChoice_bbf0e642::UseSourceConnectRetry_1ed86dba',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_CONNECT_RETRY_SYM',
+      ),
     ),
   ),
   'change_replication_source_retry_count' =>
@@ -1149,10 +2077,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceRetryCountChoice_5b957526::UseMasterRetryCount_c07ebb57',
+      'symbols' =>
+      array (
+        0 => 'MASTER_RETRY_COUNT_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceRetryCountChoice_5b957526::UseSourceRetryCount_492586e1',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_RETRY_COUNT_SYM',
+      ),
     ),
   ),
   'change_replication_source_delay' =>
@@ -1160,10 +2096,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceDelayChoice_23f94cd7::UseMasterDelay_46d8303f',
+      'symbols' =>
+      array (
+        0 => 'MASTER_DELAY_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceDelayChoice_23f94cd7::UseSourceDelay_a4539d40',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_DELAY_SYM',
+      ),
     ),
   ),
   'change_replication_source_ssl' =>
@@ -1171,10 +2115,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceSslChoice_f5524761::UseMasterSsl_d51eade6',
+      'symbols' =>
+      array (
+        0 => 'MASTER_SSL_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceSslChoice_f5524761::UseSourceSsl_40e45bd2',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_SSL_SYM',
+      ),
     ),
   ),
   'change_replication_source_ssl_ca' =>
@@ -1182,10 +2134,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceSslCaChoice_10ee1032::UseMasterSslCa_5752f531',
+      'symbols' =>
+      array (
+        0 => 'MASTER_SSL_CA_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceSslCaChoice_10ee1032::UseSourceSslCa_c64b1381',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_SSL_CA_SYM',
+      ),
     ),
   ),
   'change_replication_source_ssl_capath' =>
@@ -1193,10 +2153,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceSslCapathChoice_d4dd319d::UseMasterSslCapath_6601f6af',
+      'symbols' =>
+      array (
+        0 => 'MASTER_SSL_CAPATH_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceSslCapathChoice_d4dd319d::UseSourceSslCapath_a1f8a98c',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_SSL_CAPATH_SYM',
+      ),
     ),
   ),
   'change_replication_source_ssl_cipher' =>
@@ -1204,10 +2172,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceSslCipherChoice_b9ec872e::UseMasterSslCipher_6545252f',
+      'symbols' =>
+      array (
+        0 => 'MASTER_SSL_CIPHER_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceSslCipherChoice_b9ec872e::UseSourceSslCipher_895a09b2',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_SSL_CIPHER_SYM',
+      ),
     ),
   ),
   'change_replication_source_ssl_crl' =>
@@ -1215,10 +2191,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceSslCrlChoice_ba7c3584::UseMasterSslCrl_0f884349',
+      'symbols' =>
+      array (
+        0 => 'MASTER_SSL_CRL_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceSslCrlChoice_ba7c3584::UseSourceSslCrl_884196ab',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_SSL_CRL_SYM',
+      ),
     ),
   ),
   'change_replication_source_ssl_crlpath' =>
@@ -1226,10 +2210,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceSslCrlpathChoice_37df6a87::UseMasterSslCrlpath_5ff0d704',
+      'symbols' =>
+      array (
+        0 => 'MASTER_SSL_CRLPATH_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceSslCrlpathChoice_37df6a87::UseSourceSslCrlpath_6bd956ff',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_SSL_CRLPATH_SYM',
+      ),
     ),
   ),
   'change_replication_source_ssl_key' =>
@@ -1237,10 +2229,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceSslKeyChoice_2e699592::UseMasterSslKey_15a7e69d',
+      'symbols' =>
+      array (
+        0 => 'MASTER_SSL_KEY_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceSslKeyChoice_2e699592::UseSourceSslKey_73de7649',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_SSL_KEY_SYM',
+      ),
     ),
   ),
   'change_replication_source_ssl_verify_server_cert' =>
@@ -1248,10 +2248,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceSslVerifyServerCertChoice_9caa0d1f::UseMasterSslVerifyServerCert_f0a3303f',
+      'symbols' =>
+      array (
+        0 => 'MASTER_SSL_VERIFY_SERVER_CERT_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceSslVerifyServerCertChoice_9caa0d1f::UseSourceSslVerifyServerCert_3fb50364',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_SSL_VERIFY_SERVER_CERT_SYM',
+      ),
     ),
   ),
   'change_replication_source_tls_version' =>
@@ -1259,10 +2267,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceTlsVersionChoice_2601071a::UseMasterTlsVersion_28fb5a3a',
+      'symbols' =>
+      array (
+        0 => 'MASTER_TLS_VERSION_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceTlsVersionChoice_2601071a::UseSourceTlsVersion_32f3c227',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_TLS_VERSION_SYM',
+      ),
     ),
   ),
   'change_replication_source_tls_ciphersuites' =>
@@ -1270,10 +2286,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceTlsCiphersuitesChoice_cb6ca2ef::UseMasterTlsCiphersuites_0780b74c',
+      'symbols' =>
+      array (
+        0 => 'MASTER_TLS_CIPHERSUITES_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceTlsCiphersuitesChoice_cb6ca2ef::UseSourceTlsCiphersuites_bb87c833',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_TLS_CIPHERSUITES_SYM',
+      ),
     ),
   ),
   'change_replication_source_ssl_cert' =>
@@ -1281,10 +2305,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceSslCertChoice_e523488f::UseMasterSslCert_d72fef78',
+      'symbols' =>
+      array (
+        0 => 'MASTER_SSL_CERT_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceSslCertChoice_e523488f::UseSourceSslCert_b7f592ab',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_SSL_CERT_SYM',
+      ),
     ),
   ),
   'change_replication_source_public_key' =>
@@ -1292,10 +2324,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourcePublicKeyChoice_0d7ab5ea::UseMasterPublicKeyPath_38dfaf84',
+      'symbols' =>
+      array (
+        0 => 'MASTER_PUBLIC_KEY_PATH_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourcePublicKeyChoice_0d7ab5ea::UseSourcePublicKeyPath_448715c0',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_PUBLIC_KEY_PATH_SYM',
+      ),
     ),
   ),
   'change_replication_source_get_source_public_key' =>
@@ -1303,10 +2343,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceGetSourcePublicKeyChoice_e3e63dc2::UseGetMasterPublicKey_2a3c2138',
+      'symbols' =>
+      array (
+        0 => 'GET_MASTER_PUBLIC_KEY_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceGetSourcePublicKeyChoice_e3e63dc2::UseGetSourcePublicKey_8c748a8e',
+      'symbols' =>
+      array (
+        0 => 'GET_SOURCE_PUBLIC_KEY_SYM',
+      ),
     ),
   ),
   'change_replication_source_heartbeat_period' =>
@@ -1314,10 +2362,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceHeartbeatPeriodChoice_e5a96520::UseMasterHeartbeatPeriod_1d182c62',
+      'symbols' =>
+      array (
+        0 => 'MASTER_HEARTBEAT_PERIOD_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceHeartbeatPeriodChoice_e5a96520::UseSourceHeartbeatPeriod_f085c427',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_HEARTBEAT_PERIOD_SYM',
+      ),
     ),
   ),
   'change_replication_source_compression_algorithm' =>
@@ -1325,10 +2381,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceCompressionAlgorithmChoice_e81e4221::UseMasterCompressionAlgorithms_b466a9dc',
+      'symbols' =>
+      array (
+        0 => 'MASTER_COMPRESSION_ALGORITHM_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceCompressionAlgorithmChoice_e81e4221::UseSourceCompressionAlgorithms_fd2872c4',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_COMPRESSION_ALGORITHM_SYM',
+      ),
     ),
   ),
   'change_replication_source_zstd_compression_level' =>
@@ -1336,10 +2400,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceZstdCompressionLevelChoice_690c94ad::UseMasterZstdCompressionLevel_db3005a2',
+      'symbols' =>
+      array (
+        0 => 'MASTER_ZSTD_COMPRESSION_LEVEL_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ChangeReplicationSourceZstdCompressionLevelChoice_690c94ad::UseSourceZstdCompressionLevel_178ee386',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_ZSTD_COMPRESSION_LEVEL_SYM',
+      ),
     ),
   ),
   'source_def' =>
@@ -1352,6 +2424,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'change_replication_source_host',
+        1 => 'EQ',
+        2 => 'TEXT_STRING_sys_nonewline',
+      ),
     ),
     1 =>
     array (
@@ -1359,6 +2437,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NETWORK_NAMESPACE_SYM',
+        1 => 'EQ',
+        2 => 'TEXT_STRING_sys_nonewline',
       ),
     ),
     2 =>
@@ -1369,6 +2453,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'change_replication_source_bind',
+        1 => 'EQ',
+        2 => 'TEXT_STRING_sys_nonewline',
+      ),
     ),
     3 =>
     array (
@@ -1377,6 +2467,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'change_replication_source_user',
+        1 => 'EQ',
+        2 => 'TEXT_STRING_sys_nonewline',
       ),
     ),
     4 =>
@@ -1387,6 +2483,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'change_replication_source_password',
+        1 => 'EQ',
+        2 => 'TEXT_STRING_sys_nonewline',
+      ),
     ),
     5 =>
     array (
@@ -1395,6 +2497,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'change_replication_source_port',
+        1 => 'EQ',
+        2 => 'ulong_num',
       ),
     ),
     6 =>
@@ -1405,6 +2513,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'change_replication_source_connect_retry',
+        1 => 'EQ',
+        2 => 'ulong_num',
+      ),
     ),
     7 =>
     array (
@@ -1413,6 +2527,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'change_replication_source_retry_count',
+        1 => 'EQ',
+        2 => 'ulong_num',
       ),
     ),
     8 =>
@@ -1423,6 +2543,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'change_replication_source_delay',
+        1 => 'EQ',
+        2 => 'ulong_num',
+      ),
     ),
     9 =>
     array (
@@ -1431,6 +2557,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'change_replication_source_ssl',
+        1 => 'EQ',
+        2 => 'ulong_num',
       ),
     ),
     10 =>
@@ -1441,6 +2573,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'change_replication_source_ssl_ca',
+        1 => 'EQ',
+        2 => 'TEXT_STRING_sys_nonewline',
+      ),
     ),
     11 =>
     array (
@@ -1449,6 +2587,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'change_replication_source_ssl_capath',
+        1 => 'EQ',
+        2 => 'TEXT_STRING_sys_nonewline',
       ),
     ),
     12 =>
@@ -1459,6 +2603,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'change_replication_source_tls_version',
+        1 => 'EQ',
+        2 => 'TEXT_STRING_sys_nonewline',
+      ),
     ),
     13 =>
     array (
@@ -1467,6 +2617,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'change_replication_source_tls_ciphersuites',
+        1 => 'EQ',
+        2 => 'source_tls_ciphersuites_def',
       ),
     ),
     14 =>
@@ -1477,6 +2633,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'change_replication_source_ssl_cert',
+        1 => 'EQ',
+        2 => 'TEXT_STRING_sys_nonewline',
+      ),
     ),
     15 =>
     array (
@@ -1485,6 +2647,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'change_replication_source_ssl_cipher',
+        1 => 'EQ',
+        2 => 'TEXT_STRING_sys_nonewline',
       ),
     ),
     16 =>
@@ -1495,6 +2663,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'change_replication_source_ssl_key',
+        1 => 'EQ',
+        2 => 'TEXT_STRING_sys_nonewline',
+      ),
     ),
     17 =>
     array (
@@ -1503,6 +2677,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'change_replication_source_ssl_verify_server_cert',
+        1 => 'EQ',
+        2 => 'ulong_num',
       ),
     ),
     18 =>
@@ -1513,6 +2693,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'change_replication_source_ssl_crl',
+        1 => 'EQ',
+        2 => 'TEXT_STRING_sys_nonewline',
+      ),
     ),
     19 =>
     array (
@@ -1521,6 +2707,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'change_replication_source_ssl_crlpath',
+        1 => 'EQ',
+        2 => 'TEXT_STRING_sys_nonewline',
       ),
     ),
     20 =>
@@ -1531,6 +2723,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'change_replication_source_public_key',
+        1 => 'EQ',
+        2 => 'TEXT_STRING_sys_nonewline',
+      ),
     ),
     21 =>
     array (
@@ -1539,6 +2737,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'change_replication_source_get_source_public_key',
+        1 => 'EQ',
+        2 => 'ulong_num',
       ),
     ),
     22 =>
@@ -1549,6 +2753,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'change_replication_source_heartbeat_period',
+        1 => 'EQ',
+        2 => 'NUM_literal',
+      ),
     ),
     23 =>
     array (
@@ -1556,6 +2766,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'IGNORE_SERVER_IDS_SYM',
+        1 => 'EQ',
+        2 => '(',
+        3 => 'ignore_server_id_list',
+        4 => ')',
       ),
     ),
     24 =>
@@ -1566,6 +2784,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'change_replication_source_compression_algorithm',
+        1 => 'EQ',
+        2 => 'TEXT_STRING_sys',
+      ),
     ),
     25 =>
     array (
@@ -1574,6 +2798,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'change_replication_source_zstd_compression_level',
+        1 => 'EQ',
+        2 => 'ulong_num',
       ),
     ),
     26 =>
@@ -1584,6 +2814,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'change_replication_source_auto_position',
+        1 => 'EQ',
+        2 => 'ulong_num',
+      ),
     ),
     27 =>
     array (
@@ -1591,6 +2827,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PRIVILEGE_CHECKS_USER_SYM',
+        1 => 'EQ',
+        2 => 'privilege_check_def',
       ),
     ),
     28 =>
@@ -1600,6 +2842,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'REQUIRE_ROW_FORMAT_SYM',
+        1 => 'EQ',
+        2 => 'ulong_num',
+      ),
     ),
     29 =>
     array (
@@ -1607,6 +2855,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REQUIRE_TABLE_PRIMARY_KEY_CHECK_SYM',
+        1 => 'EQ',
+        2 => 'table_primary_key_check_def',
       ),
     ),
     30 =>
@@ -1616,6 +2870,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_CONNECTION_AUTO_FAILOVER_SYM',
+        1 => 'EQ',
+        2 => 'real_ulong_num',
+      ),
     ),
     31 =>
     array (
@@ -1623,6 +2883,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS_SYM',
+        1 => 'EQ',
+        2 => 'assign_gtids_to_anonymous_transactions_def',
       ),
     ),
     32 =>
@@ -1632,10 +2898,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'GTID_ONLY_SYM',
+        1 => 'EQ',
+        2 => 'real_ulong_num',
+      ),
     ),
     33 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'source_file_def',
+      ),
     ),
   ),
   'ignore_server_id_list' =>
@@ -1646,10 +2922,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ignore_server_id',
+      ),
     ),
     2 =>
     array (
@@ -1659,6 +2942,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ignore_server_id_list',
+        1 => ',',
+        2 => 'ignore_server_id',
+      ),
     ),
   ),
   'ignore_server_id' =>
@@ -1666,6 +2955,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ulong_num',
+      ),
     ),
   ),
   'privilege_check_def' =>
@@ -1673,12 +2966,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'user_ident_or_text',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\PrivilegeCheckDefWithNullSym_a9884fa5',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'NULL_SYM',
       ),
     ),
   ),
@@ -1687,18 +2988,34 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\TablePrimaryKeyCheckDefChoice_5e389903::UseStream_df2ff3bb',
+      'symbols' =>
+      array (
+        0 => 'STREAM_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\TablePrimaryKeyCheckDefChoice_5e389903::UseOn_e8a01133',
+      'symbols' =>
+      array (
+        0 => 'ON_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\TablePrimaryKeyCheckDefChoice_5e389903::UseOff_38cca6be',
+      'symbols' =>
+      array (
+        0 => 'OFF_SYM',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\TablePrimaryKeyCheckDefChoice_5e389903::UseGenerate_1cd35aa5',
+      'symbols' =>
+      array (
+        0 => 'GENERATE_SYM',
+      ),
     ),
   ),
   'assign_gtids_to_anonymous_transactions_def' =>
@@ -1709,12 +3026,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'OFF_SYM',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\AssignGtidsToAnonymousTransactionsDefWithLocalSym_ea6949be',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'LOCAL_SYM',
       ),
     ),
     2 =>
@@ -1724,6 +3049,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TEXT_STRING',
+      ),
     ),
   ),
   'source_tls_ciphersuites_def' =>
@@ -1731,12 +3060,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'TEXT_STRING_sys_nonewline',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\SourceTlsCiphersuitesDefWithNullSym_6464911a',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'NULL_SYM',
       ),
     ),
   ),
@@ -1745,10 +3082,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SourceLogFileChoice_cac2112c::UseMasterLogFile_106ccab6',
+      'symbols' =>
+      array (
+        0 => 'MASTER_LOG_FILE_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SourceLogFileChoice_cac2112c::UseSourceLogFile_d13af792',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_LOG_FILE_SYM',
+      ),
     ),
   ),
   'source_log_pos' =>
@@ -1756,10 +3101,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SourceLogPosChoice_64b7706c::UseMasterLogPos_a017f1e2',
+      'symbols' =>
+      array (
+        0 => 'MASTER_LOG_POS_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SourceLogPosChoice_64b7706c::UseSourceLogPos_cc3aa6d9',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_LOG_POS_SYM',
+      ),
     ),
   ),
   'source_file_def' =>
@@ -1772,6 +3125,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'source_log_file',
+        1 => 'EQ',
+        2 => 'TEXT_STRING_sys_nonewline',
+      ),
     ),
     1 =>
     array (
@@ -1781,6 +3140,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'source_log_pos',
+        1 => 'EQ',
+        2 => 'ulonglong_num',
+      ),
     ),
     2 =>
     array (
@@ -1789,6 +3154,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'RELAY_LOG_FILE_SYM',
+        1 => 'EQ',
+        2 => 'TEXT_STRING_sys_nonewline',
+      ),
     ),
     3 =>
     array (
@@ -1796,6 +3167,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RELAY_LOG_POS_SYM',
+        1 => 'EQ',
+        2 => 'ulong_num',
       ),
     ),
   ),
@@ -1807,6 +3184,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -1814,6 +3194,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FOR_SYM',
+        1 => 'CHANNEL_SYM',
+        2 => 'TEXT_STRING_sys_nonewline',
       ),
     ),
   ),
@@ -1830,6 +3216,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 6,
         4 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'opt_temporary',
+        2 => 'TABLE_SYM',
+        3 => 'opt_if_not_exists',
+        4 => 'table_ident',
+        5 => '(',
+        6 => 'table_element_list',
+        7 => ')',
+        8 => 'opt_create_table_options_etc',
+      ),
     ),
     1 =>
     array (
@@ -1840,6 +3238,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
         3 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'opt_temporary',
+        2 => 'TABLE_SYM',
+        3 => 'opt_if_not_exists',
+        4 => 'table_ident',
+        5 => 'opt_create_table_options_etc',
       ),
     ),
     2 =>
@@ -1852,6 +3259,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 4,
         3 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'opt_temporary',
+        2 => 'TABLE_SYM',
+        3 => 'opt_if_not_exists',
+        4 => 'table_ident',
+        5 => 'LIKE',
+        6 => 'table_ident',
+      ),
     ),
     3 =>
     array (
@@ -1862,6 +3279,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
         3 => 7,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'opt_temporary',
+        2 => 'TABLE_SYM',
+        3 => 'opt_if_not_exists',
+        4 => 'table_ident',
+        5 => '(',
+        6 => 'LIKE',
+        7 => 'table_ident',
+        8 => ')',
       ),
     ),
   ),
@@ -1874,6 +3303,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'ROLE_SYM',
+        2 => 'opt_if_not_exists',
+        3 => 'role_list',
       ),
     ),
   ),
@@ -1891,6 +3327,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         4 => 8,
         5 => 9,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'RESOURCE_SYM',
+        2 => 'GROUP_SYM',
+        3 => 'ident',
+        4 => 'TYPE_SYM',
+        5 => 'opt_equal',
+        6 => 'resource_group_types',
+        7 => 'opt_resource_group_vcpu_list',
+        8 => 'opt_resource_group_priority',
+        9 => 'opt_resource_group_enable_disable',
+      ),
     ),
   ),
   'create' =>
@@ -1905,6 +3354,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'DATABASE',
+        2 => 'opt_if_not_exists',
+        3 => 'ident',
+        4 => 'opt_create_database_options',
+      ),
     ),
     1 =>
     array (
@@ -1912,6 +3369,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'view_or_trigger_or_sp_or_event',
       ),
     ),
     2 =>
@@ -1928,6 +3390,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         6 => 7,
         7 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'USER',
+        2 => 'opt_if_not_exists',
+        3 => 'create_user_list',
+        4 => 'default_role_clause',
+        5 => 'require_clause',
+        6 => 'connect_options',
+        7 => 'opt_account_lock_password_expire_options',
+        8 => 'opt_user_attribute',
+      ),
     ),
     3 =>
     array (
@@ -1937,6 +3411,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 5,
         2 => 6,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'LOGFILE_SYM',
+        2 => 'GROUP_SYM',
+        3 => 'ident',
+        4 => 'ADD',
+        5 => 'lg_undofile',
+        6 => 'opt_logfile_group_options',
       ),
     ),
     4 =>
@@ -1949,6 +3433,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 4,
         3 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'TABLESPACE_SYM',
+        2 => 'ident',
+        3 => 'opt_ts_datafile_name',
+        4 => 'opt_logfile_group_name',
+        5 => 'opt_tablespace_options',
+      ),
     ),
     5 =>
     array (
@@ -1959,6 +3452,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'UNDO_SYM',
+        2 => 'TABLESPACE_SYM',
+        3 => 'ident',
+        4 => 'ADD',
+        5 => 'ts_datafile',
+        6 => 'opt_undo_tablespace_options',
+      ),
     ),
     6 =>
     array (
@@ -1968,6 +3471,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 6,
         2 => 9,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'SERVER_SYM',
+        2 => 'ident_or_text',
+        3 => 'FOREIGN',
+        4 => 'DATA_SYM',
+        5 => 'WRAPPER_SYM',
+        6 => 'ident_or_text',
+        7 => 'OPTIONS_SYM',
+        8 => '(',
+        9 => 'server_options_list',
+        10 => ')',
       ),
     ),
   ),
@@ -1981,6 +3498,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 6,
         1 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'OR_SYM',
+        2 => 'REPLACE_SYM',
+        3 => 'SPATIAL_SYM',
+        4 => 'REFERENCE_SYM',
+        5 => 'SYSTEM_SYM',
+        6 => 'real_ulonglong_num',
+        7 => 'srs_attributes',
+      ),
     ),
     1 =>
     array (
@@ -1990,6 +3518,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 5,
         2 => 6,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'SPATIAL_SYM',
+        2 => 'REFERENCE_SYM',
+        3 => 'SYSTEM_SYM',
+        4 => 'opt_if_not_exists',
+        5 => 'real_ulonglong_num',
+        6 => 'srs_attributes',
       ),
     ),
   ),
@@ -2001,6 +3539,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -2010,6 +3551,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'srs_attributes',
+        1 => 'NAME_SYM',
+        2 => 'TEXT_STRING_sys_nonewline',
+      ),
     ),
     2 =>
     array (
@@ -2018,6 +3565,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'srs_attributes',
+        1 => 'DEFINITION_SYM',
+        2 => 'TEXT_STRING_sys_nonewline',
       ),
     ),
     3 =>
@@ -2029,6 +3582,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'srs_attributes',
+        1 => 'ORGANIZATION_SYM',
+        2 => 'TEXT_STRING_sys_nonewline',
+        3 => 'IDENTIFIED_SYM',
+        4 => 'BY',
+        5 => 'real_ulonglong_num',
+      ),
     ),
     4 =>
     array (
@@ -2037,6 +3599,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'srs_attributes',
+        1 => 'DESCRIPTION_SYM',
+        2 => 'TEXT_STRING_sys_nonewline',
       ),
     ),
   ),
@@ -2048,6 +3616,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -2055,6 +3626,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT_SYM',
+        1 => 'ROLE_SYM',
+        2 => 'role_list',
       ),
     ),
   ),
@@ -2073,6 +3650,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         5 => 10,
         6 => 11,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'opt_unique',
+        2 => 'INDEX_SYM',
+        3 => 'ident',
+        4 => 'opt_index_type_clause',
+        5 => 'ON_SYM',
+        6 => 'table_ident',
+        7 => '(',
+        8 => 'key_list_with_expression',
+        9 => ')',
+        10 => 'opt_index_options',
+        11 => 'opt_index_lock_and_algorithm',
+      ),
     ),
     1 =>
     array (
@@ -2084,6 +3676,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 7,
         3 => 9,
         4 => 10,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'FULLTEXT_SYM',
+        2 => 'INDEX_SYM',
+        3 => 'ident',
+        4 => 'ON_SYM',
+        5 => 'table_ident',
+        6 => '(',
+        7 => 'key_list_with_expression',
+        8 => ')',
+        9 => 'opt_fulltext_index_options',
+        10 => 'opt_index_lock_and_algorithm',
       ),
     ),
     2 =>
@@ -2097,6 +3703,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 9,
         4 => 10,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'SPATIAL_SYM',
+        2 => 'INDEX_SYM',
+        3 => 'ident',
+        4 => 'ON_SYM',
+        5 => 'table_ident',
+        6 => '(',
+        7 => 'key_list_with_expression',
+        8 => ')',
+        9 => 'opt_spatial_index_options',
+        10 => 'opt_index_lock_and_algorithm',
+      ),
     ),
   ),
   'server_options_list' =>
@@ -2104,6 +3724,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'server_option',
+      ),
     ),
     1 =>
     array (
@@ -2112,6 +3736,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'server_options_list',
+        1 => ',',
+        2 => 'server_option',
       ),
     ),
   ),
@@ -2125,6 +3755,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'USER',
+        1 => 'TEXT_STRING_sys',
+      ),
     ),
     1 =>
     array (
@@ -2132,6 +3767,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'HOST_SYM',
+        1 => 'TEXT_STRING_sys',
       ),
     ),
     2 =>
@@ -2142,6 +3782,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'DATABASE',
+        1 => 'TEXT_STRING_sys',
+      ),
     ),
     3 =>
     array (
@@ -2149,6 +3794,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'OWNER_SYM',
+        1 => 'TEXT_STRING_sys',
       ),
     ),
     4 =>
@@ -2158,6 +3808,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD',
+        1 => 'TEXT_STRING_sys',
+      ),
     ),
     5 =>
     array (
@@ -2166,6 +3821,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'SOCKET_SYM',
+        1 => 'TEXT_STRING_sys',
+      ),
     ),
     6 =>
     array (
@@ -2173,6 +3833,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PORT_SYM',
+        1 => 'ulong_num',
       ),
     ),
   ),
@@ -2191,6 +3856,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         5 => 8,
         6 => 10,
       ),
+      'symbols' =>
+      array (
+        0 => 'EVENT_SYM',
+        1 => 'opt_if_not_exists',
+        2 => 'sp_name',
+        3 => 'ON_SYM',
+        4 => 'SCHEDULE_SYM',
+        5 => 'ev_schedule_time',
+        6 => 'opt_ev_on_completion',
+        7 => 'opt_ev_status',
+        8 => 'opt_ev_comment',
+        9 => 'DO_SYM',
+        10 => 'ev_sql_stmt',
+      ),
     ),
   ),
   'ev_schedule_time' =>
@@ -2205,6 +3884,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'EVERY_SYM',
+        1 => 'expr',
+        2 => 'interval',
+        3 => 'ev_starts',
+        4 => 'ev_ends',
+      ),
     ),
     1 =>
     array (
@@ -2213,6 +3900,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'AT_SYM',
+        1 => 'expr',
+      ),
     ),
   ),
   'opt_ev_status' =>
@@ -2220,22 +3912,45 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptEvStatusChoice_7e8374e5::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptEvStatusChoice_7e8374e5::UseEnable_18912667',
+      'symbols' =>
+      array (
+        0 => 'ENABLE_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptEvStatusChoice_7e8374e5::UseDisableOnSlave_170434e8',
+      'symbols' =>
+      array (
+        0 => 'DISABLE_SYM',
+        1 => 'ON_SYM',
+        2 => 'SLAVE',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptEvStatusChoice_7e8374e5::UseDisableOnReplica_c7ad22a9',
+      'symbols' =>
+      array (
+        0 => 'DISABLE_SYM',
+        1 => 'ON_SYM',
+        2 => 'REPLICA_SYM',
+      ),
     ),
     4 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptEvStatusChoice_7e8374e5::UseDisable_0fb87bd2',
+      'symbols' =>
+      array (
+        0 => 'DISABLE_SYM',
+      ),
     ),
   ),
   'ev_starts' =>
@@ -2246,6 +3961,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -2253,6 +3971,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'STARTS_SYM',
+        1 => 'expr',
       ),
     ),
   ),
@@ -2264,6 +3987,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -2271,6 +3997,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ENDS_SYM',
+        1 => 'expr',
       ),
     ),
   ),
@@ -2282,10 +4013,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ev_on_completion',
+      ),
     ),
   ),
   'ev_on_completion' =>
@@ -2293,10 +4031,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\EvOnCompletionChoice_87a9a3d9::UseOnCompletionPreserve_ef5091c8',
+      'symbols' =>
+      array (
+        0 => 'ON_SYM',
+        1 => 'COMPLETION_SYM',
+        2 => 'PRESERVE_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\EvOnCompletionChoice_87a9a3d9::UseOnCompletionNotPreserve_deea4e64',
+      'symbols' =>
+      array (
+        0 => 'ON_SYM',
+        1 => 'COMPLETION_SYM',
+        2 => 'NOT_SYM',
+        3 => 'PRESERVE_SYM',
+      ),
     ),
   ),
   'opt_ev_comment' =>
@@ -2307,6 +4058,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -2315,6 +4069,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT_SYM',
+        1 => 'TEXT_STRING_sys',
+      ),
     ),
   ),
   'ev_sql_stmt' =>
@@ -2322,6 +4081,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ev_sql_stmt_inner',
+      ),
     ),
   ),
   'ev_sql_stmt_inner' =>
@@ -2329,54 +4092,106 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_proc_stmt_statement',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_proc_stmt_return',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_proc_stmt_if',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'case_stmt_specification',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_labeled_block',
+      ),
     ),
     5 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_unlabeled_block',
+      ),
     ),
     6 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_labeled_control',
+      ),
     ),
     7 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_proc_stmt_unlabeled',
+      ),
     ),
     8 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_proc_stmt_leave',
+      ),
     ),
     9 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_proc_stmt_iterate',
+      ),
     ),
     10 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_proc_stmt_open',
+      ),
     ),
     11 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_proc_stmt_fetch',
+      ),
     ),
     12 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_proc_stmt_close',
+      ),
     ),
   ),
   'sp_name' =>
@@ -2389,10 +4204,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ident',
+        1 => '.',
+        2 => 'ident',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
   ),
   'sp_a_chistics' =>
@@ -2401,6 +4226,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\SpAChisticsWith_d477a987',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -2412,6 +4240,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'sp_a_chistics',
+        1 => 'sp_chistic',
+      ),
     ),
   ),
   'sp_c_chistics' =>
@@ -2422,6 +4255,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -2430,6 +4266,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'sp_c_chistics',
+        1 => 'sp_c_chistic',
       ),
     ),
   ),
@@ -2442,12 +4283,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT_SYM',
+        1 => 'TEXT_STRING_sys',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\SpChisticWithLanguageSymSqlSym_1066f659',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'LANGUAGE_SYM',
+        1 => 'SQL_SYM',
       ),
     ),
     2 =>
@@ -2457,12 +4308,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'LANGUAGE_SYM',
+        1 => 'ident',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\SpChisticWithNoSymSqlSym_6882f56e',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'NO_SYM',
+        1 => 'SQL_SYM',
       ),
     ),
     4 =>
@@ -2471,12 +4332,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'CONTAINS_SYM',
+        1 => 'SQL_SYM',
+      ),
     ),
     5 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\SpChisticWithReadsSymSqlSymDataSym_c9f0d3ea',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'READS_SYM',
+        1 => 'SQL_SYM',
+        2 => 'DATA_SYM',
       ),
     ),
     6 =>
@@ -2485,10 +4357,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'MODIFIES_SYM',
+        1 => 'SQL_SYM',
+        2 => 'DATA_SYM',
+      ),
     ),
     7 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_suid',
+      ),
     ),
   ),
   'sp_c_chistic' =>
@@ -2496,12 +4378,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_chistic',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\SpCChisticWithDeterministicSym_8b60106e',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'DETERMINISTIC_SYM',
       ),
     ),
     2 =>
@@ -2511,6 +4401,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'not',
+        1 => 'DETERMINISTIC_SYM',
+      ),
     ),
   ),
   'sp_suid' =>
@@ -2518,10 +4413,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SpSuidChoice_6ca6a5d9::UseSqlSecurityDefiner_57d87183',
+      'symbols' =>
+      array (
+        0 => 'SQL_SYM',
+        1 => 'SECURITY_SYM',
+        2 => 'DEFINER_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SpSuidChoice_6ca6a5d9::UseSqlSecurityInvoker_e5a5d4a3',
+      'symbols' =>
+      array (
+        0 => 'SQL_SYM',
+        1 => 'SECURITY_SYM',
+        2 => 'INVOKER_SYM',
+      ),
     ),
   ),
   'call_stmt' =>
@@ -2534,6 +4441,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'CALL_SYM',
+        1 => 'sp_name',
+        2 => 'opt_paren_expr_list',
+      ),
     ),
   ),
   'opt_paren_expr_list' =>
@@ -2544,6 +4457,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -2551,6 +4467,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'opt_expr_list',
+        2 => ')',
       ),
     ),
   ),
@@ -2562,10 +4484,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_fdparams',
+      ),
     ),
   ),
   'sp_fdparams' =>
@@ -2578,10 +4507,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'sp_fdparams',
+        1 => ',',
+        2 => 'sp_fdparam',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_fdparam',
+      ),
     ),
   ),
   'sp_fdparam' =>
@@ -2595,6 +4534,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ident',
+        1 => 'type',
+        2 => 'opt_collate',
+      ),
     ),
   ),
   'sp_pdparam_list' =>
@@ -2605,10 +4550,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_pdparams',
+      ),
     ),
   ),
   'sp_pdparams' =>
@@ -2621,10 +4573,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'sp_pdparams',
+        1 => ',',
+        2 => 'sp_pdparam',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_pdparam',
+      ),
     ),
   ),
   'sp_pdparam' =>
@@ -2639,6 +4601,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 2,
         3 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'sp_opt_inout',
+        1 => 'ident',
+        2 => 'type',
+        3 => 'opt_collate',
+      ),
     ),
   ),
   'sp_opt_inout' =>
@@ -2646,18 +4615,33 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SpOptInoutChoice_d88be5b9::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SpOptInoutChoice_d88be5b9::UseIn_fed1d872',
+      'symbols' =>
+      array (
+        0 => 'IN_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SpOptInoutChoice_d88be5b9::UseOut_c57929ed',
+      'symbols' =>
+      array (
+        0 => 'OUT_SYM',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SpOptInoutChoice_d88be5b9::UseInout_abf58a7f',
+      'symbols' =>
+      array (
+        0 => 'INOUT_SYM',
+      ),
     ),
   ),
   'sp_proc_stmts' =>
@@ -2668,6 +4652,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -2676,6 +4663,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'sp_proc_stmts',
+        1 => 'sp_proc_stmt',
+        2 => ';',
       ),
     ),
   ),
@@ -2688,6 +4681,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'sp_proc_stmt',
+        1 => ';',
+      ),
     ),
     1 =>
     array (
@@ -2696,6 +4694,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'sp_proc_stmts1',
+        1 => 'sp_proc_stmt',
+        2 => ';',
       ),
     ),
   ),
@@ -2707,6 +4711,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -2715,6 +4722,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'sp_decls',
+        1 => 'sp_decl',
+        2 => ';',
       ),
     ),
   ),
@@ -2730,6 +4743,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'DECLARE_SYM',
+        1 => 'sp_decl_idents',
+        2 => 'type',
+        3 => 'opt_collate',
+        4 => 'sp_opt_default',
+      ),
     ),
     1 =>
     array (
@@ -2738,6 +4759,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DECLARE_SYM',
+        1 => 'ident',
+        2 => 'CONDITION_SYM',
+        3 => 'FOR_SYM',
+        4 => 'sp_cond',
       ),
     ),
     2 =>
@@ -2749,6 +4778,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 4,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'DECLARE_SYM',
+        1 => 'sp_handler_type',
+        2 => 'HANDLER_SYM',
+        3 => 'FOR_SYM',
+        4 => 'sp_hcond_list',
+        5 => 'sp_proc_stmt',
+      ),
     ),
     3 =>
     array (
@@ -2758,6 +4796,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'DECLARE_SYM',
+        1 => 'ident',
+        2 => 'CURSOR_SYM',
+        3 => 'FOR_SYM',
+        4 => 'select_stmt',
+      ),
     ),
   ),
   'sp_handler_type' =>
@@ -2765,10 +4811,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SpHandlerTypeChoice_5cd1c82d::UseExit_3a093158',
+      'symbols' =>
+      array (
+        0 => 'EXIT_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SpHandlerTypeChoice_5cd1c82d::UseContinue_628db0c7',
+      'symbols' =>
+      array (
+        0 => 'CONTINUE_SYM',
+      ),
     ),
   ),
   'sp_hcond_list' =>
@@ -2776,6 +4830,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_hcond_element',
+      ),
     ),
     1 =>
     array (
@@ -2785,6 +4843,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'sp_hcond_list',
+        1 => ',',
+        2 => 'sp_hcond_element',
+      ),
     ),
   ),
   'sp_hcond_element' =>
@@ -2792,6 +4856,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_hcond',
+      ),
     ),
   ),
   'sp_cond' =>
@@ -2799,10 +4867,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ulong_num',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sqlstate',
+      ),
     ),
   ),
   'sqlstate' =>
@@ -2815,6 +4891,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'SQLSTATE_SYM',
+        1 => 'opt_value',
+        2 => 'TEXT_STRING_literal',
+      ),
     ),
   ),
   'opt_value' =>
@@ -2822,10 +4904,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptValueChoice_07895cda::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptValueChoice_07895cda::UseValue_8ec121c9',
+      'symbols' =>
+      array (
+        0 => 'VALUE_SYM',
+      ),
     ),
   ),
   'sp_hcond' =>
@@ -2833,16 +4922,28 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_cond',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\SpHcondWithSqlwarningSym_b9115250',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'SQLWARNING_SYM',
       ),
     ),
     3 =>
@@ -2852,12 +4953,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'not',
+        1 => 'FOUND_SYM',
+      ),
     ),
     4 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\SpHcondWithSqlexceptionSym_176dcc8b',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'SQLEXCEPTION_SYM',
       ),
     ),
   ),
@@ -2871,6 +4981,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'SIGNAL_SYM',
+        1 => 'signal_value',
+        2 => 'opt_set_signal_information',
+      ),
     ),
   ),
   'signal_value' =>
@@ -2878,10 +4994,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sqlstate',
+      ),
     ),
   ),
   'opt_signal_value' =>
@@ -2892,10 +5016,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'signal_value',
+      ),
     ),
   ),
   'opt_set_signal_information' =>
@@ -2906,6 +5037,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -2913,6 +5047,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SET_SYM',
+        1 => 'signal_information_item_list',
       ),
     ),
   ),
@@ -2926,6 +5065,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'signal_condition_information_item_name',
+        1 => 'EQ',
+        2 => 'signal_allowed_expr',
+      ),
     ),
     1 =>
     array (
@@ -2936,6 +5081,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'signal_information_item_list',
+        1 => ',',
+        2 => 'signal_condition_information_item_name',
+        3 => 'EQ',
+        4 => 'signal_allowed_expr',
+      ),
     ),
   ),
   'signal_allowed_expr' =>
@@ -2943,14 +5096,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'literal_or_null',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'rvalue_system_or_user_variable',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'simple_ident',
+      ),
     ),
   ),
   'signal_condition_information_item_name' =>
@@ -2958,50 +5123,98 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SignalConditionInformationItemNameChoice_bb755e37::UseClassOrigin_9ff1521b',
+      'symbols' =>
+      array (
+        0 => 'CLASS_ORIGIN_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SignalConditionInformationItemNameChoice_bb755e37::UseSubclassOrigin_286b534f',
+      'symbols' =>
+      array (
+        0 => 'SUBCLASS_ORIGIN_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SignalConditionInformationItemNameChoice_bb755e37::UseConstraintCatalog_28495488',
+      'symbols' =>
+      array (
+        0 => 'CONSTRAINT_CATALOG_SYM',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SignalConditionInformationItemNameChoice_bb755e37::UseConstraintSchema_bd00f60e',
+      'symbols' =>
+      array (
+        0 => 'CONSTRAINT_SCHEMA_SYM',
+      ),
     ),
     4 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SignalConditionInformationItemNameChoice_bb755e37::UseConstraintName_733be03d',
+      'symbols' =>
+      array (
+        0 => 'CONSTRAINT_NAME_SYM',
+      ),
     ),
     5 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SignalConditionInformationItemNameChoice_bb755e37::UseCatalogName_1838e585',
+      'symbols' =>
+      array (
+        0 => 'CATALOG_NAME_SYM',
+      ),
     ),
     6 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SignalConditionInformationItemNameChoice_bb755e37::UseSchemaName_05f2bc8a',
+      'symbols' =>
+      array (
+        0 => 'SCHEMA_NAME_SYM',
+      ),
     ),
     7 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SignalConditionInformationItemNameChoice_bb755e37::UseTableName_17c5467f',
+      'symbols' =>
+      array (
+        0 => 'TABLE_NAME_SYM',
+      ),
     ),
     8 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SignalConditionInformationItemNameChoice_bb755e37::UseColumnName_5e16ba8b',
+      'symbols' =>
+      array (
+        0 => 'COLUMN_NAME_SYM',
+      ),
     ),
     9 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SignalConditionInformationItemNameChoice_bb755e37::UseCursorName_d936cc3b',
+      'symbols' =>
+      array (
+        0 => 'CURSOR_NAME_SYM',
+      ),
     ),
     10 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SignalConditionInformationItemNameChoice_bb755e37::UseMessageText_3340fdcc',
+      'symbols' =>
+      array (
+        0 => 'MESSAGE_TEXT_SYM',
+      ),
     ),
     11 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SignalConditionInformationItemNameChoice_bb755e37::UseMysqlErrno_1d2786ba',
+      'symbols' =>
+      array (
+        0 => 'MYSQL_ERRNO_SYM',
+      ),
     ),
   ),
   'resignal_stmt' =>
@@ -3013,6 +5226,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RESIGNAL_SYM',
+        1 => 'opt_signal_value',
+        2 => 'opt_set_signal_information',
       ),
     ),
   ),
@@ -3026,6 +5245,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'GET_SYM',
+        1 => 'which_area',
+        2 => 'DIAGNOSTICS_SYM',
+        3 => 'diagnostics_information',
+      ),
     ),
   ),
   'which_area' =>
@@ -3033,14 +5259,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\WhichAreaChoice_331f077d::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\WhichAreaChoice_331f077d::UseCurrent_e3cc57e1',
+      'symbols' =>
+      array (
+        0 => 'CURRENT_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\WhichAreaChoice_331f077d::UseStacked_5e050eb3',
+      'symbols' =>
+      array (
+        0 => 'STACKED_SYM',
+      ),
     ),
   ),
   'diagnostics_information' =>
@@ -3048,6 +5285,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'statement_information',
+      ),
     ),
     1 =>
     array (
@@ -3057,6 +5298,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'CONDITION_SYM',
+        1 => 'condition_number',
+        2 => 'condition_information',
+      ),
     ),
   ),
   'statement_information' =>
@@ -3064,6 +5311,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'statement_information_item',
+      ),
     ),
     1 =>
     array (
@@ -3072,6 +5323,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'statement_information',
+        1 => ',',
+        2 => 'statement_information_item',
       ),
     ),
   ),
@@ -3085,6 +5342,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'simple_target_specification',
+        1 => 'EQ',
+        2 => 'statement_information_item_name',
+      ),
     ),
   ),
   'simple_target_specification' =>
@@ -3092,6 +5355,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
     1 =>
     array (
@@ -3100,6 +5367,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '@',
+        1 => 'ident_or_text',
+      ),
     ),
   ),
   'statement_information_item_name' =>
@@ -3107,10 +5379,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\StatementInformationItemNameChoice_7f0cdc04::UseNumber_a081e07b',
+      'symbols' =>
+      array (
+        0 => 'NUMBER_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\StatementInformationItemNameChoice_7f0cdc04::UseRowCount_afb476bf',
+      'symbols' =>
+      array (
+        0 => 'ROW_COUNT_SYM',
+      ),
     ),
   ),
   'condition_number' =>
@@ -3118,6 +5398,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'signal_allowed_expr',
+      ),
     ),
   ),
   'condition_information' =>
@@ -3125,6 +5409,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'condition_information_item',
+      ),
     ),
     1 =>
     array (
@@ -3133,6 +5421,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'condition_information',
+        1 => ',',
+        2 => 'condition_information_item',
       ),
     ),
   ),
@@ -3146,6 +5440,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'simple_target_specification',
+        1 => 'EQ',
+        2 => 'condition_information_item_name',
+      ),
     ),
   ),
   'condition_information_item_name' =>
@@ -3153,54 +5453,106 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ConditionInformationItemNameChoice_8096dfc6::UseClassOrigin_9ff1521b',
+      'symbols' =>
+      array (
+        0 => 'CLASS_ORIGIN_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ConditionInformationItemNameChoice_8096dfc6::UseSubclassOrigin_286b534f',
+      'symbols' =>
+      array (
+        0 => 'SUBCLASS_ORIGIN_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ConditionInformationItemNameChoice_8096dfc6::UseConstraintCatalog_28495488',
+      'symbols' =>
+      array (
+        0 => 'CONSTRAINT_CATALOG_SYM',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ConditionInformationItemNameChoice_8096dfc6::UseConstraintSchema_bd00f60e',
+      'symbols' =>
+      array (
+        0 => 'CONSTRAINT_SCHEMA_SYM',
+      ),
     ),
     4 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ConditionInformationItemNameChoice_8096dfc6::UseConstraintName_733be03d',
+      'symbols' =>
+      array (
+        0 => 'CONSTRAINT_NAME_SYM',
+      ),
     ),
     5 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ConditionInformationItemNameChoice_8096dfc6::UseCatalogName_1838e585',
+      'symbols' =>
+      array (
+        0 => 'CATALOG_NAME_SYM',
+      ),
     ),
     6 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ConditionInformationItemNameChoice_8096dfc6::UseSchemaName_05f2bc8a',
+      'symbols' =>
+      array (
+        0 => 'SCHEMA_NAME_SYM',
+      ),
     ),
     7 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ConditionInformationItemNameChoice_8096dfc6::UseTableName_17c5467f',
+      'symbols' =>
+      array (
+        0 => 'TABLE_NAME_SYM',
+      ),
     ),
     8 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ConditionInformationItemNameChoice_8096dfc6::UseColumnName_5e16ba8b',
+      'symbols' =>
+      array (
+        0 => 'COLUMN_NAME_SYM',
+      ),
     ),
     9 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ConditionInformationItemNameChoice_8096dfc6::UseCursorName_d936cc3b',
+      'symbols' =>
+      array (
+        0 => 'CURSOR_NAME_SYM',
+      ),
     ),
     10 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ConditionInformationItemNameChoice_8096dfc6::UseMessageText_3340fdcc',
+      'symbols' =>
+      array (
+        0 => 'MESSAGE_TEXT_SYM',
+      ),
     ),
     11 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ConditionInformationItemNameChoice_8096dfc6::UseMysqlErrno_1d2786ba',
+      'symbols' =>
+      array (
+        0 => 'MYSQL_ERRNO_SYM',
+      ),
     ),
     12 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ConditionInformationItemNameChoice_8096dfc6::UseReturnedSqlstate_e7982ed7',
+      'symbols' =>
+      array (
+        0 => 'RETURNED_SQLSTATE_SYM',
+      ),
     ),
   ),
   'sp_decl_idents' =>
@@ -3208,6 +5560,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
     1 =>
     array (
@@ -3216,6 +5572,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'sp_decl_idents',
+        1 => ',',
+        2 => 'ident',
       ),
     ),
   ),
@@ -3227,6 +5589,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -3235,6 +5600,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT_SYM',
+        1 => 'expr',
+      ),
     ),
   ),
   'sp_proc_stmt' =>
@@ -3242,54 +5612,106 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_proc_stmt_statement',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_proc_stmt_return',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_proc_stmt_if',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'case_stmt_specification',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_labeled_block',
+      ),
     ),
     5 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_unlabeled_block',
+      ),
     ),
     6 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_labeled_control',
+      ),
     ),
     7 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_proc_stmt_unlabeled',
+      ),
     ),
     8 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_proc_stmt_leave',
+      ),
     ),
     9 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_proc_stmt_iterate',
+      ),
     ),
     10 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_proc_stmt_open',
+      ),
     ),
     11 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_proc_stmt_fetch',
+      ),
     ),
     12 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_proc_stmt_close',
+      ),
     ),
   ),
   'sp_proc_stmt_if' =>
@@ -3301,6 +5723,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'IF',
+        1 => 'sp_if',
+        2 => 'END',
+        3 => 'IF',
+      ),
     ),
   ),
   'sp_proc_stmt_statement' =>
@@ -3308,6 +5737,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'simple_statement',
+      ),
     ),
   ),
   'sp_proc_stmt_return' =>
@@ -3319,6 +5752,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'RETURN_SYM',
+        1 => 'expr',
+      ),
     ),
   ),
   'sp_proc_stmt_unlabeled' =>
@@ -3326,6 +5764,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_unlabeled_control',
+      ),
     ),
   ),
   'sp_proc_stmt_leave' =>
@@ -3336,6 +5778,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LEAVE_SYM',
+        1 => 'label_ident',
       ),
     ),
   ),
@@ -3348,6 +5795,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ITERATE_SYM',
+        1 => 'label_ident',
+      ),
     ),
   ),
   'sp_proc_stmt_open' =>
@@ -3358,6 +5810,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'OPEN_SYM',
+        1 => 'ident',
       ),
     ),
   ),
@@ -3372,6 +5829,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'FETCH_SYM',
+        1 => 'sp_opt_fetch_noise',
+        2 => 'ident',
+        3 => 'INTO',
+        4 => 'sp_fetch_list',
+      ),
     ),
   ),
   'sp_proc_stmt_close' =>
@@ -3383,6 +5848,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'CLOSE_SYM',
+        1 => 'ident',
+      ),
     ),
   ),
   'sp_opt_fetch_noise' =>
@@ -3390,14 +5860,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SpOptFetchNoiseChoice_b9e4d57d::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SpOptFetchNoiseChoice_b9e4d57d::UseNextFrom_42eb4e0c',
+      'symbols' =>
+      array (
+        0 => 'NEXT_SYM',
+        1 => 'FROM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SpOptFetchNoiseChoice_b9e4d57d::UseFrom_f4383c66',
+      'symbols' =>
+      array (
+        0 => 'FROM',
+      ),
     ),
   ),
   'sp_fetch_list' =>
@@ -3405,6 +5887,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
     1 =>
     array (
@@ -3413,6 +5899,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'sp_fetch_list',
+        1 => ',',
+        2 => 'ident',
       ),
     ),
   ),
@@ -3427,6 +5919,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'expr',
+        1 => 'THEN_SYM',
+        2 => 'sp_proc_stmts1',
+        3 => 'sp_elseifs',
+      ),
     ),
   ),
   'sp_elseifs' =>
@@ -3437,6 +5936,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -3444,6 +5946,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ELSEIF_SYM',
+        1 => 'sp_if',
       ),
     ),
     2 =>
@@ -3453,6 +5960,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ELSE',
+        1 => 'sp_proc_stmts1',
+      ),
     ),
   ),
   'case_stmt_specification' =>
@@ -3460,10 +5972,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'simple_case_stmt',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'searched_case_stmt',
+      ),
     ),
   ),
   'simple_case_stmt' =>
@@ -3477,6 +5997,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'CASE_SYM',
+        1 => 'expr',
+        2 => 'simple_when_clause_list',
+        3 => 'else_clause_opt',
+        4 => 'END',
+        5 => 'CASE_SYM',
+      ),
     ),
   ),
   'searched_case_stmt' =>
@@ -3489,6 +6018,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'CASE_SYM',
+        1 => 'searched_when_clause_list',
+        2 => 'else_clause_opt',
+        3 => 'END',
+        4 => 'CASE_SYM',
+      ),
     ),
   ),
   'simple_when_clause_list' =>
@@ -3496,6 +6033,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'simple_when_clause',
+      ),
     ),
     1 =>
     array (
@@ -3505,6 +6046,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'simple_when_clause_list',
+        1 => 'simple_when_clause',
+      ),
     ),
   ),
   'searched_when_clause_list' =>
@@ -3512,6 +6058,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'searched_when_clause',
+      ),
     ),
     1 =>
     array (
@@ -3520,6 +6070,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'searched_when_clause_list',
+        1 => 'searched_when_clause',
       ),
     ),
   ),
@@ -3533,6 +6088,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'WHEN_SYM',
+        1 => 'expr',
+        2 => 'THEN_SYM',
+        3 => 'sp_proc_stmts1',
+      ),
     ),
   ),
   'searched_when_clause' =>
@@ -3545,6 +6107,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'WHEN_SYM',
+        1 => 'expr',
+        2 => 'THEN_SYM',
+        3 => 'sp_proc_stmts1',
+      ),
     ),
   ),
   'else_clause_opt' =>
@@ -3555,6 +6124,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -3562,6 +6134,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ELSE',
+        1 => 'sp_proc_stmts1',
       ),
     ),
   ),
@@ -3576,6 +6153,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'label_ident',
+        1 => ':',
+        2 => 'sp_unlabeled_control',
+        3 => 'sp_opt_label',
+      ),
     ),
   ),
   'sp_opt_label' =>
@@ -3586,10 +6170,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'label_ident',
+      ),
     ),
   ),
   'sp_labeled_block' =>
@@ -3603,6 +6194,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'label_ident',
+        1 => ':',
+        2 => 'sp_block_content',
+        3 => 'sp_opt_label',
+      ),
     ),
   ),
   'sp_unlabeled_block' =>
@@ -3610,6 +6208,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_block_content',
+      ),
     ),
   ),
   'sp_block_content' =>
@@ -3622,6 +6224,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'BEGIN_SYM',
+        1 => 'sp_decls',
+        2 => 'sp_proc_stmts',
+        3 => 'END',
+      ),
     ),
   ),
   'sp_unlabeled_control' =>
@@ -3633,6 +6242,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'LOOP_SYM',
+        1 => 'sp_proc_stmts1',
+        2 => 'END',
+        3 => 'LOOP_SYM',
+      ),
     ),
     1 =>
     array (
@@ -3641,6 +6257,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'WHILE_SYM',
+        1 => 'expr',
+        2 => 'DO_SYM',
+        3 => 'sp_proc_stmts1',
+        4 => 'END',
+        5 => 'WHILE_SYM',
       ),
     ),
     2 =>
@@ -3651,6 +6276,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'REPEAT_SYM',
+        1 => 'sp_proc_stmts1',
+        2 => 'UNTIL_SYM',
+        3 => 'expr',
+        4 => 'END',
+        5 => 'REPEAT_SYM',
+      ),
     ),
   ),
   'trg_action_time' =>
@@ -3658,10 +6292,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\TrgActionTimeChoice_b4681e82::UseBefore_c341c7fe',
+      'symbols' =>
+      array (
+        0 => 'BEFORE_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\TrgActionTimeChoice_b4681e82::UseAfter_94c3f141',
+      'symbols' =>
+      array (
+        0 => 'AFTER_SYM',
+      ),
     ),
   ),
   'trg_event' =>
@@ -3669,14 +6311,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\TrgEventChoice_c6bd7e6b::UseInsert_014413c2',
+      'symbols' =>
+      array (
+        0 => 'INSERT_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\TrgEventChoice_c6bd7e6b::UseUpdate_6cb78ab1',
+      'symbols' =>
+      array (
+        0 => 'UPDATE_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\TrgEventChoice_c6bd7e6b::UseDelete_65daeb37',
+      'symbols' =>
+      array (
+        0 => 'DELETE_SYM',
+      ),
     ),
   ),
   'opt_ts_datafile_name' =>
@@ -3687,6 +6341,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -3694,6 +6351,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ADD',
+        1 => 'ts_datafile',
       ),
     ),
   ),
@@ -3705,6 +6367,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -3712,6 +6377,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'USE_SYM',
+        1 => 'LOGFILE_SYM',
+        2 => 'GROUP_SYM',
+        3 => 'ident',
       ),
     ),
   ),
@@ -3723,10 +6395,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'tablespace_option_list',
+      ),
     ),
   ),
   'tablespace_option_list' =>
@@ -3734,6 +6413,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'tablespace_option',
+      ),
     ),
     1 =>
     array (
@@ -3744,6 +6427,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'tablespace_option_list',
+        1 => 'opt_comma',
+        2 => 'tablespace_option',
+      ),
     ),
   ),
   'tablespace_option' =>
@@ -3751,46 +6440,90 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_initial_size',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_autoextend_size',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_max_size',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_extent_size',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_nodegroup',
+      ),
     ),
     5 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_engine',
+      ),
     ),
     6 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_wait',
+      ),
     ),
     7 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_comment',
+      ),
     ),
     8 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_file_block_size',
+      ),
     ),
     9 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_encryption',
+      ),
     ),
     10 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_engine_attribute',
+      ),
     ),
   ),
   'opt_alter_tablespace_options' =>
@@ -3801,10 +6534,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_tablespace_option_list',
+      ),
     ),
   ),
   'alter_tablespace_option_list' =>
@@ -3812,6 +6552,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_tablespace_option',
+      ),
     ),
     1 =>
     array (
@@ -3822,6 +6566,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'alter_tablespace_option_list',
+        1 => 'opt_comma',
+        2 => 'alter_tablespace_option',
+      ),
     ),
   ),
   'alter_tablespace_option' =>
@@ -3829,30 +6579,58 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_initial_size',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_autoextend_size',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_max_size',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_engine',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_wait',
+      ),
     ),
     5 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_encryption',
+      ),
     ),
     6 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_engine_attribute',
+      ),
     ),
   ),
   'opt_undo_tablespace_options' =>
@@ -3863,10 +6641,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'undo_tablespace_option_list',
+      ),
     ),
   ),
   'undo_tablespace_option_list' =>
@@ -3874,6 +6659,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'undo_tablespace_option',
+      ),
     ),
     1 =>
     array (
@@ -3884,6 +6673,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'undo_tablespace_option_list',
+        1 => 'opt_comma',
+        2 => 'undo_tablespace_option',
+      ),
     ),
   ),
   'undo_tablespace_option' =>
@@ -3891,6 +6686,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_engine',
+      ),
     ),
   ),
   'opt_logfile_group_options' =>
@@ -3901,10 +6700,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'logfile_group_option_list',
+      ),
     ),
   ),
   'logfile_group_option_list' =>
@@ -3912,6 +6718,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'logfile_group_option',
+      ),
     ),
     1 =>
     array (
@@ -3922,6 +6732,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'logfile_group_option_list',
+        1 => 'opt_comma',
+        2 => 'logfile_group_option',
+      ),
     ),
   ),
   'logfile_group_option' =>
@@ -3929,30 +6745,58 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_initial_size',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_undo_buffer_size',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_redo_buffer_size',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_nodegroup',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_engine',
+      ),
     ),
     5 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_wait',
+      ),
     ),
     6 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_comment',
+      ),
     ),
   ),
   'opt_alter_logfile_group_options' =>
@@ -3963,10 +6807,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_logfile_group_option_list',
+      ),
     ),
   ),
   'alter_logfile_group_option_list' =>
@@ -3974,6 +6825,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_logfile_group_option',
+      ),
     ),
     1 =>
     array (
@@ -3984,6 +6839,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'alter_logfile_group_option_list',
+        1 => 'opt_comma',
+        2 => 'alter_logfile_group_option',
+      ),
     ),
   ),
   'alter_logfile_group_option' =>
@@ -3991,14 +6852,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_initial_size',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_engine',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_wait',
+      ),
     ),
   ),
   'ts_datafile' =>
@@ -4010,6 +6883,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'DATAFILE_SYM',
+        1 => 'TEXT_STRING_sys',
+      ),
     ),
   ),
   'undo_tablespace_state' =>
@@ -4017,10 +6895,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\UndoTablespaceStateChoice_23d85132::UseActive_630c2f1c',
+      'symbols' =>
+      array (
+        0 => 'ACTIVE_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\UndoTablespaceStateChoice_23d85132::UseInactive_df343bd4',
+      'symbols' =>
+      array (
+        0 => 'INACTIVE_SYM',
+      ),
     ),
   ),
   'lg_undofile' =>
@@ -4031,6 +6917,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'UNDOFILE_SYM',
+        1 => 'TEXT_STRING_sys',
       ),
     ),
   ),
@@ -4044,6 +6935,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'INITIAL_SIZE_SYM',
+        1 => 'opt_equal',
+        2 => 'size_number',
+      ),
     ),
   ),
   'ts_option_autoextend_size' =>
@@ -4051,6 +6948,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'option_autoextend_size',
+      ),
     ),
   ),
   'option_autoextend_size' =>
@@ -4062,6 +6963,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'AUTOEXTEND_SIZE_SYM',
+        1 => 'opt_equal',
+        2 => 'size_number',
       ),
     ),
   ),
@@ -4075,6 +6982,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'MAX_SIZE_SYM',
+        1 => 'opt_equal',
+        2 => 'size_number',
+      ),
     ),
   ),
   'ts_option_extent_size' =>
@@ -4086,6 +6999,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'EXTENT_SIZE_SYM',
+        1 => 'opt_equal',
+        2 => 'size_number',
       ),
     ),
   ),
@@ -4099,6 +7018,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNDO_BUFFER_SIZE_SYM',
+        1 => 'opt_equal',
+        2 => 'size_number',
+      ),
     ),
   ),
   'ts_option_redo_buffer_size' =>
@@ -4110,6 +7035,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REDO_BUFFER_SIZE_SYM',
+        1 => 'opt_equal',
+        2 => 'size_number',
       ),
     ),
   ),
@@ -4123,6 +7054,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'NODEGROUP_SYM',
+        1 => 'opt_equal',
+        2 => 'real_ulong_num',
+      ),
     ),
   ),
   'ts_option_comment' =>
@@ -4134,6 +7071,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT_SYM',
+        1 => 'opt_equal',
+        2 => 'TEXT_STRING_sys',
       ),
     ),
   ),
@@ -4148,6 +7091,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_storage',
+        1 => 'ENGINE_SYM',
+        2 => 'opt_equal',
+        3 => 'ident_or_text',
+      ),
     ),
   ),
   'ts_option_file_block_size' =>
@@ -4160,6 +7110,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'FILE_BLOCK_SIZE_SYM',
+        1 => 'opt_equal',
+        2 => 'size_number',
+      ),
     ),
   ),
   'ts_option_wait' =>
@@ -4167,10 +7123,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\TsOptionWaitChoice_06a79d39::UseWait_4f618185',
+      'symbols' =>
+      array (
+        0 => 'WAIT_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\TsOptionWaitChoice_06a79d39::UseNoWait_c19ba2da',
+      'symbols' =>
+      array (
+        0 => 'NO_WAIT_SYM',
+      ),
     ),
   ),
   'ts_option_encryption' =>
@@ -4182,6 +7146,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ENCRYPTION_SYM',
+        1 => 'opt_equal',
+        2 => 'TEXT_STRING_sys',
       ),
     ),
   ),
@@ -4195,6 +7165,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ENGINE_ATTRIBUTE_SYM',
+        1 => 'opt_equal',
+        2 => 'json_attribute',
+      ),
     ),
   ),
   'size_number' =>
@@ -4202,10 +7178,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'real_ulonglong_num',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'IDENT_sys',
+      ),
     ),
   ),
   'opt_create_table_options_etc' =>
@@ -4218,10 +7202,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'create_table_options',
+        1 => 'opt_create_partitioning_etc',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'opt_create_partitioning_etc',
+      ),
     ),
   ),
   'opt_create_partitioning_etc' =>
@@ -4234,10 +7227,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'partition_clause',
+        1 => 'opt_duplicate_as_qe',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'opt_duplicate_as_qe',
+      ),
     ),
   ),
   'opt_duplicate_as_qe' =>
@@ -4246,6 +7248,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptDuplicateAsQeWith_8befdf4f',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -4257,10 +7262,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'duplicate',
+        1 => 'as_create_query_expression',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'as_create_query_expression',
+      ),
     ),
   ),
   'as_create_query_expression' =>
@@ -4272,10 +7286,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'AS',
+        1 => 'query_expression_with_opt_locking_clauses',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'query_expression_with_opt_locking_clauses',
+      ),
     ),
   ),
   'partition_clause' =>
@@ -4290,6 +7313,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 4,
         3 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'PARTITION_SYM',
+        1 => 'BY',
+        2 => 'part_type_def',
+        3 => 'opt_num_parts',
+        4 => 'opt_sub_part',
+        5 => 'opt_part_defs',
+      ),
     ),
   ),
   'part_type_def' =>
@@ -4303,6 +7335,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_linear',
+        1 => 'KEY_SYM',
+        2 => 'opt_key_algo',
+        3 => '(',
+        4 => 'opt_name_list',
+        5 => ')',
+      ),
     ),
     1 =>
     array (
@@ -4312,6 +7353,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_linear',
+        1 => 'HASH_SYM',
+        2 => '(',
+        3 => 'bit_expr',
+        4 => ')',
+      ),
     ),
     2 =>
     array (
@@ -4319,6 +7368,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RANGE_SYM',
+        1 => '(',
+        2 => 'bit_expr',
+        3 => ')',
       ),
     ),
     3 =>
@@ -4329,6 +7385,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'RANGE_SYM',
+        1 => 'COLUMNS',
+        2 => '(',
+        3 => 'name_list',
+        4 => ')',
+      ),
     ),
     4 =>
     array (
@@ -4336,6 +7400,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LIST_SYM',
+        1 => '(',
+        2 => 'bit_expr',
+        3 => ')',
       ),
     ),
     5 =>
@@ -4346,6 +7417,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'LIST_SYM',
+        1 => 'COLUMNS',
+        2 => '(',
+        3 => 'name_list',
+        4 => ')',
+      ),
     ),
   ),
   'opt_linear' =>
@@ -4353,10 +7432,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptLinearChoice_7401897f::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptLinearChoice_7401897f::UseLinear_36ad86d8',
+      'symbols' =>
+      array (
+        0 => 'LINEAR_SYM',
+      ),
     ),
   ),
   'opt_key_algo' =>
@@ -4367,6 +7453,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -4374,6 +7463,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALGORITHM_SYM',
+        1 => 'EQ',
+        2 => 'real_ulong_num',
       ),
     ),
   ),
@@ -4385,6 +7480,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -4392,6 +7490,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PARTITIONS_SYM',
+        1 => 'real_ulong_num',
       ),
     ),
   ),
@@ -4401,6 +7504,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptSubPartWith_8001a404',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -4413,6 +7519,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'SUBPARTITION_SYM',
+        1 => 'BY',
+        2 => 'opt_linear',
+        3 => 'HASH_SYM',
+        4 => '(',
+        5 => 'bit_expr',
+        6 => ')',
+        7 => 'opt_num_subparts',
+      ),
     ),
     2 =>
     array (
@@ -4424,6 +7541,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 6,
         3 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'SUBPARTITION_SYM',
+        1 => 'BY',
+        2 => 'opt_linear',
+        3 => 'KEY_SYM',
+        4 => 'opt_key_algo',
+        5 => '(',
+        6 => 'name_list',
+        7 => ')',
+        8 => 'opt_num_subparts',
+      ),
     ),
   ),
   'opt_name_list' =>
@@ -4434,10 +7563,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'name_list',
+      ),
     ),
   ),
   'name_list' =>
@@ -4445,6 +7581,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
     1 =>
     array (
@@ -4453,6 +7593,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'name_list',
+        1 => ',',
+        2 => 'ident',
       ),
     ),
   ),
@@ -4464,6 +7610,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -4471,6 +7620,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SUBPARTITIONS_SYM',
+        1 => 'real_ulong_num',
       ),
     ),
   ),
@@ -4482,6 +7636,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -4490,6 +7647,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'part_def_list',
+        2 => ')',
+      ),
     ),
   ),
   'part_def_list' =>
@@ -4497,6 +7660,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'part_definition',
+      ),
     ),
     1 =>
     array (
@@ -4505,6 +7672,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'part_def_list',
+        1 => ',',
+        2 => 'part_definition',
       ),
     ),
   ),
@@ -4520,6 +7693,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'PARTITION_SYM',
+        1 => 'ident',
+        2 => 'opt_part_values',
+        3 => 'opt_part_options',
+        4 => 'opt_sub_partition',
+      ),
     ),
   ),
   'opt_part_values' =>
@@ -4530,6 +7711,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -4538,6 +7722,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'VALUES',
+        1 => 'LESS_SYM',
+        2 => 'THAN_SYM',
+        3 => 'part_func_max',
+      ),
     ),
     2 =>
     array (
@@ -4545,6 +7736,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'VALUES',
+        1 => 'IN_SYM',
+        2 => 'part_values_in',
       ),
     ),
   ),
@@ -4556,10 +7753,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'MAX_VALUE_SYM',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'part_value_item_list_paren',
+      ),
     ),
   ),
   'part_values_in' =>
@@ -4567,6 +7772,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'part_value_item_list_paren',
+      ),
     ),
     1 =>
     array (
@@ -4575,6 +7784,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'part_value_list',
+        2 => ')',
+      ),
     ),
   ),
   'part_value_list' =>
@@ -4582,6 +7797,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'part_value_item_list_paren',
+      ),
     ),
     1 =>
     array (
@@ -4590,6 +7809,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'part_value_list',
+        1 => ',',
+        2 => 'part_value_item_list_paren',
       ),
     ),
   ),
@@ -4602,6 +7827,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'part_value_item_list',
+        2 => ')',
+      ),
     ),
   ),
   'part_value_item_list' =>
@@ -4609,6 +7840,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'part_value_item',
+      ),
     ),
     1 =>
     array (
@@ -4617,6 +7852,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'part_value_item_list',
+        1 => ',',
+        2 => 'part_value_item',
       ),
     ),
   ),
@@ -4628,10 +7869,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'MAX_VALUE_SYM',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+      ),
     ),
   ),
   'opt_sub_partition' =>
@@ -4642,6 +7891,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -4650,6 +7902,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'sub_part_list',
+        2 => ')',
+      ),
     ),
   ),
   'sub_part_list' =>
@@ -4657,6 +7915,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sub_part_definition',
+      ),
     ),
     1 =>
     array (
@@ -4665,6 +7927,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'sub_part_list',
+        1 => ',',
+        2 => 'sub_part_definition',
       ),
     ),
   ),
@@ -4678,6 +7946,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'SUBPARTITION_SYM',
+        1 => 'ident_or_text',
+        2 => 'opt_part_options',
+      ),
     ),
   ),
   'opt_part_options' =>
@@ -4688,10 +7962,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'part_option_list',
+      ),
     ),
   ),
   'part_option_list' =>
@@ -4704,10 +7985,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'part_option_list',
+        1 => 'part_option',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'part_option',
+      ),
     ),
   ),
   'part_option' =>
@@ -4720,6 +8010,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'TABLESPACE_SYM',
+        1 => 'opt_equal',
+        2 => 'ident',
+      ),
     ),
     1 =>
     array (
@@ -4730,6 +8026,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_storage',
+        1 => 'ENGINE_SYM',
+        2 => 'opt_equal',
+        3 => 'ident_or_text',
+      ),
     ),
     2 =>
     array (
@@ -4738,6 +8041,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NODEGROUP_SYM',
+        1 => 'opt_equal',
+        2 => 'real_ulong_num',
       ),
     ),
     3 =>
@@ -4748,6 +8057,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'MAX_ROWS',
+        1 => 'opt_equal',
+        2 => 'real_ulonglong_num',
+      ),
     ),
     4 =>
     array (
@@ -4756,6 +8071,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MIN_ROWS',
+        1 => 'opt_equal',
+        2 => 'real_ulonglong_num',
       ),
     ),
     5 =>
@@ -4766,6 +8087,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'DATA_SYM',
+        1 => 'DIRECTORY_SYM',
+        2 => 'opt_equal',
+        3 => 'TEXT_STRING_sys',
+      ),
     ),
     6 =>
     array (
@@ -4774,6 +8102,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INDEX_SYM',
+        1 => 'DIRECTORY_SYM',
+        2 => 'opt_equal',
+        3 => 'TEXT_STRING_sys',
       ),
     ),
     7 =>
@@ -4784,6 +8119,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT_SYM',
+        1 => 'opt_equal',
+        2 => 'TEXT_STRING_sys',
+      ),
     ),
   ),
   'alter_database_options' =>
@@ -4791,6 +8132,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_database_option',
+      ),
     ),
     1 =>
     array (
@@ -4800,6 +8145,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'alter_database_options',
+        1 => 'alter_database_option',
+      ),
     ),
   ),
   'alter_database_option' =>
@@ -4807,6 +8157,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'create_database_option',
+      ),
     ),
     1 =>
     array (
@@ -4815,6 +8169,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'READ_SYM',
+        1 => 'ONLY_SYM',
+        2 => 'opt_equal',
+        3 => 'ternary_option',
       ),
     ),
   ),
@@ -4826,10 +8187,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'create_database_options',
+      ),
     ),
   ),
   'create_database_options' =>
@@ -4837,6 +8205,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'create_database_option',
+      ),
     ),
     1 =>
     array (
@@ -4846,6 +8218,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'create_database_options',
+        1 => 'create_database_option',
+      ),
     ),
   ),
   'create_database_option' =>
@@ -4853,14 +8230,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'default_collation',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'default_charset',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'default_encryption',
+      ),
     ),
   ),
   'opt_if_not_exists' =>
@@ -4871,6 +8260,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -4879,6 +8271,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'IF',
+        1 => 'not',
+        2 => 'EXISTS',
+      ),
     ),
   ),
   'create_table_options_space_separated' =>
@@ -4886,6 +8284,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'create_table_option',
+      ),
     ),
     1 =>
     array (
@@ -4895,6 +8297,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'create_table_options_space_separated',
+        1 => 'create_table_option',
+      ),
     ),
   ),
   'create_table_options' =>
@@ -4902,6 +8309,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'create_table_option',
+      ),
     ),
     1 =>
     array (
@@ -4912,6 +8323,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'create_table_options',
+        1 => 'opt_comma',
+        2 => 'create_table_option',
+      ),
     ),
   ),
   'opt_comma' =>
@@ -4919,10 +8336,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptCommaChoice_07863778::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptCommaChoice_07863778::Use_d03502c4',
+      'symbols' =>
+      array (
+        0 => ',',
+      ),
     ),
   ),
   'create_table_option' =>
@@ -4935,6 +8359,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ENGINE_SYM',
+        1 => 'opt_equal',
+        2 => 'ident_or_text',
+      ),
     ),
     1 =>
     array (
@@ -4942,6 +8372,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SECONDARY_ENGINE_SYM',
+        1 => 'opt_equal',
+        2 => 'NULL_SYM',
       ),
     ),
     2 =>
@@ -4952,6 +8388,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'SECONDARY_ENGINE_SYM',
+        1 => 'opt_equal',
+        2 => 'ident_or_text',
+      ),
     ),
     3 =>
     array (
@@ -4960,6 +8402,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MAX_ROWS',
+        1 => 'opt_equal',
+        2 => 'ulonglong_num',
       ),
     ),
     4 =>
@@ -4970,6 +8418,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'MIN_ROWS',
+        1 => 'opt_equal',
+        2 => 'ulonglong_num',
+      ),
     ),
     5 =>
     array (
@@ -4978,6 +8432,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'AVG_ROW_LENGTH',
+        1 => 'opt_equal',
+        2 => 'ulonglong_num',
       ),
     ),
     6 =>
@@ -4988,6 +8448,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD',
+        1 => 'opt_equal',
+        2 => 'TEXT_STRING_sys',
+      ),
     ),
     7 =>
     array (
@@ -4996,6 +8462,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT_SYM',
+        1 => 'opt_equal',
+        2 => 'TEXT_STRING_sys',
       ),
     ),
     8 =>
@@ -5006,6 +8478,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMPRESSION_SYM',
+        1 => 'opt_equal',
+        2 => 'TEXT_STRING_sys',
+      ),
     ),
     9 =>
     array (
@@ -5014,6 +8492,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ENCRYPTION_SYM',
+        1 => 'opt_equal',
+        2 => 'TEXT_STRING_sys',
       ),
     ),
     10 =>
@@ -5024,6 +8508,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'AUTO_INC',
+        1 => 'opt_equal',
+        2 => 'ulonglong_num',
+      ),
     ),
     11 =>
     array (
@@ -5032,6 +8522,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PACK_KEYS_SYM',
+        1 => 'opt_equal',
+        2 => 'ternary_option',
       ),
     ),
     12 =>
@@ -5042,6 +8538,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'STATS_AUTO_RECALC_SYM',
+        1 => 'opt_equal',
+        2 => 'ternary_option',
+      ),
     ),
     13 =>
     array (
@@ -5050,6 +8552,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'STATS_PERSISTENT_SYM',
+        1 => 'opt_equal',
+        2 => 'ternary_option',
       ),
     ),
     14 =>
@@ -5060,6 +8568,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'STATS_SAMPLE_PAGES_SYM',
+        1 => 'opt_equal',
+        2 => 'ulong_num',
+      ),
     ),
     15 =>
     array (
@@ -5067,6 +8581,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'STATS_SAMPLE_PAGES_SYM',
+        1 => 'opt_equal',
+        2 => 'DEFAULT_SYM',
       ),
     ),
     16 =>
@@ -5077,6 +8597,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'CHECKSUM_SYM',
+        1 => 'opt_equal',
+        2 => 'ulong_num',
+      ),
     ),
     17 =>
     array (
@@ -5085,6 +8611,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TABLE_CHECKSUM_SYM',
+        1 => 'opt_equal',
+        2 => 'ulong_num',
       ),
     ),
     18 =>
@@ -5095,6 +8627,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'DELAY_KEY_WRITE_SYM',
+        1 => 'opt_equal',
+        2 => 'ulong_num',
+      ),
     ),
     19 =>
     array (
@@ -5103,6 +8641,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ROW_FORMAT_SYM',
+        1 => 'opt_equal',
+        2 => 'row_types',
       ),
     ),
     20 =>
@@ -5113,14 +8657,30 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNION_SYM',
+        1 => 'opt_equal',
+        2 => '(',
+        3 => 'opt_table_list',
+        4 => ')',
+      ),
     ),
     21 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'default_charset',
+      ),
     ),
     22 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'default_collation',
+      ),
     ),
     23 =>
     array (
@@ -5129,6 +8689,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INSERT_METHOD',
+        1 => 'opt_equal',
+        2 => 'merge_insert_types',
       ),
     ),
     24 =>
@@ -5139,6 +8705,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'DATA_SYM',
+        1 => 'DIRECTORY_SYM',
+        2 => 'opt_equal',
+        3 => 'TEXT_STRING_sys',
+      ),
     ),
     25 =>
     array (
@@ -5147,6 +8720,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INDEX_SYM',
+        1 => 'DIRECTORY_SYM',
+        2 => 'opt_equal',
+        3 => 'TEXT_STRING_sys',
       ),
     ),
     26 =>
@@ -5157,6 +8737,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'TABLESPACE_SYM',
+        1 => 'opt_equal',
+        2 => 'ident',
+      ),
     ),
     27 =>
     array (
@@ -5164,12 +8750,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'STORAGE_SYM',
+        1 => 'DISK_SYM',
+      ),
     ),
     28 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\CreateTableOptionWithStorageSymMemorySym_8a1b3bca',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'STORAGE_SYM',
+        1 => 'MEMORY_SYM',
       ),
     ),
     29 =>
@@ -5180,6 +8776,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'CONNECTION_SYM',
+        1 => 'opt_equal',
+        2 => 'TEXT_STRING_sys',
+      ),
     ),
     30 =>
     array (
@@ -5189,12 +8791,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'KEY_BLOCK_SIZE',
+        1 => 'opt_equal',
+        2 => 'ulonglong_num',
+      ),
     ),
     31 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\CreateTableOptionWithStartSymTransactionSym_ebb5f5ec',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'START_SYM',
+        1 => 'TRANSACTION_SYM',
       ),
     ),
     32 =>
@@ -5205,6 +8818,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ENGINE_ATTRIBUTE_SYM',
+        1 => 'opt_equal',
+        2 => 'json_attribute',
+      ),
     ),
     33 =>
     array (
@@ -5214,10 +8833,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'SECONDARY_ENGINE_ATTRIBUTE_SYM',
+        1 => 'opt_equal',
+        2 => 'json_attribute',
+      ),
     ),
     34 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'option_autoextend_size',
+      ),
     ),
   ),
   'ternary_option' =>
@@ -5225,12 +8854,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ulong_num',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\TernaryOptionWithDefaultSym_f2ec1f92',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT_SYM',
       ),
     ),
   ),
@@ -5246,6 +8883,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 2,
         3 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_default',
+        1 => 'character_set',
+        2 => 'opt_equal',
+        3 => 'charset_name',
+      ),
     ),
   ),
   'default_collation' =>
@@ -5258,6 +8902,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
         2 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'opt_default',
+        1 => 'COLLATE_SYM',
+        2 => 'opt_equal',
+        3 => 'collation_name',
       ),
     ),
   ),
@@ -5272,6 +8923,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_default',
+        1 => 'ENCRYPTION_SYM',
+        2 => 'opt_equal',
+        3 => 'TEXT_STRING_sys',
+      ),
     ),
   ),
   'row_types' =>
@@ -5279,26 +8937,50 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\RowTypesChoice_e208fbd9::UseDefault_89dbf710',
+      'symbols' =>
+      array (
+        0 => 'DEFAULT_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\RowTypesChoice_e208fbd9::UseFixed_f28b6901',
+      'symbols' =>
+      array (
+        0 => 'FIXED_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\RowTypesChoice_e208fbd9::UseDynamic_ef1070bb',
+      'symbols' =>
+      array (
+        0 => 'DYNAMIC_SYM',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\RowTypesChoice_e208fbd9::UseCompressed_dbc63f89',
+      'symbols' =>
+      array (
+        0 => 'COMPRESSED_SYM',
+      ),
     ),
     4 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\RowTypesChoice_e208fbd9::UseRedundant_a5f96bdf',
+      'symbols' =>
+      array (
+        0 => 'REDUNDANT_SYM',
+      ),
     ),
     5 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\RowTypesChoice_e208fbd9::UseCompact_0bff0c2b',
+      'symbols' =>
+      array (
+        0 => 'COMPACT_SYM',
+      ),
     ),
   ),
   'merge_insert_types' =>
@@ -5306,14 +8988,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\MergeInsertTypesChoice_2475624f::UseNo_23794d91',
+      'symbols' =>
+      array (
+        0 => 'NO_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\MergeInsertTypesChoice_2475624f::UseFirst_267d3b81',
+      'symbols' =>
+      array (
+        0 => 'FIRST_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\MergeInsertTypesChoice_2475624f::UseLast_7e86aeec',
+      'symbols' =>
+      array (
+        0 => 'LAST_SYM',
+      ),
     ),
   ),
   'udf_type' =>
@@ -5324,12 +9018,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'STRING_SYM',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\UdfTypeWithRealSym_64930085',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'REAL_SYM',
       ),
     ),
     2 =>
@@ -5339,6 +9041,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DECIMAL_SYM',
+      ),
     ),
     3 =>
     array (
@@ -5347,6 +9053,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INT_SYM',
+      ),
     ),
   ),
   'table_element_list' =>
@@ -5354,6 +9064,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'table_element',
+      ),
     ),
     1 =>
     array (
@@ -5363,6 +9077,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'table_element_list',
+        1 => ',',
+        2 => 'table_element',
+      ),
     ),
   ),
   'table_element' =>
@@ -5370,10 +9090,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'column_def',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'table_constraint_def',
+      ),
     ),
   ),
   'column_def' =>
@@ -5387,6 +9115,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ident',
+        1 => 'field_def',
+        2 => 'opt_references',
+      ),
     ),
   ),
   'opt_references' =>
@@ -5397,10 +9131,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'references',
+      ),
     ),
   ),
   'table_constraint_def' =>
@@ -5415,6 +9156,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'key_or_index',
+        1 => 'opt_index_name_and_type',
+        2 => '(',
+        3 => 'key_list_with_expression',
+        4 => ')',
+        5 => 'opt_index_options',
+      ),
     ),
     1 =>
     array (
@@ -5426,6 +9176,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 4,
         3 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'FULLTEXT_SYM',
+        1 => 'opt_key_or_index',
+        2 => 'opt_ident',
+        3 => '(',
+        4 => 'key_list_with_expression',
+        5 => ')',
+        6 => 'opt_fulltext_index_options',
+      ),
     ),
     2 =>
     array (
@@ -5436,6 +9196,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
         3 => 6,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SPATIAL_SYM',
+        1 => 'opt_key_or_index',
+        2 => 'opt_ident',
+        3 => '(',
+        4 => 'key_list_with_expression',
+        5 => ')',
+        6 => 'opt_spatial_index_options',
       ),
     ),
     3 =>
@@ -5449,6 +9219,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 4,
         4 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_constraint_name',
+        1 => 'constraint_key_type',
+        2 => 'opt_index_name_and_type',
+        3 => '(',
+        4 => 'key_list_with_expression',
+        5 => ')',
+        6 => 'opt_index_options',
+      ),
     ),
     4 =>
     array (
@@ -5460,6 +9240,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 5,
         3 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_constraint_name',
+        1 => 'FOREIGN',
+        2 => 'KEY_SYM',
+        3 => 'opt_ident',
+        4 => '(',
+        5 => 'key_list',
+        6 => ')',
+        7 => 'references',
+      ),
     ),
     5 =>
     array (
@@ -5469,6 +9260,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'opt_constraint_name',
+        1 => 'check_constraint',
+        2 => 'opt_constraint_enforcement',
       ),
     ),
   ),
@@ -5481,6 +9278,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'CHECK_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ')',
+      ),
     ),
   ),
   'opt_constraint_name' =>
@@ -5491,6 +9295,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -5499,6 +9306,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'CONSTRAINT',
+        1 => 'opt_ident',
+      ),
     ),
   ),
   'opt_not' =>
@@ -5506,10 +9318,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptNotChoice_6a769467::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptNotChoice_6a769467::UseNot_8be3365c',
+      'symbols' =>
+      array (
+        0 => 'NOT_SYM',
+      ),
     ),
   ),
   'opt_constraint_enforcement' =>
@@ -5520,10 +9339,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'constraint_enforcement',
+      ),
     ),
   ),
   'constraint_enforcement' =>
@@ -5534,6 +9360,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'opt_not',
+        1 => 'ENFORCED_SYM',
       ),
     ),
   ),
@@ -5546,6 +9377,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'type',
+        1 => 'opt_column_attribute_list',
       ),
     ),
     1 =>
@@ -5560,6 +9396,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         4 => 7,
         5 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'type',
+        1 => 'opt_collate',
+        2 => 'opt_generated_always',
+        3 => 'AS',
+        4 => '(',
+        5 => 'expr',
+        6 => ')',
+        7 => 'opt_stored_attribute',
+        8 => 'opt_column_attribute_list',
+      ),
     ),
   ),
   'opt_generated_always' =>
@@ -5567,10 +9415,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptGeneratedAlwaysChoice_c41a9e3f::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptGeneratedAlwaysChoice_c41a9e3f::UseGeneratedAlways_75b9aa2e',
+      'symbols' =>
+      array (
+        0 => 'GENERATED',
+        1 => 'ALWAYS_SYM',
+      ),
     ),
   ),
   'opt_stored_attribute' =>
@@ -5578,14 +9434,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptStoredAttributeChoice_5c2f8f16::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptStoredAttributeChoice_5c2f8f16::UseVirtual_bf02c8c1',
+      'symbols' =>
+      array (
+        0 => 'VIRTUAL_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptStoredAttributeChoice_5c2f8f16::UseStored_1afc73e0',
+      'symbols' =>
+      array (
+        0 => 'STORED_SYM',
+      ),
     ),
   ),
   'type' =>
@@ -5599,6 +9466,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'int_type',
+        1 => 'opt_field_length',
+        2 => 'field_options',
+      ),
     ),
     1 =>
     array (
@@ -5608,6 +9481,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'real_type',
+        1 => 'opt_precision',
+        2 => 'field_options',
       ),
     ),
     2 =>
@@ -5619,12 +9498,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'numeric_type',
+        1 => 'float_options',
+        2 => 'field_options',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\TypeWithBitSym_33c3a5aa',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'BIT_SYM',
       ),
     ),
     4 =>
@@ -5634,6 +9523,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'BIT_SYM',
+        1 => 'field_length',
+      ),
     ),
     5 =>
     array (
@@ -5641,12 +9535,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'BOOL_SYM',
+      ),
     ),
     6 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\TypeWithBooleanSym_2ec1cded',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'BOOLEAN_SYM',
       ),
     ),
     7 =>
@@ -5658,6 +9560,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'CHAR_SYM',
+        1 => 'field_length',
+        2 => 'opt_charset_with_opt_binary',
+      ),
     ),
     8 =>
     array (
@@ -5666,6 +9574,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CHAR_SYM',
+        1 => 'opt_charset_with_opt_binary',
       ),
     ),
     9 =>
@@ -5677,6 +9590,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'nchar',
+        1 => 'field_length',
+        2 => 'opt_bin_mod',
+      ),
     ),
     10 =>
     array (
@@ -5686,6 +9605,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'nchar',
+        1 => 'opt_bin_mod',
+      ),
     ),
     11 =>
     array (
@@ -5694,12 +9618,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'BINARY_SYM',
+        1 => 'field_length',
+      ),
     ),
     12 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\TypeWithBinarySym_85f672e9',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'BINARY_SYM',
       ),
     ),
     13 =>
@@ -5711,6 +9644,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'varchar',
+        1 => 'field_length',
+        2 => 'opt_charset_with_opt_binary',
+      ),
     ),
     14 =>
     array (
@@ -5721,6 +9660,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'nvarchar',
+        1 => 'field_length',
+        2 => 'opt_bin_mod',
+      ),
     ),
     15 =>
     array (
@@ -5728,6 +9673,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'VARBINARY_SYM',
+        1 => 'field_length',
       ),
     ),
     16 =>
@@ -5739,12 +9689,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'YEAR_SYM',
+        1 => 'opt_field_length',
+        2 => 'field_options',
+      ),
     ),
     17 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\TypeWithDateSym_66fcc849',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'DATE_SYM',
       ),
     ),
     18 =>
@@ -5754,6 +9714,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'TIME_SYM',
+        1 => 'type_datetime_precision',
+      ),
     ),
     19 =>
     array (
@@ -5761,6 +9726,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TIMESTAMP_SYM',
+        1 => 'type_datetime_precision',
       ),
     ),
     20 =>
@@ -5770,12 +9740,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'DATETIME_SYM',
+        1 => 'type_datetime_precision',
+      ),
     ),
     21 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\TypeWithTinyblobSym_1b37fc83',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'TINYBLOB_SYM',
       ),
     ),
     22 =>
@@ -5785,16 +9764,29 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'BLOB_SYM',
+        1 => 'opt_field_length',
+      ),
     ),
     23 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'spatial_type',
+      ),
     ),
     24 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\TypeWithMediumblobSym_9a3a320e',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'MEDIUMBLOB_SYM',
       ),
     ),
     25 =>
@@ -5803,12 +9795,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'LONGBLOB_SYM',
+      ),
     ),
     26 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\TypeWithLongSymVarbinarySym_096d967a',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'LONG_SYM',
+        1 => 'VARBINARY_SYM',
       ),
     ),
     27 =>
@@ -5819,6 +9820,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'LONG_SYM',
+        1 => 'varchar',
+        2 => 'opt_charset_with_opt_binary',
+      ),
     ),
     28 =>
     array (
@@ -5826,6 +9833,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TINYTEXT_SYN',
+        1 => 'opt_charset_with_opt_binary',
       ),
     ),
     29 =>
@@ -5836,6 +9848,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'TEXT_SYM',
+        1 => 'opt_field_length',
+        2 => 'opt_charset_with_opt_binary',
+      ),
     ),
     30 =>
     array (
@@ -5844,6 +9862,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'MEDIUMTEXT_SYM',
+        1 => 'opt_charset_with_opt_binary',
+      ),
     ),
     31 =>
     array (
@@ -5851,6 +9874,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LONGTEXT_SYM',
+        1 => 'opt_charset_with_opt_binary',
       ),
     ),
     32 =>
@@ -5861,6 +9889,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ENUM_SYM',
+        1 => '(',
+        2 => 'string_list',
+        3 => ')',
+        4 => 'opt_charset_with_opt_binary',
+      ),
     ),
     33 =>
     array (
@@ -5870,6 +9906,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'SET_SYM',
+        1 => '(',
+        2 => 'string_list',
+        3 => ')',
+        4 => 'opt_charset_with_opt_binary',
+      ),
     ),
     34 =>
     array (
@@ -5878,6 +9922,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'LONG_SYM',
+        1 => 'opt_charset_with_opt_binary',
+      ),
     ),
     35 =>
     array (
@@ -5885,12 +9934,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'SERIAL_SYM',
+      ),
     ),
     36 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\TypeWithJsonSym_d784a430',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'JSON_SYM',
       ),
     ),
   ),
@@ -5902,6 +9959,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'GEOMETRY_SYM',
+      ),
     ),
     1 =>
     array (
@@ -5910,12 +9971,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'GEOMETRYCOLLECTION_SYM',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\SpatialTypeWithPointSym_e0841522',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'POINT_SYM',
       ),
     ),
     3 =>
@@ -5924,12 +9993,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'MULTIPOINT_SYM',
+      ),
     ),
     4 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\SpatialTypeWithLinestringSym_65c18fc4',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'LINESTRING_SYM',
       ),
     ),
     5 =>
@@ -5938,6 +10015,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'MULTILINESTRING_SYM',
+      ),
     ),
     6 =>
     array (
@@ -5945,12 +10026,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'POLYGON_SYM',
+      ),
     ),
     7 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\SpatialTypeWithMultipolygonSym_700bb1f0',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'MULTIPOLYGON_SYM',
       ),
     ),
   ),
@@ -5962,6 +10051,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'NCHAR_SYM',
+      ),
     ),
     1 =>
     array (
@@ -5969,6 +10062,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NATIONAL_SYM',
+        1 => 'CHAR_SYM',
       ),
     ),
   ),
@@ -5981,6 +10079,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CHAR_SYM',
+        1 => 'VARYING',
+      ),
     ),
     1 =>
     array (
@@ -5988,6 +10091,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'VARCHAR_SYM',
       ),
     ),
   ),
@@ -6000,12 +10107,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'NATIONAL_SYM',
+        1 => 'VARCHAR_SYM',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\NvarcharWithNvarcharSym_482a214c',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'NVARCHAR_SYM',
       ),
     ),
     2 =>
@@ -6015,6 +10131,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'NCHAR_SYM',
+        1 => 'VARCHAR_SYM',
+      ),
     ),
     3 =>
     array (
@@ -6023,12 +10144,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'NATIONAL_SYM',
+        1 => 'CHAR_SYM',
+        2 => 'VARYING',
+      ),
     ),
     4 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\NvarcharWithNcharSymVarying_5beb3ae7',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'NCHAR_SYM',
+        1 => 'VARYING',
       ),
     ),
   ),
@@ -6041,6 +10173,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INT_SYM',
+      ),
     ),
     1 =>
     array (
@@ -6048,6 +10184,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TINYINT_SYM',
       ),
     ),
     2 =>
@@ -6057,6 +10197,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SMALLINT_SYM',
+      ),
     ),
     3 =>
     array (
@@ -6065,6 +10209,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MEDIUMINT_SYM',
+      ),
     ),
     4 =>
     array (
@@ -6072,6 +10220,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BIGINT_SYM',
       ),
     ),
   ),
@@ -6083,6 +10235,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'REAL_SYM',
+      ),
     ),
     1 =>
     array (
@@ -6092,6 +10248,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'DOUBLE_SYM',
+        1 => 'opt_PRECISION',
+      ),
     ),
   ),
   'opt_PRECISION' =>
@@ -6099,10 +10260,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptPrecisionChoice_1c718145::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptPrecisionChoice_1c718145::UsePrecision_783d8929',
+      'symbols' =>
+      array (
+        0 => 'PRECISION',
+      ),
     ),
   ),
   'numeric_type' =>
@@ -6114,6 +10282,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FLOAT_SYM',
+      ),
     ),
     1 =>
     array (
@@ -6122,6 +10294,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DECIMAL_SYM',
+      ),
     ),
     2 =>
     array (
@@ -6129,12 +10305,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'NUMERIC_SYM',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\NumericTypeWithFixedSym_d75c8291',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'FIXED_SYM',
       ),
     ),
   ),
@@ -6146,10 +10330,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'field_length',
+      ),
     ),
   ),
   'float_options' =>
@@ -6160,14 +10351,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'field_length',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'precision',
+      ),
     ),
   ),
   'precision' =>
@@ -6180,6 +10382,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'NUM',
+        2 => ',',
+        3 => 'NUM',
+        4 => ')',
+      ),
     ),
   ),
   'type_datetime_precision' =>
@@ -6190,6 +10400,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -6197,6 +10410,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'NUM',
+        2 => ')',
       ),
     ),
   ),
@@ -6208,12 +10427,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\FuncDatetimePrecisionWith_7f68bd5e',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => ')',
       ),
     ),
     2 =>
@@ -6222,6 +10449,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'NUM',
+        2 => ')',
       ),
     ),
   ),
@@ -6233,10 +10466,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'field_opt_list',
+      ),
     ),
   ),
   'field_opt_list' =>
@@ -6249,10 +10489,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'field_opt_list',
+        1 => 'field_option',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'field_option',
+      ),
     ),
   ),
   'field_option' =>
@@ -6260,14 +10509,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\FieldOptionChoice_01bed8e0::UseSigned_701723fe',
+      'symbols' =>
+      array (
+        0 => 'SIGNED_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\FieldOptionChoice_01bed8e0::UseUnsigned_0839843f',
+      'symbols' =>
+      array (
+        0 => 'UNSIGNED_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\FieldOptionChoice_01bed8e0::UseZerofill_34f1925c',
+      'symbols' =>
+      array (
+        0 => 'ZEROFILL_SYM',
+      ),
     ),
   ),
   'field_length' =>
@@ -6279,6 +10540,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'LONG_NUM',
+        2 => ')',
+      ),
     ),
     1 =>
     array (
@@ -6286,6 +10553,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'ULONGLONG_NUM',
+        2 => ')',
       ),
     ),
     2 =>
@@ -6295,6 +10568,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'DECIMAL_NUM',
+        2 => ')',
+      ),
     ),
     3 =>
     array (
@@ -6302,6 +10581,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'NUM',
+        2 => ')',
       ),
     ),
   ),
@@ -6313,10 +10598,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'field_length',
+      ),
     ),
   ),
   'opt_precision' =>
@@ -6327,10 +10619,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'precision',
+      ),
     ),
   ),
   'opt_column_attribute_list' =>
@@ -6341,10 +10640,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'column_attribute_list',
+      ),
     ),
   ),
   'column_attribute_list' =>
@@ -6357,10 +10663,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'column_attribute_list',
+        1 => 'column_attribute',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'column_attribute',
+      ),
     ),
   ),
   'column_attribute' =>
@@ -6371,6 +10686,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'NULL_SYM',
+      ),
     ),
     1 =>
     array (
@@ -6378,6 +10697,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'not',
+        1 => 'NULL_SYM',
       ),
     ),
     2 =>
@@ -6387,6 +10711,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'not',
+        1 => 'SECONDARY_SYM',
+      ),
     ),
     3 =>
     array (
@@ -6394,6 +10723,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT_SYM',
+        1 => 'now_or_signed_literal',
       ),
     ),
     4 =>
@@ -6403,6 +10737,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ')',
+      ),
     ),
     5 =>
     array (
@@ -6411,6 +10752,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ON_SYM',
+        1 => 'UPDATE_SYM',
+        2 => 'now',
+      ),
     ),
     6 =>
     array (
@@ -6418,12 +10765,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'AUTO_INC',
+      ),
     ),
     7 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\ColumnAttributeWithSerialSymDefaultSymValueSym_9e4cc32d',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'SERIAL_SYM',
+        1 => 'DEFAULT_SYM',
+        2 => 'VALUE_SYM',
       ),
     ),
     8 =>
@@ -6433,6 +10790,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_primary',
+        1 => 'KEY_SYM',
+      ),
     ),
     9 =>
     array (
@@ -6440,12 +10802,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'UNIQUE_SYM',
+      ),
     ),
     10 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\ColumnAttributeWithUniqueSymKeySym_7cff04f7',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'UNIQUE_SYM',
+        1 => 'KEY_SYM',
       ),
     ),
     11 =>
@@ -6455,6 +10826,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT_SYM',
+        1 => 'TEXT_STRING_sys',
+      ),
     ),
     12 =>
     array (
@@ -6462,6 +10838,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COLLATE_SYM',
+        1 => 'collation_name',
       ),
     ),
     13 =>
@@ -6471,6 +10852,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'COLUMN_FORMAT_SYM',
+        1 => 'column_format',
+      ),
     ),
     14 =>
     array (
@@ -6479,6 +10865,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'STORAGE_SYM',
+        1 => 'storage_media',
+      ),
     ),
     15 =>
     array (
@@ -6486,6 +10877,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SRID_SYM',
+        1 => 'real_ulonglong_num',
       ),
     ),
     16 =>
@@ -6496,10 +10892,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_constraint_name',
+        1 => 'check_constraint',
+      ),
     ),
     17 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'constraint_enforcement',
+      ),
     ),
     18 =>
     array (
@@ -6508,6 +10913,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ENGINE_ATTRIBUTE_SYM',
+        1 => 'opt_equal',
+        2 => 'json_attribute',
       ),
     ),
     19 =>
@@ -6518,10 +10929,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'SECONDARY_ENGINE_ATTRIBUTE_SYM',
+        1 => 'opt_equal',
+        2 => 'json_attribute',
+      ),
     ),
     20 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'visibility',
+      ),
     ),
   ),
   'column_format' =>
@@ -6529,14 +10950,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ColumnFormatChoice_3a30b484::UseDefault_89dbf710',
+      'symbols' =>
+      array (
+        0 => 'DEFAULT_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ColumnFormatChoice_3a30b484::UseFixed_f28b6901',
+      'symbols' =>
+      array (
+        0 => 'FIXED_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ColumnFormatChoice_3a30b484::UseDynamic_ef1070bb',
+      'symbols' =>
+      array (
+        0 => 'DYNAMIC_SYM',
+      ),
     ),
   ),
   'storage_media' =>
@@ -6544,14 +10977,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\StorageMediaChoice_544b467b::UseDefault_89dbf710',
+      'symbols' =>
+      array (
+        0 => 'DEFAULT_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\StorageMediaChoice_544b467b::UseDisk_8267b044',
+      'symbols' =>
+      array (
+        0 => 'DISK_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\StorageMediaChoice_544b467b::UseMemory_a266fe9c',
+      'symbols' =>
+      array (
+        0 => 'MEMORY_SYM',
+      ),
     ),
   ),
   'now' =>
@@ -6564,6 +11009,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'NOW_SYM',
+        1 => 'func_datetime_precision',
+      ),
     ),
   ),
   'now_or_signed_literal' =>
@@ -6571,10 +11021,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'now',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'signed_literal_or_null',
+      ),
     ),
   ),
   'character_set' =>
@@ -6586,12 +11044,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CHAR_SYM',
+        1 => 'SET_SYM',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\CharacterSetWithCharset_451e4a9c',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'CHARSET',
       ),
     ),
   ),
@@ -6600,12 +11067,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident_or_text',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\CharsetNameWithBinarySym_04b33183',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'BINARY_SYM',
       ),
     ),
   ),
@@ -6617,6 +11092,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -6626,6 +11104,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'character_set',
+        1 => 'charset_name',
+      ),
     ),
   ),
   'old_or_new_charset_name' =>
@@ -6633,12 +11116,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident_or_text',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OldOrNewCharsetNameWithBinarySym_967ea453',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'BINARY_SYM',
       ),
     ),
   ),
@@ -6647,12 +11138,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'old_or_new_charset_name',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OldOrNewCharsetNameOrDefaultWithDefaultSym_bf7ef988',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT_SYM',
       ),
     ),
   ),
@@ -6661,12 +11160,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident_or_text',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\CollationNameWithBinarySym_36e1af5b',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'BINARY_SYM',
       ),
     ),
   ),
@@ -6678,6 +11185,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -6686,6 +11196,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'COLLATE_SYM',
+        1 => 'collation_name',
+      ),
     ),
   ),
   'opt_default' =>
@@ -6693,10 +11208,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptDefaultChoice_5cef4826::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptDefaultChoice_5cef4826::UseDefault_89dbf710',
+      'symbols' =>
+      array (
+        0 => 'DEFAULT_SYM',
+      ),
     ),
   ),
   'ascii' =>
@@ -6704,14 +11226,28 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\AsciiChoice_bcce0f9e::UseAscii_481868aa',
+      'symbols' =>
+      array (
+        0 => 'ASCII_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\AsciiChoice_bcce0f9e::UseBinaryAscii_8dcea185',
+      'symbols' =>
+      array (
+        0 => 'BINARY_SYM',
+        1 => 'ASCII_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\AsciiChoice_bcce0f9e::UseAsciiBinary_99b568cc',
+      'symbols' =>
+      array (
+        0 => 'ASCII_SYM',
+        1 => 'BINARY_SYM',
+      ),
     ),
   ),
   'unicode' =>
@@ -6719,14 +11255,28 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\UnicodeChoice_12e6823c::UseUnicode_7d10420f',
+      'symbols' =>
+      array (
+        0 => 'UNICODE_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\UnicodeChoice_12e6823c::UseUnicodeBinary_e90354c2',
+      'symbols' =>
+      array (
+        0 => 'UNICODE_SYM',
+        1 => 'BINARY_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\UnicodeChoice_12e6823c::UseBinaryUnicode_62131883',
+      'symbols' =>
+      array (
+        0 => 'BINARY_SYM',
+        1 => 'UNICODE_SYM',
+      ),
     ),
   ),
   'opt_charset_with_opt_binary' =>
@@ -6737,20 +11287,35 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ascii',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'unicode',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptCharsetWithOptBinaryWithByteSym_0f27da53',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'BYTE_SYM',
       ),
     ),
     4 =>
@@ -6762,12 +11327,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'character_set',
+        1 => 'charset_name',
+        2 => 'opt_bin_mod',
+      ),
     ),
     5 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptCharsetWithOptBinaryWithBinarySym_0a9a0946',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'BINARY_SYM',
       ),
     ),
     6 =>
@@ -6778,6 +11353,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'BINARY_SYM',
+        1 => 'character_set',
+        2 => 'charset_name',
+      ),
     ),
   ),
   'opt_bin_mod' =>
@@ -6785,10 +11366,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptBinModChoice_e8ffc0d2::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptBinModChoice_e8ffc0d2::UseBinary_4c77b56b',
+      'symbols' =>
+      array (
+        0 => 'BINARY_SYM',
+      ),
     ),
   ),
   'ws_num_codepoints' =>
@@ -6800,6 +11388,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'real_ulong_num',
+        2 => ')',
+      ),
     ),
   ),
   'opt_primary' =>
@@ -6807,10 +11401,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptPrimaryChoice_80145a26::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptPrimaryChoice_80145a26::UsePrimary_bc9a6688',
+      'symbols' =>
+      array (
+        0 => 'PRIMARY_SYM',
+      ),
     ),
   ),
   'references' =>
@@ -6825,6 +11426,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'REFERENCES',
+        1 => 'table_ident',
+        2 => 'opt_ref_list',
+        3 => 'opt_match_clause',
+        4 => 'opt_on_update_delete',
+      ),
     ),
   ),
   'opt_ref_list' =>
@@ -6835,6 +11444,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -6842,6 +11454,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'reference_list',
+        2 => ')',
       ),
     ),
   ),
@@ -6855,10 +11473,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'reference_list',
+        1 => ',',
+        2 => 'ident',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
   ),
   'opt_match_clause' =>
@@ -6866,18 +11494,36 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptMatchClauseChoice_46f6cce1::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptMatchClauseChoice_46f6cce1::UseMatchFull_a1c2aa11',
+      'symbols' =>
+      array (
+        0 => 'MATCH',
+        1 => 'FULL',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptMatchClauseChoice_46f6cce1::UseMatchPartial_b0d05904',
+      'symbols' =>
+      array (
+        0 => 'MATCH',
+        1 => 'PARTIAL',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptMatchClauseChoice_46f6cce1::UseMatchSimple_cdbeceec',
+      'symbols' =>
+      array (
+        0 => 'MATCH',
+        1 => 'SIMPLE_SYM',
+      ),
     ),
   ),
   'opt_on_update_delete' =>
@@ -6888,6 +11534,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -6896,6 +11545,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ON_SYM',
+        1 => 'UPDATE_SYM',
+        2 => 'delete_option',
+      ),
     ),
     2 =>
     array (
@@ -6903,6 +11558,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ON_SYM',
+        1 => 'DELETE_SYM',
+        2 => 'delete_option',
       ),
     ),
     3 =>
@@ -6913,6 +11574,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ON_SYM',
+        1 => 'UPDATE_SYM',
+        2 => 'delete_option',
+        3 => 'ON_SYM',
+        4 => 'DELETE_SYM',
+        5 => 'delete_option',
+      ),
     ),
     4 =>
     array (
@@ -6922,6 +11592,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ON_SYM',
+        1 => 'DELETE_SYM',
+        2 => 'delete_option',
+        3 => 'ON_SYM',
+        4 => 'UPDATE_SYM',
+        5 => 'delete_option',
+      ),
     ),
   ),
   'delete_option' =>
@@ -6929,22 +11608,45 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\DeleteOptionChoice_5edeaf0e::UseRestrict_bd7a04e6',
+      'symbols' =>
+      array (
+        0 => 'RESTRICT',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\DeleteOptionChoice_5edeaf0e::UseCascade_86844e57',
+      'symbols' =>
+      array (
+        0 => 'CASCADE',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\DeleteOptionChoice_5edeaf0e::UseSetNull_a5f7c4e6',
+      'symbols' =>
+      array (
+        0 => 'SET_SYM',
+        1 => 'NULL_SYM',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\DeleteOptionChoice_5edeaf0e::UseNoAction_25595c7c',
+      'symbols' =>
+      array (
+        0 => 'NO_SYM',
+        1 => 'ACTION',
+      ),
     ),
     4 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\DeleteOptionChoice_5edeaf0e::UseSetDefault_639a6c2d',
+      'symbols' =>
+      array (
+        0 => 'SET_SYM',
+        1 => 'DEFAULT_SYM',
+      ),
     ),
   ),
   'constraint_key_type' =>
@@ -6955,6 +11657,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'PRIMARY_SYM',
+        1 => 'KEY_SYM',
+      ),
     ),
     1 =>
     array (
@@ -6963,6 +11670,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNIQUE_SYM',
+        1 => 'opt_key_or_index',
+      ),
     ),
   ),
   'key_or_index' =>
@@ -6970,10 +11682,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\KeyOrIndexChoice_f6ff0fbf::UseKey_5ca24005',
+      'symbols' =>
+      array (
+        0 => 'KEY_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\KeyOrIndexChoice_f6ff0fbf::UseIndex_ea69fe17',
+      'symbols' =>
+      array (
+        0 => 'INDEX_SYM',
+      ),
     ),
   ),
   'opt_key_or_index' =>
@@ -6984,10 +11704,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'key_or_index',
+      ),
     ),
   ),
   'keys_or_index' =>
@@ -6995,14 +11722,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\KeysOrIndexChoice_63f390bb::UseKeys_3fca5061',
+      'symbols' =>
+      array (
+        0 => 'KEYS',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\KeysOrIndexChoice_63f390bb::UseIndex_ea69fe17',
+      'symbols' =>
+      array (
+        0 => 'INDEX_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\KeysOrIndexChoice_63f390bb::UseIndexes_019e4e72',
+      'symbols' =>
+      array (
+        0 => 'INDEXES',
+      ),
     ),
   ),
   'opt_unique' =>
@@ -7010,10 +11749,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptUniqueChoice_78808712::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptUniqueChoice_78808712::UseUnique_64636a12',
+      'symbols' =>
+      array (
+        0 => 'UNIQUE_SYM',
+      ),
     ),
   ),
   'opt_fulltext_index_options' =>
@@ -7024,10 +11770,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'fulltext_index_options',
+      ),
     ),
   ),
   'fulltext_index_options' =>
@@ -7035,6 +11788,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'fulltext_index_option',
+      ),
     ),
     1 =>
     array (
@@ -7044,6 +11801,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'fulltext_index_options',
+        1 => 'fulltext_index_option',
+      ),
     ),
   ),
   'fulltext_index_option' =>
@@ -7051,6 +11813,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'common_index_option',
+      ),
     ),
     1 =>
     array (
@@ -7058,6 +11824,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'PARSER_SYM',
+        2 => 'IDENT_sys',
       ),
     ),
   ),
@@ -7069,10 +11841,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'spatial_index_options',
+      ),
     ),
   ),
   'spatial_index_options' =>
@@ -7080,6 +11859,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'spatial_index_option',
+      ),
     ),
     1 =>
     array (
@@ -7089,6 +11872,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'spatial_index_options',
+        1 => 'spatial_index_option',
+      ),
     ),
   ),
   'spatial_index_option' =>
@@ -7096,6 +11884,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'common_index_option',
+      ),
     ),
   ),
   'opt_index_options' =>
@@ -7106,10 +11898,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'index_options',
+      ),
     ),
   ),
   'index_options' =>
@@ -7117,6 +11916,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'index_option',
+      ),
     ),
     1 =>
     array (
@@ -7126,6 +11929,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'index_options',
+        1 => 'index_option',
+      ),
     ),
   ),
   'index_option' =>
@@ -7133,10 +11941,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'common_index_option',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'index_type_clause',
+      ),
     ),
   ),
   'common_index_option' =>
@@ -7149,6 +11965,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'KEY_BLOCK_SIZE',
+        1 => 'opt_equal',
+        2 => 'ulong_num',
+      ),
     ),
     1 =>
     array (
@@ -7157,10 +11979,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT_SYM',
+        1 => 'TEXT_STRING_sys',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'visibility',
+      ),
     ),
     3 =>
     array (
@@ -7169,6 +12000,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ENGINE_ATTRIBUTE_SYM',
+        1 => 'opt_equal',
+        2 => 'json_attribute',
       ),
     ),
     4 =>
@@ -7179,6 +12016,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'SECONDARY_ENGINE_ATTRIBUTE_SYM',
+        1 => 'opt_equal',
+        2 => 'json_attribute',
+      ),
     ),
   ),
   'opt_index_name_and_type' =>
@@ -7186,6 +12029,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'opt_ident',
+      ),
     ),
     1 =>
     array (
@@ -7195,6 +12042,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_ident',
+        1 => 'USING',
+        2 => 'index_type',
+      ),
     ),
     2 =>
     array (
@@ -7203,6 +12056,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ident',
+        1 => 'TYPE_SYM',
+        2 => 'index_type',
       ),
     ),
   ),
@@ -7214,10 +12073,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'index_type_clause',
+      ),
     ),
   ),
   'index_type_clause' =>
@@ -7229,6 +12095,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'USING',
+        1 => 'index_type',
+      ),
     ),
     1 =>
     array (
@@ -7237,6 +12108,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'TYPE_SYM',
+        1 => 'index_type',
+      ),
     ),
   ),
   'visibility' =>
@@ -7244,10 +12120,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\VisibilityChoice_d7208761::UseVisible_5cea256d',
+      'symbols' =>
+      array (
+        0 => 'VISIBLE_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\VisibilityChoice_d7208761::UseInvisible_03f65a90',
+      'symbols' =>
+      array (
+        0 => 'INVISIBLE_SYM',
+      ),
     ),
   ),
   'index_type' =>
@@ -7255,14 +12139,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\IndexTypeChoice_5a9f82fb::UseBtree_3a08eb1d',
+      'symbols' =>
+      array (
+        0 => 'BTREE_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\IndexTypeChoice_5a9f82fb::UseRtree_c3316be2',
+      'symbols' =>
+      array (
+        0 => 'RTREE_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\IndexTypeChoice_5a9f82fb::UseHash_c1fb44c7',
+      'symbols' =>
+      array (
+        0 => 'HASH_SYM',
+      ),
     ),
   ),
   'key_list' =>
@@ -7275,10 +12171,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'key_list',
+        1 => ',',
+        2 => 'key_part',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'key_part',
+      ),
     ),
   ),
   'key_part' =>
@@ -7291,6 +12197,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ident',
+        1 => 'opt_ordering_direction',
+      ),
     ),
     1 =>
     array (
@@ -7300,6 +12211,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
         2 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ident',
+        1 => '(',
+        2 => 'NUM',
+        3 => ')',
+        4 => 'opt_ordering_direction',
       ),
     ),
   ),
@@ -7313,10 +12232,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'key_list_with_expression',
+        1 => ',',
+        2 => 'key_part_with_expression',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'key_part_with_expression',
+      ),
     ),
   ),
   'key_part_with_expression' =>
@@ -7324,6 +12253,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'key_part',
+      ),
     ),
     1 =>
     array (
@@ -7332,6 +12265,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'expr',
+        2 => ')',
+        3 => 'opt_ordering_direction',
       ),
     ),
   ),
@@ -7343,10 +12283,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
   ),
   'string_list' =>
@@ -7354,6 +12301,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'text_string',
+      ),
     ),
     1 =>
     array (
@@ -7362,6 +12313,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'string_list',
+        1 => ',',
+        2 => 'text_string',
       ),
     ),
   ),
@@ -7375,6 +12332,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TABLE_SYM',
+        2 => 'table_ident',
+        3 => 'opt_alter_table_actions',
+      ),
     ),
     1 =>
     array (
@@ -7383,6 +12347,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TABLE_SYM',
+        2 => 'table_ident',
+        3 => 'standalone_alter_table_action',
       ),
     ),
   ),
@@ -7397,6 +12368,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'DATABASE',
+        2 => 'ident_or_empty',
+        3 => 'alter_database_options',
+      ),
     ),
   ),
   'alter_procedure_stmt' =>
@@ -7409,6 +12387,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'PROCEDURE_SYM',
+        2 => 'sp_name',
+        3 => 'sp_a_chistics',
+      ),
     ),
   ),
   'alter_function_stmt' =>
@@ -7420,6 +12405,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'FUNCTION_SYM',
+        2 => 'sp_name',
+        3 => 'sp_a_chistics',
       ),
     ),
   ),
@@ -7434,6 +12426,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'view_algorithm',
+        2 => 'definer_opt',
+        3 => 'view_tail',
+      ),
     ),
     1 =>
     array (
@@ -7442,6 +12441,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'definer_opt',
+        2 => 'view_tail',
       ),
     ),
   ),
@@ -7460,6 +12465,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         5 => 7,
         6 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'definer_opt',
+        2 => 'EVENT_SYM',
+        3 => 'sp_name',
+        4 => 'ev_alter_on_schedule_completion',
+        5 => 'opt_ev_rename_to',
+        6 => 'opt_ev_status',
+        7 => 'opt_ev_comment',
+        8 => 'opt_ev_sql_stmt',
+      ),
     ),
   ),
   'alter_logfile_stmt' =>
@@ -7472,6 +12489,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 5,
         2 => 6,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'LOGFILE_SYM',
+        2 => 'GROUP_SYM',
+        3 => 'ident',
+        4 => 'ADD',
+        5 => 'lg_undofile',
+        6 => 'opt_alter_logfile_group_options',
       ),
     ),
   ),
@@ -7486,6 +12513,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 4,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TABLESPACE_SYM',
+        2 => 'ident',
+        3 => 'ADD',
+        4 => 'ts_datafile',
+        5 => 'opt_alter_tablespace_options',
+      ),
     ),
     1 =>
     array (
@@ -7496,6 +12532,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 4,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TABLESPACE_SYM',
+        2 => 'ident',
+        3 => 'DROP',
+        4 => 'ts_datafile',
+        5 => 'opt_alter_tablespace_options',
+      ),
     ),
     2 =>
     array (
@@ -7505,6 +12550,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TABLESPACE_SYM',
+        2 => 'ident',
+        3 => 'RENAME',
+        4 => 'TO_SYM',
+        5 => 'ident',
+      ),
     ),
     3 =>
     array (
@@ -7513,6 +12567,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'TABLESPACE_SYM',
+        2 => 'ident',
+        3 => 'alter_tablespace_option_list',
       ),
     ),
   ),
@@ -7527,6 +12588,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'UNDO_SYM',
+        2 => 'TABLESPACE_SYM',
+        3 => 'ident',
+        4 => 'SET_SYM',
+        5 => 'undo_tablespace_state',
+        6 => 'opt_undo_tablespace_options',
+      ),
     ),
   ),
   'alter_server_stmt' =>
@@ -7538,6 +12609,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'SERVER_SYM',
+        2 => 'ident_or_text',
+        3 => 'OPTIONS_SYM',
+        4 => '(',
+        5 => 'server_options_list',
+        6 => ')',
       ),
     ),
   ),
@@ -7555,6 +12636,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         4 => 4,
         5 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'alter_user_command',
+        1 => 'alter_user_list',
+        2 => 'require_clause',
+        3 => 'connect_options',
+        4 => 'opt_account_lock_password_expire_options',
+        5 => 'opt_user_attribute',
+      ),
     ),
     1 =>
     array (
@@ -7566,6 +12656,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 2,
         3 => 3,
         4 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'alter_user_command',
+        1 => 'user_func',
+        2 => 'identified_by_random_password',
+        3 => 'opt_replace_password',
+        4 => 'opt_retain_current_password',
       ),
     ),
     2 =>
@@ -7579,6 +12677,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 3,
         4 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'alter_user_command',
+        1 => 'user_func',
+        2 => 'identified_by_password',
+        3 => 'opt_replace_password',
+        4 => 'opt_retain_current_password',
+      ),
     ),
     3 =>
     array (
@@ -7587,6 +12693,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'alter_user_command',
+        1 => 'user_func',
+        2 => 'DISCARD_SYM',
+        3 => 'OLD_SYM',
+        4 => 'PASSWORD',
       ),
     ),
     4 =>
@@ -7597,6 +12711,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'alter_user_command',
+        1 => 'user',
+        2 => 'DEFAULT_SYM',
+        3 => 'ROLE_SYM',
+        4 => 'ALL',
+      ),
     ),
     5 =>
     array (
@@ -7605,6 +12727,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'alter_user_command',
+        1 => 'user',
+        2 => 'DEFAULT_SYM',
+        3 => 'ROLE_SYM',
+        4 => 'NONE_SYM',
       ),
     ),
     6 =>
@@ -7616,6 +12746,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'alter_user_command',
+        1 => 'user',
+        2 => 'DEFAULT_SYM',
+        3 => 'ROLE_SYM',
+        4 => 'role_list',
+      ),
     ),
     7 =>
     array (
@@ -7625,6 +12763,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'alter_user_command',
+        1 => 'user',
+        2 => 'opt_user_registration',
       ),
     ),
     8 =>
@@ -7636,6 +12780,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'alter_user_command',
+        1 => 'user_func',
+        2 => 'opt_user_registration',
+      ),
     ),
   ),
   'opt_replace_password' =>
@@ -7646,6 +12796,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -7653,6 +12806,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REPLACE_SYM',
+        1 => 'TEXT_STRING_password',
       ),
     ),
   ),
@@ -7669,6 +12827,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 6,
         4 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'RESOURCE_SYM',
+        2 => 'GROUP_SYM',
+        3 => 'ident',
+        4 => 'opt_resource_group_vcpu_list',
+        5 => 'opt_resource_group_priority',
+        6 => 'opt_resource_group_enable_disable',
+        7 => 'opt_force',
+      ),
     ),
   ),
   'alter_user_command' =>
@@ -7681,6 +12850,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'USER',
+        2 => 'if_exists',
+      ),
     ),
   ),
   'opt_user_attribute' =>
@@ -7691,6 +12866,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -7699,6 +12877,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ATTRIBUTE_SYM',
+        1 => 'TEXT_STRING_literal',
+      ),
     ),
     2 =>
     array (
@@ -7706,6 +12889,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT_SYM',
+        1 => 'TEXT_STRING_literal',
       ),
     ),
   ),
@@ -7717,10 +12905,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'opt_account_lock_password_expire_option_list',
+      ),
     ),
   ),
   'opt_account_lock_password_expire_option_list' =>
@@ -7728,6 +12923,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'opt_account_lock_password_expire_option',
+      ),
     ),
     1 =>
     array (
@@ -7736,6 +12935,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'opt_account_lock_password_expire_option_list',
+        1 => 'opt_account_lock_password_expire_option',
       ),
     ),
   ),
@@ -7747,6 +12951,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'ACCOUNT_SYM',
+        1 => 'UNLOCK_SYM',
+      ),
     ),
     1 =>
     array (
@@ -7754,12 +12963,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'ACCOUNT_SYM',
+        1 => 'LOCK_SYM',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptAccountLockPasswordExpireOptionWithPasswordExpireSym_24ed3131',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD',
+        1 => 'EXPIRE_SYM',
       ),
     ),
     3 =>
@@ -7770,6 +12989,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD',
+        1 => 'EXPIRE_SYM',
+        2 => 'INTERVAL_SYM',
+        3 => 'real_ulong_num',
+        4 => 'DAY_SYM',
+      ),
     ),
     4 =>
     array (
@@ -7777,12 +13004,24 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD',
+        1 => 'EXPIRE_SYM',
+        2 => 'NEVER_SYM',
+      ),
     ),
     5 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptAccountLockPasswordExpireOptionWithPasswordExpireSymDefaultSym_3bde59ed',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD',
+        1 => 'EXPIRE_SYM',
+        2 => 'DEFAULT_SYM',
       ),
     ),
     6 =>
@@ -7792,12 +13031,24 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD',
+        1 => 'HISTORY_SYM',
+        2 => 'real_ulong_num',
+      ),
     ),
     7 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptAccountLockPasswordExpireOptionWithPasswordHistorySymDefaultSym_41a58ea2',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD',
+        1 => 'HISTORY_SYM',
+        2 => 'DEFAULT_SYM',
       ),
     ),
     8 =>
@@ -7808,12 +13059,27 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD',
+        1 => 'REUSE_SYM',
+        2 => 'INTERVAL_SYM',
+        3 => 'real_ulong_num',
+        4 => 'DAY_SYM',
+      ),
     ),
     9 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptAccountLockPasswordExpireOptionWithPasswordReuseSymIntervalSymDefaultSym_c1c5ef93',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD',
+        1 => 'REUSE_SYM',
+        2 => 'INTERVAL_SYM',
+        3 => 'DEFAULT_SYM',
       ),
     ),
     10 =>
@@ -7822,6 +13088,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD',
+        1 => 'REQUIRE_SYM',
+        2 => 'CURRENT_SYM',
+      ),
     ),
     11 =>
     array (
@@ -7829,12 +13101,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD',
+        1 => 'REQUIRE_SYM',
+        2 => 'CURRENT_SYM',
+        3 => 'DEFAULT_SYM',
+      ),
     ),
     12 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptAccountLockPasswordExpireOptionWithPasswordRequireSymCurrentSymOptionalSym_ddb073ad',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD',
+        1 => 'REQUIRE_SYM',
+        2 => 'CURRENT_SYM',
+        3 => 'OPTIONAL_SYM',
       ),
     ),
     13 =>
@@ -7844,6 +13130,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'FAILED_LOGIN_ATTEMPTS_SYM',
+        1 => 'real_ulong_num',
+      ),
     ),
     14 =>
     array (
@@ -7852,12 +13143,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD_LOCK_TIME_SYM',
+        1 => 'real_ulong_num',
+      ),
     ),
     15 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptAccountLockPasswordExpireOptionWithPasswordLockTimeSymUnboundedSym_384a90f7',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD_LOCK_TIME_SYM',
+        1 => 'UNBOUNDED_SYM',
       ),
     ),
   ),
@@ -7869,6 +13170,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -7876,6 +13180,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'connect_option_list',
       ),
     ),
   ),
@@ -7889,10 +13198,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'connect_option_list',
+        1 => 'connect_option',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'connect_option',
+      ),
     ),
   ),
   'connect_option' =>
@@ -7904,6 +13222,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'MAX_QUERIES_PER_HOUR',
+        1 => 'ulong_num',
+      ),
     ),
     1 =>
     array (
@@ -7911,6 +13234,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MAX_UPDATES_PER_HOUR',
+        1 => 'ulong_num',
       ),
     ),
     2 =>
@@ -7920,6 +13248,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'MAX_CONNECTIONS_PER_HOUR',
+        1 => 'ulong_num',
+      ),
     ),
     3 =>
     array (
@@ -7927,6 +13260,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MAX_USER_CONNECTIONS_SYM',
+        1 => 'ulong_num',
       ),
     ),
   ),
@@ -7939,6 +13277,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'USER',
+        1 => '(',
+        2 => ')',
+      ),
     ),
   ),
   'ev_alter_on_schedule_completion' =>
@@ -7949,6 +13293,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -7957,10 +13304,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ON_SYM',
+        1 => 'SCHEDULE_SYM',
+        2 => 'ev_schedule_time',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ev_on_completion',
+      ),
     ),
     3 =>
     array (
@@ -7969,6 +13326,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ON_SYM',
+        1 => 'SCHEDULE_SYM',
+        2 => 'ev_schedule_time',
+        3 => 'ev_on_completion',
       ),
     ),
   ),
@@ -7980,6 +13344,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -7987,6 +13354,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RENAME',
+        1 => 'TO_SYM',
+        2 => 'sp_name',
       ),
     ),
   ),
@@ -7998,6 +13371,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -8005,6 +13381,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DO_SYM',
+        1 => 'ev_sql_stmt',
       ),
     ),
   ),
@@ -8016,10 +13397,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
   ),
   'opt_alter_table_actions' =>
@@ -8027,6 +13415,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'opt_alter_command_list',
+      ),
     ),
     1 =>
     array (
@@ -8036,6 +13428,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_alter_command_list',
+        1 => 'alter_table_partition_options',
+      ),
     ),
   ),
   'standalone_alter_table_action' =>
@@ -8043,6 +13440,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'standalone_alter_commands',
+      ),
     ),
     1 =>
     array (
@@ -8052,6 +13453,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'alter_commands_modifier_list',
+        1 => ',',
+        2 => 'standalone_alter_commands',
+      ),
     ),
   ),
   'alter_table_partition_options' =>
@@ -8059,12 +13466,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'partition_clause',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\AlterTablePartitionOptionsWithRemoveSymPartitioningSym_c96cd05c',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'REMOVE_SYM',
+        1 => 'PARTITIONING_SYM',
       ),
     ),
   ),
@@ -8076,14 +13492,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_commands_modifier_list',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_list',
+      ),
     ),
     3 =>
     array (
@@ -8092,6 +13519,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'alter_commands_modifier_list',
+        1 => ',',
+        2 => 'alter_list',
       ),
     ),
   ),
@@ -8103,12 +13536,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'DISCARD_SYM',
+        1 => 'TABLESPACE_SYM',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\StandaloneAlterCommandsWithImportTablespaceSym_dcdc2e4b',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'IMPORT',
+        1 => 'TABLESPACE_SYM',
       ),
     ),
     2 =>
@@ -8117,6 +13560,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ADD',
+        1 => 'PARTITION_SYM',
+        2 => 'opt_no_write_to_binlog',
       ),
     ),
     3 =>
@@ -8127,6 +13576,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ADD',
+        1 => 'PARTITION_SYM',
+        2 => 'opt_no_write_to_binlog',
+        3 => '(',
+        4 => 'part_def_list',
+        5 => ')',
+      ),
     ),
     4 =>
     array (
@@ -8136,6 +13594,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ADD',
+        1 => 'PARTITION_SYM',
+        2 => 'opt_no_write_to_binlog',
+        3 => 'PARTITIONS_SYM',
+        4 => 'real_ulong_num',
+      ),
     ),
     5 =>
     array (
@@ -8143,6 +13609,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'PARTITION_SYM',
+        2 => 'ident_string_list',
       ),
     ),
     6 =>
@@ -8153,6 +13625,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'REBUILD_SYM',
+        1 => 'PARTITION_SYM',
+        2 => 'opt_no_write_to_binlog',
+        3 => 'all_or_alt_part_name_list',
+      ),
     ),
     7 =>
     array (
@@ -8161,6 +13640,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'OPTIMIZE',
+        1 => 'PARTITION_SYM',
+        2 => 'opt_no_write_to_binlog',
+        3 => 'all_or_alt_part_name_list',
       ),
     ),
     8 =>
@@ -8171,6 +13657,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ANALYZE_SYM',
+        1 => 'PARTITION_SYM',
+        2 => 'opt_no_write_to_binlog',
+        3 => 'all_or_alt_part_name_list',
+      ),
     ),
     9 =>
     array (
@@ -8179,6 +13672,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CHECK_SYM',
+        1 => 'PARTITION_SYM',
+        2 => 'all_or_alt_part_name_list',
+        3 => 'opt_mi_check_types',
       ),
     ),
     10 =>
@@ -8190,6 +13690,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'REPAIR',
+        1 => 'PARTITION_SYM',
+        2 => 'opt_no_write_to_binlog',
+        3 => 'all_or_alt_part_name_list',
+        4 => 'opt_mi_repair_types',
+      ),
     ),
     11 =>
     array (
@@ -8199,6 +13707,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'COALESCE',
+        1 => 'PARTITION_SYM',
+        2 => 'opt_no_write_to_binlog',
+        3 => 'real_ulong_num',
+      ),
     ),
     12 =>
     array (
@@ -8207,6 +13722,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'TRUNCATE_SYM',
+        1 => 'PARTITION_SYM',
+        2 => 'all_or_alt_part_name_list',
+      ),
     ),
     13 =>
     array (
@@ -8214,6 +13735,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REORGANIZE_SYM',
+        1 => 'PARTITION_SYM',
+        2 => 'opt_no_write_to_binlog',
       ),
     ),
     14 =>
@@ -8225,6 +13752,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'REORGANIZE_SYM',
+        1 => 'PARTITION_SYM',
+        2 => 'opt_no_write_to_binlog',
+        3 => 'ident_string_list',
+        4 => 'INTO',
+        5 => '(',
+        6 => 'part_def_list',
+        7 => ')',
+      ),
     ),
     15 =>
     array (
@@ -8235,6 +13773,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'EXCHANGE_SYM',
+        1 => 'PARTITION_SYM',
+        2 => 'ident',
+        3 => 'WITH',
+        4 => 'TABLE_SYM',
+        5 => 'table_ident',
+        6 => 'opt_with_validation',
+      ),
     ),
     16 =>
     array (
@@ -8242,6 +13790,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DISCARD_SYM',
+        1 => 'PARTITION_SYM',
+        2 => 'all_or_alt_part_name_list',
+        3 => 'TABLESPACE_SYM',
       ),
     ),
     17 =>
@@ -8251,6 +13806,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'IMPORT',
+        1 => 'PARTITION_SYM',
+        2 => 'all_or_alt_part_name_list',
+        3 => 'TABLESPACE_SYM',
+      ),
     ),
     18 =>
     array (
@@ -8258,12 +13820,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'SECONDARY_LOAD_SYM',
+      ),
     ),
     19 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\StandaloneAlterCommandsWithSecondaryUnloadSym_023d7937',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'SECONDARY_UNLOAD_SYM',
       ),
     ),
   ),
@@ -8275,10 +13845,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'with_validation',
+      ),
     ),
   ),
   'with_validation' =>
@@ -8286,10 +13863,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\WithValidationChoice_6a2a77c6::UseWithValidation_193f25f1',
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'VALIDATION_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\WithValidationChoice_6a2a77c6::UseWithoutValidation_c3ffb244',
+      'symbols' =>
+      array (
+        0 => 'WITHOUT_SYM',
+        1 => 'VALIDATION_SYM',
+      ),
     ),
   ),
   'all_or_alt_part_name_list' =>
@@ -8300,10 +13887,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'ALL',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident_string_list',
+      ),
     ),
   ),
   'alter_list' =>
@@ -8311,6 +13906,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_list_item',
+      ),
     ),
     1 =>
     array (
@@ -8319,6 +13918,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'alter_list',
+        1 => ',',
+        2 => 'alter_list_item',
       ),
     ),
     2 =>
@@ -8329,10 +13934,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'alter_list',
+        1 => ',',
+        2 => 'alter_commands_modifier',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'create_table_options_space_separated',
+      ),
     ),
     4 =>
     array (
@@ -8342,6 +13957,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'alter_list',
+        1 => ',',
+        2 => 'create_table_options_space_separated',
+      ),
     ),
   ),
   'alter_commands_modifier_list' =>
@@ -8349,6 +13970,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_commands_modifier',
+      ),
     ),
     1 =>
     array (
@@ -8357,6 +13982,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'alter_commands_modifier_list',
+        1 => ',',
+        2 => 'alter_commands_modifier',
       ),
     ),
   ),
@@ -8373,6 +14004,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 4,
         4 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ADD',
+        1 => 'opt_column',
+        2 => 'ident',
+        3 => 'field_def',
+        4 => 'opt_references',
+        5 => 'opt_place',
+      ),
     ),
     1 =>
     array (
@@ -8382,6 +14022,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ADD',
+        1 => 'opt_column',
+        2 => '(',
+        3 => 'table_element_list',
+        4 => ')',
+      ),
     ),
     2 =>
     array (
@@ -8389,6 +14037,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ADD',
+        1 => 'table_constraint_def',
       ),
     ),
     3 =>
@@ -8402,6 +14055,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 4,
         4 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'CHANGE',
+        1 => 'opt_column',
+        2 => 'ident',
+        3 => 'ident',
+        4 => 'field_def',
+        5 => 'opt_place',
+      ),
     ),
     4 =>
     array (
@@ -8413,6 +14075,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'MODIFY_SYM',
+        1 => 'opt_column',
+        2 => 'ident',
+        3 => 'field_def',
+        4 => 'opt_place',
+      ),
     ),
     5 =>
     array (
@@ -8423,6 +14093,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'opt_column',
+        2 => 'ident',
+        3 => 'opt_restrict',
+      ),
     ),
     6 =>
     array (
@@ -8431,12 +14108,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'FOREIGN',
+        2 => 'KEY_SYM',
+        3 => 'ident',
+      ),
     ),
     7 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\AlterListItemWithDropPrimarySymKeySym_ae3f6e96',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'PRIMARY_SYM',
+        2 => 'KEY_SYM',
       ),
     ),
     8 =>
@@ -8447,6 +14137,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'key_or_index',
+        2 => 'ident',
+      ),
     ),
     9 =>
     array (
@@ -8454,6 +14150,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'CHECK_SYM',
+        2 => 'ident',
       ),
     ),
     10 =>
@@ -8463,6 +14165,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'CONSTRAINT',
+        2 => 'ident',
+      ),
     ),
     11 =>
     array (
@@ -8470,12 +14178,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'DISABLE_SYM',
+        1 => 'KEYS',
+      ),
     ),
     12 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\AlterListItemWithEnableSymKeys_bcc7f3d8',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'ENABLE_SYM',
+        1 => 'KEYS',
       ),
     ),
     13 =>
@@ -8487,6 +14205,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'opt_column',
+        2 => 'ident',
+        3 => 'SET_SYM',
+        4 => 'DEFAULT_SYM',
+        5 => 'signed_literal_or_null',
+      ),
     ),
     14 =>
     array (
@@ -8497,6 +14224,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'opt_column',
+        2 => 'ident',
+        3 => 'SET_SYM',
+        4 => 'DEFAULT_SYM',
+        5 => '(',
+        6 => 'expr',
+        7 => ')',
+      ),
     ),
     15 =>
     array (
@@ -8505,6 +14243,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'opt_column',
+        2 => 'ident',
+        3 => 'DROP',
+        4 => 'DEFAULT_SYM',
       ),
     ),
     16 =>
@@ -8516,6 +14262,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'opt_column',
+        2 => 'ident',
+        3 => 'SET_SYM',
+        4 => 'visibility',
+      ),
     ),
     17 =>
     array (
@@ -8524,6 +14278,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'INDEX_SYM',
+        2 => 'ident',
+        3 => 'visibility',
       ),
     ),
     18 =>
@@ -8534,6 +14295,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'CHECK_SYM',
+        2 => 'ident',
+        3 => 'constraint_enforcement',
+      ),
     ),
     19 =>
     array (
@@ -8543,6 +14311,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'CONSTRAINT',
+        2 => 'ident',
+        3 => 'constraint_enforcement',
+      ),
     ),
     20 =>
     array (
@@ -8551,6 +14326,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RENAME',
+        1 => 'opt_to',
+        2 => 'table_ident',
       ),
     ),
     21 =>
@@ -8562,6 +14343,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'RENAME',
+        1 => 'key_or_index',
+        2 => 'ident',
+        3 => 'TO_SYM',
+        4 => 'ident',
+      ),
     ),
     22 =>
     array (
@@ -8570,6 +14359,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RENAME',
+        1 => 'COLUMN_SYM',
+        2 => 'ident',
+        3 => 'TO_SYM',
+        4 => 'ident',
       ),
     ),
     23 =>
@@ -8581,6 +14378,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'CONVERT_SYM',
+        1 => 'TO_SYM',
+        2 => 'character_set',
+        3 => 'charset_name',
+        4 => 'opt_collate',
+      ),
     ),
     24 =>
     array (
@@ -8590,12 +14395,24 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'CONVERT_SYM',
+        1 => 'TO_SYM',
+        2 => 'character_set',
+        3 => 'DEFAULT_SYM',
+        4 => 'opt_collate',
+      ),
     ),
     25 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\AlterListItemWithForceSym_9ea5035d',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'FORCE_SYM',
       ),
     ),
     26 =>
@@ -8605,6 +14422,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ORDER_SYM',
+        1 => 'BY',
+        2 => 'alter_order_list',
+      ),
     ),
   ),
   'alter_commands_modifier' =>
@@ -8612,14 +14435,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_algorithm_option',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_lock_option',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'with_validation',
+      ),
     ),
   ),
   'opt_index_lock_and_algorithm' =>
@@ -8630,14 +14465,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_lock_option',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_algorithm_option',
+      ),
     ),
     3 =>
     array (
@@ -8647,6 +14493,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'alter_lock_option',
+        1 => 'alter_algorithm_option',
+      ),
     ),
     4 =>
     array (
@@ -8655,6 +14506,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'alter_algorithm_option',
+        1 => 'alter_lock_option',
       ),
     ),
   ),
@@ -8668,6 +14524,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALGORITHM_SYM',
+        1 => 'opt_equal',
+        2 => 'alter_algorithm_option_value',
+      ),
     ),
   ),
   'alter_algorithm_option_value' =>
@@ -8678,10 +14540,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT_SYM',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
   ),
   'alter_lock_option' =>
@@ -8694,6 +14564,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'LOCK_SYM',
+        1 => 'opt_equal',
+        2 => 'alter_lock_option_value',
+      ),
     ),
   ),
   'alter_lock_option_value' =>
@@ -8704,10 +14580,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT_SYM',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
   ),
   'opt_column' =>
@@ -8715,10 +14599,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptColumnChoice_eefdbfac::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptColumnChoice_eefdbfac::UseColumn_83a8e21d',
+      'symbols' =>
+      array (
+        0 => 'COLUMN_SYM',
+      ),
     ),
   ),
   'opt_ignore' =>
@@ -8726,10 +14617,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptIgnoreChoice_928aa92e::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptIgnoreChoice_928aa92e::UseIgnore_eff4f8c3',
+      'symbols' =>
+      array (
+        0 => 'IGNORE_SYM',
+      ),
     ),
   ),
   'opt_restrict' =>
@@ -8737,14 +14635,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptRestrictChoice_e1e7cf73::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptRestrictChoice_e1e7cf73::UseRestrict_bd7a04e6',
+      'symbols' =>
+      array (
+        0 => 'RESTRICT',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptRestrictChoice_e1e7cf73::UseCascade_86844e57',
+      'symbols' =>
+      array (
+        0 => 'CASCADE',
+      ),
     ),
   ),
   'opt_place' =>
@@ -8755,6 +14664,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -8763,12 +14675,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'AFTER_SYM',
+        1 => 'ident',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptPlaceWithFirstSym_f656c428',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'FIRST_SYM',
       ),
     ),
   ),
@@ -8777,18 +14698,33 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptToChoice_c11aeeda::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptToChoice_c11aeeda::UseTo_c3bd7d9e',
+      'symbols' =>
+      array (
+        0 => 'TO_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptToChoice_c11aeeda::Use_380918b9',
+      'symbols' =>
+      array (
+        0 => 'EQ',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptToChoice_c11aeeda::UseAs_de148153',
+      'symbols' =>
+      array (
+        0 => 'AS',
+      ),
     ),
   ),
   'group_replication' =>
@@ -8801,12 +14737,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'group_replication_start',
+        1 => 'opt_group_replication_start_options',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\GroupReplicationWithStopSymGroupReplication_7825fd32',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'STOP_SYM',
+        1 => 'GROUP_REPLICATION',
       ),
     ),
   ),
@@ -8815,6 +14761,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\GroupReplicationStartChoice_9afef309::UseStartGroupReplication_dc944310',
+      'symbols' =>
+      array (
+        0 => 'START_SYM',
+        1 => 'GROUP_REPLICATION',
+      ),
     ),
   ),
   'opt_group_replication_start_options' =>
@@ -8825,10 +14776,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'group_replication_start_options',
+      ),
     ),
   ),
   'group_replication_start_options' =>
@@ -8836,6 +14794,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'group_replication_start_option',
+      ),
     ),
     1 =>
     array (
@@ -8845,6 +14807,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'group_replication_start_options',
+        1 => ',',
+        2 => 'group_replication_start_option',
+      ),
     ),
   ),
   'group_replication_start_option' =>
@@ -8852,14 +14820,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'group_replication_user',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'group_replication_password',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'group_replication_plugin_auth',
+      ),
     ),
   ),
   'group_replication_user' =>
@@ -8872,6 +14852,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'USER',
+        1 => 'EQ',
+        2 => 'TEXT_STRING_sys_nonewline',
+      ),
     ),
   ),
   'group_replication_password' =>
@@ -8882,6 +14868,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD',
+        1 => 'EQ',
+        2 => 'TEXT_STRING_sys_nonewline',
       ),
     ),
   ),
@@ -8894,6 +14886,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT_AUTH_SYM',
+        1 => 'EQ',
+        2 => 'TEXT_STRING_sys_nonewline',
+      ),
     ),
   ),
   'replica' =>
@@ -8901,10 +14899,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ReplicaChoice_501eb360::UseSlave_32e9e993',
+      'symbols' =>
+      array (
+        0 => 'SLAVE',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ReplicaChoice_501eb360::UseReplica_238146a8',
+      'symbols' =>
+      array (
+        0 => 'REPLICA_SYM',
+      ),
     ),
   ),
   'stop_replica_stmt' =>
@@ -8917,6 +14923,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
         2 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'STOP_SYM',
+        1 => 'replica',
+        2 => 'opt_replica_thread_option_list',
+        3 => 'opt_channel',
       ),
     ),
   ),
@@ -8936,6 +14949,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         6 => 7,
         7 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'START_SYM',
+        1 => 'replica',
+        2 => 'opt_replica_thread_option_list',
+        3 => 'opt_replica_until',
+        4 => 'opt_user_option',
+        5 => 'opt_password_option',
+        6 => 'opt_default_auth_option',
+        7 => 'opt_plugin_dir_option',
+        8 => 'opt_channel',
+      ),
     ),
   ),
   'start' =>
@@ -8947,6 +14972,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'START_SYM',
+        1 => 'TRANSACTION_SYM',
+        2 => 'opt_start_transaction_option_list',
+      ),
     ),
   ),
   'opt_start_transaction_option_list' =>
@@ -8957,10 +14988,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'start_transaction_option_list',
+      ),
     ),
   ),
   'start_transaction_option_list' =>
@@ -8968,6 +15006,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'start_transaction_option',
+      ),
     ),
     1 =>
     array (
@@ -8977,6 +15019,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'start_transaction_option_list',
+        1 => ',',
+        2 => 'start_transaction_option',
+      ),
     ),
   ),
   'start_transaction_option' =>
@@ -8984,14 +15032,30 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\StartTransactionOptionChoice_39ab0f54::UseWithConsistentSnapshot_4d167c75',
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'CONSISTENT_SYM',
+        2 => 'SNAPSHOT_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\StartTransactionOptionChoice_39ab0f54::UseReadOnly_6628aa89',
+      'symbols' =>
+      array (
+        0 => 'READ_SYM',
+        1 => 'ONLY_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\StartTransactionOptionChoice_39ab0f54::UseReadWrite_4c96461f',
+      'symbols' =>
+      array (
+        0 => 'READ_SYM',
+        1 => 'WRITE_SYM',
+      ),
     ),
   ),
   'opt_user_option' =>
@@ -9000,6 +15064,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptUserOptionWith_507d58b2',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -9011,6 +15078,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'USER',
+        1 => 'EQ',
+        2 => 'TEXT_STRING_sys',
+      ),
     ),
   ),
   'opt_password_option' =>
@@ -9021,6 +15094,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -9028,6 +15104,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD',
+        1 => 'EQ',
+        2 => 'TEXT_STRING_sys',
       ),
     ),
   ),
@@ -9039,6 +15121,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -9046,6 +15131,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT_AUTH_SYM',
+        1 => 'EQ',
+        2 => 'TEXT_STRING_sys',
       ),
     ),
   ),
@@ -9057,6 +15148,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -9064,6 +15158,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PLUGIN_DIR_SYM',
+        1 => 'EQ',
+        2 => 'TEXT_STRING_sys',
       ),
     ),
   ),
@@ -9075,10 +15175,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'replica_thread_option_list',
+      ),
     ),
   ),
   'replica_thread_option_list' =>
@@ -9086,6 +15193,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'replica_thread_option',
+      ),
     ),
     1 =>
     array (
@@ -9094,6 +15205,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'replica_thread_option_list',
+        1 => ',',
+        2 => 'replica_thread_option',
       ),
     ),
   ),
@@ -9105,6 +15222,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'SQL_THREAD',
+      ),
     ),
     1 =>
     array (
@@ -9112,6 +15233,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RELAY_THREAD',
       ),
     ),
   ),
@@ -9123,6 +15248,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -9131,6 +15259,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNTIL_SYM',
+        1 => 'replica_until',
+      ),
     ),
   ),
   'replica_until' =>
@@ -9138,6 +15271,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'source_file_def',
+      ),
     ),
     1 =>
     array (
@@ -9147,6 +15284,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'replica_until',
+        1 => ',',
+        2 => 'source_file_def',
+      ),
     ),
     2 =>
     array (
@@ -9154,6 +15297,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SQL_BEFORE_GTIDS',
+        1 => 'EQ',
+        2 => 'TEXT_STRING_sys',
       ),
     ),
     3 =>
@@ -9163,12 +15312,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'SQL_AFTER_GTIDS',
+        1 => 'EQ',
+        2 => 'TEXT_STRING_sys',
+      ),
     ),
     4 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\ReplicaUntilWithSqlAfterMtsGaps_fac916b3',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'SQL_AFTER_MTS_GAPS',
       ),
     ),
   ),
@@ -9183,6 +15342,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'CHECKSUM_SYM',
+        1 => 'table_or_tables',
+        2 => 'table_list',
+        3 => 'opt_checksum_type',
+      ),
     ),
   ),
   'opt_checksum_type' =>
@@ -9190,14 +15356,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptChecksumTypeChoice_7ff41d7d::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptChecksumTypeChoice_7ff41d7d::UseQuick_e0273b60',
+      'symbols' =>
+      array (
+        0 => 'QUICK',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptChecksumTypeChoice_7ff41d7d::UseExtended_9632d8ea',
+      'symbols' =>
+      array (
+        0 => 'EXTENDED_SYM',
+      ),
     ),
   ),
   'repair_table_stmt' =>
@@ -9212,6 +15389,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'REPAIR',
+        1 => 'opt_no_write_to_binlog',
+        2 => 'table_or_tables',
+        3 => 'table_list',
+        4 => 'opt_mi_repair_types',
+      ),
     ),
   ),
   'opt_mi_repair_types' =>
@@ -9222,10 +15407,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'mi_repair_types',
+      ),
     ),
   ),
   'mi_repair_types' =>
@@ -9233,6 +15425,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'mi_repair_type',
+      ),
     ),
     1 =>
     array (
@@ -9242,6 +15438,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'mi_repair_types',
+        1 => 'mi_repair_type',
+      ),
     ),
   ),
   'mi_repair_type' =>
@@ -9249,14 +15450,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\MiRepairTypeChoice_ddecba63::UseQuick_e0273b60',
+      'symbols' =>
+      array (
+        0 => 'QUICK',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\MiRepairTypeChoice_ddecba63::UseExtended_9632d8ea',
+      'symbols' =>
+      array (
+        0 => 'EXTENDED_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\MiRepairTypeChoice_ddecba63::UseUseFrm_2c59274b',
+      'symbols' =>
+      array (
+        0 => 'USE_FRM',
+      ),
     ),
   ),
   'analyze_table_stmt' =>
@@ -9271,6 +15484,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ANALYZE_SYM',
+        1 => 'opt_no_write_to_binlog',
+        2 => 'table_or_tables',
+        3 => 'table_list',
+        4 => 'opt_histogram',
+      ),
     ),
   ),
   'opt_histogram_update_param' =>
@@ -9281,6 +15502,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -9289,6 +15513,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'NUM',
+        2 => 'BUCKETS_SYM',
+      ),
     ),
     2 =>
     array (
@@ -9296,6 +15526,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'USING',
+        1 => 'DATA_SYM',
+        2 => 'TEXT_STRING_literal',
       ),
     ),
   ),
@@ -9307,6 +15543,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -9316,6 +15555,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'UPDATE_SYM',
+        1 => 'HISTOGRAM_SYM',
+        2 => 'ON_SYM',
+        3 => 'ident_string_list',
+        4 => 'opt_histogram_update_param',
+      ),
     ),
     2 =>
     array (
@@ -9323,6 +15570,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'HISTOGRAM_SYM',
+        2 => 'ON_SYM',
+        3 => 'ident_string_list',
       ),
     ),
   ),
@@ -9334,6 +15588,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BINLOG_SYM',
+        1 => 'TEXT_STRING_sys',
       ),
     ),
   ),
@@ -9348,6 +15607,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'CHECK_SYM',
+        1 => 'table_or_tables',
+        2 => 'table_list',
+        3 => 'opt_mi_check_types',
+      ),
     ),
   ),
   'opt_mi_check_types' =>
@@ -9358,10 +15624,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'mi_check_types',
+      ),
     ),
   ),
   'mi_check_types' =>
@@ -9369,6 +15642,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'mi_check_type',
+      ),
     ),
     1 =>
     array (
@@ -9378,6 +15655,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'mi_check_type',
+        1 => 'mi_check_types',
+      ),
     ),
   ),
   'mi_check_type' =>
@@ -9385,26 +15667,51 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\MiCheckTypeChoice_147f9765::UseQuick_e0273b60',
+      'symbols' =>
+      array (
+        0 => 'QUICK',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\MiCheckTypeChoice_147f9765::UseFast_8d5ebd1c',
+      'symbols' =>
+      array (
+        0 => 'FAST_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\MiCheckTypeChoice_147f9765::UseMedium_7c48dd67',
+      'symbols' =>
+      array (
+        0 => 'MEDIUM_SYM',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\MiCheckTypeChoice_147f9765::UseExtended_9632d8ea',
+      'symbols' =>
+      array (
+        0 => 'EXTENDED_SYM',
+      ),
     ),
     4 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\MiCheckTypeChoice_147f9765::UseChanged_b6f00f28',
+      'symbols' =>
+      array (
+        0 => 'CHANGED',
+      ),
     ),
     5 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\MiCheckTypeChoice_147f9765::UseForUpgrade_44aef177',
+      'symbols' =>
+      array (
+        0 => 'FOR_SYM',
+        1 => 'UPGRADE_SYM',
+      ),
     ),
   ),
   'optimize_table_stmt' =>
@@ -9418,6 +15725,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'OPTIMIZE',
+        1 => 'opt_no_write_to_binlog',
+        2 => 'table_or_tables',
+        3 => 'table_list',
+      ),
     ),
   ),
   'opt_no_write_to_binlog' =>
@@ -9425,14 +15739,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptNoWriteToBinlogChoice_834bd6a1::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptNoWriteToBinlogChoice_834bd6a1::UseNoWriteToBinlog_57640581',
+      'symbols' =>
+      array (
+        0 => 'NO_WRITE_TO_BINLOG',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptNoWriteToBinlogChoice_834bd6a1::UseLocal_646c1937',
+      'symbols' =>
+      array (
+        0 => 'LOCAL_SYM',
+      ),
     ),
   ),
   'rename' =>
@@ -9445,6 +15770,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'RENAME',
+        1 => 'table_or_tables',
+        2 => 'table_to_table_list',
+      ),
     ),
     1 =>
     array (
@@ -9453,6 +15784,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RENAME',
+        1 => 'USER',
+        2 => 'rename_list',
       ),
     ),
   ),
@@ -9466,6 +15803,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'user',
+        1 => 'TO_SYM',
+        2 => 'user',
+      ),
     ),
     1 =>
     array (
@@ -9476,6 +15819,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'rename_list',
+        1 => ',',
+        2 => 'user',
+        3 => 'TO_SYM',
+        4 => 'user',
+      ),
     ),
   ),
   'table_to_table_list' =>
@@ -9483,6 +15834,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'table_to_table',
+      ),
     ),
     1 =>
     array (
@@ -9491,6 +15846,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'table_to_table_list',
+        1 => ',',
+        2 => 'table_to_table',
       ),
     ),
   ),
@@ -9504,6 +15865,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'table_ident',
+        1 => 'TO_SYM',
+        2 => 'table_ident',
+      ),
     ),
   ),
   'keycache_stmt' =>
@@ -9516,6 +15883,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'CACHE_SYM',
+        1 => 'INDEX_SYM',
+        2 => 'keycache_list',
+        3 => 'IN_SYM',
+        4 => 'key_cache_name',
+      ),
     ),
     1 =>
     array (
@@ -9527,6 +15902,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 4,
         3 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'CACHE_SYM',
+        1 => 'INDEX_SYM',
+        2 => 'table_ident',
+        3 => 'adm_partition',
+        4 => 'opt_cache_key_list',
+        5 => 'IN_SYM',
+        6 => 'key_cache_name',
+      ),
     ),
   ),
   'keycache_list' =>
@@ -9534,6 +15919,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'assign_to_keycache',
+      ),
     ),
     1 =>
     array (
@@ -9542,6 +15931,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'keycache_list',
+        1 => ',',
+        2 => 'assign_to_keycache',
       ),
     ),
   ),
@@ -9555,6 +15950,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'table_ident',
+        1 => 'opt_cache_key_list',
+      ),
     ),
   ),
   'key_cache_name' =>
@@ -9562,12 +15962,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\KeyCacheNameWithDefaultSym_04036be6',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT_SYM',
       ),
     ),
   ),
@@ -9583,6 +15991,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 6,
         3 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'LOAD',
+        1 => 'INDEX_SYM',
+        2 => 'INTO',
+        3 => 'CACHE_SYM',
+        4 => 'table_ident',
+        5 => 'adm_partition',
+        6 => 'opt_cache_key_list',
+        7 => 'opt_ignore_leaves',
+      ),
     ),
     1 =>
     array (
@@ -9591,6 +16010,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'LOAD',
+        1 => 'INDEX_SYM',
+        2 => 'INTO',
+        3 => 'CACHE_SYM',
+        4 => 'preload_list',
+      ),
     ),
   ),
   'preload_list' =>
@@ -9598,6 +16025,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'preload_keys',
+      ),
     ),
     1 =>
     array (
@@ -9606,6 +16037,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'preload_list',
+        1 => ',',
+        2 => 'preload_keys',
       ),
     ),
   ),
@@ -9620,6 +16057,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'table_ident',
+        1 => 'opt_cache_key_list',
+        2 => 'opt_ignore_leaves',
+      ),
     ),
   ),
   'adm_partition' =>
@@ -9631,6 +16074,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'PARTITION_SYM',
+        1 => '(',
+        2 => 'all_or_alt_part_name_list',
+        3 => ')',
+      ),
     ),
   ),
   'opt_cache_key_list' =>
@@ -9639,6 +16089,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptCacheKeyListWith_e0fbaebe',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -9650,6 +16103,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'key_or_index',
+        1 => '(',
+        2 => 'opt_key_usage_list',
+        3 => ')',
+      ),
     ),
   ),
   'opt_ignore_leaves' =>
@@ -9657,10 +16117,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptIgnoreLeavesChoice_fea420ae::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptIgnoreLeavesChoice_fea420ae::UseIgnoreLeaves_f61ccd79',
+      'symbols' =>
+      array (
+        0 => 'IGNORE_SYM',
+        1 => 'LEAVES',
+      ),
     ),
   ),
   'select_stmt' =>
@@ -9668,6 +16136,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'query_expression',
+      ),
     ),
     1 =>
     array (
@@ -9677,10 +16149,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'query_expression',
+        1 => 'locking_clause_list',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'select_stmt_with_into',
+      ),
     ),
   ),
   'select_stmt_with_into' =>
@@ -9692,6 +16173,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'select_stmt_with_into',
+        2 => ')',
+      ),
     ),
     1 =>
     array (
@@ -9700,6 +16187,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'query_expression',
+        1 => 'into_clause',
       ),
     ),
     2 =>
@@ -9711,6 +16203,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'query_expression',
+        1 => 'into_clause',
+        2 => 'locking_clause_list',
+      ),
     ),
     3 =>
     array (
@@ -9720,6 +16218,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'query_expression',
+        1 => 'locking_clause_list',
+        2 => 'into_clause',
       ),
     ),
   ),
@@ -9734,6 +16238,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'query_expression_body',
+        1 => 'opt_order_clause',
+        2 => 'opt_limit_clause',
+      ),
     ),
     1 =>
     array (
@@ -9745,6 +16255,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 2,
         3 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'with_clause',
+        1 => 'query_expression_body',
+        2 => 'opt_order_clause',
+        3 => 'opt_limit_clause',
+      ),
     ),
   ),
   'query_expression_body' =>
@@ -9752,10 +16269,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'query_primary',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'query_expression_parens',
+      ),
     ),
     2 =>
     array (
@@ -9765,6 +16290,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
         2 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'query_expression_body',
+        1 => 'UNION_SYM',
+        2 => 'union_option',
+        3 => 'query_expression_body',
       ),
     ),
     3 =>
@@ -9776,6 +16308,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'query_expression_body',
+        1 => 'EXCEPT_SYM',
+        2 => 'union_option',
+        3 => 'query_expression_body',
+      ),
     ),
     4 =>
     array (
@@ -9785,6 +16324,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
         2 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'query_expression_body',
+        1 => 'INTERSECT_SYM',
+        2 => 'union_option',
+        3 => 'query_expression_body',
       ),
     ),
   ),
@@ -9797,6 +16343,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'query_expression_parens',
+        2 => ')',
+      ),
     ),
     1 =>
     array (
@@ -9805,6 +16357,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'query_expression_with_opt_locking_clauses',
+        2 => ')',
+      ),
     ),
   ),
   'query_primary' =>
@@ -9812,14 +16370,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'query_specification',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'table_value_constructor',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'explicit_table',
+      ),
     ),
   ),
   'query_specification' =>
@@ -9838,6 +16408,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         6 => 7,
         7 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'SELECT_SYM',
+        1 => 'select_options',
+        2 => 'select_item_list',
+        3 => 'into_clause',
+        4 => 'opt_from_clause',
+        5 => 'opt_where_clause',
+        6 => 'opt_group_clause',
+        7 => 'opt_having_clause',
+        8 => 'opt_window_clause',
+      ),
     ),
     1 =>
     array (
@@ -9852,6 +16434,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         5 => 6,
         6 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'SELECT_SYM',
+        1 => 'select_options',
+        2 => 'select_item_list',
+        3 => 'opt_from_clause',
+        4 => 'opt_where_clause',
+        5 => 'opt_group_clause',
+        6 => 'opt_having_clause',
+        7 => 'opt_window_clause',
+      ),
     ),
   ),
   'opt_from_clause' =>
@@ -9862,10 +16455,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'from_clause',
+      ),
     ),
   ),
   'from_clause' =>
@@ -9877,6 +16477,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'FROM',
+        1 => 'from_tables',
+      ),
     ),
   ),
   'from_tables' =>
@@ -9887,10 +16492,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'DUAL_SYM',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'table_reference_list',
+      ),
     ),
   ),
   'table_reference_list' =>
@@ -9898,6 +16511,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'table_reference',
+      ),
     ),
     1 =>
     array (
@@ -9906,6 +16523,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'table_reference_list',
+        1 => ',',
+        2 => 'table_reference',
       ),
     ),
   ),
@@ -9918,6 +16541,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'VALUES',
+        1 => 'values_row_list',
+      ),
     ),
   ),
   'explicit_table' =>
@@ -9929,6 +16557,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'TABLE_SYM',
+        1 => 'table_ident',
+      ),
     ),
   ),
   'select_options' =>
@@ -9939,10 +16572,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'select_option_list',
+      ),
     ),
   ),
   'select_option_list' =>
@@ -9955,10 +16595,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'select_option_list',
+        1 => 'select_option',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'select_option',
+      ),
     ),
   ),
   'select_option' =>
@@ -9966,12 +16615,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'query_spec_option',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\SelectOptionWithSqlNoCacheSym_0dde9155',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'SQL_NO_CACHE_SYM',
       ),
     ),
   ),
@@ -9985,10 +16642,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'locking_clause_list',
+        1 => 'locking_clause',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'locking_clause',
+      ),
     ),
   ),
   'locking_clause' =>
@@ -10001,6 +16667,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'FOR_SYM',
+        1 => 'lock_strength',
+        2 => 'opt_locked_row_action',
+      ),
     ),
     1 =>
     array (
@@ -10011,12 +16683,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'FOR_SYM',
+        1 => 'lock_strength',
+        2 => 'table_locking_list',
+        3 => 'opt_locked_row_action',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\LockingClauseWithLockSymInSymShareSymModeSym_02ee99f4',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'LOCK_SYM',
+        1 => 'IN_SYM',
+        2 => 'SHARE_SYM',
+        3 => 'MODE_SYM',
       ),
     ),
   ),
@@ -10025,10 +16711,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\LockStrengthChoice_3fc0a512::UseUpdate_6cb78ab1',
+      'symbols' =>
+      array (
+        0 => 'UPDATE_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\LockStrengthChoice_3fc0a512::UseShare_0b060acf',
+      'symbols' =>
+      array (
+        0 => 'SHARE_SYM',
+      ),
     ),
   ),
   'table_locking_list' =>
@@ -10040,6 +16734,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'OF_SYM',
+        1 => 'table_alias_ref_list',
+      ),
     ),
   ),
   'opt_locked_row_action' =>
@@ -10050,10 +16749,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'locked_row_action',
+      ),
     ),
   ),
   'locked_row_action' =>
@@ -10061,10 +16767,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\LockedRowActionChoice_360323ad::UseSkipLocked_5ad391e2',
+      'symbols' =>
+      array (
+        0 => 'SKIP_SYM',
+        1 => 'LOCKED_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\LockedRowActionChoice_360323ad::UseNowait_3fa8f87a',
+      'symbols' =>
+      array (
+        0 => 'NOWAIT_SYM',
+      ),
     ),
   ),
   'select_item_list' =>
@@ -10077,16 +16792,30 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'select_item_list',
+        1 => ',',
+        2 => 'select_item',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'select_item',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\SelectItemListWith_2365e026',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => '*',
       ),
     ),
   ),
@@ -10095,6 +16824,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'table_wild',
+      ),
     ),
     1 =>
     array (
@@ -10103,6 +16836,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'expr',
+        1 => 'select_alias',
       ),
     ),
   ),
@@ -10114,6 +16852,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -10121,6 +16862,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'AS',
+        1 => 'ident',
       ),
     ),
     2 =>
@@ -10130,14 +16876,27 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'AS',
+        1 => 'TEXT_STRING_validated',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'TEXT_STRING_validated',
+      ),
     ),
   ),
   'optional_braces' =>
@@ -10145,10 +16904,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptionalBracesChoice_f4fff975::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptionalBracesChoice_f4fff975::Use_e779214a',
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => ')',
+      ),
     ),
   ),
   'expr' =>
@@ -10162,6 +16929,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'expr',
+        1 => 'or',
+        2 => 'expr',
+      ),
     ),
     1 =>
     array (
@@ -10170,6 +16943,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'expr',
+        1 => 'XOR',
+        2 => 'expr',
       ),
     ),
     2 =>
@@ -10181,6 +16960,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'expr',
+        1 => 'and',
+        2 => 'expr',
+      ),
     ),
     3 =>
     array (
@@ -10189,6 +16974,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'NOT_SYM',
+        1 => 'expr',
+      ),
     ),
     4 =>
     array (
@@ -10196,6 +16986,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'bool_pri',
+        1 => 'IS',
+        2 => 'TRUE_SYM',
       ),
     ),
     5 =>
@@ -10206,6 +17002,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'bool_pri',
+        1 => 'IS',
+        2 => 'not',
+        3 => 'TRUE_SYM',
+      ),
     ),
     6 =>
     array (
@@ -10213,6 +17016,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'bool_pri',
+        1 => 'IS',
+        2 => 'FALSE_SYM',
       ),
     ),
     7 =>
@@ -10223,6 +17032,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'bool_pri',
+        1 => 'IS',
+        2 => 'not',
+        3 => 'FALSE_SYM',
+      ),
     ),
     8 =>
     array (
@@ -10230,6 +17046,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'bool_pri',
+        1 => 'IS',
+        2 => 'UNKNOWN_SYM',
       ),
     ),
     9 =>
@@ -10240,10 +17062,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'bool_pri',
+        1 => 'IS',
+        2 => 'not',
+        3 => 'UNKNOWN_SYM',
+      ),
     ),
     10 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'bool_pri',
+      ),
     ),
   ),
   'bool_pri' =>
@@ -10255,6 +17088,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'bool_pri',
+        1 => 'IS',
+        2 => 'NULL_SYM',
+      ),
     ),
     1 =>
     array (
@@ -10263,6 +17102,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'bool_pri',
+        1 => 'IS',
+        2 => 'not',
+        3 => 'NULL_SYM',
       ),
     ),
     2 =>
@@ -10273,6 +17119,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'bool_pri',
+        1 => 'comp_op',
+        2 => 'predicate',
       ),
     ),
     3 =>
@@ -10285,10 +17137,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 2,
         3 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'bool_pri',
+        1 => 'comp_op',
+        2 => 'all_or_any',
+        3 => 'table_subquery',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'predicate',
+      ),
     ),
   ),
   'predicate' =>
@@ -10301,6 +17164,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => 'IN_SYM',
+        2 => 'table_subquery',
+      ),
     ),
     1 =>
     array (
@@ -10311,6 +17180,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => 'not',
+        2 => 'IN_SYM',
+        3 => 'table_subquery',
+      ),
     ),
     2 =>
     array (
@@ -10319,6 +17195,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => 'IN_SYM',
+        2 => '(',
+        3 => 'expr',
+        4 => ')',
       ),
     ),
     3 =>
@@ -10330,6 +17214,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => 'IN_SYM',
+        2 => '(',
+        3 => 'expr',
+        4 => ',',
+        5 => 'expr_list',
+        6 => ')',
+      ),
     ),
     4 =>
     array (
@@ -10339,6 +17233,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => 'not',
+        2 => 'IN_SYM',
+        3 => '(',
+        4 => 'expr',
+        5 => ')',
       ),
     ),
     5 =>
@@ -10351,6 +17254,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 4,
         3 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => 'not',
+        2 => 'IN_SYM',
+        3 => '(',
+        4 => 'expr',
+        5 => ',',
+        6 => 'expr_list',
+        7 => ')',
+      ),
     ),
     6 =>
     array (
@@ -10361,6 +17275,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => 'MEMBER_SYM',
+        2 => 'opt_of',
+        3 => '(',
+        4 => 'simple_expr',
+        5 => ')',
+      ),
     ),
     7 =>
     array (
@@ -10370,6 +17293,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
         2 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => 'BETWEEN_SYM',
+        2 => 'bit_expr',
+        3 => 'AND_SYM',
+        4 => 'predicate',
       ),
     ),
     8 =>
@@ -10382,6 +17313,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => 'not',
+        2 => 'BETWEEN_SYM',
+        3 => 'bit_expr',
+        4 => 'AND_SYM',
+        5 => 'predicate',
+      ),
     ),
     9 =>
     array (
@@ -10391,6 +17331,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => 'SOUNDS_SYM',
+        2 => 'LIKE',
+        3 => 'bit_expr',
+      ),
     ),
     10 =>
     array (
@@ -10399,6 +17346,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => 'LIKE',
+        2 => 'simple_expr',
       ),
     ),
     11 =>
@@ -10410,6 +17363,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => 'LIKE',
+        2 => 'simple_expr',
+        3 => 'ESCAPE_SYM',
+        4 => 'simple_expr',
+      ),
     ),
     12 =>
     array (
@@ -10419,6 +17380,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => 'not',
+        2 => 'LIKE',
+        3 => 'simple_expr',
       ),
     ),
     13 =>
@@ -10431,6 +17399,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => 'not',
+        2 => 'LIKE',
+        3 => 'simple_expr',
+        4 => 'ESCAPE_SYM',
+        5 => 'simple_expr',
+      ),
     ),
     14 =>
     array (
@@ -10440,6 +17417,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => 'REGEXP',
+        2 => 'bit_expr',
       ),
     ),
     15 =>
@@ -10452,10 +17435,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 2,
         3 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => 'not',
+        2 => 'REGEXP',
+        3 => 'bit_expr',
+      ),
     ),
     16 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+      ),
     ),
   ),
   'opt_of' =>
@@ -10463,10 +17457,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptOfChoice_8c38c611::UseOf_270826d4',
+      'symbols' =>
+      array (
+        0 => 'OF_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptOfChoice_8c38c611::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'bit_expr' =>
@@ -10479,6 +17480,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => '|',
+        2 => 'bit_expr',
+      ),
     ),
     1 =>
     array (
@@ -10487,6 +17494,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => '&',
+        2 => 'bit_expr',
       ),
     ),
     2 =>
@@ -10497,6 +17510,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => 'SHIFT_LEFT',
+        2 => 'bit_expr',
+      ),
     ),
     3 =>
     array (
@@ -10505,6 +17524,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => 'SHIFT_RIGHT',
+        2 => 'bit_expr',
       ),
     ),
     4 =>
@@ -10515,6 +17540,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => '+',
+        2 => 'bit_expr',
+      ),
     ),
     5 =>
     array (
@@ -10523,6 +17554,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => '-',
+        2 => 'bit_expr',
       ),
     ),
     6 =>
@@ -10534,6 +17571,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => '+',
+        2 => 'INTERVAL_SYM',
+        3 => 'expr',
+        4 => 'interval',
+      ),
     ),
     7 =>
     array (
@@ -10544,6 +17589,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => '-',
+        2 => 'INTERVAL_SYM',
+        3 => 'expr',
+        4 => 'interval',
+      ),
     ),
     8 =>
     array (
@@ -10552,6 +17605,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => '*',
+        2 => 'bit_expr',
       ),
     ),
     9 =>
@@ -10562,6 +17621,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => '/',
+        2 => 'bit_expr',
+      ),
     ),
     10 =>
     array (
@@ -10570,6 +17635,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => '%',
+        2 => 'bit_expr',
       ),
     ),
     11 =>
@@ -10580,6 +17651,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => 'DIV_SYM',
+        2 => 'bit_expr',
+      ),
     ),
     12 =>
     array (
@@ -10588,6 +17665,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => 'MOD_SYM',
+        2 => 'bit_expr',
       ),
     ),
     13 =>
@@ -10598,10 +17681,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'bit_expr',
+        1 => '^',
+        2 => 'bit_expr',
+      ),
     ),
     14 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'simple_expr',
+      ),
     ),
   ),
   'or' =>
@@ -10612,6 +17705,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'OR_SYM',
+      ),
     ),
     1 =>
     array (
@@ -10620,6 +17717,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'OR2_SYM',
+      ),
     ),
   ),
   'and' =>
@@ -10627,10 +17728,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\AndChoice_1c2990dc::UseAnd_bd972cc4',
+      'symbols' =>
+      array (
+        0 => 'AND_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\AndChoice_1c2990dc::Use_73e7b6f8',
+      'symbols' =>
+      array (
+        0 => 'AND_AND_SYM',
+      ),
     ),
   ),
   'not' =>
@@ -10641,6 +17750,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'NOT_SYM',
+      ),
     ),
     1 =>
     array (
@@ -10648,6 +17761,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NOT2_SYM',
       ),
     ),
   ),
@@ -10659,6 +17776,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => '!',
+      ),
     ),
     1 =>
     array (
@@ -10666,6 +17787,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NOT2_SYM',
       ),
     ),
   ),
@@ -10677,12 +17802,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'EQ',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\CompOpWithEqualSym_66adce9b',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'EQUAL_SYM',
       ),
     ),
     2 =>
@@ -10691,12 +17824,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'GE',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\CompOpWithGtSym_51ca05eb',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'GT_SYM',
       ),
     ),
     4 =>
@@ -10705,12 +17846,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'LE',
+      ),
     ),
     5 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\CompOpWithLt_f208e164',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'LT',
       ),
     ),
     6 =>
@@ -10719,6 +17868,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NE',
       ),
     ),
   ),
@@ -10730,6 +17883,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'ALL',
+      ),
     ),
     1 =>
     array (
@@ -10738,6 +17895,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ANY_SYM',
+      ),
     ),
   ),
   'simple_expr' =>
@@ -10745,22 +17906,42 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'simple_ident',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'function_call_keyword',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'function_call_nonkeyword',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'function_call_generic',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'function_call_conflict',
+      ),
     ),
     5 =>
     array (
@@ -10770,30 +17951,60 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'simple_expr',
+        1 => 'COLLATE_SYM',
+        2 => 'ident_or_text',
+      ),
     ),
     6 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'literal_or_null',
+      ),
     ),
     7 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'param_marker',
+      ),
     ),
     8 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'rvalue_system_or_user_variable',
+      ),
     ),
     9 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'in_expression_user_variable_assignment',
+      ),
     ),
     10 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'set_function_specification',
+      ),
     ),
     11 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'window_func_call',
+      ),
     ),
     12 =>
     array (
@@ -10803,6 +18014,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'simple_expr',
+        1 => 'OR_OR_SYM',
+        2 => 'simple_expr',
+      ),
     ),
     13 =>
     array (
@@ -10810,6 +18027,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '+',
+        1 => 'simple_expr',
       ),
     ),
     14 =>
@@ -10819,6 +18041,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '-',
+        1 => 'simple_expr',
+      ),
     ),
     15 =>
     array (
@@ -10826,6 +18053,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '~',
+        1 => 'simple_expr',
       ),
     ),
     16 =>
@@ -10836,10 +18068,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'not2',
+        1 => 'simple_expr',
+      ),
     ),
     17 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'row_subquery',
+      ),
     ),
     18 =>
     array (
@@ -10847,6 +18088,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'expr',
+        2 => ')',
       ),
     ),
     19 =>
@@ -10857,6 +18104,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'expr',
+        2 => ',',
+        3 => 'expr_list',
+        4 => ')',
+      ),
     ),
     20 =>
     array (
@@ -10866,6 +18121,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ROW_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'expr_list',
+        5 => ')',
+      ),
     ),
     21 =>
     array (
@@ -10873,6 +18137,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'EXISTS',
+        1 => 'table_subquery',
       ),
     ),
     22 =>
@@ -10882,6 +18151,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => '{',
+        1 => 'ident',
+        2 => 'expr',
+        3 => '}',
       ),
     ),
     23 =>
@@ -10893,6 +18169,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 4,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'MATCH',
+        1 => 'ident_list_arg',
+        2 => 'AGAINST',
+        3 => '(',
+        4 => 'bit_expr',
+        5 => 'fulltext_options',
+        6 => ')',
+      ),
     ),
     24 =>
     array (
@@ -10900,6 +18186,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BINARY_SYM',
+        1 => 'simple_expr',
       ),
     ),
     25 =>
@@ -10911,6 +18202,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 4,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'CAST_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => 'AS',
+        4 => 'cast_type',
+        5 => 'opt_array_cast',
+        6 => ')',
+      ),
     ),
     26 =>
     array (
@@ -10920,6 +18221,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 6,
         2 => 7,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CAST_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => 'AT_SYM',
+        4 => 'LOCAL_SYM',
+        5 => 'AS',
+        6 => 'cast_type',
+        7 => 'opt_array_cast',
+        8 => ')',
       ),
     ),
     27 =>
@@ -10932,6 +18245,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 7,
         3 => 10,
       ),
+      'symbols' =>
+      array (
+        0 => 'CAST_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => 'AT_SYM',
+        4 => 'TIME_SYM',
+        5 => 'ZONE_SYM',
+        6 => 'opt_interval',
+        7 => 'TEXT_STRING_literal',
+        8 => 'AS',
+        9 => 'DATETIME_SYM',
+        10 => 'type_datetime_precision',
+        11 => ')',
+      ),
     ),
     28 =>
     array (
@@ -10942,6 +18270,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'CASE_SYM',
+        1 => 'opt_expr',
+        2 => 'when_list',
+        3 => 'opt_else',
+        4 => 'END',
+      ),
     ),
     29 =>
     array (
@@ -10950,6 +18286,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CONVERT_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'cast_type',
+        5 => ')',
       ),
     ),
     30 =>
@@ -10960,6 +18305,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'CONVERT_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => 'USING',
+        4 => 'charset_name',
+        5 => ')',
+      ),
     ),
     31 =>
     array (
@@ -10968,6 +18322,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT_SYM',
+        1 => '(',
+        2 => 'simple_ident',
+        3 => ')',
+      ),
     ),
     32 =>
     array (
@@ -10975,6 +18336,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'VALUES',
+        1 => '(',
+        2 => 'simple_ident_nospvar',
+        3 => ')',
       ),
     ),
     33 =>
@@ -10986,6 +18354,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'INTERVAL_SYM',
+        1 => 'expr',
+        2 => 'interval',
+        3 => '+',
+        4 => 'expr',
+      ),
     ),
     34 =>
     array (
@@ -10995,6 +18371,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'simple_ident',
+        1 => 'JSON_SEPARATOR_SYM',
+        2 => 'TEXT_STRING_literal',
       ),
     ),
     35 =>
@@ -11006,6 +18388,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'simple_ident',
+        1 => 'JSON_UNQUOTED_SEPARATOR_SYM',
+        2 => 'TEXT_STRING_literal',
+      ),
     ),
   ),
   'opt_array_cast' =>
@@ -11013,10 +18401,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptArrayCastChoice_8fb6f935::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptArrayCastChoice_8fb6f935::UseArray_23a49b7b',
+      'symbols' =>
+      array (
+        0 => 'ARRAY_SYM',
+      ),
     ),
   ),
   'function_call_keyword' =>
@@ -11029,6 +18424,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'CHAR_SYM',
+        1 => '(',
+        2 => 'expr_list',
+        3 => ')',
+      ),
     ),
     1 =>
     array (
@@ -11039,6 +18441,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'CHAR_SYM',
+        1 => '(',
+        2 => 'expr_list',
+        3 => 'USING',
+        4 => 'charset_name',
+        5 => ')',
+      ),
     ),
     2 =>
     array (
@@ -11047,6 +18458,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_USER',
+        1 => 'optional_braces',
+      ),
     ),
     3 =>
     array (
@@ -11054,6 +18470,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DATE_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ')',
       ),
     ),
     4 =>
@@ -11064,6 +18487,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'DAY_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ')',
+      ),
     ),
     5 =>
     array (
@@ -11072,6 +18502,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'HOUR_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ')',
       ),
     ),
     6 =>
@@ -11084,6 +18521,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 6,
         3 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'INSERT_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'expr',
+        5 => ',',
+        6 => 'expr',
+        7 => ',',
+        8 => 'expr',
+        9 => ')',
+      ),
     ),
     7 =>
     array (
@@ -11092,6 +18542,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INTERVAL_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'expr',
+        5 => ')',
       ),
     ),
     8 =>
@@ -11102,6 +18561,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
         2 => 6,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INTERVAL_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'expr',
+        5 => ',',
+        6 => 'expr_list',
+        7 => ')',
       ),
     ),
     9 =>
@@ -11114,6 +18584,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 5,
         3 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'JSON_VALUE_SYM',
+        1 => '(',
+        2 => 'simple_expr',
+        3 => ',',
+        4 => 'text_literal',
+        5 => 'opt_returning_type',
+        6 => 'opt_on_empty_or_error',
+        7 => ')',
+      ),
     ),
     10 =>
     array (
@@ -11122,6 +18603,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LEFT',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'expr',
+        5 => ')',
       ),
     ),
     11 =>
@@ -11132,6 +18622,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'MINUTE_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ')',
+      ),
     ),
     12 =>
     array (
@@ -11140,6 +18637,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MONTH_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ')',
       ),
     ),
     13 =>
@@ -11150,6 +18654,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'RIGHT',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'expr',
+        5 => ')',
+      ),
     ),
     14 =>
     array (
@@ -11159,6 +18672,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'SECOND_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ')',
+      ),
     ),
     15 =>
     array (
@@ -11167,6 +18687,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'TIME_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ')',
+      ),
     ),
     16 =>
     array (
@@ -11174,6 +18701,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TIMESTAMP_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ')',
       ),
     ),
     17 =>
@@ -11184,6 +18718,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'TIMESTAMP_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'expr',
+        5 => ')',
+      ),
     ),
     18 =>
     array (
@@ -11191,6 +18734,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TRIM',
+        1 => '(',
+        2 => 'expr',
+        3 => ')',
       ),
     ),
     19 =>
@@ -11201,6 +18751,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'TRIM',
+        1 => '(',
+        2 => 'LEADING',
+        3 => 'expr',
+        4 => 'FROM',
+        5 => 'expr',
+        6 => ')',
+      ),
     ),
     20 =>
     array (
@@ -11209,6 +18769,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TRIM',
+        1 => '(',
+        2 => 'TRAILING',
+        3 => 'expr',
+        4 => 'FROM',
+        5 => 'expr',
+        6 => ')',
       ),
     ),
     21 =>
@@ -11219,6 +18789,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'TRIM',
+        1 => '(',
+        2 => 'BOTH',
+        3 => 'expr',
+        4 => 'FROM',
+        5 => 'expr',
+        6 => ')',
+      ),
     ),
     22 =>
     array (
@@ -11226,6 +18806,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TRIM',
+        1 => '(',
+        2 => 'LEADING',
+        3 => 'FROM',
+        4 => 'expr',
+        5 => ')',
       ),
     ),
     23 =>
@@ -11235,6 +18824,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'TRIM',
+        1 => '(',
+        2 => 'TRAILING',
+        3 => 'FROM',
+        4 => 'expr',
+        5 => ')',
+      ),
     ),
     24 =>
     array (
@@ -11242,6 +18840,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TRIM',
+        1 => '(',
+        2 => 'BOTH',
+        3 => 'FROM',
+        4 => 'expr',
+        5 => ')',
       ),
     ),
     25 =>
@@ -11252,6 +18859,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'TRIM',
+        1 => '(',
+        2 => 'expr',
+        3 => 'FROM',
+        4 => 'expr',
+        5 => ')',
+      ),
     ),
     26 =>
     array (
@@ -11259,6 +18875,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'USER',
+        1 => '(',
+        2 => ')',
       ),
     ),
     27 =>
@@ -11268,6 +18890,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'YEAR_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ')',
       ),
     ),
   ),
@@ -11281,6 +18910,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ADDDATE_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'expr',
+        5 => ')',
+      ),
     ),
     1 =>
     array (
@@ -11291,6 +18929,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'ADDDATE_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'INTERVAL_SYM',
+        5 => 'expr',
+        6 => 'interval',
+        7 => ')',
+      ),
     ),
     2 =>
     array (
@@ -11300,6 +18949,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'CURDATE',
+        1 => 'optional_braces',
+      ),
     ),
     3 =>
     array (
@@ -11308,6 +18962,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CURTIME',
+        1 => 'func_datetime_precision',
       ),
     ),
     4 =>
@@ -11319,6 +18978,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'DATE_ADD_INTERVAL',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'INTERVAL_SYM',
+        5 => 'expr',
+        6 => 'interval',
+        7 => ')',
+      ),
     ),
     5 =>
     array (
@@ -11329,6 +18999,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'DATE_SUB_INTERVAL',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'INTERVAL_SYM',
+        5 => 'expr',
+        6 => 'interval',
+        7 => ')',
+      ),
     ),
     6 =>
     array (
@@ -11337,6 +19018,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'EXTRACT_SYM',
+        1 => '(',
+        2 => 'interval',
+        3 => 'FROM',
+        4 => 'expr',
+        5 => ')',
       ),
     ),
     7 =>
@@ -11347,6 +19037,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'GET_FORMAT',
+        1 => '(',
+        2 => 'date_time_type',
+        3 => ',',
+        4 => 'expr',
+        5 => ')',
+      ),
     ),
     8 =>
     array (
@@ -11354,6 +19053,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LOG_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ')',
       ),
     ),
     9 =>
@@ -11364,10 +19070,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'LOG_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'expr',
+        5 => ')',
+      ),
     ),
     10 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'now',
+      ),
     ),
     11 =>
     array (
@@ -11376,6 +19095,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'POSITION_SYM',
+        1 => '(',
+        2 => 'bit_expr',
+        3 => 'IN_SYM',
+        4 => 'expr',
+        5 => ')',
       ),
     ),
     12 =>
@@ -11386,6 +19114,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'SUBDATE_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'expr',
+        5 => ')',
+      ),
     ),
     13 =>
     array (
@@ -11395,6 +19132,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
         2 => 6,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SUBDATE_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'INTERVAL_SYM',
+        5 => 'expr',
+        6 => 'interval',
+        7 => ')',
       ),
     ),
     14 =>
@@ -11407,6 +19155,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 4,
         3 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'SUBSTRING',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'expr',
+        5 => ',',
+        6 => 'expr',
+        7 => ')',
+      ),
     ),
     15 =>
     array (
@@ -11416,6 +19175,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
         2 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SUBSTRING',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'expr',
+        5 => ')',
       ),
     ),
     16 =>
@@ -11428,6 +19196,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 4,
         3 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'SUBSTRING',
+        1 => '(',
+        2 => 'expr',
+        3 => 'FROM',
+        4 => 'expr',
+        5 => 'FOR_SYM',
+        6 => 'expr',
+        7 => ')',
+      ),
     ),
     17 =>
     array (
@@ -11438,6 +19217,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'SUBSTRING',
+        1 => '(',
+        2 => 'expr',
+        3 => 'FROM',
+        4 => 'expr',
+        5 => ')',
+      ),
     ),
     18 =>
     array (
@@ -11445,6 +19233,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SYSDATE',
+        1 => 'func_datetime_precision',
       ),
     ),
     19 =>
@@ -11456,6 +19249,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 4,
         2 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'TIMESTAMP_ADD',
+        1 => '(',
+        2 => 'interval_time_stamp',
+        3 => ',',
+        4 => 'expr',
+        5 => ',',
+        6 => 'expr',
+        7 => ')',
+      ),
     ),
     20 =>
     array (
@@ -11466,6 +19270,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 4,
         2 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'TIMESTAMP_DIFF',
+        1 => '(',
+        2 => 'interval_time_stamp',
+        3 => ',',
+        4 => 'expr',
+        5 => ',',
+        6 => 'expr',
+        7 => ')',
+      ),
     ),
     21 =>
     array (
@@ -11473,6 +19288,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'UTC_DATE_SYM',
+        1 => 'optional_braces',
       ),
     ),
     22 =>
@@ -11482,6 +19302,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'UTC_TIME_SYM',
+        1 => 'func_datetime_precision',
+      ),
     ),
     23 =>
     array (
@@ -11489,6 +19314,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'UTC_TIMESTAMP_SYM',
+        1 => 'func_datetime_precision',
       ),
     ),
   ),
@@ -11500,6 +19330,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -11507,6 +19340,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RETURNING_SYM',
+        1 => 'cast_type',
       ),
     ),
   ),
@@ -11519,6 +19357,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ASCII_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ')',
+      ),
     ),
     1 =>
     array (
@@ -11526,6 +19371,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CHARSET',
+        1 => '(',
+        2 => 'expr',
+        3 => ')',
       ),
     ),
     2 =>
@@ -11535,6 +19387,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'COALESCE',
+        1 => '(',
+        2 => 'expr_list',
+        3 => ')',
+      ),
     ),
     3 =>
     array (
@@ -11543,6 +19402,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'COLLATION_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ')',
+      ),
     ),
     4 =>
     array (
@@ -11550,6 +19416,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DATABASE',
+        1 => '(',
+        2 => ')',
       ),
     ),
     5 =>
@@ -11561,6 +19433,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 4,
         2 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'IF',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'expr',
+        5 => ',',
+        6 => 'expr',
+        7 => ')',
+      ),
     ),
     6 =>
     array (
@@ -11569,6 +19452,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FORMAT_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'expr',
+        5 => ')',
       ),
     ),
     7 =>
@@ -11580,6 +19472,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 4,
         2 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'FORMAT_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'expr',
+        5 => ',',
+        6 => 'expr',
+        7 => ')',
+      ),
     ),
     8 =>
     array (
@@ -11587,6 +19490,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MICROSECOND_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ')',
       ),
     ),
     9 =>
@@ -11597,6 +19507,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'MOD_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'expr',
+        5 => ')',
+      ),
     ),
     10 =>
     array (
@@ -11606,6 +19525,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'QUARTER_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ')',
+      ),
     ),
     11 =>
     array (
@@ -11614,6 +19540,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REPEAT_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'expr',
+        5 => ')',
       ),
     ),
     12 =>
@@ -11625,6 +19560,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 4,
         2 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'REPLACE_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'expr',
+        5 => ',',
+        6 => 'expr',
+        7 => ')',
+      ),
     ),
     13 =>
     array (
@@ -11633,12 +19579,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'REVERSE_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ')',
+      ),
     ),
     14 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\FunctionCallConflictWithRowCountSym_b1ab3878',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'ROW_COUNT_SYM',
+        1 => '(',
+        2 => ')',
       ),
     ),
     15 =>
@@ -11649,6 +19608,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'TRUNCATE_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'expr',
+        5 => ')',
+      ),
     ),
     16 =>
     array (
@@ -11657,6 +19625,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'WEEK_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ')',
       ),
     ),
     17 =>
@@ -11668,6 +19643,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'WEEK_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'expr',
+        5 => ')',
+      ),
     ),
     18 =>
     array (
@@ -11675,6 +19659,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'WEIGHT_STRING_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ')',
       ),
     ),
     19 =>
@@ -11686,6 +19677,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 4,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'WEIGHT_STRING_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => 'AS',
+        4 => 'CHAR_SYM',
+        5 => 'ws_num_codepoints',
+        6 => ')',
+      ),
     ),
     20 =>
     array (
@@ -11694,6 +19695,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'WEIGHT_STRING_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => 'AS',
+        4 => 'BINARY_SYM',
+        5 => 'ws_num_codepoints',
+        6 => ')',
       ),
     ),
     21 =>
@@ -11706,10 +19717,27 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 6,
         3 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'WEIGHT_STRING_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'ulong_num',
+        5 => ',',
+        6 => 'ulong_num',
+        7 => ',',
+        8 => 'ulong_num',
+        9 => ')',
+      ),
     ),
     22 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'geometry_function',
+      ),
     ),
   ),
   'geometry_function' =>
@@ -11722,6 +19750,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'GEOMETRYCOLLECTION_SYM',
+        1 => '(',
+        2 => 'opt_expr_list',
+        3 => ')',
+      ),
     ),
     1 =>
     array (
@@ -11729,6 +19764,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LINESTRING_SYM',
+        1 => '(',
+        2 => 'expr_list',
+        3 => ')',
       ),
     ),
     2 =>
@@ -11738,6 +19780,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'MULTILINESTRING_SYM',
+        1 => '(',
+        2 => 'expr_list',
+        3 => ')',
+      ),
     ),
     3 =>
     array (
@@ -11746,6 +19795,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'MULTIPOINT_SYM',
+        1 => '(',
+        2 => 'expr_list',
+        3 => ')',
+      ),
     ),
     4 =>
     array (
@@ -11753,6 +19809,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MULTIPOLYGON_SYM',
+        1 => '(',
+        2 => 'expr_list',
+        3 => ')',
       ),
     ),
     5 =>
@@ -11763,6 +19826,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'POINT_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'expr',
+        5 => ')',
+      ),
     ),
     6 =>
     array (
@@ -11770,6 +19842,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'POLYGON_SYM',
+        1 => '(',
+        2 => 'expr_list',
+        3 => ')',
       ),
     ),
   ),
@@ -11783,6 +19862,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'IDENT_sys',
+        1 => '(',
+        2 => 'opt_udf_expr_list',
+        3 => ')',
+      ),
     ),
     1 =>
     array (
@@ -11792,6 +19878,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
         2 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ident',
+        1 => '.',
+        2 => 'ident',
+        3 => '(',
+        4 => 'opt_expr_list',
+        5 => ')',
       ),
     ),
   ),
@@ -11805,12 +19900,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_natural_language_mode',
+        1 => 'opt_query_expansion',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\FulltextOptionsWithInSymBooleanSymModeSym_7ade1ced',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'IN_SYM',
+        1 => 'BOOLEAN_SYM',
+        2 => 'MODE_SYM',
       ),
     ),
   ),
@@ -11819,10 +19925,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptNaturalLanguageModeChoice_6931c211::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptNaturalLanguageModeChoice_6931c211::UseInNaturalLanguageMode_cdff8eb0',
+      'symbols' =>
+      array (
+        0 => 'IN_SYM',
+        1 => 'NATURAL',
+        2 => 'LANGUAGE_SYM',
+        3 => 'MODE_SYM',
+      ),
     ),
   ),
   'opt_query_expansion' =>
@@ -11830,10 +19946,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptQueryExpansionChoice_59a9bd59::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptQueryExpansionChoice_59a9bd59::UseWithQueryExpansion_3dd27063',
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'QUERY_SYM',
+        2 => 'EXPANSION_SYM',
+      ),
     ),
   ),
   'opt_udf_expr_list' =>
@@ -11844,10 +19969,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'udf_expr_list',
+      ),
     ),
   ),
   'udf_expr_list' =>
@@ -11855,6 +19987,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'udf_expr',
+      ),
     ),
     1 =>
     array (
@@ -11863,6 +19999,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'udf_expr_list',
+        1 => ',',
+        2 => 'udf_expr',
       ),
     ),
   ),
@@ -11876,6 +20018,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'expr',
+        1 => 'select_alias',
+      ),
     ),
   ),
   'set_function_specification' =>
@@ -11883,10 +20030,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sum_expr',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'grouping_operation',
+      ),
     ),
   ),
   'sum_expr' =>
@@ -11899,6 +20054,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'AVG_SYM',
+        1 => '(',
+        2 => 'in_sum_expr',
+        3 => ')',
+        4 => 'opt_windowing_clause',
+      ),
     ),
     1 =>
     array (
@@ -11909,6 +20072,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'AVG_SYM',
+        1 => '(',
+        2 => 'DISTINCT',
+        3 => 'in_sum_expr',
+        4 => ')',
+        5 => 'opt_windowing_clause',
+      ),
     ),
     2 =>
     array (
@@ -11917,6 +20089,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BIT_AND_SYM',
+        1 => '(',
+        2 => 'in_sum_expr',
+        3 => ')',
+        4 => 'opt_windowing_clause',
       ),
     ),
     3 =>
@@ -11927,6 +20107,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'BIT_OR_SYM',
+        1 => '(',
+        2 => 'in_sum_expr',
+        3 => ')',
+        4 => 'opt_windowing_clause',
+      ),
     ),
     4 =>
     array (
@@ -11935,6 +20123,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'JSON_ARRAYAGG',
+        1 => '(',
+        2 => 'in_sum_expr',
+        3 => ')',
+        4 => 'opt_windowing_clause',
       ),
     ),
     5 =>
@@ -11946,6 +20142,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 4,
         2 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'JSON_OBJECTAGG',
+        1 => '(',
+        2 => 'in_sum_expr',
+        3 => ',',
+        4 => 'in_sum_expr',
+        5 => ')',
+        6 => 'opt_windowing_clause',
+      ),
     ),
     6 =>
     array (
@@ -11954,6 +20160,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ST_COLLECT_SYM',
+        1 => '(',
+        2 => 'in_sum_expr',
+        3 => ')',
+        4 => 'opt_windowing_clause',
       ),
     ),
     7 =>
@@ -11965,6 +20179,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'ST_COLLECT_SYM',
+        1 => '(',
+        2 => 'DISTINCT',
+        3 => 'in_sum_expr',
+        4 => ')',
+        5 => 'opt_windowing_clause',
+      ),
     ),
     8 =>
     array (
@@ -11973,6 +20196,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BIT_XOR_SYM',
+        1 => '(',
+        2 => 'in_sum_expr',
+        3 => ')',
+        4 => 'opt_windowing_clause',
       ),
     ),
     9 =>
@@ -11983,6 +20214,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'COUNT_SYM',
+        1 => '(',
+        2 => 'opt_all',
+        3 => '*',
+        4 => ')',
+        5 => 'opt_windowing_clause',
+      ),
     ),
     10 =>
     array (
@@ -11991,6 +20231,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COUNT_SYM',
+        1 => '(',
+        2 => 'in_sum_expr',
+        3 => ')',
+        4 => 'opt_windowing_clause',
       ),
     ),
     11 =>
@@ -12002,6 +20250,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'COUNT_SYM',
+        1 => '(',
+        2 => 'DISTINCT',
+        3 => 'expr_list',
+        4 => ')',
+        5 => 'opt_windowing_clause',
+      ),
     ),
     12 =>
     array (
@@ -12010,6 +20267,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MIN_SYM',
+        1 => '(',
+        2 => 'in_sum_expr',
+        3 => ')',
+        4 => 'opt_windowing_clause',
       ),
     ),
     13 =>
@@ -12021,6 +20286,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'MIN_SYM',
+        1 => '(',
+        2 => 'DISTINCT',
+        3 => 'in_sum_expr',
+        4 => ')',
+        5 => 'opt_windowing_clause',
+      ),
     ),
     14 =>
     array (
@@ -12029,6 +20303,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MAX_SYM',
+        1 => '(',
+        2 => 'in_sum_expr',
+        3 => ')',
+        4 => 'opt_windowing_clause',
       ),
     ),
     15 =>
@@ -12040,6 +20322,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'MAX_SYM',
+        1 => '(',
+        2 => 'DISTINCT',
+        3 => 'in_sum_expr',
+        4 => ')',
+        5 => 'opt_windowing_clause',
+      ),
     ),
     16 =>
     array (
@@ -12049,6 +20340,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
         2 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'STD_SYM',
+        1 => '(',
+        2 => 'in_sum_expr',
+        3 => ')',
+        4 => 'opt_windowing_clause',
       ),
     ),
     17 =>
@@ -12060,6 +20359,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'VARIANCE_SYM',
+        1 => '(',
+        2 => 'in_sum_expr',
+        3 => ')',
+        4 => 'opt_windowing_clause',
+      ),
     ),
     18 =>
     array (
@@ -12068,6 +20375,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'STDDEV_SAMP_SYM',
+        1 => '(',
+        2 => 'in_sum_expr',
+        3 => ')',
+        4 => 'opt_windowing_clause',
       ),
     ),
     19 =>
@@ -12078,6 +20393,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'VAR_SAMP_SYM',
+        1 => '(',
+        2 => 'in_sum_expr',
+        3 => ')',
+        4 => 'opt_windowing_clause',
+      ),
     ),
     20 =>
     array (
@@ -12086,6 +20409,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SUM_SYM',
+        1 => '(',
+        2 => 'in_sum_expr',
+        3 => ')',
+        4 => 'opt_windowing_clause',
       ),
     ),
     21 =>
@@ -12096,6 +20427,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
         2 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SUM_SYM',
+        1 => '(',
+        2 => 'DISTINCT',
+        3 => 'in_sum_expr',
+        4 => ')',
+        5 => 'opt_windowing_clause',
       ),
     ),
     22 =>
@@ -12109,6 +20449,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 5,
         4 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'GROUP_CONCAT_SYM',
+        1 => '(',
+        2 => 'opt_distinct',
+        3 => 'expr_list',
+        4 => 'opt_gorder_clause',
+        5 => 'opt_gconcat_separator',
+        6 => ')',
+        7 => 'opt_windowing_clause',
+      ),
     ),
   ),
   'window_func_call' =>
@@ -12120,6 +20471,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ROW_NUMBER_SYM',
+        1 => '(',
+        2 => ')',
+        3 => 'windowing_clause',
+      ),
     ),
     1 =>
     array (
@@ -12127,6 +20485,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RANK_SYM',
+        1 => '(',
+        2 => ')',
+        3 => 'windowing_clause',
       ),
     ),
     2 =>
@@ -12136,6 +20501,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'DENSE_RANK_SYM',
+        1 => '(',
+        2 => ')',
+        3 => 'windowing_clause',
+      ),
     ),
     3 =>
     array (
@@ -12143,6 +20515,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CUME_DIST_SYM',
+        1 => '(',
+        2 => ')',
+        3 => 'windowing_clause',
       ),
     ),
     4 =>
@@ -12152,6 +20531,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'PERCENT_RANK_SYM',
+        1 => '(',
+        2 => ')',
+        3 => 'windowing_clause',
+      ),
     ),
     5 =>
     array (
@@ -12160,6 +20546,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NTILE_SYM',
+        1 => '(',
+        2 => 'stable_integer',
+        3 => ')',
+        4 => 'windowing_clause',
       ),
     ),
     6 =>
@@ -12172,6 +20566,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 5,
         3 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'LEAD_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => 'opt_lead_lag_info',
+        4 => ')',
+        5 => 'opt_null_treatment',
+        6 => 'windowing_clause',
+      ),
     ),
     7 =>
     array (
@@ -12183,6 +20587,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 5,
         3 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'LAG_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => 'opt_lead_lag_info',
+        4 => ')',
+        5 => 'opt_null_treatment',
+        6 => 'windowing_clause',
+      ),
     ),
     8 =>
     array (
@@ -12193,6 +20607,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 4,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'FIRST_VALUE_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ')',
+        4 => 'opt_null_treatment',
+        5 => 'windowing_clause',
+      ),
     ),
     9 =>
     array (
@@ -12202,6 +20625,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
         2 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LAST_VALUE_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ')',
+        4 => 'opt_null_treatment',
+        5 => 'windowing_clause',
       ),
     ),
     10 =>
@@ -12215,6 +20647,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 7,
         4 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'NTH_VALUE_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'simple_expr',
+        5 => ')',
+        6 => 'opt_from_first_last',
+        7 => 'opt_null_treatment',
+        8 => 'windowing_clause',
+      ),
     ),
   ),
   'opt_lead_lag_info' =>
@@ -12223,6 +20667,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptLeadLagInfoWith_a537d1fb',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -12234,6 +20681,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => ',',
+        1 => 'stable_integer',
+        2 => 'opt_ll_default',
+      ),
     ),
   ),
   'stable_integer' =>
@@ -12241,10 +20694,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'int64_literal',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'param_or_var',
+      ),
     ),
   ),
   'param_or_var' =>
@@ -12252,10 +20713,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'param_marker',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
     2 =>
     array (
@@ -12263,6 +20732,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '@',
+        1 => 'ident_or_text',
       ),
     ),
   ),
@@ -12274,6 +20748,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -12282,6 +20759,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => ',',
+        1 => 'expr',
+      ),
     ),
   ),
   'opt_null_treatment' =>
@@ -12289,14 +20771,27 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptNullTreatmentChoice_a717e62c::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptNullTreatmentChoice_a717e62c::UseRespectNulls_a4010503',
+      'symbols' =>
+      array (
+        0 => 'RESPECT_SYM',
+        1 => 'NULLS_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptNullTreatmentChoice_a717e62c::UseIgnoreNulls_91b4e4c0',
+      'symbols' =>
+      array (
+        0 => 'IGNORE_SYM',
+        1 => 'NULLS_SYM',
+      ),
     ),
   ),
   'opt_from_first_last' =>
@@ -12304,14 +20799,27 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptFromFirstLastChoice_3c171937::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptFromFirstLastChoice_3c171937::UseFromFirst_f44b294e',
+      'symbols' =>
+      array (
+        0 => 'FROM',
+        1 => 'FIRST_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptFromFirstLastChoice_3c171937::UseFromLast_0fb07b44',
+      'symbols' =>
+      array (
+        0 => 'FROM',
+        1 => 'LAST_SYM',
+      ),
     ),
   ),
   'opt_windowing_clause' =>
@@ -12322,10 +20830,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'windowing_clause',
+      ),
     ),
   ),
   'windowing_clause' =>
@@ -12337,6 +20852,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'OVER_SYM',
+        1 => 'window_name_or_spec',
+      ),
     ),
   ),
   'window_name_or_spec' =>
@@ -12344,10 +20864,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'window_name',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'window_spec',
+      ),
     ),
   ),
   'window_name' =>
@@ -12355,6 +20883,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
   ),
   'window_spec' =>
@@ -12365,6 +20897,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'window_spec_details',
+        2 => ')',
       ),
     ),
   ),
@@ -12380,6 +20918,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 2,
         3 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_existing_window_name',
+        1 => 'opt_partition_clause',
+        2 => 'opt_window_order_by_clause',
+        3 => 'opt_window_frame_clause',
+      ),
     ),
   ),
   'opt_existing_window_name' =>
@@ -12390,10 +20935,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'window_name',
+      ),
     ),
   ),
   'opt_partition_clause' =>
@@ -12404,6 +20956,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -12411,6 +20966,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PARTITION_SYM',
+        1 => 'BY',
+        2 => 'group_list',
       ),
     ),
   ),
@@ -12422,6 +20983,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -12429,6 +20993,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ORDER_SYM',
+        1 => 'BY',
+        2 => 'order_list',
       ),
     ),
   ),
@@ -12438,6 +21008,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptWindowFrameClauseWith_9202d50b',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -12450,6 +21023,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'window_frame_units',
+        1 => 'window_frame_extent',
+        2 => 'opt_window_frame_exclusion',
+      ),
     ),
   ),
   'window_frame_extent' =>
@@ -12457,10 +21036,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'window_frame_start',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'window_frame_between',
+      ),
     ),
   ),
   'window_frame_start' =>
@@ -12471,6 +21058,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'UNBOUNDED_SYM',
+        1 => 'PRECEDING_SYM',
+      ),
     ),
     1 =>
     array (
@@ -12479,6 +21071,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NUM_literal',
+        1 => 'PRECEDING_SYM',
+      ),
     ),
     2 =>
     array (
@@ -12486,6 +21083,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'param_marker',
+        1 => 'PRECEDING_SYM',
       ),
     ),
     3 =>
@@ -12496,12 +21098,24 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'INTERVAL_SYM',
+        1 => 'expr',
+        2 => 'interval',
+        3 => 'PRECEDING_SYM',
+      ),
     ),
     4 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\WindowFrameStartWithCurrentSymRowSym_6877dda5',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_SYM',
+        1 => 'ROW_SYM',
       ),
     ),
   ),
@@ -12515,6 +21129,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'BETWEEN_SYM',
+        1 => 'window_frame_bound',
+        2 => 'AND_SYM',
+        3 => 'window_frame_bound',
+      ),
     ),
   ),
   'window_frame_bound' =>
@@ -12522,12 +21143,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'window_frame_start',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\WindowFrameBoundWithUnboundedSymFollowingSym_3431dd62',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'UNBOUNDED_SYM',
+        1 => 'FOLLOWING_SYM',
       ),
     ),
     2 =>
@@ -12537,6 +21167,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NUM_literal',
+        1 => 'FOLLOWING_SYM',
+      ),
     ),
     3 =>
     array (
@@ -12544,6 +21179,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'param_marker',
+        1 => 'FOLLOWING_SYM',
       ),
     ),
     4 =>
@@ -12554,6 +21194,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'INTERVAL_SYM',
+        1 => 'expr',
+        2 => 'interval',
+        3 => 'FOLLOWING_SYM',
+      ),
     ),
   ),
   'opt_window_frame_exclusion' =>
@@ -12561,22 +21208,47 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptWindowFrameExclusionChoice_0dcc2b2b::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptWindowFrameExclusionChoice_0dcc2b2b::UseExcludeCurrentRow_b1f83261',
+      'symbols' =>
+      array (
+        0 => 'EXCLUDE_SYM',
+        1 => 'CURRENT_SYM',
+        2 => 'ROW_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptWindowFrameExclusionChoice_0dcc2b2b::UseExcludeGroup_1e1e3216',
+      'symbols' =>
+      array (
+        0 => 'EXCLUDE_SYM',
+        1 => 'GROUP_SYM',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptWindowFrameExclusionChoice_0dcc2b2b::UseExcludeTies_a062fa84',
+      'symbols' =>
+      array (
+        0 => 'EXCLUDE_SYM',
+        1 => 'TIES_SYM',
+      ),
     ),
     4 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptWindowFrameExclusionChoice_0dcc2b2b::UseExcludeNoOthers_b122de28',
+      'symbols' =>
+      array (
+        0 => 'EXCLUDE_SYM',
+        1 => 'NO_SYM',
+        2 => 'OTHERS_SYM',
+      ),
     ),
   ),
   'window_frame_units' =>
@@ -12584,14 +21256,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\WindowFrameUnitsChoice_95f00093::UseRows_6d2b98cb',
+      'symbols' =>
+      array (
+        0 => 'ROWS_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\WindowFrameUnitsChoice_95f00093::UseRange_69da9691',
+      'symbols' =>
+      array (
+        0 => 'RANGE_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\WindowFrameUnitsChoice_95f00093::UseGroups_1a84bba2',
+      'symbols' =>
+      array (
+        0 => 'GROUPS_SYM',
+      ),
     ),
   ),
   'grouping_operation' =>
@@ -12602,6 +21286,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'GROUPING_SYM',
+        1 => '(',
+        2 => 'expr_list',
+        3 => ')',
       ),
     ),
   ),
@@ -12616,6 +21307,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => '@',
+        1 => 'ident_or_text',
+        2 => 'SET_VAR',
+        3 => 'expr',
+      ),
     ),
   ),
   'rvalue_system_or_user_variable' =>
@@ -12627,6 +21325,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '@',
+        1 => 'ident_or_text',
+      ),
     ),
     1 =>
     array (
@@ -12635,6 +21338,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => '@',
+        1 => '@',
+        2 => 'opt_rvalue_system_variable_type',
+        3 => 'rvalue_system_variable',
       ),
     ),
   ),
@@ -12646,6 +21356,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -12653,6 +21366,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DISTINCT',
       ),
     ),
   ),
@@ -12664,6 +21381,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -12671,6 +21391,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SEPARATOR_SYM',
+        1 => 'text_string',
       ),
     ),
   ),
@@ -12682,6 +21407,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -12689,6 +21417,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ORDER_SYM',
+        1 => 'BY',
+        2 => 'gorder_list',
       ),
     ),
   ),
@@ -12702,10 +21436,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'gorder_list',
+        1 => ',',
+        2 => 'order_expr',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'order_expr',
+      ),
     ),
   ),
   'in_sum_expr' =>
@@ -12718,6 +21462,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_all',
+        1 => 'expr',
+      ),
     ),
   ),
   'cast_type' =>
@@ -12729,6 +21478,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'BINARY_SYM',
+        1 => 'opt_field_length',
+      ),
     ),
     1 =>
     array (
@@ -12739,6 +21493,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'CHAR_SYM',
+        1 => 'opt_field_length',
+        2 => 'opt_charset_with_opt_binary',
+      ),
     ),
     2 =>
     array (
@@ -12748,12 +21508,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'nchar',
+        1 => 'opt_field_length',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\CastTypeWithSignedSym_7b8b0b9b',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'SIGNED_SYM',
       ),
     ),
     4 =>
@@ -12763,12 +21532,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'SIGNED_SYM',
+        1 => 'INT_SYM',
+      ),
     ),
     5 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\CastTypeWithUnsignedSym_99c201a1',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'UNSIGNED_SYM',
       ),
     ),
     6 =>
@@ -12778,12 +21556,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNSIGNED_SYM',
+        1 => 'INT_SYM',
+      ),
     ),
     7 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\CastTypeWithDateSym_45e9babb',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'DATE_SYM',
       ),
     ),
     8 =>
@@ -12793,6 +21580,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'YEAR_SYM',
+      ),
     ),
     9 =>
     array (
@@ -12801,6 +21592,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'TIME_SYM',
+        1 => 'type_datetime_precision',
+      ),
     ),
     10 =>
     array (
@@ -12808,6 +21604,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DATETIME_SYM',
+        1 => 'type_datetime_precision',
       ),
     ),
     11 =>
@@ -12818,6 +21619,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'DECIMAL_SYM',
+        1 => 'float_options',
+      ),
     ),
     12 =>
     array (
@@ -12825,10 +21631,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'JSON_SYM',
+      ),
     ),
     13 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'real_type',
+      ),
     ),
     14 =>
     array (
@@ -12838,12 +21652,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'FLOAT_SYM',
+        1 => 'standard_float_options',
+      ),
     ),
     15 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\CastTypeWithPointSym_442d07b6',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'POINT_SYM',
       ),
     ),
     16 =>
@@ -12852,12 +21675,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'LINESTRING_SYM',
+      ),
     ),
     17 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\CastTypeWithPolygonSym_b1472b50',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'POLYGON_SYM',
       ),
     ),
     18 =>
@@ -12866,12 +21697,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'MULTIPOINT_SYM',
+      ),
     ),
     19 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\CastTypeWithMultilinestringSym_e7a35789',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'MULTILINESTRING_SYM',
       ),
     ),
     20 =>
@@ -12880,6 +21719,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'MULTIPOLYGON_SYM',
+      ),
     ),
     21 =>
     array (
@@ -12887,6 +21730,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'GEOMETRYCOLLECTION_SYM',
       ),
     ),
   ),
@@ -12898,10 +21745,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'expr_list',
+      ),
     ),
   ),
   'expr_list' =>
@@ -12909,6 +21763,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'expr',
+      ),
     ),
     1 =>
     array (
@@ -12918,6 +21776,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'expr_list',
+        1 => ',',
+        2 => 'expr',
+      ),
     ),
   ),
   'ident_list_arg' =>
@@ -12925,6 +21789,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident_list',
+      ),
     ),
     1 =>
     array (
@@ -12933,6 +21801,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'ident_list',
+        2 => ')',
+      ),
     ),
   ),
   'ident_list' =>
@@ -12940,6 +21814,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'simple_ident',
+      ),
     ),
     1 =>
     array (
@@ -12948,6 +21826,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ident_list',
+        1 => ',',
+        2 => 'simple_ident',
       ),
     ),
   ),
@@ -12959,10 +21843,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'expr',
+      ),
     ),
   ),
   'opt_else' =>
@@ -12973,6 +21864,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -12980,6 +21874,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ELSE',
+        1 => 'expr',
       ),
     ),
   ),
@@ -12993,6 +21892,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'WHEN_SYM',
+        1 => 'expr',
+        2 => 'THEN_SYM',
+        3 => 'expr',
+      ),
     ),
     1 =>
     array (
@@ -13003,6 +21909,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'when_list',
+        1 => 'WHEN_SYM',
+        2 => 'expr',
+        3 => 'THEN_SYM',
+        4 => 'expr',
+      ),
     ),
   ),
   'table_reference' =>
@@ -13010,10 +21924,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'table_factor',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'joined_table',
+      ),
     ),
     2 =>
     array (
@@ -13022,6 +21944,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => '{',
+        1 => 'OJ_SYM',
+        2 => 'esc_table_reference',
+        3 => '}',
+      ),
     ),
   ),
   'esc_table_reference' =>
@@ -13029,10 +21958,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'table_factor',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'joined_table',
+      ),
     ),
   ),
   'joined_table' =>
@@ -13047,6 +21984,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 2,
         3 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'table_reference',
+        1 => 'inner_join_type',
+        2 => 'table_reference',
+        3 => 'ON_SYM',
+        4 => 'expr',
+      ),
     ),
     1 =>
     array (
@@ -13057,6 +22002,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
         3 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'table_reference',
+        1 => 'inner_join_type',
+        2 => 'table_reference',
+        3 => 'USING',
+        4 => '(',
+        5 => 'using_list',
+        6 => ')',
       ),
     ),
     2 =>
@@ -13069,6 +22024,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 2,
         3 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'table_reference',
+        1 => 'outer_join_type',
+        2 => 'table_reference',
+        3 => 'ON_SYM',
+        4 => 'expr',
+      ),
     ),
     3 =>
     array (
@@ -13080,6 +22043,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 2,
         3 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'table_reference',
+        1 => 'outer_join_type',
+        2 => 'table_reference',
+        3 => 'USING',
+        4 => '(',
+        5 => 'using_list',
+        6 => ')',
+      ),
     ),
     4 =>
     array (
@@ -13090,6 +22063,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'table_reference',
+        1 => 'inner_join_type',
+        2 => 'table_reference',
+      ),
     ),
     5 =>
     array (
@@ -13099,6 +22078,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'table_reference',
+        1 => 'natural_join_type',
+        2 => 'table_factor',
       ),
     ),
   ),
@@ -13111,6 +22096,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'NATURAL',
+        1 => 'opt_inner',
+        2 => 'JOIN_SYM',
+      ),
     ),
     1 =>
     array (
@@ -13118,6 +22109,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NATURAL',
+        1 => 'RIGHT',
+        2 => 'opt_outer',
+        3 => 'JOIN_SYM',
       ),
     ),
     2 =>
@@ -13127,6 +22125,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'NATURAL',
+        1 => 'LEFT',
+        2 => 'opt_outer',
+        3 => 'JOIN_SYM',
+      ),
     ),
   ),
   'inner_join_type' =>
@@ -13134,18 +22139,36 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\InnerJoinTypeChoice_32963d08::UseJoin_a9e153ee',
+      'symbols' =>
+      array (
+        0 => 'JOIN_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\InnerJoinTypeChoice_32963d08::UseInnerJoin_98b2b2a0',
+      'symbols' =>
+      array (
+        0 => 'INNER_SYM',
+        1 => 'JOIN_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\InnerJoinTypeChoice_32963d08::UseCrossJoin_82443ed3',
+      'symbols' =>
+      array (
+        0 => 'CROSS',
+        1 => 'JOIN_SYM',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\InnerJoinTypeChoice_32963d08::UseStraightJoin_880c4b53',
+      'symbols' =>
+      array (
+        0 => 'STRAIGHT_JOIN',
+      ),
     ),
   ),
   'outer_join_type' =>
@@ -13157,6 +22180,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'LEFT',
+        1 => 'opt_outer',
+        2 => 'JOIN_SYM',
+      ),
     ),
     1 =>
     array (
@@ -13165,6 +22194,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'RIGHT',
+        1 => 'opt_outer',
+        2 => 'JOIN_SYM',
+      ),
     ),
   ),
   'opt_inner' =>
@@ -13172,10 +22207,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptInnerChoice_bae3c2bb::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptInnerChoice_bae3c2bb::UseInner_67f54b7b',
+      'symbols' =>
+      array (
+        0 => 'INNER_SYM',
+      ),
     ),
   ),
   'opt_outer' =>
@@ -13183,10 +22225,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptOuterChoice_86cb63c7::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptOuterChoice_86cb63c7::UseOuter_2c635ca0',
+      'symbols' =>
+      array (
+        0 => 'OUTER_SYM',
+      ),
     ),
   ),
   'opt_use_partition' =>
@@ -13197,10 +22246,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'use_partition',
+      ),
     ),
   ),
   'use_partition' =>
@@ -13212,6 +22268,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'PARTITION_SYM',
+        1 => '(',
+        2 => 'using_list',
+        3 => ')',
+      ),
     ),
   ),
   'table_factor' =>
@@ -13219,26 +22282,50 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'single_table',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'single_table_parens',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'derived_table',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'joined_table_parens',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'table_reference_list_parens',
+      ),
     ),
     5 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'table_function',
+      ),
     ),
   ),
   'table_reference_list_parens' =>
@@ -13250,6 +22337,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'table_reference_list_parens',
+        2 => ')',
+      ),
     ),
     1 =>
     array (
@@ -13258,6 +22351,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'table_reference_list',
+        2 => ',',
+        3 => 'table_reference',
+        4 => ')',
       ),
     ),
   ),
@@ -13270,6 +22371,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'single_table_parens',
+        2 => ')',
+      ),
     ),
     1 =>
     array (
@@ -13277,6 +22384,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'single_table',
+        2 => ')',
       ),
     ),
   ),
@@ -13292,6 +22405,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 2,
         3 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'table_ident',
+        1 => 'opt_use_partition',
+        2 => 'opt_table_alias',
+        3 => 'opt_key_definition',
+      ),
     ),
   ),
   'joined_table_parens' =>
@@ -13303,6 +22423,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'joined_table_parens',
+        2 => ')',
+      ),
     ),
     1 =>
     array (
@@ -13310,6 +22436,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'joined_table',
+        2 => ')',
       ),
     ),
   ),
@@ -13324,6 +22456,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'table_subquery',
+        1 => 'opt_table_alias',
+        2 => 'opt_derived_column_list',
+      ),
     ),
     1 =>
     array (
@@ -13333,6 +22471,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
         2 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LATERAL_SYM',
+        1 => 'table_subquery',
+        2 => 'opt_table_alias',
+        3 => 'opt_derived_column_list',
       ),
     ),
   ),
@@ -13348,6 +22493,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 5,
         3 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'JSON_TABLE_SYM',
+        1 => '(',
+        2 => 'expr',
+        3 => ',',
+        4 => 'text_literal',
+        5 => 'columns_clause',
+        6 => ')',
+        7 => 'opt_table_alias',
+      ),
     ),
   ),
   'columns_clause' =>
@@ -13360,6 +22516,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'COLUMNS',
+        1 => '(',
+        2 => 'columns_list',
+        3 => ')',
+      ),
     ),
   ),
   'columns_list' =>
@@ -13367,6 +22530,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'jt_column',
+      ),
     ),
     1 =>
     array (
@@ -13375,6 +22542,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'columns_list',
+        1 => ',',
+        2 => 'jt_column',
       ),
     ),
   ),
@@ -13386,6 +22559,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ident',
+        1 => 'FOR_SYM',
+        2 => 'ORDINALITY_SYM',
       ),
     ),
     1 =>
@@ -13400,6 +22579,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         4 => 5,
         5 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'ident',
+        1 => 'type',
+        2 => 'opt_collate',
+        3 => 'jt_column_type',
+        4 => 'PATH_SYM',
+        5 => 'text_literal',
+        6 => 'opt_on_empty_or_error_json_table',
+      ),
     ),
     2 =>
     array (
@@ -13409,6 +22598,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'NESTED_SYM',
+        1 => 'PATH_SYM',
+        2 => 'text_literal',
+        3 => 'columns_clause',
+      ),
     ),
   ),
   'jt_column_type' =>
@@ -13416,10 +22612,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\JtColumnTypeChoice_5bb8e3c9::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\JtColumnTypeChoice_5bb8e3c9::UseExists_b1ce3865',
+      'symbols' =>
+      array (
+        0 => 'EXISTS',
+      ),
     ),
   ),
   'opt_on_empty_or_error' =>
@@ -13430,14 +22633,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'on_empty',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'on_error',
+      ),
     ),
     3 =>
     array (
@@ -13447,6 +22661,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'on_empty',
+        1 => 'on_error',
+      ),
     ),
   ),
   'opt_on_empty_or_error_json_table' =>
@@ -13454,6 +22673,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'opt_on_empty_or_error',
+      ),
     ),
     1 =>
     array (
@@ -13462,6 +22685,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'on_error',
+        1 => 'on_empty',
       ),
     ),
   ),
@@ -13474,6 +22702,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'json_on_response',
+        1 => 'ON_SYM',
+        2 => 'EMPTY_SYM',
+      ),
     ),
   ),
   'on_error' =>
@@ -13485,6 +22719,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'json_on_response',
+        1 => 'ON_SYM',
+        2 => 'ERROR_SYM',
+      ),
     ),
   ),
   'json_on_response' =>
@@ -13495,12 +22735,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'ERROR_SYM',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\JsonOnResponseWithNullSym_a695ec00',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'NULL_SYM',
       ),
     ),
     2 =>
@@ -13510,6 +22758,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT_SYM',
+        1 => 'signed_literal',
+      ),
     ),
   ),
   'index_hint_clause' =>
@@ -13517,18 +22770,38 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\IndexHintClauseChoice_6b9790b3::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\IndexHintClauseChoice_6b9790b3::UseForJoin_eda154a2',
+      'symbols' =>
+      array (
+        0 => 'FOR_SYM',
+        1 => 'JOIN_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\IndexHintClauseChoice_6b9790b3::UseForOrderBy_1ac1df62',
+      'symbols' =>
+      array (
+        0 => 'FOR_SYM',
+        1 => 'ORDER_SYM',
+        2 => 'BY',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\IndexHintClauseChoice_6b9790b3::UseForGroupBy_a6916070',
+      'symbols' =>
+      array (
+        0 => 'FOR_SYM',
+        1 => 'GROUP_SYM',
+        2 => 'BY',
+      ),
     ),
   ),
   'index_hint_type' =>
@@ -13536,10 +22809,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\IndexHintTypeChoice_3dcfc7c9::UseForce_bd16a503',
+      'symbols' =>
+      array (
+        0 => 'FORCE_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\IndexHintTypeChoice_3dcfc7c9::UseIgnore_eff4f8c3',
+      'symbols' =>
+      array (
+        0 => 'IGNORE_SYM',
+      ),
     ),
   ),
   'index_hint_definition' =>
@@ -13554,6 +22835,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 2,
         3 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'index_hint_type',
+        1 => 'key_or_index',
+        2 => 'index_hint_clause',
+        3 => '(',
+        4 => 'key_usage_list',
+        5 => ')',
+      ),
     ),
     1 =>
     array (
@@ -13564,6 +22854,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'USE_SYM',
+        1 => 'key_or_index',
+        2 => 'index_hint_clause',
+        3 => '(',
+        4 => 'opt_key_usage_list',
+        5 => ')',
+      ),
     ),
   ),
   'index_hints_list' =>
@@ -13571,6 +22870,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'index_hint_definition',
+      ),
     ),
     1 =>
     array (
@@ -13579,6 +22882,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'index_hints_list',
+        1 => 'index_hint_definition',
       ),
     ),
   ),
@@ -13590,10 +22898,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'index_hints_list',
+      ),
     ),
   ),
   'opt_key_definition' =>
@@ -13601,6 +22916,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'opt_index_hints_list',
+      ),
     ),
   ),
   'opt_key_usage_list' =>
@@ -13611,10 +22930,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'key_usage_list',
+      ),
     ),
   ),
   'key_usage_element' =>
@@ -13622,12 +22948,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\KeyUsageElementWithPrimarySym_a0d40477',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'PRIMARY_SYM',
       ),
     ),
   ),
@@ -13636,6 +22970,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'key_usage_element',
+      ),
     ),
     1 =>
     array (
@@ -13645,6 +22983,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'key_usage_list',
+        1 => ',',
+        2 => 'key_usage_element',
+      ),
     ),
   ),
   'using_list' =>
@@ -13652,6 +22996,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident_string_list',
+      ),
     ),
   ),
   'ident_string_list' =>
@@ -13659,6 +23007,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
     1 =>
     array (
@@ -13668,6 +23020,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ident_string_list',
+        1 => ',',
+        2 => 'ident',
+      ),
     ),
   ),
   'interval' =>
@@ -13675,12 +23033,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'interval_time_stamp',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\IntervalWithDayHourSym_7b2c3856',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'DAY_HOUR_SYM',
       ),
     ),
     2 =>
@@ -13689,12 +23055,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'DAY_MICROSECOND_SYM',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\IntervalWithDayMinuteSym_6e30bffe',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'DAY_MINUTE_SYM',
       ),
     ),
     4 =>
@@ -13703,12 +23077,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'DAY_SECOND_SYM',
+      ),
     ),
     5 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\IntervalWithHourMicrosecondSym_0a008adc',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'HOUR_MICROSECOND_SYM',
       ),
     ),
     6 =>
@@ -13717,12 +23099,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'HOUR_MINUTE_SYM',
+      ),
     ),
     7 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\IntervalWithHourSecondSym_e129e63b',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'HOUR_SECOND_SYM',
       ),
     ),
     8 =>
@@ -13731,12 +23121,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'MINUTE_MICROSECOND_SYM',
+      ),
     ),
     9 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\IntervalWithMinuteSecondSym_1063a560',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'MINUTE_SECOND_SYM',
       ),
     ),
     10 =>
@@ -13745,12 +23143,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'SECOND_MICROSECOND_SYM',
+      ),
     ),
     11 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\IntervalWithYearMonthSym_af0d52fd',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'YEAR_MONTH_SYM',
       ),
     ),
   ),
@@ -13763,6 +23169,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DAY_SYM',
+      ),
     ),
     1 =>
     array (
@@ -13770,6 +23180,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'WEEK_SYM',
       ),
     ),
     2 =>
@@ -13779,6 +23193,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'HOUR_SYM',
+      ),
     ),
     3 =>
     array (
@@ -13786,6 +23204,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MINUTE_SYM',
       ),
     ),
     4 =>
@@ -13795,6 +23217,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MONTH_SYM',
+      ),
     ),
     5 =>
     array (
@@ -13802,6 +23228,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'QUARTER_SYM',
       ),
     ),
     6 =>
@@ -13811,12 +23241,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SECOND_SYM',
+      ),
     ),
     7 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\IntervalTimeStampWithMicrosecondSym_58b176ef',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'MICROSECOND_SYM',
       ),
     ),
     8 =>
@@ -13826,6 +23264,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'YEAR_SYM',
+      ),
     ),
   ),
   'date_time_type' =>
@@ -13833,18 +23275,34 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\DateTimeTypeChoice_349d02a6::UseDate_17f9a0a5',
+      'symbols' =>
+      array (
+        0 => 'DATE_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\DateTimeTypeChoice_349d02a6::UseTime_5888675d',
+      'symbols' =>
+      array (
+        0 => 'TIME_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\DateTimeTypeChoice_349d02a6::UseTimestamp_80c1f032',
+      'symbols' =>
+      array (
+        0 => 'TIMESTAMP_SYM',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\DateTimeTypeChoice_349d02a6::UseDatetime_107291fd',
+      'symbols' =>
+      array (
+        0 => 'DATETIME_SYM',
+      ),
     ),
   ),
   'opt_as' =>
@@ -13852,10 +23310,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptAsChoice_88c85c7d::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptAsChoice_88c85c7d::UseAs_de148153',
+      'symbols' =>
+      array (
+        0 => 'AS',
+      ),
     ),
   ),
   'opt_table_alias' =>
@@ -13864,6 +23329,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptTableAliasWith_aaa72a4b',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -13875,6 +23343,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_as',
+        1 => 'ident',
+      ),
     ),
   ),
   'opt_all' =>
@@ -13882,10 +23355,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptAllChoice_66c44b99::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptAllChoice_66c44b99::UseAll_b5c7aed7',
+      'symbols' =>
+      array (
+        0 => 'ALL',
+      ),
     ),
   ),
   'opt_where_clause' =>
@@ -13896,10 +23376,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'where_clause',
+      ),
     ),
   ),
   'where_clause' =>
@@ -13911,6 +23398,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'WHERE',
+        1 => 'expr',
+      ),
     ),
   ),
   'opt_having_clause' =>
@@ -13921,6 +23413,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -13928,6 +23423,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'HAVING',
+        1 => 'expr',
       ),
     ),
   ),
@@ -13940,6 +23440,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'with_list',
+      ),
     ),
     1 =>
     array (
@@ -13947,6 +23452,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'RECURSIVE_SYM',
+        2 => 'with_list',
       ),
     ),
   ),
@@ -13960,10 +23471,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'with_list',
+        1 => ',',
+        2 => 'common_table_expr',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'common_table_expr',
+      ),
     ),
   ),
   'common_table_expr' =>
@@ -13977,6 +23498,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ident',
+        1 => 'opt_derived_column_list',
+        2 => 'AS',
+        3 => 'table_subquery',
+      ),
     ),
   ),
   'opt_derived_column_list' =>
@@ -13987,6 +23515,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -13995,6 +23526,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'simple_ident_list',
+        2 => ')',
+      ),
     ),
   ),
   'simple_ident_list' =>
@@ -14002,6 +23539,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
     1 =>
     array (
@@ -14010,6 +23551,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'simple_ident_list',
+        1 => ',',
+        2 => 'ident',
       ),
     ),
   ),
@@ -14021,6 +23568,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -14029,6 +23579,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'WINDOW_SYM',
+        1 => 'window_definition_list',
+      ),
     ),
   ),
   'window_definition_list' =>
@@ -14036,6 +23591,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'window_definition',
+      ),
     ),
     1 =>
     array (
@@ -14044,6 +23603,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'window_definition_list',
+        1 => ',',
+        2 => 'window_definition',
       ),
     ),
   ),
@@ -14057,6 +23622,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'window_name',
+        1 => 'AS',
+        2 => 'window_spec',
+      ),
     ),
   ),
   'opt_group_clause' =>
@@ -14067,6 +23638,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -14075,6 +23649,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'GROUP_SYM',
+        1 => 'BY',
+        2 => 'group_list',
+        3 => 'olap_opt',
       ),
     ),
   ),
@@ -14088,10 +23669,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'group_list',
+        1 => ',',
+        2 => 'grouping_expr',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'grouping_expr',
+      ),
     ),
   ),
   'olap_opt' =>
@@ -14102,6 +23693,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -14109,6 +23703,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'WITH_ROLLUP_SYM',
       ),
     ),
   ),
@@ -14122,10 +23720,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'alter_order_list',
+        1 => ',',
+        2 => 'alter_order_item',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_order_item',
+      ),
     ),
   ),
   'alter_order_item' =>
@@ -14138,6 +23746,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'simple_ident_nospvar',
+        1 => 'opt_ordering_direction',
+      ),
     ),
   ),
   'opt_order_clause' =>
@@ -14148,10 +23761,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'order_clause',
+      ),
     ),
   ),
   'order_clause' =>
@@ -14162,6 +23782,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ORDER_SYM',
+        1 => 'BY',
+        2 => 'order_list',
       ),
     ),
   ),
@@ -14175,10 +23801,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'order_list',
+        1 => ',',
+        2 => 'order_expr',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'order_expr',
+      ),
     ),
   ),
   'opt_ordering_direction' =>
@@ -14189,10 +23825,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ordering_direction',
+      ),
     ),
   ),
   'ordering_direction' =>
@@ -14200,10 +23843,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OrderingDirectionChoice_63bee526::UseAsc_323b087e',
+      'symbols' =>
+      array (
+        0 => 'ASC',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OrderingDirectionChoice_63bee526::UseDesc_984da4fe',
+      'symbols' =>
+      array (
+        0 => 'DESC',
+      ),
     ),
   ),
   'opt_limit_clause' =>
@@ -14214,10 +23865,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'limit_clause',
+      ),
     ),
   ),
   'limit_clause' =>
@@ -14229,6 +23887,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'LIMIT',
+        1 => 'limit_options',
+      ),
     ),
   ),
   'limit_options' =>
@@ -14236,6 +23899,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'limit_option',
+      ),
     ),
     1 =>
     array (
@@ -14244,6 +23911,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'limit_option',
+        1 => ',',
+        2 => 'limit_option',
       ),
     ),
     2 =>
@@ -14254,6 +23927,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'limit_option',
+        1 => 'OFFSET_SYM',
+        2 => 'limit_option',
+      ),
     ),
   ),
   'limit_option' =>
@@ -14261,10 +23940,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'param_marker',
+      ),
     ),
     2 =>
     array (
@@ -14272,6 +23959,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ULONGLONG_NUM',
       ),
     ),
     3 =>
@@ -14281,6 +23972,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LONG_NUM',
+      ),
     ),
     4 =>
     array (
@@ -14288,6 +23983,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NUM',
       ),
     ),
   ),
@@ -14299,6 +23998,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -14306,6 +24008,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LIMIT',
+        1 => 'limit_option',
       ),
     ),
   ),
@@ -14318,6 +24025,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NUM',
+      ),
     ),
     1 =>
     array (
@@ -14325,6 +24036,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'HEX_NUM',
       ),
     ),
     2 =>
@@ -14334,6 +24049,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LONG_NUM',
+      ),
     ),
     3 =>
     array (
@@ -14341,6 +24060,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ULONGLONG_NUM',
       ),
     ),
     4 =>
@@ -14350,6 +24073,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DECIMAL_NUM',
+      ),
     ),
     5 =>
     array (
@@ -14357,6 +24084,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FLOAT_NUM',
       ),
     ),
   ),
@@ -14369,6 +24100,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NUM',
+      ),
     ),
     1 =>
     array (
@@ -14376,6 +24111,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'HEX_NUM',
       ),
     ),
     2 =>
@@ -14385,6 +24124,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LONG_NUM',
+      ),
     ),
     3 =>
     array (
@@ -14393,10 +24136,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ULONGLONG_NUM',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'dec_num_error',
+      ),
     ),
   ),
   'ulonglong_num' =>
@@ -14408,6 +24159,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NUM',
+      ),
     ),
     1 =>
     array (
@@ -14415,6 +24170,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ULONGLONG_NUM',
       ),
     ),
     2 =>
@@ -14424,6 +24183,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LONG_NUM',
+      ),
     ),
     3 =>
     array (
@@ -14432,6 +24195,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DECIMAL_NUM',
+      ),
     ),
     4 =>
     array (
@@ -14439,6 +24206,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FLOAT_NUM',
       ),
     ),
   ),
@@ -14451,6 +24222,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NUM',
+      ),
     ),
     1 =>
     array (
@@ -14458,6 +24233,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'HEX_NUM',
       ),
     ),
     2 =>
@@ -14467,6 +24246,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ULONGLONG_NUM',
+      ),
     ),
     3 =>
     array (
@@ -14475,10 +24258,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LONG_NUM',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'dec_num_error',
+      ),
     ),
   ),
   'dec_num_error' =>
@@ -14486,6 +24277,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'dec_num',
+      ),
     ),
   ),
   'dec_num' =>
@@ -14497,6 +24292,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DECIMAL_NUM',
+      ),
     ),
     1 =>
     array (
@@ -14504,6 +24303,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FLOAT_NUM',
       ),
     ),
   ),
@@ -14517,10 +24320,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'select_var_list',
+        1 => ',',
+        2 => 'select_var_ident',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'select_var_ident',
+      ),
     ),
   ),
   'select_var_ident' =>
@@ -14532,10 +24345,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '@',
+        1 => 'ident_or_text',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident_or_text',
+      ),
     ),
   ),
   'into_clause' =>
@@ -14546,6 +24368,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INTO',
+        1 => 'into_destination',
       ),
     ),
   ),
@@ -14561,6 +24388,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'OUTFILE',
+        1 => 'TEXT_STRING_filesystem',
+        2 => 'opt_load_data_charset',
+        3 => 'opt_field_term',
+        4 => 'opt_line_term',
+      ),
     ),
     1 =>
     array (
@@ -14569,10 +24404,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'DUMPFILE',
+        1 => 'TEXT_STRING_filesystem',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'select_var_list',
+      ),
     ),
   ),
   'do_stmt' =>
@@ -14583,6 +24427,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DO_SYM',
+        1 => 'select_item_list',
       ),
     ),
   ),
@@ -14599,6 +24448,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 4,
         4 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'opt_temporary',
+        2 => 'table_or_tables',
+        3 => 'if_exists',
+        4 => 'table_list',
+        5 => 'opt_restrict',
+      ),
     ),
   ),
   'drop_index_stmt' =>
@@ -14611,6 +24469,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
         2 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'INDEX_SYM',
+        2 => 'ident',
+        3 => 'ON_SYM',
+        4 => 'table_ident',
+        5 => 'opt_index_lock_and_algorithm',
       ),
     ),
   ),
@@ -14625,6 +24492,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'DATABASE',
+        2 => 'if_exists',
+        3 => 'ident',
+      ),
     ),
   ),
   'drop_function_stmt' =>
@@ -14638,6 +24512,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'FUNCTION_SYM',
+        2 => 'if_exists',
+        3 => 'ident',
+        4 => '.',
+        5 => 'ident',
+      ),
     ),
     1 =>
     array (
@@ -14646,6 +24529,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'FUNCTION_SYM',
+        2 => 'if_exists',
+        3 => 'ident',
       ),
     ),
   ),
@@ -14659,6 +24549,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'RESOURCE_SYM',
+        2 => 'GROUP_SYM',
+        3 => 'ident',
+        4 => 'opt_force',
+      ),
     ),
   ),
   'drop_procedure_stmt' =>
@@ -14670,6 +24568,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'PROCEDURE_SYM',
+        2 => 'if_exists',
+        3 => 'sp_name',
       ),
     ),
   ),
@@ -14684,6 +24589,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'USER',
+        2 => 'if_exists',
+        3 => 'user_list',
+      ),
     ),
   ),
   'drop_view_stmt' =>
@@ -14697,6 +24609,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'VIEW_SYM',
+        2 => 'if_exists',
+        3 => 'table_list',
+        4 => 'opt_restrict',
+      ),
     ),
   ),
   'drop_event_stmt' =>
@@ -14708,6 +24628,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'EVENT_SYM',
+        2 => 'if_exists',
+        3 => 'sp_name',
       ),
     ),
   ),
@@ -14721,6 +24648,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'TRIGGER_SYM',
+        2 => 'if_exists',
+        3 => 'sp_name',
+      ),
     ),
   ),
   'drop_tablespace_stmt' =>
@@ -14732,6 +24666,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'TABLESPACE_SYM',
+        2 => 'ident',
+        3 => 'opt_drop_ts_options',
       ),
     ),
   ),
@@ -14745,6 +24686,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'UNDO_SYM',
+        2 => 'TABLESPACE_SYM',
+        3 => 'ident',
+        4 => 'opt_undo_tablespace_options',
+      ),
     ),
   ),
   'drop_logfile_stmt' =>
@@ -14756,6 +24705,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'LOGFILE_SYM',
+        2 => 'GROUP_SYM',
+        3 => 'ident',
+        4 => 'opt_drop_ts_options',
       ),
     ),
   ),
@@ -14769,6 +24726,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'SERVER_SYM',
+        2 => 'if_exists',
+        3 => 'ident_or_text',
+      ),
     ),
   ),
   'drop_srs_stmt' =>
@@ -14780,6 +24744,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'SPATIAL_SYM',
+        2 => 'REFERENCE_SYM',
+        3 => 'SYSTEM_SYM',
+        4 => 'if_exists',
+        5 => 'real_ulonglong_num',
       ),
     ),
   ),
@@ -14793,6 +24766,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'ROLE_SYM',
+        2 => 'if_exists',
+        3 => 'role_list',
+      ),
     ),
   ),
   'table_list' =>
@@ -14800,6 +24780,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'table_ident',
+      ),
     ),
     1 =>
     array (
@@ -14809,6 +24793,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'table_list',
+        1 => ',',
+        2 => 'table_ident',
+      ),
     ),
   ),
   'table_alias_ref_list' =>
@@ -14816,6 +24806,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'table_ident_opt_wild',
+      ),
     ),
     1 =>
     array (
@@ -14825,6 +24819,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'table_alias_ref_list',
+        1 => ',',
+        2 => 'table_ident_opt_wild',
+      ),
     ),
   ),
   'if_exists' =>
@@ -14832,10 +24832,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\IfExistsChoice_d99928b2::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\IfExistsChoice_d99928b2::UseIfExists_82cdccc7',
+      'symbols' =>
+      array (
+        0 => 'IF',
+        1 => 'EXISTS',
+      ),
     ),
   ),
   'opt_ignore_unknown_user' =>
@@ -14846,6 +24854,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -14854,6 +24865,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'IGNORE_SYM',
+        1 => 'UNKNOWN_SYM',
+        2 => 'USER',
+      ),
     ),
   ),
   'opt_temporary' =>
@@ -14861,10 +24878,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptTemporaryChoice_10bf1b85::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptTemporaryChoice_10bf1b85::UseTemporary_cb28e366',
+      'symbols' =>
+      array (
+        0 => 'TEMPORARY',
+      ),
     ),
   ),
   'opt_drop_ts_options' =>
@@ -14875,10 +24899,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'drop_ts_option_list',
+      ),
     ),
   ),
   'drop_ts_option_list' =>
@@ -14886,6 +24917,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'drop_ts_option',
+      ),
     ),
     1 =>
     array (
@@ -14896,6 +24931,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'drop_ts_option_list',
+        1 => 'opt_comma',
+        2 => 'drop_ts_option',
+      ),
     ),
   ),
   'drop_ts_option' =>
@@ -14903,10 +24944,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_engine',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ts_option_wait',
+      ),
     ),
   ),
   'insert_stmt' =>
@@ -14925,6 +24974,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         6 => 7,
         7 => 8,
       ),
+      'symbols' =>
+      array (
+        0 => 'INSERT_SYM',
+        1 => 'insert_lock_option',
+        2 => 'opt_ignore',
+        3 => 'opt_INTO',
+        4 => 'table_ident',
+        5 => 'opt_use_partition',
+        6 => 'insert_from_constructor',
+        7 => 'opt_values_reference',
+        8 => 'opt_insert_update_list',
+      ),
     ),
     1 =>
     array (
@@ -14940,6 +25001,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         6 => 8,
         7 => 9,
       ),
+      'symbols' =>
+      array (
+        0 => 'INSERT_SYM',
+        1 => 'insert_lock_option',
+        2 => 'opt_ignore',
+        3 => 'opt_INTO',
+        4 => 'table_ident',
+        5 => 'opt_use_partition',
+        6 => 'SET_SYM',
+        7 => 'update_list',
+        8 => 'opt_values_reference',
+        9 => 'opt_insert_update_list',
+      ),
     ),
     2 =>
     array (
@@ -14953,6 +25027,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         4 => 5,
         5 => 6,
         6 => 7,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INSERT_SYM',
+        1 => 'insert_lock_option',
+        2 => 'opt_ignore',
+        3 => 'opt_INTO',
+        4 => 'table_ident',
+        5 => 'opt_use_partition',
+        6 => 'insert_query_expression',
+        7 => 'opt_insert_update_list',
       ),
     ),
   ),
@@ -14969,6 +25054,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 4,
         4 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'REPLACE_SYM',
+        1 => 'replace_lock_option',
+        2 => 'opt_INTO',
+        3 => 'table_ident',
+        4 => 'opt_use_partition',
+        5 => 'insert_from_constructor',
+      ),
     ),
     1 =>
     array (
@@ -14980,6 +25074,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 4,
         4 => 6,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REPLACE_SYM',
+        1 => 'replace_lock_option',
+        2 => 'opt_INTO',
+        3 => 'table_ident',
+        4 => 'opt_use_partition',
+        5 => 'SET_SYM',
+        6 => 'update_list',
       ),
     ),
     2 =>
@@ -14993,6 +25097,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 4,
         4 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'REPLACE_SYM',
+        1 => 'replace_lock_option',
+        2 => 'opt_INTO',
+        3 => 'table_ident',
+        4 => 'opt_use_partition',
+        5 => 'insert_query_expression',
+      ),
     ),
   ),
   'insert_lock_option' =>
@@ -15000,18 +25113,33 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\InsertLockOptionChoice_9353dd7b::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\InsertLockOptionChoice_9353dd7b::UseLowPriority_987c9984',
+      'symbols' =>
+      array (
+        0 => 'LOW_PRIORITY',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\InsertLockOptionChoice_9353dd7b::UseDelayed_e28b0c35',
+      'symbols' =>
+      array (
+        0 => 'DELAYED_SYM',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\InsertLockOptionChoice_9353dd7b::UseHighPriority_93dc3609',
+      'symbols' =>
+      array (
+        0 => 'HIGH_PRIORITY',
+      ),
     ),
   ),
   'replace_lock_option' =>
@@ -15019,12 +25147,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'opt_low_priority',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\ReplaceLockOptionWithDelayedSym_b216a5e8',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'DELAYED_SYM',
       ),
     ),
   ),
@@ -15033,10 +25169,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptIntoChoice_7023492e::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptIntoChoice_7023492e::UseInto_e07e33d3',
+      'symbols' =>
+      array (
+        0 => 'INTO',
+      ),
     ),
   ),
   'insert_from_constructor' =>
@@ -15044,6 +25187,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'insert_values',
+      ),
     ),
     1 =>
     array (
@@ -15051,6 +25198,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => ')',
+        2 => 'insert_values',
       ),
     ),
     2 =>
@@ -15061,6 +25214,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'insert_columns',
+        2 => ')',
+        3 => 'insert_values',
+      ),
     ),
   ),
   'insert_query_expression' =>
@@ -15068,6 +25228,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'query_expression_with_opt_locking_clauses',
+      ),
     ),
     1 =>
     array (
@@ -15075,6 +25239,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => ')',
+        2 => 'query_expression_with_opt_locking_clauses',
       ),
     ),
     2 =>
@@ -15084,6 +25254,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'insert_columns',
+        2 => ')',
+        3 => 'query_expression_with_opt_locking_clauses',
       ),
     ),
   ),
@@ -15097,10 +25274,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'insert_columns',
+        1 => ',',
+        2 => 'insert_column',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'insert_column',
+      ),
     ),
   ),
   'insert_values' =>
@@ -15113,6 +25300,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'value_or_values',
+        1 => 'values_list',
+      ),
     ),
   ),
   'query_expression_with_opt_locking_clauses' =>
@@ -15120,6 +25312,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'query_expression',
+      ),
     ),
     1 =>
     array (
@@ -15129,6 +25325,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'query_expression',
+        1 => 'locking_clause_list',
+      ),
     ),
   ),
   'value_or_values' =>
@@ -15136,10 +25337,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ValueOrValuesChoice_9296b1a0::UseValue_8ec121c9',
+      'symbols' =>
+      array (
+        0 => 'VALUE_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ValueOrValuesChoice_9296b1a0::UseValues_e79a0720',
+      'symbols' =>
+      array (
+        0 => 'VALUES',
+      ),
     ),
   ),
   'values_list' =>
@@ -15152,10 +25361,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'values_list',
+        1 => ',',
+        2 => 'row_value',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'row_value',
+      ),
     ),
   ),
   'values_row_list' =>
@@ -15168,10 +25387,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'values_row_list',
+        1 => ',',
+        2 => 'row_value_explicit',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'row_value_explicit',
+      ),
     ),
   ),
   'equal' =>
@@ -15182,6 +25411,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'EQ',
+      ),
     ),
     1 =>
     array (
@@ -15189,6 +25422,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SET_VAR',
       ),
     ),
   ),
@@ -15200,10 +25437,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'equal',
+      ),
     ),
   ),
   'row_value' =>
@@ -15214,6 +25458,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'opt_values',
+        2 => ')',
       ),
     ),
   ),
@@ -15226,6 +25476,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ROW_SYM',
+        1 => '(',
+        2 => 'opt_values',
+        3 => ')',
+      ),
     ),
   ),
   'opt_values' =>
@@ -15236,10 +25493,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'values',
+      ),
     ),
   ),
   'values' =>
@@ -15252,10 +25516,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'values',
+        1 => ',',
+        2 => 'expr_or_default',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'expr_or_default',
+      ),
     ),
   ),
   'expr_or_default' =>
@@ -15263,12 +25537,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'expr',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\ExprOrDefaultWithDefaultSym_c43114ce',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT_SYM',
       ),
     ),
   ),
@@ -15280,6 +25562,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -15288,6 +25573,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'AS',
+        1 => 'ident',
+        2 => 'opt_derived_column_list',
       ),
     ),
   ),
@@ -15299,6 +25590,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -15306,6 +25600,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ON_SYM',
+        1 => 'DUPLICATE_SYM',
+        2 => 'KEY_SYM',
+        3 => 'UPDATE_SYM',
+        4 => 'update_list',
       ),
     ),
   ),
@@ -15325,6 +25627,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         6 => 8,
         7 => 9,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_with_clause',
+        1 => 'UPDATE_SYM',
+        2 => 'opt_low_priority',
+        3 => 'opt_ignore',
+        4 => 'table_reference_list',
+        5 => 'SET_SYM',
+        6 => 'update_list',
+        7 => 'opt_where_clause',
+        8 => 'opt_order_clause',
+        9 => 'opt_simple_limit',
+      ),
     ),
   ),
   'opt_with_clause' =>
@@ -15335,10 +25650,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'with_clause',
+      ),
     ),
   ),
   'update_list' =>
@@ -15351,10 +25673,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'update_list',
+        1 => ',',
+        2 => 'update_elem',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'update_elem',
+      ),
     ),
   ),
   'update_elem' =>
@@ -15368,6 +25700,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'simple_ident_nospvar',
+        1 => 'equal',
+        2 => 'expr_or_default',
+      ),
     ),
   ),
   'opt_low_priority' =>
@@ -15375,10 +25713,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptLowPriorityChoice_4fdab283::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptLowPriorityChoice_4fdab283::UseLowPriority_987c9984',
+      'symbols' =>
+      array (
+        0 => 'LOW_PRIORITY',
+      ),
     ),
   ),
   'delete_stmt' =>
@@ -15397,6 +25742,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         6 => 8,
         7 => 9,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_with_clause',
+        1 => 'DELETE_SYM',
+        2 => 'opt_delete_options',
+        3 => 'FROM',
+        4 => 'table_ident',
+        5 => 'opt_table_alias',
+        6 => 'opt_use_partition',
+        7 => 'opt_where_clause',
+        8 => 'opt_order_clause',
+        9 => 'opt_simple_limit',
+      ),
     ),
     1 =>
     array (
@@ -15408,6 +25766,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 5,
         4 => 6,
+      ),
+      'symbols' =>
+      array (
+        0 => 'opt_with_clause',
+        1 => 'DELETE_SYM',
+        2 => 'opt_delete_options',
+        3 => 'table_alias_ref_list',
+        4 => 'FROM',
+        5 => 'table_reference_list',
+        6 => 'opt_where_clause',
       ),
     ),
     2 =>
@@ -15421,6 +25789,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 6,
         4 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_with_clause',
+        1 => 'DELETE_SYM',
+        2 => 'opt_delete_options',
+        3 => 'FROM',
+        4 => 'table_alias_ref_list',
+        5 => 'USING',
+        6 => 'table_reference_list',
+        7 => 'opt_where_clause',
+      ),
     ),
   ),
   'opt_wild' =>
@@ -15428,10 +25807,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptWildChoice_b5c0d7fc::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptWildChoice_b5c0d7fc::Use_01dd8e9f',
+      'symbols' =>
+      array (
+        0 => '.',
+        1 => '*',
+      ),
     ),
   ),
   'opt_delete_options' =>
@@ -15440,6 +25827,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptDeleteOptionsWith_c1df58bb',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -15451,6 +25841,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_delete_option',
+        1 => 'opt_delete_options',
+      ),
     ),
   ),
   'opt_delete_option' =>
@@ -15458,14 +25853,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptDeleteOptionChoice_3dd5b335::UseQuick_e0273b60',
+      'symbols' =>
+      array (
+        0 => 'QUICK',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptDeleteOptionChoice_3dd5b335::UseLowPriority_987c9984',
+      'symbols' =>
+      array (
+        0 => 'LOW_PRIORITY',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptDeleteOptionChoice_3dd5b335::UseIgnore_eff4f8c3',
+      'symbols' =>
+      array (
+        0 => 'IGNORE_SYM',
+      ),
     ),
   ),
   'truncate_stmt' =>
@@ -15478,6 +25885,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'TRUNCATE_SYM',
+        1 => 'opt_table',
+        2 => 'table_ident',
+      ),
     ),
   ),
   'opt_table' =>
@@ -15485,10 +25898,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptTableChoice_64f6cc2f::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptTableChoice_64f6cc2f::UseTable_52ca2fea',
+      'symbols' =>
+      array (
+        0 => 'TABLE_SYM',
+      ),
     ),
   ),
   'opt_profile_defs' =>
@@ -15499,10 +25919,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'profile_defs',
+      ),
     ),
   ),
   'profile_defs' =>
@@ -15510,6 +25937,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'profile_def',
+      ),
     ),
     1 =>
     array (
@@ -15519,6 +25950,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'profile_defs',
+        1 => ',',
+        2 => 'profile_def',
+      ),
     ),
   ),
   'profile_def' =>
@@ -15526,38 +25963,77 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ProfileDefChoice_246a5626::UseCpu_db9a4c7d',
+      'symbols' =>
+      array (
+        0 => 'CPU_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ProfileDefChoice_246a5626::UseMemory_a266fe9c',
+      'symbols' =>
+      array (
+        0 => 'MEMORY_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ProfileDefChoice_246a5626::UseBlockIo_173f9e4d',
+      'symbols' =>
+      array (
+        0 => 'BLOCK_SYM',
+        1 => 'IO_SYM',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ProfileDefChoice_246a5626::UseContextSwitches_c2e5ed64',
+      'symbols' =>
+      array (
+        0 => 'CONTEXT_SYM',
+        1 => 'SWITCHES_SYM',
+      ),
     ),
     4 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ProfileDefChoice_246a5626::UsePageFaults_d73b38d1',
+      'symbols' =>
+      array (
+        0 => 'PAGE_SYM',
+        1 => 'FAULTS_SYM',
+      ),
     ),
     5 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ProfileDefChoice_246a5626::UseIpc_331b8ee4',
+      'symbols' =>
+      array (
+        0 => 'IPC_SYM',
+      ),
     ),
     6 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ProfileDefChoice_246a5626::UseSwaps_9d70aa8c',
+      'symbols' =>
+      array (
+        0 => 'SWAPS_SYM',
+      ),
     ),
     7 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ProfileDefChoice_246a5626::UseSource_56ccd012',
+      'symbols' =>
+      array (
+        0 => 'SOURCE_SYM',
+      ),
     ),
     8 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ProfileDefChoice_246a5626::UseAll_b5c7aed7',
+      'symbols' =>
+      array (
+        0 => 'ALL',
+      ),
     ),
   ),
   'opt_for_query' =>
@@ -15568,6 +26044,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -15575,6 +26054,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FOR_SYM',
+        1 => 'QUERY_SYM',
+        2 => 'NUM',
       ),
     ),
   ),
@@ -15587,6 +26072,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'DATABASES',
+        2 => 'opt_wild_or_where',
       ),
     ),
   ),
@@ -15601,6 +26092,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'opt_show_cmd_type',
+        2 => 'TABLES',
+        3 => 'opt_db',
+        4 => 'opt_wild_or_where',
+      ),
     ),
   ),
   'show_triggers_stmt' =>
@@ -15614,6 +26113,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'opt_full',
+        2 => 'TRIGGERS_SYM',
+        3 => 'opt_db',
+        4 => 'opt_wild_or_where',
+      ),
     ),
   ),
   'show_events_stmt' =>
@@ -15625,6 +26132,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'EVENTS_SYM',
+        2 => 'opt_db',
+        3 => 'opt_wild_or_where',
       ),
     ),
   ),
@@ -15638,6 +26152,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'TABLE_SYM',
+        2 => 'STATUS_SYM',
+        3 => 'opt_db',
+        4 => 'opt_wild_or_where',
+      ),
     ),
   ),
   'show_open_tables_stmt' =>
@@ -15650,6 +26172,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'OPEN_SYM',
+        2 => 'TABLES',
+        3 => 'opt_db',
+        4 => 'opt_wild_or_where',
+      ),
     ),
   ),
   'show_plugins_stmt' =>
@@ -15657,6 +26187,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ShowPluginsStmtChoice_6ad724db::UseShowPlugins_d80d134d',
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'PLUGINS_SYM',
+      ),
     ),
   ),
   'show_engine_logs_stmt' =>
@@ -15667,6 +26202,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'ENGINE_SYM',
+        2 => 'engine_or_all',
+        3 => 'LOGS_SYM',
       ),
     ),
   ),
@@ -15679,6 +26221,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'ENGINE_SYM',
+        2 => 'engine_or_all',
+        3 => 'MUTEX_SYM',
+      ),
     ),
   ),
   'show_engine_status_stmt' =>
@@ -15689,6 +26238,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'ENGINE_SYM',
+        2 => 'engine_or_all',
+        3 => 'STATUS_SYM',
       ),
     ),
   ),
@@ -15706,6 +26262,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         4 => 5,
         5 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'opt_show_cmd_type',
+        2 => 'COLUMNS',
+        3 => 'from_or_in',
+        4 => 'table_ident',
+        5 => 'opt_db',
+        6 => 'opt_wild_or_where',
+      ),
     ),
   ),
   'show_binary_logs_stmt' =>
@@ -15717,6 +26283,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'master_or_binary',
+        2 => 'LOGS_SYM',
+      ),
     ),
   ),
   'show_replicas_stmt' =>
@@ -15724,10 +26296,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ShowReplicasStmtChoice_4340aa31::UseShowSlaveHosts_b1d358e3',
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'SLAVE',
+        2 => 'HOSTS_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ShowReplicasStmtChoice_4340aa31::UseShowReplicas_0ab1cee3',
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'REPLICAS_SYM',
+      ),
     ),
   ),
   'show_binlog_events_stmt' =>
@@ -15740,6 +26323,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 4,
         2 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'BINLOG_SYM',
+        2 => 'EVENTS_SYM',
+        3 => 'opt_binlog_in',
+        4 => 'binlog_from',
+        5 => 'opt_limit_clause',
       ),
     ),
   ),
@@ -15754,6 +26346,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 4,
         2 => 5,
         3 => 6,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'RELAYLOG_SYM',
+        2 => 'EVENTS_SYM',
+        3 => 'opt_binlog_in',
+        4 => 'binlog_from',
+        5 => 'opt_limit_clause',
+        6 => 'opt_channel',
       ),
     ),
   ),
@@ -15771,6 +26373,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         4 => 5,
         5 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'opt_extended',
+        2 => 'keys_or_index',
+        3 => 'from_or_in',
+        4 => 'table_ident',
+        5 => 'opt_db',
+        6 => 'opt_where_clause',
+      ),
     ),
   ),
   'show_engines_stmt' =>
@@ -15782,6 +26394,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'opt_storage',
+        2 => 'ENGINES_SYM',
+      ),
     ),
   ),
   'show_count_warnings_stmt' =>
@@ -15789,6 +26407,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ShowCountWarningsStmtChoice_0ee0015f::UseShowCountWarnings_6ad3f36a',
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'COUNT_SYM',
+        2 => '(',
+        3 => '*',
+        4 => ')',
+        5 => 'WARNINGS',
+      ),
     ),
   ),
   'show_count_errors_stmt' =>
@@ -15796,6 +26423,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ShowCountErrorsStmtChoice_45b84e63::UseShowCountErrors_c4da3959',
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'COUNT_SYM',
+        2 => '(',
+        3 => '*',
+        4 => ')',
+        5 => 'ERRORS',
+      ),
     ),
   ),
   'show_warnings_stmt' =>
@@ -15806,6 +26442,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'WARNINGS',
+        2 => 'opt_limit_clause',
       ),
     ),
   ),
@@ -15818,6 +26460,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'ERRORS',
+        2 => 'opt_limit_clause',
+      ),
     ),
   ),
   'show_profiles_stmt' =>
@@ -15825,6 +26473,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ShowProfilesStmtChoice_d306bf3a::UseShowProfiles_10e6f7fd',
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'PROFILES_SYM',
+      ),
     ),
   ),
   'show_profile_stmt' =>
@@ -15838,6 +26491,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'PROFILE_SYM',
+        2 => 'opt_profile_defs',
+        3 => 'opt_for_query',
+        4 => 'opt_limit_clause',
+      ),
     ),
   ),
   'show_status_stmt' =>
@@ -15850,6 +26511,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'opt_var_type',
+        2 => 'STATUS_SYM',
+        3 => 'opt_wild_or_where',
+      ),
     ),
   ),
   'show_processlist_stmt' =>
@@ -15860,6 +26528,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'opt_full',
+        2 => 'PROCESSLIST_SYM',
       ),
     ),
   ),
@@ -15873,6 +26547,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'opt_var_type',
+        2 => 'VARIABLES',
+        3 => 'opt_wild_or_where',
+      ),
     ),
   ),
   'show_character_set_stmt' =>
@@ -15885,6 +26566,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'character_set',
+        2 => 'opt_wild_or_where',
+      ),
     ),
   ),
   'show_collation_stmt' =>
@@ -15896,6 +26583,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'COLLATION_SYM',
+        2 => 'opt_wild_or_where',
+      ),
     ),
   ),
   'show_privileges_stmt' =>
@@ -15903,6 +26596,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ShowPrivilegesStmtChoice_18bc00fb::UseShowPrivileges_3999f1e2',
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'PRIVILEGES',
+      ),
     ),
   ),
   'show_grants_stmt' =>
@@ -15913,6 +26611,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'GRANTS',
+      ),
     ),
     1 =>
     array (
@@ -15920,6 +26623,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'GRANTS',
+        2 => 'FOR_SYM',
+        3 => 'user',
       ),
     ),
     2 =>
@@ -15929,6 +26639,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
         1 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'GRANTS',
+        2 => 'FOR_SYM',
+        3 => 'user',
+        4 => 'USING',
+        5 => 'user_list',
       ),
     ),
   ),
@@ -15943,6 +26662,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'CREATE',
+        2 => 'DATABASE',
+        3 => 'opt_if_not_exists',
+        4 => 'ident',
+      ),
     ),
   ),
   'show_create_table_stmt' =>
@@ -15953,6 +26680,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'CREATE',
+        2 => 'TABLE_SYM',
+        3 => 'table_ident',
       ),
     ),
   ),
@@ -15965,6 +26699,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'CREATE',
+        2 => 'VIEW_SYM',
+        3 => 'table_ident',
+      ),
     ),
   ),
   'show_master_status_stmt' =>
@@ -15972,6 +26713,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ShowMasterStatusStmtChoice_51f059d6::UseShowMasterStatus_16c97857',
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'MASTER_SYM',
+        2 => 'STATUS_SYM',
+      ),
     ),
   ),
   'show_binary_log_status_stmt' =>
@@ -15979,6 +26726,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ShowBinaryLogStatusStmtChoice_4158e6d0::UseShowBinaryLogStatus_a4738186',
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'BINARY_SYM',
+        2 => 'LOG_SYM',
+        3 => 'STATUS_SYM',
+      ),
     ),
   ),
   'show_replica_status_stmt' =>
@@ -15991,6 +26745,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'replica',
+        2 => 'STATUS_SYM',
+        3 => 'opt_channel',
+      ),
     ),
   ),
   'show_create_procedure_stmt' =>
@@ -16001,6 +26762,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'CREATE',
+        2 => 'PROCEDURE_SYM',
+        3 => 'sp_name',
       ),
     ),
   ),
@@ -16013,6 +26781,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'CREATE',
+        2 => 'FUNCTION_SYM',
+        3 => 'sp_name',
+      ),
     ),
   ),
   'show_create_trigger_stmt' =>
@@ -16023,6 +26798,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'CREATE',
+        2 => 'TRIGGER_SYM',
+        3 => 'sp_name',
       ),
     ),
   ),
@@ -16035,6 +26817,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'PROCEDURE_SYM',
+        2 => 'STATUS_SYM',
+        3 => 'opt_wild_or_where',
+      ),
     ),
   ),
   'show_function_status_stmt' =>
@@ -16045,6 +26834,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'FUNCTION_SYM',
+        2 => 'STATUS_SYM',
+        3 => 'opt_wild_or_where',
       ),
     ),
   ),
@@ -16057,6 +26853,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'PROCEDURE_SYM',
+        2 => 'CODE_SYM',
+        3 => 'sp_name',
+      ),
     ),
   ),
   'show_function_code_stmt' =>
@@ -16068,6 +26871,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'FUNCTION_SYM',
+        2 => 'CODE_SYM',
+        3 => 'sp_name',
+      ),
     ),
   ),
   'show_create_event_stmt' =>
@@ -16078,6 +26888,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'CREATE',
+        2 => 'EVENT_SYM',
+        3 => 'sp_name',
       ),
     ),
   ),
@@ -16091,6 +26908,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'CREATE',
+        2 => 'USER',
+        3 => 'user',
+      ),
     ),
   ),
   'show_parse_tree_stmt' =>
@@ -16102,6 +26926,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'PARSE_TREE_SYM',
+        2 => 'simple_statement',
+      ),
     ),
   ),
   'engine_or_all' =>
@@ -16109,12 +26939,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident_or_text',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\EngineOrAllWithAll_771560d4',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALL',
       ),
     ),
   ),
@@ -16123,10 +26961,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\MasterOrBinaryChoice_a8a79e4d::UseMaster_30e77240',
+      'symbols' =>
+      array (
+        0 => 'MASTER_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\MasterOrBinaryChoice_a8a79e4d::UseBinary_4c77b56b',
+      'symbols' =>
+      array (
+        0 => 'BINARY_SYM',
+      ),
     ),
   ),
   'master_or_binary_logs_and_gtids' =>
@@ -16134,10 +26980,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\MasterOrBinaryLogsAndGtidsChoice_c16d45dd::UseMaster_30e77240',
+      'symbols' =>
+      array (
+        0 => 'MASTER_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\MasterOrBinaryLogsAndGtidsChoice_c16d45dd::UseBinaryLogsAndGtids_38648752',
+      'symbols' =>
+      array (
+        0 => 'BINARY_SYM',
+        1 => 'LOGS_SYM',
+        2 => 'AND_SYM',
+        3 => 'GTIDS_SYM',
+      ),
     ),
   ),
   'opt_storage' =>
@@ -16145,10 +27002,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptStorageChoice_8bafacff::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptStorageChoice_8bafacff::UseStorage_b2f6362f',
+      'symbols' =>
+      array (
+        0 => 'STORAGE_SYM',
+      ),
     ),
   ),
   'opt_db' =>
@@ -16157,6 +27021,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptDbWith_e8f14526',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -16168,6 +27035,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'from_or_in',
+        1 => 'ident',
+      ),
     ),
   ),
   'opt_full' =>
@@ -16175,10 +27047,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptFullChoice_2a2428ff::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptFullChoice_2a2428ff::UseFull_cb6839ca',
+      'symbols' =>
+      array (
+        0 => 'FULL',
+      ),
     ),
   ),
   'opt_extended' =>
@@ -16186,10 +27065,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptExtendedChoice_6c2248eb::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptExtendedChoice_6c2248eb::UseExtended_9632d8ea',
+      'symbols' =>
+      array (
+        0 => 'EXTENDED_SYM',
+      ),
     ),
   ),
   'opt_show_cmd_type' =>
@@ -16197,18 +27083,34 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptShowCmdTypeChoice_2f00cb0f::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptShowCmdTypeChoice_2f00cb0f::UseFull_cb6839ca',
+      'symbols' =>
+      array (
+        0 => 'FULL',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptShowCmdTypeChoice_2f00cb0f::UseExtended_9632d8ea',
+      'symbols' =>
+      array (
+        0 => 'EXTENDED_SYM',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptShowCmdTypeChoice_2f00cb0f::UseExtendedFull_d290d1e0',
+      'symbols' =>
+      array (
+        0 => 'EXTENDED_SYM',
+        1 => 'FULL',
+      ),
     ),
   ),
   'from_or_in' =>
@@ -16216,10 +27118,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\FromOrInChoice_6f91678a::UseFrom_f4383c66',
+      'symbols' =>
+      array (
+        0 => 'FROM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\FromOrInChoice_6f91678a::UseIn_fed1d872',
+      'symbols' =>
+      array (
+        0 => 'IN_SYM',
+      ),
     ),
   ),
   'opt_binlog_in' =>
@@ -16230,6 +27140,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -16237,6 +27150,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'IN_SYM',
+        1 => 'TEXT_STRING_sys',
       ),
     ),
   ),
@@ -16248,6 +27166,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -16255,6 +27176,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FROM',
+        1 => 'ulonglong_num',
       ),
     ),
   ),
@@ -16266,6 +27192,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -16274,10 +27203,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'LIKE',
+        1 => 'TEXT_STRING_literal',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'where_clause',
+      ),
     ),
   ),
   'describe_stmt' =>
@@ -16290,6 +27228,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'describe_command',
+        1 => 'table_ident',
+        2 => 'opt_describe_column',
       ),
     ),
   ),
@@ -16304,6 +27248,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'describe_command',
+        1 => 'opt_explain_options',
+        2 => 'explainable_stmt',
+      ),
     ),
   ),
   'explainable_stmt' =>
@@ -16316,6 +27266,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_explain_for_schema',
+        1 => 'select_stmt',
+      ),
     ),
     1 =>
     array (
@@ -16324,6 +27279,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'opt_explain_for_schema',
+        1 => 'insert_stmt',
       ),
     ),
     2 =>
@@ -16334,6 +27294,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_explain_for_schema',
+        1 => 'replace_stmt',
+      ),
     ),
     3 =>
     array (
@@ -16342,6 +27307,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'opt_explain_for_schema',
+        1 => 'update_stmt',
       ),
     ),
     4 =>
@@ -16352,6 +27322,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'opt_explain_for_schema',
+        1 => 'delete_stmt',
+      ),
     ),
     5 =>
     array (
@@ -16359,6 +27334,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FOR_SYM',
+        1 => 'CONNECTION_SYM',
+        2 => 'real_ulong_num',
       ),
     ),
   ),
@@ -16370,6 +27351,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'DESC',
+      ),
     ),
     1 =>
     array (
@@ -16377,6 +27362,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DESCRIBE',
       ),
     ),
   ),
@@ -16388,6 +27377,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -16395,6 +27387,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FORMAT_SYM',
+        1 => 'EQ',
+        2 => 'ident_or_text',
       ),
     ),
   ),
@@ -16407,6 +27405,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ANALYZE_SYM',
+        1 => 'opt_explain_format',
+      ),
     ),
     1 =>
     array (
@@ -16415,6 +27418,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'opt_explain_format',
+        1 => 'opt_explain_into',
       ),
     ),
   ),
@@ -16426,6 +27434,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -16433,6 +27444,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INTO',
+        1 => '@',
+        2 => 'ident_or_text',
       ),
     ),
   ),
@@ -16444,6 +27461,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -16452,6 +27472,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FOR_SYM',
+        1 => 'DATABASE',
+        2 => 'ident_or_text',
       ),
     ),
   ),
@@ -16463,14 +27489,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'text_string',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
   ),
   'flush' =>
@@ -16482,6 +27519,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FLUSH_SYM',
+        1 => 'opt_no_write_to_binlog',
+        2 => 'flush_options',
       ),
     ),
   ),
@@ -16496,10 +27539,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'table_or_tables',
+        1 => 'opt_table_list',
+        2 => 'opt_flush_lock',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'flush_options_list',
+      ),
     ),
   ),
   'opt_flush_lock' =>
@@ -16507,14 +27560,28 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptFlushLockChoice_d12692ad::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptFlushLockChoice_d12692ad::UseWithReadLock_cf240c10',
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'READ_SYM',
+        2 => 'LOCK_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptFlushLockChoice_d12692ad::UseForExport_964dac9c',
+      'symbols' =>
+      array (
+        0 => 'FOR_SYM',
+        1 => 'EXPORT_SYM',
+      ),
     ),
   ),
   'flush_options_list' =>
@@ -16527,10 +27594,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'flush_options_list',
+        1 => ',',
+        2 => 'flush_option',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'flush_option',
+      ),
     ),
   ),
   'flush_option' =>
@@ -16541,12 +27618,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'ERROR_SYM',
+        1 => 'LOGS_SYM',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\FlushOptionWithEngineSymLogsSym_bbf4fe5e',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'ENGINE_SYM',
+        1 => 'LOGS_SYM',
       ),
     ),
     2 =>
@@ -16555,6 +27642,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'GENERAL',
+        1 => 'LOGS_SYM',
+      ),
     ),
     3 =>
     array (
@@ -16562,12 +27654,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'SLOW',
+        1 => 'LOGS_SYM',
+      ),
     ),
     4 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\FlushOptionWithBinarySymLogsSym_41159344',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'BINARY_SYM',
+        1 => 'LOGS_SYM',
       ),
     ),
     5 =>
@@ -16577,12 +27679,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'RELAY',
+        1 => 'LOGS_SYM',
+        2 => 'opt_channel',
+      ),
     ),
     6 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\FlushOptionWithHostsSym_11ae5d16',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'HOSTS_SYM',
       ),
     ),
     7 =>
@@ -16591,12 +27703,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'PRIVILEGES',
+      ),
     ),
     8 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\FlushOptionWithLogsSym_0da54bee',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'LOGS_SYM',
       ),
     ),
     9 =>
@@ -16605,6 +27725,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'STATUS_SYM',
+      ),
     ),
     10 =>
     array (
@@ -16612,12 +27736,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'RESOURCES',
+      ),
     ),
     11 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\FlushOptionWithOptimizerCostsSym_f6c9b69e',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'OPTIMIZER_COSTS_SYM',
       ),
     ),
   ),
@@ -16629,10 +27761,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'table_list',
+      ),
     ),
   ),
   'reset' =>
@@ -16644,6 +27783,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'RESET_SYM',
+        1 => 'reset_options',
+      ),
     ),
     1 =>
     array (
@@ -16651,6 +27795,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RESET_SYM',
+        1 => 'PERSIST_SYM',
+        2 => 'opt_if_exists_ident',
       ),
     ),
   ),
@@ -16664,10 +27814,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'reset_options',
+        1 => ',',
+        2 => 'reset_option',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'reset_option',
+      ),
     ),
   ),
   'opt_if_exists_ident' =>
@@ -16676,6 +27836,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptIfExistsIdentWith_3ac79d47',
       'fields' =>
+      array (
+      ),
+      'symbols' =>
       array (
       ),
     ),
@@ -16687,6 +27850,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'if_exists',
+        1 => 'persisted_variable_ident',
+      ),
     ),
   ),
   'persisted_variable_ident' =>
@@ -16694,6 +27862,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
     1 =>
     array (
@@ -16703,6 +27875,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ident',
+        1 => '.',
+        2 => 'ident',
+      ),
     ),
     2 =>
     array (
@@ -16710,6 +27888,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT_SYM',
+        1 => '.',
+        2 => 'ident',
       ),
     ),
   ),
@@ -16723,6 +27907,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'SLAVE',
+        1 => 'opt_replica_reset_options',
+        2 => 'opt_channel',
+      ),
     ),
     1 =>
     array (
@@ -16731,6 +27921,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REPLICA_SYM',
+        1 => 'opt_replica_reset_options',
+        2 => 'opt_channel',
       ),
     ),
     2 =>
@@ -16741,6 +27937,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'master_or_binary_logs_and_gtids',
+        1 => 'source_reset_options',
+      ),
     ),
   ),
   'opt_replica_reset_options' =>
@@ -16748,10 +27949,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptReplicaResetOptionsChoice_66c44b99::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptReplicaResetOptionsChoice_66c44b99::UseAll_b5c7aed7',
+      'symbols' =>
+      array (
+        0 => 'ALL',
+      ),
     ),
   ),
   'source_reset_options' =>
@@ -16762,6 +27970,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -16769,6 +27980,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TO_SYM',
+        1 => 'real_ulonglong_num',
       ),
     ),
   ),
@@ -16780,6 +27996,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PURGE',
+        1 => 'purge_options',
       ),
     ),
   ),
@@ -16793,6 +28014,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'master_or_binary',
+        1 => 'LOGS_SYM',
+        2 => 'purge_option',
+      ),
     ),
   ),
   'purge_option' =>
@@ -16804,6 +28031,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'TO_SYM',
+        1 => 'TEXT_STRING_sys',
+      ),
     ),
     1 =>
     array (
@@ -16811,6 +28043,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BEFORE_SYM',
+        1 => 'expr',
       ),
     ),
   ),
@@ -16824,6 +28061,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'KILL_SYM',
+        1 => 'kill_option',
+        2 => 'expr',
+      ),
     ),
   ),
   'kill_option' =>
@@ -16831,14 +28074,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\KillOptionChoice_cb5c94e4::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\KillOptionChoice_cb5c94e4::UseConnection_453e643a',
+      'symbols' =>
+      array (
+        0 => 'CONNECTION_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\KillOptionChoice_cb5c94e4::UseQuery_d80eef57',
+      'symbols' =>
+      array (
+        0 => 'QUERY_SYM',
+      ),
     ),
   ),
   'use' =>
@@ -16849,6 +28103,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'USE_SYM',
+        1 => 'ident',
       ),
     ),
   ),
@@ -16881,6 +28140,33 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         19 => 22,
         20 => 23,
       ),
+      'symbols' =>
+      array (
+        0 => 'LOAD',
+        1 => 'data_or_xml',
+        2 => 'load_data_lock',
+        3 => 'opt_from_keyword',
+        4 => 'opt_local',
+        5 => 'load_source_type',
+        6 => 'TEXT_STRING_filesystem',
+        7 => 'opt_source_count',
+        8 => 'opt_source_order',
+        9 => 'opt_duplicate',
+        10 => 'INTO',
+        11 => 'TABLE_SYM',
+        12 => 'table_ident',
+        13 => 'opt_use_partition',
+        14 => 'opt_load_data_charset',
+        15 => 'opt_xml_rows_identified_by',
+        16 => 'opt_field_term',
+        17 => 'opt_line_term',
+        18 => 'opt_ignore_lines',
+        19 => 'opt_field_or_var_spec',
+        20 => 'opt_load_data_set_spec',
+        21 => 'opt_load_parallel',
+        22 => 'opt_load_memory',
+        23 => 'opt_load_algorithm',
+      ),
     ),
   ),
   'data_or_xml' =>
@@ -16888,10 +28174,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\DataOrXmlChoice_71428860::UseData_c97c29c7',
+      'symbols' =>
+      array (
+        0 => 'DATA_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\DataOrXmlChoice_71428860::UseXml_40658e9a',
+      'symbols' =>
+      array (
+        0 => 'XML_SYM',
+      ),
     ),
   ),
   'opt_local' =>
@@ -16899,10 +28193,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptLocalChoice_a187b50c::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptLocalChoice_a187b50c::UseLocal_646c1937',
+      'symbols' =>
+      array (
+        0 => 'LOCAL_SYM',
+      ),
     ),
   ),
   'opt_from_keyword' =>
@@ -16910,10 +28211,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptFromKeywordChoice_8c3f0536::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptFromKeywordChoice_8c3f0536::UseFrom_f4383c66',
+      'symbols' =>
+      array (
+        0 => 'FROM',
+      ),
     ),
   ),
   'load_data_lock' =>
@@ -16921,14 +28229,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\LoadDataLockChoice_d4b9972a::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\LoadDataLockChoice_d4b9972a::UseConcurrent_852eda03',
+      'symbols' =>
+      array (
+        0 => 'CONCURRENT',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\LoadDataLockChoice_d4b9972a::UseLowPriority_987c9984',
+      'symbols' =>
+      array (
+        0 => 'LOW_PRIORITY',
+      ),
     ),
   ),
   'load_source_type' =>
@@ -16936,14 +28255,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\LoadSourceTypeChoice_6f6af1f8::UseInfile_dd9367e7',
+      'symbols' =>
+      array (
+        0 => 'INFILE_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\LoadSourceTypeChoice_6f6af1f8::UseUrl_e7a241de',
+      'symbols' =>
+      array (
+        0 => 'URL_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\LoadSourceTypeChoice_6f6af1f8::UseS3_44d6a8a7',
+      'symbols' =>
+      array (
+        0 => 'S3_SYM',
+      ),
     ),
   ),
   'opt_source_count' =>
@@ -16954,6 +28285,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -16961,6 +28295,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COUNT_SYM',
+        1 => 'NUM',
       ),
     ),
     2 =>
@@ -16971,6 +28310,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'IDENT_sys',
+        1 => 'NUM',
+      ),
     ),
   ),
   'opt_source_order' =>
@@ -16978,10 +28322,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptSourceOrderChoice_3bb841a7::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptSourceOrderChoice_3bb841a7::UseInPrimaryKeyOrder_cfbaebb1',
+      'symbols' =>
+      array (
+        0 => 'IN_SYM',
+        1 => 'PRIMARY_SYM',
+        2 => 'KEY_SYM',
+        3 => 'ORDER_SYM',
+      ),
     ),
   ),
   'opt_duplicate' =>
@@ -16992,10 +28346,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'duplicate',
+      ),
     ),
   ),
   'duplicate' =>
@@ -17003,10 +28364,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\DuplicateChoice_ed63d717::UseReplace_9b66c971',
+      'symbols' =>
+      array (
+        0 => 'REPLACE_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\DuplicateChoice_ed63d717::UseIgnore_eff4f8c3',
+      'symbols' =>
+      array (
+        0 => 'IGNORE_SYM',
+      ),
     ),
   ),
   'opt_field_term' =>
@@ -17017,6 +28386,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -17025,6 +28397,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COLUMNS',
+        1 => 'field_term_list',
       ),
     ),
   ),
@@ -17038,10 +28415,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'field_term_list',
+        1 => 'field_term',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'field_term',
+      ),
     ),
   ),
   'field_term' =>
@@ -17053,6 +28439,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'TERMINATED',
+        1 => 'BY',
+        2 => 'text_string',
+      ),
     ),
     1 =>
     array (
@@ -17060,6 +28452,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'OPTIONALLY',
+        1 => 'ENCLOSED',
+        2 => 'BY',
+        3 => 'text_string',
       ),
     ),
     2 =>
@@ -17069,6 +28468,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ENCLOSED',
+        1 => 'BY',
+        2 => 'text_string',
+      ),
     ),
     3 =>
     array (
@@ -17076,6 +28481,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ESCAPED',
+        1 => 'BY',
+        2 => 'text_string',
       ),
     ),
   ),
@@ -17087,6 +28498,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -17094,6 +28508,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LINES',
+        1 => 'line_term_list',
       ),
     ),
   ),
@@ -17107,10 +28526,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'line_term_list',
+        1 => 'line_term',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'line_term',
+      ),
     ),
   ),
   'line_term' =>
@@ -17122,6 +28550,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'TERMINATED',
+        1 => 'BY',
+        2 => 'text_string',
+      ),
     ),
     1 =>
     array (
@@ -17129,6 +28563,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'STARTING',
+        1 => 'BY',
+        2 => 'text_string',
       ),
     ),
   ),
@@ -17140,6 +28580,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -17147,6 +28590,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ROWS_SYM',
+        1 => 'IDENTIFIED_SYM',
+        2 => 'BY',
+        3 => 'text_string',
       ),
     ),
   ),
@@ -17158,6 +28608,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -17167,6 +28620,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'IGNORE_SYM',
+        1 => 'NUM',
+        2 => 'lines_or_rows',
+      ),
     ),
   ),
   'lines_or_rows' =>
@@ -17174,10 +28633,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\LinesOrRowsChoice_0e1d3876::UseLines_72df37d4',
+      'symbols' =>
+      array (
+        0 => 'LINES',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\LinesOrRowsChoice_0e1d3876::UseRows_6d2b98cb',
+      'symbols' =>
+      array (
+        0 => 'ROWS_SYM',
+      ),
     ),
   ),
   'opt_field_or_var_spec' =>
@@ -17188,6 +28655,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -17196,12 +28666,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'fields_or_vars',
+        2 => ')',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptFieldOrVarSpecWith_c8edae68',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => ')',
       ),
     ),
   ),
@@ -17215,10 +28696,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'fields_or_vars',
+        1 => ',',
+        2 => 'field_or_var',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'field_or_var',
+      ),
     ),
   ),
   'field_or_var' =>
@@ -17226,6 +28717,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'simple_ident_nospvar',
+      ),
     ),
     1 =>
     array (
@@ -17233,6 +28728,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '@',
+        1 => 'ident_or_text',
       ),
     ),
   ),
@@ -17244,6 +28744,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -17251,6 +28754,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SET_SYM',
+        1 => 'load_data_set_list',
       ),
     ),
   ),
@@ -17264,10 +28772,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'load_data_set_list',
+        1 => ',',
+        2 => 'load_data_set_elem',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'load_data_set_elem',
+      ),
     ),
   ),
   'load_data_set_elem' =>
@@ -17281,6 +28799,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'simple_ident_nospvar',
+        1 => 'equal',
+        2 => 'expr_or_default',
+      ),
     ),
   ),
   'opt_load_algorithm' =>
@@ -17288,10 +28812,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptLoadAlgorithmChoice_e6484b72::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptLoadAlgorithmChoice_e6484b72::UseAlgorithmBulk_09c89115',
+      'symbols' =>
+      array (
+        0 => 'ALGORITHM_SYM',
+        1 => 'EQ',
+        2 => 'BULK_SYM',
+      ),
     ),
   ),
   'opt_load_parallel' =>
@@ -17302,6 +28835,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -17309,6 +28845,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PARALLEL_SYM',
+        1 => 'EQ',
+        2 => 'NUM',
       ),
     ),
   ),
@@ -17320,6 +28862,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -17327,6 +28872,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MEMORY_SYM',
+        1 => 'EQ',
+        2 => 'size_number',
       ),
     ),
   ),
@@ -17339,6 +28890,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TEXT_STRING',
+      ),
     ),
     1 =>
     array (
@@ -17346,6 +28901,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NCHAR_STRING',
       ),
     ),
     2 =>
@@ -17356,6 +28915,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNDERSCORE_CHARSET',
+        1 => 'TEXT_STRING',
+      ),
     ),
     3 =>
     array (
@@ -17365,6 +28929,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'text_literal',
+        1 => 'TEXT_STRING_literal',
+      ),
     ),
   ),
   'text_string' =>
@@ -17372,6 +28941,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'TEXT_STRING_literal',
+      ),
     ),
     1 =>
     array (
@@ -17380,6 +28953,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'HEX_NUM',
+      ),
     ),
     2 =>
     array (
@@ -17387,6 +28964,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BIN_NUM',
       ),
     ),
   ),
@@ -17399,6 +28980,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PARAM_MARKER',
+      ),
     ),
   ),
   'signed_literal' =>
@@ -17406,6 +28991,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'literal',
+      ),
     ),
     1 =>
     array (
@@ -17413,6 +29002,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '+',
+        1 => 'NUM_literal',
       ),
     ),
     2 =>
@@ -17422,6 +29016,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '-',
+        1 => 'NUM_literal',
+      ),
     ),
   ),
   'signed_literal_or_null' =>
@@ -17429,10 +29028,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'signed_literal',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'null_as_literal',
+      ),
     ),
   ),
   'null_as_literal' =>
@@ -17440,6 +29047,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\NullAsLiteralChoice_83b9fcc2::UseNull_fb329000',
+      'symbols' =>
+      array (
+        0 => 'NULL_SYM',
+      ),
     ),
   ),
   'literal' =>
@@ -17447,14 +29058,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'text_literal',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'NUM_literal',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'temporal_literal',
+      ),
     ),
     3 =>
     array (
@@ -17462,12 +29085,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'FALSE_SYM',
+      ),
     ),
     4 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\LiteralWithTrueSym_31dca60d',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'TRUE_SYM',
       ),
     ),
     5 =>
@@ -17477,6 +29108,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'HEX_NUM',
+      ),
     ),
     6 =>
     array (
@@ -17484,6 +29119,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BIN_NUM',
       ),
     ),
     7 =>
@@ -17494,6 +29133,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNDERSCORE_CHARSET',
+        1 => 'HEX_NUM',
+      ),
     ),
     8 =>
     array (
@@ -17503,6 +29147,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNDERSCORE_CHARSET',
+        1 => 'BIN_NUM',
+      ),
     ),
   ),
   'literal_or_null' =>
@@ -17510,10 +29159,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'literal',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'null_as_literal',
+      ),
     ),
   ),
   'NUM_literal' =>
@@ -17521,6 +29178,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'int64_literal',
+      ),
     ),
     1 =>
     array (
@@ -17529,6 +29190,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DECIMAL_NUM',
+      ),
     ),
     2 =>
     array (
@@ -17536,6 +29201,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FLOAT_NUM',
       ),
     ),
   ),
@@ -17548,6 +29217,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NUM',
+      ),
     ),
     1 =>
     array (
@@ -17556,6 +29229,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LONG_NUM',
+      ),
     ),
     2 =>
     array (
@@ -17563,6 +29240,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ULONGLONG_NUM',
       ),
     ),
   ),
@@ -17575,6 +29256,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'DATE_SYM',
+        1 => 'TEXT_STRING',
+      ),
     ),
     1 =>
     array (
@@ -17582,6 +29268,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TIME_SYM',
+        1 => 'TEXT_STRING',
       ),
     ),
     2 =>
@@ -17591,6 +29282,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'TIMESTAMP_SYM',
+        1 => 'TEXT_STRING',
+      ),
     ),
   ),
   'opt_interval' =>
@@ -17598,10 +29294,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptIntervalChoice_7b326ecb::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptIntervalChoice_7b326ecb::UseInterval_8ed24e3a',
+      'symbols' =>
+      array (
+        0 => 'INTERVAL_SYM',
+      ),
     ),
   ),
   'insert_column' =>
@@ -17609,6 +29312,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'simple_ident_nospvar',
+      ),
     ),
   ),
   'table_wild' =>
@@ -17620,6 +29327,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ident',
+        1 => '.',
+        2 => '*',
+      ),
     ),
     1 =>
     array (
@@ -17628,6 +29341,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ident',
+        1 => '.',
+        2 => 'ident',
+        3 => '.',
+        4 => '*',
       ),
     ),
   ),
@@ -17641,6 +29362,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'expr',
+        1 => 'opt_ordering_direction',
+      ),
     ),
   ),
   'grouping_expr' =>
@@ -17648,6 +29374,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'expr',
+      ),
     ),
   ),
   'simple_ident' =>
@@ -17655,10 +29385,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'simple_ident_q',
+      ),
     ),
   ),
   'simple_ident_nospvar' =>
@@ -17666,10 +29404,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'simple_ident_q',
+      ),
     ),
   ),
   'simple_ident_q' =>
@@ -17682,6 +29428,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ident',
+        1 => '.',
+        2 => 'ident',
+      ),
     ),
     1 =>
     array (
@@ -17692,6 +29444,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'ident',
+        1 => '.',
+        2 => 'ident',
+        3 => '.',
+        4 => 'ident',
+      ),
     ),
   ),
   'table_ident' =>
@@ -17699,6 +29459,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
     1 =>
     array (
@@ -17707,6 +29471,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ident',
+        1 => '.',
+        2 => 'ident',
       ),
     ),
   ),
@@ -17720,6 +29490,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ident',
+        1 => 'opt_wild',
+      ),
     ),
     1 =>
     array (
@@ -17729,6 +29504,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
         2 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ident',
+        1 => '.',
+        2 => 'ident',
+        3 => 'opt_wild',
       ),
     ),
   ),
@@ -17741,6 +29523,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'IDENT',
+      ),
     ),
     1 =>
     array (
@@ -17749,6 +29535,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'IDENT_QUOTED',
+      ),
     ),
   ),
   'TEXT_STRING_sys_nonewline' =>
@@ -17756,6 +29546,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'TEXT_STRING_sys',
+      ),
     ),
   ),
   'filter_wild_db_table_string' =>
@@ -17763,6 +29557,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'TEXT_STRING_sys_nonewline',
+      ),
     ),
   ),
   'TEXT_STRING_sys' =>
@@ -17773,6 +29571,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TEXT_STRING',
       ),
     ),
   ),
@@ -17785,6 +29587,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TEXT_STRING',
+      ),
     ),
   ),
   'TEXT_STRING_filesystem' =>
@@ -17795,6 +29601,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TEXT_STRING',
       ),
     ),
   ),
@@ -17807,6 +29617,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TEXT_STRING',
+      ),
     ),
   ),
   'TEXT_STRING_hash' =>
@@ -17814,6 +29628,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'TEXT_STRING_sys',
+      ),
     ),
     1 =>
     array (
@@ -17821,6 +29639,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'HEX_NUM',
       ),
     ),
   ),
@@ -17833,6 +29655,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TEXT_STRING',
+      ),
     ),
   ),
   'ident' =>
@@ -17840,10 +29666,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'IDENT_sys',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident_keyword',
+      ),
     ),
   ),
   'role_ident' =>
@@ -17851,10 +29685,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'IDENT_sys',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'role_keyword',
+      ),
     ),
   ),
   'label_ident' =>
@@ -17862,10 +29704,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'IDENT_sys',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'label_keyword',
+      ),
     ),
   ),
   'lvalue_ident' =>
@@ -17873,10 +29723,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'IDENT_sys',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'lvalue_keyword',
+      ),
     ),
   ),
   'ident_or_text' =>
@@ -17884,10 +29742,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'TEXT_STRING_sys',
+      ),
     ),
     2 =>
     array (
@@ -17896,6 +29762,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LEX_HOSTNAME',
+      ),
     ),
   ),
   'role_ident_or_text' =>
@@ -17903,10 +29773,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'role_ident',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'TEXT_STRING_sys',
+      ),
     ),
     2 =>
     array (
@@ -17915,6 +29793,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LEX_HOSTNAME',
+      ),
     ),
   ),
   'user_ident_or_text' =>
@@ -17922,6 +29804,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident_or_text',
+      ),
     ),
     1 =>
     array (
@@ -17931,6 +29817,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ident_or_text',
+        1 => '@',
+        2 => 'ident_or_text',
+      ),
     ),
   ),
   'user' =>
@@ -17938,6 +29830,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'user_ident_or_text',
+      ),
     ),
     1 =>
     array (
@@ -17946,6 +29842,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_USER',
+        1 => 'optional_braces',
+      ),
     ),
   ),
   'role' =>
@@ -17953,6 +29854,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'role_ident_or_text',
+      ),
     ),
     1 =>
     array (
@@ -17962,6 +29867,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'role_ident_or_text',
+        1 => '@',
+        2 => 'ident_or_text',
+      ),
     ),
   ),
   'schema' =>
@@ -17969,6 +29880,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
   ),
   'ident_keyword' =>
@@ -17976,22 +29891,42 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident_keywords_unambiguous',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident_keywords_ambiguous_1_roles_and_labels',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident_keywords_ambiguous_2_labels',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident_keywords_ambiguous_3_roles',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident_keywords_ambiguous_4_system_variables',
+      ),
     ),
   ),
   'ident_keywords_ambiguous_1_roles_and_labels' =>
@@ -18003,6 +29938,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'EXECUTE_SYM',
+      ),
     ),
     1 =>
     array (
@@ -18011,6 +29950,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'RESTART_SYM',
+      ),
     ),
     2 =>
     array (
@@ -18018,6 +29961,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SHUTDOWN',
       ),
     ),
   ),
@@ -18030,6 +29977,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ASCII_SYM',
+      ),
     ),
     1 =>
     array (
@@ -18037,6 +29988,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BEGIN_SYM',
       ),
     ),
     2 =>
@@ -18046,6 +30001,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'BYTE_SYM',
+      ),
     ),
     3 =>
     array (
@@ -18053,6 +30012,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CACHE_SYM',
       ),
     ),
     4 =>
@@ -18062,6 +30025,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CHARSET',
+      ),
     ),
     5 =>
     array (
@@ -18069,6 +30036,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CHECKSUM_SYM',
       ),
     ),
     6 =>
@@ -18078,6 +30049,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CLONE_SYM',
+      ),
     ),
     7 =>
     array (
@@ -18085,6 +30060,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COMMENT_SYM',
       ),
     ),
     8 =>
@@ -18094,6 +30073,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMMIT_SYM',
+      ),
     ),
     9 =>
     array (
@@ -18101,6 +30084,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CONTAINS_SYM',
       ),
     ),
     10 =>
@@ -18110,6 +30097,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DEALLOCATE_SYM',
+      ),
     ),
     11 =>
     array (
@@ -18117,6 +30108,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DO_SYM',
       ),
     ),
     12 =>
@@ -18126,6 +30121,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'END',
+      ),
     ),
     13 =>
     array (
@@ -18133,6 +30132,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FLUSH_SYM',
       ),
     ),
     14 =>
@@ -18142,6 +30145,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FOLLOWS_SYM',
+      ),
     ),
     15 =>
     array (
@@ -18149,6 +30156,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'HANDLER_SYM',
       ),
     ),
     16 =>
@@ -18158,6 +30169,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'HELP_SYM',
+      ),
     ),
     17 =>
     array (
@@ -18165,6 +30180,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'IMPORT',
       ),
     ),
     18 =>
@@ -18174,6 +30193,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INSTALL_SYM',
+      ),
     ),
     19 =>
     array (
@@ -18181,6 +30204,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LANGUAGE_SYM',
       ),
     ),
     20 =>
@@ -18190,6 +30217,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NO_SYM',
+      ),
     ),
     21 =>
     array (
@@ -18197,6 +30228,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PRECEDES_SYM',
       ),
     ),
     22 =>
@@ -18206,6 +30241,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PREPARE_SYM',
+      ),
     ),
     23 =>
     array (
@@ -18213,6 +30252,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REPAIR',
       ),
     ),
     24 =>
@@ -18222,6 +30265,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'RESET_SYM',
+      ),
     ),
     25 =>
     array (
@@ -18229,6 +30276,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ROLLBACK_SYM',
       ),
     ),
     26 =>
@@ -18238,6 +30289,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SAVEPOINT_SYM',
+      ),
     ),
     27 =>
     array (
@@ -18245,6 +30300,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SIGNED_SYM',
       ),
     ),
     28 =>
@@ -18254,6 +30313,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SLAVE',
+      ),
     ),
     29 =>
     array (
@@ -18261,6 +30324,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'START_SYM',
       ),
     ),
     30 =>
@@ -18270,6 +30337,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'STOP_SYM',
+      ),
     ),
     31 =>
     array (
@@ -18277,6 +30348,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TRUNCATE_SYM',
       ),
     ),
     32 =>
@@ -18286,6 +30361,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNICODE_SYM',
+      ),
     ),
     33 =>
     array (
@@ -18293,6 +30372,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'UNINSTALL_SYM',
       ),
     ),
     34 =>
@@ -18302,6 +30385,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'XA_SYM',
+      ),
     ),
   ),
   'label_keyword' =>
@@ -18309,14 +30396,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident_keywords_unambiguous',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident_keywords_ambiguous_3_roles',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident_keywords_ambiguous_4_system_variables',
+      ),
     ),
   ),
   'ident_keywords_ambiguous_3_roles' =>
@@ -18328,6 +30427,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'EVENT_SYM',
+      ),
     ),
     1 =>
     array (
@@ -18335,6 +30438,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FILE_SYM',
       ),
     ),
     2 =>
@@ -18344,6 +30451,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NONE_SYM',
+      ),
     ),
     3 =>
     array (
@@ -18351,6 +30462,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PROCESS',
       ),
     ),
     4 =>
@@ -18360,6 +30475,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PROXY_SYM',
+      ),
     ),
     5 =>
     array (
@@ -18367,6 +30486,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RELOAD',
       ),
     ),
     6 =>
@@ -18376,6 +30499,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'REPLICATION',
+      ),
     ),
     7 =>
     array (
@@ -18384,6 +30511,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'RESOURCE_SYM',
+      ),
     ),
     8 =>
     array (
@@ -18391,6 +30522,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SUPER_SYM',
       ),
     ),
   ),
@@ -18403,6 +30538,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ACTION',
+      ),
     ),
     1 =>
     array (
@@ -18410,6 +30549,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ACCOUNT_SYM',
       ),
     ),
     2 =>
@@ -18419,6 +30562,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ACTIVE_SYM',
+      ),
     ),
     3 =>
     array (
@@ -18426,6 +30573,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ADDDATE_SYM',
       ),
     ),
     4 =>
@@ -18435,6 +30586,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ADMIN_SYM',
+      ),
     ),
     5 =>
     array (
@@ -18442,6 +30597,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'AFTER_SYM',
       ),
     ),
     6 =>
@@ -18451,6 +30610,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'AGAINST',
+      ),
     ),
     7 =>
     array (
@@ -18458,6 +30621,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'AGGREGATE_SYM',
       ),
     ),
     8 =>
@@ -18467,6 +30634,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ALGORITHM_SYM',
+      ),
     ),
     9 =>
     array (
@@ -18474,6 +30645,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALWAYS_SYM',
       ),
     ),
     10 =>
@@ -18483,6 +30658,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ANY_SYM',
+      ),
     ),
     11 =>
     array (
@@ -18490,6 +30669,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ARRAY_SYM',
       ),
     ),
     12 =>
@@ -18499,6 +30682,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'AT_SYM',
+      ),
     ),
     13 =>
     array (
@@ -18506,6 +30693,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ATTRIBUTE_SYM',
       ),
     ),
     14 =>
@@ -18515,6 +30706,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'AUTHENTICATION_SYM',
+      ),
     ),
     15 =>
     array (
@@ -18522,6 +30717,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'AUTOEXTEND_SIZE_SYM',
       ),
     ),
     16 =>
@@ -18531,6 +30730,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'AUTO_INC',
+      ),
     ),
     17 =>
     array (
@@ -18538,6 +30741,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'AVG_ROW_LENGTH',
       ),
     ),
     18 =>
@@ -18547,6 +30754,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'AVG_SYM',
+      ),
     ),
     19 =>
     array (
@@ -18554,6 +30765,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BACKUP_SYM',
       ),
     ),
     20 =>
@@ -18563,6 +30778,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'BINLOG_SYM',
+      ),
     ),
     21 =>
     array (
@@ -18570,6 +30789,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BIT_SYM',
       ),
     ),
     22 =>
@@ -18579,6 +30802,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'BLOCK_SYM',
+      ),
     ),
     23 =>
     array (
@@ -18586,6 +30813,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BOOLEAN_SYM',
       ),
     ),
     24 =>
@@ -18595,6 +30826,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'BOOL_SYM',
+      ),
     ),
     25 =>
     array (
@@ -18602,6 +30837,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BTREE_SYM',
       ),
     ),
     26 =>
@@ -18611,6 +30850,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'BUCKETS_SYM',
+      ),
     ),
     27 =>
     array (
@@ -18618,6 +30861,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'BULK_SYM',
       ),
     ),
     28 =>
@@ -18627,6 +30874,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CASCADED',
+      ),
     ),
     29 =>
     array (
@@ -18634,6 +30885,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CATALOG_NAME_SYM',
       ),
     ),
     30 =>
@@ -18643,6 +30898,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CHAIN_SYM',
+      ),
     ),
     31 =>
     array (
@@ -18650,6 +30909,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CHALLENGE_RESPONSE_SYM',
       ),
     ),
     32 =>
@@ -18659,6 +30922,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CHANGED',
+      ),
     ),
     33 =>
     array (
@@ -18666,6 +30933,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CHANNEL_SYM',
       ),
     ),
     34 =>
@@ -18675,6 +30946,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CIPHER_SYM',
+      ),
     ),
     35 =>
     array (
@@ -18682,6 +30957,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CLASS_ORIGIN_SYM',
       ),
     ),
     36 =>
@@ -18691,6 +30970,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CLIENT_SYM',
+      ),
     ),
     37 =>
     array (
@@ -18698,6 +30981,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CLOSE_SYM',
       ),
     ),
     38 =>
@@ -18707,6 +30994,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'COALESCE',
+      ),
     ),
     39 =>
     array (
@@ -18714,6 +31005,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CODE_SYM',
       ),
     ),
     40 =>
@@ -18723,6 +31018,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'COLLATION_SYM',
+      ),
     ),
     41 =>
     array (
@@ -18730,6 +31029,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COLUMNS',
       ),
     ),
     42 =>
@@ -18739,6 +31042,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'COLUMN_FORMAT_SYM',
+      ),
     ),
     43 =>
     array (
@@ -18746,6 +31053,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COLUMN_NAME_SYM',
       ),
     ),
     44 =>
@@ -18755,6 +31066,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMMITTED_SYM',
+      ),
     ),
     45 =>
     array (
@@ -18762,6 +31077,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COMPACT_SYM',
       ),
     ),
     46 =>
@@ -18771,6 +31090,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMPLETION_SYM',
+      ),
     ),
     47 =>
     array (
@@ -18778,6 +31101,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COMPONENT_SYM',
       ),
     ),
     48 =>
@@ -18787,6 +31114,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'COMPRESSED_SYM',
+      ),
     ),
     49 =>
     array (
@@ -18794,6 +31125,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COMPRESSION_SYM',
       ),
     ),
     50 =>
@@ -18803,6 +31138,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CONCURRENT',
+      ),
     ),
     51 =>
     array (
@@ -18810,6 +31149,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CONNECTION_SYM',
       ),
     ),
     52 =>
@@ -18819,6 +31162,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CONSISTENT_SYM',
+      ),
     ),
     53 =>
     array (
@@ -18826,6 +31173,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CONSTRAINT_CATALOG_SYM',
       ),
     ),
     54 =>
@@ -18835,6 +31186,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CONSTRAINT_NAME_SYM',
+      ),
     ),
     55 =>
     array (
@@ -18842,6 +31197,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CONSTRAINT_SCHEMA_SYM',
       ),
     ),
     56 =>
@@ -18851,6 +31210,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CONTEXT_SYM',
+      ),
     ),
     57 =>
     array (
@@ -18858,6 +31221,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CPU_SYM',
       ),
     ),
     58 =>
@@ -18867,6 +31234,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'CURRENT_SYM',
+      ),
     ),
     59 =>
     array (
@@ -18874,6 +31245,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CURSOR_NAME_SYM',
       ),
     ),
     60 =>
@@ -18883,6 +31258,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DATAFILE_SYM',
+      ),
     ),
     61 =>
     array (
@@ -18890,6 +31269,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DATA_SYM',
       ),
     ),
     62 =>
@@ -18899,6 +31282,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DATETIME_SYM',
+      ),
     ),
     63 =>
     array (
@@ -18906,6 +31293,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DATE_SYM',
       ),
     ),
     64 =>
@@ -18915,6 +31306,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DAY_SYM',
+      ),
     ),
     65 =>
     array (
@@ -18922,6 +31317,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT_AUTH_SYM',
       ),
     ),
     66 =>
@@ -18931,6 +31330,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DEFINER_SYM',
+      ),
     ),
     67 =>
     array (
@@ -18938,6 +31341,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEFINITION_SYM',
       ),
     ),
     68 =>
@@ -18947,6 +31354,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DELAY_KEY_WRITE_SYM',
+      ),
     ),
     69 =>
     array (
@@ -18954,6 +31365,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DESCRIPTION_SYM',
       ),
     ),
     70 =>
@@ -18963,6 +31378,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DIAGNOSTICS_SYM',
+      ),
     ),
     71 =>
     array (
@@ -18970,6 +31389,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DIRECTORY_SYM',
       ),
     ),
     72 =>
@@ -18979,6 +31402,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DISABLE_SYM',
+      ),
     ),
     73 =>
     array (
@@ -18986,6 +31413,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DISCARD_SYM',
       ),
     ),
     74 =>
@@ -18995,6 +31426,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DISK_SYM',
+      ),
     ),
     75 =>
     array (
@@ -19002,6 +31437,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DUMPFILE',
       ),
     ),
     76 =>
@@ -19011,6 +31450,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DUPLICATE_SYM',
+      ),
     ),
     77 =>
     array (
@@ -19018,6 +31461,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DYNAMIC_SYM',
       ),
     ),
     78 =>
@@ -19027,6 +31474,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ENABLE_SYM',
+      ),
     ),
     79 =>
     array (
@@ -19034,6 +31485,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ENCRYPTION_SYM',
       ),
     ),
     80 =>
@@ -19043,6 +31498,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ENDS_SYM',
+      ),
     ),
     81 =>
     array (
@@ -19050,6 +31509,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ENFORCED_SYM',
       ),
     ),
     82 =>
@@ -19059,6 +31522,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ENGINES_SYM',
+      ),
     ),
     83 =>
     array (
@@ -19066,6 +31533,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ENGINE_SYM',
       ),
     ),
     84 =>
@@ -19075,6 +31546,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ENGINE_ATTRIBUTE_SYM',
+      ),
     ),
     85 =>
     array (
@@ -19082,6 +31557,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ENUM_SYM',
       ),
     ),
     86 =>
@@ -19091,6 +31570,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ERRORS',
+      ),
     ),
     87 =>
     array (
@@ -19098,6 +31581,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ERROR_SYM',
       ),
     ),
     88 =>
@@ -19107,6 +31594,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ESCAPE_SYM',
+      ),
     ),
     89 =>
     array (
@@ -19114,6 +31605,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'EVENTS_SYM',
       ),
     ),
     90 =>
@@ -19123,6 +31618,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'EVERY_SYM',
+      ),
     ),
     91 =>
     array (
@@ -19130,6 +31629,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'EXCHANGE_SYM',
       ),
     ),
     92 =>
@@ -19139,6 +31642,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'EXCLUDE_SYM',
+      ),
     ),
     93 =>
     array (
@@ -19146,6 +31653,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'EXPANSION_SYM',
       ),
     ),
     94 =>
@@ -19155,6 +31666,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'EXPIRE_SYM',
+      ),
     ),
     95 =>
     array (
@@ -19162,6 +31677,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'EXPORT_SYM',
       ),
     ),
     96 =>
@@ -19171,6 +31690,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'EXTENDED_SYM',
+      ),
     ),
     97 =>
     array (
@@ -19178,6 +31701,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'EXTENT_SIZE_SYM',
       ),
     ),
     98 =>
@@ -19187,6 +31714,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FACTOR_SYM',
+      ),
     ),
     99 =>
     array (
@@ -19194,6 +31725,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FAILED_LOGIN_ATTEMPTS_SYM',
       ),
     ),
     100 =>
@@ -19203,6 +31738,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FAST_SYM',
+      ),
     ),
     101 =>
     array (
@@ -19210,6 +31749,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FAULTS_SYM',
       ),
     ),
     102 =>
@@ -19219,6 +31762,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FILE_BLOCK_SIZE_SYM',
+      ),
     ),
     103 =>
     array (
@@ -19226,6 +31773,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FILTER_SYM',
       ),
     ),
     104 =>
@@ -19235,6 +31786,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FINISH_SYM',
+      ),
     ),
     105 =>
     array (
@@ -19242,6 +31797,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FIRST_SYM',
       ),
     ),
     106 =>
@@ -19251,6 +31810,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FIXED_SYM',
+      ),
     ),
     107 =>
     array (
@@ -19258,6 +31821,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FOLLOWING_SYM',
       ),
     ),
     108 =>
@@ -19267,6 +31834,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FORMAT_SYM',
+      ),
     ),
     109 =>
     array (
@@ -19274,6 +31845,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FOUND_SYM',
       ),
     ),
     110 =>
@@ -19283,6 +31858,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'FULL',
+      ),
     ),
     111 =>
     array (
@@ -19290,6 +31869,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'GENERAL',
       ),
     ),
     112 =>
@@ -19299,6 +31882,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'GENERATE_SYM',
+      ),
     ),
     113 =>
     array (
@@ -19306,6 +31893,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'GEOMETRYCOLLECTION_SYM',
       ),
     ),
     114 =>
@@ -19315,6 +31906,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'GEOMETRY_SYM',
+      ),
     ),
     115 =>
     array (
@@ -19322,6 +31917,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'GET_FORMAT',
       ),
     ),
     116 =>
@@ -19331,6 +31930,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'GET_MASTER_PUBLIC_KEY_SYM',
+      ),
     ),
     117 =>
     array (
@@ -19338,6 +31941,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'GET_SOURCE_PUBLIC_KEY_SYM',
       ),
     ),
     118 =>
@@ -19347,6 +31954,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'GRANTS',
+      ),
     ),
     119 =>
     array (
@@ -19354,6 +31965,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'GROUP_REPLICATION',
       ),
     ),
     120 =>
@@ -19363,6 +31978,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'GTIDS_SYM',
+      ),
     ),
     121 =>
     array (
@@ -19370,6 +31989,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'GTID_ONLY_SYM',
       ),
     ),
     122 =>
@@ -19379,6 +32002,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'HASH_SYM',
+      ),
     ),
     123 =>
     array (
@@ -19386,6 +32013,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'HISTOGRAM_SYM',
       ),
     ),
     124 =>
@@ -19395,6 +32026,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'HISTORY_SYM',
+      ),
     ),
     125 =>
     array (
@@ -19402,6 +32037,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'HOSTS_SYM',
       ),
     ),
     126 =>
@@ -19411,6 +32050,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'HOST_SYM',
+      ),
     ),
     127 =>
     array (
@@ -19418,6 +32061,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'HOUR_SYM',
       ),
     ),
     128 =>
@@ -19427,6 +32074,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'IDENTIFIED_SYM',
+      ),
     ),
     129 =>
     array (
@@ -19434,6 +32085,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'IGNORE_SERVER_IDS_SYM',
       ),
     ),
     130 =>
@@ -19443,6 +32098,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INACTIVE_SYM',
+      ),
     ),
     131 =>
     array (
@@ -19450,6 +32109,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INDEXES',
       ),
     ),
     132 =>
@@ -19459,6 +32122,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INITIAL_SIZE_SYM',
+      ),
     ),
     133 =>
     array (
@@ -19466,6 +32133,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INITIAL_SYM',
       ),
     ),
     134 =>
@@ -19475,6 +32146,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INITIATE_SYM',
+      ),
     ),
     135 =>
     array (
@@ -19482,6 +32157,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INSERT_METHOD',
       ),
     ),
     136 =>
@@ -19491,6 +32170,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INSTANCE_SYM',
+      ),
     ),
     137 =>
     array (
@@ -19498,6 +32181,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INVISIBLE_SYM',
       ),
     ),
     138 =>
@@ -19507,6 +32194,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'INVOKER_SYM',
+      ),
     ),
     139 =>
     array (
@@ -19514,6 +32205,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'IO_SYM',
       ),
     ),
     140 =>
@@ -19523,6 +32218,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'IPC_SYM',
+      ),
     ),
     141 =>
     array (
@@ -19530,6 +32229,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ISOLATION',
       ),
     ),
     142 =>
@@ -19539,6 +32242,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ISSUER_SYM',
+      ),
     ),
     143 =>
     array (
@@ -19546,6 +32253,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'JSON_SYM',
       ),
     ),
     144 =>
@@ -19555,6 +32266,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'JSON_VALUE_SYM',
+      ),
     ),
     145 =>
     array (
@@ -19562,6 +32277,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'KEY_BLOCK_SIZE',
       ),
     ),
     146 =>
@@ -19571,6 +32290,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'KEYRING_SYM',
+      ),
     ),
     147 =>
     array (
@@ -19578,6 +32301,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LAST_SYM',
       ),
     ),
     148 =>
@@ -19587,6 +32314,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LEAVES',
+      ),
     ),
     149 =>
     array (
@@ -19594,6 +32325,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LESS_SYM',
       ),
     ),
     150 =>
@@ -19603,6 +32338,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LEVEL_SYM',
+      ),
     ),
     151 =>
     array (
@@ -19610,6 +32349,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LINESTRING_SYM',
       ),
     ),
     152 =>
@@ -19619,6 +32362,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LIST_SYM',
+      ),
     ),
     153 =>
     array (
@@ -19626,6 +32373,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LOCKED_SYM',
       ),
     ),
     154 =>
@@ -19635,6 +32386,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LOCKS_SYM',
+      ),
     ),
     155 =>
     array (
@@ -19642,6 +32397,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LOGFILE_SYM',
       ),
     ),
     156 =>
@@ -19651,6 +32410,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'LOGS_SYM',
+      ),
     ),
     157 =>
     array (
@@ -19658,6 +32421,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LOG_SYM',
       ),
     ),
     158 =>
@@ -19667,6 +32434,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MASTER_AUTO_POSITION_SYM',
+      ),
     ),
     159 =>
     array (
@@ -19674,6 +32445,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MASTER_COMPRESSION_ALGORITHM_SYM',
       ),
     ),
     160 =>
@@ -19683,6 +32458,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MASTER_CONNECT_RETRY_SYM',
+      ),
     ),
     161 =>
     array (
@@ -19690,6 +32469,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MASTER_DELAY_SYM',
       ),
     ),
     162 =>
@@ -19699,6 +32482,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MASTER_HEARTBEAT_PERIOD_SYM',
+      ),
     ),
     163 =>
     array (
@@ -19706,6 +32493,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MASTER_HOST_SYM',
       ),
     ),
     164 =>
@@ -19715,6 +32506,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NETWORK_NAMESPACE_SYM',
+      ),
     ),
     165 =>
     array (
@@ -19722,6 +32517,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MASTER_LOG_FILE_SYM',
       ),
     ),
     166 =>
@@ -19731,6 +32530,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MASTER_LOG_POS_SYM',
+      ),
     ),
     167 =>
     array (
@@ -19738,6 +32541,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MASTER_PASSWORD_SYM',
       ),
     ),
     168 =>
@@ -19747,6 +32554,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MASTER_PORT_SYM',
+      ),
     ),
     169 =>
     array (
@@ -19754,6 +32565,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MASTER_PUBLIC_KEY_PATH_SYM',
       ),
     ),
     170 =>
@@ -19763,6 +32578,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MASTER_RETRY_COUNT_SYM',
+      ),
     ),
     171 =>
     array (
@@ -19770,6 +32589,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MASTER_SSL_CAPATH_SYM',
       ),
     ),
     172 =>
@@ -19779,6 +32602,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MASTER_SSL_CA_SYM',
+      ),
     ),
     173 =>
     array (
@@ -19786,6 +32613,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MASTER_SSL_CERT_SYM',
       ),
     ),
     174 =>
@@ -19795,6 +32626,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MASTER_SSL_CIPHER_SYM',
+      ),
     ),
     175 =>
     array (
@@ -19802,6 +32637,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MASTER_SSL_CRLPATH_SYM',
       ),
     ),
     176 =>
@@ -19811,6 +32650,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MASTER_SSL_CRL_SYM',
+      ),
     ),
     177 =>
     array (
@@ -19818,6 +32661,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MASTER_SSL_KEY_SYM',
       ),
     ),
     178 =>
@@ -19827,6 +32674,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MASTER_SSL_SYM',
+      ),
     ),
     179 =>
     array (
@@ -19834,6 +32685,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MASTER_SYM',
       ),
     ),
     180 =>
@@ -19843,6 +32698,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MASTER_TLS_CIPHERSUITES_SYM',
+      ),
     ),
     181 =>
     array (
@@ -19850,6 +32709,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MASTER_TLS_VERSION_SYM',
       ),
     ),
     182 =>
@@ -19859,6 +32722,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MASTER_USER_SYM',
+      ),
     ),
     183 =>
     array (
@@ -19866,6 +32733,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MASTER_ZSTD_COMPRESSION_LEVEL_SYM',
       ),
     ),
     184 =>
@@ -19875,6 +32746,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MAX_CONNECTIONS_PER_HOUR',
+      ),
     ),
     185 =>
     array (
@@ -19882,6 +32757,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MAX_QUERIES_PER_HOUR',
       ),
     ),
     186 =>
@@ -19891,6 +32770,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MAX_ROWS',
+      ),
     ),
     187 =>
     array (
@@ -19898,6 +32781,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MAX_SIZE_SYM',
       ),
     ),
     188 =>
@@ -19907,6 +32794,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MAX_UPDATES_PER_HOUR',
+      ),
     ),
     189 =>
     array (
@@ -19914,6 +32805,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MAX_USER_CONNECTIONS_SYM',
       ),
     ),
     190 =>
@@ -19923,6 +32818,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MEDIUM_SYM',
+      ),
     ),
     191 =>
     array (
@@ -19930,6 +32829,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MEMBER_SYM',
       ),
     ),
     192 =>
@@ -19939,6 +32842,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MEMORY_SYM',
+      ),
     ),
     193 =>
     array (
@@ -19946,6 +32853,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MERGE_SYM',
       ),
     ),
     194 =>
@@ -19955,6 +32866,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MESSAGE_TEXT_SYM',
+      ),
     ),
     195 =>
     array (
@@ -19962,6 +32877,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MICROSECOND_SYM',
       ),
     ),
     196 =>
@@ -19971,6 +32890,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MIGRATE_SYM',
+      ),
     ),
     197 =>
     array (
@@ -19978,6 +32901,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MINUTE_SYM',
       ),
     ),
     198 =>
@@ -19987,6 +32914,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MIN_ROWS',
+      ),
     ),
     199 =>
     array (
@@ -19994,6 +32925,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MODE_SYM',
       ),
     ),
     200 =>
@@ -20003,6 +32938,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MODIFY_SYM',
+      ),
     ),
     201 =>
     array (
@@ -20010,6 +32949,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MONTH_SYM',
       ),
     ),
     202 =>
@@ -20019,6 +32962,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MULTILINESTRING_SYM',
+      ),
     ),
     203 =>
     array (
@@ -20026,6 +32973,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MULTIPOINT_SYM',
       ),
     ),
     204 =>
@@ -20035,6 +32986,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MULTIPOLYGON_SYM',
+      ),
     ),
     205 =>
     array (
@@ -20042,6 +32997,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'MUTEX_SYM',
       ),
     ),
     206 =>
@@ -20051,6 +33010,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'MYSQL_ERRNO_SYM',
+      ),
     ),
     207 =>
     array (
@@ -20058,6 +33021,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NAMES_SYM',
       ),
     ),
     208 =>
@@ -20067,6 +33034,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NAME_SYM',
+      ),
     ),
     209 =>
     array (
@@ -20074,6 +33045,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NATIONAL_SYM',
       ),
     ),
     210 =>
@@ -20083,6 +33058,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NCHAR_SYM',
+      ),
     ),
     211 =>
     array (
@@ -20090,6 +33069,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NDBCLUSTER_SYM',
       ),
     ),
     212 =>
@@ -20099,6 +33082,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NESTED_SYM',
+      ),
     ),
     213 =>
     array (
@@ -20106,6 +33093,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NEVER_SYM',
       ),
     ),
     214 =>
@@ -20115,6 +33106,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NEW_SYM',
+      ),
     ),
     215 =>
     array (
@@ -20122,6 +33117,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NEXT_SYM',
       ),
     ),
     216 =>
@@ -20131,6 +33130,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NODEGROUP_SYM',
+      ),
     ),
     217 =>
     array (
@@ -20138,6 +33141,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NOWAIT_SYM',
       ),
     ),
     218 =>
@@ -20147,6 +33154,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NO_WAIT_SYM',
+      ),
     ),
     219 =>
     array (
@@ -20154,6 +33165,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NULLS_SYM',
       ),
     ),
     220 =>
@@ -20163,6 +33178,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NUMBER_SYM',
+      ),
     ),
     221 =>
     array (
@@ -20170,6 +33189,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NVARCHAR_SYM',
       ),
     ),
     222 =>
@@ -20179,6 +33202,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'OFF_SYM',
+      ),
     ),
     223 =>
     array (
@@ -20186,6 +33213,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'OFFSET_SYM',
       ),
     ),
     224 =>
@@ -20195,6 +33226,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'OJ_SYM',
+      ),
     ),
     225 =>
     array (
@@ -20202,6 +33237,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'OLD_SYM',
       ),
     ),
     226 =>
@@ -20211,6 +33250,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ONE_SYM',
+      ),
     ),
     227 =>
     array (
@@ -20218,6 +33261,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ONLY_SYM',
       ),
     ),
     228 =>
@@ -20227,6 +33274,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'OPEN_SYM',
+      ),
     ),
     229 =>
     array (
@@ -20234,6 +33285,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'OPTIONAL_SYM',
       ),
     ),
     230 =>
@@ -20243,6 +33298,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'OPTIONS_SYM',
+      ),
     ),
     231 =>
     array (
@@ -20250,6 +33309,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ORDINALITY_SYM',
       ),
     ),
     232 =>
@@ -20259,6 +33322,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ORGANIZATION_SYM',
+      ),
     ),
     233 =>
     array (
@@ -20266,6 +33333,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'OTHERS_SYM',
       ),
     ),
     234 =>
@@ -20275,6 +33346,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'OWNER_SYM',
+      ),
     ),
     235 =>
     array (
@@ -20282,6 +33357,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PACK_KEYS_SYM',
       ),
     ),
     236 =>
@@ -20291,6 +33370,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PAGE_SYM',
+      ),
     ),
     237 =>
     array (
@@ -20298,6 +33381,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PARSER_SYM',
       ),
     ),
     238 =>
@@ -20307,6 +33394,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PARSE_TREE_SYM',
+      ),
     ),
     239 =>
     array (
@@ -20314,6 +33405,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PARTIAL',
       ),
     ),
     240 =>
@@ -20323,6 +33418,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PARTITIONING_SYM',
+      ),
     ),
     241 =>
     array (
@@ -20330,6 +33429,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PARTITIONS_SYM',
       ),
     ),
     242 =>
@@ -20339,6 +33442,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD',
+      ),
     ),
     243 =>
     array (
@@ -20346,6 +33453,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD_LOCK_TIME_SYM',
       ),
     ),
     244 =>
@@ -20355,6 +33466,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PATH_SYM',
+      ),
     ),
     245 =>
     array (
@@ -20362,6 +33477,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PHASE_SYM',
       ),
     ),
     246 =>
@@ -20371,6 +33490,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PLUGINS_SYM',
+      ),
     ),
     247 =>
     array (
@@ -20378,6 +33501,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PLUGIN_DIR_SYM',
       ),
     ),
     248 =>
@@ -20387,6 +33514,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PLUGIN_SYM',
+      ),
     ),
     249 =>
     array (
@@ -20394,6 +33525,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'POINT_SYM',
       ),
     ),
     250 =>
@@ -20403,6 +33538,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'POLYGON_SYM',
+      ),
     ),
     251 =>
     array (
@@ -20410,6 +33549,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PORT_SYM',
       ),
     ),
     252 =>
@@ -20419,6 +33562,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PRECEDING_SYM',
+      ),
     ),
     253 =>
     array (
@@ -20426,6 +33573,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PRESERVE_SYM',
       ),
     ),
     254 =>
@@ -20435,6 +33586,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PREV_SYM',
+      ),
     ),
     255 =>
     array (
@@ -20442,6 +33597,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PRIVILEGES',
       ),
     ),
     256 =>
@@ -20451,6 +33610,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PRIVILEGE_CHECKS_USER_SYM',
+      ),
     ),
     257 =>
     array (
@@ -20458,6 +33621,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PROCESSLIST_SYM',
       ),
     ),
     258 =>
@@ -20467,6 +33634,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PROFILES_SYM',
+      ),
     ),
     259 =>
     array (
@@ -20474,6 +33645,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PROFILE_SYM',
       ),
     ),
     260 =>
@@ -20483,6 +33658,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'QUARTER_SYM',
+      ),
     ),
     261 =>
     array (
@@ -20490,6 +33669,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'QUERY_SYM',
       ),
     ),
     262 =>
@@ -20499,6 +33682,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'QUICK',
+      ),
     ),
     263 =>
     array (
@@ -20506,6 +33693,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RANDOM_SYM',
       ),
     ),
     264 =>
@@ -20515,6 +33706,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'READ_ONLY_SYM',
+      ),
     ),
     265 =>
     array (
@@ -20522,6 +33717,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REBUILD_SYM',
       ),
     ),
     266 =>
@@ -20531,6 +33730,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'RECOVER_SYM',
+      ),
     ),
     267 =>
     array (
@@ -20538,6 +33741,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REDO_BUFFER_SIZE_SYM',
       ),
     ),
     268 =>
@@ -20547,6 +33754,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'REDUNDANT_SYM',
+      ),
     ),
     269 =>
     array (
@@ -20554,6 +33765,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REFERENCE_SYM',
       ),
     ),
     270 =>
@@ -20563,6 +33778,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'REGISTRATION_SYM',
+      ),
     ),
     271 =>
     array (
@@ -20570,6 +33789,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RELAY',
       ),
     ),
     272 =>
@@ -20579,6 +33802,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'RELAYLOG_SYM',
+      ),
     ),
     273 =>
     array (
@@ -20586,6 +33813,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RELAY_LOG_FILE_SYM',
       ),
     ),
     274 =>
@@ -20595,6 +33826,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'RELAY_LOG_POS_SYM',
+      ),
     ),
     275 =>
     array (
@@ -20602,6 +33837,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RELAY_THREAD',
       ),
     ),
     276 =>
@@ -20611,6 +33850,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'REMOVE_SYM',
+      ),
     ),
     277 =>
     array (
@@ -20618,6 +33861,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS_SYM',
       ),
     ),
     278 =>
@@ -20627,6 +33874,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'REORGANIZE_SYM',
+      ),
     ),
     279 =>
     array (
@@ -20634,6 +33885,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REPEATABLE_SYM',
       ),
     ),
     280 =>
@@ -20643,6 +33898,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'REPLICAS_SYM',
+      ),
     ),
     281 =>
     array (
@@ -20650,6 +33909,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REPLICATE_DO_DB',
       ),
     ),
     282 =>
@@ -20659,6 +33922,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'REPLICATE_DO_TABLE',
+      ),
     ),
     283 =>
     array (
@@ -20666,6 +33933,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REPLICATE_IGNORE_DB',
       ),
     ),
     284 =>
@@ -20675,6 +33946,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'REPLICATE_IGNORE_TABLE',
+      ),
     ),
     285 =>
     array (
@@ -20682,6 +33957,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REPLICATE_REWRITE_DB',
       ),
     ),
     286 =>
@@ -20691,6 +33970,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'REPLICATE_WILD_DO_TABLE',
+      ),
     ),
     287 =>
     array (
@@ -20698,6 +33981,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REPLICATE_WILD_IGNORE_TABLE',
       ),
     ),
     288 =>
@@ -20707,6 +33994,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'REPLICA_SYM',
+      ),
     ),
     289 =>
     array (
@@ -20714,6 +34005,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REQUIRE_ROW_FORMAT_SYM',
       ),
     ),
     290 =>
@@ -20723,6 +34018,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'REQUIRE_TABLE_PRIMARY_KEY_CHECK_SYM',
+      ),
     ),
     291 =>
     array (
@@ -20730,6 +34029,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RESOURCES',
       ),
     ),
     292 =>
@@ -20739,6 +34042,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'RESPECT_SYM',
+      ),
     ),
     293 =>
     array (
@@ -20746,6 +34053,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RESTORE_SYM',
       ),
     ),
     294 =>
@@ -20755,6 +34066,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'RESUME_SYM',
+      ),
     ),
     295 =>
     array (
@@ -20762,6 +34077,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RETAIN_SYM',
       ),
     ),
     296 =>
@@ -20771,6 +34090,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'RETURNED_SQLSTATE_SYM',
+      ),
     ),
     297 =>
     array (
@@ -20778,6 +34101,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RETURNING_SYM',
       ),
     ),
     298 =>
@@ -20787,6 +34114,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'RETURNS_SYM',
+      ),
     ),
     299 =>
     array (
@@ -20794,6 +34125,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REUSE_SYM',
       ),
     ),
     300 =>
@@ -20803,6 +34138,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'REVERSE_SYM',
+      ),
     ),
     301 =>
     array (
@@ -20810,6 +34149,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ROLE_SYM',
       ),
     ),
     302 =>
@@ -20819,6 +34162,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ROLLUP_SYM',
+      ),
     ),
     303 =>
     array (
@@ -20826,6 +34173,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ROTATE_SYM',
       ),
     ),
     304 =>
@@ -20835,6 +34186,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ROUTINE_SYM',
+      ),
     ),
     305 =>
     array (
@@ -20842,6 +34197,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ROW_COUNT_SYM',
       ),
     ),
     306 =>
@@ -20851,6 +34210,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ROW_FORMAT_SYM',
+      ),
     ),
     307 =>
     array (
@@ -20858,6 +34221,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RTREE_SYM',
       ),
     ),
     308 =>
@@ -20867,6 +34234,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'S3_SYM',
+      ),
     ),
     309 =>
     array (
@@ -20874,6 +34245,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SCHEDULE_SYM',
       ),
     ),
     310 =>
@@ -20883,6 +34258,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SCHEMA_NAME_SYM',
+      ),
     ),
     311 =>
     array (
@@ -20890,6 +34269,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SECONDARY_ENGINE_SYM',
       ),
     ),
     312 =>
@@ -20899,6 +34282,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SECONDARY_ENGINE_ATTRIBUTE_SYM',
+      ),
     ),
     313 =>
     array (
@@ -20906,6 +34293,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SECONDARY_LOAD_SYM',
       ),
     ),
     314 =>
@@ -20915,6 +34306,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SECONDARY_SYM',
+      ),
     ),
     315 =>
     array (
@@ -20922,6 +34317,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SECONDARY_UNLOAD_SYM',
       ),
     ),
     316 =>
@@ -20931,6 +34330,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SECOND_SYM',
+      ),
     ),
     317 =>
     array (
@@ -20938,6 +34341,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SECURITY_SYM',
       ),
     ),
     318 =>
@@ -20947,6 +34354,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SERIALIZABLE_SYM',
+      ),
     ),
     319 =>
     array (
@@ -20954,6 +34365,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SERIAL_SYM',
       ),
     ),
     320 =>
@@ -20963,6 +34378,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SERVER_SYM',
+      ),
     ),
     321 =>
     array (
@@ -20970,6 +34389,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SHARE_SYM',
       ),
     ),
     322 =>
@@ -20979,6 +34402,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SIMPLE_SYM',
+      ),
     ),
     323 =>
     array (
@@ -20986,6 +34413,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SKIP_SYM',
       ),
     ),
     324 =>
@@ -20995,6 +34426,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SLOW',
+      ),
     ),
     325 =>
     array (
@@ -21002,6 +34437,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SNAPSHOT_SYM',
       ),
     ),
     326 =>
@@ -21011,6 +34450,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SOCKET_SYM',
+      ),
     ),
     327 =>
     array (
@@ -21018,6 +34461,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SONAME_SYM',
       ),
     ),
     328 =>
@@ -21027,6 +34474,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SOUNDS_SYM',
+      ),
     ),
     329 =>
     array (
@@ -21034,6 +34485,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_AUTO_POSITION_SYM',
       ),
     ),
     330 =>
@@ -21043,6 +34498,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_BIND_SYM',
+      ),
     ),
     331 =>
     array (
@@ -21050,6 +34509,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_COMPRESSION_ALGORITHM_SYM',
       ),
     ),
     332 =>
@@ -21059,6 +34522,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_CONNECTION_AUTO_FAILOVER_SYM',
+      ),
     ),
     333 =>
     array (
@@ -21066,6 +34533,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_CONNECT_RETRY_SYM',
       ),
     ),
     334 =>
@@ -21075,6 +34546,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_DELAY_SYM',
+      ),
     ),
     335 =>
     array (
@@ -21082,6 +34557,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_HEARTBEAT_PERIOD_SYM',
       ),
     ),
     336 =>
@@ -21091,6 +34570,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_HOST_SYM',
+      ),
     ),
     337 =>
     array (
@@ -21098,6 +34581,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_LOG_FILE_SYM',
       ),
     ),
     338 =>
@@ -21107,6 +34594,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_LOG_POS_SYM',
+      ),
     ),
     339 =>
     array (
@@ -21114,6 +34605,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_PASSWORD_SYM',
       ),
     ),
     340 =>
@@ -21123,6 +34618,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_PORT_SYM',
+      ),
     ),
     341 =>
     array (
@@ -21130,6 +34629,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_PUBLIC_KEY_PATH_SYM',
       ),
     ),
     342 =>
@@ -21139,6 +34642,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_RETRY_COUNT_SYM',
+      ),
     ),
     343 =>
     array (
@@ -21146,6 +34653,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_SSL_CAPATH_SYM',
       ),
     ),
     344 =>
@@ -21155,6 +34666,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_SSL_CA_SYM',
+      ),
     ),
     345 =>
     array (
@@ -21162,6 +34677,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_SSL_CERT_SYM',
       ),
     ),
     346 =>
@@ -21171,6 +34690,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_SSL_CIPHER_SYM',
+      ),
     ),
     347 =>
     array (
@@ -21178,6 +34701,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_SSL_CRLPATH_SYM',
       ),
     ),
     348 =>
@@ -21187,6 +34714,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_SSL_CRL_SYM',
+      ),
     ),
     349 =>
     array (
@@ -21194,6 +34725,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_SSL_KEY_SYM',
       ),
     ),
     350 =>
@@ -21203,6 +34738,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_SSL_SYM',
+      ),
     ),
     351 =>
     array (
@@ -21210,6 +34749,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_SSL_VERIFY_SERVER_CERT_SYM',
       ),
     ),
     352 =>
@@ -21219,6 +34762,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_SYM',
+      ),
     ),
     353 =>
     array (
@@ -21226,6 +34773,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_TLS_CIPHERSUITES_SYM',
       ),
     ),
     354 =>
@@ -21235,6 +34786,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_TLS_VERSION_SYM',
+      ),
     ),
     355 =>
     array (
@@ -21242,6 +34797,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_USER_SYM',
       ),
     ),
     356 =>
@@ -21251,6 +34810,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SOURCE_ZSTD_COMPRESSION_LEVEL_SYM',
+      ),
     ),
     357 =>
     array (
@@ -21258,6 +34821,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SQL_AFTER_GTIDS',
       ),
     ),
     358 =>
@@ -21267,6 +34834,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SQL_AFTER_MTS_GAPS',
+      ),
     ),
     359 =>
     array (
@@ -21274,6 +34845,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SQL_BEFORE_GTIDS',
       ),
     ),
     360 =>
@@ -21283,6 +34858,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SQL_BUFFER_RESULT',
+      ),
     ),
     361 =>
     array (
@@ -21290,6 +34869,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SQL_NO_CACHE_SYM',
       ),
     ),
     362 =>
@@ -21299,6 +34882,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SQL_THREAD',
+      ),
     ),
     363 =>
     array (
@@ -21306,6 +34893,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SRID_SYM',
       ),
     ),
     364 =>
@@ -21315,6 +34906,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'STACKED_SYM',
+      ),
     ),
     365 =>
     array (
@@ -21322,6 +34917,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'STARTS_SYM',
       ),
     ),
     366 =>
@@ -21331,6 +34930,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'STATS_AUTO_RECALC_SYM',
+      ),
     ),
     367 =>
     array (
@@ -21338,6 +34941,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'STATS_PERSISTENT_SYM',
       ),
     ),
     368 =>
@@ -21347,6 +34954,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'STATS_SAMPLE_PAGES_SYM',
+      ),
     ),
     369 =>
     array (
@@ -21354,6 +34965,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'STATUS_SYM',
       ),
     ),
     370 =>
@@ -21363,6 +34978,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'STORAGE_SYM',
+      ),
     ),
     371 =>
     array (
@@ -21370,6 +34989,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'STREAM_SYM',
       ),
     ),
     372 =>
@@ -21379,6 +35002,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'STRING_SYM',
+      ),
     ),
     373 =>
     array (
@@ -21386,6 +35013,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ST_COLLECT_SYM',
       ),
     ),
     374 =>
@@ -21395,6 +35026,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SUBCLASS_ORIGIN_SYM',
+      ),
     ),
     375 =>
     array (
@@ -21402,6 +35037,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SUBDATE_SYM',
       ),
     ),
     376 =>
@@ -21411,6 +35050,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SUBJECT_SYM',
+      ),
     ),
     377 =>
     array (
@@ -21418,6 +35061,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SUBPARTITIONS_SYM',
       ),
     ),
     378 =>
@@ -21427,6 +35074,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SUBPARTITION_SYM',
+      ),
     ),
     379 =>
     array (
@@ -21434,6 +35085,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SUSPEND_SYM',
       ),
     ),
     380 =>
@@ -21443,6 +35098,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'SWAPS_SYM',
+      ),
     ),
     381 =>
     array (
@@ -21450,6 +35109,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SWITCHES_SYM',
       ),
     ),
     382 =>
@@ -21459,6 +35122,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TABLES',
+      ),
     ),
     383 =>
     array (
@@ -21466,6 +35133,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TABLESPACE_SYM',
       ),
     ),
     384 =>
@@ -21475,6 +35146,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TABLE_CHECKSUM_SYM',
+      ),
     ),
     385 =>
     array (
@@ -21482,6 +35157,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TABLE_NAME_SYM',
       ),
     ),
     386 =>
@@ -21491,6 +35170,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TEMPORARY',
+      ),
     ),
     387 =>
     array (
@@ -21498,6 +35181,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TEMPTABLE_SYM',
       ),
     ),
     388 =>
@@ -21507,6 +35194,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TEXT_SYM',
+      ),
     ),
     389 =>
     array (
@@ -21514,6 +35205,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'THAN_SYM',
       ),
     ),
     390 =>
@@ -21523,6 +35218,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'THREAD_PRIORITY_SYM',
+      ),
     ),
     391 =>
     array (
@@ -21530,6 +35229,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TIES_SYM',
       ),
     ),
     392 =>
@@ -21539,6 +35242,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TIMESTAMP_ADD',
+      ),
     ),
     393 =>
     array (
@@ -21546,6 +35253,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TIMESTAMP_DIFF',
       ),
     ),
     394 =>
@@ -21555,6 +35266,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TIMESTAMP_SYM',
+      ),
     ),
     395 =>
     array (
@@ -21562,6 +35277,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TIME_SYM',
       ),
     ),
     396 =>
@@ -21571,6 +35290,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TLS_SYM',
+      ),
     ),
     397 =>
     array (
@@ -21578,6 +35301,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TRANSACTION_SYM',
       ),
     ),
     398 =>
@@ -21587,6 +35314,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TRIGGERS_SYM',
+      ),
     ),
     399 =>
     array (
@@ -21594,6 +35325,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TYPES_SYM',
       ),
     ),
     400 =>
@@ -21603,6 +35338,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'TYPE_SYM',
+      ),
     ),
     401 =>
     array (
@@ -21610,6 +35349,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'UNBOUNDED_SYM',
       ),
     ),
     402 =>
@@ -21619,6 +35362,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNCOMMITTED_SYM',
+      ),
     ),
     403 =>
     array (
@@ -21626,6 +35373,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'UNDEFINED_SYM',
       ),
     ),
     404 =>
@@ -21635,6 +35386,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNDOFILE_SYM',
+      ),
     ),
     405 =>
     array (
@@ -21642,6 +35397,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'UNDO_BUFFER_SIZE_SYM',
       ),
     ),
     406 =>
@@ -21651,6 +35410,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNKNOWN_SYM',
+      ),
     ),
     407 =>
     array (
@@ -21658,6 +35421,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'UNREGISTER_SYM',
       ),
     ),
     408 =>
@@ -21667,6 +35434,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNTIL_SYM',
+      ),
     ),
     409 =>
     array (
@@ -21674,6 +35445,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'UPGRADE_SYM',
       ),
     ),
     410 =>
@@ -21683,6 +35458,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'URL_SYM',
+      ),
     ),
     411 =>
     array (
@@ -21690,6 +35469,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'USER',
       ),
     ),
     412 =>
@@ -21699,6 +35482,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'USE_FRM',
+      ),
     ),
     413 =>
     array (
@@ -21706,6 +35493,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'VALIDATION_SYM',
       ),
     ),
     414 =>
@@ -21715,6 +35506,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'VALUE_SYM',
+      ),
     ),
     415 =>
     array (
@@ -21722,6 +35517,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'VARIABLES',
       ),
     ),
     416 =>
@@ -21731,6 +35530,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'VCPU_SYM',
+      ),
     ),
     417 =>
     array (
@@ -21738,6 +35541,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'VIEW_SYM',
       ),
     ),
     418 =>
@@ -21747,6 +35554,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'VISIBLE_SYM',
+      ),
     ),
     419 =>
     array (
@@ -21754,6 +35565,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'WAIT_SYM',
       ),
     ),
     420 =>
@@ -21763,6 +35578,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'WARNINGS',
+      ),
     ),
     421 =>
     array (
@@ -21770,6 +35589,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'WEEK_SYM',
       ),
     ),
     422 =>
@@ -21779,6 +35602,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'WEIGHT_STRING_SYM',
+      ),
     ),
     423 =>
     array (
@@ -21786,6 +35613,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'WITHOUT_SYM',
       ),
     ),
     424 =>
@@ -21795,6 +35626,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'WORK_SYM',
+      ),
     ),
     425 =>
     array (
@@ -21802,6 +35637,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'WRAPPER_SYM',
       ),
     ),
     426 =>
@@ -21811,6 +35650,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'X509_SYM',
+      ),
     ),
     427 =>
     array (
@@ -21818,6 +35661,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'XID_SYM',
       ),
     ),
     428 =>
@@ -21827,6 +35674,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'XML_SYM',
+      ),
     ),
     429 =>
     array (
@@ -21834,6 +35685,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'YEAR_SYM',
       ),
     ),
     430 =>
@@ -21843,6 +35698,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'ZONE_SYM',
+      ),
     ),
   ),
   'role_keyword' =>
@@ -21850,14 +35709,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident_keywords_unambiguous',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident_keywords_ambiguous_2_labels',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident_keywords_ambiguous_4_system_variables',
+      ),
     ),
   ),
   'lvalue_keyword' =>
@@ -21865,18 +35736,34 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident_keywords_unambiguous',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident_keywords_ambiguous_1_roles_and_labels',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident_keywords_ambiguous_2_labels',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident_keywords_ambiguous_3_roles',
+      ),
     ),
   ),
   'ident_keywords_ambiguous_4_system_variables' =>
@@ -21888,6 +35775,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'GLOBAL_SYM',
+      ),
     ),
     1 =>
     array (
@@ -21895,6 +35786,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'LOCAL_SYM',
       ),
     ),
     2 =>
@@ -21904,6 +35799,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PERSIST_SYM',
+      ),
     ),
     3 =>
     array (
@@ -21912,6 +35811,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'PERSIST_ONLY_SYM',
+      ),
     ),
     4 =>
     array (
@@ -21919,6 +35822,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SESSION_SYM',
       ),
     ),
   ),
@@ -21930,6 +35837,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SET_SYM',
+        1 => 'start_option_value_list',
       ),
     ),
   ),
@@ -21943,6 +35855,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'option_value_no_option_type',
+        1 => 'option_value_list_continued',
+      ),
     ),
     1 =>
     array (
@@ -21950,6 +35867,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TRANSACTION_SYM',
+        1 => 'transaction_characteristics',
       ),
     ),
     2 =>
@@ -21959,6 +35881,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'option_type',
+        1 => 'start_option_value_list_following_option_type',
       ),
     ),
     3 =>
@@ -21971,6 +35898,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD',
+        1 => 'equal',
+        2 => 'TEXT_STRING_password',
+        3 => 'opt_replace_password',
+        4 => 'opt_retain_current_password',
+      ),
     ),
     4 =>
     array (
@@ -21979,6 +35914,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
         1 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD',
+        1 => 'TO_SYM',
+        2 => 'RANDOM_SYM',
+        3 => 'opt_replace_password',
+        4 => 'opt_retain_current_password',
       ),
     ),
     5 =>
@@ -21992,6 +35935,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 5,
         4 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD',
+        1 => 'FOR_SYM',
+        2 => 'user',
+        3 => 'equal',
+        4 => 'TEXT_STRING_password',
+        5 => 'opt_replace_password',
+        6 => 'opt_retain_current_password',
+      ),
     ),
     6 =>
     array (
@@ -22001,6 +35954,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 5,
         2 => 6,
+      ),
+      'symbols' =>
+      array (
+        0 => 'PASSWORD',
+        1 => 'FOR_SYM',
+        2 => 'user',
+        3 => 'TO_SYM',
+        4 => 'RANDOM_SYM',
+        5 => 'opt_replace_password',
+        6 => 'opt_retain_current_password',
       ),
     ),
   ),
@@ -22013,6 +35976,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'SET_SYM',
+        1 => 'ROLE_SYM',
+        2 => 'role_list',
+      ),
     ),
     1 =>
     array (
@@ -22020,12 +35989,24 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'SET_SYM',
+        1 => 'ROLE_SYM',
+        2 => 'NONE_SYM',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\SetRoleStmtWithSetSymRoleSymDefaultSym_f0db8568',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'SET_SYM',
+        1 => 'ROLE_SYM',
+        2 => 'DEFAULT_SYM',
       ),
     ),
     3 =>
@@ -22036,6 +36017,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'SET_SYM',
+        1 => 'DEFAULT_SYM',
+        2 => 'ROLE_SYM',
+        3 => 'role_list',
+        4 => 'TO_SYM',
+        5 => 'role_list',
+      ),
     ),
     4 =>
     array (
@@ -22043,6 +36033,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 5,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SET_SYM',
+        1 => 'DEFAULT_SYM',
+        2 => 'ROLE_SYM',
+        3 => 'NONE_SYM',
+        4 => 'TO_SYM',
+        5 => 'role_list',
       ),
     ),
     5 =>
@@ -22052,6 +36051,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'SET_SYM',
+        1 => 'DEFAULT_SYM',
+        2 => 'ROLE_SYM',
+        3 => 'ALL',
+        4 => 'TO_SYM',
+        5 => 'role_list',
+      ),
     ),
     6 =>
     array (
@@ -22059,6 +36067,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SET_SYM',
+        1 => 'ROLE_SYM',
+        2 => 'ALL',
+        3 => 'opt_except_role_list',
       ),
     ),
   ),
@@ -22070,6 +36085,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -22077,6 +36095,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'EXCEPT_SYM',
+        1 => 'role_list',
       ),
     ),
   ),
@@ -22089,6 +36112,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'SET_SYM',
+        1 => 'RESOURCE_SYM',
+        2 => 'GROUP_SYM',
+        3 => 'ident',
+      ),
     ),
     1 =>
     array (
@@ -22098,6 +36128,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 3,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'SET_SYM',
+        1 => 'RESOURCE_SYM',
+        2 => 'GROUP_SYM',
+        3 => 'ident',
+        4 => 'FOR_SYM',
+        5 => 'thread_id_list_options',
+      ),
     ),
   ),
   'thread_id_list' =>
@@ -22105,6 +36144,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'real_ulong_num',
+      ),
     ),
     1 =>
     array (
@@ -22115,6 +36158,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'thread_id_list',
+        1 => 'opt_comma',
+        2 => 'real_ulong_num',
+      ),
     ),
   ),
   'thread_id_list_options' =>
@@ -22122,6 +36171,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'thread_id_list',
+      ),
     ),
   ),
   'start_option_value_list_following_option_type' =>
@@ -22134,6 +36187,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'option_value_following_option_type',
+        1 => 'option_value_list_continued',
+      ),
     ),
     1 =>
     array (
@@ -22141,6 +36199,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TRANSACTION_SYM',
+        1 => 'transaction_characteristics',
       ),
     ),
   ),
@@ -22152,6 +36215,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -22160,6 +36226,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => ',',
+        1 => 'option_value_list',
+      ),
     ),
   ),
   'option_value_list' =>
@@ -22167,6 +36238,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'option_value',
+      ),
     ),
     1 =>
     array (
@@ -22175,6 +36250,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'option_value_list',
+        1 => ',',
+        2 => 'option_value',
       ),
     ),
   ),
@@ -22188,10 +36269,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'option_type',
+        1 => 'option_value_following_option_type',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'option_value_no_option_type',
+      ),
     ),
   ),
   'option_type' =>
@@ -22199,22 +36289,42 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptionTypeChoice_04c440c6::UseGlobal_e7440dd3',
+      'symbols' =>
+      array (
+        0 => 'GLOBAL_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptionTypeChoice_04c440c6::UsePersist_f2539f68',
+      'symbols' =>
+      array (
+        0 => 'PERSIST_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptionTypeChoice_04c440c6::UsePersistOnly_78133024',
+      'symbols' =>
+      array (
+        0 => 'PERSIST_ONLY_SYM',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptionTypeChoice_04c440c6::UseLocal_646c1937',
+      'symbols' =>
+      array (
+        0 => 'LOCAL_SYM',
+      ),
     ),
     4 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptionTypeChoice_04c440c6::UseSession_cb66ec75',
+      'symbols' =>
+      array (
+        0 => 'SESSION_SYM',
+      ),
     ),
   ),
   'opt_var_type' =>
@@ -22222,18 +36332,33 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptVarTypeChoice_d22273d3::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptVarTypeChoice_d22273d3::UseGlobal_e7440dd3',
+      'symbols' =>
+      array (
+        0 => 'GLOBAL_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptVarTypeChoice_d22273d3::UseLocal_646c1937',
+      'symbols' =>
+      array (
+        0 => 'LOCAL_SYM',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptVarTypeChoice_d22273d3::UseSession_cb66ec75',
+      'symbols' =>
+      array (
+        0 => 'SESSION_SYM',
+      ),
     ),
   ),
   'opt_rvalue_system_variable_type' =>
@@ -22241,18 +36366,36 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptRvalueSystemVariableTypeChoice_3c76b304::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptRvalueSystemVariableTypeChoice_3c76b304::UseGlobal_d19f0c78',
+      'symbols' =>
+      array (
+        0 => 'GLOBAL_SYM',
+        1 => '.',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptRvalueSystemVariableTypeChoice_3c76b304::UseLocal_04ef36f9',
+      'symbols' =>
+      array (
+        0 => 'LOCAL_SYM',
+        1 => '.',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptRvalueSystemVariableTypeChoice_3c76b304::UseSession_ffe3f182',
+      'symbols' =>
+      array (
+        0 => 'SESSION_SYM',
+        1 => '.',
+      ),
     ),
   ),
   'opt_set_var_ident_type' =>
@@ -22260,26 +36403,54 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptSetVarIdentTypeChoice_ff16f3c6::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptSetVarIdentTypeChoice_ff16f3c6::UsePersist_db55aeb0',
+      'symbols' =>
+      array (
+        0 => 'PERSIST_SYM',
+        1 => '.',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptSetVarIdentTypeChoice_ff16f3c6::UsePersistOnly_f85921fb',
+      'symbols' =>
+      array (
+        0 => 'PERSIST_ONLY_SYM',
+        1 => '.',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptSetVarIdentTypeChoice_ff16f3c6::UseGlobal_d19f0c78',
+      'symbols' =>
+      array (
+        0 => 'GLOBAL_SYM',
+        1 => '.',
+      ),
     ),
     4 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptSetVarIdentTypeChoice_ff16f3c6::UseLocal_04ef36f9',
+      'symbols' =>
+      array (
+        0 => 'LOCAL_SYM',
+        1 => '.',
+      ),
     ),
     5 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptSetVarIdentTypeChoice_ff16f3c6::UseSession_ffe3f182',
+      'symbols' =>
+      array (
+        0 => 'SESSION_SYM',
+        1 => '.',
+      ),
     ),
   ),
   'option_value_following_option_type' =>
@@ -22292,6 +36463,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'lvalue_variable',
+        1 => 'equal',
+        2 => 'set_expr_or_default',
       ),
     ),
   ),
@@ -22306,6 +36483,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'lvalue_variable',
+        1 => 'equal',
+        2 => 'set_expr_or_default',
+      ),
     ),
     1 =>
     array (
@@ -22315,6 +36498,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
         2 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => '@',
+        1 => 'ident_or_text',
+        2 => 'equal',
+        3 => 'expr',
       ),
     ),
     2 =>
@@ -22327,6 +36517,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 4,
         3 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => '@',
+        1 => '@',
+        2 => 'opt_set_var_ident_type',
+        3 => 'lvalue_variable',
+        4 => 'equal',
+        5 => 'set_expr_or_default',
+      ),
     ),
     3 =>
     array (
@@ -22335,6 +36534,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'character_set',
+        1 => 'old_or_new_charset_name_or_default',
       ),
     ),
     4 =>
@@ -22345,6 +36549,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'NAMES_SYM',
+        1 => 'equal',
+        2 => 'expr',
+      ),
     ),
     5 =>
     array (
@@ -22354,12 +36564,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'NAMES_SYM',
+        1 => 'charset_name',
+        2 => 'opt_collate',
+      ),
     ),
     6 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptionValueNoOptionTypeWithNamesSymDefaultSym_e9c83fda',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'NAMES_SYM',
+        1 => 'DEFAULT_SYM',
       ),
     ),
   ),
@@ -22368,6 +36589,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'lvalue_ident',
+      ),
     ),
     1 =>
     array (
@@ -22377,6 +36602,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'lvalue_ident',
+        1 => '.',
+        2 => 'ident',
+      ),
     ),
     2 =>
     array (
@@ -22385,6 +36616,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT_SYM',
+        1 => '.',
+        2 => 'ident',
+      ),
     ),
   ),
   'rvalue_system_variable' =>
@@ -22392,6 +36629,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident_or_text',
+      ),
     ),
     1 =>
     array (
@@ -22400,6 +36641,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ident_or_text',
+        1 => '.',
+        2 => 'ident',
       ),
     ),
   ),
@@ -22413,6 +36660,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'transaction_access_mode',
+        1 => 'opt_isolation_level',
+      ),
     ),
     1 =>
     array (
@@ -22422,6 +36674,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'isolation_level',
+        1 => 'opt_transaction_access_mode',
+      ),
     ),
   ),
   'transaction_access_mode' =>
@@ -22429,6 +36686,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'transaction_access_mode_types',
+      ),
     ),
   ),
   'opt_transaction_access_mode' =>
@@ -22439,6 +36700,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -22446,6 +36710,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => ',',
+        1 => 'transaction_access_mode',
       ),
     ),
   ),
@@ -22458,6 +36727,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ISOLATION',
+        1 => 'LEVEL_SYM',
+        2 => 'isolation_types',
+      ),
     ),
   ),
   'opt_isolation_level' =>
@@ -22468,6 +36743,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -22476,6 +36754,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => ',',
+        1 => 'isolation_level',
+      ),
     ),
   ),
   'transaction_access_mode_types' =>
@@ -22483,10 +36766,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\TransactionAccessModeTypesChoice_c78eb422::UseReadOnly_6628aa89',
+      'symbols' =>
+      array (
+        0 => 'READ_SYM',
+        1 => 'ONLY_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\TransactionAccessModeTypesChoice_c78eb422::UseReadWrite_4c96461f',
+      'symbols' =>
+      array (
+        0 => 'READ_SYM',
+        1 => 'WRITE_SYM',
+      ),
     ),
   ),
   'isolation_types' =>
@@ -22494,18 +36787,37 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\IsolationTypesChoice_5c144ac4::UseReadUncommitted_4875265c',
+      'symbols' =>
+      array (
+        0 => 'READ_SYM',
+        1 => 'UNCOMMITTED_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\IsolationTypesChoice_5c144ac4::UseReadCommitted_c09d6186',
+      'symbols' =>
+      array (
+        0 => 'READ_SYM',
+        1 => 'COMMITTED_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\IsolationTypesChoice_5c144ac4::UseRepeatableRead_f5f5acc3',
+      'symbols' =>
+      array (
+        0 => 'REPEATABLE_SYM',
+        1 => 'READ_SYM',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\IsolationTypesChoice_5c144ac4::UseSerializable_7dc421f3',
+      'symbols' =>
+      array (
+        0 => 'SERIALIZABLE_SYM',
+      ),
     ),
   ),
   'set_expr_or_default' =>
@@ -22513,12 +36825,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'expr',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\SetExprOrDefaultWithDefaultSym_309d0e16',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'DEFAULT_SYM',
       ),
     ),
     2 =>
@@ -22527,12 +36847,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'ON_SYM',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\SetExprOrDefaultWithAll_271cc1b9',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALL',
       ),
     ),
     4 =>
@@ -22541,6 +36869,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'BINARY_SYM',
+      ),
     ),
     5 =>
     array (
@@ -22548,12 +36880,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'ROW_SYM',
+      ),
     ),
     6 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\SetExprOrDefaultWithSystemSym_9377d518',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'SYSTEM_SYM',
       ),
     ),
   ),
@@ -22567,12 +36907,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'LOCK_SYM',
+        1 => 'table_or_tables',
+        2 => 'table_lock_list',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\LockWithLockSymInstanceSymForSymBackupSym_27ba6008',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'LOCK_SYM',
+        1 => 'INSTANCE_SYM',
+        2 => 'FOR_SYM',
+        3 => 'BACKUP_SYM',
       ),
     ),
   ),
@@ -22581,10 +36934,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\TableOrTablesChoice_d5ef97e3::UseTable_52ca2fea',
+      'symbols' =>
+      array (
+        0 => 'TABLE_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\TableOrTablesChoice_d5ef97e3::UseTables_51f6ddbd',
+      'symbols' =>
+      array (
+        0 => 'TABLES',
+      ),
     ),
   ),
   'table_lock_list' =>
@@ -22592,6 +36953,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'table_lock',
+      ),
     ),
     1 =>
     array (
@@ -22600,6 +36965,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'table_lock_list',
+        1 => ',',
+        2 => 'table_lock',
       ),
     ),
   ),
@@ -22614,6 +36985,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'table_ident',
+        1 => 'opt_table_alias',
+        2 => 'lock_option',
+      ),
     ),
   ),
   'lock_option' =>
@@ -22621,18 +36998,36 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\LockOptionChoice_475d9195::UseRead_3f563741',
+      'symbols' =>
+      array (
+        0 => 'READ_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\LockOptionChoice_475d9195::UseWrite_a970ec59',
+      'symbols' =>
+      array (
+        0 => 'WRITE_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\LockOptionChoice_475d9195::UseLowPriorityWrite_38a02701',
+      'symbols' =>
+      array (
+        0 => 'LOW_PRIORITY',
+        1 => 'WRITE_SYM',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\LockOptionChoice_475d9195::UseReadLocal_50ae732f',
+      'symbols' =>
+      array (
+        0 => 'READ_SYM',
+        1 => 'LOCAL_SYM',
+      ),
     ),
   ),
   'unlock' =>
@@ -22644,12 +37039,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNLOCK_SYM',
+        1 => 'table_or_tables',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\UnlockWithUnlockSymInstanceSym_adc7c72d',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'UNLOCK_SYM',
+        1 => 'INSTANCE_SYM',
       ),
     ),
   ),
@@ -22658,6 +37063,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ShutdownStmtChoice_eae96b68::UseShutdown_256ef5da',
+      'symbols' =>
+      array (
+        0 => 'SHUTDOWN',
+      ),
     ),
   ),
   'restart_server_stmt' =>
@@ -22665,6 +37074,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\RestartServerStmtChoice_d5b3be98::UseRestart_0ce77031',
+      'symbols' =>
+      array (
+        0 => 'RESTART_SYM',
+      ),
     ),
   ),
   'alter_instance_stmt' =>
@@ -22675,6 +37088,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'INSTANCE_SYM',
+        2 => 'alter_instance_action',
       ),
     ),
   ),
@@ -22687,6 +37106,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ROTATE_SYM',
+        1 => 'ident_or_text',
+        2 => 'MASTER_SYM',
+        3 => 'KEY_SYM',
+      ),
     ),
     1 =>
     array (
@@ -22694,12 +37120,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'RELOAD',
+        1 => 'TLS_SYM',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\AlterInstanceActionWithReloadTlsSymNoSymRollbackSymOnSymErrorSym_237208a3',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'RELOAD',
+        1 => 'TLS_SYM',
+        2 => 'NO_SYM',
+        3 => 'ROLLBACK_SYM',
+        4 => 'ON_SYM',
+        5 => 'ERROR_SYM',
       ),
     ),
     3 =>
@@ -22709,6 +37149,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'RELOAD',
+        1 => 'TLS_SYM',
+        2 => 'FOR_SYM',
+        3 => 'CHANNEL_SYM',
+        4 => 'ident',
+      ),
     ),
     4 =>
     array (
@@ -22716,6 +37164,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'RELOAD',
+        1 => 'TLS_SYM',
+        2 => 'FOR_SYM',
+        3 => 'CHANNEL_SYM',
+        4 => 'ident',
+        5 => 'NO_SYM',
+        6 => 'ROLLBACK_SYM',
+        7 => 'ON_SYM',
+        8 => 'ERROR_SYM',
       ),
     ),
     5 =>
@@ -22726,6 +37186,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'ENABLE_SYM',
+        1 => 'ident',
+        2 => 'ident',
+      ),
     ),
     6 =>
     array (
@@ -22735,12 +37201,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'DISABLE_SYM',
+        1 => 'ident',
+        2 => 'ident',
+      ),
     ),
     7 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\AlterInstanceActionWithReloadKeyringSym_705686c5',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'RELOAD',
+        1 => 'KEYRING_SYM',
       ),
     ),
   ),
@@ -22754,6 +37231,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'HANDLER_SYM',
+        1 => 'table_ident',
+        2 => 'OPEN_SYM',
+        3 => 'opt_table_alias',
+      ),
     ),
     1 =>
     array (
@@ -22761,6 +37245,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'HANDLER_SYM',
+        1 => 'ident',
+        2 => 'CLOSE_SYM',
       ),
     ),
     2 =>
@@ -22773,6 +37263,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 4,
         3 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'HANDLER_SYM',
+        1 => 'ident',
+        2 => 'READ_SYM',
+        3 => 'handler_scan_function',
+        4 => 'opt_where_clause',
+        5 => 'opt_limit_clause',
+      ),
     ),
     3 =>
     array (
@@ -22784,6 +37283,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 4,
         3 => 5,
         4 => 6,
+      ),
+      'symbols' =>
+      array (
+        0 => 'HANDLER_SYM',
+        1 => 'ident',
+        2 => 'READ_SYM',
+        3 => 'ident',
+        4 => 'handler_rkey_function',
+        5 => 'opt_where_clause',
+        6 => 'opt_limit_clause',
       ),
     ),
     4 =>
@@ -22798,6 +37307,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         4 => 8,
         5 => 9,
       ),
+      'symbols' =>
+      array (
+        0 => 'HANDLER_SYM',
+        1 => 'ident',
+        2 => 'READ_SYM',
+        3 => 'ident',
+        4 => 'handler_rkey_mode',
+        5 => '(',
+        6 => 'values',
+        7 => ')',
+        8 => 'opt_where_clause',
+        9 => 'opt_limit_clause',
+      ),
     ),
   ),
   'handler_scan_function' =>
@@ -22805,10 +37327,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\HandlerScanFunctionChoice_95f48b47::UseFirst_267d3b81',
+      'symbols' =>
+      array (
+        0 => 'FIRST_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\HandlerScanFunctionChoice_95f48b47::UseNext_7a66eabf',
+      'symbols' =>
+      array (
+        0 => 'NEXT_SYM',
+      ),
     ),
   ),
   'handler_rkey_function' =>
@@ -22816,18 +37346,34 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\HandlerRkeyFunctionChoice_792b25a8::UseFirst_267d3b81',
+      'symbols' =>
+      array (
+        0 => 'FIRST_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\HandlerRkeyFunctionChoice_792b25a8::UseNext_7a66eabf',
+      'symbols' =>
+      array (
+        0 => 'NEXT_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\HandlerRkeyFunctionChoice_792b25a8::UsePrev_39a40026',
+      'symbols' =>
+      array (
+        0 => 'PREV_SYM',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\HandlerRkeyFunctionChoice_792b25a8::UseLast_7e86aeec',
+      'symbols' =>
+      array (
+        0 => 'LAST_SYM',
+      ),
     ),
   ),
   'handler_rkey_mode' =>
@@ -22835,22 +37381,42 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\HandlerRkeyModeChoice_bd7740f2::Use_380918b9',
+      'symbols' =>
+      array (
+        0 => 'EQ',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\HandlerRkeyModeChoice_bd7740f2::Use_92a00d7d',
+      'symbols' =>
+      array (
+        0 => 'GE',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\HandlerRkeyModeChoice_bd7740f2::Use_b60080dc',
+      'symbols' =>
+      array (
+        0 => 'LE',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\HandlerRkeyModeChoice_bd7740f2::Use_62b67e1f',
+      'symbols' =>
+      array (
+        0 => 'GT_SYM',
+      ),
     ),
     4 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\HandlerRkeyModeChoice_bd7740f2::Use_dabd3aff',
+      'symbols' =>
+      array (
+        0 => 'LT',
+      ),
     ),
   ),
   'revoke' =>
@@ -22865,6 +37431,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 4,
         3 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'REVOKE',
+        1 => 'if_exists',
+        2 => 'role_or_privilege_list',
+        3 => 'FROM',
+        4 => 'user_list',
+        5 => 'opt_ignore_unknown_user',
+      ),
     ),
     1 =>
     array (
@@ -22877,6 +37452,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 5,
         4 => 7,
         5 => 8,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REVOKE',
+        1 => 'if_exists',
+        2 => 'role_or_privilege_list',
+        3 => 'ON_SYM',
+        4 => 'opt_acl_type',
+        5 => 'grant_ident',
+        6 => 'FROM',
+        7 => 'user_list',
+        8 => 'opt_ignore_unknown_user',
       ),
     ),
     2 =>
@@ -22891,6 +37478,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         4 => 8,
         5 => 9,
       ),
+      'symbols' =>
+      array (
+        0 => 'REVOKE',
+        1 => 'if_exists',
+        2 => 'ALL',
+        3 => 'opt_privileges',
+        4 => 'ON_SYM',
+        5 => 'opt_acl_type',
+        6 => 'grant_ident',
+        7 => 'FROM',
+        8 => 'user_list',
+        9 => 'opt_ignore_unknown_user',
+      ),
     ),
     3 =>
     array (
@@ -22902,6 +37502,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 8,
         3 => 9,
       ),
+      'symbols' =>
+      array (
+        0 => 'REVOKE',
+        1 => 'if_exists',
+        2 => 'ALL',
+        3 => 'opt_privileges',
+        4 => ',',
+        5 => 'GRANT',
+        6 => 'OPTION',
+        7 => 'FROM',
+        8 => 'user_list',
+        9 => 'opt_ignore_unknown_user',
+      ),
     ),
     4 =>
     array (
@@ -22912,6 +37525,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 4,
         2 => 6,
         3 => 7,
+      ),
+      'symbols' =>
+      array (
+        0 => 'REVOKE',
+        1 => 'if_exists',
+        2 => 'PROXY_SYM',
+        3 => 'ON_SYM',
+        4 => 'user',
+        5 => 'FROM',
+        6 => 'user_list',
+        7 => 'opt_ignore_unknown_user',
       ),
     ),
   ),
@@ -22926,6 +37550,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'GRANT',
+        1 => 'role_or_privilege_list',
+        2 => 'TO_SYM',
+        3 => 'user_list',
+        4 => 'opt_with_admin_option',
+      ),
     ),
     1 =>
     array (
@@ -22938,6 +37570,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 6,
         4 => 7,
         5 => 8,
+      ),
+      'symbols' =>
+      array (
+        0 => 'GRANT',
+        1 => 'role_or_privilege_list',
+        2 => 'ON_SYM',
+        3 => 'opt_acl_type',
+        4 => 'grant_ident',
+        5 => 'TO_SYM',
+        6 => 'user_list',
+        7 => 'grant_options',
+        8 => 'opt_grant_as',
       ),
     ),
     2 =>
@@ -22952,6 +37596,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         4 => 8,
         5 => 9,
       ),
+      'symbols' =>
+      array (
+        0 => 'GRANT',
+        1 => 'ALL',
+        2 => 'opt_privileges',
+        3 => 'ON_SYM',
+        4 => 'opt_acl_type',
+        5 => 'grant_ident',
+        6 => 'TO_SYM',
+        7 => 'user_list',
+        8 => 'grant_options',
+        9 => 'opt_grant_as',
+      ),
     ),
     3 =>
     array (
@@ -22962,6 +37619,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 5,
         2 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'GRANT',
+        1 => 'PROXY_SYM',
+        2 => 'ON_SYM',
+        3 => 'user',
+        4 => 'TO_SYM',
+        5 => 'user_list',
+        6 => 'opt_grant_option',
+      ),
     ),
   ),
   'opt_acl_type' =>
@@ -22969,18 +37636,33 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptAclTypeChoice_64a9f425::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptAclTypeChoice_64a9f425::UseTable_52ca2fea',
+      'symbols' =>
+      array (
+        0 => 'TABLE_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptAclTypeChoice_64a9f425::UseFunction_9d1aae1b',
+      'symbols' =>
+      array (
+        0 => 'FUNCTION_SYM',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptAclTypeChoice_64a9f425::UseProcedure_26996b4a',
+      'symbols' =>
+      array (
+        0 => 'PROCEDURE_SYM',
+      ),
     ),
   ),
   'opt_privileges' =>
@@ -22988,10 +37670,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptPrivilegesChoice_d5b75b69::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptPrivilegesChoice_d5b75b69::UsePrivileges_1bcab5f9',
+      'symbols' =>
+      array (
+        0 => 'PRIVILEGES',
+      ),
     ),
   ),
   'role_or_privilege_list' =>
@@ -22999,6 +37688,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'role_or_privilege',
+      ),
     ),
     1 =>
     array (
@@ -23007,6 +37700,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'role_or_privilege_list',
+        1 => ',',
+        2 => 'role_or_privilege',
       ),
     ),
   ),
@@ -23020,6 +37719,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'role_ident_or_text',
+        1 => 'opt_column_list',
+      ),
     ),
     1 =>
     array (
@@ -23029,6 +37733,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'role_ident_or_text',
+        1 => '@',
+        2 => 'ident_or_text',
+      ),
     ),
     2 =>
     array (
@@ -23036,6 +37746,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SELECT_SYM',
+        1 => 'opt_column_list',
       ),
     ),
     3 =>
@@ -23045,6 +37760,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'INSERT_SYM',
+        1 => 'opt_column_list',
+      ),
     ),
     4 =>
     array (
@@ -23052,6 +37772,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'UPDATE_SYM',
+        1 => 'opt_column_list',
       ),
     ),
     5 =>
@@ -23061,12 +37786,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'REFERENCES',
+        1 => 'opt_column_list',
+      ),
     ),
     6 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\RoleOrPrivilegeWithDeleteSym_38c3a117',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'DELETE_SYM',
       ),
     ),
     7 =>
@@ -23075,12 +37809,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'USAGE',
+      ),
     ),
     8 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\RoleOrPrivilegeWithIndexSym_d1c6aa3a',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'INDEX_SYM',
       ),
     ),
     9 =>
@@ -23089,12 +37831,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+      ),
     ),
     10 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\RoleOrPrivilegeWithCreate_897bc5cd',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
       ),
     ),
     11 =>
@@ -23103,12 +37853,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+      ),
     ),
     12 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\RoleOrPrivilegeWithExecuteSym_5b617b1d',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'EXECUTE_SYM',
       ),
     ),
     13 =>
@@ -23117,12 +37875,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'RELOAD',
+      ),
     ),
     14 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\RoleOrPrivilegeWithShutdown_952c014c',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'SHUTDOWN',
       ),
     ),
     15 =>
@@ -23131,6 +37897,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'PROCESS',
+      ),
     ),
     16 =>
     array (
@@ -23138,12 +37908,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'FILE_SYM',
+      ),
     ),
     17 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\RoleOrPrivilegeWithGrantOption_33594553',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'GRANT',
+        1 => 'OPTION',
       ),
     ),
     18 =>
@@ -23153,12 +37932,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'DATABASES',
+      ),
     ),
     19 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\RoleOrPrivilegeWithSuperSym_074e0efa',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'SUPER_SYM',
       ),
     ),
     20 =>
@@ -23167,12 +37955,23 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'TEMPORARY',
+        2 => 'TABLES',
+      ),
     ),
     21 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\RoleOrPrivilegeWithLockSymTables_4db5a564',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'LOCK_SYM',
+        1 => 'TABLES',
       ),
     ),
     22 =>
@@ -23181,12 +37980,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'REPLICATION',
+        1 => 'SLAVE',
+      ),
     ),
     23 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\RoleOrPrivilegeWithReplicationClientSym_26a0f7b1',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'REPLICATION',
+        1 => 'CLIENT_SYM',
       ),
     ),
     24 =>
@@ -23195,12 +38004,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'VIEW_SYM',
+      ),
     ),
     25 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\RoleOrPrivilegeWithShowViewSym_da7e77bb',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'SHOW',
+        1 => 'VIEW_SYM',
       ),
     ),
     26 =>
@@ -23209,12 +38028,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'ROUTINE_SYM',
+      ),
     ),
     27 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\RoleOrPrivilegeWithAlterRoutineSym_9485b5d4',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALTER',
+        1 => 'ROUTINE_SYM',
       ),
     ),
     28 =>
@@ -23224,12 +38053,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'USER',
+      ),
     ),
     29 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\RoleOrPrivilegeWithEventSym_3af57d37',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'EVENT_SYM',
       ),
     ),
     30 =>
@@ -23238,12 +38076,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'TRIGGER_SYM',
+      ),
     ),
     31 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\RoleOrPrivilegeWithCreateTablespaceSym_9889930a',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'TABLESPACE_SYM',
       ),
     ),
     32 =>
@@ -23252,12 +38099,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'CREATE',
+        1 => 'ROLE_SYM',
+      ),
     ),
     33 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\RoleOrPrivilegeWithDropRoleSym_89b0ed73',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'DROP',
+        1 => 'ROLE_SYM',
       ),
     ),
   ),
@@ -23266,10 +38123,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptWithAdminOptionChoice_e74a1a4b::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptWithAdminOptionChoice_e74a1a4b::UseWithAdminOption_ab19e181',
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'ADMIN_SYM',
+        2 => 'OPTION',
+      ),
     ),
   ),
   'opt_and' =>
@@ -23277,10 +38143,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptAndChoice_e271f3ee::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptAndChoice_e271f3ee::UseAnd_bd972cc4',
+      'symbols' =>
+      array (
+        0 => 'AND_SYM',
+      ),
     ),
   ),
   'require_list' =>
@@ -23294,10 +38167,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'require_list_element',
+        1 => 'opt_and',
+        2 => 'require_list',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'require_list_element',
+      ),
     ),
   ),
   'require_list_element' =>
@@ -23309,6 +38192,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'SUBJECT_SYM',
+        1 => 'TEXT_STRING',
+      ),
     ),
     1 =>
     array (
@@ -23317,6 +38205,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'ISSUER_SYM',
+        1 => 'TEXT_STRING',
+      ),
     ),
     2 =>
     array (
@@ -23324,6 +38217,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'CIPHER_SYM',
+        1 => 'TEXT_STRING',
       ),
     ),
   ),
@@ -23335,6 +38233,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => '*',
+      ),
     ),
     1 =>
     array (
@@ -23343,6 +38245,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'schema',
+        1 => '.',
+        2 => '*',
+      ),
     ),
     2 =>
     array (
@@ -23350,10 +38258,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => '*',
+        1 => '.',
+        2 => '*',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
     4 =>
     array (
@@ -23363,6 +38281,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'schema',
+        1 => '.',
+        2 => 'ident',
+      ),
     ),
   ),
   'user_list' =>
@@ -23370,6 +38294,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'user',
+      ),
     ),
     1 =>
     array (
@@ -23379,6 +38307,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'user_list',
+        1 => ',',
+        2 => 'user',
+      ),
     ),
   ),
   'role_list' =>
@@ -23386,6 +38320,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'role',
+      ),
     ),
     1 =>
     array (
@@ -23395,6 +38333,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'role_list',
+        1 => ',',
+        2 => 'role',
+      ),
     ),
   ),
   'opt_retain_current_password' =>
@@ -23402,10 +38346,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptRetainCurrentPasswordChoice_86de168e::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptRetainCurrentPasswordChoice_86de168e::UseRetainCurrentPassword_07c5d02b',
+      'symbols' =>
+      array (
+        0 => 'RETAIN_SYM',
+        1 => 'CURRENT_SYM',
+        2 => 'PASSWORD',
+      ),
     ),
   ),
   'opt_discard_old_password' =>
@@ -23413,10 +38366,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptDiscardOldPasswordChoice_8e95507a::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptDiscardOldPasswordChoice_8e95507a::UseDiscardOldPassword_3d763f2b',
+      'symbols' =>
+      array (
+        0 => 'DISCARD_SYM',
+        1 => 'OLD_SYM',
+        2 => 'PASSWORD',
+      ),
     ),
   ),
   'opt_user_registration' =>
@@ -23428,6 +38390,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'factor',
+        1 => 'INITIATE_SYM',
+        2 => 'REGISTRATION_SYM',
+      ),
     ),
     1 =>
     array (
@@ -23435,6 +38403,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'factor',
+        1 => 'UNREGISTER_SYM',
       ),
     ),
     2 =>
@@ -23444,6 +38417,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 6,
+      ),
+      'symbols' =>
+      array (
+        0 => 'factor',
+        1 => 'FINISH_SYM',
+        2 => 'REGISTRATION_SYM',
+        3 => 'SET_SYM',
+        4 => 'CHALLENGE_RESPONSE_SYM',
+        5 => 'AS',
+        6 => 'TEXT_STRING_hash',
       ),
     ),
   ),
@@ -23458,6 +38441,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'user',
+        1 => 'identification',
+        2 => 'opt_create_user_with_mfa',
+      ),
     ),
     1 =>
     array (
@@ -23468,6 +38457,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'user',
+        1 => 'identified_with_plugin',
+        2 => 'opt_initial_auth',
+      ),
     ),
     2 =>
     array (
@@ -23476,6 +38471,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'user',
+        1 => 'opt_create_user_with_mfa',
       ),
     ),
   ),
@@ -23487,6 +38487,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -23494,6 +38497,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'AND_SYM',
+        1 => 'identification',
       ),
     ),
     2 =>
@@ -23504,6 +38512,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'AND_SYM',
+        1 => 'identification',
+        2 => 'AND_SYM',
+        3 => 'identification',
+      ),
     ),
   ),
   'identification' =>
@@ -23511,26 +38526,50 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'identified_by_password',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'identified_by_random_password',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'identified_with_plugin',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'identified_with_plugin_as_auth',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'identified_with_plugin_by_password',
+      ),
     ),
     5 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'identified_with_plugin_by_random_password',
+      ),
     ),
   ),
   'identified_by_password' =>
@@ -23542,6 +38581,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'IDENTIFIED_SYM',
+        1 => 'BY',
+        2 => 'TEXT_STRING_password',
+      ),
     ),
   ),
   'identified_by_random_password' =>
@@ -23549,6 +38594,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\IdentifiedByRandomPasswordChoice_694f299c::UseIdentifiedByRandomPassword_5799a57c',
+      'symbols' =>
+      array (
+        0 => 'IDENTIFIED_SYM',
+        1 => 'BY',
+        2 => 'RANDOM_SYM',
+        3 => 'PASSWORD',
+      ),
     ),
   ),
   'identified_with_plugin' =>
@@ -23559,6 +38611,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'IDENTIFIED_SYM',
+        1 => 'WITH',
+        2 => 'ident_or_text',
       ),
     ),
   ),
@@ -23572,6 +38630,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'IDENTIFIED_SYM',
+        1 => 'WITH',
+        2 => 'ident_or_text',
+        3 => 'AS',
+        4 => 'TEXT_STRING_hash',
+      ),
     ),
   ),
   'identified_with_plugin_by_password' =>
@@ -23584,6 +38650,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'IDENTIFIED_SYM',
+        1 => 'WITH',
+        2 => 'ident_or_text',
+        3 => 'BY',
+        4 => 'TEXT_STRING_password',
+      ),
     ),
   ),
   'identified_with_plugin_by_random_password' =>
@@ -23594,6 +38668,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'IDENTIFIED_SYM',
+        1 => 'WITH',
+        2 => 'ident_or_text',
+        3 => 'BY',
+        4 => 'RANDOM_SYM',
+        5 => 'PASSWORD',
       ),
     ),
   ),
@@ -23606,6 +38689,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'INITIAL_SYM',
+        1 => 'AUTHENTICATION_SYM',
+        2 => 'identified_by_random_password',
+      ),
     ),
     1 =>
     array (
@@ -23614,6 +38703,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'INITIAL_SYM',
+        1 => 'AUTHENTICATION_SYM',
+        2 => 'identified_with_plugin_as_auth',
+      ),
     ),
     2 =>
     array (
@@ -23621,6 +38716,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INITIAL_SYM',
+        1 => 'AUTHENTICATION_SYM',
+        2 => 'identified_by_password',
       ),
     ),
   ),
@@ -23636,6 +38737,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'user',
+        1 => 'identified_by_password',
+        2 => 'REPLACE_SYM',
+        3 => 'TEXT_STRING_password',
+        4 => 'opt_retain_current_password',
+      ),
     ),
     1 =>
     array (
@@ -23647,6 +38756,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'user',
+        1 => 'identified_with_plugin_by_password',
+        2 => 'REPLACE_SYM',
+        3 => 'TEXT_STRING_password',
+        4 => 'opt_retain_current_password',
+      ),
     ),
     2 =>
     array (
@@ -23657,6 +38774,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'user',
+        1 => 'identified_by_password',
+        2 => 'opt_retain_current_password',
+      ),
     ),
     3 =>
     array (
@@ -23666,6 +38789,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'user',
+        1 => 'identified_by_random_password',
+        2 => 'opt_retain_current_password',
       ),
     ),
     4 =>
@@ -23678,6 +38807,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'user',
+        1 => 'identified_by_random_password',
+        2 => 'REPLACE_SYM',
+        3 => 'TEXT_STRING_password',
+        4 => 'opt_retain_current_password',
+      ),
     ),
     5 =>
     array (
@@ -23686,6 +38823,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'user',
+        1 => 'identified_with_plugin',
       ),
     ),
     6 =>
@@ -23697,6 +38839,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'user',
+        1 => 'identified_with_plugin_as_auth',
+        2 => 'opt_retain_current_password',
+      ),
     ),
     7 =>
     array (
@@ -23706,6 +38854,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'user',
+        1 => 'identified_with_plugin_by_password',
+        2 => 'opt_retain_current_password',
       ),
     ),
     8 =>
@@ -23717,6 +38871,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'user',
+        1 => 'identified_with_plugin_by_random_password',
+        2 => 'opt_retain_current_password',
+      ),
     ),
     9 =>
     array (
@@ -23725,6 +38885,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'user',
+        1 => 'opt_discard_old_password',
       ),
     ),
     10 =>
@@ -23735,6 +38900,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
         2 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'user',
+        1 => 'ADD',
+        2 => 'factor',
+        3 => 'identification',
       ),
     ),
     11 =>
@@ -23748,6 +38920,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 5,
         4 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'user',
+        1 => 'ADD',
+        2 => 'factor',
+        3 => 'identification',
+        4 => 'ADD',
+        5 => 'factor',
+        6 => 'identification',
+      ),
     ),
     12 =>
     array (
@@ -23757,6 +38939,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
         2 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'user',
+        1 => 'MODIFY_SYM',
+        2 => 'factor',
+        3 => 'identification',
       ),
     ),
     13 =>
@@ -23770,6 +38959,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 5,
         4 => 6,
       ),
+      'symbols' =>
+      array (
+        0 => 'user',
+        1 => 'MODIFY_SYM',
+        2 => 'factor',
+        3 => 'identification',
+        4 => 'MODIFY_SYM',
+        5 => 'factor',
+        6 => 'identification',
+      ),
     ),
     14 =>
     array (
@@ -23778,6 +38977,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'user',
+        1 => 'DROP',
+        2 => 'factor',
       ),
     ),
     15 =>
@@ -23788,6 +38993,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
         2 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'user',
+        1 => 'DROP',
+        2 => 'factor',
+        3 => 'DROP',
+        4 => 'factor',
       ),
     ),
   ),
@@ -23800,6 +39013,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NUM',
+        1 => 'FACTOR_SYM',
+      ),
     ),
   ),
   'create_user_list' =>
@@ -23807,6 +39025,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'create_user',
+      ),
     ),
     1 =>
     array (
@@ -23816,6 +39038,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'create_user_list',
+        1 => ',',
+        2 => 'create_user',
+      ),
     ),
   ),
   'alter_user_list' =>
@@ -23823,6 +39051,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'alter_user',
+      ),
     ),
     1 =>
     array (
@@ -23831,6 +39063,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'alter_user_list',
+        1 => ',',
+        2 => 'alter_user',
       ),
     ),
   ),
@@ -23842,6 +39080,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -23850,6 +39091,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => '(',
+        1 => 'column_list',
+        2 => ')',
+      ),
     ),
   ),
   'column_list' =>
@@ -23857,6 +39104,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'ident',
+      ),
     ),
     1 =>
     array (
@@ -23865,6 +39116,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'column_list',
+        1 => ',',
+        2 => 'ident',
       ),
     ),
   ),
@@ -23876,6 +39133,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -23884,12 +39144,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'REQUIRE_SYM',
+        1 => 'require_list',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\RequireClauseWithRequireSymSslSym_6e604454',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'REQUIRE_SYM',
+        1 => 'SSL_SYM',
       ),
     ),
     3 =>
@@ -23898,12 +39168,22 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'REQUIRE_SYM',
+        1 => 'X509_SYM',
+      ),
     ),
     4 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\RequireClauseWithRequireSymNoneSym_74f76803',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'REQUIRE_SYM',
+        1 => 'NONE_SYM',
       ),
     ),
   ),
@@ -23912,10 +39192,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\GrantOptionsChoice_d601384a::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\GrantOptionsChoice_d601384a::UseWithGrantOption_79cfb8cf',
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'GRANT',
+        2 => 'OPTION',
+      ),
     ),
   ),
   'opt_grant_option' =>
@@ -23923,10 +39212,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptGrantOptionChoice_d601384a::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptGrantOptionChoice_d601384a::UseWithGrantOption_79cfb8cf',
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'GRANT',
+        2 => 'OPTION',
+      ),
     ),
   ),
   'opt_with_roles' =>
@@ -23937,6 +39235,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -23944,6 +39245,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'ROLE_SYM',
+        2 => 'role_list',
       ),
     ),
     2 =>
@@ -23953,6 +39260,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'ROLE_SYM',
+        2 => 'ALL',
+        3 => 'opt_except_role_list',
+      ),
     ),
     3 =>
     array (
@@ -23960,12 +39274,24 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'ROLE_SYM',
+        2 => 'NONE_SYM',
+      ),
     ),
     4 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptWithRolesWithWithRoleSymDefaultSym_9a4f4d87',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'ROLE_SYM',
+        2 => 'DEFAULT_SYM',
       ),
     ),
   ),
@@ -23977,6 +39303,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -23985,6 +39314,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'AS',
+        1 => 'user',
+        2 => 'opt_with_roles',
       ),
     ),
   ),
@@ -23997,6 +39332,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'BEGIN_SYM',
+        1 => 'opt_work',
+      ),
     ),
   ),
   'opt_work' =>
@@ -24004,10 +39344,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptWorkChoice_822cb2b8::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptWorkChoice_822cb2b8::UseWork_00b82880',
+      'symbols' =>
+      array (
+        0 => 'WORK_SYM',
+      ),
     ),
   ),
   'opt_chain' =>
@@ -24015,14 +39362,28 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptChainChoice_bd59608e::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptChainChoice_bd59608e::UseAndNoChain_0b393eac',
+      'symbols' =>
+      array (
+        0 => 'AND_SYM',
+        1 => 'NO_SYM',
+        2 => 'CHAIN_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptChainChoice_bd59608e::UseAndChain_ca6c40ba',
+      'symbols' =>
+      array (
+        0 => 'AND_SYM',
+        1 => 'CHAIN_SYM',
+      ),
     ),
   ),
   'opt_release' =>
@@ -24030,14 +39391,26 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptReleaseChoice_2fd595ea::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptReleaseChoice_2fd595ea::UseRelease_cdb88be9',
+      'symbols' =>
+      array (
+        0 => 'RELEASE_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptReleaseChoice_2fd595ea::UseNoRelease_0d0165df',
+      'symbols' =>
+      array (
+        0 => 'NO_SYM',
+        1 => 'RELEASE_SYM',
+      ),
     ),
   ),
   'opt_savepoint' =>
@@ -24045,10 +39418,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptSavepointChoice_f1b77095::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptSavepointChoice_f1b77095::UseSavepoint_7e4dde5b',
+      'symbols' =>
+      array (
+        0 => 'SAVEPOINT_SYM',
+      ),
     ),
   ),
   'commit' =>
@@ -24061,6 +39441,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
         2 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'COMMIT_SYM',
+        1 => 'opt_work',
+        2 => 'opt_chain',
+        3 => 'opt_release',
       ),
     ),
   ),
@@ -24075,6 +39462,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'ROLLBACK_SYM',
+        1 => 'opt_work',
+        2 => 'opt_chain',
+        3 => 'opt_release',
+      ),
     ),
     1 =>
     array (
@@ -24084,6 +39478,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 3,
         2 => 4,
+      ),
+      'symbols' =>
+      array (
+        0 => 'ROLLBACK_SYM',
+        1 => 'opt_work',
+        2 => 'TO_SYM',
+        3 => 'opt_savepoint',
+        4 => 'ident',
       ),
     ),
   ),
@@ -24096,6 +39498,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'SAVEPOINT_SYM',
+        1 => 'ident',
+      ),
     ),
   ),
   'release' =>
@@ -24107,6 +39514,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'RELEASE_SYM',
+        1 => 'SAVEPOINT_SYM',
+        2 => 'ident',
+      ),
     ),
   ),
   'union_option' =>
@@ -24117,6 +39530,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -24125,12 +39541,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DISTINCT',
+      ),
     ),
     2 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\UnionOptionWithAll_98d89d34',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALL',
       ),
     ),
   ),
@@ -24139,6 +39563,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'subquery',
+      ),
     ),
   ),
   'table_subquery' =>
@@ -24146,6 +39574,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'subquery',
+      ),
     ),
   ),
   'subquery' =>
@@ -24153,6 +39585,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'query_expression_parens',
+      ),
     ),
   ),
   'query_spec_option' =>
@@ -24163,12 +39599,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'STRAIGHT_JOIN',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\QuerySpecOptionWithHighPriority_b2c577c7',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'HIGH_PRIORITY',
       ),
     ),
     2 =>
@@ -24178,12 +39622,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'DISTINCT',
+      ),
     ),
     3 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\QuerySpecOptionWithSqlSmallResult_8536083c',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'SQL_SMALL_RESULT',
       ),
     ),
     4 =>
@@ -24192,12 +39644,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'SQL_BIG_RESULT',
+      ),
     ),
     5 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\QuerySpecOptionWithSqlBufferResult_264d7c2b',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'SQL_BUFFER_RESULT',
       ),
     ),
     6 =>
@@ -24206,12 +39666,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+        0 => 'SQL_CALC_FOUND_ROWS',
+      ),
     ),
     7 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\QuerySpecOptionWithAll_94793b3d',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'ALL',
       ),
     ),
   ),
@@ -24220,6 +39688,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\InitLexCreateInfoChoice_055539df::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'view_or_trigger_or_sp_or_event' =>
@@ -24233,6 +39704,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 1,
         2 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'definer',
+        1 => 'init_lex_create_info',
+        2 => 'definer_tail',
+      ),
     ),
     1 =>
     array (
@@ -24242,6 +39719,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'no_definer',
+        1 => 'init_lex_create_info',
+        2 => 'no_definer_tail',
       ),
     ),
     2 =>
@@ -24254,6 +39737,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 2,
         3 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'view_replace_or_algorithm',
+        1 => 'definer_opt',
+        2 => 'init_lex_create_info',
+        3 => 'view_tail',
+      ),
     ),
   ),
   'definer_tail' =>
@@ -24261,22 +39751,42 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'view_tail',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'trigger_tail',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_tail',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sf_tail',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'event_tail',
+      ),
     ),
   ),
   'no_definer_tail' =>
@@ -24284,26 +39794,50 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'view_tail',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'trigger_tail',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_tail',
+      ),
     ),
     3 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sf_tail',
+      ),
     ),
     4 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'udf_tail',
+      ),
     ),
     5 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'event_tail',
+      ),
     ),
   ),
   'definer_opt' =>
@@ -24311,10 +39845,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'no_definer',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'definer',
+      ),
     ),
   ),
   'no_definer' =>
@@ -24322,6 +39864,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\NoDefinerChoice_055539df::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
   ),
   'definer' =>
@@ -24333,6 +39878,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'DEFINER_SYM',
+        1 => 'EQ',
+        2 => 'user',
+      ),
     ),
   ),
   'view_replace_or_algorithm' =>
@@ -24340,6 +39891,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'view_replace',
+      ),
     ),
     1 =>
     array (
@@ -24349,10 +39904,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'view_replace',
+        1 => 'view_algorithm',
+      ),
     ),
     2 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'view_algorithm',
+      ),
     ),
   ),
   'view_replace' =>
@@ -24360,6 +39924,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ViewReplaceChoice_a21ca266::UseOrReplace_85db5453',
+      'symbols' =>
+      array (
+        0 => 'OR_SYM',
+        1 => 'REPLACE_SYM',
+      ),
     ),
   ),
   'view_algorithm' =>
@@ -24367,14 +39936,32 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ViewAlgorithmChoice_7c294a36::UseAlgorithmUndefined_647e35e1',
+      'symbols' =>
+      array (
+        0 => 'ALGORITHM_SYM',
+        1 => 'EQ',
+        2 => 'UNDEFINED_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ViewAlgorithmChoice_7c294a36::UseAlgorithmMerge_5911336c',
+      'symbols' =>
+      array (
+        0 => 'ALGORITHM_SYM',
+        1 => 'EQ',
+        2 => 'MERGE_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ViewAlgorithmChoice_7c294a36::UseAlgorithmTemptable_c36ebe23',
+      'symbols' =>
+      array (
+        0 => 'ALGORITHM_SYM',
+        1 => 'EQ',
+        2 => 'TEMPTABLE_SYM',
+      ),
     ),
   ),
   'view_suid' =>
@@ -24382,14 +39969,29 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ViewSuidChoice_0ddb4b67::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ViewSuidChoice_0ddb4b67::UseSqlSecurityDefiner_57d87183',
+      'symbols' =>
+      array (
+        0 => 'SQL_SYM',
+        1 => 'SECURITY_SYM',
+        2 => 'DEFINER_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ViewSuidChoice_0ddb4b67::UseSqlSecurityInvoker_e5a5d4a3',
+      'symbols' =>
+      array (
+        0 => 'SQL_SYM',
+        1 => 'SECURITY_SYM',
+        2 => 'INVOKER_SYM',
+      ),
     ),
   ),
   'view_tail' =>
@@ -24404,6 +40006,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 3,
         3 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'view_suid',
+        1 => 'VIEW_SYM',
+        2 => 'table_ident',
+        3 => 'opt_derived_column_list',
+        4 => 'AS',
+        5 => 'view_query_block',
+      ),
     ),
   ),
   'view_query_block' =>
@@ -24416,6 +40027,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'query_expression_with_opt_locking_clauses',
+        1 => 'view_check_option',
+      ),
     ),
   ),
   'view_check_option' =>
@@ -24423,18 +40039,41 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ViewCheckOptionChoice_909a630e::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ViewCheckOptionChoice_909a630e::UseWithCheckOption_e6c3e346',
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'CHECK_SYM',
+        2 => 'OPTION',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ViewCheckOptionChoice_909a630e::UseWithCascadedCheckOption_715d83ad',
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'CASCADED',
+        2 => 'CHECK_SYM',
+        3 => 'OPTION',
+      ),
     ),
     3 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ViewCheckOptionChoice_909a630e::UseWithLocalCheckOption_f2637ad1',
+      'symbols' =>
+      array (
+        0 => 'WITH',
+        1 => 'LOCAL_SYM',
+        2 => 'CHECK_SYM',
+        3 => 'OPTION',
+      ),
     ),
   ),
   'trigger_action_order' =>
@@ -24442,10 +40081,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\TriggerActionOrderChoice_b52f2f95::UseFollows_f734af59',
+      'symbols' =>
+      array (
+        0 => 'FOLLOWS_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\TriggerActionOrderChoice_b52f2f95::UsePrecedes_bba1c15a',
+      'symbols' =>
+      array (
+        0 => 'PRECEDES_SYM',
+      ),
     ),
   ),
   'trigger_follows_precedes_clause' =>
@@ -24456,6 +40103,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -24464,6 +40114,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'trigger_action_order',
+        1 => 'ident_or_text',
       ),
     ),
   ),
@@ -24482,6 +40137,21 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         5 => 10,
         6 => 11,
       ),
+      'symbols' =>
+      array (
+        0 => 'TRIGGER_SYM',
+        1 => 'opt_if_not_exists',
+        2 => 'sp_name',
+        3 => 'trg_action_time',
+        4 => 'trg_event',
+        5 => 'ON_SYM',
+        6 => 'table_ident',
+        7 => 'FOR_SYM',
+        8 => 'EACH_SYM',
+        9 => 'ROW_SYM',
+        10 => 'trigger_follows_precedes_clause',
+        11 => 'sp_proc_stmt',
+      ),
     ),
   ),
   'udf_tail' =>
@@ -24496,6 +40166,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 5,
         3 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'AGGREGATE_SYM',
+        1 => 'FUNCTION_SYM',
+        2 => 'opt_if_not_exists',
+        3 => 'ident',
+        4 => 'RETURNS_SYM',
+        5 => 'udf_type',
+        6 => 'SONAME_SYM',
+        7 => 'TEXT_STRING_sys',
+      ),
     ),
     1 =>
     array (
@@ -24506,6 +40187,16 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
         3 => 6,
+      ),
+      'symbols' =>
+      array (
+        0 => 'FUNCTION_SYM',
+        1 => 'opt_if_not_exists',
+        2 => 'ident',
+        3 => 'RETURNS_SYM',
+        4 => 'udf_type',
+        5 => 'SONAME_SYM',
+        6 => 'TEXT_STRING_sys',
       ),
     ),
   ),
@@ -24524,6 +40215,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         5 => 9,
         6 => 10,
       ),
+      'symbols' =>
+      array (
+        0 => 'FUNCTION_SYM',
+        1 => 'opt_if_not_exists',
+        2 => 'sp_name',
+        3 => '(',
+        4 => 'sp_fdparam_list',
+        5 => ')',
+        6 => 'RETURNS_SYM',
+        7 => 'type',
+        8 => 'opt_collate',
+        9 => 'sp_c_chistics',
+        10 => 'stored_routine_body',
+      ),
     ),
   ),
   'routine_string' =>
@@ -24531,6 +40236,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'TEXT_STRING_literal',
+      ),
     ),
     1 =>
     array (
@@ -24538,6 +40247,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 0,
+      ),
+      'symbols' =>
+      array (
+        0 => 'DOLLAR_QUOTED_STRING_SYM',
       ),
     ),
   ),
@@ -24550,10 +40263,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 1,
       ),
+      'symbols' =>
+      array (
+        0 => 'AS',
+        1 => 'routine_string',
+      ),
     ),
     1 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'sp_proc_stmt',
+      ),
     ),
   ),
   'sp_tail' =>
@@ -24569,6 +40291,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         3 => 6,
         4 => 7,
       ),
+      'symbols' =>
+      array (
+        0 => 'PROCEDURE_SYM',
+        1 => 'opt_if_not_exists',
+        2 => 'sp_name',
+        3 => '(',
+        4 => 'sp_pdparam_list',
+        5 => ')',
+        6 => 'sp_c_chistics',
+        7 => 'stored_routine_body',
+      ),
     ),
   ),
   'xa' =>
@@ -24582,6 +40315,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'XA_SYM',
+        1 => 'begin_or_start',
+        2 => 'xid',
+        3 => 'opt_join_or_resume',
+      ),
     ),
     1 =>
     array (
@@ -24591,6 +40331,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'XA_SYM',
+        1 => 'END',
+        2 => 'xid',
+        3 => 'opt_suspend',
+      ),
     ),
     2 =>
     array (
@@ -24598,6 +40345,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'XA_SYM',
+        1 => 'PREPARE_SYM',
+        2 => 'xid',
       ),
     ),
     3 =>
@@ -24608,6 +40361,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'XA_SYM',
+        1 => 'COMMIT_SYM',
+        2 => 'xid',
+        3 => 'opt_one_phase',
+      ),
     ),
     4 =>
     array (
@@ -24615,6 +40375,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'XA_SYM',
+        1 => 'ROLLBACK_SYM',
+        2 => 'xid',
       ),
     ),
     5 =>
@@ -24624,6 +40390,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'XA_SYM',
+        1 => 'RECOVER_SYM',
+        2 => 'opt_convert_xid',
+      ),
     ),
   ),
   'opt_convert_xid' =>
@@ -24631,10 +40403,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptConvertXidChoice_b32c22a0::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptConvertXidChoice_b32c22a0::UseConvertXid_79b02145',
+      'symbols' =>
+      array (
+        0 => 'CONVERT_SYM',
+        1 => 'XID_SYM',
+      ),
     ),
   ),
   'xid' =>
@@ -24642,6 +40422,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'text_string',
+      ),
     ),
     1 =>
     array (
@@ -24650,6 +40434,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'text_string',
+        1 => ',',
+        2 => 'text_string',
       ),
     ),
     2 =>
@@ -24661,6 +40451,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 2,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'text_string',
+        1 => ',',
+        2 => 'text_string',
+        3 => ',',
+        4 => 'ulong_num',
+      ),
     ),
   ),
   'begin_or_start' =>
@@ -24668,10 +40466,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\BeginOrStartChoice_af1cfb24::UseBegin_a8402858',
+      'symbols' =>
+      array (
+        0 => 'BEGIN_SYM',
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\BeginOrStartChoice_af1cfb24::UseStart_39f17ec6',
+      'symbols' =>
+      array (
+        0 => 'START_SYM',
+      ),
     ),
   ),
   'opt_join_or_resume' =>
@@ -24679,14 +40485,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptJoinOrResumeChoice_f1195da4::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptJoinOrResumeChoice_f1195da4::UseJoin_a9e153ee',
+      'symbols' =>
+      array (
+        0 => 'JOIN_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptJoinOrResumeChoice_f1195da4::UseResume_0747c96a',
+      'symbols' =>
+      array (
+        0 => 'RESUME_SYM',
+      ),
     ),
   ),
   'opt_one_phase' =>
@@ -24694,10 +40511,18 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptOnePhaseChoice_8cb47ec9::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptOnePhaseChoice_8cb47ec9::UseOnePhase_07d795e3',
+      'symbols' =>
+      array (
+        0 => 'ONE_SYM',
+        1 => 'PHASE_SYM',
+      ),
     ),
   ),
   'opt_suspend' =>
@@ -24705,14 +40530,27 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptSuspendChoice_d418cef2::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptSuspendChoice_d418cef2::UseSuspend_3de4e07a',
+      'symbols' =>
+      array (
+        0 => 'SUSPEND_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptSuspendChoice_d418cef2::UseSuspendForMigrate_b99d6a9b',
+      'symbols' =>
+      array (
+        0 => 'SUSPEND_SYM',
+        1 => 'FOR_SYM',
+        2 => 'MIGRATE_SYM',
+      ),
     ),
   ),
   'install_option_type' =>
@@ -24720,14 +40558,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\InstallOptionTypeChoice_da753f0b::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\InstallOptionTypeChoice_da753f0b::UseGlobal_e7440dd3',
+      'symbols' =>
+      array (
+        0 => 'GLOBAL_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\InstallOptionTypeChoice_da753f0b::UsePersist_f2539f68',
+      'symbols' =>
+      array (
+        0 => 'PERSIST_SYM',
+      ),
     ),
   ),
   'install_set_rvalue' =>
@@ -24735,12 +40584,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'expr',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\InstallSetRvalueWithOnSym_cbc4467a',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'ON_SYM',
       ),
     ),
   ),
@@ -24756,6 +40613,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 2,
         3 => 3,
       ),
+      'symbols' =>
+      array (
+        0 => 'install_option_type',
+        1 => 'lvalue_variable',
+        2 => 'equal',
+        3 => 'install_set_rvalue',
+      ),
     ),
   ),
   'install_set_value_list' =>
@@ -24763,6 +40627,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'install_set_value',
+      ),
     ),
     1 =>
     array (
@@ -24771,6 +40639,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'install_set_value_list',
+        1 => ',',
+        2 => 'install_set_value',
       ),
     ),
   ),
@@ -24782,6 +40656,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -24789,6 +40666,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => 'SET_SYM',
+        1 => 'install_set_value_list',
       ),
     ),
   ),
@@ -24802,6 +40684,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 2,
         1 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'INSTALL_SYM',
+        1 => 'PLUGIN_SYM',
+        2 => 'ident',
+        3 => 'SONAME_SYM',
+        4 => 'TEXT_STRING_sys',
+      ),
     ),
     1 =>
     array (
@@ -24810,6 +40700,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
         1 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'INSTALL_SYM',
+        1 => 'COMPONENT_SYM',
+        2 => 'TEXT_STRING_sys_list',
+        3 => 'opt_install_set_value_list',
       ),
     ),
   ),
@@ -24822,6 +40719,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNINSTALL_SYM',
+        1 => 'PLUGIN_SYM',
+        2 => 'ident',
+      ),
     ),
     1 =>
     array (
@@ -24830,6 +40733,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'UNINSTALL_SYM',
+        1 => 'COMPONENT_SYM',
+        2 => 'TEXT_STRING_sys_list',
+      ),
     ),
   ),
   'TEXT_STRING_sys_list' =>
@@ -24837,6 +40746,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'TEXT_STRING_sys',
+      ),
     ),
     1 =>
     array (
@@ -24845,6 +40758,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'TEXT_STRING_sys_list',
+        1 => ',',
+        2 => 'TEXT_STRING_sys',
       ),
     ),
   ),
@@ -24856,6 +40775,13 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 3,
+      ),
+      'symbols' =>
+      array (
+        0 => 'IMPORT',
+        1 => 'TABLE_SYM',
+        2 => 'FROM',
+        3 => 'TEXT_STRING_sys_list',
       ),
     ),
   ),
@@ -24869,6 +40795,15 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 4,
         1 => 5,
       ),
+      'symbols' =>
+      array (
+        0 => 'CLONE_SYM',
+        1 => 'LOCAL_SYM',
+        2 => 'DATA_SYM',
+        3 => 'DIRECTORY_SYM',
+        4 => 'opt_equal',
+        5 => 'TEXT_STRING_filesystem',
+      ),
     ),
     1 =>
     array (
@@ -24880,6 +40815,19 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         2 => 8,
         3 => 9,
       ),
+      'symbols' =>
+      array (
+        0 => 'CLONE_SYM',
+        1 => 'INSTANCE_SYM',
+        2 => 'FROM',
+        3 => 'user',
+        4 => ':',
+        5 => 'ulong_num',
+        6 => 'IDENTIFIED_SYM',
+        7 => 'BY',
+        8 => 'TEXT_STRING_sys',
+        9 => 'opt_datadir_ssl',
+      ),
     ),
   ),
   'opt_datadir_ssl' =>
@@ -24887,6 +40835,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'opt_ssl',
+      ),
     ),
     1 =>
     array (
@@ -24897,6 +40849,14 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         1 => 3,
         2 => 4,
       ),
+      'symbols' =>
+      array (
+        0 => 'DATA_SYM',
+        1 => 'DIRECTORY_SYM',
+        2 => 'opt_equal',
+        3 => 'TEXT_STRING_filesystem',
+        4 => 'opt_ssl',
+      ),
     ),
   ),
   'opt_ssl' =>
@@ -24904,14 +40864,28 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptSslChoice_3cebd19c::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptSslChoice_3cebd19c::UseRequireSsl_44b1b2ba',
+      'symbols' =>
+      array (
+        0 => 'REQUIRE_SYM',
+        1 => 'SSL_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptSslChoice_3cebd19c::UseRequireNoSsl_0ea862f8',
+      'symbols' =>
+      array (
+        0 => 'REQUIRE_SYM',
+        1 => 'NO_SYM',
+        2 => 'SSL_SYM',
+      ),
     ),
   ),
   'resource_group_types' =>
@@ -24923,12 +40897,20 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'USER',
+      ),
     ),
     1 =>
     array (
       'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\ResourceGroupTypesWithSystemSym_bdbef898',
       'fields' =>
       array (
+      ),
+      'symbols' =>
+      array (
+        0 => 'SYSTEM_SYM',
       ),
     ),
   ),
@@ -24940,6 +40922,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -24949,6 +40934,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'VCPU_SYM',
+        1 => 'opt_equal',
+        2 => 'vcpu_range_spec_list',
+      ),
     ),
   ),
   'vcpu_range_spec_list' =>
@@ -24956,6 +40947,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'vcpu_num_or_range',
+      ),
     ),
     1 =>
     array (
@@ -24965,6 +40960,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 0,
         1 => 1,
         2 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'vcpu_range_spec_list',
+        1 => 'opt_comma',
+        2 => 'vcpu_num_or_range',
       ),
     ),
   ),
@@ -24977,6 +40978,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NUM',
+      ),
     ),
     1 =>
     array (
@@ -24985,6 +40990,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
         1 => 2,
+      ),
+      'symbols' =>
+      array (
+        0 => 'NUM',
+        1 => '-',
+        2 => 'NUM',
       ),
     ),
   ),
@@ -24997,6 +41008,10 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       array (
         0 => 0,
       ),
+      'symbols' =>
+      array (
+        0 => 'NUM',
+      ),
     ),
     1 =>
     array (
@@ -25004,6 +41019,11 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
         0 => 1,
+      ),
+      'symbols' =>
+      array (
+        0 => '-',
+        1 => 'NUM',
       ),
     ),
   ),
@@ -25015,6 +41035,9 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
       'fields' =>
       array (
       ),
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
@@ -25024,6 +41047,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
         0 => 1,
         1 => 2,
       ),
+      'symbols' =>
+      array (
+        0 => 'THREAD_PRIORITY_SYM',
+        1 => 'opt_equal',
+        2 => 'signed_num',
+      ),
     ),
   ),
   'opt_resource_group_enable_disable' =>
@@ -25031,14 +41060,25 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptResourceGroupEnableDisableChoice_b5e6950f::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptResourceGroupEnableDisableChoice_b5e6950f::UseEnable_18912667',
+      'symbols' =>
+      array (
+        0 => 'ENABLE_SYM',
+      ),
     ),
     2 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptResourceGroupEnableDisableChoice_b5e6950f::UseDisable_0fb87bd2',
+      'symbols' =>
+      array (
+        0 => 'DISABLE_SYM',
+      ),
     ),
   ),
   'opt_force' =>
@@ -25046,10 +41086,17 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptForceChoice_5e6890ca::Use_e3b0c442',
+      'symbols' =>
+      array (
+      ),
     ),
     1 =>
     array (
       'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptForceChoice_5e6890ca::UseForce_bd16a503',
+      'symbols' =>
+      array (
+        0 => 'FORCE_SYM',
+      ),
     ),
   ),
   'json_attribute' =>
@@ -25057,6 +41104,12 @@ return new \SqlSemantics\Core\Analysis\ValueReader(array (
     0 =>
     array (
       'forward' => 0,
+      'symbols' =>
+      array (
+        0 => 'TEXT_STRING_sys',
+      ),
     ),
   ),
+), array (
+), array (
 ));

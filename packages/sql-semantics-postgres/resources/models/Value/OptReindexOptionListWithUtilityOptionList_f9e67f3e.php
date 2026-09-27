@@ -17,10 +17,11 @@ final class OptReindexOptionListWithUtilityOptionList_f9e67f3e implements \SqlSe
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionListForm $utilityOptionList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($utilityOptionList), 'The utilityOptionList must be a generated immutable SQL value.');
     }
@@ -30,9 +31,32 @@ final class OptReindexOptionListWithUtilityOptionList_f9e67f3e implements \SqlSe
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->utilityOptionList->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->utilityOptionList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->utilityOptionList, \SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionListForm::class, $replace), $this->comments);
     }
 
     /**
@@ -40,6 +64,14 @@ final class OptReindexOptionListWithUtilityOptionList_f9e67f3e implements \SqlSe
      */
     public function withUtilityOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionListForm $utilityOptionList): self
     {
-        return new self($utilityOptionList);
+        return new self($utilityOptionList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->utilityOptionList, $comments);
     }
 }

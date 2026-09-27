@@ -17,7 +17,7 @@ final class DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsTableAliasRefLis
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWithClauseForm $with,
@@ -25,6 +25,7 @@ final class DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsTableAliasRefLis
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableAliasRefListForm $tableAliasRefList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm $tableReferenceList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm $where,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($with), 'The with must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDeleteOptions), 'The optDeleteOptions must be a generated immutable SQL value.');
@@ -38,13 +39,40 @@ final class DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsTableAliasRefLis
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->with->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('DELETE');
+        $writer->comments($this->comments, 2);
         $this->optDeleteOptions->write($writer);
+        $writer->comments($this->comments, 3);
         $this->tableAliasRefList->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('FROM');
+        $writer->comments($this->comments, 5);
         $this->tableReferenceList->write($writer);
+        $writer->comments($this->comments, 6);
         $this->where->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->with, $this->optDeleteOptions, $this->tableAliasRefList, $this->tableReferenceList, $this->where];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->with, \SqlSemantics\Statement\Model\MySql\Role\OptWithClauseForm::class, $replace), $this->replacement($this->optDeleteOptions, \SqlSemantics\Statement\Model\MySql\Role\OptDeleteOptionsForm::class, $replace), $this->replacement($this->tableAliasRefList, \SqlSemantics\Statement\Model\MySql\Role\TableAliasRefListForm::class, $replace), $this->replacement($this->tableReferenceList, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm::class, $replace), $this->comments);
     }
 
     /**
@@ -52,7 +80,7 @@ final class DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsTableAliasRefLis
      */
     public function withWith(\SqlSemantics\Statement\Model\MySql\Role\OptWithClauseForm $with): self
     {
-        return new self($with, $this->optDeleteOptions, $this->tableAliasRefList, $this->tableReferenceList, $this->where);
+        return new self($with, $this->optDeleteOptions, $this->tableAliasRefList, $this->tableReferenceList, $this->where, $this->comments);
     }
 
     /**
@@ -60,7 +88,7 @@ final class DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsTableAliasRefLis
      */
     public function withOptDeleteOptions(\SqlSemantics\Statement\Model\MySql\Role\OptDeleteOptionsForm $optDeleteOptions): self
     {
-        return new self($this->with, $optDeleteOptions, $this->tableAliasRefList, $this->tableReferenceList, $this->where);
+        return new self($this->with, $optDeleteOptions, $this->tableAliasRefList, $this->tableReferenceList, $this->where, $this->comments);
     }
 
     /**
@@ -68,7 +96,7 @@ final class DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsTableAliasRefLis
      */
     public function withTableAliasRefList(\SqlSemantics\Statement\Model\MySql\Role\TableAliasRefListForm $tableAliasRefList): self
     {
-        return new self($this->with, $this->optDeleteOptions, $tableAliasRefList, $this->tableReferenceList, $this->where);
+        return new self($this->with, $this->optDeleteOptions, $tableAliasRefList, $this->tableReferenceList, $this->where, $this->comments);
     }
 
     /**
@@ -76,7 +104,7 @@ final class DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsTableAliasRefLis
      */
     public function withTableReferenceList(\SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm $tableReferenceList): self
     {
-        return new self($this->with, $this->optDeleteOptions, $this->tableAliasRefList, $tableReferenceList, $this->where);
+        return new self($this->with, $this->optDeleteOptions, $this->tableAliasRefList, $tableReferenceList, $this->where, $this->comments);
     }
 
     /**
@@ -84,6 +112,14 @@ final class DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsTableAliasRefLis
      */
     public function withWhere(\SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm $where): self
     {
-        return new self($this->with, $this->optDeleteOptions, $this->tableAliasRefList, $this->tableReferenceList, $where);
+        return new self($this->with, $this->optDeleteOptions, $this->tableAliasRefList, $this->tableReferenceList, $where, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->with, $this->optDeleteOptions, $this->tableAliasRefList, $this->tableReferenceList, $this->where, $comments);
     }
 }

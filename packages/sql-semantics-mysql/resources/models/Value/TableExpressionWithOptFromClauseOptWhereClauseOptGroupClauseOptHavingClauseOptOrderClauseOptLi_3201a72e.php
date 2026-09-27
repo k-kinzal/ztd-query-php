@@ -17,7 +17,7 @@ final class TableExpressionWithOptFromClauseOptWhereClauseOptGroupClauseOptHavin
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptFromClauseForm $from,
@@ -28,6 +28,7 @@ final class TableExpressionWithOptFromClauseOptWhereClauseOptGroupClauseOptHavin
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptProcedureAnalyseClauseForm $optProcedureAnalyseClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSelectLockTypeForm $optSelectLockType,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($from), 'The from must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($where), 'The where must be a generated immutable SQL value.');
@@ -44,14 +45,42 @@ final class TableExpressionWithOptFromClauseOptWhereClauseOptGroupClauseOptHavin
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->from->write($writer);
+        $writer->comments($this->comments, 1);
         $this->where->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optGroupClause->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optHavingClause->write($writer);
+        $writer->comments($this->comments, 4);
         $this->orderBy->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optLimitClause->write($writer);
+        $writer->comments($this->comments, 6);
         $this->optProcedureAnalyseClause->write($writer);
+        $writer->comments($this->comments, 7);
         $this->optSelectLockType->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optSelectLockType];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->from, \SqlSemantics\Statement\Model\MySql\Role\OptFromClauseForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm::class, $replace), $this->replacement($this->optGroupClause, \SqlSemantics\Statement\Model\MySql\Role\OptGroupClauseForm::class, $replace), $this->replacement($this->optHavingClause, \SqlSemantics\Statement\Model\MySql\Role\OptHavingClauseForm::class, $replace), $this->replacement($this->orderBy, \SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm::class, $replace), $this->replacement($this->optLimitClause, \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm::class, $replace), $this->replacement($this->optProcedureAnalyseClause, \SqlSemantics\Statement\Model\MySql\Role\OptProcedureAnalyseClauseForm::class, $replace), $this->replacement($this->optSelectLockType, \SqlSemantics\Statement\Model\MySql\Role\OptSelectLockTypeForm::class, $replace), $this->comments);
     }
 
     /**
@@ -59,7 +88,7 @@ final class TableExpressionWithOptFromClauseOptWhereClauseOptGroupClauseOptHavin
      */
     public function withFrom(\SqlSemantics\Statement\Model\MySql\Role\OptFromClauseForm $from): self
     {
-        return new self($from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optSelectLockType);
+        return new self($from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optSelectLockType, $this->comments);
     }
 
     /**
@@ -67,7 +96,7 @@ final class TableExpressionWithOptFromClauseOptWhereClauseOptGroupClauseOptHavin
      */
     public function withWhere(\SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm $where): self
     {
-        return new self($this->from, $where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optSelectLockType);
+        return new self($this->from, $where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optSelectLockType, $this->comments);
     }
 
     /**
@@ -75,7 +104,7 @@ final class TableExpressionWithOptFromClauseOptWhereClauseOptGroupClauseOptHavin
      */
     public function withOptGroupClause(\SqlSemantics\Statement\Model\MySql\Role\OptGroupClauseForm $optGroupClause): self
     {
-        return new self($this->from, $this->where, $optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optSelectLockType);
+        return new self($this->from, $this->where, $optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optSelectLockType, $this->comments);
     }
 
     /**
@@ -83,7 +112,7 @@ final class TableExpressionWithOptFromClauseOptWhereClauseOptGroupClauseOptHavin
      */
     public function withOptHavingClause(\SqlSemantics\Statement\Model\MySql\Role\OptHavingClauseForm $optHavingClause): self
     {
-        return new self($this->from, $this->where, $this->optGroupClause, $optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optSelectLockType);
+        return new self($this->from, $this->where, $this->optGroupClause, $optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optSelectLockType, $this->comments);
     }
 
     /**
@@ -91,7 +120,7 @@ final class TableExpressionWithOptFromClauseOptWhereClauseOptGroupClauseOptHavin
      */
     public function withOrderBy(\SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm $orderBy): self
     {
-        return new self($this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optSelectLockType);
+        return new self($this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optSelectLockType, $this->comments);
     }
 
     /**
@@ -99,7 +128,7 @@ final class TableExpressionWithOptFromClauseOptWhereClauseOptGroupClauseOptHavin
      */
     public function withOptLimitClause(\SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause): self
     {
-        return new self($this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $optLimitClause, $this->optProcedureAnalyseClause, $this->optSelectLockType);
+        return new self($this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $optLimitClause, $this->optProcedureAnalyseClause, $this->optSelectLockType, $this->comments);
     }
 
     /**
@@ -107,7 +136,7 @@ final class TableExpressionWithOptFromClauseOptWhereClauseOptGroupClauseOptHavin
      */
     public function withOptProcedureAnalyseClause(\SqlSemantics\Statement\Model\MySql\Role\OptProcedureAnalyseClauseForm $optProcedureAnalyseClause): self
     {
-        return new self($this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $optProcedureAnalyseClause, $this->optSelectLockType);
+        return new self($this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $optProcedureAnalyseClause, $this->optSelectLockType, $this->comments);
     }
 
     /**
@@ -115,6 +144,14 @@ final class TableExpressionWithOptFromClauseOptWhereClauseOptGroupClauseOptHavin
      */
     public function withOptSelectLockType(\SqlSemantics\Statement\Model\MySql\Role\OptSelectLockTypeForm $optSelectLockType): self
     {
-        return new self($this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $optSelectLockType);
+        return new self($this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $optSelectLockType, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optSelectLockType, $comments);
     }
 }

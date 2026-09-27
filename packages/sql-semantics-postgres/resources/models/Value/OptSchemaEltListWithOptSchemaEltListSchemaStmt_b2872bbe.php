@@ -17,11 +17,12 @@ final class OptSchemaEltListWithOptSchemaEltListSchemaStmt_b2872bbe implements \
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptSchemaEltListForm $optSchemaEltList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SchemaStmtForm $schemaStmt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optSchemaEltList), 'The optSchemaEltList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($schemaStmt), 'The schemaStmt must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class OptSchemaEltListWithOptSchemaEltListSchemaStmt_b2872bbe implements \
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optSchemaEltList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->schemaStmt->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optSchemaEltList, $this->schemaStmt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optSchemaEltList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSchemaEltListForm::class, $replace), $this->replacement($this->schemaStmt, \SqlSemantics\Statement\Model\PostgreSql\Role\SchemaStmtForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class OptSchemaEltListWithOptSchemaEltListSchemaStmt_b2872bbe implements \
      */
     public function withOptSchemaEltList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSchemaEltListForm $optSchemaEltList): self
     {
-        return new self($optSchemaEltList, $this->schemaStmt);
+        return new self($optSchemaEltList, $this->schemaStmt, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class OptSchemaEltListWithOptSchemaEltListSchemaStmt_b2872bbe implements \
      */
     public function withSchemaStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\SchemaStmtForm $schemaStmt): self
     {
-        return new self($this->optSchemaEltList, $schemaStmt);
+        return new self($this->optSchemaEltList, $schemaStmt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optSchemaEltList, $this->schemaStmt, $comments);
     }
 }

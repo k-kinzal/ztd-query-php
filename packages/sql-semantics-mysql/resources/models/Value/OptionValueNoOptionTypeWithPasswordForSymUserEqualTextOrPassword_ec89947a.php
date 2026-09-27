@@ -17,12 +17,13 @@ final class OptionValueNoOptionTypeWithPasswordForSymUserEqualTextOrPassword_ec8
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserForm $user,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextOrPasswordForm $textOrPassword,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($equal), 'The equal must be a generated immutable SQL value.');
@@ -34,11 +35,36 @@ final class OptionValueNoOptionTypeWithPasswordForSymUserEqualTextOrPassword_ec8
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('PASSWORD');
+        $writer->comments($this->comments, 1);
         $writer->append('FOR');
+        $writer->comments($this->comments, 2);
         $this->user->write($writer);
+        $writer->comments($this->comments, 3);
         $this->equal->write($writer);
+        $writer->comments($this->comments, 4);
         $this->textOrPassword->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->user, $this->equal, $this->textOrPassword];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->user, \SqlSemantics\Statement\Model\MySql\Role\UserForm::class, $replace), $this->replacement($this->equal, \SqlSemantics\Statement\Model\MySql\Role\EqualForm::class, $replace), $this->replacement($this->textOrPassword, \SqlSemantics\Statement\Model\MySql\Role\TextOrPasswordForm::class, $replace), $this->comments);
     }
 
     /**
@@ -46,7 +72,7 @@ final class OptionValueNoOptionTypeWithPasswordForSymUserEqualTextOrPassword_ec8
      */
     public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
     {
-        return new self($user, $this->equal, $this->textOrPassword);
+        return new self($user, $this->equal, $this->textOrPassword, $this->comments);
     }
 
     /**
@@ -54,7 +80,7 @@ final class OptionValueNoOptionTypeWithPasswordForSymUserEqualTextOrPassword_ec8
      */
     public function withEqual(\SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal): self
     {
-        return new self($this->user, $equal, $this->textOrPassword);
+        return new self($this->user, $equal, $this->textOrPassword, $this->comments);
     }
 
     /**
@@ -62,6 +88,14 @@ final class OptionValueNoOptionTypeWithPasswordForSymUserEqualTextOrPassword_ec8
      */
     public function withTextOrPassword(\SqlSemantics\Statement\Model\MySql\Role\TextOrPasswordForm $textOrPassword): self
     {
-        return new self($this->user, $this->equal, $textOrPassword);
+        return new self($this->user, $this->equal, $textOrPassword, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->user, $this->equal, $this->textOrPassword, $comments);
     }
 }

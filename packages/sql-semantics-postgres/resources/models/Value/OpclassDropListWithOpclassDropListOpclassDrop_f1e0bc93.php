@@ -17,11 +17,12 @@ final class OpclassDropListWithOpclassDropListOpclassDrop_f1e0bc93 implements \S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OpclassDropListForm $opclassDropList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OpclassDropForm $opclassDrop,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($opclassDropList), 'The opclassDropList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($opclassDrop), 'The opclassDrop must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class OpclassDropListWithOpclassDropListOpclassDrop_f1e0bc93 implements \S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->opclassDropList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->opclassDrop->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->opclassDropList, $this->opclassDrop];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->opclassDropList, \SqlSemantics\Statement\Model\PostgreSql\Role\OpclassDropListForm::class, $replace), $this->replacement($this->opclassDrop, \SqlSemantics\Statement\Model\PostgreSql\Role\OpclassDropForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class OpclassDropListWithOpclassDropListOpclassDrop_f1e0bc93 implements \S
      */
     public function withOpclassDropList(\SqlSemantics\Statement\Model\PostgreSql\Role\OpclassDropListForm $opclassDropList): self
     {
-        return new self($opclassDropList, $this->opclassDrop);
+        return new self($opclassDropList, $this->opclassDrop, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class OpclassDropListWithOpclassDropListOpclassDrop_f1e0bc93 implements \S
      */
     public function withOpclassDrop(\SqlSemantics\Statement\Model\PostgreSql\Role\OpclassDropForm $opclassDrop): self
     {
-        return new self($this->opclassDropList, $opclassDrop);
+        return new self($this->opclassDropList, $opclassDrop, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->opclassDropList, $this->opclassDrop, $comments);
     }
 }

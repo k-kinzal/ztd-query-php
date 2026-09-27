@@ -17,11 +17,12 @@ final class SpHcondListWithSpHcondListSpHcondElement_e7ce5eea implements \SqlSem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpHcondListForm $spHcondList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpHcondElementForm $spHcondElement,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spHcondList), 'The spHcondList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spHcondElement), 'The spHcondElement must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class SpHcondListWithSpHcondListSpHcondElement_e7ce5eea implements \SqlSem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->spHcondList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->spHcondElement->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->spHcondList, $this->spHcondElement];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->spHcondList, \SqlSemantics\Statement\Model\MySql\Role\SpHcondListForm::class, $replace), $this->replacement($this->spHcondElement, \SqlSemantics\Statement\Model\MySql\Role\SpHcondElementForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class SpHcondListWithSpHcondListSpHcondElement_e7ce5eea implements \SqlSem
      */
     public function withSpHcondList(\SqlSemantics\Statement\Model\MySql\Role\SpHcondListForm $spHcondList): self
     {
-        return new self($spHcondList, $this->spHcondElement);
+        return new self($spHcondList, $this->spHcondElement, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class SpHcondListWithSpHcondListSpHcondElement_e7ce5eea implements \SqlSem
      */
     public function withSpHcondElement(\SqlSemantics\Statement\Model\MySql\Role\SpHcondElementForm $spHcondElement): self
     {
-        return new self($this->spHcondList, $spHcondElement);
+        return new self($this->spHcondList, $spHcondElement, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->spHcondList, $this->spHcondElement, $comments);
     }
 }

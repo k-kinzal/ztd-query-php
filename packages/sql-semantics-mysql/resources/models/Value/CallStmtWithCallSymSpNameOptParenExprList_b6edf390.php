@@ -17,11 +17,12 @@ final class CallStmtWithCallSymSpNameOptParenExprList_b6edf390 implements \SqlSe
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptParenExprListForm $optParenExprList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spName), 'The spName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optParenExprList), 'The optParenExprList must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class CallStmtWithCallSymSpNameOptParenExprList_b6edf390 implements \SqlSe
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CALL');
+        $writer->comments($this->comments, 1);
         $this->spName->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optParenExprList->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->spName, $this->optParenExprList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->spName, \SqlSemantics\Statement\Model\MySql\Role\SpNameForm::class, $replace), $this->replacement($this->optParenExprList, \SqlSemantics\Statement\Model\MySql\Role\OptParenExprListForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class CallStmtWithCallSymSpNameOptParenExprList_b6edf390 implements \SqlSe
      */
     public function withSpName(\SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName): self
     {
-        return new self($spName, $this->optParenExprList);
+        return new self($spName, $this->optParenExprList, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class CallStmtWithCallSymSpNameOptParenExprList_b6edf390 implements \SqlSe
      */
     public function withOptParenExprList(\SqlSemantics\Statement\Model\MySql\Role\OptParenExprListForm $optParenExprList): self
     {
-        return new self($this->spName, $optParenExprList);
+        return new self($this->spName, $optParenExprList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->spName, $this->optParenExprList, $comments);
     }
 }

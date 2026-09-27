@@ -17,11 +17,12 @@ final class DropSrsStmtWithDropSpatialSymReferenceSymSystemSymIfExistsRealUlongl
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RealUlonglongNumForm $realUlonglongNum,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ifExists), 'The ifExists must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($realUlonglongNum), 'The realUlonglongNum must be a generated immutable SQL value.');
@@ -32,12 +33,38 @@ final class DropSrsStmtWithDropSpatialSymReferenceSymSystemSymIfExistsRealUlongl
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('DROP');
+        $writer->comments($this->comments, 1);
         $writer->append('SPATIAL');
+        $writer->comments($this->comments, 2);
         $writer->append('REFERENCE');
+        $writer->comments($this->comments, 3);
         $writer->append('SYSTEM');
+        $writer->comments($this->comments, 4);
         $this->ifExists->write($writer);
+        $writer->comments($this->comments, 5);
         $this->realUlonglongNum->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->ifExists, $this->realUlonglongNum];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->ifExists, \SqlSemantics\Statement\Model\MySql\Role\IfExistsForm::class, $replace), $this->replacement($this->realUlonglongNum, \SqlSemantics\Statement\Model\MySql\Role\RealUlonglongNumForm::class, $replace), $this->comments);
     }
 
     /**
@@ -45,7 +72,7 @@ final class DropSrsStmtWithDropSpatialSymReferenceSymSystemSymIfExistsRealUlongl
      */
     public function withIfExists(\SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists): self
     {
-        return new self($ifExists, $this->realUlonglongNum);
+        return new self($ifExists, $this->realUlonglongNum, $this->comments);
     }
 
     /**
@@ -53,6 +80,14 @@ final class DropSrsStmtWithDropSpatialSymReferenceSymSystemSymIfExistsRealUlongl
      */
     public function withRealUlonglongNum(\SqlSemantics\Statement\Model\MySql\Role\RealUlonglongNumForm $realUlonglongNum): self
     {
-        return new self($this->ifExists, $realUlonglongNum);
+        return new self($this->ifExists, $realUlonglongNum, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ifExists, $this->realUlonglongNum, $comments);
     }
 }

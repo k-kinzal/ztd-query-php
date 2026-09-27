@@ -17,12 +17,13 @@ final class FuncExprCommonSubexprWithXmlrootAExprXmlRootVersionOptXmlRootStandal
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\XmlRootVersionForm $xmlRootVersion,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptXmlRootStandaloneForm $optXmlRootStandalone,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($xmlRootVersion), 'The xmlRootVersion must be a generated immutable SQL value.');
@@ -34,13 +35,40 @@ final class FuncExprCommonSubexprWithXmlrootAExprXmlRootVersionOptXmlRootStandal
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('XMLROOT');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->aExpr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(',');
+        $writer->comments($this->comments, 4);
         $this->xmlRootVersion->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optXmlRootStandalone->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->aExpr, $this->xmlRootVersion, $this->optXmlRootStandalone];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->aExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm::class, $replace), $this->replacement($this->xmlRootVersion, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlRootVersionForm::class, $replace), $this->replacement($this->optXmlRootStandalone, \SqlSemantics\Statement\Model\PostgreSql\Role\OptXmlRootStandaloneForm::class, $replace), $this->comments);
     }
 
     /**
@@ -48,7 +76,7 @@ final class FuncExprCommonSubexprWithXmlrootAExprXmlRootVersionOptXmlRootStandal
      */
     public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
     {
-        return new self($aExpr, $this->xmlRootVersion, $this->optXmlRootStandalone);
+        return new self($aExpr, $this->xmlRootVersion, $this->optXmlRootStandalone, $this->comments);
     }
 
     /**
@@ -56,7 +84,7 @@ final class FuncExprCommonSubexprWithXmlrootAExprXmlRootVersionOptXmlRootStandal
      */
     public function withXmlRootVersion(\SqlSemantics\Statement\Model\PostgreSql\Role\XmlRootVersionForm $xmlRootVersion): self
     {
-        return new self($this->aExpr, $xmlRootVersion, $this->optXmlRootStandalone);
+        return new self($this->aExpr, $xmlRootVersion, $this->optXmlRootStandalone, $this->comments);
     }
 
     /**
@@ -64,6 +92,14 @@ final class FuncExprCommonSubexprWithXmlrootAExprXmlRootVersionOptXmlRootStandal
      */
     public function withOptXmlRootStandalone(\SqlSemantics\Statement\Model\PostgreSql\Role\OptXmlRootStandaloneForm $optXmlRootStandalone): self
     {
-        return new self($this->aExpr, $this->xmlRootVersion, $optXmlRootStandalone);
+        return new self($this->aExpr, $this->xmlRootVersion, $optXmlRootStandalone, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->aExpr, $this->xmlRootVersion, $this->optXmlRootStandalone, $comments);
     }
 }

@@ -17,12 +17,13 @@ final class DefaultCollationWithOptDefaultCollateSymOptEqualCollationName_24e9f6
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptDefaultForm $optDefault,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CollationNameForm $collationName,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDefault), 'The optDefault must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
@@ -34,10 +35,34 @@ final class DefaultCollationWithOptDefaultCollateSymOptEqualCollationName_24e9f6
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optDefault->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('COLLATE');
+        $writer->comments($this->comments, 2);
         $this->optEqual->write($writer);
+        $writer->comments($this->comments, 3);
         $this->collationName->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optDefault, $this->optEqual, $this->collationName];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optDefault, \SqlSemantics\Statement\Model\MySql\Role\OptDefaultForm::class, $replace), $this->replacement($this->optEqual, \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm::class, $replace), $this->replacement($this->collationName, \SqlSemantics\Statement\Model\MySql\Role\CollationNameForm::class, $replace), $this->comments);
     }
 
     /**
@@ -45,7 +70,7 @@ final class DefaultCollationWithOptDefaultCollateSymOptEqualCollationName_24e9f6
      */
     public function withOptDefault(\SqlSemantics\Statement\Model\MySql\Role\OptDefaultForm $optDefault): self
     {
-        return new self($optDefault, $this->optEqual, $this->collationName);
+        return new self($optDefault, $this->optEqual, $this->collationName, $this->comments);
     }
 
     /**
@@ -53,7 +78,7 @@ final class DefaultCollationWithOptDefaultCollateSymOptEqualCollationName_24e9f6
      */
     public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
     {
-        return new self($this->optDefault, $optEqual, $this->collationName);
+        return new self($this->optDefault, $optEqual, $this->collationName, $this->comments);
     }
 
     /**
@@ -61,6 +86,14 @@ final class DefaultCollationWithOptDefaultCollateSymOptEqualCollationName_24e9f6
      */
     public function withCollationName(\SqlSemantics\Statement\Model\MySql\Role\CollationNameForm $collationName): self
     {
-        return new self($this->optDefault, $this->optEqual, $collationName);
+        return new self($this->optDefault, $this->optEqual, $collationName, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optDefault, $this->optEqual, $this->collationName, $comments);
     }
 }

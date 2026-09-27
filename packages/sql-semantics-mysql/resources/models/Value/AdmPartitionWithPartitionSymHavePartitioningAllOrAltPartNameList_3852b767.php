@@ -17,11 +17,12 @@ final class AdmPartitionWithPartitionSymHavePartitioningAllOrAltPartNameList_385
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\HavePartitioningForm $havePartitioning,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AllOrAltPartNameListForm $allOrAltPartNameList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($havePartitioning), 'The havePartitioning must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($allOrAltPartNameList), 'The allOrAltPartNameList must be a generated immutable SQL value.');
@@ -32,11 +33,36 @@ final class AdmPartitionWithPartitionSymHavePartitioningAllOrAltPartNameList_385
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('PARTITION');
+        $writer->comments($this->comments, 1);
         $this->havePartitioning->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('(');
+        $writer->comments($this->comments, 3);
         $this->allOrAltPartNameList->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->havePartitioning, $this->allOrAltPartNameList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->havePartitioning, \SqlSemantics\Statement\Model\MySql\Role\HavePartitioningForm::class, $replace), $this->replacement($this->allOrAltPartNameList, \SqlSemantics\Statement\Model\MySql\Role\AllOrAltPartNameListForm::class, $replace), $this->comments);
     }
 
     /**
@@ -44,7 +70,7 @@ final class AdmPartitionWithPartitionSymHavePartitioningAllOrAltPartNameList_385
      */
     public function withHavePartitioning(\SqlSemantics\Statement\Model\MySql\Role\HavePartitioningForm $havePartitioning): self
     {
-        return new self($havePartitioning, $this->allOrAltPartNameList);
+        return new self($havePartitioning, $this->allOrAltPartNameList, $this->comments);
     }
 
     /**
@@ -52,6 +78,14 @@ final class AdmPartitionWithPartitionSymHavePartitioningAllOrAltPartNameList_385
      */
     public function withAllOrAltPartNameList(\SqlSemantics\Statement\Model\MySql\Role\AllOrAltPartNameListForm $allOrAltPartNameList): self
     {
-        return new self($this->havePartitioning, $allOrAltPartNameList);
+        return new self($this->havePartitioning, $allOrAltPartNameList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->havePartitioning, $this->allOrAltPartNameList, $comments);
     }
 }

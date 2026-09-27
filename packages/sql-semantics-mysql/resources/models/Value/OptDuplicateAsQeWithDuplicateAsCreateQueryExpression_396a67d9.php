@@ -17,11 +17,12 @@ final class OptDuplicateAsQeWithDuplicateAsCreateQueryExpression_396a67d9 implem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DuplicateForm $duplicate,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AsCreateQueryExpressionForm $asCreateQueryExpression,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($duplicate), 'The duplicate must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($asCreateQueryExpression), 'The asCreateQueryExpression must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class OptDuplicateAsQeWithDuplicateAsCreateQueryExpression_396a67d9 implem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->duplicate->write($writer);
+        $writer->comments($this->comments, 1);
         $this->asCreateQueryExpression->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->duplicate, $this->asCreateQueryExpression];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->duplicate, \SqlSemantics\Statement\Model\MySql\Role\DuplicateForm::class, $replace), $this->replacement($this->asCreateQueryExpression, \SqlSemantics\Statement\Model\MySql\Role\AsCreateQueryExpressionForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class OptDuplicateAsQeWithDuplicateAsCreateQueryExpression_396a67d9 implem
      */
     public function withDuplicate(\SqlSemantics\Statement\Model\MySql\Role\DuplicateForm $duplicate): self
     {
-        return new self($duplicate, $this->asCreateQueryExpression);
+        return new self($duplicate, $this->asCreateQueryExpression, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class OptDuplicateAsQeWithDuplicateAsCreateQueryExpression_396a67d9 implem
      */
     public function withAsCreateQueryExpression(\SqlSemantics\Statement\Model\MySql\Role\AsCreateQueryExpressionForm $asCreateQueryExpression): self
     {
-        return new self($this->duplicate, $asCreateQueryExpression);
+        return new self($this->duplicate, $asCreateQueryExpression, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->duplicate, $this->asCreateQueryExpression, $comments);
     }
 }

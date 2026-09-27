@@ -17,11 +17,12 @@ final class SubPartFieldListWithSubPartFieldListSubPartFieldItem_f02497fe implem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SubPartFieldListForm $subPartFieldList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SubPartFieldItemForm $subPartFieldItem,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($subPartFieldList), 'The subPartFieldList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($subPartFieldItem), 'The subPartFieldItem must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class SubPartFieldListWithSubPartFieldListSubPartFieldItem_f02497fe implem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->subPartFieldList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->subPartFieldItem->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->subPartFieldList, $this->subPartFieldItem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->subPartFieldList, \SqlSemantics\Statement\Model\MySql\Role\SubPartFieldListForm::class, $replace), $this->replacement($this->subPartFieldItem, \SqlSemantics\Statement\Model\MySql\Role\SubPartFieldItemForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class SubPartFieldListWithSubPartFieldListSubPartFieldItem_f02497fe implem
      */
     public function withSubPartFieldList(\SqlSemantics\Statement\Model\MySql\Role\SubPartFieldListForm $subPartFieldList): self
     {
-        return new self($subPartFieldList, $this->subPartFieldItem);
+        return new self($subPartFieldList, $this->subPartFieldItem, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class SubPartFieldListWithSubPartFieldListSubPartFieldItem_f02497fe implem
      */
     public function withSubPartFieldItem(\SqlSemantics\Statement\Model\MySql\Role\SubPartFieldItemForm $subPartFieldItem): self
     {
-        return new self($this->subPartFieldList, $subPartFieldItem);
+        return new self($this->subPartFieldList, $subPartFieldItem, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->subPartFieldList, $this->subPartFieldItem, $comments);
     }
 }

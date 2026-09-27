@@ -17,11 +17,12 @@ final class SourceDefWithChangeReplicationSourceTlsCiphersuitesEqSourceTlsCipher
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceTlsCiphersuitesForm $changeReplicationSourceTlsCiphersuites,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SourceTlsCiphersuitesDefForm $sourceTlsCiphersuitesDef,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($changeReplicationSourceTlsCiphersuites), 'The changeReplicationSourceTlsCiphersuites must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($sourceTlsCiphersuitesDef), 'The sourceTlsCiphersuitesDef must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class SourceDefWithChangeReplicationSourceTlsCiphersuitesEqSourceTlsCipher
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->changeReplicationSourceTlsCiphersuites->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('=');
+        $writer->comments($this->comments, 2);
         $this->sourceTlsCiphersuitesDef->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->changeReplicationSourceTlsCiphersuites, $this->sourceTlsCiphersuitesDef];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->changeReplicationSourceTlsCiphersuites, \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceTlsCiphersuitesForm::class, $replace), $this->replacement($this->sourceTlsCiphersuitesDef, \SqlSemantics\Statement\Model\MySql\Role\SourceTlsCiphersuitesDefForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class SourceDefWithChangeReplicationSourceTlsCiphersuitesEqSourceTlsCipher
      */
     public function withChangeReplicationSourceTlsCiphersuites(\SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceTlsCiphersuitesForm $changeReplicationSourceTlsCiphersuites): self
     {
-        return new self($changeReplicationSourceTlsCiphersuites, $this->sourceTlsCiphersuitesDef);
+        return new self($changeReplicationSourceTlsCiphersuites, $this->sourceTlsCiphersuitesDef, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class SourceDefWithChangeReplicationSourceTlsCiphersuitesEqSourceTlsCipher
      */
     public function withSourceTlsCiphersuitesDef(\SqlSemantics\Statement\Model\MySql\Role\SourceTlsCiphersuitesDefForm $sourceTlsCiphersuitesDef): self
     {
-        return new self($this->changeReplicationSourceTlsCiphersuites, $sourceTlsCiphersuitesDef);
+        return new self($this->changeReplicationSourceTlsCiphersuites, $sourceTlsCiphersuitesDef, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->changeReplicationSourceTlsCiphersuites, $this->sourceTlsCiphersuitesDef, $comments);
     }
 }

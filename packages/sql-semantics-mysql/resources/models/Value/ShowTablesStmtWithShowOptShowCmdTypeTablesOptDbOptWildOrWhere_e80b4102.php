@@ -17,12 +17,13 @@ final class ShowTablesStmtWithShowOptShowCmdTypeTablesOptDbOptWildOrWhere_e80b41
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptShowCmdTypeForm $optShowCmdType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptDbForm $optDb,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForm $optWildOrWhere,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optShowCmdType), 'The optShowCmdType must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDb), 'The optDb must be a generated immutable SQL value.');
@@ -34,11 +35,36 @@ final class ShowTablesStmtWithShowOptShowCmdTypeTablesOptDbOptWildOrWhere_e80b41
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SHOW');
+        $writer->comments($this->comments, 1);
         $this->optShowCmdType->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('TABLES');
+        $writer->comments($this->comments, 3);
         $this->optDb->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optWildOrWhere->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optShowCmdType, $this->optDb, $this->optWildOrWhere];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optShowCmdType, \SqlSemantics\Statement\Model\MySql\Role\OptShowCmdTypeForm::class, $replace), $this->replacement($this->optDb, \SqlSemantics\Statement\Model\MySql\Role\OptDbForm::class, $replace), $this->replacement($this->optWildOrWhere, \SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForm::class, $replace), $this->comments);
     }
 
     /**
@@ -46,7 +72,7 @@ final class ShowTablesStmtWithShowOptShowCmdTypeTablesOptDbOptWildOrWhere_e80b41
      */
     public function withOptShowCmdType(\SqlSemantics\Statement\Model\MySql\Role\OptShowCmdTypeForm $optShowCmdType): self
     {
-        return new self($optShowCmdType, $this->optDb, $this->optWildOrWhere);
+        return new self($optShowCmdType, $this->optDb, $this->optWildOrWhere, $this->comments);
     }
 
     /**
@@ -54,7 +80,7 @@ final class ShowTablesStmtWithShowOptShowCmdTypeTablesOptDbOptWildOrWhere_e80b41
      */
     public function withOptDb(\SqlSemantics\Statement\Model\MySql\Role\OptDbForm $optDb): self
     {
-        return new self($this->optShowCmdType, $optDb, $this->optWildOrWhere);
+        return new self($this->optShowCmdType, $optDb, $this->optWildOrWhere, $this->comments);
     }
 
     /**
@@ -62,6 +88,14 @@ final class ShowTablesStmtWithShowOptShowCmdTypeTablesOptDbOptWildOrWhere_e80b41
      */
     public function withOptWildOrWhere(\SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForm $optWildOrWhere): self
     {
-        return new self($this->optShowCmdType, $this->optDb, $optWildOrWhere);
+        return new self($this->optShowCmdType, $this->optDb, $optWildOrWhere, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optShowCmdType, $this->optDb, $this->optWildOrWhere, $comments);
     }
 }

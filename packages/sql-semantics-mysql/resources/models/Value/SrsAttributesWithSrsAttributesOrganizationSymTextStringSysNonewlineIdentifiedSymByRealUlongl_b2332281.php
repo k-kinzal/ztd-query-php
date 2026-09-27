@@ -17,12 +17,13 @@ final class SrsAttributesWithSrsAttributesOrganizationSymTextStringSysNonewlineI
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SrsAttributesForm $srsAttributes,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RealUlonglongNumForm $realUlonglongNum,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($srsAttributes), 'The srsAttributes must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSysNonewline), 'The textStringSysNonewline must be a generated immutable SQL value.');
@@ -34,12 +35,38 @@ final class SrsAttributesWithSrsAttributesOrganizationSymTextStringSysNonewlineI
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->srsAttributes->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('ORGANIZATION');
+        $writer->comments($this->comments, 2);
         $this->textStringSysNonewline->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('IDENTIFIED');
+        $writer->comments($this->comments, 4);
         $writer->append('BY');
+        $writer->comments($this->comments, 5);
         $this->realUlonglongNum->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->srsAttributes, $this->textStringSysNonewline, $this->realUlonglongNum];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->srsAttributes, \SqlSemantics\Statement\Model\MySql\Role\SrsAttributesForm::class, $replace), $this->replacement($this->textStringSysNonewline, \SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm::class, $replace), $this->replacement($this->realUlonglongNum, \SqlSemantics\Statement\Model\MySql\Role\RealUlonglongNumForm::class, $replace), $this->comments);
     }
 
     /**
@@ -47,7 +74,7 @@ final class SrsAttributesWithSrsAttributesOrganizationSymTextStringSysNonewlineI
      */
     public function withSrsAttributes(\SqlSemantics\Statement\Model\MySql\Role\SrsAttributesForm $srsAttributes): self
     {
-        return new self($srsAttributes, $this->textStringSysNonewline, $this->realUlonglongNum);
+        return new self($srsAttributes, $this->textStringSysNonewline, $this->realUlonglongNum, $this->comments);
     }
 
     /**
@@ -55,7 +82,7 @@ final class SrsAttributesWithSrsAttributesOrganizationSymTextStringSysNonewlineI
      */
     public function withTextStringSysNonewline(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline): self
     {
-        return new self($this->srsAttributes, $textStringSysNonewline, $this->realUlonglongNum);
+        return new self($this->srsAttributes, $textStringSysNonewline, $this->realUlonglongNum, $this->comments);
     }
 
     /**
@@ -63,6 +90,14 @@ final class SrsAttributesWithSrsAttributesOrganizationSymTextStringSysNonewlineI
      */
     public function withRealUlonglongNum(\SqlSemantics\Statement\Model\MySql\Role\RealUlonglongNumForm $realUlonglongNum): self
     {
-        return new self($this->srsAttributes, $this->textStringSysNonewline, $realUlonglongNum);
+        return new self($this->srsAttributes, $this->textStringSysNonewline, $realUlonglongNum, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->srsAttributes, $this->textStringSysNonewline, $this->realUlonglongNum, $comments);
     }
 }

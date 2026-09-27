@@ -17,13 +17,14 @@ final class ColConstraintElemWithReferencesQualifiedNameOptColumnListKeyMatchKey
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnListForm $optColumnList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\KeyMatchForm $keyMatch,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\KeyActionsForm $keyActions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optColumnList), 'The optColumnList must be a generated immutable SQL value.');
@@ -36,11 +37,36 @@ final class ColConstraintElemWithReferencesQualifiedNameOptColumnListKeyMatchKey
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('REFERENCES');
+        $writer->comments($this->comments, 1);
         $this->qualifiedName->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optColumnList->write($writer);
+        $writer->comments($this->comments, 3);
         $this->keyMatch->write($writer);
+        $writer->comments($this->comments, 4);
         $this->keyActions->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->qualifiedName, $this->optColumnList, $this->keyMatch, $this->keyActions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->optColumnList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnListForm::class, $replace), $this->replacement($this->keyMatch, \SqlSemantics\Statement\Model\PostgreSql\Role\KeyMatchForm::class, $replace), $this->replacement($this->keyActions, \SqlSemantics\Statement\Model\PostgreSql\Role\KeyActionsForm::class, $replace), $this->comments);
     }
 
     /**
@@ -48,7 +74,7 @@ final class ColConstraintElemWithReferencesQualifiedNameOptColumnListKeyMatchKey
      */
     public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
     {
-        return new self($qualifiedName, $this->optColumnList, $this->keyMatch, $this->keyActions);
+        return new self($qualifiedName, $this->optColumnList, $this->keyMatch, $this->keyActions, $this->comments);
     }
 
     /**
@@ -56,7 +82,7 @@ final class ColConstraintElemWithReferencesQualifiedNameOptColumnListKeyMatchKey
      */
     public function withOptColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnListForm $optColumnList): self
     {
-        return new self($this->qualifiedName, $optColumnList, $this->keyMatch, $this->keyActions);
+        return new self($this->qualifiedName, $optColumnList, $this->keyMatch, $this->keyActions, $this->comments);
     }
 
     /**
@@ -64,7 +90,7 @@ final class ColConstraintElemWithReferencesQualifiedNameOptColumnListKeyMatchKey
      */
     public function withKeyMatch(\SqlSemantics\Statement\Model\PostgreSql\Role\KeyMatchForm $keyMatch): self
     {
-        return new self($this->qualifiedName, $this->optColumnList, $keyMatch, $this->keyActions);
+        return new self($this->qualifiedName, $this->optColumnList, $keyMatch, $this->keyActions, $this->comments);
     }
 
     /**
@@ -72,6 +98,14 @@ final class ColConstraintElemWithReferencesQualifiedNameOptColumnListKeyMatchKey
      */
     public function withKeyActions(\SqlSemantics\Statement\Model\PostgreSql\Role\KeyActionsForm $keyActions): self
     {
-        return new self($this->qualifiedName, $this->optColumnList, $this->keyMatch, $keyActions);
+        return new self($this->qualifiedName, $this->optColumnList, $this->keyMatch, $keyActions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->qualifiedName, $this->optColumnList, $this->keyMatch, $this->keyActions, $comments);
     }
 }

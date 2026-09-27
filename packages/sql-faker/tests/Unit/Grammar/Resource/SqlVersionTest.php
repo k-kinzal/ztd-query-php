@@ -29,7 +29,7 @@ final class SqlVersionTest extends TestCase
     {
         $versions = SqlVersion::all();
 
-        self::assertCount(11, $versions);
+        self::assertCount(12, $versions);
         self::assertSame(
             ['mysql-5.6.51', 'mysql-5.7.44', 'mysql-8.0.44'],
             array_slice(array_map(static fn (SqlVersion $version): string => $version->name, $versions), 0, 3),
@@ -61,6 +61,7 @@ final class SqlVersionTest extends TestCase
         foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $release) {
             yield "mysql-{$release}" => ["mysql-{$release}", "https://raw.githubusercontent.com/mysql/mysql-server/refs/tags/mysql-{$release}/sql/sql_yacc.yy"];
         }
+        yield 'pg-16.6' => ['pg-16.6', 'https://raw.githubusercontent.com/postgres/postgres/refs/tags/REL_16_6/src/backend/parser/gram.y'];
         yield 'pg-17.2' => ['pg-17.2', 'https://raw.githubusercontent.com/postgres/postgres/refs/tags/REL_17_2/src/backend/parser/gram.y'];
         yield 'sqlite-3.47.2' => ['sqlite-3.47.2', 'https://raw.githubusercontent.com/sqlite/sqlite/refs/tags/version-3.47.2/src/parse.y'];
     }

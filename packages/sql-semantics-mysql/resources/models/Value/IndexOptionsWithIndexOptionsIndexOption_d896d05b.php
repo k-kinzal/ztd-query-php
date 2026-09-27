@@ -17,11 +17,12 @@ final class IndexOptionsWithIndexOptionsIndexOption_d896d05b implements \SqlSema
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IndexOptionsForm $indexOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IndexOptionForm $indexOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($indexOptions), 'The indexOptions must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($indexOption), 'The indexOption must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class IndexOptionsWithIndexOptionsIndexOption_d896d05b implements \SqlSema
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->indexOptions->write($writer);
+        $writer->comments($this->comments, 1);
         $this->indexOption->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->indexOptions, $this->indexOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->indexOptions, \SqlSemantics\Statement\Model\MySql\Role\IndexOptionsForm::class, $replace), $this->replacement($this->indexOption, \SqlSemantics\Statement\Model\MySql\Role\IndexOptionForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class IndexOptionsWithIndexOptionsIndexOption_d896d05b implements \SqlSema
      */
     public function withIndexOptions(\SqlSemantics\Statement\Model\MySql\Role\IndexOptionsForm $indexOptions): self
     {
-        return new self($indexOptions, $this->indexOption);
+        return new self($indexOptions, $this->indexOption, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class IndexOptionsWithIndexOptionsIndexOption_d896d05b implements \SqlSema
      */
     public function withIndexOption(\SqlSemantics\Statement\Model\MySql\Role\IndexOptionForm $indexOption): self
     {
-        return new self($this->indexOptions, $indexOption);
+        return new self($this->indexOptions, $indexOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->indexOptions, $this->indexOption, $comments);
     }
 }

@@ -17,7 +17,7 @@ final class InsertStmtWithInsertInsertLockOptionOptIgnoreOptIntoTableIdentOptUse
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertLockOptionForm $insertLockOption,
@@ -27,6 +27,7 @@ final class InsertStmtWithInsertInsertLockOptionOptIgnoreOptIntoTableIdentOptUse
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUsePartitionForm $optUsePartition,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertFromSubqueryForm $insertFromSubquery,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptInsertUpdateListForm $optInsertUpdateList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($insertLockOption), 'The insertLockOption must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIgnore), 'The optIgnore must be a generated immutable SQL value.');
@@ -42,14 +43,42 @@ final class InsertStmtWithInsertInsertLockOptionOptIgnoreOptIntoTableIdentOptUse
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('INSERT');
+        $writer->comments($this->comments, 1);
         $this->insertLockOption->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optIgnore->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optInto->write($writer);
+        $writer->comments($this->comments, 4);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optUsePartition->write($writer);
+        $writer->comments($this->comments, 6);
         $this->insertFromSubquery->write($writer);
+        $writer->comments($this->comments, 7);
         $this->optInsertUpdateList->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $this->insertFromSubquery, $this->optInsertUpdateList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->insertLockOption, \SqlSemantics\Statement\Model\MySql\Role\InsertLockOptionForm::class, $replace), $this->replacement($this->optIgnore, \SqlSemantics\Statement\Model\MySql\Role\OptIgnoreForm::class, $replace), $this->replacement($this->optInto, \SqlSemantics\Statement\Model\MySql\Role\OptIntoForm::class, $replace), $this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->optUsePartition, \SqlSemantics\Statement\Model\MySql\Role\OptUsePartitionForm::class, $replace), $this->replacement($this->insertFromSubquery, \SqlSemantics\Statement\Model\MySql\Role\InsertFromSubqueryForm::class, $replace), $this->replacement($this->optInsertUpdateList, \SqlSemantics\Statement\Model\MySql\Role\OptInsertUpdateListForm::class, $replace), $this->comments);
     }
 
     /**
@@ -57,7 +86,7 @@ final class InsertStmtWithInsertInsertLockOptionOptIgnoreOptIntoTableIdentOptUse
      */
     public function withInsertLockOption(\SqlSemantics\Statement\Model\MySql\Role\InsertLockOptionForm $insertLockOption): self
     {
-        return new self($insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $this->insertFromSubquery, $this->optInsertUpdateList);
+        return new self($insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $this->insertFromSubquery, $this->optInsertUpdateList, $this->comments);
     }
 
     /**
@@ -65,7 +94,7 @@ final class InsertStmtWithInsertInsertLockOptionOptIgnoreOptIntoTableIdentOptUse
      */
     public function withOptIgnore(\SqlSemantics\Statement\Model\MySql\Role\OptIgnoreForm $optIgnore): self
     {
-        return new self($this->insertLockOption, $optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $this->insertFromSubquery, $this->optInsertUpdateList);
+        return new self($this->insertLockOption, $optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $this->insertFromSubquery, $this->optInsertUpdateList, $this->comments);
     }
 
     /**
@@ -73,7 +102,7 @@ final class InsertStmtWithInsertInsertLockOptionOptIgnoreOptIntoTableIdentOptUse
      */
     public function withOptInto(\SqlSemantics\Statement\Model\MySql\Role\OptIntoForm $optInto): self
     {
-        return new self($this->insertLockOption, $this->optIgnore, $optInto, $this->tableIdent, $this->optUsePartition, $this->insertFromSubquery, $this->optInsertUpdateList);
+        return new self($this->insertLockOption, $this->optIgnore, $optInto, $this->tableIdent, $this->optUsePartition, $this->insertFromSubquery, $this->optInsertUpdateList, $this->comments);
     }
 
     /**
@@ -81,7 +110,7 @@ final class InsertStmtWithInsertInsertLockOptionOptIgnoreOptIntoTableIdentOptUse
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($this->insertLockOption, $this->optIgnore, $this->optInto, $tableIdent, $this->optUsePartition, $this->insertFromSubquery, $this->optInsertUpdateList);
+        return new self($this->insertLockOption, $this->optIgnore, $this->optInto, $tableIdent, $this->optUsePartition, $this->insertFromSubquery, $this->optInsertUpdateList, $this->comments);
     }
 
     /**
@@ -89,7 +118,7 @@ final class InsertStmtWithInsertInsertLockOptionOptIgnoreOptIntoTableIdentOptUse
      */
     public function withOptUsePartition(\SqlSemantics\Statement\Model\MySql\Role\OptUsePartitionForm $optUsePartition): self
     {
-        return new self($this->insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $optUsePartition, $this->insertFromSubquery, $this->optInsertUpdateList);
+        return new self($this->insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $optUsePartition, $this->insertFromSubquery, $this->optInsertUpdateList, $this->comments);
     }
 
     /**
@@ -97,7 +126,7 @@ final class InsertStmtWithInsertInsertLockOptionOptIgnoreOptIntoTableIdentOptUse
      */
     public function withInsertFromSubquery(\SqlSemantics\Statement\Model\MySql\Role\InsertFromSubqueryForm $insertFromSubquery): self
     {
-        return new self($this->insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $insertFromSubquery, $this->optInsertUpdateList);
+        return new self($this->insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $insertFromSubquery, $this->optInsertUpdateList, $this->comments);
     }
 
     /**
@@ -105,6 +134,14 @@ final class InsertStmtWithInsertInsertLockOptionOptIgnoreOptIntoTableIdentOptUse
      */
     public function withOptInsertUpdateList(\SqlSemantics\Statement\Model\MySql\Role\OptInsertUpdateListForm $optInsertUpdateList): self
     {
-        return new self($this->insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $this->insertFromSubquery, $optInsertUpdateList);
+        return new self($this->insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $this->insertFromSubquery, $optInsertUpdateList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $this->insertFromSubquery, $this->optInsertUpdateList, $comments);
     }
 }

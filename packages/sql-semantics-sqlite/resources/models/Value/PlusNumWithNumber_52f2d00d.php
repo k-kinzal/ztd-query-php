@@ -17,10 +17,11 @@ final class PlusNumWithNumber_52f2d00d implements \SqlSemantics\Statement\Model\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $number,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($number, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['number'], 'The number must be a complete number lexical spelling.');
     }
@@ -30,7 +31,28 @@ final class PlusNumWithNumber_52f2d00d implements \SqlSemantics\Statement\Model\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->number);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [];
+    }
+
+    /**
+     * This form holds no values to replace.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return $this;
     }
 
     /**
@@ -38,6 +60,14 @@ final class PlusNumWithNumber_52f2d00d implements \SqlSemantics\Statement\Model\
      */
     public function withNumber(string $number): self
     {
-        return new self($number);
+        return new self($number, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->number, $comments);
     }
 }

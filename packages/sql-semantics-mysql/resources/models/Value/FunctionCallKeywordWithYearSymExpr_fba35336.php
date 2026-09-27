@@ -17,11 +17,12 @@ final class FunctionCallKeywordWithYearSymExpr_fba35336 implements \SqlSemantics
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $yearSym,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($yearSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['YEAR_SYM'], 'The yearSym must be a complete YEAR_SYM lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
@@ -32,10 +33,34 @@ final class FunctionCallKeywordWithYearSymExpr_fba35336 implements \SqlSemantics
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->yearSym);
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->expr];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->yearSym, $this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->comments);
     }
 
     /**
@@ -43,7 +68,7 @@ final class FunctionCallKeywordWithYearSymExpr_fba35336 implements \SqlSemantics
      */
     public function withYearSym(string $yearSym): self
     {
-        return new self($yearSym, $this->expr);
+        return new self($yearSym, $this->expr, $this->comments);
     }
 
     /**
@@ -51,6 +76,14 @@ final class FunctionCallKeywordWithYearSymExpr_fba35336 implements \SqlSemantics
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($this->yearSym, $expr);
+        return new self($this->yearSym, $expr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->yearSym, $this->expr, $comments);
     }
 }

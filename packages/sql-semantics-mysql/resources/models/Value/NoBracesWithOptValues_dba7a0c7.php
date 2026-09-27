@@ -17,10 +17,11 @@ final class NoBracesWithOptValues_dba7a0c7 implements \SqlSemantics\Statement\Mo
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptValuesForm $optValues,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optValues), 'The optValues must be a generated immutable SQL value.');
     }
@@ -30,9 +31,32 @@ final class NoBracesWithOptValues_dba7a0c7 implements \SqlSemantics\Statement\Mo
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->optValues->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optValues];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optValues, \SqlSemantics\Statement\Model\MySql\Role\OptValuesForm::class, $replace), $this->comments);
     }
 
     /**
@@ -40,6 +64,14 @@ final class NoBracesWithOptValues_dba7a0c7 implements \SqlSemantics\Statement\Mo
      */
     public function withOptValues(\SqlSemantics\Statement\Model\MySql\Role\OptValuesForm $optValues): self
     {
-        return new self($optValues);
+        return new self($optValues, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optValues, $comments);
     }
 }

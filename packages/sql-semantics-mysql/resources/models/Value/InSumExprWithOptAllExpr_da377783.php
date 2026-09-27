@@ -17,11 +17,12 @@ final class InSumExprWithOptAllExpr_da377783 implements \SqlSemantics\Statement\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptAllForm $optAll,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optAll), 'The optAll must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class InSumExprWithOptAllExpr_da377783 implements \SqlSemantics\Statement\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optAll->write($writer);
+        $writer->comments($this->comments, 1);
         $this->expr->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optAll, $this->expr];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optAll, \SqlSemantics\Statement\Model\MySql\Role\OptAllForm::class, $replace), $this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class InSumExprWithOptAllExpr_da377783 implements \SqlSemantics\Statement\
      */
     public function withOptAll(\SqlSemantics\Statement\Model\MySql\Role\OptAllForm $optAll): self
     {
-        return new self($optAll, $this->expr);
+        return new self($optAll, $this->expr, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class InSumExprWithOptAllExpr_da377783 implements \SqlSemantics\Statement\
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($this->optAll, $expr);
+        return new self($this->optAll, $expr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optAll, $this->expr, $comments);
     }
 }

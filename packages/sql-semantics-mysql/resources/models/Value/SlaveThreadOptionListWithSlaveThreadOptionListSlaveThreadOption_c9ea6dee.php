@@ -17,11 +17,12 @@ final class SlaveThreadOptionListWithSlaveThreadOptionListSlaveThreadOption_c9ea
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SlaveThreadOptionListForm $slaveThreadOptionList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SlaveThreadOptionForm $slaveThreadOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($slaveThreadOptionList), 'The slaveThreadOptionList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($slaveThreadOption), 'The slaveThreadOption must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class SlaveThreadOptionListWithSlaveThreadOptionListSlaveThreadOption_c9ea
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->slaveThreadOptionList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->slaveThreadOption->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->slaveThreadOptionList, $this->slaveThreadOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->slaveThreadOptionList, \SqlSemantics\Statement\Model\MySql\Role\SlaveThreadOptionListForm::class, $replace), $this->replacement($this->slaveThreadOption, \SqlSemantics\Statement\Model\MySql\Role\SlaveThreadOptionForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class SlaveThreadOptionListWithSlaveThreadOptionListSlaveThreadOption_c9ea
      */
     public function withSlaveThreadOptionList(\SqlSemantics\Statement\Model\MySql\Role\SlaveThreadOptionListForm $slaveThreadOptionList): self
     {
-        return new self($slaveThreadOptionList, $this->slaveThreadOption);
+        return new self($slaveThreadOptionList, $this->slaveThreadOption, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class SlaveThreadOptionListWithSlaveThreadOptionListSlaveThreadOption_c9ea
      */
     public function withSlaveThreadOption(\SqlSemantics\Statement\Model\MySql\Role\SlaveThreadOptionForm $slaveThreadOption): self
     {
-        return new self($this->slaveThreadOptionList, $slaveThreadOption);
+        return new self($this->slaveThreadOptionList, $slaveThreadOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->slaveThreadOptionList, $this->slaveThreadOption, $comments);
     }
 }

@@ -25,8 +25,9 @@ use SqlFaker\PostgreSql\Generation\Value\OperatorDomain;
 use SqlFaker\PostgreSql\Generation\Value\QuotedDomain;
 
 /**
- * Declares scanner values, fixed spellings, contextual domains and spacing for PostgreSQL 17.2.
- * Source tag REL_17_2 matches pg-17.2 in resources/version.php.
+ * Declares scanner values, fixed spellings, contextual domains and spacing for PostgreSQL 16.6 and 17.2.
+ * Source tag REL_17_2 matches pg-17.2 in resources/version.php; REL_16_6 (pg-16.6) declares a strict subset
+ * of its keywords with the same scanner rules, so both releases share these declarations.
  * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/parser.c
  * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/scan.l
  * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y
@@ -541,7 +542,7 @@ final class DefinitionFactory
                 new VersionedLexemeGenerator(
                     $version,
                     new VersionCase(
-                        ['pg-17.2'],
+                        ['pg-16.6', 'pg-17.2'],
                         new MatchingLexemeGenerator(
                             static fn (LexemeInput $input): bool => isset($keywords[$input->terminal()->name]) || in_array($input->terminal()->name, ['FORMAT_LA', 'NOT_LA', 'NULLS_LA', 'WITH_LA', 'WITHOUT_LA'], true),
                             new KeywordLexemeGenerator(
@@ -554,7 +555,7 @@ final class DefinitionFactory
                 new VersionedLexemeGenerator(
                     $version,
                     new VersionCase(
-                        ['pg-17.2'],
+                        ['pg-16.6', 'pg-17.2'],
                         new ChoiceLexemeGenerator(
                             new ChoiceLexemeGenerator(
                                 new ChoiceLexemeGenerator(

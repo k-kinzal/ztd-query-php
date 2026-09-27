@@ -17,11 +17,12 @@ final class TransactionStmtLegacyWithBeginPOptTransactionTransactionModeListOrEm
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTransactionForm $optTransaction,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TransactionModeListOrEmptyForm $transactionModeListOrEmpty,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTransaction), 'The optTransaction must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($transactionModeListOrEmpty), 'The transactionModeListOrEmpty must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class TransactionStmtLegacyWithBeginPOptTransactionTransactionModeListOrEm
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('BEGIN');
+        $writer->comments($this->comments, 1);
         $this->optTransaction->write($writer);
+        $writer->comments($this->comments, 2);
         $this->transactionModeListOrEmpty->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optTransaction, $this->transactionModeListOrEmpty];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optTransaction, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTransactionForm::class, $replace), $this->replacement($this->transactionModeListOrEmpty, \SqlSemantics\Statement\Model\PostgreSql\Role\TransactionModeListOrEmptyForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class TransactionStmtLegacyWithBeginPOptTransactionTransactionModeListOrEm
      */
     public function withOptTransaction(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTransactionForm $optTransaction): self
     {
-        return new self($optTransaction, $this->transactionModeListOrEmpty);
+        return new self($optTransaction, $this->transactionModeListOrEmpty, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class TransactionStmtLegacyWithBeginPOptTransactionTransactionModeListOrEm
      */
     public function withTransactionModeListOrEmpty(\SqlSemantics\Statement\Model\PostgreSql\Role\TransactionModeListOrEmptyForm $transactionModeListOrEmpty): self
     {
-        return new self($this->optTransaction, $transactionModeListOrEmpty);
+        return new self($this->optTransaction, $transactionModeListOrEmpty, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optTransaction, $this->transactionModeListOrEmpty, $comments);
     }
 }

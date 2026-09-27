@@ -17,11 +17,12 @@ final class CmdWithBeginTranstypeTransOpt_d437fc17 implements \SqlSemantics\Stat
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TranstypeForm $transtype,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TransOptForm $transOpt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($transtype), 'The transtype must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($transOpt), 'The transOpt must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class CmdWithBeginTranstypeTransOpt_d437fc17 implements \SqlSemantics\Stat
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('BEGIN');
+        $writer->comments($this->comments, 1);
         $this->transtype->write($writer);
+        $writer->comments($this->comments, 2);
         $this->transOpt->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->transtype, $this->transOpt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->transtype, \SqlSemantics\Statement\Model\Sqlite\Role\TranstypeForm::class, $replace), $this->replacement($this->transOpt, \SqlSemantics\Statement\Model\Sqlite\Role\TransOptForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class CmdWithBeginTranstypeTransOpt_d437fc17 implements \SqlSemantics\Stat
      */
     public function withTranstype(\SqlSemantics\Statement\Model\Sqlite\Role\TranstypeForm $transtype): self
     {
-        return new self($transtype, $this->transOpt);
+        return new self($transtype, $this->transOpt, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class CmdWithBeginTranstypeTransOpt_d437fc17 implements \SqlSemantics\Stat
      */
     public function withTransOpt(\SqlSemantics\Statement\Model\Sqlite\Role\TransOptForm $transOpt): self
     {
-        return new self($this->transtype, $transOpt);
+        return new self($this->transtype, $transOpt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->transtype, $this->transOpt, $comments);
     }
 }

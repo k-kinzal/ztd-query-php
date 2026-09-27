@@ -17,11 +17,12 @@ final class LockingClauseWithForSymLockStrengthOptLockedRowAction_46d3f361 imple
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LockStrengthForm $lockStrength,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLockedRowActionForm $optLockedRowAction,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($lockStrength), 'The lockStrength must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLockedRowAction), 'The optLockedRowAction must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class LockingClauseWithForSymLockStrengthOptLockedRowAction_46d3f361 imple
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('FOR');
+        $writer->comments($this->comments, 1);
         $this->lockStrength->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optLockedRowAction->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->lockStrength, $this->optLockedRowAction];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->lockStrength, \SqlSemantics\Statement\Model\MySql\Role\LockStrengthForm::class, $replace), $this->replacement($this->optLockedRowAction, \SqlSemantics\Statement\Model\MySql\Role\OptLockedRowActionForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class LockingClauseWithForSymLockStrengthOptLockedRowAction_46d3f361 imple
      */
     public function withLockStrength(\SqlSemantics\Statement\Model\MySql\Role\LockStrengthForm $lockStrength): self
     {
-        return new self($lockStrength, $this->optLockedRowAction);
+        return new self($lockStrength, $this->optLockedRowAction, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class LockingClauseWithForSymLockStrengthOptLockedRowAction_46d3f361 imple
      */
     public function withOptLockedRowAction(\SqlSemantics\Statement\Model\MySql\Role\OptLockedRowActionForm $optLockedRowAction): self
     {
-        return new self($this->lockStrength, $optLockedRowAction);
+        return new self($this->lockStrength, $optLockedRowAction, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->lockStrength, $this->optLockedRowAction, $comments);
     }
 }

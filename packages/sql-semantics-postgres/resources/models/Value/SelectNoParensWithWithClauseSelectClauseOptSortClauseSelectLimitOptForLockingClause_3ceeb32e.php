@@ -17,7 +17,7 @@ final class SelectNoParensWithWithClauseSelectClauseOptSortClauseSelectLimitOptF
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\WithClauseForm $with,
@@ -25,6 +25,7 @@ final class SelectNoParensWithWithClauseSelectClauseOptSortClauseSelectLimitOptF
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptSortClauseForm $optSortClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitForm $selectLimit,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptForLockingClauseForm $optForLockingClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($with), 'The with must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($selectClause), 'The selectClause must be a generated immutable SQL value.');
@@ -38,11 +39,36 @@ final class SelectNoParensWithWithClauseSelectClauseOptSortClauseSelectLimitOptF
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->with->write($writer);
+        $writer->comments($this->comments, 1);
         $this->selectClause->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optSortClause->write($writer);
+        $writer->comments($this->comments, 3);
         $this->selectLimit->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optForLockingClause->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->with, $this->selectClause, $this->optSortClause, $this->selectLimit, $this->optForLockingClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->with, \SqlSemantics\Statement\Model\PostgreSql\Role\WithClauseForm::class, $replace), $this->replacement($this->selectClause, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectClauseForm::class, $replace), $this->replacement($this->optSortClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSortClauseForm::class, $replace), $this->replacement($this->selectLimit, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitForm::class, $replace), $this->replacement($this->optForLockingClause, \SqlSemantics\Statement\Model\PostgreSql\Role\OptForLockingClauseForm::class, $replace), $this->comments);
     }
 
     /**
@@ -50,7 +76,7 @@ final class SelectNoParensWithWithClauseSelectClauseOptSortClauseSelectLimitOptF
      */
     public function withWith(\SqlSemantics\Statement\Model\PostgreSql\Role\WithClauseForm $with): self
     {
-        return new self($with, $this->selectClause, $this->optSortClause, $this->selectLimit, $this->optForLockingClause);
+        return new self($with, $this->selectClause, $this->optSortClause, $this->selectLimit, $this->optForLockingClause, $this->comments);
     }
 
     /**
@@ -58,7 +84,7 @@ final class SelectNoParensWithWithClauseSelectClauseOptSortClauseSelectLimitOptF
      */
     public function withSelectClause(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectClauseForm $selectClause): self
     {
-        return new self($this->with, $selectClause, $this->optSortClause, $this->selectLimit, $this->optForLockingClause);
+        return new self($this->with, $selectClause, $this->optSortClause, $this->selectLimit, $this->optForLockingClause, $this->comments);
     }
 
     /**
@@ -66,7 +92,7 @@ final class SelectNoParensWithWithClauseSelectClauseOptSortClauseSelectLimitOptF
      */
     public function withOptSortClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSortClauseForm $optSortClause): self
     {
-        return new self($this->with, $this->selectClause, $optSortClause, $this->selectLimit, $this->optForLockingClause);
+        return new self($this->with, $this->selectClause, $optSortClause, $this->selectLimit, $this->optForLockingClause, $this->comments);
     }
 
     /**
@@ -74,7 +100,7 @@ final class SelectNoParensWithWithClauseSelectClauseOptSortClauseSelectLimitOptF
      */
     public function withSelectLimit(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitForm $selectLimit): self
     {
-        return new self($this->with, $this->selectClause, $this->optSortClause, $selectLimit, $this->optForLockingClause);
+        return new self($this->with, $this->selectClause, $this->optSortClause, $selectLimit, $this->optForLockingClause, $this->comments);
     }
 
     /**
@@ -82,6 +108,14 @@ final class SelectNoParensWithWithClauseSelectClauseOptSortClauseSelectLimitOptF
      */
     public function withOptForLockingClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptForLockingClauseForm $optForLockingClause): self
     {
-        return new self($this->with, $this->selectClause, $this->optSortClause, $this->selectLimit, $optForLockingClause);
+        return new self($this->with, $this->selectClause, $this->optSortClause, $this->selectLimit, $optForLockingClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->with, $this->selectClause, $this->optSortClause, $this->selectLimit, $this->optForLockingClause, $comments);
     }
 }

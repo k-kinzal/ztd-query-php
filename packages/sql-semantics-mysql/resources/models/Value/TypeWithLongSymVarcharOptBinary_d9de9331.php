@@ -17,11 +17,12 @@ final class TypeWithLongSymVarcharOptBinary_d9de9331 implements \SqlSemantics\St
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\VarcharForm $varchar,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm $optBinary,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($varchar), 'The varchar must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optBinary), 'The optBinary must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class TypeWithLongSymVarcharOptBinary_d9de9331 implements \SqlSemantics\St
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('LONG');
+        $writer->comments($this->comments, 1);
         $this->varchar->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optBinary->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->varchar, $this->optBinary];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->varchar, \SqlSemantics\Statement\Model\MySql\Role\VarcharForm::class, $replace), $this->replacement($this->optBinary, \SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class TypeWithLongSymVarcharOptBinary_d9de9331 implements \SqlSemantics\St
      */
     public function withVarchar(\SqlSemantics\Statement\Model\MySql\Role\VarcharForm $varchar): self
     {
-        return new self($varchar, $this->optBinary);
+        return new self($varchar, $this->optBinary, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class TypeWithLongSymVarcharOptBinary_d9de9331 implements \SqlSemantics\St
      */
     public function withOptBinary(\SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm $optBinary): self
     {
-        return new self($this->varchar, $optBinary);
+        return new self($this->varchar, $optBinary, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->varchar, $this->optBinary, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class CopyOptItemWithQuoteOptAsSconst_8c8c0c9b implements \SqlSemantics\St
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptAsForm $optAs,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optAs), 'The optAs must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($sconst), 'The sconst must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class CopyOptItemWithQuoteOptAsSconst_8c8c0c9b implements \SqlSemantics\St
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('QUOTE');
+        $writer->comments($this->comments, 1);
         $this->optAs->write($writer);
+        $writer->comments($this->comments, 2);
         $this->sconst->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optAs, $this->sconst];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optAs, \SqlSemantics\Statement\Model\PostgreSql\Role\OptAsForm::class, $replace), $this->replacement($this->sconst, \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class CopyOptItemWithQuoteOptAsSconst_8c8c0c9b implements \SqlSemantics\St
      */
     public function withOptAs(\SqlSemantics\Statement\Model\PostgreSql\Role\OptAsForm $optAs): self
     {
-        return new self($optAs, $this->sconst);
+        return new self($optAs, $this->sconst, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class CopyOptItemWithQuoteOptAsSconst_8c8c0c9b implements \SqlSemantics\St
      */
     public function withSconst(\SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst): self
     {
-        return new self($this->optAs, $sconst);
+        return new self($this->optAs, $sconst, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optAs, $this->sconst, $comments);
     }
 }

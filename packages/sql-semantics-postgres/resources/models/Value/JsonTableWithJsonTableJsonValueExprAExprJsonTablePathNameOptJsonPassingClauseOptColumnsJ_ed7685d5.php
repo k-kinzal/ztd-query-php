@@ -17,7 +17,7 @@ final class JsonTableWithJsonTableJsonValueExprAExprJsonTablePathNameOptJsonPass
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprForm $jsonValueExpr,
@@ -26,6 +26,7 @@ final class JsonTableWithJsonTableJsonValueExprAExprJsonTablePathNameOptJsonPass
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonPassingClauseOptForm $jsonPassingClauseOpt,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionListForm $jsonTableColumnDefinitionList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonOnErrorClauseOptForm $jsonOnErrorClauseOpt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonValueExpr), 'The jsonValueExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
@@ -40,19 +41,52 @@ final class JsonTableWithJsonTableJsonValueExprAExprJsonTablePathNameOptJsonPass
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('JSON_TABLE');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->jsonValueExpr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(',');
+        $writer->comments($this->comments, 4);
         $this->aExpr->write($writer);
+        $writer->comments($this->comments, 5);
         $this->jsonTablePathNameOpt->write($writer);
+        $writer->comments($this->comments, 6);
         $this->jsonPassingClauseOpt->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append('COLUMNS');
+        $writer->comments($this->comments, 8);
         $writer->append('(');
+        $writer->comments($this->comments, 9);
         $this->jsonTableColumnDefinitionList->write($writer);
+        $writer->comments($this->comments, 10);
         $writer->append(')');
+        $writer->comments($this->comments, 11);
         $this->jsonOnErrorClauseOpt->write($writer);
+        $writer->comments($this->comments, 12);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->jsonValueExpr, $this->aExpr, $this->jsonTablePathNameOpt, $this->jsonPassingClauseOpt, $this->jsonTableColumnDefinitionList, $this->jsonOnErrorClauseOpt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->jsonValueExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprForm::class, $replace), $this->replacement($this->aExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm::class, $replace), $this->replacement($this->jsonTablePathNameOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTablePathNameOptForm::class, $replace), $this->replacement($this->jsonPassingClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonPassingClauseOptForm::class, $replace), $this->replacement($this->jsonTableColumnDefinitionList, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionListForm::class, $replace), $this->replacement($this->jsonOnErrorClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonOnErrorClauseOptForm::class, $replace), $this->comments);
     }
 
     /**
@@ -60,7 +94,7 @@ final class JsonTableWithJsonTableJsonValueExprAExprJsonTablePathNameOptJsonPass
      */
     public function withJsonValueExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprForm $jsonValueExpr): self
     {
-        return new self($jsonValueExpr, $this->aExpr, $this->jsonTablePathNameOpt, $this->jsonPassingClauseOpt, $this->jsonTableColumnDefinitionList, $this->jsonOnErrorClauseOpt);
+        return new self($jsonValueExpr, $this->aExpr, $this->jsonTablePathNameOpt, $this->jsonPassingClauseOpt, $this->jsonTableColumnDefinitionList, $this->jsonOnErrorClauseOpt, $this->comments);
     }
 
     /**
@@ -68,7 +102,7 @@ final class JsonTableWithJsonTableJsonValueExprAExprJsonTablePathNameOptJsonPass
      */
     public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
     {
-        return new self($this->jsonValueExpr, $aExpr, $this->jsonTablePathNameOpt, $this->jsonPassingClauseOpt, $this->jsonTableColumnDefinitionList, $this->jsonOnErrorClauseOpt);
+        return new self($this->jsonValueExpr, $aExpr, $this->jsonTablePathNameOpt, $this->jsonPassingClauseOpt, $this->jsonTableColumnDefinitionList, $this->jsonOnErrorClauseOpt, $this->comments);
     }
 
     /**
@@ -76,7 +110,7 @@ final class JsonTableWithJsonTableJsonValueExprAExprJsonTablePathNameOptJsonPass
      */
     public function withJsonTablePathNameOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonTablePathNameOptForm $jsonTablePathNameOpt): self
     {
-        return new self($this->jsonValueExpr, $this->aExpr, $jsonTablePathNameOpt, $this->jsonPassingClauseOpt, $this->jsonTableColumnDefinitionList, $this->jsonOnErrorClauseOpt);
+        return new self($this->jsonValueExpr, $this->aExpr, $jsonTablePathNameOpt, $this->jsonPassingClauseOpt, $this->jsonTableColumnDefinitionList, $this->jsonOnErrorClauseOpt, $this->comments);
     }
 
     /**
@@ -84,7 +118,7 @@ final class JsonTableWithJsonTableJsonValueExprAExprJsonTablePathNameOptJsonPass
      */
     public function withJsonPassingClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonPassingClauseOptForm $jsonPassingClauseOpt): self
     {
-        return new self($this->jsonValueExpr, $this->aExpr, $this->jsonTablePathNameOpt, $jsonPassingClauseOpt, $this->jsonTableColumnDefinitionList, $this->jsonOnErrorClauseOpt);
+        return new self($this->jsonValueExpr, $this->aExpr, $this->jsonTablePathNameOpt, $jsonPassingClauseOpt, $this->jsonTableColumnDefinitionList, $this->jsonOnErrorClauseOpt, $this->comments);
     }
 
     /**
@@ -92,7 +126,7 @@ final class JsonTableWithJsonTableJsonValueExprAExprJsonTablePathNameOptJsonPass
      */
     public function withJsonTableColumnDefinitionList(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionListForm $jsonTableColumnDefinitionList): self
     {
-        return new self($this->jsonValueExpr, $this->aExpr, $this->jsonTablePathNameOpt, $this->jsonPassingClauseOpt, $jsonTableColumnDefinitionList, $this->jsonOnErrorClauseOpt);
+        return new self($this->jsonValueExpr, $this->aExpr, $this->jsonTablePathNameOpt, $this->jsonPassingClauseOpt, $jsonTableColumnDefinitionList, $this->jsonOnErrorClauseOpt, $this->comments);
     }
 
     /**
@@ -100,6 +134,14 @@ final class JsonTableWithJsonTableJsonValueExprAExprJsonTablePathNameOptJsonPass
      */
     public function withJsonOnErrorClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonOnErrorClauseOptForm $jsonOnErrorClauseOpt): self
     {
-        return new self($this->jsonValueExpr, $this->aExpr, $this->jsonTablePathNameOpt, $this->jsonPassingClauseOpt, $this->jsonTableColumnDefinitionList, $jsonOnErrorClauseOpt);
+        return new self($this->jsonValueExpr, $this->aExpr, $this->jsonTablePathNameOpt, $this->jsonPassingClauseOpt, $this->jsonTableColumnDefinitionList, $jsonOnErrorClauseOpt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->jsonValueExpr, $this->aExpr, $this->jsonTablePathNameOpt, $this->jsonPassingClauseOpt, $this->jsonTableColumnDefinitionList, $this->jsonOnErrorClauseOpt, $comments);
     }
 }

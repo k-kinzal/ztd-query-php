@@ -17,11 +17,12 @@ final class FunctionWithArgtypesWithFuncNameFuncArgs_83449916 implements \SqlSem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm $funcName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsForm $funcArgs,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcName), 'The funcName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcArgs), 'The funcArgs must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class FunctionWithArgtypesWithFuncNameFuncArgs_83449916 implements \SqlSem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->funcName->write($writer);
+        $writer->comments($this->comments, 1);
         $this->funcArgs->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->funcName, $this->funcArgs];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->funcName, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm::class, $replace), $this->replacement($this->funcArgs, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class FunctionWithArgtypesWithFuncNameFuncArgs_83449916 implements \SqlSem
      */
     public function withFuncName(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm $funcName): self
     {
-        return new self($funcName, $this->funcArgs);
+        return new self($funcName, $this->funcArgs, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class FunctionWithArgtypesWithFuncNameFuncArgs_83449916 implements \SqlSem
      */
     public function withFuncArgs(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsForm $funcArgs): self
     {
-        return new self($this->funcName, $funcArgs);
+        return new self($this->funcName, $funcArgs, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->funcName, $this->funcArgs, $comments);
     }
 }

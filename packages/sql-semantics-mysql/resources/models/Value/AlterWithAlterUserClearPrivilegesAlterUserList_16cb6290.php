@@ -12,17 +12,18 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterWithAlterUserClearPrivilegesAlterUserList_16cb6290 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterWithAlterUserClearPrivilegesAlterUserList_16cb6290 implements \SqlSemantics\Statement\Model\MySql\Role\AlterForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class AlterWithAlterUserClearPrivilegesAlterUserList_16cb6290 implements \SqlSemantics\Statement\Model\MySql\Role\AlterForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $user,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ClearPrivilegesForm $clearPrivileges,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterUserListForm $alterUserList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($user, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['USER'], 'The user must be a complete USER lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($clearPrivileges), 'The clearPrivileges must be a generated immutable SQL value.');
@@ -34,10 +35,34 @@ final class AlterWithAlterUserClearPrivilegesAlterUserList_16cb6290 implements \
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append($this->user);
+        $writer->comments($this->comments, 2);
         $this->clearPrivileges->write($writer);
+        $writer->comments($this->comments, 3);
         $this->alterUserList->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->clearPrivileges, $this->alterUserList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->user, $this->replacement($this->clearPrivileges, \SqlSemantics\Statement\Model\MySql\Role\ClearPrivilegesForm::class, $replace), $this->replacement($this->alterUserList, \SqlSemantics\Statement\Model\MySql\Role\AlterUserListForm::class, $replace), $this->comments);
     }
 
     /**
@@ -45,7 +70,7 @@ final class AlterWithAlterUserClearPrivilegesAlterUserList_16cb6290 implements \
      */
     public function withUser(string $user): self
     {
-        return new self($user, $this->clearPrivileges, $this->alterUserList);
+        return new self($user, $this->clearPrivileges, $this->alterUserList, $this->comments);
     }
 
     /**
@@ -53,7 +78,7 @@ final class AlterWithAlterUserClearPrivilegesAlterUserList_16cb6290 implements \
      */
     public function withClearPrivileges(\SqlSemantics\Statement\Model\MySql\Role\ClearPrivilegesForm $clearPrivileges): self
     {
-        return new self($this->user, $clearPrivileges, $this->alterUserList);
+        return new self($this->user, $clearPrivileges, $this->alterUserList, $this->comments);
     }
 
     /**
@@ -61,6 +86,14 @@ final class AlterWithAlterUserClearPrivilegesAlterUserList_16cb6290 implements \
      */
     public function withAlterUserList(\SqlSemantics\Statement\Model\MySql\Role\AlterUserListForm $alterUserList): self
     {
-        return new self($this->user, $this->clearPrivileges, $alterUserList);
+        return new self($this->user, $this->clearPrivileges, $alterUserList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->user, $this->clearPrivileges, $this->alterUserList, $comments);
     }
 }

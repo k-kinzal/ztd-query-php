@@ -17,11 +17,12 @@ final class AlterCommandsModifierListWithAlterCommandsModifierListAlterCommandsM
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsModifierListForm $alterCommandsModifierList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsModifierForm $alterCommandsModifier,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterCommandsModifierList), 'The alterCommandsModifierList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterCommandsModifier), 'The alterCommandsModifier must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class AlterCommandsModifierListWithAlterCommandsModifierListAlterCommandsM
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->alterCommandsModifierList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->alterCommandsModifier->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->alterCommandsModifierList, $this->alterCommandsModifier];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->alterCommandsModifierList, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsModifierListForm::class, $replace), $this->replacement($this->alterCommandsModifier, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsModifierForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class AlterCommandsModifierListWithAlterCommandsModifierListAlterCommandsM
      */
     public function withAlterCommandsModifierList(\SqlSemantics\Statement\Model\MySql\Role\AlterCommandsModifierListForm $alterCommandsModifierList): self
     {
-        return new self($alterCommandsModifierList, $this->alterCommandsModifier);
+        return new self($alterCommandsModifierList, $this->alterCommandsModifier, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class AlterCommandsModifierListWithAlterCommandsModifierListAlterCommandsM
      */
     public function withAlterCommandsModifier(\SqlSemantics\Statement\Model\MySql\Role\AlterCommandsModifierForm $alterCommandsModifier): self
     {
-        return new self($this->alterCommandsModifierList, $alterCommandsModifier);
+        return new self($this->alterCommandsModifierList, $alterCommandsModifier, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->alterCommandsModifierList, $this->alterCommandsModifier, $comments);
     }
 }

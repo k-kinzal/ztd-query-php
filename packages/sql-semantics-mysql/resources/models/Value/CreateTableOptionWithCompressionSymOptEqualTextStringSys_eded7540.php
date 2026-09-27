@@ -17,11 +17,12 @@ final class CreateTableOptionWithCompressionSymOptEqualTextStringSys_eded7540 im
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSys), 'The textStringSys must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class CreateTableOptionWithCompressionSymOptEqualTextStringSys_eded7540 im
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('COMPRESSION');
+        $writer->comments($this->comments, 1);
         $this->optEqual->write($writer);
+        $writer->comments($this->comments, 2);
         $this->textStringSys->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optEqual, $this->textStringSys];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optEqual, \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm::class, $replace), $this->replacement($this->textStringSys, \SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class CreateTableOptionWithCompressionSymOptEqualTextStringSys_eded7540 im
      */
     public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
     {
-        return new self($optEqual, $this->textStringSys);
+        return new self($optEqual, $this->textStringSys, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class CreateTableOptionWithCompressionSymOptEqualTextStringSys_eded7540 im
      */
     public function withTextStringSys(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys): self
     {
-        return new self($this->optEqual, $textStringSys);
+        return new self($this->optEqual, $textStringSys, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optEqual, $this->textStringSys, $comments);
     }
 }

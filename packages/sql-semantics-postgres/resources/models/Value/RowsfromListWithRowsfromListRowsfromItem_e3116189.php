@@ -17,11 +17,12 @@ final class RowsfromListWithRowsfromListRowsfromItem_e3116189 implements \SqlSem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RowsfromListForm $rowsfromList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RowsfromItemForm $rowsfromItem,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($rowsfromList), 'The rowsfromList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($rowsfromItem), 'The rowsfromItem must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class RowsfromListWithRowsfromListRowsfromItem_e3116189 implements \SqlSem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->rowsfromList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->rowsfromItem->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->rowsfromList, $this->rowsfromItem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->rowsfromList, \SqlSemantics\Statement\Model\PostgreSql\Role\RowsfromListForm::class, $replace), $this->replacement($this->rowsfromItem, \SqlSemantics\Statement\Model\PostgreSql\Role\RowsfromItemForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class RowsfromListWithRowsfromListRowsfromItem_e3116189 implements \SqlSem
      */
     public function withRowsfromList(\SqlSemantics\Statement\Model\PostgreSql\Role\RowsfromListForm $rowsfromList): self
     {
-        return new self($rowsfromList, $this->rowsfromItem);
+        return new self($rowsfromList, $this->rowsfromItem, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class RowsfromListWithRowsfromListRowsfromItem_e3116189 implements \SqlSem
      */
     public function withRowsfromItem(\SqlSemantics\Statement\Model\PostgreSql\Role\RowsfromItemForm $rowsfromItem): self
     {
-        return new self($this->rowsfromList, $rowsfromItem);
+        return new self($this->rowsfromList, $rowsfromItem, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->rowsfromList, $this->rowsfromItem, $comments);
     }
 }

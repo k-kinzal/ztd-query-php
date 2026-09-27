@@ -17,11 +17,12 @@ final class SpPdparamsWithSpPdparamsSpPdparam_48069f45 implements \SqlSemantics\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpPdparamsForm $spPdparams,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpPdparamForm $spPdparam,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spPdparams), 'The spPdparams must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spPdparam), 'The spPdparam must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class SpPdparamsWithSpPdparamsSpPdparam_48069f45 implements \SqlSemantics\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->spPdparams->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->spPdparam->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->spPdparams, $this->spPdparam];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->spPdparams, \SqlSemantics\Statement\Model\MySql\Role\SpPdparamsForm::class, $replace), $this->replacement($this->spPdparam, \SqlSemantics\Statement\Model\MySql\Role\SpPdparamForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class SpPdparamsWithSpPdparamsSpPdparam_48069f45 implements \SqlSemantics\
      */
     public function withSpPdparams(\SqlSemantics\Statement\Model\MySql\Role\SpPdparamsForm $spPdparams): self
     {
-        return new self($spPdparams, $this->spPdparam);
+        return new self($spPdparams, $this->spPdparam, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class SpPdparamsWithSpPdparamsSpPdparam_48069f45 implements \SqlSemantics\
      */
     public function withSpPdparam(\SqlSemantics\Statement\Model\MySql\Role\SpPdparamForm $spPdparam): self
     {
-        return new self($this->spPdparams, $spPdparam);
+        return new self($this->spPdparams, $spPdparam, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->spPdparams, $this->spPdparam, $comments);
     }
 }

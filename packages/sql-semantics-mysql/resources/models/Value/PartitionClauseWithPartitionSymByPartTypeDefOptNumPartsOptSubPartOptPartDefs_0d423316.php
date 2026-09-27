@@ -17,13 +17,14 @@ final class PartitionClauseWithPartitionSymByPartTypeDefOptNumPartsOptSubPartOpt
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartTypeDefForm $partTypeDef,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptNumPartsForm $optNumParts,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSubPartForm $optSubPart,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptPartDefsForm $optPartDefs,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partTypeDef), 'The partTypeDef must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optNumParts), 'The optNumParts must be a generated immutable SQL value.');
@@ -36,12 +37,38 @@ final class PartitionClauseWithPartitionSymByPartTypeDefOptNumPartsOptSubPartOpt
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('PARTITION');
+        $writer->comments($this->comments, 1);
         $writer->append('BY');
+        $writer->comments($this->comments, 2);
         $this->partTypeDef->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optNumParts->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optSubPart->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optPartDefs->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->partTypeDef, $this->optNumParts, $this->optSubPart, $this->optPartDefs];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->partTypeDef, \SqlSemantics\Statement\Model\MySql\Role\PartTypeDefForm::class, $replace), $this->replacement($this->optNumParts, \SqlSemantics\Statement\Model\MySql\Role\OptNumPartsForm::class, $replace), $this->replacement($this->optSubPart, \SqlSemantics\Statement\Model\MySql\Role\OptSubPartForm::class, $replace), $this->replacement($this->optPartDefs, \SqlSemantics\Statement\Model\MySql\Role\OptPartDefsForm::class, $replace), $this->comments);
     }
 
     /**
@@ -49,7 +76,7 @@ final class PartitionClauseWithPartitionSymByPartTypeDefOptNumPartsOptSubPartOpt
      */
     public function withPartTypeDef(\SqlSemantics\Statement\Model\MySql\Role\PartTypeDefForm $partTypeDef): self
     {
-        return new self($partTypeDef, $this->optNumParts, $this->optSubPart, $this->optPartDefs);
+        return new self($partTypeDef, $this->optNumParts, $this->optSubPart, $this->optPartDefs, $this->comments);
     }
 
     /**
@@ -57,7 +84,7 @@ final class PartitionClauseWithPartitionSymByPartTypeDefOptNumPartsOptSubPartOpt
      */
     public function withOptNumParts(\SqlSemantics\Statement\Model\MySql\Role\OptNumPartsForm $optNumParts): self
     {
-        return new self($this->partTypeDef, $optNumParts, $this->optSubPart, $this->optPartDefs);
+        return new self($this->partTypeDef, $optNumParts, $this->optSubPart, $this->optPartDefs, $this->comments);
     }
 
     /**
@@ -65,7 +92,7 @@ final class PartitionClauseWithPartitionSymByPartTypeDefOptNumPartsOptSubPartOpt
      */
     public function withOptSubPart(\SqlSemantics\Statement\Model\MySql\Role\OptSubPartForm $optSubPart): self
     {
-        return new self($this->partTypeDef, $this->optNumParts, $optSubPart, $this->optPartDefs);
+        return new self($this->partTypeDef, $this->optNumParts, $optSubPart, $this->optPartDefs, $this->comments);
     }
 
     /**
@@ -73,6 +100,14 @@ final class PartitionClauseWithPartitionSymByPartTypeDefOptNumPartsOptSubPartOpt
      */
     public function withOptPartDefs(\SqlSemantics\Statement\Model\MySql\Role\OptPartDefsForm $optPartDefs): self
     {
-        return new self($this->partTypeDef, $this->optNumParts, $this->optSubPart, $optPartDefs);
+        return new self($this->partTypeDef, $this->optNumParts, $this->optSubPart, $optPartDefs, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->partTypeDef, $this->optNumParts, $this->optSubPart, $this->optPartDefs, $comments);
     }
 }

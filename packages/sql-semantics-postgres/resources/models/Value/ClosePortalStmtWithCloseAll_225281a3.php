@@ -15,11 +15,49 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
 final class ClosePortalStmtWithCloseAll_225281a3 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ClosePortalStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
     /**
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
+     */
+    public function __construct(
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
+    ) {
+    }
+
+    /**
      * Writes SQL entirely from this value's fields.
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CLOSE');
+        $writer->comments($this->comments, 1);
         $writer->append('ALL');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [];
+    }
+
+    /**
+     * This form holds no values to replace.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return $this;
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($comments);
     }
 }

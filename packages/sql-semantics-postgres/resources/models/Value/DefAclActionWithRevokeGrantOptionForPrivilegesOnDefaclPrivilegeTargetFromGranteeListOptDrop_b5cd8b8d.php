@@ -17,13 +17,14 @@ final class DefAclActionWithRevokeGrantOptionForPrivilegesOnDefaclPrivilegeTarge
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegesForm $privileges,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DefaclPrivilegeTargetForm $defaclPrivilegeTarget,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GranteeListForm $granteeList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($privileges), 'The privileges must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($defaclPrivilegeTarget), 'The defaclPrivilegeTarget must be a generated immutable SQL value.');
@@ -36,16 +37,46 @@ final class DefAclActionWithRevokeGrantOptionForPrivilegesOnDefaclPrivilegeTarge
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('REVOKE');
+        $writer->comments($this->comments, 1);
         $writer->append('GRANT');
+        $writer->comments($this->comments, 2);
         $writer->append('OPTION');
+        $writer->comments($this->comments, 3);
         $writer->append('FOR');
+        $writer->comments($this->comments, 4);
         $this->privileges->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('ON');
+        $writer->comments($this->comments, 6);
         $this->defaclPrivilegeTarget->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append('FROM');
+        $writer->comments($this->comments, 8);
         $this->granteeList->write($writer);
+        $writer->comments($this->comments, 9);
         $this->optDropBehavior->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->privileges, $this->defaclPrivilegeTarget, $this->granteeList, $this->optDropBehavior];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->privileges, \SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegesForm::class, $replace), $this->replacement($this->defaclPrivilegeTarget, \SqlSemantics\Statement\Model\PostgreSql\Role\DefaclPrivilegeTargetForm::class, $replace), $this->replacement($this->granteeList, \SqlSemantics\Statement\Model\PostgreSql\Role\GranteeListForm::class, $replace), $this->replacement($this->optDropBehavior, \SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm::class, $replace), $this->comments);
     }
 
     /**
@@ -53,7 +84,7 @@ final class DefAclActionWithRevokeGrantOptionForPrivilegesOnDefaclPrivilegeTarge
      */
     public function withPrivileges(\SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegesForm $privileges): self
     {
-        return new self($privileges, $this->defaclPrivilegeTarget, $this->granteeList, $this->optDropBehavior);
+        return new self($privileges, $this->defaclPrivilegeTarget, $this->granteeList, $this->optDropBehavior, $this->comments);
     }
 
     /**
@@ -61,7 +92,7 @@ final class DefAclActionWithRevokeGrantOptionForPrivilegesOnDefaclPrivilegeTarge
      */
     public function withDefaclPrivilegeTarget(\SqlSemantics\Statement\Model\PostgreSql\Role\DefaclPrivilegeTargetForm $defaclPrivilegeTarget): self
     {
-        return new self($this->privileges, $defaclPrivilegeTarget, $this->granteeList, $this->optDropBehavior);
+        return new self($this->privileges, $defaclPrivilegeTarget, $this->granteeList, $this->optDropBehavior, $this->comments);
     }
 
     /**
@@ -69,7 +100,7 @@ final class DefAclActionWithRevokeGrantOptionForPrivilegesOnDefaclPrivilegeTarge
      */
     public function withGranteeList(\SqlSemantics\Statement\Model\PostgreSql\Role\GranteeListForm $granteeList): self
     {
-        return new self($this->privileges, $this->defaclPrivilegeTarget, $granteeList, $this->optDropBehavior);
+        return new self($this->privileges, $this->defaclPrivilegeTarget, $granteeList, $this->optDropBehavior, $this->comments);
     }
 
     /**
@@ -77,6 +108,14 @@ final class DefAclActionWithRevokeGrantOptionForPrivilegesOnDefaclPrivilegeTarge
      */
     public function withOptDropBehavior(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior): self
     {
-        return new self($this->privileges, $this->defaclPrivilegeTarget, $this->granteeList, $optDropBehavior);
+        return new self($this->privileges, $this->defaclPrivilegeTarget, $this->granteeList, $optDropBehavior, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->privileges, $this->defaclPrivilegeTarget, $this->granteeList, $this->optDropBehavior, $comments);
     }
 }

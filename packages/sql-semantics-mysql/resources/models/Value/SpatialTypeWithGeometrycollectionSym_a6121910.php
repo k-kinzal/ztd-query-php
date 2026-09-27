@@ -17,10 +17,11 @@ final class SpatialTypeWithGeometrycollectionSym_a6121910 implements \SqlSemanti
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $geometrycollectionSym,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($geometrycollectionSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['GEOMETRYCOLLECTION_SYM'], 'The geometrycollectionSym must be a complete GEOMETRYCOLLECTION_SYM lexical spelling.');
     }
@@ -30,7 +31,28 @@ final class SpatialTypeWithGeometrycollectionSym_a6121910 implements \SqlSemanti
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->geometrycollectionSym);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [];
+    }
+
+    /**
+     * This form holds no values to replace.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return $this;
     }
 
     /**
@@ -38,6 +60,14 @@ final class SpatialTypeWithGeometrycollectionSym_a6121910 implements \SqlSemanti
      */
     public function withGeometrycollectionSym(string $geometrycollectionSym): self
     {
-        return new self($geometrycollectionSym);
+        return new self($geometrycollectionSym, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->geometrycollectionSym, $comments);
     }
 }

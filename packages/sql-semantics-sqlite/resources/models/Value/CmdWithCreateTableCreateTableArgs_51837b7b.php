@@ -17,11 +17,12 @@ final class CmdWithCreateTableCreateTableArgs_51837b7b implements \SqlSemantics\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CreateTableForm $createTable,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CreateTableArgsForm $createTableArgs,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($createTable), 'The createTable must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($createTableArgs), 'The createTableArgs must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class CmdWithCreateTableCreateTableArgs_51837b7b implements \SqlSemantics\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->createTable->write($writer);
+        $writer->comments($this->comments, 1);
         $this->createTableArgs->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->createTable, $this->createTableArgs];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->createTable, \SqlSemantics\Statement\Model\Sqlite\Role\CreateTableForm::class, $replace), $this->replacement($this->createTableArgs, \SqlSemantics\Statement\Model\Sqlite\Role\CreateTableArgsForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class CmdWithCreateTableCreateTableArgs_51837b7b implements \SqlSemantics\
      */
     public function withCreateTable(\SqlSemantics\Statement\Model\Sqlite\Role\CreateTableForm $createTable): self
     {
-        return new self($createTable, $this->createTableArgs);
+        return new self($createTable, $this->createTableArgs, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class CmdWithCreateTableCreateTableArgs_51837b7b implements \SqlSemantics\
      */
     public function withCreateTableArgs(\SqlSemantics\Statement\Model\Sqlite\Role\CreateTableArgsForm $createTableArgs): self
     {
-        return new self($this->createTable, $createTableArgs);
+        return new self($this->createTable, $createTableArgs, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->createTable, $this->createTableArgs, $comments);
     }
 }

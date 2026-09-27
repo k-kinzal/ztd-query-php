@@ -17,7 +17,7 @@ final class SimpleSelectWithSelectDistinctClauseTargetListIntoClauseFromClauseWh
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DistinctClauseForm $distinct,
@@ -28,6 +28,7 @@ final class SimpleSelectWithSelectDistinctClauseTargetListIntoClauseFromClauseWh
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GroupClauseForm $groupBy,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\HavingClauseForm $having,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\WindowClauseForm $windowClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($distinct), 'The distinct must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($projections), 'The projections must be a generated immutable SQL value.');
@@ -44,15 +45,44 @@ final class SimpleSelectWithSelectDistinctClauseTargetListIntoClauseFromClauseWh
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SELECT');
+        $writer->comments($this->comments, 1);
         $this->distinct->write($writer);
+        $writer->comments($this->comments, 2);
         $this->projections->write($writer);
+        $writer->comments($this->comments, 3);
         $this->intoClause->write($writer);
+        $writer->comments($this->comments, 4);
         $this->from->write($writer);
+        $writer->comments($this->comments, 5);
         $this->where->write($writer);
+        $writer->comments($this->comments, 6);
         $this->groupBy->write($writer);
+        $writer->comments($this->comments, 7);
         $this->having->write($writer);
+        $writer->comments($this->comments, 8);
         $this->windowClause->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->distinct, $this->projections, $this->intoClause, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->distinct, \SqlSemantics\Statement\Model\PostgreSql\Role\DistinctClauseForm::class, $replace), $this->replacement($this->projections, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetListForm::class, $replace), $this->replacement($this->intoClause, \SqlSemantics\Statement\Model\PostgreSql\Role\IntoClauseForm::class, $replace), $this->replacement($this->from, \SqlSemantics\Statement\Model\PostgreSql\Role\FromClauseForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\PostgreSql\Role\WhereClauseForm::class, $replace), $this->replacement($this->groupBy, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupClauseForm::class, $replace), $this->replacement($this->having, \SqlSemantics\Statement\Model\PostgreSql\Role\HavingClauseForm::class, $replace), $this->replacement($this->windowClause, \SqlSemantics\Statement\Model\PostgreSql\Role\WindowClauseForm::class, $replace), $this->comments);
     }
 
     /**
@@ -60,7 +90,7 @@ final class SimpleSelectWithSelectDistinctClauseTargetListIntoClauseFromClauseWh
      */
     public function withDistinct(\SqlSemantics\Statement\Model\PostgreSql\Role\DistinctClauseForm $distinct): self
     {
-        return new self($distinct, $this->projections, $this->intoClause, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause);
+        return new self($distinct, $this->projections, $this->intoClause, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause, $this->comments);
     }
 
     /**
@@ -68,7 +98,7 @@ final class SimpleSelectWithSelectDistinctClauseTargetListIntoClauseFromClauseWh
      */
     public function withProjections(\SqlSemantics\Statement\Model\PostgreSql\Role\TargetListForm $projections): self
     {
-        return new self($this->distinct, $projections, $this->intoClause, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause);
+        return new self($this->distinct, $projections, $this->intoClause, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause, $this->comments);
     }
 
     /**
@@ -76,7 +106,7 @@ final class SimpleSelectWithSelectDistinctClauseTargetListIntoClauseFromClauseWh
      */
     public function withIntoClause(\SqlSemantics\Statement\Model\PostgreSql\Role\IntoClauseForm $intoClause): self
     {
-        return new self($this->distinct, $this->projections, $intoClause, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause);
+        return new self($this->distinct, $this->projections, $intoClause, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause, $this->comments);
     }
 
     /**
@@ -84,7 +114,7 @@ final class SimpleSelectWithSelectDistinctClauseTargetListIntoClauseFromClauseWh
      */
     public function withFrom(\SqlSemantics\Statement\Model\PostgreSql\Role\FromClauseForm $from): self
     {
-        return new self($this->distinct, $this->projections, $this->intoClause, $from, $this->where, $this->groupBy, $this->having, $this->windowClause);
+        return new self($this->distinct, $this->projections, $this->intoClause, $from, $this->where, $this->groupBy, $this->having, $this->windowClause, $this->comments);
     }
 
     /**
@@ -92,7 +122,7 @@ final class SimpleSelectWithSelectDistinctClauseTargetListIntoClauseFromClauseWh
      */
     public function withWhere(\SqlSemantics\Statement\Model\PostgreSql\Role\WhereClauseForm $where): self
     {
-        return new self($this->distinct, $this->projections, $this->intoClause, $this->from, $where, $this->groupBy, $this->having, $this->windowClause);
+        return new self($this->distinct, $this->projections, $this->intoClause, $this->from, $where, $this->groupBy, $this->having, $this->windowClause, $this->comments);
     }
 
     /**
@@ -100,7 +130,7 @@ final class SimpleSelectWithSelectDistinctClauseTargetListIntoClauseFromClauseWh
      */
     public function withGroupBy(\SqlSemantics\Statement\Model\PostgreSql\Role\GroupClauseForm $groupBy): self
     {
-        return new self($this->distinct, $this->projections, $this->intoClause, $this->from, $this->where, $groupBy, $this->having, $this->windowClause);
+        return new self($this->distinct, $this->projections, $this->intoClause, $this->from, $this->where, $groupBy, $this->having, $this->windowClause, $this->comments);
     }
 
     /**
@@ -108,7 +138,7 @@ final class SimpleSelectWithSelectDistinctClauseTargetListIntoClauseFromClauseWh
      */
     public function withHaving(\SqlSemantics\Statement\Model\PostgreSql\Role\HavingClauseForm $having): self
     {
-        return new self($this->distinct, $this->projections, $this->intoClause, $this->from, $this->where, $this->groupBy, $having, $this->windowClause);
+        return new self($this->distinct, $this->projections, $this->intoClause, $this->from, $this->where, $this->groupBy, $having, $this->windowClause, $this->comments);
     }
 
     /**
@@ -116,6 +146,14 @@ final class SimpleSelectWithSelectDistinctClauseTargetListIntoClauseFromClauseWh
      */
     public function withWindowClause(\SqlSemantics\Statement\Model\PostgreSql\Role\WindowClauseForm $windowClause): self
     {
-        return new self($this->distinct, $this->projections, $this->intoClause, $this->from, $this->where, $this->groupBy, $this->having, $windowClause);
+        return new self($this->distinct, $this->projections, $this->intoClause, $this->from, $this->where, $this->groupBy, $this->having, $windowClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->distinct, $this->projections, $this->intoClause, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause, $comments);
     }
 }

@@ -17,10 +17,11 @@ final class OptSetSignalInformationWithSetSymSignalInformationItemList_62c925e3 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SignalInformationItemListForm $signalInformationItemList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($signalInformationItemList), 'The signalInformationItemList must be a generated immutable SQL value.');
     }
@@ -30,8 +31,30 @@ final class OptSetSignalInformationWithSetSymSignalInformationItemList_62c925e3 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SET');
+        $writer->comments($this->comments, 1);
         $this->signalInformationItemList->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->signalInformationItemList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->signalInformationItemList, \SqlSemantics\Statement\Model\MySql\Role\SignalInformationItemListForm::class, $replace), $this->comments);
     }
 
     /**
@@ -39,6 +62,14 @@ final class OptSetSignalInformationWithSetSymSignalInformationItemList_62c925e3 
      */
     public function withSignalInformationItemList(\SqlSemantics\Statement\Model\MySql\Role\SignalInformationItemListForm $signalInformationItemList): self
     {
-        return new self($signalInformationItemList);
+        return new self($signalInformationItemList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->signalInformationItemList, $comments);
     }
 }

@@ -17,10 +17,11 @@ final class AggrArgsWithOrderByAggrArgsList_18807607 implements \SqlSemantics\St
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgsListForm $aggrArgsList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aggrArgsList), 'The aggrArgsList must be a generated immutable SQL value.');
     }
@@ -30,11 +31,36 @@ final class AggrArgsWithOrderByAggrArgsList_18807607 implements \SqlSemantics\St
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $writer->append('ORDER');
+        $writer->comments($this->comments, 2);
         $writer->append('BY');
+        $writer->comments($this->comments, 3);
         $this->aggrArgsList->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->aggrArgsList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->aggrArgsList, \SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgsListForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,6 +68,14 @@ final class AggrArgsWithOrderByAggrArgsList_18807607 implements \SqlSemantics\St
      */
     public function withAggrArgsList(\SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgsListForm $aggrArgsList): self
     {
-        return new self($aggrArgsList);
+        return new self($aggrArgsList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->aggrArgsList, $comments);
     }
 }

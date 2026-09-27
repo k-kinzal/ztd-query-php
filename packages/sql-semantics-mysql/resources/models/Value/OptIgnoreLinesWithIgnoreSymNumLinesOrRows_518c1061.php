@@ -17,11 +17,12 @@ final class OptIgnoreLinesWithIgnoreSymNumLinesOrRows_518c1061 implements \SqlSe
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $value,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LinesOrRowsForm $linesOrRows,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($value, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['NUM'], 'The value must be a complete NUM lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($linesOrRows), 'The linesOrRows must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class OptIgnoreLinesWithIgnoreSymNumLinesOrRows_518c1061 implements \SqlSe
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('IGNORE');
+        $writer->comments($this->comments, 1);
         $writer->append($this->value);
+        $writer->comments($this->comments, 2);
         $this->linesOrRows->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->linesOrRows];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->value, $this->replacement($this->linesOrRows, \SqlSemantics\Statement\Model\MySql\Role\LinesOrRowsForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class OptIgnoreLinesWithIgnoreSymNumLinesOrRows_518c1061 implements \SqlSe
      */
     public function withValue(string $value): self
     {
-        return new self($value, $this->linesOrRows);
+        return new self($value, $this->linesOrRows, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class OptIgnoreLinesWithIgnoreSymNumLinesOrRows_518c1061 implements \SqlSe
      */
     public function withLinesOrRows(\SqlSemantics\Statement\Model\MySql\Role\LinesOrRowsForm $linesOrRows): self
     {
-        return new self($this->value, $linesOrRows);
+        return new self($this->value, $linesOrRows, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->value, $this->linesOrRows, $comments);
     }
 }

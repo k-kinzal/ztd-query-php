@@ -17,12 +17,13 @@ final class JoinTableWithTableRefNormalJoinTableRef_c502a929 implements \SqlSema
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableRefForm $tableRef,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NormalJoinForm $normalJoin,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableRefForm $tableRef2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableRef), 'The tableRef must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($normalJoin), 'The normalJoin must be a generated immutable SQL value.');
@@ -34,9 +35,32 @@ final class JoinTableWithTableRefNormalJoinTableRef_c502a929 implements \SqlSema
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableRef->write($writer);
+        $writer->comments($this->comments, 1);
         $this->normalJoin->write($writer);
+        $writer->comments($this->comments, 2);
         $this->tableRef2->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableRef, $this->normalJoin, $this->tableRef2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableRef, \SqlSemantics\Statement\Model\MySql\Role\TableRefForm::class, $replace), $this->replacement($this->normalJoin, \SqlSemantics\Statement\Model\MySql\Role\NormalJoinForm::class, $replace), $this->replacement($this->tableRef2, \SqlSemantics\Statement\Model\MySql\Role\TableRefForm::class, $replace), $this->comments);
     }
 
     /**
@@ -44,7 +68,7 @@ final class JoinTableWithTableRefNormalJoinTableRef_c502a929 implements \SqlSema
      */
     public function withTableRef(\SqlSemantics\Statement\Model\MySql\Role\TableRefForm $tableRef): self
     {
-        return new self($tableRef, $this->normalJoin, $this->tableRef2);
+        return new self($tableRef, $this->normalJoin, $this->tableRef2, $this->comments);
     }
 
     /**
@@ -52,7 +76,7 @@ final class JoinTableWithTableRefNormalJoinTableRef_c502a929 implements \SqlSema
      */
     public function withNormalJoin(\SqlSemantics\Statement\Model\MySql\Role\NormalJoinForm $normalJoin): self
     {
-        return new self($this->tableRef, $normalJoin, $this->tableRef2);
+        return new self($this->tableRef, $normalJoin, $this->tableRef2, $this->comments);
     }
 
     /**
@@ -60,6 +84,14 @@ final class JoinTableWithTableRefNormalJoinTableRef_c502a929 implements \SqlSema
      */
     public function withTableRef2(\SqlSemantics\Statement\Model\MySql\Role\TableRefForm $tableRef2): self
     {
-        return new self($this->tableRef, $this->normalJoin, $tableRef2);
+        return new self($this->tableRef, $this->normalJoin, $tableRef2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableRef, $this->normalJoin, $this->tableRef2, $comments);
     }
 }

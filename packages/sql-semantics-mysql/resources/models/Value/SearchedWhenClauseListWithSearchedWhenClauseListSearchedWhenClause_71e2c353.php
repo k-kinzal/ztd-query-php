@@ -17,11 +17,12 @@ final class SearchedWhenClauseListWithSearchedWhenClauseListSearchedWhenClause_7
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SearchedWhenClauseListForm $searchedWhenClauseList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SearchedWhenClauseForm $searchedWhenClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($searchedWhenClauseList), 'The searchedWhenClauseList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($searchedWhenClause), 'The searchedWhenClause must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class SearchedWhenClauseListWithSearchedWhenClauseListSearchedWhenClause_7
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->searchedWhenClauseList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->searchedWhenClause->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->searchedWhenClauseList, $this->searchedWhenClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->searchedWhenClauseList, \SqlSemantics\Statement\Model\MySql\Role\SearchedWhenClauseListForm::class, $replace), $this->replacement($this->searchedWhenClause, \SqlSemantics\Statement\Model\MySql\Role\SearchedWhenClauseForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class SearchedWhenClauseListWithSearchedWhenClauseListSearchedWhenClause_7
      */
     public function withSearchedWhenClauseList(\SqlSemantics\Statement\Model\MySql\Role\SearchedWhenClauseListForm $searchedWhenClauseList): self
     {
-        return new self($searchedWhenClauseList, $this->searchedWhenClause);
+        return new self($searchedWhenClauseList, $this->searchedWhenClause, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class SearchedWhenClauseListWithSearchedWhenClauseListSearchedWhenClause_7
      */
     public function withSearchedWhenClause(\SqlSemantics\Statement\Model\MySql\Role\SearchedWhenClauseForm $searchedWhenClause): self
     {
-        return new self($this->searchedWhenClauseList, $searchedWhenClause);
+        return new self($this->searchedWhenClauseList, $searchedWhenClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->searchedWhenClauseList, $this->searchedWhenClause, $comments);
     }
 }

@@ -17,12 +17,13 @@ final class WindowFuncCallWithFirstValueSymExprOptNullTreatmentWindowingClause_4
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptNullTreatmentForm $optNullTreatment,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WindowingClauseForm $windowingClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optNullTreatment), 'The optNullTreatment must be a generated immutable SQL value.');
@@ -34,12 +35,38 @@ final class WindowFuncCallWithFirstValueSymExprOptNullTreatmentWindowingClause_4
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('FIRST_VALUE');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
+        $writer->comments($this->comments, 4);
         $this->optNullTreatment->write($writer);
+        $writer->comments($this->comments, 5);
         $this->windowingClause->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->expr, $this->optNullTreatment, $this->windowingClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->replacement($this->optNullTreatment, \SqlSemantics\Statement\Model\MySql\Role\OptNullTreatmentForm::class, $replace), $this->replacement($this->windowingClause, \SqlSemantics\Statement\Model\MySql\Role\WindowingClauseForm::class, $replace), $this->comments);
     }
 
     /**
@@ -47,7 +74,7 @@ final class WindowFuncCallWithFirstValueSymExprOptNullTreatmentWindowingClause_4
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($expr, $this->optNullTreatment, $this->windowingClause);
+        return new self($expr, $this->optNullTreatment, $this->windowingClause, $this->comments);
     }
 
     /**
@@ -55,7 +82,7 @@ final class WindowFuncCallWithFirstValueSymExprOptNullTreatmentWindowingClause_4
      */
     public function withOptNullTreatment(\SqlSemantics\Statement\Model\MySql\Role\OptNullTreatmentForm $optNullTreatment): self
     {
-        return new self($this->expr, $optNullTreatment, $this->windowingClause);
+        return new self($this->expr, $optNullTreatment, $this->windowingClause, $this->comments);
     }
 
     /**
@@ -63,6 +90,14 @@ final class WindowFuncCallWithFirstValueSymExprOptNullTreatmentWindowingClause_4
      */
     public function withWindowingClause(\SqlSemantics\Statement\Model\MySql\Role\WindowingClauseForm $windowingClause): self
     {
-        return new self($this->expr, $this->optNullTreatment, $windowingClause);
+        return new self($this->expr, $this->optNullTreatment, $windowingClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->expr, $this->optNullTreatment, $this->windowingClause, $comments);
     }
 }

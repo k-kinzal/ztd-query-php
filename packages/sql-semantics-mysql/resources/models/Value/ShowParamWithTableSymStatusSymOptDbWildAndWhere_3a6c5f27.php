@@ -17,11 +17,12 @@ final class ShowParamWithTableSymStatusSymOptDbWildAndWhere_3a6c5f27 implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptDbForm $optDb,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm $wildAndWhere,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDb), 'The optDb must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($wildAndWhere), 'The wildAndWhere must be a generated immutable SQL value.');
@@ -32,10 +33,34 @@ final class ShowParamWithTableSymStatusSymOptDbWildAndWhere_3a6c5f27 implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('TABLE');
+        $writer->comments($this->comments, 1);
         $writer->append('STATUS');
+        $writer->comments($this->comments, 2);
         $this->optDb->write($writer);
+        $writer->comments($this->comments, 3);
         $this->wildAndWhere->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optDb, $this->wildAndWhere];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optDb, \SqlSemantics\Statement\Model\MySql\Role\OptDbForm::class, $replace), $this->replacement($this->wildAndWhere, \SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm::class, $replace), $this->comments);
     }
 
     /**
@@ -43,7 +68,7 @@ final class ShowParamWithTableSymStatusSymOptDbWildAndWhere_3a6c5f27 implements 
      */
     public function withOptDb(\SqlSemantics\Statement\Model\MySql\Role\OptDbForm $optDb): self
     {
-        return new self($optDb, $this->wildAndWhere);
+        return new self($optDb, $this->wildAndWhere, $this->comments);
     }
 
     /**
@@ -51,6 +76,14 @@ final class ShowParamWithTableSymStatusSymOptDbWildAndWhere_3a6c5f27 implements 
      */
     public function withWildAndWhere(\SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm $wildAndWhere): self
     {
-        return new self($this->optDb, $wildAndWhere);
+        return new self($this->optDb, $wildAndWhere, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optDb, $this->wildAndWhere, $comments);
     }
 }

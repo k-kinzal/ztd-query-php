@@ -17,12 +17,13 @@ final class FunctionCallNonkeywordWithTimestampDiffIntervalTimeStampExprExpr_262
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IntervalTimeStampForm $intervalTimeStamp,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($intervalTimeStamp), 'The intervalTimeStamp must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
@@ -34,14 +35,42 @@ final class FunctionCallNonkeywordWithTimestampDiffIntervalTimeStampExprExpr_262
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('TIMESTAMPDIFF');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->intervalTimeStamp->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(',');
+        $writer->comments($this->comments, 4);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(',');
+        $writer->comments($this->comments, 6);
         $this->expr2->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->intervalTimeStamp, $this->expr, $this->expr2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->intervalTimeStamp, \SqlSemantics\Statement\Model\MySql\Role\IntervalTimeStampForm::class, $replace), $this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->replacement($this->expr2, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->comments);
     }
 
     /**
@@ -49,7 +78,7 @@ final class FunctionCallNonkeywordWithTimestampDiffIntervalTimeStampExprExpr_262
      */
     public function withIntervalTimeStamp(\SqlSemantics\Statement\Model\MySql\Role\IntervalTimeStampForm $intervalTimeStamp): self
     {
-        return new self($intervalTimeStamp, $this->expr, $this->expr2);
+        return new self($intervalTimeStamp, $this->expr, $this->expr2, $this->comments);
     }
 
     /**
@@ -57,7 +86,7 @@ final class FunctionCallNonkeywordWithTimestampDiffIntervalTimeStampExprExpr_262
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($this->intervalTimeStamp, $expr, $this->expr2);
+        return new self($this->intervalTimeStamp, $expr, $this->expr2, $this->comments);
     }
 
     /**
@@ -65,6 +94,14 @@ final class FunctionCallNonkeywordWithTimestampDiffIntervalTimeStampExprExpr_262
      */
     public function withExpr2(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr2): self
     {
-        return new self($this->intervalTimeStamp, $this->expr, $expr2);
+        return new self($this->intervalTimeStamp, $this->expr, $expr2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->intervalTimeStamp, $this->expr, $this->expr2, $comments);
     }
 }

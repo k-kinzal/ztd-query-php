@@ -17,13 +17,14 @@ final class CreateMatViewStmtWithCreateOptNoLogMaterializedViewIfPNotExistsCreat
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptNoLogForm $optNoLog,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreateMvTargetForm $createMvTarget,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm $selectStmt,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithDataForm $optWithData,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optNoLog), 'The optNoLog must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createMvTarget), 'The createMvTarget must be a generated immutable SQL value.');
@@ -36,17 +37,48 @@ final class CreateMatViewStmtWithCreateOptNoLogMaterializedViewIfPNotExistsCreat
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $this->optNoLog->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('MATERIALIZED');
+        $writer->comments($this->comments, 3);
         $writer->append('VIEW');
+        $writer->comments($this->comments, 4);
         $writer->append('IF');
+        $writer->comments($this->comments, 5);
         $writer->append('NOT');
+        $writer->comments($this->comments, 6);
         $writer->append('EXISTS');
+        $writer->comments($this->comments, 7);
         $this->createMvTarget->write($writer);
+        $writer->comments($this->comments, 8);
         $writer->append('AS');
+        $writer->comments($this->comments, 9);
         $this->selectStmt->write($writer);
+        $writer->comments($this->comments, 10);
         $this->optWithData->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optNoLog, $this->createMvTarget, $this->selectStmt, $this->optWithData];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optNoLog, \SqlSemantics\Statement\Model\PostgreSql\Role\OptNoLogForm::class, $replace), $this->replacement($this->createMvTarget, \SqlSemantics\Statement\Model\PostgreSql\Role\CreateMvTargetForm::class, $replace), $this->replacement($this->selectStmt, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm::class, $replace), $this->replacement($this->optWithData, \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithDataForm::class, $replace), $this->comments);
     }
 
     /**
@@ -54,7 +86,7 @@ final class CreateMatViewStmtWithCreateOptNoLogMaterializedViewIfPNotExistsCreat
      */
     public function withOptNoLog(\SqlSemantics\Statement\Model\PostgreSql\Role\OptNoLogForm $optNoLog): self
     {
-        return new self($optNoLog, $this->createMvTarget, $this->selectStmt, $this->optWithData);
+        return new self($optNoLog, $this->createMvTarget, $this->selectStmt, $this->optWithData, $this->comments);
     }
 
     /**
@@ -62,7 +94,7 @@ final class CreateMatViewStmtWithCreateOptNoLogMaterializedViewIfPNotExistsCreat
      */
     public function withCreateMvTarget(\SqlSemantics\Statement\Model\PostgreSql\Role\CreateMvTargetForm $createMvTarget): self
     {
-        return new self($this->optNoLog, $createMvTarget, $this->selectStmt, $this->optWithData);
+        return new self($this->optNoLog, $createMvTarget, $this->selectStmt, $this->optWithData, $this->comments);
     }
 
     /**
@@ -70,7 +102,7 @@ final class CreateMatViewStmtWithCreateOptNoLogMaterializedViewIfPNotExistsCreat
      */
     public function withSelectStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm $selectStmt): self
     {
-        return new self($this->optNoLog, $this->createMvTarget, $selectStmt, $this->optWithData);
+        return new self($this->optNoLog, $this->createMvTarget, $selectStmt, $this->optWithData, $this->comments);
     }
 
     /**
@@ -78,6 +110,14 @@ final class CreateMatViewStmtWithCreateOptNoLogMaterializedViewIfPNotExistsCreat
      */
     public function withOptWithData(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithDataForm $optWithData): self
     {
-        return new self($this->optNoLog, $this->createMvTarget, $this->selectStmt, $optWithData);
+        return new self($this->optNoLog, $this->createMvTarget, $this->selectStmt, $optWithData, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optNoLog, $this->createMvTarget, $this->selectStmt, $this->optWithData, $comments);
     }
 }

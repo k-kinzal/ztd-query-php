@@ -17,11 +17,12 @@ final class SourceDefWithChangeReplicationSourceRetryCountEqUlongNum_4b7458f0 im
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceRetryCountForm $changeReplicationSourceRetryCount,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($changeReplicationSourceRetryCount), 'The changeReplicationSourceRetryCount must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ulongNum), 'The ulongNum must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class SourceDefWithChangeReplicationSourceRetryCountEqUlongNum_4b7458f0 im
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->changeReplicationSourceRetryCount->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('=');
+        $writer->comments($this->comments, 2);
         $this->ulongNum->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->changeReplicationSourceRetryCount, $this->ulongNum];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->changeReplicationSourceRetryCount, \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceRetryCountForm::class, $replace), $this->replacement($this->ulongNum, \SqlSemantics\Statement\Model\MySql\Role\UlongNumForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class SourceDefWithChangeReplicationSourceRetryCountEqUlongNum_4b7458f0 im
      */
     public function withChangeReplicationSourceRetryCount(\SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceRetryCountForm $changeReplicationSourceRetryCount): self
     {
-        return new self($changeReplicationSourceRetryCount, $this->ulongNum);
+        return new self($changeReplicationSourceRetryCount, $this->ulongNum, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class SourceDefWithChangeReplicationSourceRetryCountEqUlongNum_4b7458f0 im
      */
     public function withUlongNum(\SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum): self
     {
-        return new self($this->changeReplicationSourceRetryCount, $ulongNum);
+        return new self($this->changeReplicationSourceRetryCount, $ulongNum, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->changeReplicationSourceRetryCount, $this->ulongNum, $comments);
     }
 }

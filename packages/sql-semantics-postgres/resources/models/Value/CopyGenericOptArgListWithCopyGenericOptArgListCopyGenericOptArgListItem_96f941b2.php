@@ -17,11 +17,12 @@ final class CopyGenericOptArgListWithCopyGenericOptArgListCopyGenericOptArgListI
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListForm $copyGenericOptArgList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListItemForm $copyGenericOptArgListItem,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($copyGenericOptArgList), 'The copyGenericOptArgList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($copyGenericOptArgListItem), 'The copyGenericOptArgListItem must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class CopyGenericOptArgListWithCopyGenericOptArgListCopyGenericOptArgListI
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->copyGenericOptArgList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->copyGenericOptArgListItem->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->copyGenericOptArgList, $this->copyGenericOptArgListItem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->copyGenericOptArgList, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListForm::class, $replace), $this->replacement($this->copyGenericOptArgListItem, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListItemForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class CopyGenericOptArgListWithCopyGenericOptArgListCopyGenericOptArgListI
      */
     public function withCopyGenericOptArgList(\SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListForm $copyGenericOptArgList): self
     {
-        return new self($copyGenericOptArgList, $this->copyGenericOptArgListItem);
+        return new self($copyGenericOptArgList, $this->copyGenericOptArgListItem, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class CopyGenericOptArgListWithCopyGenericOptArgListCopyGenericOptArgListI
      */
     public function withCopyGenericOptArgListItem(\SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListItemForm $copyGenericOptArgListItem): self
     {
-        return new self($this->copyGenericOptArgList, $copyGenericOptArgListItem);
+        return new self($this->copyGenericOptArgList, $copyGenericOptArgListItem, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->copyGenericOptArgList, $this->copyGenericOptArgListItem, $comments);
     }
 }

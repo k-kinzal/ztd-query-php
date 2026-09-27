@@ -17,11 +17,12 @@ final class OperatorDefListWithOperatorDefListOperatorDefElem_68d92621 implement
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefListForm $operatorDefList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefElemForm $operatorDefElem,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($operatorDefList), 'The operatorDefList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($operatorDefElem), 'The operatorDefElem must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class OperatorDefListWithOperatorDefListOperatorDefElem_68d92621 implement
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->operatorDefList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->operatorDefElem->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->operatorDefList, $this->operatorDefElem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->operatorDefList, \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefListForm::class, $replace), $this->replacement($this->operatorDefElem, \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefElemForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class OperatorDefListWithOperatorDefListOperatorDefElem_68d92621 implement
      */
     public function withOperatorDefList(\SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefListForm $operatorDefList): self
     {
-        return new self($operatorDefList, $this->operatorDefElem);
+        return new self($operatorDefList, $this->operatorDefElem, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class OperatorDefListWithOperatorDefListOperatorDefElem_68d92621 implement
      */
     public function withOperatorDefElem(\SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefElemForm $operatorDefElem): self
     {
-        return new self($this->operatorDefList, $operatorDefElem);
+        return new self($this->operatorDefList, $operatorDefElem, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->operatorDefList, $this->operatorDefElem, $comments);
     }
 }

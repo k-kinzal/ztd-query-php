@@ -17,7 +17,7 @@ final class CreateWithCreateOptUniqueIndexSymIdentKeyAlgOnTableIdentKeyListNorma
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUniqueForm $optUnique,
@@ -27,6 +27,7 @@ final class CreateWithCreateOptUniqueIndexSymIdentKeyAlgOnTableIdentKeyListNorma
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyListForm $keyList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptionsForm $normalKeyOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIndexLockAlgorithmForm $optIndexLockAlgorithm,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUnique), 'The optUnique must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
@@ -42,18 +43,50 @@ final class CreateWithCreateOptUniqueIndexSymIdentKeyAlgOnTableIdentKeyListNorma
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $this->optUnique->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('INDEX');
+        $writer->comments($this->comments, 3);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 4);
         $this->keyAlg->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('ON');
+        $writer->comments($this->comments, 6);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append('(');
+        $writer->comments($this->comments, 8);
         $this->keyList->write($writer);
+        $writer->comments($this->comments, 9);
         $writer->append(')');
+        $writer->comments($this->comments, 10);
         $this->normalKeyOptions->write($writer);
+        $writer->comments($this->comments, 11);
         $this->optIndexLockAlgorithm->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optUnique, $this->ident, $this->keyAlg, $this->tableIdent, $this->keyList, $this->normalKeyOptions, $this->optIndexLockAlgorithm];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optUnique, \SqlSemantics\Statement\Model\MySql\Role\OptUniqueForm::class, $replace), $this->replacement($this->ident, \SqlSemantics\Statement\Model\MySql\Role\IdentForm::class, $replace), $this->replacement($this->keyAlg, \SqlSemantics\Statement\Model\MySql\Role\KeyAlgForm::class, $replace), $this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->keyList, \SqlSemantics\Statement\Model\MySql\Role\KeyListForm::class, $replace), $this->replacement($this->normalKeyOptions, \SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptionsForm::class, $replace), $this->replacement($this->optIndexLockAlgorithm, \SqlSemantics\Statement\Model\MySql\Role\OptIndexLockAlgorithmForm::class, $replace), $this->comments);
     }
 
     /**
@@ -61,7 +94,7 @@ final class CreateWithCreateOptUniqueIndexSymIdentKeyAlgOnTableIdentKeyListNorma
      */
     public function withOptUnique(\SqlSemantics\Statement\Model\MySql\Role\OptUniqueForm $optUnique): self
     {
-        return new self($optUnique, $this->ident, $this->keyAlg, $this->tableIdent, $this->keyList, $this->normalKeyOptions, $this->optIndexLockAlgorithm);
+        return new self($optUnique, $this->ident, $this->keyAlg, $this->tableIdent, $this->keyList, $this->normalKeyOptions, $this->optIndexLockAlgorithm, $this->comments);
     }
 
     /**
@@ -69,7 +102,7 @@ final class CreateWithCreateOptUniqueIndexSymIdentKeyAlgOnTableIdentKeyListNorma
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($this->optUnique, $ident, $this->keyAlg, $this->tableIdent, $this->keyList, $this->normalKeyOptions, $this->optIndexLockAlgorithm);
+        return new self($this->optUnique, $ident, $this->keyAlg, $this->tableIdent, $this->keyList, $this->normalKeyOptions, $this->optIndexLockAlgorithm, $this->comments);
     }
 
     /**
@@ -77,7 +110,7 @@ final class CreateWithCreateOptUniqueIndexSymIdentKeyAlgOnTableIdentKeyListNorma
      */
     public function withKeyAlg(\SqlSemantics\Statement\Model\MySql\Role\KeyAlgForm $keyAlg): self
     {
-        return new self($this->optUnique, $this->ident, $keyAlg, $this->tableIdent, $this->keyList, $this->normalKeyOptions, $this->optIndexLockAlgorithm);
+        return new self($this->optUnique, $this->ident, $keyAlg, $this->tableIdent, $this->keyList, $this->normalKeyOptions, $this->optIndexLockAlgorithm, $this->comments);
     }
 
     /**
@@ -85,7 +118,7 @@ final class CreateWithCreateOptUniqueIndexSymIdentKeyAlgOnTableIdentKeyListNorma
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($this->optUnique, $this->ident, $this->keyAlg, $tableIdent, $this->keyList, $this->normalKeyOptions, $this->optIndexLockAlgorithm);
+        return new self($this->optUnique, $this->ident, $this->keyAlg, $tableIdent, $this->keyList, $this->normalKeyOptions, $this->optIndexLockAlgorithm, $this->comments);
     }
 
     /**
@@ -93,7 +126,7 @@ final class CreateWithCreateOptUniqueIndexSymIdentKeyAlgOnTableIdentKeyListNorma
      */
     public function withKeyList(\SqlSemantics\Statement\Model\MySql\Role\KeyListForm $keyList): self
     {
-        return new self($this->optUnique, $this->ident, $this->keyAlg, $this->tableIdent, $keyList, $this->normalKeyOptions, $this->optIndexLockAlgorithm);
+        return new self($this->optUnique, $this->ident, $this->keyAlg, $this->tableIdent, $keyList, $this->normalKeyOptions, $this->optIndexLockAlgorithm, $this->comments);
     }
 
     /**
@@ -101,7 +134,7 @@ final class CreateWithCreateOptUniqueIndexSymIdentKeyAlgOnTableIdentKeyListNorma
      */
     public function withNormalKeyOptions(\SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptionsForm $normalKeyOptions): self
     {
-        return new self($this->optUnique, $this->ident, $this->keyAlg, $this->tableIdent, $this->keyList, $normalKeyOptions, $this->optIndexLockAlgorithm);
+        return new self($this->optUnique, $this->ident, $this->keyAlg, $this->tableIdent, $this->keyList, $normalKeyOptions, $this->optIndexLockAlgorithm, $this->comments);
     }
 
     /**
@@ -109,6 +142,14 @@ final class CreateWithCreateOptUniqueIndexSymIdentKeyAlgOnTableIdentKeyListNorma
      */
     public function withOptIndexLockAlgorithm(\SqlSemantics\Statement\Model\MySql\Role\OptIndexLockAlgorithmForm $optIndexLockAlgorithm): self
     {
-        return new self($this->optUnique, $this->ident, $this->keyAlg, $this->tableIdent, $this->keyList, $this->normalKeyOptions, $optIndexLockAlgorithm);
+        return new self($this->optUnique, $this->ident, $this->keyAlg, $this->tableIdent, $this->keyList, $this->normalKeyOptions, $optIndexLockAlgorithm, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optUnique, $this->ident, $this->keyAlg, $this->tableIdent, $this->keyList, $this->normalKeyOptions, $this->optIndexLockAlgorithm, $comments);
     }
 }

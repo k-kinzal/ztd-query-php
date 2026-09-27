@@ -17,7 +17,7 @@ final class CreateWithCreateFulltextIndexSymIdentInitKeyOptionsOnTableIdentKeyLi
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FulltextForm $fulltext,
@@ -27,6 +27,7 @@ final class CreateWithCreateFulltextIndexSymIdentInitKeyOptionsOnTableIdentKeyLi
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyListForm $keyList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptionsForm $fulltextKeyOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIndexLockAlgorithmForm $optIndexLockAlgorithm,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fulltext), 'The fulltext must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
@@ -42,18 +43,50 @@ final class CreateWithCreateFulltextIndexSymIdentInitKeyOptionsOnTableIdentKeyLi
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $this->fulltext->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('INDEX');
+        $writer->comments($this->comments, 3);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 4);
         $this->initKeyOptions->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('ON');
+        $writer->comments($this->comments, 6);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append('(');
+        $writer->comments($this->comments, 8);
         $this->keyList->write($writer);
+        $writer->comments($this->comments, 9);
         $writer->append(')');
+        $writer->comments($this->comments, 10);
         $this->fulltextKeyOptions->write($writer);
+        $writer->comments($this->comments, 11);
         $this->optIndexLockAlgorithm->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->fulltext, $this->ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $this->fulltextKeyOptions, $this->optIndexLockAlgorithm];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->fulltext, \SqlSemantics\Statement\Model\MySql\Role\FulltextForm::class, $replace), $this->replacement($this->ident, \SqlSemantics\Statement\Model\MySql\Role\IdentForm::class, $replace), $this->replacement($this->initKeyOptions, \SqlSemantics\Statement\Model\MySql\Role\InitKeyOptionsForm::class, $replace), $this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->keyList, \SqlSemantics\Statement\Model\MySql\Role\KeyListForm::class, $replace), $this->replacement($this->fulltextKeyOptions, \SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptionsForm::class, $replace), $this->replacement($this->optIndexLockAlgorithm, \SqlSemantics\Statement\Model\MySql\Role\OptIndexLockAlgorithmForm::class, $replace), $this->comments);
     }
 
     /**
@@ -61,7 +94,7 @@ final class CreateWithCreateFulltextIndexSymIdentInitKeyOptionsOnTableIdentKeyLi
      */
     public function withFulltext(\SqlSemantics\Statement\Model\MySql\Role\FulltextForm $fulltext): self
     {
-        return new self($fulltext, $this->ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $this->fulltextKeyOptions, $this->optIndexLockAlgorithm);
+        return new self($fulltext, $this->ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $this->fulltextKeyOptions, $this->optIndexLockAlgorithm, $this->comments);
     }
 
     /**
@@ -69,7 +102,7 @@ final class CreateWithCreateFulltextIndexSymIdentInitKeyOptionsOnTableIdentKeyLi
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($this->fulltext, $ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $this->fulltextKeyOptions, $this->optIndexLockAlgorithm);
+        return new self($this->fulltext, $ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $this->fulltextKeyOptions, $this->optIndexLockAlgorithm, $this->comments);
     }
 
     /**
@@ -77,7 +110,7 @@ final class CreateWithCreateFulltextIndexSymIdentInitKeyOptionsOnTableIdentKeyLi
      */
     public function withInitKeyOptions(\SqlSemantics\Statement\Model\MySql\Role\InitKeyOptionsForm $initKeyOptions): self
     {
-        return new self($this->fulltext, $this->ident, $initKeyOptions, $this->tableIdent, $this->keyList, $this->fulltextKeyOptions, $this->optIndexLockAlgorithm);
+        return new self($this->fulltext, $this->ident, $initKeyOptions, $this->tableIdent, $this->keyList, $this->fulltextKeyOptions, $this->optIndexLockAlgorithm, $this->comments);
     }
 
     /**
@@ -85,7 +118,7 @@ final class CreateWithCreateFulltextIndexSymIdentInitKeyOptionsOnTableIdentKeyLi
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($this->fulltext, $this->ident, $this->initKeyOptions, $tableIdent, $this->keyList, $this->fulltextKeyOptions, $this->optIndexLockAlgorithm);
+        return new self($this->fulltext, $this->ident, $this->initKeyOptions, $tableIdent, $this->keyList, $this->fulltextKeyOptions, $this->optIndexLockAlgorithm, $this->comments);
     }
 
     /**
@@ -93,7 +126,7 @@ final class CreateWithCreateFulltextIndexSymIdentInitKeyOptionsOnTableIdentKeyLi
      */
     public function withKeyList(\SqlSemantics\Statement\Model\MySql\Role\KeyListForm $keyList): self
     {
-        return new self($this->fulltext, $this->ident, $this->initKeyOptions, $this->tableIdent, $keyList, $this->fulltextKeyOptions, $this->optIndexLockAlgorithm);
+        return new self($this->fulltext, $this->ident, $this->initKeyOptions, $this->tableIdent, $keyList, $this->fulltextKeyOptions, $this->optIndexLockAlgorithm, $this->comments);
     }
 
     /**
@@ -101,7 +134,7 @@ final class CreateWithCreateFulltextIndexSymIdentInitKeyOptionsOnTableIdentKeyLi
      */
     public function withFulltextKeyOptions(\SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptionsForm $fulltextKeyOptions): self
     {
-        return new self($this->fulltext, $this->ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $fulltextKeyOptions, $this->optIndexLockAlgorithm);
+        return new self($this->fulltext, $this->ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $fulltextKeyOptions, $this->optIndexLockAlgorithm, $this->comments);
     }
 
     /**
@@ -109,6 +142,14 @@ final class CreateWithCreateFulltextIndexSymIdentInitKeyOptionsOnTableIdentKeyLi
      */
     public function withOptIndexLockAlgorithm(\SqlSemantics\Statement\Model\MySql\Role\OptIndexLockAlgorithmForm $optIndexLockAlgorithm): self
     {
-        return new self($this->fulltext, $this->ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $this->fulltextKeyOptions, $optIndexLockAlgorithm);
+        return new self($this->fulltext, $this->ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $this->fulltextKeyOptions, $optIndexLockAlgorithm, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->fulltext, $this->ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $this->fulltextKeyOptions, $this->optIndexLockAlgorithm, $comments);
     }
 }

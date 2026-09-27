@@ -17,11 +17,12 @@ final class InsertColumnsWithInsertColumnsInsertColumn_058540af implements \SqlS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertColumnsForm $insertColumns,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertColumnForm $insertColumn,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($insertColumns), 'The insertColumns must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($insertColumn), 'The insertColumn must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class InsertColumnsWithInsertColumnsInsertColumn_058540af implements \SqlS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->insertColumns->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->insertColumn->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->insertColumns, $this->insertColumn];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->insertColumns, \SqlSemantics\Statement\Model\MySql\Role\InsertColumnsForm::class, $replace), $this->replacement($this->insertColumn, \SqlSemantics\Statement\Model\MySql\Role\InsertColumnForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class InsertColumnsWithInsertColumnsInsertColumn_058540af implements \SqlS
      */
     public function withInsertColumns(\SqlSemantics\Statement\Model\MySql\Role\InsertColumnsForm $insertColumns): self
     {
-        return new self($insertColumns, $this->insertColumn);
+        return new self($insertColumns, $this->insertColumn, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class InsertColumnsWithInsertColumnsInsertColumn_058540af implements \SqlS
      */
     public function withInsertColumn(\SqlSemantics\Statement\Model\MySql\Role\InsertColumnForm $insertColumn): self
     {
-        return new self($this->insertColumns, $insertColumn);
+        return new self($this->insertColumns, $insertColumn, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->insertColumns, $this->insertColumn, $comments);
     }
 }

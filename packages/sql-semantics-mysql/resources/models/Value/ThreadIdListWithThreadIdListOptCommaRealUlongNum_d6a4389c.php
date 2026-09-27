@@ -17,12 +17,13 @@ final class ThreadIdListWithThreadIdListOptCommaRealUlongNum_d6a4389c implements
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ThreadIdListForm $threadIdList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCommaForm $optComma,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm $realUlongNum,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($threadIdList), 'The threadIdList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optComma), 'The optComma must be a generated immutable SQL value.');
@@ -34,9 +35,32 @@ final class ThreadIdListWithThreadIdListOptCommaRealUlongNum_d6a4389c implements
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->threadIdList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optComma->write($writer);
+        $writer->comments($this->comments, 2);
         $this->realUlongNum->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->threadIdList, $this->optComma, $this->realUlongNum];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->threadIdList, \SqlSemantics\Statement\Model\MySql\Role\ThreadIdListForm::class, $replace), $this->replacement($this->optComma, \SqlSemantics\Statement\Model\MySql\Role\OptCommaForm::class, $replace), $this->replacement($this->realUlongNum, \SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm::class, $replace), $this->comments);
     }
 
     /**
@@ -44,7 +68,7 @@ final class ThreadIdListWithThreadIdListOptCommaRealUlongNum_d6a4389c implements
      */
     public function withThreadIdList(\SqlSemantics\Statement\Model\MySql\Role\ThreadIdListForm $threadIdList): self
     {
-        return new self($threadIdList, $this->optComma, $this->realUlongNum);
+        return new self($threadIdList, $this->optComma, $this->realUlongNum, $this->comments);
     }
 
     /**
@@ -52,7 +76,7 @@ final class ThreadIdListWithThreadIdListOptCommaRealUlongNum_d6a4389c implements
      */
     public function withOptComma(\SqlSemantics\Statement\Model\MySql\Role\OptCommaForm $optComma): self
     {
-        return new self($this->threadIdList, $optComma, $this->realUlongNum);
+        return new self($this->threadIdList, $optComma, $this->realUlongNum, $this->comments);
     }
 
     /**
@@ -60,6 +84,14 @@ final class ThreadIdListWithThreadIdListOptCommaRealUlongNum_d6a4389c implements
      */
     public function withRealUlongNum(\SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm $realUlongNum): self
     {
-        return new self($this->threadIdList, $this->optComma, $realUlongNum);
+        return new self($this->threadIdList, $this->optComma, $realUlongNum, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->threadIdList, $this->optComma, $this->realUlongNum, $comments);
     }
 }

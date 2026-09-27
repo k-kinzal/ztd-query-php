@@ -17,13 +17,14 @@ final class JoinedTableWithTableReferenceInnerJoinTypeTableReferenceOnSymExpr_0d
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InnerJoinTypeForm $innerJoinType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableReference), 'The tableReference must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($innerJoinType), 'The innerJoinType must be a generated immutable SQL value.');
@@ -36,11 +37,36 @@ final class JoinedTableWithTableReferenceInnerJoinTypeTableReferenceOnSymExpr_0d
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableReference->write($writer);
+        $writer->comments($this->comments, 1);
         $this->innerJoinType->write($writer);
+        $writer->comments($this->comments, 2);
         $this->tableReference2->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('ON');
+        $writer->comments($this->comments, 4);
         $this->expr->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableReference, $this->innerJoinType, $this->tableReference2, $this->expr];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableReference, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm::class, $replace), $this->replacement($this->innerJoinType, \SqlSemantics\Statement\Model\MySql\Role\InnerJoinTypeForm::class, $replace), $this->replacement($this->tableReference2, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm::class, $replace), $this->replacement($this->expr, \SqlSemantics\Statement\Model\MySql\Role\ExprForm::class, $replace), $this->comments);
     }
 
     /**
@@ -48,7 +74,7 @@ final class JoinedTableWithTableReferenceInnerJoinTypeTableReferenceOnSymExpr_0d
      */
     public function withTableReference(\SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference): self
     {
-        return new self($tableReference, $this->innerJoinType, $this->tableReference2, $this->expr);
+        return new self($tableReference, $this->innerJoinType, $this->tableReference2, $this->expr, $this->comments);
     }
 
     /**
@@ -56,7 +82,7 @@ final class JoinedTableWithTableReferenceInnerJoinTypeTableReferenceOnSymExpr_0d
      */
     public function withInnerJoinType(\SqlSemantics\Statement\Model\MySql\Role\InnerJoinTypeForm $innerJoinType): self
     {
-        return new self($this->tableReference, $innerJoinType, $this->tableReference2, $this->expr);
+        return new self($this->tableReference, $innerJoinType, $this->tableReference2, $this->expr, $this->comments);
     }
 
     /**
@@ -64,7 +90,7 @@ final class JoinedTableWithTableReferenceInnerJoinTypeTableReferenceOnSymExpr_0d
      */
     public function withTableReference2(\SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference2): self
     {
-        return new self($this->tableReference, $this->innerJoinType, $tableReference2, $this->expr);
+        return new self($this->tableReference, $this->innerJoinType, $tableReference2, $this->expr, $this->comments);
     }
 
     /**
@@ -72,6 +98,14 @@ final class JoinedTableWithTableReferenceInnerJoinTypeTableReferenceOnSymExpr_0d
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($this->tableReference, $this->innerJoinType, $this->tableReference2, $expr);
+        return new self($this->tableReference, $this->innerJoinType, $this->tableReference2, $expr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableReference, $this->innerJoinType, $this->tableReference2, $this->expr, $comments);
     }
 }

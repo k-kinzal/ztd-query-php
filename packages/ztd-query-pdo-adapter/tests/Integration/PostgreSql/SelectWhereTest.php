@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration\PostgreSql;
 
 use Container\Endpoint;
-use Container\PostgreSql16Container;
+use Container\PostgreSqlRelease;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
@@ -25,7 +25,7 @@ final class SelectWhereTest extends TestCase
 {
     public function testWhereEquality(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -66,7 +66,7 @@ final class SelectWhereTest extends TestCase
 
     public function testWhereComparison(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -107,7 +107,7 @@ final class SelectWhereTest extends TestCase
 
     public function testWhereAnd(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -148,7 +148,7 @@ final class SelectWhereTest extends TestCase
 
     public function testWhereIn(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -189,7 +189,7 @@ final class SelectWhereTest extends TestCase
 
     public function testWhereBetween(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -230,7 +230,7 @@ final class SelectWhereTest extends TestCase
 
     public function testWhereLike(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),

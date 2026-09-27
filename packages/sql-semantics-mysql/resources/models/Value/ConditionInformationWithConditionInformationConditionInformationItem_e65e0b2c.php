@@ -17,11 +17,12 @@ final class ConditionInformationWithConditionInformationConditionInformationItem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ConditionInformationForm $conditionInformation,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ConditionInformationItemForm $conditionInformationItem,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($conditionInformation), 'The conditionInformation must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($conditionInformationItem), 'The conditionInformationItem must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class ConditionInformationWithConditionInformationConditionInformationItem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->conditionInformation->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->conditionInformationItem->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->conditionInformation, $this->conditionInformationItem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->conditionInformation, \SqlSemantics\Statement\Model\MySql\Role\ConditionInformationForm::class, $replace), $this->replacement($this->conditionInformationItem, \SqlSemantics\Statement\Model\MySql\Role\ConditionInformationItemForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class ConditionInformationWithConditionInformationConditionInformationItem
      */
     public function withConditionInformation(\SqlSemantics\Statement\Model\MySql\Role\ConditionInformationForm $conditionInformation): self
     {
-        return new self($conditionInformation, $this->conditionInformationItem);
+        return new self($conditionInformation, $this->conditionInformationItem, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class ConditionInformationWithConditionInformationConditionInformationItem
      */
     public function withConditionInformationItem(\SqlSemantics\Statement\Model\MySql\Role\ConditionInformationItemForm $conditionInformationItem): self
     {
-        return new self($this->conditionInformation, $conditionInformationItem);
+        return new self($this->conditionInformation, $conditionInformationItem, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->conditionInformation, $this->conditionInformationItem, $comments);
     }
 }

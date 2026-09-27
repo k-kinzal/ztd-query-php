@@ -17,12 +17,13 @@ final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropOperatorOpera
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AddDropForm $addDrop,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorWithArgtypesForm $operatorWithArgtypes,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($addDrop), 'The addDrop must be a generated immutable SQL value.');
@@ -34,12 +35,38 @@ final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropOperatorOpera
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('EXTENSION');
+        $writer->comments($this->comments, 2);
         $this->name->write($writer);
+        $writer->comments($this->comments, 3);
         $this->addDrop->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('OPERATOR');
+        $writer->comments($this->comments, 5);
         $this->operatorWithArgtypes->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->name, $this->addDrop, $this->operatorWithArgtypes];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->addDrop, \SqlSemantics\Statement\Model\PostgreSql\Role\AddDropForm::class, $replace), $this->replacement($this->operatorWithArgtypes, \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorWithArgtypesForm::class, $replace), $this->comments);
     }
 
     /**
@@ -47,7 +74,7 @@ final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropOperatorOpera
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($name, $this->addDrop, $this->operatorWithArgtypes);
+        return new self($name, $this->addDrop, $this->operatorWithArgtypes, $this->comments);
     }
 
     /**
@@ -55,7 +82,7 @@ final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropOperatorOpera
      */
     public function withAddDrop(\SqlSemantics\Statement\Model\PostgreSql\Role\AddDropForm $addDrop): self
     {
-        return new self($this->name, $addDrop, $this->operatorWithArgtypes);
+        return new self($this->name, $addDrop, $this->operatorWithArgtypes, $this->comments);
     }
 
     /**
@@ -63,6 +90,14 @@ final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropOperatorOpera
      */
     public function withOperatorWithArgtypes(\SqlSemantics\Statement\Model\PostgreSql\Role\OperatorWithArgtypesForm $operatorWithArgtypes): self
     {
-        return new self($this->name, $this->addDrop, $operatorWithArgtypes);
+        return new self($this->name, $this->addDrop, $operatorWithArgtypes, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->name, $this->addDrop, $this->operatorWithArgtypes, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class CreatedbOptItemsWithCreatedbOptItemsCreatedbOptItem_d3f3426e impleme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreatedbOptItemsForm $createdbOptItems,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreatedbOptItemForm $createdbOptItem,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createdbOptItems), 'The createdbOptItems must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createdbOptItem), 'The createdbOptItem must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class CreatedbOptItemsWithCreatedbOptItemsCreatedbOptItem_d3f3426e impleme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->createdbOptItems->write($writer);
+        $writer->comments($this->comments, 1);
         $this->createdbOptItem->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->createdbOptItems, $this->createdbOptItem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->createdbOptItems, \SqlSemantics\Statement\Model\PostgreSql\Role\CreatedbOptItemsForm::class, $replace), $this->replacement($this->createdbOptItem, \SqlSemantics\Statement\Model\PostgreSql\Role\CreatedbOptItemForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class CreatedbOptItemsWithCreatedbOptItemsCreatedbOptItem_d3f3426e impleme
      */
     public function withCreatedbOptItems(\SqlSemantics\Statement\Model\PostgreSql\Role\CreatedbOptItemsForm $createdbOptItems): self
     {
-        return new self($createdbOptItems, $this->createdbOptItem);
+        return new self($createdbOptItems, $this->createdbOptItem, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class CreatedbOptItemsWithCreatedbOptItemsCreatedbOptItem_d3f3426e impleme
      */
     public function withCreatedbOptItem(\SqlSemantics\Statement\Model\PostgreSql\Role\CreatedbOptItemForm $createdbOptItem): self
     {
-        return new self($this->createdbOptItems, $createdbOptItem);
+        return new self($this->createdbOptItems, $createdbOptItem, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->createdbOptItems, $this->createdbOptItem, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class OptGroupClauseWithGroupSymByGroupListOlapOpt_71c99020 implements \Sq
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GroupListForm $groupList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OlapOptForm $olapOpt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($groupList), 'The groupList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($olapOpt), 'The olapOpt must be a generated immutable SQL value.');
@@ -32,10 +33,34 @@ final class OptGroupClauseWithGroupSymByGroupListOlapOpt_71c99020 implements \Sq
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('GROUP');
+        $writer->comments($this->comments, 1);
         $writer->append('BY');
+        $writer->comments($this->comments, 2);
         $this->groupList->write($writer);
+        $writer->comments($this->comments, 3);
         $this->olapOpt->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->groupList, $this->olapOpt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->groupList, \SqlSemantics\Statement\Model\MySql\Role\GroupListForm::class, $replace), $this->replacement($this->olapOpt, \SqlSemantics\Statement\Model\MySql\Role\OlapOptForm::class, $replace), $this->comments);
     }
 
     /**
@@ -43,7 +68,7 @@ final class OptGroupClauseWithGroupSymByGroupListOlapOpt_71c99020 implements \Sq
      */
     public function withGroupList(\SqlSemantics\Statement\Model\MySql\Role\GroupListForm $groupList): self
     {
-        return new self($groupList, $this->olapOpt);
+        return new self($groupList, $this->olapOpt, $this->comments);
     }
 
     /**
@@ -51,6 +76,14 @@ final class OptGroupClauseWithGroupSymByGroupListOlapOpt_71c99020 implements \Sq
      */
     public function withOlapOpt(\SqlSemantics\Statement\Model\MySql\Role\OlapOptForm $olapOpt): self
     {
-        return new self($this->groupList, $olapOpt);
+        return new self($this->groupList, $olapOpt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->groupList, $this->olapOpt, $comments);
     }
 }

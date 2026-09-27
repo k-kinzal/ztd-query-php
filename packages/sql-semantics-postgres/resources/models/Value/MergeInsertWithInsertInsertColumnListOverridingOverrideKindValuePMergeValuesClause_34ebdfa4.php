@@ -17,12 +17,13 @@ final class MergeInsertWithInsertInsertColumnListOverridingOverrideKindValuePMer
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\InsertColumnListForm $insertColumnList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OverrideKindForm $overrideKind,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\MergeValuesClauseForm $mergeValuesClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($insertColumnList), 'The insertColumnList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($overrideKind), 'The overrideKind must be a generated immutable SQL value.');
@@ -34,14 +35,42 @@ final class MergeInsertWithInsertInsertColumnListOverridingOverrideKindValuePMer
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('INSERT');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->insertColumnList->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
+        $writer->comments($this->comments, 4);
         $writer->append('OVERRIDING');
+        $writer->comments($this->comments, 5);
         $this->overrideKind->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append('VALUE');
+        $writer->comments($this->comments, 7);
         $this->mergeValuesClause->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->insertColumnList, $this->overrideKind, $this->mergeValuesClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->insertColumnList, \SqlSemantics\Statement\Model\PostgreSql\Role\InsertColumnListForm::class, $replace), $this->replacement($this->overrideKind, \SqlSemantics\Statement\Model\PostgreSql\Role\OverrideKindForm::class, $replace), $this->replacement($this->mergeValuesClause, \SqlSemantics\Statement\Model\PostgreSql\Role\MergeValuesClauseForm::class, $replace), $this->comments);
     }
 
     /**
@@ -49,7 +78,7 @@ final class MergeInsertWithInsertInsertColumnListOverridingOverrideKindValuePMer
      */
     public function withInsertColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\InsertColumnListForm $insertColumnList): self
     {
-        return new self($insertColumnList, $this->overrideKind, $this->mergeValuesClause);
+        return new self($insertColumnList, $this->overrideKind, $this->mergeValuesClause, $this->comments);
     }
 
     /**
@@ -57,7 +86,7 @@ final class MergeInsertWithInsertInsertColumnListOverridingOverrideKindValuePMer
      */
     public function withOverrideKind(\SqlSemantics\Statement\Model\PostgreSql\Role\OverrideKindForm $overrideKind): self
     {
-        return new self($this->insertColumnList, $overrideKind, $this->mergeValuesClause);
+        return new self($this->insertColumnList, $overrideKind, $this->mergeValuesClause, $this->comments);
     }
 
     /**
@@ -65,6 +94,14 @@ final class MergeInsertWithInsertInsertColumnListOverridingOverrideKindValuePMer
      */
     public function withMergeValuesClause(\SqlSemantics\Statement\Model\PostgreSql\Role\MergeValuesClauseForm $mergeValuesClause): self
     {
-        return new self($this->insertColumnList, $this->overrideKind, $mergeValuesClause);
+        return new self($this->insertColumnList, $this->overrideKind, $mergeValuesClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->insertColumnList, $this->overrideKind, $this->mergeValuesClause, $comments);
     }
 }

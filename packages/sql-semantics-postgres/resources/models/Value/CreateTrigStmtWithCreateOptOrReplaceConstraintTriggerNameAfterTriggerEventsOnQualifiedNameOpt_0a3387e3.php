@@ -17,7 +17,7 @@ final class CreateTrigStmtWithCreateOptOrReplaceConstraintTriggerNameAfterTrigge
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm $optOrReplace,
@@ -30,6 +30,7 @@ final class CreateTrigStmtWithCreateOptOrReplaceConstraintTriggerNameAfterTrigge
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionOrProcedureForm $functionOrProcedure,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm $funcName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerFuncArgsForm $triggerFuncArgs,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optOrReplace), 'The optOrReplace must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
@@ -48,27 +49,68 @@ final class CreateTrigStmtWithCreateOptOrReplaceConstraintTriggerNameAfterTrigge
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $this->optOrReplace->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('CONSTRAINT');
+        $writer->comments($this->comments, 3);
         $writer->append('TRIGGER');
+        $writer->comments($this->comments, 4);
         $this->name->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('AFTER');
+        $writer->comments($this->comments, 6);
         $this->triggerEvents->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append('ON');
+        $writer->comments($this->comments, 8);
         $this->qualifiedName->write($writer);
+        $writer->comments($this->comments, 9);
         $this->optConstrFromTable->write($writer);
+        $writer->comments($this->comments, 10);
         $this->constraintAttributeSpec->write($writer);
+        $writer->comments($this->comments, 11);
         $writer->append('FOR');
+        $writer->comments($this->comments, 12);
         $writer->append('EACH');
+        $writer->comments($this->comments, 13);
         $writer->append('ROW');
+        $writer->comments($this->comments, 14);
         $this->triggerWhen->write($writer);
+        $writer->comments($this->comments, 15);
         $writer->append('EXECUTE');
+        $writer->comments($this->comments, 16);
         $this->functionOrProcedure->write($writer);
+        $writer->comments($this->comments, 17);
         $this->funcName->write($writer);
+        $writer->comments($this->comments, 18);
         $writer->append('(');
+        $writer->comments($this->comments, 19);
         $this->triggerFuncArgs->write($writer);
+        $writer->comments($this->comments, 20);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optOrReplace, $this->name, $this->triggerEvents, $this->qualifiedName, $this->optConstrFromTable, $this->constraintAttributeSpec, $this->triggerWhen, $this->functionOrProcedure, $this->funcName, $this->triggerFuncArgs];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optOrReplace, \SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm::class, $replace), $this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->triggerEvents, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerEventsForm::class, $replace), $this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->optConstrFromTable, \SqlSemantics\Statement\Model\PostgreSql\Role\OptConstrFromTableForm::class, $replace), $this->replacement($this->constraintAttributeSpec, \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeSpecForm::class, $replace), $this->replacement($this->triggerWhen, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerWhenForm::class, $replace), $this->replacement($this->functionOrProcedure, \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionOrProcedureForm::class, $replace), $this->replacement($this->funcName, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm::class, $replace), $this->replacement($this->triggerFuncArgs, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerFuncArgsForm::class, $replace), $this->comments);
     }
 
     /**
@@ -76,7 +118,7 @@ final class CreateTrigStmtWithCreateOptOrReplaceConstraintTriggerNameAfterTrigge
      */
     public function withOptOrReplace(\SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm $optOrReplace): self
     {
-        return new self($optOrReplace, $this->name, $this->triggerEvents, $this->qualifiedName, $this->optConstrFromTable, $this->constraintAttributeSpec, $this->triggerWhen, $this->functionOrProcedure, $this->funcName, $this->triggerFuncArgs);
+        return new self($optOrReplace, $this->name, $this->triggerEvents, $this->qualifiedName, $this->optConstrFromTable, $this->constraintAttributeSpec, $this->triggerWhen, $this->functionOrProcedure, $this->funcName, $this->triggerFuncArgs, $this->comments);
     }
 
     /**
@@ -84,7 +126,7 @@ final class CreateTrigStmtWithCreateOptOrReplaceConstraintTriggerNameAfterTrigge
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($this->optOrReplace, $name, $this->triggerEvents, $this->qualifiedName, $this->optConstrFromTable, $this->constraintAttributeSpec, $this->triggerWhen, $this->functionOrProcedure, $this->funcName, $this->triggerFuncArgs);
+        return new self($this->optOrReplace, $name, $this->triggerEvents, $this->qualifiedName, $this->optConstrFromTable, $this->constraintAttributeSpec, $this->triggerWhen, $this->functionOrProcedure, $this->funcName, $this->triggerFuncArgs, $this->comments);
     }
 
     /**
@@ -92,7 +134,7 @@ final class CreateTrigStmtWithCreateOptOrReplaceConstraintTriggerNameAfterTrigge
      */
     public function withTriggerEvents(\SqlSemantics\Statement\Model\PostgreSql\Role\TriggerEventsForm $triggerEvents): self
     {
-        return new self($this->optOrReplace, $this->name, $triggerEvents, $this->qualifiedName, $this->optConstrFromTable, $this->constraintAttributeSpec, $this->triggerWhen, $this->functionOrProcedure, $this->funcName, $this->triggerFuncArgs);
+        return new self($this->optOrReplace, $this->name, $triggerEvents, $this->qualifiedName, $this->optConstrFromTable, $this->constraintAttributeSpec, $this->triggerWhen, $this->functionOrProcedure, $this->funcName, $this->triggerFuncArgs, $this->comments);
     }
 
     /**
@@ -100,7 +142,7 @@ final class CreateTrigStmtWithCreateOptOrReplaceConstraintTriggerNameAfterTrigge
      */
     public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
     {
-        return new self($this->optOrReplace, $this->name, $this->triggerEvents, $qualifiedName, $this->optConstrFromTable, $this->constraintAttributeSpec, $this->triggerWhen, $this->functionOrProcedure, $this->funcName, $this->triggerFuncArgs);
+        return new self($this->optOrReplace, $this->name, $this->triggerEvents, $qualifiedName, $this->optConstrFromTable, $this->constraintAttributeSpec, $this->triggerWhen, $this->functionOrProcedure, $this->funcName, $this->triggerFuncArgs, $this->comments);
     }
 
     /**
@@ -108,7 +150,7 @@ final class CreateTrigStmtWithCreateOptOrReplaceConstraintTriggerNameAfterTrigge
      */
     public function withOptConstrFromTable(\SqlSemantics\Statement\Model\PostgreSql\Role\OptConstrFromTableForm $optConstrFromTable): self
     {
-        return new self($this->optOrReplace, $this->name, $this->triggerEvents, $this->qualifiedName, $optConstrFromTable, $this->constraintAttributeSpec, $this->triggerWhen, $this->functionOrProcedure, $this->funcName, $this->triggerFuncArgs);
+        return new self($this->optOrReplace, $this->name, $this->triggerEvents, $this->qualifiedName, $optConstrFromTable, $this->constraintAttributeSpec, $this->triggerWhen, $this->functionOrProcedure, $this->funcName, $this->triggerFuncArgs, $this->comments);
     }
 
     /**
@@ -116,7 +158,7 @@ final class CreateTrigStmtWithCreateOptOrReplaceConstraintTriggerNameAfterTrigge
      */
     public function withConstraintAttributeSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeSpecForm $constraintAttributeSpec): self
     {
-        return new self($this->optOrReplace, $this->name, $this->triggerEvents, $this->qualifiedName, $this->optConstrFromTable, $constraintAttributeSpec, $this->triggerWhen, $this->functionOrProcedure, $this->funcName, $this->triggerFuncArgs);
+        return new self($this->optOrReplace, $this->name, $this->triggerEvents, $this->qualifiedName, $this->optConstrFromTable, $constraintAttributeSpec, $this->triggerWhen, $this->functionOrProcedure, $this->funcName, $this->triggerFuncArgs, $this->comments);
     }
 
     /**
@@ -124,7 +166,7 @@ final class CreateTrigStmtWithCreateOptOrReplaceConstraintTriggerNameAfterTrigge
      */
     public function withTriggerWhen(\SqlSemantics\Statement\Model\PostgreSql\Role\TriggerWhenForm $triggerWhen): self
     {
-        return new self($this->optOrReplace, $this->name, $this->triggerEvents, $this->qualifiedName, $this->optConstrFromTable, $this->constraintAttributeSpec, $triggerWhen, $this->functionOrProcedure, $this->funcName, $this->triggerFuncArgs);
+        return new self($this->optOrReplace, $this->name, $this->triggerEvents, $this->qualifiedName, $this->optConstrFromTable, $this->constraintAttributeSpec, $triggerWhen, $this->functionOrProcedure, $this->funcName, $this->triggerFuncArgs, $this->comments);
     }
 
     /**
@@ -132,7 +174,7 @@ final class CreateTrigStmtWithCreateOptOrReplaceConstraintTriggerNameAfterTrigge
      */
     public function withFunctionOrProcedure(\SqlSemantics\Statement\Model\PostgreSql\Role\FunctionOrProcedureForm $functionOrProcedure): self
     {
-        return new self($this->optOrReplace, $this->name, $this->triggerEvents, $this->qualifiedName, $this->optConstrFromTable, $this->constraintAttributeSpec, $this->triggerWhen, $functionOrProcedure, $this->funcName, $this->triggerFuncArgs);
+        return new self($this->optOrReplace, $this->name, $this->triggerEvents, $this->qualifiedName, $this->optConstrFromTable, $this->constraintAttributeSpec, $this->triggerWhen, $functionOrProcedure, $this->funcName, $this->triggerFuncArgs, $this->comments);
     }
 
     /**
@@ -140,7 +182,7 @@ final class CreateTrigStmtWithCreateOptOrReplaceConstraintTriggerNameAfterTrigge
      */
     public function withFuncName(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm $funcName): self
     {
-        return new self($this->optOrReplace, $this->name, $this->triggerEvents, $this->qualifiedName, $this->optConstrFromTable, $this->constraintAttributeSpec, $this->triggerWhen, $this->functionOrProcedure, $funcName, $this->triggerFuncArgs);
+        return new self($this->optOrReplace, $this->name, $this->triggerEvents, $this->qualifiedName, $this->optConstrFromTable, $this->constraintAttributeSpec, $this->triggerWhen, $this->functionOrProcedure, $funcName, $this->triggerFuncArgs, $this->comments);
     }
 
     /**
@@ -148,6 +190,14 @@ final class CreateTrigStmtWithCreateOptOrReplaceConstraintTriggerNameAfterTrigge
      */
     public function withTriggerFuncArgs(\SqlSemantics\Statement\Model\PostgreSql\Role\TriggerFuncArgsForm $triggerFuncArgs): self
     {
-        return new self($this->optOrReplace, $this->name, $this->triggerEvents, $this->qualifiedName, $this->optConstrFromTable, $this->constraintAttributeSpec, $this->triggerWhen, $this->functionOrProcedure, $this->funcName, $triggerFuncArgs);
+        return new self($this->optOrReplace, $this->name, $this->triggerEvents, $this->qualifiedName, $this->optConstrFromTable, $this->constraintAttributeSpec, $this->triggerWhen, $this->functionOrProcedure, $this->funcName, $triggerFuncArgs, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optOrReplace, $this->name, $this->triggerEvents, $this->qualifiedName, $this->optConstrFromTable, $this->constraintAttributeSpec, $this->triggerWhen, $this->functionOrProcedure, $this->funcName, $this->triggerFuncArgs, $comments);
     }
 }

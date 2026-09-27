@@ -17,11 +17,12 @@ final class JoinTableWithTableRefStraightJoinTableFactor_f82227aa implements \Sq
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableRefForm $tableRef,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableFactorForm $tableFactor,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableRef), 'The tableRef must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableFactor), 'The tableFactor must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class JoinTableWithTableRefStraightJoinTableFactor_f82227aa implements \Sq
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableRef->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('STRAIGHT_JOIN');
+        $writer->comments($this->comments, 2);
         $this->tableFactor->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableRef, $this->tableFactor];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableRef, \SqlSemantics\Statement\Model\MySql\Role\TableRefForm::class, $replace), $this->replacement($this->tableFactor, \SqlSemantics\Statement\Model\MySql\Role\TableFactorForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class JoinTableWithTableRefStraightJoinTableFactor_f82227aa implements \Sq
      */
     public function withTableRef(\SqlSemantics\Statement\Model\MySql\Role\TableRefForm $tableRef): self
     {
-        return new self($tableRef, $this->tableFactor);
+        return new self($tableRef, $this->tableFactor, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class JoinTableWithTableRefStraightJoinTableFactor_f82227aa implements \Sq
      */
     public function withTableFactor(\SqlSemantics\Statement\Model\MySql\Role\TableFactorForm $tableFactor): self
     {
-        return new self($this->tableRef, $tableFactor);
+        return new self($this->tableRef, $tableFactor, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableRef, $this->tableFactor, $comments);
     }
 }

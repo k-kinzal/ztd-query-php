@@ -17,11 +17,12 @@ final class OptionValueNoOptionTypeWithNamesSymCharsetNameOptCollate_c0fc4666 im
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharsetNameForm $charsetName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCollateForm $optCollate,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($charsetName), 'The charsetName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCollate), 'The optCollate must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class OptionValueNoOptionTypeWithNamesSymCharsetNameOptCollate_c0fc4666 im
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('NAMES');
+        $writer->comments($this->comments, 1);
         $this->charsetName->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optCollate->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->charsetName, $this->optCollate];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->charsetName, \SqlSemantics\Statement\Model\MySql\Role\CharsetNameForm::class, $replace), $this->replacement($this->optCollate, \SqlSemantics\Statement\Model\MySql\Role\OptCollateForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class OptionValueNoOptionTypeWithNamesSymCharsetNameOptCollate_c0fc4666 im
      */
     public function withCharsetName(\SqlSemantics\Statement\Model\MySql\Role\CharsetNameForm $charsetName): self
     {
-        return new self($charsetName, $this->optCollate);
+        return new self($charsetName, $this->optCollate, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class OptionValueNoOptionTypeWithNamesSymCharsetNameOptCollate_c0fc4666 im
      */
     public function withOptCollate(\SqlSemantics\Statement\Model\MySql\Role\OptCollateForm $optCollate): self
     {
-        return new self($this->charsetName, $optCollate);
+        return new self($this->charsetName, $optCollate, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->charsetName, $this->optCollate, $comments);
     }
 }

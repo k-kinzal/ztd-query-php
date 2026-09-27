@@ -6,6 +6,7 @@ namespace SqlParser\MySql;
 
 use RuntimeException;
 use SqlParser\Lexer\LexicalException;
+use SqlParser\Lexer\ParameterSyntax;
 use SqlParser\Lexer\TerminalIndex;
 use SqlParser\Lexer\Token;
 use SqlParser\MySql\Lexer\KeywordTable;
@@ -41,6 +42,9 @@ use SqlParser\Table\TableFile;
  *     $parser->version() // => 'mysql-5.7.44'
  * @example Rejecting an unsupported release
  *     new \SqlParser\MySql\MySqlParser('mysql-4.1.0') // throws \RuntimeException: Unsupported
+ * @example Reading a named placeholder
+ *     $parser = new \SqlParser\MySql\MySqlParser(parameters: \SqlParser\Lexer\ParameterSyntax::Named);
+ *     $parser->tokenize('SELECT id FROM users WHERE id = :id')[7]->name // => 'PARAM_MARKER'
  */
 final class MySqlParser implements SqlParser
 {
@@ -56,14 +60,15 @@ final class MySqlParser implements SqlParser
      * @param string|null $version Release tag such as `mysql-8.4.7`, or null for the newest shipped
      * @param SqlMode $mode The `sql_mode` flags that change tokenization
      * @param VersionRegistry $registry Record of shipped releases
+     * @param ParameterSyntax $parameters Which parameter markers are read; the server reads only `?`
      *
      * @throws RuntimeException When the release is not shipped or its resources are missing
      */
-    public function __construct(?string $version = null, SqlMode $mode = new SqlMode(), VersionRegistry $registry = new VersionRegistry())
+    public function __construct(?string $version = null, SqlMode $mode = new SqlMode(), VersionRegistry $registry = new VersionRegistry(), ParameterSyntax $parameters = ParameterSyntax::Native)
     {
         $this->version = MySqlVersion::resolve($version, $registry);
         $this->table = (new TableFile())->load($this->version->release->tablePath);
-        $this->lexer = new MySqlLexer(KeywordTable::load($this->version->release->keywordPath), $this->version, $mode);
+        $this->lexer = new MySqlLexer(KeywordTable::load($this->version->release->keywordPath), $this->version, $mode, parameters: $parameters);
     }
 
     /**

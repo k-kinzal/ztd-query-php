@@ -17,10 +17,11 @@ final class RoleOrPrivilegeWithShowDatabases_36c56519 implements \SqlSemantics\S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $databases,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($databases, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DATABASES'], 'The databases must be a complete DATABASES lexical spelling.');
     }
@@ -30,8 +31,30 @@ final class RoleOrPrivilegeWithShowDatabases_36c56519 implements \SqlSemantics\S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SHOW');
+        $writer->comments($this->comments, 1);
         $writer->append($this->databases);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [];
+    }
+
+    /**
+     * This form holds no values to replace.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return $this;
     }
 
     /**
@@ -39,6 +62,14 @@ final class RoleOrPrivilegeWithShowDatabases_36c56519 implements \SqlSemantics\S
      */
     public function withDatabases(string $databases): self
     {
-        return new self($databases);
+        return new self($databases, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->databases, $comments);
     }
 }

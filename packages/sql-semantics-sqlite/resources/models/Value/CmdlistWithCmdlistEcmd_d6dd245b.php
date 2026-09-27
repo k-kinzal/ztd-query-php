@@ -17,11 +17,12 @@ final class CmdlistWithCmdlistEcmd_d6dd245b implements \SqlSemantics\Statement\M
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CmdlistForm $cmdlist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\EcmdForm $ecmd,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($cmdlist), 'The cmdlist must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($ecmd), 'The ecmd must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class CmdlistWithCmdlistEcmd_d6dd245b implements \SqlSemantics\Statement\M
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->cmdlist->write($writer);
+        $writer->comments($this->comments, 1);
         $this->ecmd->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->cmdlist, $this->ecmd];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->cmdlist, \SqlSemantics\Statement\Model\Sqlite\Role\CmdlistForm::class, $replace), $this->replacement($this->ecmd, \SqlSemantics\Statement\Model\Sqlite\Role\EcmdForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class CmdlistWithCmdlistEcmd_d6dd245b implements \SqlSemantics\Statement\M
      */
     public function withCmdlist(\SqlSemantics\Statement\Model\Sqlite\Role\CmdlistForm $cmdlist): self
     {
-        return new self($cmdlist, $this->ecmd);
+        return new self($cmdlist, $this->ecmd, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class CmdlistWithCmdlistEcmd_d6dd245b implements \SqlSemantics\Statement\M
      */
     public function withEcmd(\SqlSemantics\Statement\Model\Sqlite\Role\EcmdForm $ecmd): self
     {
-        return new self($this->cmdlist, $ecmd);
+        return new self($this->cmdlist, $ecmd, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->cmdlist, $this->ecmd, $comments);
     }
 }

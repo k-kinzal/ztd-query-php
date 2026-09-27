@@ -17,11 +17,12 @@ final class IgnoreServerIdListWithIgnoreServerIdListIgnoreServerId_f106ddf6 impl
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IgnoreServerIdListForm $ignoreServerIdList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IgnoreServerIdForm $ignoreServerId,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ignoreServerIdList), 'The ignoreServerIdList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ignoreServerId), 'The ignoreServerId must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class IgnoreServerIdListWithIgnoreServerIdListIgnoreServerId_f106ddf6 impl
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->ignoreServerIdList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->ignoreServerId->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->ignoreServerIdList, $this->ignoreServerId];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->ignoreServerIdList, \SqlSemantics\Statement\Model\MySql\Role\IgnoreServerIdListForm::class, $replace), $this->replacement($this->ignoreServerId, \SqlSemantics\Statement\Model\MySql\Role\IgnoreServerIdForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class IgnoreServerIdListWithIgnoreServerIdListIgnoreServerId_f106ddf6 impl
      */
     public function withIgnoreServerIdList(\SqlSemantics\Statement\Model\MySql\Role\IgnoreServerIdListForm $ignoreServerIdList): self
     {
-        return new self($ignoreServerIdList, $this->ignoreServerId);
+        return new self($ignoreServerIdList, $this->ignoreServerId, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class IgnoreServerIdListWithIgnoreServerIdListIgnoreServerId_f106ddf6 impl
      */
     public function withIgnoreServerId(\SqlSemantics\Statement\Model\MySql\Role\IgnoreServerIdForm $ignoreServerId): self
     {
-        return new self($this->ignoreServerIdList, $ignoreServerId);
+        return new self($this->ignoreServerIdList, $ignoreServerId, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ignoreServerIdList, $this->ignoreServerId, $comments);
     }
 }

@@ -4,9 +4,10 @@
  * PHP-Fuzzer entry point for PostgreSQL SQL syntax validation.
  *
  * Usage:
- *   vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_syntax.php fuzz/corpus/pg/
+ *   PG_VERSION=16.6 vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_syntax.php fuzz/corpus/pg/
  *
  * Environment variables:
+ *   PG_VERSION        - PostgreSQL release to test (default: 17.2)
  *   SQLFAKER_COVERAGE - Set to 0 to run without recording grammar coverage under fuzz/coverage/pg
  */
 
@@ -25,6 +26,7 @@ register_shutdown_function(static function (): void {
 });
 
 use Container\Endpoint;
+use Container\PostgreSql16Container;
 use Container\PostgreSql17Container;
 use Faker\Factory;
 use Fuzz\Target\PgSyntaxCheck;
@@ -34,9 +36,27 @@ use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\PostgreSql\PostgreSqlProvider;
 use Testcontainers\Testcontainers;
 
-fwrite(STDERR, "Starting PostgreSQL container...\n");
+$pgVersion = getenv('PG_VERSION') !== false ? getenv('PG_VERSION') : '17.2';
 
-$endpoint = Testcontainers::run(PostgreSql17Container::class)->getData(Endpoint::class);
+/**
+ * Container and grammar version of each PostgreSQL release.
+ */
+$containerMap = [
+    '16.6' => [PostgreSql16Container::class, 'pg-16.6'],
+    '17.2' => [PostgreSql17Container::class, 'pg-17.2'],
+];
+
+if (!isset($containerMap[$pgVersion])) {
+    fwrite(STDERR, "Unknown PostgreSQL version: $pgVersion\n");
+    fwrite(STDERR, 'Supported versions: ' . implode(', ', array_keys($containerMap)) . "\n");
+    exit(1);
+}
+
+[$containerClass, $grammarVersion] = $containerMap[$pgVersion];
+
+fwrite(STDERR, "Starting PostgreSQL $pgVersion container...\n");
+
+$endpoint = Testcontainers::run($containerClass)->getData(Endpoint::class);
 $host = $endpoint->host;
 $port = $endpoint->port;
 
@@ -46,10 +66,11 @@ if ($connection === false) {
     exit(2);
 }
 
-fwrite(STDERR, "PostgreSQL ready on $host:$port\n");
+fwrite(STDERR, "PostgreSQL $pgVersion ready on $host:$port\n");
+fwrite(STDERR, "Grammar version: $grammarVersion\n");
 
 $coverage = getenv('SQLFAKER_COVERAGE') === '0' ? null : new GrammarCoverage(__DIR__ . '/coverage/pg');
-$provider = new PostgreSqlProvider(Factory::create(), 'pg-17.2', $coverage);
+$provider = new PostgreSqlProvider(Factory::create(), $grammarVersion, $coverage);
 $check = new PgSyntaxCheck($connection);
 $planner = $provider->planner();
 $constraints = GenerationPlan::fromRule('stmt')->requiringNonEmpty();

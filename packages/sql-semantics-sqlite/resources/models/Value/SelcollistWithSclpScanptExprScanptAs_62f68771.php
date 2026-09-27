@@ -17,7 +17,7 @@ final class SelcollistWithSclpScanptExprScanptAs_62f68771 implements \SqlSemanti
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SclpForm $sclp,
@@ -25,6 +25,7 @@ final class SelcollistWithSclpScanptExprScanptAs_62f68771 implements \SqlSemanti
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt2,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\AsForm $as,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($sclp), 'The sclp must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($scanpt), 'The scanpt must be a generated immutable SQL value.');
@@ -38,11 +39,36 @@ final class SelcollistWithSclpScanptExprScanptAs_62f68771 implements \SqlSemanti
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->sclp->write($writer);
+        $writer->comments($this->comments, 1);
         $this->scanpt->write($writer);
+        $writer->comments($this->comments, 2);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 3);
         $this->scanpt2->write($writer);
+        $writer->comments($this->comments, 4);
         $this->as->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->sclp, $this->scanpt, $this->expr, $this->scanpt2, $this->as];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->sclp, \SqlSemantics\Statement\Model\Sqlite\Role\SclpForm::class, $replace), $this->replacement($this->scanpt, \SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm::class, $replace), $this->replacement($this->expr, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm::class, $replace), $this->replacement($this->scanpt2, \SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm::class, $replace), $this->replacement($this->as, \SqlSemantics\Statement\Model\Sqlite\Role\AsForm::class, $replace), $this->comments);
     }
 
     /**
@@ -50,7 +76,7 @@ final class SelcollistWithSclpScanptExprScanptAs_62f68771 implements \SqlSemanti
      */
     public function withSclp(\SqlSemantics\Statement\Model\Sqlite\Role\SclpForm $sclp): self
     {
-        return new self($sclp, $this->scanpt, $this->expr, $this->scanpt2, $this->as);
+        return new self($sclp, $this->scanpt, $this->expr, $this->scanpt2, $this->as, $this->comments);
     }
 
     /**
@@ -58,7 +84,7 @@ final class SelcollistWithSclpScanptExprScanptAs_62f68771 implements \SqlSemanti
      */
     public function withScanpt(\SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt): self
     {
-        return new self($this->sclp, $scanpt, $this->expr, $this->scanpt2, $this->as);
+        return new self($this->sclp, $scanpt, $this->expr, $this->scanpt2, $this->as, $this->comments);
     }
 
     /**
@@ -66,7 +92,7 @@ final class SelcollistWithSclpScanptExprScanptAs_62f68771 implements \SqlSemanti
      */
     public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
     {
-        return new self($this->sclp, $this->scanpt, $expr, $this->scanpt2, $this->as);
+        return new self($this->sclp, $this->scanpt, $expr, $this->scanpt2, $this->as, $this->comments);
     }
 
     /**
@@ -74,7 +100,7 @@ final class SelcollistWithSclpScanptExprScanptAs_62f68771 implements \SqlSemanti
      */
     public function withScanpt2(\SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt2): self
     {
-        return new self($this->sclp, $this->scanpt, $this->expr, $scanpt2, $this->as);
+        return new self($this->sclp, $this->scanpt, $this->expr, $scanpt2, $this->as, $this->comments);
     }
 
     /**
@@ -82,6 +108,14 @@ final class SelcollistWithSclpScanptExprScanptAs_62f68771 implements \SqlSemanti
      */
     public function withAs(\SqlSemantics\Statement\Model\Sqlite\Role\AsForm $as): self
     {
-        return new self($this->sclp, $this->scanpt, $this->expr, $this->scanpt2, $as);
+        return new self($this->sclp, $this->scanpt, $this->expr, $this->scanpt2, $as, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->sclp, $this->scanpt, $this->expr, $this->scanpt2, $this->as, $comments);
     }
 }

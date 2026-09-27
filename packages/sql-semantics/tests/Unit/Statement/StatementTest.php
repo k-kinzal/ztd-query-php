@@ -20,13 +20,28 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\SqlSemantics\Statement\Writer::class)]
 #[UsesClass(\SqlSemantics\Statement\Assertion::class)]
 #[UsesClass(\SqlSemantics\Statement\ImmutableGraph::class)]
+#[UsesClass(\SqlSemantics\Statement\Comments::class)]
+#[UsesClass(\SqlSemantics\Core\Analysis\TriviaReader::class)]
+#[UsesClass(\SqlSemantics\Core\Analysis\SourceComments::class)]
 #[UsesClass(\SqlSemantics\Core\Ast\DialectParser::class)]
 #[UsesClass(\SqlSemantics\Platform\MySql\Platform::class)]
 #[UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
 #[UsesClass(\SqlSemantics\Platform\Sqlite\Platform::class)]
+#[UsesClass(\SqlSemantics\Statement\Resolution::class)]
+#[UsesClass(\SqlSemantics\Statement\Declaration\Invariant::class)]
 #[Medium]
 final class StatementTest extends TestCase
 {
+    public function testWithCommandDiscardsTheResolutionAndWithCommentsKeepsIt(): void
+    {
+        $command = new \SqlSemantics\Statement\Model\Sqlite\Value\CmdWithCommitEndTransOpt_ccca6149('COMMIT', new \SqlSemantics\Statement\Model\Sqlite\Value\TransOptWith_6ac05548());
+        $resolution = new \SqlSemantics\Statement\Resolution();
+        $statement = new \SqlSemantics\Statement\Statement($command, new \SqlSemantics\Statement\Comments(), $resolution);
+        self::assertSame($resolution, $statement->resolution);
+        self::assertNull($statement->withCommand($command)->resolution);
+        self::assertSame($resolution, $statement->withComments(new \SqlSemantics\Statement\Comments())->resolution);
+    }
+
     #[RunInSeparateProcess]
     #[PreserveGlobalState(false)]
     public function testWithCommandConstructsAndUpdatesWithoutLoadingTheSqlParser(): void
@@ -86,5 +101,50 @@ final class StatementTest extends TestCase
         self::assertSame('COMMIT TRANSACTION', $commit->toString());
         self::assertSame('END TRANSACTION', $end->toString());
         self::assertSame('COMMIT TRANSACTION', $commit->toString());
+    }
+
+    public function testWithCommandKeepsTheCommentsAroundTheCommand(): void
+    {
+        $original = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("/*+ SeqScan(items) */ SELECT foo FROM items /* traceparent='00-abc' */");
+        $replacement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT bar FROM items')->command;
+        $updated = $original->withCommand($replacement);
+        self::assertSame(['/*+ SeqScan(items) */'], $original->comments->before(\SqlSemantics\Statement\Statement::BEFORE));
+        self::assertSame(["/* traceparent='00-abc' */"], $original->comments->before(\SqlSemantics\Statement\Statement::AFTER));
+        self::assertSame("/*+ SeqScan(items) */ SELECT bar FROM items /* traceparent='00-abc' */", $updated->toString());
+        self::assertSame("/*+ SeqScan(items) */ SELECT foo FROM items /* traceparent='00-abc' */", $original->toString());
+    }
+
+    public function testWithCommentsReplacesTheCommentsAroundTheSameCommand(): void
+    {
+        $original = new \SqlSemantics\Statement\Statement(new \SqlSemantics\Statement\Model\Sqlite\Value\CmdWithCommitEndTransOpt_ccca6149('COMMIT', new \SqlSemantics\Statement\Model\Sqlite\Value\TransOptWith_6ac05548()));
+        $updated = $original->withComments(new \SqlSemantics\Statement\Comments([\SqlSemantics\Statement\Statement::BEFORE => ['-- before'], \SqlSemantics\Statement\Statement::AFTER => ['/* after */']]));
+        self::assertSame("-- before\nCOMMIT /* after */", $updated->toString());
+        self::assertSame('COMMIT', $original->toString());
+        self::assertSame($original->command, $updated->command);
+    }
+
+    public function testToStringKeepsAnOptimizerHintAfterTheStatementKeyword(): void
+    {
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT /*+ SET_VAR(sort_buffer_size=16M) */ id FROM users');
+        self::assertSame('SELECT /*+ SET_VAR(sort_buffer_size=16M) */ id FROM users', $statement->toString());
+        self::assertSame([], $statement->comments->positions());
+    }
+
+    public function testToStringKeepsExecutableCommentDelimitersAroundTheSqlTheyEnclose(): void
+    {
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.4.7'))->analyze('SELECT /*!50700 1, */ 2, /*!99999 3, */ 4 # done');
+        self::assertSame('SELECT /*!50700 1 , */ 2 , /*!99999 3, */ 4 # done', $statement->toString());
+    }
+
+    public function testToStringSeparatesAPrefixOperatorFromANegatedOperand(): void
+    {
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT @ -1, @ x');
+        self::assertSame('SELECT @ - 1 , @ x', $statement->toString());
+    }
+
+    public function testToStringAttachesVariableMarkersToTheirNames(): void
+    {
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT @a, @@global.max_connections, @`b`, @'c'");
+        self::assertSame("SELECT @a , @@GLOBAL .max_connections , @`b` , @'c'", $statement->toString());
     }
 }

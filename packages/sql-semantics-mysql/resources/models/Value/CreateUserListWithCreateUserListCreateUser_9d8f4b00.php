@@ -17,11 +17,12 @@ final class CreateUserListWithCreateUserListCreateUser_9d8f4b00 implements \SqlS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateUserListForm $createUserList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateUserForm $createUser,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createUserList), 'The createUserList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createUser), 'The createUser must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class CreateUserListWithCreateUserListCreateUser_9d8f4b00 implements \SqlS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->createUserList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->createUser->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->createUserList, $this->createUser];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->createUserList, \SqlSemantics\Statement\Model\MySql\Role\CreateUserListForm::class, $replace), $this->replacement($this->createUser, \SqlSemantics\Statement\Model\MySql\Role\CreateUserForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class CreateUserListWithCreateUserListCreateUser_9d8f4b00 implements \SqlS
      */
     public function withCreateUserList(\SqlSemantics\Statement\Model\MySql\Role\CreateUserListForm $createUserList): self
     {
-        return new self($createUserList, $this->createUser);
+        return new self($createUserList, $this->createUser, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class CreateUserListWithCreateUserListCreateUser_9d8f4b00 implements \SqlS
      */
     public function withCreateUser(\SqlSemantics\Statement\Model\MySql\Role\CreateUserForm $createUser): self
     {
-        return new self($this->createUserList, $createUser);
+        return new self($this->createUserList, $createUser, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->createUserList, $this->createUser, $comments);
     }
 }

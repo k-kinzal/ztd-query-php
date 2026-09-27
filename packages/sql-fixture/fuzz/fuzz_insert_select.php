@@ -4,7 +4,10 @@
  * PHP-Fuzzer entry point for INSERT/SELECT consistency validation.
  *
  * Usage:
- *   vendor/bin/php-fuzzer fuzz fuzz/fuzz_insert_select.php fuzz/corpus/insert-select/
+ *   MYSQL_VERSION=9.1.0 vendor/bin/php-fuzzer fuzz fuzz/fuzz_insert_select.php fuzz/corpus/insert-select/
+ *
+ * Environment variables:
+ *   MYSQL_VERSION - MySQL release to run against (default: 8.4.7)
  *
  * This test requires a MySQL database (uses Testcontainers).
  */
@@ -18,13 +21,15 @@ register_shutdown_function(static function (): void {
 });
 
 use Container\Endpoint;
-use Container\MySql84Container;
+use Container\MySqlRelease;
 use Fuzz\Target\InsertSelectTarget;
 use Testcontainers\Testcontainers;
 
-fwrite(STDERR, "Starting MySQL 8.4 container...\n");
+$container = MySqlRelease::fromEnvironment();
 
-$endpoint = Testcontainers::run(MySql84Container::class)->getData(Endpoint::class);
+fwrite(STDERR, "Starting MySQL {$container::getGrammarVersion()} container...\n");
+
+$endpoint = Testcontainers::run($container)->getData(Endpoint::class);
 
 $pdo = new PDO(
     $endpoint->dsn(),

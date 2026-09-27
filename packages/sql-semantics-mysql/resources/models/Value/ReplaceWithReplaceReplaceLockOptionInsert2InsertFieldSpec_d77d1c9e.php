@@ -12,17 +12,18 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ReplaceWithReplaceReplaceLockOptionInsert2InsertFieldSpec_d77d1c9e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class ReplaceWithReplaceReplaceLockOptionInsert2InsertFieldSpec_d77d1c9e implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ExplanableCommandForm, \SqlSemantics\Statement\Model\MySql\Role\ReplaceForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class ReplaceWithReplaceReplaceLockOptionInsert2InsertFieldSpec_d77d1c9e implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ExplanableCommandForm, \SqlSemantics\Statement\Model\MySql\Role\ReplaceForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ReplaceLockOptionForm $replaceLockOption,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\Insert2Form $insert2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertFieldSpecForm $insertFieldSpec,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($replaceLockOption), 'The replaceLockOption must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($insert2), 'The insert2 must be a generated immutable SQL value.');
@@ -34,10 +35,34 @@ final class ReplaceWithReplaceReplaceLockOptionInsert2InsertFieldSpec_d77d1c9e i
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('REPLACE');
+        $writer->comments($this->comments, 1);
         $this->replaceLockOption->write($writer);
+        $writer->comments($this->comments, 2);
         $this->insert2->write($writer);
+        $writer->comments($this->comments, 3);
         $this->insertFieldSpec->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->replaceLockOption, $this->insert2, $this->insertFieldSpec];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->replaceLockOption, \SqlSemantics\Statement\Model\MySql\Role\ReplaceLockOptionForm::class, $replace), $this->replacement($this->insert2, \SqlSemantics\Statement\Model\MySql\Role\Insert2Form::class, $replace), $this->replacement($this->insertFieldSpec, \SqlSemantics\Statement\Model\MySql\Role\InsertFieldSpecForm::class, $replace), $this->comments);
     }
 
     /**
@@ -45,7 +70,7 @@ final class ReplaceWithReplaceReplaceLockOptionInsert2InsertFieldSpec_d77d1c9e i
      */
     public function withReplaceLockOption(\SqlSemantics\Statement\Model\MySql\Role\ReplaceLockOptionForm $replaceLockOption): self
     {
-        return new self($replaceLockOption, $this->insert2, $this->insertFieldSpec);
+        return new self($replaceLockOption, $this->insert2, $this->insertFieldSpec, $this->comments);
     }
 
     /**
@@ -53,7 +78,7 @@ final class ReplaceWithReplaceReplaceLockOptionInsert2InsertFieldSpec_d77d1c9e i
      */
     public function withInsert2(\SqlSemantics\Statement\Model\MySql\Role\Insert2Form $insert2): self
     {
-        return new self($this->replaceLockOption, $insert2, $this->insertFieldSpec);
+        return new self($this->replaceLockOption, $insert2, $this->insertFieldSpec, $this->comments);
     }
 
     /**
@@ -61,6 +86,14 @@ final class ReplaceWithReplaceReplaceLockOptionInsert2InsertFieldSpec_d77d1c9e i
      */
     public function withInsertFieldSpec(\SqlSemantics\Statement\Model\MySql\Role\InsertFieldSpecForm $insertFieldSpec): self
     {
-        return new self($this->replaceLockOption, $this->insert2, $insertFieldSpec);
+        return new self($this->replaceLockOption, $this->insert2, $insertFieldSpec, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->replaceLockOption, $this->insert2, $this->insertFieldSpec, $comments);
     }
 }

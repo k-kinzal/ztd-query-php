@@ -12,17 +12,18 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DescribeWithDescribeCommandOptExtendedDescribeExplanableCommand_9fa92e8e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class DescribeWithDescribeCommandOptExtendedDescribeExplanableCommand_9fa92e8e implements \SqlSemantics\Statement\Model\MySql\Role\DescribeForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class DescribeWithDescribeCommandOptExtendedDescribeExplanableCommand_9fa92e8e implements \SqlSemantics\Statement\Model\MySql\Role\DescribeForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DescribeCommandForm $describeCommand,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptExtendedDescribeForm $optExtendedDescribe,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExplanableCommandForm $explanableCommand,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($describeCommand), 'The describeCommand must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optExtendedDescribe), 'The optExtendedDescribe must be a generated immutable SQL value.');
@@ -34,9 +35,32 @@ final class DescribeWithDescribeCommandOptExtendedDescribeExplanableCommand_9fa9
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->describeCommand->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optExtendedDescribe->write($writer);
+        $writer->comments($this->comments, 2);
         $this->explanableCommand->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->describeCommand, $this->optExtendedDescribe, $this->explanableCommand];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->describeCommand, \SqlSemantics\Statement\Model\MySql\Role\DescribeCommandForm::class, $replace), $this->replacement($this->optExtendedDescribe, \SqlSemantics\Statement\Model\MySql\Role\OptExtendedDescribeForm::class, $replace), $this->replacement($this->explanableCommand, \SqlSemantics\Statement\Model\MySql\Role\ExplanableCommandForm::class, $replace), $this->comments);
     }
 
     /**
@@ -44,7 +68,7 @@ final class DescribeWithDescribeCommandOptExtendedDescribeExplanableCommand_9fa9
      */
     public function withDescribeCommand(\SqlSemantics\Statement\Model\MySql\Role\DescribeCommandForm $describeCommand): self
     {
-        return new self($describeCommand, $this->optExtendedDescribe, $this->explanableCommand);
+        return new self($describeCommand, $this->optExtendedDescribe, $this->explanableCommand, $this->comments);
     }
 
     /**
@@ -52,7 +76,7 @@ final class DescribeWithDescribeCommandOptExtendedDescribeExplanableCommand_9fa9
      */
     public function withOptExtendedDescribe(\SqlSemantics\Statement\Model\MySql\Role\OptExtendedDescribeForm $optExtendedDescribe): self
     {
-        return new self($this->describeCommand, $optExtendedDescribe, $this->explanableCommand);
+        return new self($this->describeCommand, $optExtendedDescribe, $this->explanableCommand, $this->comments);
     }
 
     /**
@@ -60,6 +84,14 @@ final class DescribeWithDescribeCommandOptExtendedDescribeExplanableCommand_9fa9
      */
     public function withExplanableCommand(\SqlSemantics\Statement\Model\MySql\Role\ExplanableCommandForm $explanableCommand): self
     {
-        return new self($this->describeCommand, $this->optExtendedDescribe, $explanableCommand);
+        return new self($this->describeCommand, $this->optExtendedDescribe, $explanableCommand, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->describeCommand, $this->optExtendedDescribe, $this->explanableCommand, $comments);
     }
 }

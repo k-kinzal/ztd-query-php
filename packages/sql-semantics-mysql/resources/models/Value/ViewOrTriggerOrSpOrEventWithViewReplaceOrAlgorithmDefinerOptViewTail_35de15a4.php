@@ -17,12 +17,13 @@ final class ViewOrTriggerOrSpOrEventWithViewReplaceOrAlgorithmDefinerOptViewTail
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ViewReplaceOrAlgorithmForm $viewReplaceOrAlgorithm,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DefinerOptForm $definerOpt,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ViewTailForm $viewTail,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($viewReplaceOrAlgorithm), 'The viewReplaceOrAlgorithm must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($definerOpt), 'The definerOpt must be a generated immutable SQL value.');
@@ -34,9 +35,32 @@ final class ViewOrTriggerOrSpOrEventWithViewReplaceOrAlgorithmDefinerOptViewTail
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->viewReplaceOrAlgorithm->write($writer);
+        $writer->comments($this->comments, 1);
         $this->definerOpt->write($writer);
+        $writer->comments($this->comments, 2);
         $this->viewTail->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->viewReplaceOrAlgorithm, $this->definerOpt, $this->viewTail];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->viewReplaceOrAlgorithm, \SqlSemantics\Statement\Model\MySql\Role\ViewReplaceOrAlgorithmForm::class, $replace), $this->replacement($this->definerOpt, \SqlSemantics\Statement\Model\MySql\Role\DefinerOptForm::class, $replace), $this->replacement($this->viewTail, \SqlSemantics\Statement\Model\MySql\Role\ViewTailForm::class, $replace), $this->comments);
     }
 
     /**
@@ -44,7 +68,7 @@ final class ViewOrTriggerOrSpOrEventWithViewReplaceOrAlgorithmDefinerOptViewTail
      */
     public function withViewReplaceOrAlgorithm(\SqlSemantics\Statement\Model\MySql\Role\ViewReplaceOrAlgorithmForm $viewReplaceOrAlgorithm): self
     {
-        return new self($viewReplaceOrAlgorithm, $this->definerOpt, $this->viewTail);
+        return new self($viewReplaceOrAlgorithm, $this->definerOpt, $this->viewTail, $this->comments);
     }
 
     /**
@@ -52,7 +76,7 @@ final class ViewOrTriggerOrSpOrEventWithViewReplaceOrAlgorithmDefinerOptViewTail
      */
     public function withDefinerOpt(\SqlSemantics\Statement\Model\MySql\Role\DefinerOptForm $definerOpt): self
     {
-        return new self($this->viewReplaceOrAlgorithm, $definerOpt, $this->viewTail);
+        return new self($this->viewReplaceOrAlgorithm, $definerOpt, $this->viewTail, $this->comments);
     }
 
     /**
@@ -60,6 +84,14 @@ final class ViewOrTriggerOrSpOrEventWithViewReplaceOrAlgorithmDefinerOptViewTail
      */
     public function withViewTail(\SqlSemantics\Statement\Model\MySql\Role\ViewTailForm $viewTail): self
     {
-        return new self($this->viewReplaceOrAlgorithm, $this->definerOpt, $viewTail);
+        return new self($this->viewReplaceOrAlgorithm, $this->definerOpt, $viewTail, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->viewReplaceOrAlgorithm, $this->definerOpt, $this->viewTail, $comments);
     }
 }

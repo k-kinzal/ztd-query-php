@@ -17,11 +17,12 @@ final class AlterOrderListWithAlterOrderListAlterOrderItem_3f858882 implements \
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterOrderListForm $alterOrderList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterOrderItemForm $alterOrderItem,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterOrderList), 'The alterOrderList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterOrderItem), 'The alterOrderItem must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class AlterOrderListWithAlterOrderListAlterOrderItem_3f858882 implements \
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->alterOrderList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->alterOrderItem->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->alterOrderList, $this->alterOrderItem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->alterOrderList, \SqlSemantics\Statement\Model\MySql\Role\AlterOrderListForm::class, $replace), $this->replacement($this->alterOrderItem, \SqlSemantics\Statement\Model\MySql\Role\AlterOrderItemForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class AlterOrderListWithAlterOrderListAlterOrderItem_3f858882 implements \
      */
     public function withAlterOrderList(\SqlSemantics\Statement\Model\MySql\Role\AlterOrderListForm $alterOrderList): self
     {
-        return new self($alterOrderList, $this->alterOrderItem);
+        return new self($alterOrderList, $this->alterOrderItem, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class AlterOrderListWithAlterOrderListAlterOrderItem_3f858882 implements \
      */
     public function withAlterOrderItem(\SqlSemantics\Statement\Model\MySql\Role\AlterOrderItemForm $alterOrderItem): self
     {
-        return new self($this->alterOrderList, $alterOrderItem);
+        return new self($this->alterOrderList, $alterOrderItem, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->alterOrderList, $this->alterOrderItem, $comments);
     }
 }

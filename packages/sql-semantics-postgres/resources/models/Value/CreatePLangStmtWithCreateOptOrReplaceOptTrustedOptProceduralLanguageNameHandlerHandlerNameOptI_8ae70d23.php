@@ -17,7 +17,7 @@ final class CreatePLangStmtWithCreateOptOrReplaceOptTrustedOptProceduralLanguage
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm $optOrReplace,
@@ -27,6 +27,7 @@ final class CreatePLangStmtWithCreateOptOrReplaceOptTrustedOptProceduralLanguage
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\HandlerNameForm $handlerName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptInlineHandlerForm $optInlineHandler,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptValidatorForm $optValidator,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optOrReplace), 'The optOrReplace must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTrusted), 'The optTrusted must be a generated immutable SQL value.');
@@ -42,16 +43,46 @@ final class CreatePLangStmtWithCreateOptOrReplaceOptTrustedOptProceduralLanguage
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $this->optOrReplace->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optTrusted->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optProcedural->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('LANGUAGE');
+        $writer->comments($this->comments, 5);
         $this->name->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append('HANDLER');
+        $writer->comments($this->comments, 7);
         $this->handlerName->write($writer);
+        $writer->comments($this->comments, 8);
         $this->optInlineHandler->write($writer);
+        $writer->comments($this->comments, 9);
         $this->optValidator->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optOrReplace, $this->optTrusted, $this->optProcedural, $this->name, $this->handlerName, $this->optInlineHandler, $this->optValidator];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optOrReplace, \SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm::class, $replace), $this->replacement($this->optTrusted, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTrustedForm::class, $replace), $this->replacement($this->optProcedural, \SqlSemantics\Statement\Model\PostgreSql\Role\OptProceduralForm::class, $replace), $this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->handlerName, \SqlSemantics\Statement\Model\PostgreSql\Role\HandlerNameForm::class, $replace), $this->replacement($this->optInlineHandler, \SqlSemantics\Statement\Model\PostgreSql\Role\OptInlineHandlerForm::class, $replace), $this->replacement($this->optValidator, \SqlSemantics\Statement\Model\PostgreSql\Role\OptValidatorForm::class, $replace), $this->comments);
     }
 
     /**
@@ -59,7 +90,7 @@ final class CreatePLangStmtWithCreateOptOrReplaceOptTrustedOptProceduralLanguage
      */
     public function withOptOrReplace(\SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm $optOrReplace): self
     {
-        return new self($optOrReplace, $this->optTrusted, $this->optProcedural, $this->name, $this->handlerName, $this->optInlineHandler, $this->optValidator);
+        return new self($optOrReplace, $this->optTrusted, $this->optProcedural, $this->name, $this->handlerName, $this->optInlineHandler, $this->optValidator, $this->comments);
     }
 
     /**
@@ -67,7 +98,7 @@ final class CreatePLangStmtWithCreateOptOrReplaceOptTrustedOptProceduralLanguage
      */
     public function withOptTrusted(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTrustedForm $optTrusted): self
     {
-        return new self($this->optOrReplace, $optTrusted, $this->optProcedural, $this->name, $this->handlerName, $this->optInlineHandler, $this->optValidator);
+        return new self($this->optOrReplace, $optTrusted, $this->optProcedural, $this->name, $this->handlerName, $this->optInlineHandler, $this->optValidator, $this->comments);
     }
 
     /**
@@ -75,7 +106,7 @@ final class CreatePLangStmtWithCreateOptOrReplaceOptTrustedOptProceduralLanguage
      */
     public function withOptProcedural(\SqlSemantics\Statement\Model\PostgreSql\Role\OptProceduralForm $optProcedural): self
     {
-        return new self($this->optOrReplace, $this->optTrusted, $optProcedural, $this->name, $this->handlerName, $this->optInlineHandler, $this->optValidator);
+        return new self($this->optOrReplace, $this->optTrusted, $optProcedural, $this->name, $this->handlerName, $this->optInlineHandler, $this->optValidator, $this->comments);
     }
 
     /**
@@ -83,7 +114,7 @@ final class CreatePLangStmtWithCreateOptOrReplaceOptTrustedOptProceduralLanguage
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($this->optOrReplace, $this->optTrusted, $this->optProcedural, $name, $this->handlerName, $this->optInlineHandler, $this->optValidator);
+        return new self($this->optOrReplace, $this->optTrusted, $this->optProcedural, $name, $this->handlerName, $this->optInlineHandler, $this->optValidator, $this->comments);
     }
 
     /**
@@ -91,7 +122,7 @@ final class CreatePLangStmtWithCreateOptOrReplaceOptTrustedOptProceduralLanguage
      */
     public function withHandlerName(\SqlSemantics\Statement\Model\PostgreSql\Role\HandlerNameForm $handlerName): self
     {
-        return new self($this->optOrReplace, $this->optTrusted, $this->optProcedural, $this->name, $handlerName, $this->optInlineHandler, $this->optValidator);
+        return new self($this->optOrReplace, $this->optTrusted, $this->optProcedural, $this->name, $handlerName, $this->optInlineHandler, $this->optValidator, $this->comments);
     }
 
     /**
@@ -99,7 +130,7 @@ final class CreatePLangStmtWithCreateOptOrReplaceOptTrustedOptProceduralLanguage
      */
     public function withOptInlineHandler(\SqlSemantics\Statement\Model\PostgreSql\Role\OptInlineHandlerForm $optInlineHandler): self
     {
-        return new self($this->optOrReplace, $this->optTrusted, $this->optProcedural, $this->name, $this->handlerName, $optInlineHandler, $this->optValidator);
+        return new self($this->optOrReplace, $this->optTrusted, $this->optProcedural, $this->name, $this->handlerName, $optInlineHandler, $this->optValidator, $this->comments);
     }
 
     /**
@@ -107,6 +138,14 @@ final class CreatePLangStmtWithCreateOptOrReplaceOptTrustedOptProceduralLanguage
      */
     public function withOptValidator(\SqlSemantics\Statement\Model\PostgreSql\Role\OptValidatorForm $optValidator): self
     {
-        return new self($this->optOrReplace, $this->optTrusted, $this->optProcedural, $this->name, $this->handlerName, $this->optInlineHandler, $optValidator);
+        return new self($this->optOrReplace, $this->optTrusted, $this->optProcedural, $this->name, $this->handlerName, $this->optInlineHandler, $optValidator, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optOrReplace, $this->optTrusted, $this->optProcedural, $this->name, $this->handlerName, $this->optInlineHandler, $this->optValidator, $comments);
     }
 }

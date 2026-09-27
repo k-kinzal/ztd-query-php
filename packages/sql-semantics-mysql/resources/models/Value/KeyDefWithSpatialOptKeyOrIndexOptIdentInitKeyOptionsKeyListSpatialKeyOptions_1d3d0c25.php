@@ -17,7 +17,7 @@ final class KeyDefWithSpatialOptKeyOrIndexOptIdentInitKeyOptionsKeyListSpatialKe
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpatialForm $spatial,
@@ -26,6 +26,7 @@ final class KeyDefWithSpatialOptKeyOrIndexOptIdentInitKeyOptionsKeyListSpatialKe
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InitKeyOptionsForm $initKeyOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyListForm $keyList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpatialKeyOptionsForm $spatialKeyOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spatial), 'The spatial must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optKeyOrIndex), 'The optKeyOrIndex must be a generated immutable SQL value.');
@@ -40,14 +41,42 @@ final class KeyDefWithSpatialOptKeyOrIndexOptIdentInitKeyOptionsKeyListSpatialKe
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->spatial->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optKeyOrIndex->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optIdent->write($writer);
+        $writer->comments($this->comments, 3);
         $this->initKeyOptions->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('(');
+        $writer->comments($this->comments, 5);
         $this->keyList->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append(')');
+        $writer->comments($this->comments, 7);
         $this->spatialKeyOptions->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->spatial, $this->optKeyOrIndex, $this->optIdent, $this->initKeyOptions, $this->keyList, $this->spatialKeyOptions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->spatial, \SqlSemantics\Statement\Model\MySql\Role\SpatialForm::class, $replace), $this->replacement($this->optKeyOrIndex, \SqlSemantics\Statement\Model\MySql\Role\OptKeyOrIndexForm::class, $replace), $this->replacement($this->optIdent, \SqlSemantics\Statement\Model\MySql\Role\OptIdentForm::class, $replace), $this->replacement($this->initKeyOptions, \SqlSemantics\Statement\Model\MySql\Role\InitKeyOptionsForm::class, $replace), $this->replacement($this->keyList, \SqlSemantics\Statement\Model\MySql\Role\KeyListForm::class, $replace), $this->replacement($this->spatialKeyOptions, \SqlSemantics\Statement\Model\MySql\Role\SpatialKeyOptionsForm::class, $replace), $this->comments);
     }
 
     /**
@@ -55,7 +84,7 @@ final class KeyDefWithSpatialOptKeyOrIndexOptIdentInitKeyOptionsKeyListSpatialKe
      */
     public function withSpatial(\SqlSemantics\Statement\Model\MySql\Role\SpatialForm $spatial): self
     {
-        return new self($spatial, $this->optKeyOrIndex, $this->optIdent, $this->initKeyOptions, $this->keyList, $this->spatialKeyOptions);
+        return new self($spatial, $this->optKeyOrIndex, $this->optIdent, $this->initKeyOptions, $this->keyList, $this->spatialKeyOptions, $this->comments);
     }
 
     /**
@@ -63,7 +92,7 @@ final class KeyDefWithSpatialOptKeyOrIndexOptIdentInitKeyOptionsKeyListSpatialKe
      */
     public function withOptKeyOrIndex(\SqlSemantics\Statement\Model\MySql\Role\OptKeyOrIndexForm $optKeyOrIndex): self
     {
-        return new self($this->spatial, $optKeyOrIndex, $this->optIdent, $this->initKeyOptions, $this->keyList, $this->spatialKeyOptions);
+        return new self($this->spatial, $optKeyOrIndex, $this->optIdent, $this->initKeyOptions, $this->keyList, $this->spatialKeyOptions, $this->comments);
     }
 
     /**
@@ -71,7 +100,7 @@ final class KeyDefWithSpatialOptKeyOrIndexOptIdentInitKeyOptionsKeyListSpatialKe
      */
     public function withOptIdent(\SqlSemantics\Statement\Model\MySql\Role\OptIdentForm $optIdent): self
     {
-        return new self($this->spatial, $this->optKeyOrIndex, $optIdent, $this->initKeyOptions, $this->keyList, $this->spatialKeyOptions);
+        return new self($this->spatial, $this->optKeyOrIndex, $optIdent, $this->initKeyOptions, $this->keyList, $this->spatialKeyOptions, $this->comments);
     }
 
     /**
@@ -79,7 +108,7 @@ final class KeyDefWithSpatialOptKeyOrIndexOptIdentInitKeyOptionsKeyListSpatialKe
      */
     public function withInitKeyOptions(\SqlSemantics\Statement\Model\MySql\Role\InitKeyOptionsForm $initKeyOptions): self
     {
-        return new self($this->spatial, $this->optKeyOrIndex, $this->optIdent, $initKeyOptions, $this->keyList, $this->spatialKeyOptions);
+        return new self($this->spatial, $this->optKeyOrIndex, $this->optIdent, $initKeyOptions, $this->keyList, $this->spatialKeyOptions, $this->comments);
     }
 
     /**
@@ -87,7 +116,7 @@ final class KeyDefWithSpatialOptKeyOrIndexOptIdentInitKeyOptionsKeyListSpatialKe
      */
     public function withKeyList(\SqlSemantics\Statement\Model\MySql\Role\KeyListForm $keyList): self
     {
-        return new self($this->spatial, $this->optKeyOrIndex, $this->optIdent, $this->initKeyOptions, $keyList, $this->spatialKeyOptions);
+        return new self($this->spatial, $this->optKeyOrIndex, $this->optIdent, $this->initKeyOptions, $keyList, $this->spatialKeyOptions, $this->comments);
     }
 
     /**
@@ -95,6 +124,14 @@ final class KeyDefWithSpatialOptKeyOrIndexOptIdentInitKeyOptionsKeyListSpatialKe
      */
     public function withSpatialKeyOptions(\SqlSemantics\Statement\Model\MySql\Role\SpatialKeyOptionsForm $spatialKeyOptions): self
     {
-        return new self($this->spatial, $this->optKeyOrIndex, $this->optIdent, $this->initKeyOptions, $this->keyList, $spatialKeyOptions);
+        return new self($this->spatial, $this->optKeyOrIndex, $this->optIdent, $this->initKeyOptions, $this->keyList, $spatialKeyOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->spatial, $this->optKeyOrIndex, $this->optIdent, $this->initKeyOptions, $this->keyList, $this->spatialKeyOptions, $comments);
     }
 }

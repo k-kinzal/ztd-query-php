@@ -17,11 +17,12 @@ final class ExclusionConstraintListWithExclusionConstraintListExclusionConstrain
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ExclusionConstraintListForm $exclusionConstraintList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ExclusionConstraintElemForm $exclusionConstraintElem,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($exclusionConstraintList), 'The exclusionConstraintList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($exclusionConstraintElem), 'The exclusionConstraintElem must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class ExclusionConstraintListWithExclusionConstraintListExclusionConstrain
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->exclusionConstraintList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->exclusionConstraintElem->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->exclusionConstraintList, $this->exclusionConstraintElem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->exclusionConstraintList, \SqlSemantics\Statement\Model\PostgreSql\Role\ExclusionConstraintListForm::class, $replace), $this->replacement($this->exclusionConstraintElem, \SqlSemantics\Statement\Model\PostgreSql\Role\ExclusionConstraintElemForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class ExclusionConstraintListWithExclusionConstraintListExclusionConstrain
      */
     public function withExclusionConstraintList(\SqlSemantics\Statement\Model\PostgreSql\Role\ExclusionConstraintListForm $exclusionConstraintList): self
     {
-        return new self($exclusionConstraintList, $this->exclusionConstraintElem);
+        return new self($exclusionConstraintList, $this->exclusionConstraintElem, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class ExclusionConstraintListWithExclusionConstraintListExclusionConstrain
      */
     public function withExclusionConstraintElem(\SqlSemantics\Statement\Model\PostgreSql\Role\ExclusionConstraintElemForm $exclusionConstraintElem): self
     {
-        return new self($this->exclusionConstraintList, $exclusionConstraintElem);
+        return new self($this->exclusionConstraintList, $exclusionConstraintElem, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->exclusionConstraintList, $this->exclusionConstraintElem, $comments);
     }
 }

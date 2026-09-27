@@ -17,13 +17,14 @@ final class CreateStatsStmtWithCreateStatisticsIfPNotExistsAnyNameOptNameListOnS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptNameListForm $optNameList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamsForm $statsParams,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FromListForm $fromList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optNameList), 'The optNameList must be a generated immutable SQL value.');
@@ -36,17 +37,48 @@ final class CreateStatsStmtWithCreateStatisticsIfPNotExistsAnyNameOptNameListOnS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $writer->append('STATISTICS');
+        $writer->comments($this->comments, 2);
         $writer->append('IF');
+        $writer->comments($this->comments, 3);
         $writer->append('NOT');
+        $writer->comments($this->comments, 4);
         $writer->append('EXISTS');
+        $writer->comments($this->comments, 5);
         $this->anyName->write($writer);
+        $writer->comments($this->comments, 6);
         $this->optNameList->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append('ON');
+        $writer->comments($this->comments, 8);
         $this->statsParams->write($writer);
+        $writer->comments($this->comments, 9);
         $writer->append('FROM');
+        $writer->comments($this->comments, 10);
         $this->fromList->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->anyName, $this->optNameList, $this->statsParams, $this->fromList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->anyName, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm::class, $replace), $this->replacement($this->optNameList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptNameListForm::class, $replace), $this->replacement($this->statsParams, \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamsForm::class, $replace), $this->replacement($this->fromList, \SqlSemantics\Statement\Model\PostgreSql\Role\FromListForm::class, $replace), $this->comments);
     }
 
     /**
@@ -54,7 +86,7 @@ final class CreateStatsStmtWithCreateStatisticsIfPNotExistsAnyNameOptNameListOnS
      */
     public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
     {
-        return new self($anyName, $this->optNameList, $this->statsParams, $this->fromList);
+        return new self($anyName, $this->optNameList, $this->statsParams, $this->fromList, $this->comments);
     }
 
     /**
@@ -62,7 +94,7 @@ final class CreateStatsStmtWithCreateStatisticsIfPNotExistsAnyNameOptNameListOnS
      */
     public function withOptNameList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptNameListForm $optNameList): self
     {
-        return new self($this->anyName, $optNameList, $this->statsParams, $this->fromList);
+        return new self($this->anyName, $optNameList, $this->statsParams, $this->fromList, $this->comments);
     }
 
     /**
@@ -70,7 +102,7 @@ final class CreateStatsStmtWithCreateStatisticsIfPNotExistsAnyNameOptNameListOnS
      */
     public function withStatsParams(\SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamsForm $statsParams): self
     {
-        return new self($this->anyName, $this->optNameList, $statsParams, $this->fromList);
+        return new self($this->anyName, $this->optNameList, $statsParams, $this->fromList, $this->comments);
     }
 
     /**
@@ -78,6 +110,14 @@ final class CreateStatsStmtWithCreateStatisticsIfPNotExistsAnyNameOptNameListOnS
      */
     public function withFromList(\SqlSemantics\Statement\Model\PostgreSql\Role\FromListForm $fromList): self
     {
-        return new self($this->anyName, $this->optNameList, $this->statsParams, $fromList);
+        return new self($this->anyName, $this->optNameList, $this->statsParams, $fromList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->anyName, $this->optNameList, $this->statsParams, $this->fromList, $comments);
     }
 }

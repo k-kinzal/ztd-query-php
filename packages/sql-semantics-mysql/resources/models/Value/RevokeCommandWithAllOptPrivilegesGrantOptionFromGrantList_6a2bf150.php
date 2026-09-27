@@ -17,11 +17,12 @@ final class RevokeCommandWithAllOptPrivilegesGrantOptionFromGrantList_6a2bf150 i
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptPrivilegesForm $optPrivileges,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GrantListForm $grantList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optPrivileges), 'The optPrivileges must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($grantList), 'The grantList must be a generated immutable SQL value.');
@@ -32,13 +33,40 @@ final class RevokeCommandWithAllOptPrivilegesGrantOptionFromGrantList_6a2bf150 i
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALL');
+        $writer->comments($this->comments, 1);
         $this->optPrivileges->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(',');
+        $writer->comments($this->comments, 3);
         $writer->append('GRANT');
+        $writer->comments($this->comments, 4);
         $writer->append('OPTION');
+        $writer->comments($this->comments, 5);
         $writer->append('FROM');
+        $writer->comments($this->comments, 6);
         $this->grantList->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optPrivileges, $this->grantList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optPrivileges, \SqlSemantics\Statement\Model\MySql\Role\OptPrivilegesForm::class, $replace), $this->replacement($this->grantList, \SqlSemantics\Statement\Model\MySql\Role\GrantListForm::class, $replace), $this->comments);
     }
 
     /**
@@ -46,7 +74,7 @@ final class RevokeCommandWithAllOptPrivilegesGrantOptionFromGrantList_6a2bf150 i
      */
     public function withOptPrivileges(\SqlSemantics\Statement\Model\MySql\Role\OptPrivilegesForm $optPrivileges): self
     {
-        return new self($optPrivileges, $this->grantList);
+        return new self($optPrivileges, $this->grantList, $this->comments);
     }
 
     /**
@@ -54,6 +82,14 @@ final class RevokeCommandWithAllOptPrivilegesGrantOptionFromGrantList_6a2bf150 i
      */
     public function withGrantList(\SqlSemantics\Statement\Model\MySql\Role\GrantListForm $grantList): self
     {
-        return new self($this->optPrivileges, $grantList);
+        return new self($this->optPrivileges, $grantList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optPrivileges, $this->grantList, $comments);
     }
 }

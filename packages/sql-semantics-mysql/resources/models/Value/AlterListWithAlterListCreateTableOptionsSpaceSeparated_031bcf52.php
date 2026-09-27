@@ -17,11 +17,12 @@ final class AlterListWithAlterListCreateTableOptionsSpaceSeparated_031bcf52 impl
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterListForm $alterList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsSpaceSeparatedForm $createTableOptionsSpaceSeparated,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterList), 'The alterList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createTableOptionsSpaceSeparated), 'The createTableOptionsSpaceSeparated must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class AlterListWithAlterListCreateTableOptionsSpaceSeparated_031bcf52 impl
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->alterList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->createTableOptionsSpaceSeparated->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->alterList, $this->createTableOptionsSpaceSeparated];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->alterList, \SqlSemantics\Statement\Model\MySql\Role\AlterListForm::class, $replace), $this->replacement($this->createTableOptionsSpaceSeparated, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsSpaceSeparatedForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class AlterListWithAlterListCreateTableOptionsSpaceSeparated_031bcf52 impl
      */
     public function withAlterList(\SqlSemantics\Statement\Model\MySql\Role\AlterListForm $alterList): self
     {
-        return new self($alterList, $this->createTableOptionsSpaceSeparated);
+        return new self($alterList, $this->createTableOptionsSpaceSeparated, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class AlterListWithAlterListCreateTableOptionsSpaceSeparated_031bcf52 impl
      */
     public function withCreateTableOptionsSpaceSeparated(\SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsSpaceSeparatedForm $createTableOptionsSpaceSeparated): self
     {
-        return new self($this->alterList, $createTableOptionsSpaceSeparated);
+        return new self($this->alterList, $createTableOptionsSpaceSeparated, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->alterList, $this->createTableOptionsSpaceSeparated, $comments);
     }
 }

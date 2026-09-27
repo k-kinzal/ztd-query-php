@@ -17,12 +17,13 @@ final class SpLabeledBlockWithLabelIdentSpBlockContentSpOptLabel_20e5e072 implem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LabelIdentForm $labelIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpBlockContentForm $spBlockContent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpOptLabelForm $spOptLabel,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($labelIdent), 'The labelIdent must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spBlockContent), 'The spBlockContent must be a generated immutable SQL value.');
@@ -34,10 +35,34 @@ final class SpLabeledBlockWithLabelIdentSpBlockContentSpOptLabel_20e5e072 implem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->labelIdent->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(':');
+        $writer->comments($this->comments, 2);
         $this->spBlockContent->write($writer);
+        $writer->comments($this->comments, 3);
         $this->spOptLabel->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->labelIdent, $this->spBlockContent, $this->spOptLabel];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->labelIdent, \SqlSemantics\Statement\Model\MySql\Role\LabelIdentForm::class, $replace), $this->replacement($this->spBlockContent, \SqlSemantics\Statement\Model\MySql\Role\SpBlockContentForm::class, $replace), $this->replacement($this->spOptLabel, \SqlSemantics\Statement\Model\MySql\Role\SpOptLabelForm::class, $replace), $this->comments);
     }
 
     /**
@@ -45,7 +70,7 @@ final class SpLabeledBlockWithLabelIdentSpBlockContentSpOptLabel_20e5e072 implem
      */
     public function withLabelIdent(\SqlSemantics\Statement\Model\MySql\Role\LabelIdentForm $labelIdent): self
     {
-        return new self($labelIdent, $this->spBlockContent, $this->spOptLabel);
+        return new self($labelIdent, $this->spBlockContent, $this->spOptLabel, $this->comments);
     }
 
     /**
@@ -53,7 +78,7 @@ final class SpLabeledBlockWithLabelIdentSpBlockContentSpOptLabel_20e5e072 implem
      */
     public function withSpBlockContent(\SqlSemantics\Statement\Model\MySql\Role\SpBlockContentForm $spBlockContent): self
     {
-        return new self($this->labelIdent, $spBlockContent, $this->spOptLabel);
+        return new self($this->labelIdent, $spBlockContent, $this->spOptLabel, $this->comments);
     }
 
     /**
@@ -61,6 +86,14 @@ final class SpLabeledBlockWithLabelIdentSpBlockContentSpOptLabel_20e5e072 implem
      */
     public function withSpOptLabel(\SqlSemantics\Statement\Model\MySql\Role\SpOptLabelForm $spOptLabel): self
     {
-        return new self($this->labelIdent, $this->spBlockContent, $spOptLabel);
+        return new self($this->labelIdent, $this->spBlockContent, $spOptLabel, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->labelIdent, $this->spBlockContent, $this->spOptLabel, $comments);
     }
 }

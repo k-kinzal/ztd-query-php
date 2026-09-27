@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration;
 
 use Container\Endpoint;
-use Container\MySql80Container;
-use Container\MySql84Container;
+use Container\MySqlRelease;
 use mysqli;
 use mysqli_result;
 use PHPUnit\Framework\Attributes\Large;
@@ -30,7 +29,7 @@ final class MysqliCteShadowingTest extends TestCase
 {
     public function testUpdatesAndDeletesEveryListedTable(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -85,7 +84,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testExecuteQueryReplaceRemovesExistingPrimaryKey(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -110,7 +109,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testExecuteQueryOnDuplicateKeyUpdateReplacesExistingValues(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -135,7 +134,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testUpdateReplacesExistingTextWithEmptyString(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -157,7 +156,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testUpdatePreservesIntroducedHexLiteral(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -183,7 +182,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testUpdatePreservesIntervalUnit(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -209,7 +208,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testUpdateAndDeleteRestrictRowsWithCaseExpression(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -256,7 +255,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testInsertWithoutColumnListIgnoresNamedForeignKeyConstraint(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -284,7 +283,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testSelfReferencingUpsertMatchesNativeMySql(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -315,7 +314,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testAffectedRowsCountsOnlyChangedMySqlRows(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -336,7 +335,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testTransactionsAndSavepointsRestoreShadowRows(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -376,7 +375,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testRecursiveAndUserOwnedCteNamespacesRemainValid(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -403,7 +402,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testCteDefinitionsRemainVisibleToSimulatedDml(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -426,7 +425,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testOrderedLimitedUpdateKeepsOriginalIdentityAndSwapSnapshot(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -452,7 +451,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testInsertSelectPreservesStarJoinsAggregatesDistinctAndRollup(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -504,7 +503,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testGroupedSelfReferencingSubqueryRestrictsUpdate(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -535,7 +534,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testGroupedSelfReferencingSubqueryRestrictsDelete(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -564,7 +563,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testAutoIncrementUsesShadowCounterWithoutModifyingPhysicalTable(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -588,7 +587,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testOmittedExplicitAndDefaultOnlyValuesMatchMySql(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -619,7 +618,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testEnumUsesDeclarationRanksForOrderingAndComparison(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -643,7 +642,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testSetExpressionsRemainSingleStatements(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -678,7 +677,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testSelectOnCleanShadowReturnsEmpty(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -700,7 +699,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testInsertDoesNotModifyPhysicalDatabase(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -727,7 +726,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testInsertIsVisibleViaZtdSelect(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -760,7 +759,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testMultipleInsertsAccumulate(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -795,7 +794,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testSelectWithWhereOnShadowData(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -827,7 +826,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testPhysicalDatabaseRemainsUnchangedAfterMutations(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -860,7 +859,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testEnableDisableToggle(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -883,7 +882,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testDisableZtdBypassesRewriting(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -914,7 +913,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testPreparedStatementSelectWithZtd(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -947,7 +946,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testPreparedStatementSelectNonExistent(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -979,7 +978,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testAffectedRowsAfterInsert(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -1001,7 +1000,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testAffectedRowsAfterMultipleInserts(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -1028,7 +1027,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testExecuteQuerySelect(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -1059,7 +1058,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testRealQueryInsert(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -1087,7 +1086,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testPreparedBackslashesRoundTripWithoutMysqlEscapeCorruption(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -1114,7 +1113,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testRangePartitionSelectionMatchesShadowRows(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $rawMysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -1146,7 +1145,7 @@ final class MysqliCteShadowingTest extends TestCase
     }
     public function testYearShorthandMatchesNativeCoercionWithoutPhysicalWrites(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
@@ -1168,7 +1167,7 @@ final class MysqliCteShadowingTest extends TestCase
 
     public function testNativeConstructorCreatesAnIsolatedDefaultSession(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
         $endpoint = $container->getData(Endpoint::class);
         try {
             $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);

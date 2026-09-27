@@ -17,7 +17,7 @@ final class CopyStmtWithCopyPreparableStmtToOptProgramCopyFileNameOptWithCopyOpt
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PreparableStmtForm $preparableStmt,
@@ -25,6 +25,7 @@ final class CopyStmtWithCopyPreparableStmtToOptProgramCopyFileNameOptWithCopyOpt
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CopyFileNameForm $copyFileName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CopyOptionsForm $copyOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($preparableStmt), 'The preparableStmt must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optProgram), 'The optProgram must be a generated immutable SQL value.');
@@ -38,15 +39,44 @@ final class CopyStmtWithCopyPreparableStmtToOptProgramCopyFileNameOptWithCopyOpt
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('COPY');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->preparableStmt->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
+        $writer->comments($this->comments, 4);
         $writer->append('TO');
+        $writer->comments($this->comments, 5);
         $this->optProgram->write($writer);
+        $writer->comments($this->comments, 6);
         $this->copyFileName->write($writer);
+        $writer->comments($this->comments, 7);
         $this->optWith->write($writer);
+        $writer->comments($this->comments, 8);
         $this->copyOptions->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->preparableStmt, $this->optProgram, $this->copyFileName, $this->optWith, $this->copyOptions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->preparableStmt, \SqlSemantics\Statement\Model\PostgreSql\Role\PreparableStmtForm::class, $replace), $this->replacement($this->optProgram, \SqlSemantics\Statement\Model\PostgreSql\Role\OptProgramForm::class, $replace), $this->replacement($this->copyFileName, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyFileNameForm::class, $replace), $this->replacement($this->optWith, \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm::class, $replace), $this->replacement($this->copyOptions, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyOptionsForm::class, $replace), $this->comments);
     }
 
     /**
@@ -54,7 +84,7 @@ final class CopyStmtWithCopyPreparableStmtToOptProgramCopyFileNameOptWithCopyOpt
      */
     public function withPreparableStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\PreparableStmtForm $preparableStmt): self
     {
-        return new self($preparableStmt, $this->optProgram, $this->copyFileName, $this->optWith, $this->copyOptions);
+        return new self($preparableStmt, $this->optProgram, $this->copyFileName, $this->optWith, $this->copyOptions, $this->comments);
     }
 
     /**
@@ -62,7 +92,7 @@ final class CopyStmtWithCopyPreparableStmtToOptProgramCopyFileNameOptWithCopyOpt
      */
     public function withOptProgram(\SqlSemantics\Statement\Model\PostgreSql\Role\OptProgramForm $optProgram): self
     {
-        return new self($this->preparableStmt, $optProgram, $this->copyFileName, $this->optWith, $this->copyOptions);
+        return new self($this->preparableStmt, $optProgram, $this->copyFileName, $this->optWith, $this->copyOptions, $this->comments);
     }
 
     /**
@@ -70,7 +100,7 @@ final class CopyStmtWithCopyPreparableStmtToOptProgramCopyFileNameOptWithCopyOpt
      */
     public function withCopyFileName(\SqlSemantics\Statement\Model\PostgreSql\Role\CopyFileNameForm $copyFileName): self
     {
-        return new self($this->preparableStmt, $this->optProgram, $copyFileName, $this->optWith, $this->copyOptions);
+        return new self($this->preparableStmt, $this->optProgram, $copyFileName, $this->optWith, $this->copyOptions, $this->comments);
     }
 
     /**
@@ -78,7 +108,7 @@ final class CopyStmtWithCopyPreparableStmtToOptProgramCopyFileNameOptWithCopyOpt
      */
     public function withOptWith(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith): self
     {
-        return new self($this->preparableStmt, $this->optProgram, $this->copyFileName, $optWith, $this->copyOptions);
+        return new self($this->preparableStmt, $this->optProgram, $this->copyFileName, $optWith, $this->copyOptions, $this->comments);
     }
 
     /**
@@ -86,6 +116,14 @@ final class CopyStmtWithCopyPreparableStmtToOptProgramCopyFileNameOptWithCopyOpt
      */
     public function withCopyOptions(\SqlSemantics\Statement\Model\PostgreSql\Role\CopyOptionsForm $copyOptions): self
     {
-        return new self($this->preparableStmt, $this->optProgram, $this->copyFileName, $this->optWith, $copyOptions);
+        return new self($this->preparableStmt, $this->optProgram, $this->copyFileName, $this->optWith, $copyOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->preparableStmt, $this->optProgram, $this->copyFileName, $this->optWith, $this->copyOptions, $comments);
     }
 }

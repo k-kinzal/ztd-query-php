@@ -17,11 +17,12 @@ final class FetchArgsWithForwardAllOptFromInCursorName_8d367075 implements \SqlS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptFromInForm $optFromIn,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CursorNameForm $cursorName,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optFromIn), 'The optFromIn must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($cursorName), 'The cursorName must be a generated immutable SQL value.');
@@ -32,10 +33,34 @@ final class FetchArgsWithForwardAllOptFromInCursorName_8d367075 implements \SqlS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('FORWARD');
+        $writer->comments($this->comments, 1);
         $writer->append('ALL');
+        $writer->comments($this->comments, 2);
         $this->optFromIn->write($writer);
+        $writer->comments($this->comments, 3);
         $this->cursorName->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optFromIn, $this->cursorName];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optFromIn, \SqlSemantics\Statement\Model\PostgreSql\Role\OptFromInForm::class, $replace), $this->replacement($this->cursorName, \SqlSemantics\Statement\Model\PostgreSql\Role\CursorNameForm::class, $replace), $this->comments);
     }
 
     /**
@@ -43,7 +68,7 @@ final class FetchArgsWithForwardAllOptFromInCursorName_8d367075 implements \SqlS
      */
     public function withOptFromIn(\SqlSemantics\Statement\Model\PostgreSql\Role\OptFromInForm $optFromIn): self
     {
-        return new self($optFromIn, $this->cursorName);
+        return new self($optFromIn, $this->cursorName, $this->comments);
     }
 
     /**
@@ -51,6 +76,14 @@ final class FetchArgsWithForwardAllOptFromInCursorName_8d367075 implements \SqlS
      */
     public function withCursorName(\SqlSemantics\Statement\Model\PostgreSql\Role\CursorNameForm $cursorName): self
     {
-        return new self($this->optFromIn, $cursorName);
+        return new self($this->optFromIn, $cursorName, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optFromIn, $this->cursorName, $comments);
     }
 }

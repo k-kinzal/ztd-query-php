@@ -17,11 +17,12 @@ final class VacuumRelationListWithVacuumRelationListVacuumRelation_59fb802c impl
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\VacuumRelationListForm $vacuumRelationList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\VacuumRelationForm $vacuumRelation,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($vacuumRelationList), 'The vacuumRelationList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($vacuumRelation), 'The vacuumRelation must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class VacuumRelationListWithVacuumRelationListVacuumRelation_59fb802c impl
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->vacuumRelationList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->vacuumRelation->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->vacuumRelationList, $this->vacuumRelation];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->vacuumRelationList, \SqlSemantics\Statement\Model\PostgreSql\Role\VacuumRelationListForm::class, $replace), $this->replacement($this->vacuumRelation, \SqlSemantics\Statement\Model\PostgreSql\Role\VacuumRelationForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class VacuumRelationListWithVacuumRelationListVacuumRelation_59fb802c impl
      */
     public function withVacuumRelationList(\SqlSemantics\Statement\Model\PostgreSql\Role\VacuumRelationListForm $vacuumRelationList): self
     {
-        return new self($vacuumRelationList, $this->vacuumRelation);
+        return new self($vacuumRelationList, $this->vacuumRelation, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class VacuumRelationListWithVacuumRelationListVacuumRelation_59fb802c impl
      */
     public function withVacuumRelation(\SqlSemantics\Statement\Model\PostgreSql\Role\VacuumRelationForm $vacuumRelation): self
     {
-        return new self($this->vacuumRelationList, $vacuumRelation);
+        return new self($this->vacuumRelationList, $vacuumRelation, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->vacuumRelationList, $this->vacuumRelation, $comments);
     }
 }

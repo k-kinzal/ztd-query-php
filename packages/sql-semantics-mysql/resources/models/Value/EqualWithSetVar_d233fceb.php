@@ -17,10 +17,11 @@ final class EqualWithSetVar_d233fceb implements \SqlSemantics\Statement\Model\My
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $setVar,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($setVar, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['SET_VAR'], 'The setVar must be a complete SET_VAR lexical spelling.');
     }
@@ -30,7 +31,28 @@ final class EqualWithSetVar_d233fceb implements \SqlSemantics\Statement\Model\My
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->setVar);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [];
+    }
+
+    /**
+     * This form holds no values to replace.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return $this;
     }
 
     /**
@@ -38,6 +60,14 @@ final class EqualWithSetVar_d233fceb implements \SqlSemantics\Statement\Model\My
      */
     public function withSetVar(string $setVar): self
     {
-        return new self($setVar);
+        return new self($setVar, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->setVar, $comments);
     }
 }

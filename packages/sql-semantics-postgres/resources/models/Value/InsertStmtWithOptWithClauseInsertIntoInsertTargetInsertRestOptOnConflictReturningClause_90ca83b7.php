@@ -17,7 +17,7 @@ final class InsertStmtWithOptWithClauseInsertIntoInsertTargetInsertRestOptOnConf
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithClauseForm $with,
@@ -25,6 +25,7 @@ final class InsertStmtWithOptWithClauseInsertIntoInsertTargetInsertRestOptOnConf
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\InsertRestForm $insertRest,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptOnConflictForm $optOnConflict,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ReturningClauseForm $returningClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($with), 'The with must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($insertTarget), 'The insertTarget must be a generated immutable SQL value.');
@@ -38,13 +39,40 @@ final class InsertStmtWithOptWithClauseInsertIntoInsertTargetInsertRestOptOnConf
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->with->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('INSERT');
+        $writer->comments($this->comments, 2);
         $writer->append('INTO');
+        $writer->comments($this->comments, 3);
         $this->insertTarget->write($writer);
+        $writer->comments($this->comments, 4);
         $this->insertRest->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optOnConflict->write($writer);
+        $writer->comments($this->comments, 6);
         $this->returningClause->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->with, $this->insertTarget, $this->insertRest, $this->optOnConflict, $this->returningClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->with, \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithClauseForm::class, $replace), $this->replacement($this->insertTarget, \SqlSemantics\Statement\Model\PostgreSql\Role\InsertTargetForm::class, $replace), $this->replacement($this->insertRest, \SqlSemantics\Statement\Model\PostgreSql\Role\InsertRestForm::class, $replace), $this->replacement($this->optOnConflict, \SqlSemantics\Statement\Model\PostgreSql\Role\OptOnConflictForm::class, $replace), $this->replacement($this->returningClause, \SqlSemantics\Statement\Model\PostgreSql\Role\ReturningClauseForm::class, $replace), $this->comments);
     }
 
     /**
@@ -52,7 +80,7 @@ final class InsertStmtWithOptWithClauseInsertIntoInsertTargetInsertRestOptOnConf
      */
     public function withWith(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithClauseForm $with): self
     {
-        return new self($with, $this->insertTarget, $this->insertRest, $this->optOnConflict, $this->returningClause);
+        return new self($with, $this->insertTarget, $this->insertRest, $this->optOnConflict, $this->returningClause, $this->comments);
     }
 
     /**
@@ -60,7 +88,7 @@ final class InsertStmtWithOptWithClauseInsertIntoInsertTargetInsertRestOptOnConf
      */
     public function withInsertTarget(\SqlSemantics\Statement\Model\PostgreSql\Role\InsertTargetForm $insertTarget): self
     {
-        return new self($this->with, $insertTarget, $this->insertRest, $this->optOnConflict, $this->returningClause);
+        return new self($this->with, $insertTarget, $this->insertRest, $this->optOnConflict, $this->returningClause, $this->comments);
     }
 
     /**
@@ -68,7 +96,7 @@ final class InsertStmtWithOptWithClauseInsertIntoInsertTargetInsertRestOptOnConf
      */
     public function withInsertRest(\SqlSemantics\Statement\Model\PostgreSql\Role\InsertRestForm $insertRest): self
     {
-        return new self($this->with, $this->insertTarget, $insertRest, $this->optOnConflict, $this->returningClause);
+        return new self($this->with, $this->insertTarget, $insertRest, $this->optOnConflict, $this->returningClause, $this->comments);
     }
 
     /**
@@ -76,7 +104,7 @@ final class InsertStmtWithOptWithClauseInsertIntoInsertTargetInsertRestOptOnConf
      */
     public function withOptOnConflict(\SqlSemantics\Statement\Model\PostgreSql\Role\OptOnConflictForm $optOnConflict): self
     {
-        return new self($this->with, $this->insertTarget, $this->insertRest, $optOnConflict, $this->returningClause);
+        return new self($this->with, $this->insertTarget, $this->insertRest, $optOnConflict, $this->returningClause, $this->comments);
     }
 
     /**
@@ -84,6 +112,14 @@ final class InsertStmtWithOptWithClauseInsertIntoInsertTargetInsertRestOptOnConf
      */
     public function withReturningClause(\SqlSemantics\Statement\Model\PostgreSql\Role\ReturningClauseForm $returningClause): self
     {
-        return new self($this->with, $this->insertTarget, $this->insertRest, $this->optOnConflict, $returningClause);
+        return new self($this->with, $this->insertTarget, $this->insertRest, $this->optOnConflict, $returningClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->with, $this->insertTarget, $this->insertRest, $this->optOnConflict, $this->returningClause, $comments);
     }
 }

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration;
 
 use Container\Endpoint;
-use Container\PostgreSql16Container;
+use Container\PostgreSqlRelease;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
@@ -24,7 +24,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 {
     public function testSelectOnCleanShadowReturnsEmpty(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -64,7 +64,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testInsertDoesNotModifyPhysicalDatabase(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -109,7 +109,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testInsertIsVisibleViaZtdSelect(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -155,7 +155,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testMultipleInsertsAccumulate(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -207,7 +207,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testPhysicalDatabaseRemainsUnchangedAfterMutations(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -258,7 +258,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testDisableZtdBypassesRewriting(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -307,7 +307,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testEnableDisableToggle(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -348,7 +348,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testSelectWithWhereOnShadowData(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -398,7 +398,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testUpdateDoesNotModifyPhysicalDatabase(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -445,7 +445,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testDeleteDoesNotModifyPhysicalDatabase(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -491,7 +491,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testCommentsRemainLexicalWhitespaceAcrossPostgreSqlMutations(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -529,7 +529,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testPostgreSqlQuotedStringFormsPreserveWhereOffsets(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -570,7 +570,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testInsertWithoutColumnListSupportsConstraintKeywordPrefixes(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -611,7 +611,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testQuotedInsertSourceKeywordsRemainIdentifiers(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -659,7 +659,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testJsonExistenceOperatorsRemainDistinctFromPlaceholders(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -708,7 +708,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testPreparedBooleanAndBigIntValuesRetainTheirTypes(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -741,7 +741,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testArrayAndBinaryValuesRetainNativeTypes(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),

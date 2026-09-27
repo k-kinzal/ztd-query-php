@@ -17,11 +17,12 @@ final class SrsAttributesWithSrsAttributesDefinitionSymTextStringSysNonewline_70
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SrsAttributesForm $srsAttributes,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($srsAttributes), 'The srsAttributes must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSysNonewline), 'The textStringSysNonewline must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class SrsAttributesWithSrsAttributesDefinitionSymTextStringSysNonewline_70
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->srsAttributes->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('DEFINITION');
+        $writer->comments($this->comments, 2);
         $this->textStringSysNonewline->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->srsAttributes, $this->textStringSysNonewline];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->srsAttributes, \SqlSemantics\Statement\Model\MySql\Role\SrsAttributesForm::class, $replace), $this->replacement($this->textStringSysNonewline, \SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class SrsAttributesWithSrsAttributesDefinitionSymTextStringSysNonewline_70
      */
     public function withSrsAttributes(\SqlSemantics\Statement\Model\MySql\Role\SrsAttributesForm $srsAttributes): self
     {
-        return new self($srsAttributes, $this->textStringSysNonewline);
+        return new self($srsAttributes, $this->textStringSysNonewline, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class SrsAttributesWithSrsAttributesDefinitionSymTextStringSysNonewline_70
      */
     public function withTextStringSysNonewline(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline): self
     {
-        return new self($this->srsAttributes, $textStringSysNonewline);
+        return new self($this->srsAttributes, $textStringSysNonewline, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->srsAttributes, $this->textStringSysNonewline, $comments);
     }
 }

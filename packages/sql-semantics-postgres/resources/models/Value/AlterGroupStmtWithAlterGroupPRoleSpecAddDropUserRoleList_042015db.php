@@ -17,12 +17,13 @@ final class AlterGroupStmtWithAlterGroupPRoleSpecAddDropUserRoleList_042015db im
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AddDropForm $addDrop,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoleListForm $roleList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleSpec), 'The roleSpec must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($addDrop), 'The addDrop must be a generated immutable SQL value.');
@@ -34,12 +35,38 @@ final class AlterGroupStmtWithAlterGroupPRoleSpecAddDropUserRoleList_042015db im
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('GROUP');
+        $writer->comments($this->comments, 2);
         $this->roleSpec->write($writer);
+        $writer->comments($this->comments, 3);
         $this->addDrop->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('USER');
+        $writer->comments($this->comments, 5);
         $this->roleList->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->roleSpec, $this->addDrop, $this->roleList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->roleSpec, \SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm::class, $replace), $this->replacement($this->addDrop, \SqlSemantics\Statement\Model\PostgreSql\Role\AddDropForm::class, $replace), $this->replacement($this->roleList, \SqlSemantics\Statement\Model\PostgreSql\Role\RoleListForm::class, $replace), $this->comments);
     }
 
     /**
@@ -47,7 +74,7 @@ final class AlterGroupStmtWithAlterGroupPRoleSpecAddDropUserRoleList_042015db im
      */
     public function withRoleSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec): self
     {
-        return new self($roleSpec, $this->addDrop, $this->roleList);
+        return new self($roleSpec, $this->addDrop, $this->roleList, $this->comments);
     }
 
     /**
@@ -55,7 +82,7 @@ final class AlterGroupStmtWithAlterGroupPRoleSpecAddDropUserRoleList_042015db im
      */
     public function withAddDrop(\SqlSemantics\Statement\Model\PostgreSql\Role\AddDropForm $addDrop): self
     {
-        return new self($this->roleSpec, $addDrop, $this->roleList);
+        return new self($this->roleSpec, $addDrop, $this->roleList, $this->comments);
     }
 
     /**
@@ -63,6 +90,14 @@ final class AlterGroupStmtWithAlterGroupPRoleSpecAddDropUserRoleList_042015db im
      */
     public function withRoleList(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleListForm $roleList): self
     {
-        return new self($this->roleSpec, $this->addDrop, $roleList);
+        return new self($this->roleSpec, $this->addDrop, $roleList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->roleSpec, $this->addDrop, $this->roleList, $comments);
     }
 }

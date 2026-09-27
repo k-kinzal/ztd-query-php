@@ -17,12 +17,13 @@ final class FieldSpecWithFieldIdentTypeOptAttribute_85f031c2 implements \SqlSema
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldIdentForm $fieldIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TypeForm $type,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptAttributeForm $optAttribute,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldIdent), 'The fieldIdent must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($type), 'The type must be a generated immutable SQL value.');
@@ -34,9 +35,32 @@ final class FieldSpecWithFieldIdentTypeOptAttribute_85f031c2 implements \SqlSema
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->fieldIdent->write($writer);
+        $writer->comments($this->comments, 1);
         $this->type->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optAttribute->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->fieldIdent, $this->type, $this->optAttribute];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->fieldIdent, \SqlSemantics\Statement\Model\MySql\Role\FieldIdentForm::class, $replace), $this->replacement($this->type, \SqlSemantics\Statement\Model\MySql\Role\TypeForm::class, $replace), $this->replacement($this->optAttribute, \SqlSemantics\Statement\Model\MySql\Role\OptAttributeForm::class, $replace), $this->comments);
     }
 
     /**
@@ -44,7 +68,7 @@ final class FieldSpecWithFieldIdentTypeOptAttribute_85f031c2 implements \SqlSema
      */
     public function withFieldIdent(\SqlSemantics\Statement\Model\MySql\Role\FieldIdentForm $fieldIdent): self
     {
-        return new self($fieldIdent, $this->type, $this->optAttribute);
+        return new self($fieldIdent, $this->type, $this->optAttribute, $this->comments);
     }
 
     /**
@@ -52,7 +76,7 @@ final class FieldSpecWithFieldIdentTypeOptAttribute_85f031c2 implements \SqlSema
      */
     public function withType(\SqlSemantics\Statement\Model\MySql\Role\TypeForm $type): self
     {
-        return new self($this->fieldIdent, $type, $this->optAttribute);
+        return new self($this->fieldIdent, $type, $this->optAttribute, $this->comments);
     }
 
     /**
@@ -60,6 +84,14 @@ final class FieldSpecWithFieldIdentTypeOptAttribute_85f031c2 implements \SqlSema
      */
     public function withOptAttribute(\SqlSemantics\Statement\Model\MySql\Role\OptAttributeForm $optAttribute): self
     {
-        return new self($this->fieldIdent, $this->type, $optAttribute);
+        return new self($this->fieldIdent, $this->type, $optAttribute, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->fieldIdent, $this->type, $this->optAttribute, $comments);
     }
 }

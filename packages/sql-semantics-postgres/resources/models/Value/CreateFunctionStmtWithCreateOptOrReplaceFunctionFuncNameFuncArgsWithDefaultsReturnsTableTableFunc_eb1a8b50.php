@@ -17,7 +17,7 @@ final class CreateFunctionStmtWithCreateOptOrReplaceFunctionFuncNameFuncArgsWith
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm $optOrReplace,
@@ -26,6 +26,7 @@ final class CreateFunctionStmtWithCreateOptOrReplaceFunctionFuncNameFuncArgsWith
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncColumnListForm $tableFuncColumnList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptCreatefuncOptListForm $optCreatefuncOptList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptRoutineBodyForm $optRoutineBody,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optOrReplace), 'The optOrReplace must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcName), 'The funcName must be a generated immutable SQL value.');
@@ -40,18 +41,50 @@ final class CreateFunctionStmtWithCreateOptOrReplaceFunctionFuncNameFuncArgsWith
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $this->optOrReplace->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('FUNCTION');
+        $writer->comments($this->comments, 3);
         $this->funcName->write($writer);
+        $writer->comments($this->comments, 4);
         $this->funcArgsWithDefaults->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('RETURNS');
+        $writer->comments($this->comments, 6);
         $writer->append('TABLE');
+        $writer->comments($this->comments, 7);
         $writer->append('(');
+        $writer->comments($this->comments, 8);
         $this->tableFuncColumnList->write($writer);
+        $writer->comments($this->comments, 9);
         $writer->append(')');
+        $writer->comments($this->comments, 10);
         $this->optCreatefuncOptList->write($writer);
+        $writer->comments($this->comments, 11);
         $this->optRoutineBody->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optOrReplace, $this->funcName, $this->funcArgsWithDefaults, $this->tableFuncColumnList, $this->optCreatefuncOptList, $this->optRoutineBody];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optOrReplace, \SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm::class, $replace), $this->replacement($this->funcName, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm::class, $replace), $this->replacement($this->funcArgsWithDefaults, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsWithDefaultsForm::class, $replace), $this->replacement($this->tableFuncColumnList, \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncColumnListForm::class, $replace), $this->replacement($this->optCreatefuncOptList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptCreatefuncOptListForm::class, $replace), $this->replacement($this->optRoutineBody, \SqlSemantics\Statement\Model\PostgreSql\Role\OptRoutineBodyForm::class, $replace), $this->comments);
     }
 
     /**
@@ -59,7 +92,7 @@ final class CreateFunctionStmtWithCreateOptOrReplaceFunctionFuncNameFuncArgsWith
      */
     public function withOptOrReplace(\SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm $optOrReplace): self
     {
-        return new self($optOrReplace, $this->funcName, $this->funcArgsWithDefaults, $this->tableFuncColumnList, $this->optCreatefuncOptList, $this->optRoutineBody);
+        return new self($optOrReplace, $this->funcName, $this->funcArgsWithDefaults, $this->tableFuncColumnList, $this->optCreatefuncOptList, $this->optRoutineBody, $this->comments);
     }
 
     /**
@@ -67,7 +100,7 @@ final class CreateFunctionStmtWithCreateOptOrReplaceFunctionFuncNameFuncArgsWith
      */
     public function withFuncName(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm $funcName): self
     {
-        return new self($this->optOrReplace, $funcName, $this->funcArgsWithDefaults, $this->tableFuncColumnList, $this->optCreatefuncOptList, $this->optRoutineBody);
+        return new self($this->optOrReplace, $funcName, $this->funcArgsWithDefaults, $this->tableFuncColumnList, $this->optCreatefuncOptList, $this->optRoutineBody, $this->comments);
     }
 
     /**
@@ -75,7 +108,7 @@ final class CreateFunctionStmtWithCreateOptOrReplaceFunctionFuncNameFuncArgsWith
      */
     public function withFuncArgsWithDefaults(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsWithDefaultsForm $funcArgsWithDefaults): self
     {
-        return new self($this->optOrReplace, $this->funcName, $funcArgsWithDefaults, $this->tableFuncColumnList, $this->optCreatefuncOptList, $this->optRoutineBody);
+        return new self($this->optOrReplace, $this->funcName, $funcArgsWithDefaults, $this->tableFuncColumnList, $this->optCreatefuncOptList, $this->optRoutineBody, $this->comments);
     }
 
     /**
@@ -83,7 +116,7 @@ final class CreateFunctionStmtWithCreateOptOrReplaceFunctionFuncNameFuncArgsWith
      */
     public function withTableFuncColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncColumnListForm $tableFuncColumnList): self
     {
-        return new self($this->optOrReplace, $this->funcName, $this->funcArgsWithDefaults, $tableFuncColumnList, $this->optCreatefuncOptList, $this->optRoutineBody);
+        return new self($this->optOrReplace, $this->funcName, $this->funcArgsWithDefaults, $tableFuncColumnList, $this->optCreatefuncOptList, $this->optRoutineBody, $this->comments);
     }
 
     /**
@@ -91,7 +124,7 @@ final class CreateFunctionStmtWithCreateOptOrReplaceFunctionFuncNameFuncArgsWith
      */
     public function withOptCreatefuncOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptCreatefuncOptListForm $optCreatefuncOptList): self
     {
-        return new self($this->optOrReplace, $this->funcName, $this->funcArgsWithDefaults, $this->tableFuncColumnList, $optCreatefuncOptList, $this->optRoutineBody);
+        return new self($this->optOrReplace, $this->funcName, $this->funcArgsWithDefaults, $this->tableFuncColumnList, $optCreatefuncOptList, $this->optRoutineBody, $this->comments);
     }
 
     /**
@@ -99,6 +132,14 @@ final class CreateFunctionStmtWithCreateOptOrReplaceFunctionFuncNameFuncArgsWith
      */
     public function withOptRoutineBody(\SqlSemantics\Statement\Model\PostgreSql\Role\OptRoutineBodyForm $optRoutineBody): self
     {
-        return new self($this->optOrReplace, $this->funcName, $this->funcArgsWithDefaults, $this->tableFuncColumnList, $this->optCreatefuncOptList, $optRoutineBody);
+        return new self($this->optOrReplace, $this->funcName, $this->funcArgsWithDefaults, $this->tableFuncColumnList, $this->optCreatefuncOptList, $optRoutineBody, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optOrReplace, $this->funcName, $this->funcArgsWithDefaults, $this->tableFuncColumnList, $this->optCreatefuncOptList, $this->optRoutineBody, $comments);
     }
 }

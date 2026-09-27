@@ -17,7 +17,7 @@ final class EventTailWithEventSymOptIfNotExistsSpNameOnSymScheduleSymEvScheduleT
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists,
@@ -27,6 +27,7 @@ final class EventTailWithEventSymOptIfNotExistsSpNameOnSymScheduleSymEvScheduleT
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEvStatusForm $optEvStatus,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEvCommentForm $optEvComment,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm $evSqlStmt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIfNotExists), 'The optIfNotExists must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spName), 'The spName must be a generated immutable SQL value.');
@@ -42,17 +43,48 @@ final class EventTailWithEventSymOptIfNotExistsSpNameOnSymScheduleSymEvScheduleT
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('EVENT');
+        $writer->comments($this->comments, 1);
         $this->optIfNotExists->write($writer);
+        $writer->comments($this->comments, 2);
         $this->spName->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('ON');
+        $writer->comments($this->comments, 4);
         $writer->append('SCHEDULE');
+        $writer->comments($this->comments, 5);
         $this->evScheduleTime->write($writer);
+        $writer->comments($this->comments, 6);
         $this->optEvOnCompletion->write($writer);
+        $writer->comments($this->comments, 7);
         $this->optEvStatus->write($writer);
+        $writer->comments($this->comments, 8);
         $this->optEvComment->write($writer);
+        $writer->comments($this->comments, 9);
         $writer->append('DO');
+        $writer->comments($this->comments, 10);
         $this->evSqlStmt->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optIfNotExists, $this->spName, $this->evScheduleTime, $this->optEvOnCompletion, $this->optEvStatus, $this->optEvComment, $this->evSqlStmt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optIfNotExists, \SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm::class, $replace), $this->replacement($this->spName, \SqlSemantics\Statement\Model\MySql\Role\SpNameForm::class, $replace), $this->replacement($this->evScheduleTime, \SqlSemantics\Statement\Model\MySql\Role\EvScheduleTimeForm::class, $replace), $this->replacement($this->optEvOnCompletion, \SqlSemantics\Statement\Model\MySql\Role\OptEvOnCompletionForm::class, $replace), $this->replacement($this->optEvStatus, \SqlSemantics\Statement\Model\MySql\Role\OptEvStatusForm::class, $replace), $this->replacement($this->optEvComment, \SqlSemantics\Statement\Model\MySql\Role\OptEvCommentForm::class, $replace), $this->replacement($this->evSqlStmt, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm::class, $replace), $this->comments);
     }
 
     /**
@@ -60,7 +92,7 @@ final class EventTailWithEventSymOptIfNotExistsSpNameOnSymScheduleSymEvScheduleT
      */
     public function withOptIfNotExists(\SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists): self
     {
-        return new self($optIfNotExists, $this->spName, $this->evScheduleTime, $this->optEvOnCompletion, $this->optEvStatus, $this->optEvComment, $this->evSqlStmt);
+        return new self($optIfNotExists, $this->spName, $this->evScheduleTime, $this->optEvOnCompletion, $this->optEvStatus, $this->optEvComment, $this->evSqlStmt, $this->comments);
     }
 
     /**
@@ -68,7 +100,7 @@ final class EventTailWithEventSymOptIfNotExistsSpNameOnSymScheduleSymEvScheduleT
      */
     public function withSpName(\SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName): self
     {
-        return new self($this->optIfNotExists, $spName, $this->evScheduleTime, $this->optEvOnCompletion, $this->optEvStatus, $this->optEvComment, $this->evSqlStmt);
+        return new self($this->optIfNotExists, $spName, $this->evScheduleTime, $this->optEvOnCompletion, $this->optEvStatus, $this->optEvComment, $this->evSqlStmt, $this->comments);
     }
 
     /**
@@ -76,7 +108,7 @@ final class EventTailWithEventSymOptIfNotExistsSpNameOnSymScheduleSymEvScheduleT
      */
     public function withEvScheduleTime(\SqlSemantics\Statement\Model\MySql\Role\EvScheduleTimeForm $evScheduleTime): self
     {
-        return new self($this->optIfNotExists, $this->spName, $evScheduleTime, $this->optEvOnCompletion, $this->optEvStatus, $this->optEvComment, $this->evSqlStmt);
+        return new self($this->optIfNotExists, $this->spName, $evScheduleTime, $this->optEvOnCompletion, $this->optEvStatus, $this->optEvComment, $this->evSqlStmt, $this->comments);
     }
 
     /**
@@ -84,7 +116,7 @@ final class EventTailWithEventSymOptIfNotExistsSpNameOnSymScheduleSymEvScheduleT
      */
     public function withOptEvOnCompletion(\SqlSemantics\Statement\Model\MySql\Role\OptEvOnCompletionForm $optEvOnCompletion): self
     {
-        return new self($this->optIfNotExists, $this->spName, $this->evScheduleTime, $optEvOnCompletion, $this->optEvStatus, $this->optEvComment, $this->evSqlStmt);
+        return new self($this->optIfNotExists, $this->spName, $this->evScheduleTime, $optEvOnCompletion, $this->optEvStatus, $this->optEvComment, $this->evSqlStmt, $this->comments);
     }
 
     /**
@@ -92,7 +124,7 @@ final class EventTailWithEventSymOptIfNotExistsSpNameOnSymScheduleSymEvScheduleT
      */
     public function withOptEvStatus(\SqlSemantics\Statement\Model\MySql\Role\OptEvStatusForm $optEvStatus): self
     {
-        return new self($this->optIfNotExists, $this->spName, $this->evScheduleTime, $this->optEvOnCompletion, $optEvStatus, $this->optEvComment, $this->evSqlStmt);
+        return new self($this->optIfNotExists, $this->spName, $this->evScheduleTime, $this->optEvOnCompletion, $optEvStatus, $this->optEvComment, $this->evSqlStmt, $this->comments);
     }
 
     /**
@@ -100,7 +132,7 @@ final class EventTailWithEventSymOptIfNotExistsSpNameOnSymScheduleSymEvScheduleT
      */
     public function withOptEvComment(\SqlSemantics\Statement\Model\MySql\Role\OptEvCommentForm $optEvComment): self
     {
-        return new self($this->optIfNotExists, $this->spName, $this->evScheduleTime, $this->optEvOnCompletion, $this->optEvStatus, $optEvComment, $this->evSqlStmt);
+        return new self($this->optIfNotExists, $this->spName, $this->evScheduleTime, $this->optEvOnCompletion, $this->optEvStatus, $optEvComment, $this->evSqlStmt, $this->comments);
     }
 
     /**
@@ -108,6 +140,14 @@ final class EventTailWithEventSymOptIfNotExistsSpNameOnSymScheduleSymEvScheduleT
      */
     public function withEvSqlStmt(\SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm $evSqlStmt): self
     {
-        return new self($this->optIfNotExists, $this->spName, $this->evScheduleTime, $this->optEvOnCompletion, $this->optEvStatus, $this->optEvComment, $evSqlStmt);
+        return new self($this->optIfNotExists, $this->spName, $this->evScheduleTime, $this->optEvOnCompletion, $this->optEvStatus, $this->optEvComment, $evSqlStmt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optIfNotExists, $this->spName, $this->evScheduleTime, $this->optEvOnCompletion, $this->optEvStatus, $this->optEvComment, $this->evSqlStmt, $comments);
     }
 }

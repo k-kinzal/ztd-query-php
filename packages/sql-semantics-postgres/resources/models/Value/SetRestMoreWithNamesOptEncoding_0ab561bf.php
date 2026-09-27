@@ -17,10 +17,11 @@ final class SetRestMoreWithNamesOptEncoding_0ab561bf implements \SqlSemantics\St
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptEncodingForm $optEncoding,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optEncoding), 'The optEncoding must be a generated immutable SQL value.');
     }
@@ -30,8 +31,30 @@ final class SetRestMoreWithNamesOptEncoding_0ab561bf implements \SqlSemantics\St
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('NAMES');
+        $writer->comments($this->comments, 1);
         $this->optEncoding->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optEncoding];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optEncoding, \SqlSemantics\Statement\Model\PostgreSql\Role\OptEncodingForm::class, $replace), $this->comments);
     }
 
     /**
@@ -39,6 +62,14 @@ final class SetRestMoreWithNamesOptEncoding_0ab561bf implements \SqlSemantics\St
      */
     public function withOptEncoding(\SqlSemantics\Statement\Model\PostgreSql\Role\OptEncodingForm $optEncoding): self
     {
-        return new self($optEncoding);
+        return new self($optEncoding, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optEncoding, $comments);
     }
 }

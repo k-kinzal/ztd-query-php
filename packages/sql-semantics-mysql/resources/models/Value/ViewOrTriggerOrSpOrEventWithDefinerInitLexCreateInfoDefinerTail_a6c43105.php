@@ -17,12 +17,13 @@ final class ViewOrTriggerOrSpOrEventWithDefinerInitLexCreateInfoDefinerTail_a6c4
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DefinerForm $definer,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InitLexCreateInfoForm $initLexCreateInfo,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DefinerTailForm $definerTail,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($definer), 'The definer must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($initLexCreateInfo), 'The initLexCreateInfo must be a generated immutable SQL value.');
@@ -34,9 +35,32 @@ final class ViewOrTriggerOrSpOrEventWithDefinerInitLexCreateInfoDefinerTail_a6c4
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->definer->write($writer);
+        $writer->comments($this->comments, 1);
         $this->initLexCreateInfo->write($writer);
+        $writer->comments($this->comments, 2);
         $this->definerTail->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->definer, $this->initLexCreateInfo, $this->definerTail];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->definer, \SqlSemantics\Statement\Model\MySql\Role\DefinerForm::class, $replace), $this->replacement($this->initLexCreateInfo, \SqlSemantics\Statement\Model\MySql\Role\InitLexCreateInfoForm::class, $replace), $this->replacement($this->definerTail, \SqlSemantics\Statement\Model\MySql\Role\DefinerTailForm::class, $replace), $this->comments);
     }
 
     /**
@@ -44,7 +68,7 @@ final class ViewOrTriggerOrSpOrEventWithDefinerInitLexCreateInfoDefinerTail_a6c4
      */
     public function withDefiner(\SqlSemantics\Statement\Model\MySql\Role\DefinerForm $definer): self
     {
-        return new self($definer, $this->initLexCreateInfo, $this->definerTail);
+        return new self($definer, $this->initLexCreateInfo, $this->definerTail, $this->comments);
     }
 
     /**
@@ -52,7 +76,7 @@ final class ViewOrTriggerOrSpOrEventWithDefinerInitLexCreateInfoDefinerTail_a6c4
      */
     public function withInitLexCreateInfo(\SqlSemantics\Statement\Model\MySql\Role\InitLexCreateInfoForm $initLexCreateInfo): self
     {
-        return new self($this->definer, $initLexCreateInfo, $this->definerTail);
+        return new self($this->definer, $initLexCreateInfo, $this->definerTail, $this->comments);
     }
 
     /**
@@ -60,6 +84,14 @@ final class ViewOrTriggerOrSpOrEventWithDefinerInitLexCreateInfoDefinerTail_a6c4
      */
     public function withDefinerTail(\SqlSemantics\Statement\Model\MySql\Role\DefinerTailForm $definerTail): self
     {
-        return new self($this->definer, $this->initLexCreateInfo, $definerTail);
+        return new self($this->definer, $this->initLexCreateInfo, $definerTail, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->definer, $this->initLexCreateInfo, $this->definerTail, $comments);
     }
 }

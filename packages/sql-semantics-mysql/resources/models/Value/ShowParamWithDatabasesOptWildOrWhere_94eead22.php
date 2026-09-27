@@ -17,11 +17,12 @@ final class ShowParamWithDatabasesOptWildOrWhere_94eead22 implements \SqlSemanti
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $databases,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForm $optWildOrWhere,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($databases, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DATABASES'], 'The databases must be a complete DATABASES lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWildOrWhere), 'The optWildOrWhere must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class ShowParamWithDatabasesOptWildOrWhere_94eead22 implements \SqlSemanti
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->databases);
+        $writer->comments($this->comments, 1);
         $this->optWildOrWhere->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optWildOrWhere];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->databases, $this->replacement($this->optWildOrWhere, \SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class ShowParamWithDatabasesOptWildOrWhere_94eead22 implements \SqlSemanti
      */
     public function withDatabases(string $databases): self
     {
-        return new self($databases, $this->optWildOrWhere);
+        return new self($databases, $this->optWildOrWhere, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class ShowParamWithDatabasesOptWildOrWhere_94eead22 implements \SqlSemanti
      */
     public function withOptWildOrWhere(\SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForm $optWildOrWhere): self
     {
-        return new self($this->databases, $optWildOrWhere);
+        return new self($this->databases, $optWildOrWhere, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->databases, $this->optWildOrWhere, $comments);
     }
 }

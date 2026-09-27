@@ -17,11 +17,12 @@ final class InsertTargetWithQualifiedNameAsColId_2064e667 implements \SqlSemanti
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class InsertTargetWithQualifiedNameAsColId_2064e667 implements \SqlSemanti
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->qualifiedName->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('AS');
+        $writer->comments($this->comments, 2);
         $this->colId->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->qualifiedName, $this->colId];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->colId, \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class InsertTargetWithQualifiedNameAsColId_2064e667 implements \SqlSemanti
      */
     public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
     {
-        return new self($qualifiedName, $this->colId);
+        return new self($qualifiedName, $this->colId, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class InsertTargetWithQualifiedNameAsColId_2064e667 implements \SqlSemanti
      */
     public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
     {
-        return new self($this->qualifiedName, $colId);
+        return new self($this->qualifiedName, $colId, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->qualifiedName, $this->colId, $comments);
     }
 }

@@ -17,13 +17,14 @@ final class SelectPart2DerivedWithOptQueryExpressionOptionsSelectItemListOptSele
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptQueryExpressionOptionsForm $optQueryExpressionOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm $projections,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSelectFromForm $optSelectFrom,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectLockTypeForm $selectLockType,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optQueryExpressionOptions), 'The optQueryExpressionOptions must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($projections), 'The projections must be a generated immutable SQL value.');
@@ -36,10 +37,34 @@ final class SelectPart2DerivedWithOptQueryExpressionOptionsSelectItemListOptSele
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optQueryExpressionOptions->write($writer);
+        $writer->comments($this->comments, 1);
         $this->projections->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optSelectFrom->write($writer);
+        $writer->comments($this->comments, 3);
         $this->selectLockType->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optQueryExpressionOptions, $this->projections, $this->optSelectFrom, $this->selectLockType];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optQueryExpressionOptions, \SqlSemantics\Statement\Model\MySql\Role\OptQueryExpressionOptionsForm::class, $replace), $this->replacement($this->projections, \SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm::class, $replace), $this->replacement($this->optSelectFrom, \SqlSemantics\Statement\Model\MySql\Role\OptSelectFromForm::class, $replace), $this->replacement($this->selectLockType, \SqlSemantics\Statement\Model\MySql\Role\SelectLockTypeForm::class, $replace), $this->comments);
     }
 
     /**
@@ -47,7 +72,7 @@ final class SelectPart2DerivedWithOptQueryExpressionOptionsSelectItemListOptSele
      */
     public function withOptQueryExpressionOptions(\SqlSemantics\Statement\Model\MySql\Role\OptQueryExpressionOptionsForm $optQueryExpressionOptions): self
     {
-        return new self($optQueryExpressionOptions, $this->projections, $this->optSelectFrom, $this->selectLockType);
+        return new self($optQueryExpressionOptions, $this->projections, $this->optSelectFrom, $this->selectLockType, $this->comments);
     }
 
     /**
@@ -55,7 +80,7 @@ final class SelectPart2DerivedWithOptQueryExpressionOptionsSelectItemListOptSele
      */
     public function withProjections(\SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm $projections): self
     {
-        return new self($this->optQueryExpressionOptions, $projections, $this->optSelectFrom, $this->selectLockType);
+        return new self($this->optQueryExpressionOptions, $projections, $this->optSelectFrom, $this->selectLockType, $this->comments);
     }
 
     /**
@@ -63,7 +88,7 @@ final class SelectPart2DerivedWithOptQueryExpressionOptionsSelectItemListOptSele
      */
     public function withOptSelectFrom(\SqlSemantics\Statement\Model\MySql\Role\OptSelectFromForm $optSelectFrom): self
     {
-        return new self($this->optQueryExpressionOptions, $this->projections, $optSelectFrom, $this->selectLockType);
+        return new self($this->optQueryExpressionOptions, $this->projections, $optSelectFrom, $this->selectLockType, $this->comments);
     }
 
     /**
@@ -71,6 +96,14 @@ final class SelectPart2DerivedWithOptQueryExpressionOptionsSelectItemListOptSele
      */
     public function withSelectLockType(\SqlSemantics\Statement\Model\MySql\Role\SelectLockTypeForm $selectLockType): self
     {
-        return new self($this->optQueryExpressionOptions, $this->projections, $this->optSelectFrom, $selectLockType);
+        return new self($this->optQueryExpressionOptions, $this->projections, $this->optSelectFrom, $selectLockType, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optQueryExpressionOptions, $this->projections, $this->optSelectFrom, $this->selectLockType, $comments);
     }
 }

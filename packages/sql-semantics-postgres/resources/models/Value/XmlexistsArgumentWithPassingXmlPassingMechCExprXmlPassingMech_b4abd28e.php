@@ -17,12 +17,13 @@ final class XmlexistsArgumentWithPassingXmlPassingMechCExprXmlPassingMech_b4abd2
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\XmlPassingMechForm $xmlPassingMech,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm $cExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\XmlPassingMechForm $xmlPassingMech2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($xmlPassingMech), 'The xmlPassingMech must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($cExpr), 'The cExpr must be a generated immutable SQL value.');
@@ -34,10 +35,34 @@ final class XmlexistsArgumentWithPassingXmlPassingMechCExprXmlPassingMech_b4abd2
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('PASSING');
+        $writer->comments($this->comments, 1);
         $this->xmlPassingMech->write($writer);
+        $writer->comments($this->comments, 2);
         $this->cExpr->write($writer);
+        $writer->comments($this->comments, 3);
         $this->xmlPassingMech2->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->xmlPassingMech, $this->cExpr, $this->xmlPassingMech2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->xmlPassingMech, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlPassingMechForm::class, $replace), $this->replacement($this->cExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm::class, $replace), $this->replacement($this->xmlPassingMech2, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlPassingMechForm::class, $replace), $this->comments);
     }
 
     /**
@@ -45,7 +70,7 @@ final class XmlexistsArgumentWithPassingXmlPassingMechCExprXmlPassingMech_b4abd2
      */
     public function withXmlPassingMech(\SqlSemantics\Statement\Model\PostgreSql\Role\XmlPassingMechForm $xmlPassingMech): self
     {
-        return new self($xmlPassingMech, $this->cExpr, $this->xmlPassingMech2);
+        return new self($xmlPassingMech, $this->cExpr, $this->xmlPassingMech2, $this->comments);
     }
 
     /**
@@ -53,7 +78,7 @@ final class XmlexistsArgumentWithPassingXmlPassingMechCExprXmlPassingMech_b4abd2
      */
     public function withCExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm $cExpr): self
     {
-        return new self($this->xmlPassingMech, $cExpr, $this->xmlPassingMech2);
+        return new self($this->xmlPassingMech, $cExpr, $this->xmlPassingMech2, $this->comments);
     }
 
     /**
@@ -61,6 +86,14 @@ final class XmlexistsArgumentWithPassingXmlPassingMechCExprXmlPassingMech_b4abd2
      */
     public function withXmlPassingMech2(\SqlSemantics\Statement\Model\PostgreSql\Role\XmlPassingMechForm $xmlPassingMech2): self
     {
-        return new self($this->xmlPassingMech, $this->cExpr, $xmlPassingMech2);
+        return new self($this->xmlPassingMech, $this->cExpr, $xmlPassingMech2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->xmlPassingMech, $this->cExpr, $this->xmlPassingMech2, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class AlterIdentityColumnOptionListWithAlterIdentityColumnOptionListAlterI
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AlterIdentityColumnOptionListForm $alterIdentityColumnOptionList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AlterIdentityColumnOptionForm $alterIdentityColumnOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($alterIdentityColumnOptionList), 'The alterIdentityColumnOptionList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($alterIdentityColumnOption), 'The alterIdentityColumnOption must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class AlterIdentityColumnOptionListWithAlterIdentityColumnOptionListAlterI
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->alterIdentityColumnOptionList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->alterIdentityColumnOption->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->alterIdentityColumnOptionList, $this->alterIdentityColumnOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->alterIdentityColumnOptionList, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterIdentityColumnOptionListForm::class, $replace), $this->replacement($this->alterIdentityColumnOption, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterIdentityColumnOptionForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class AlterIdentityColumnOptionListWithAlterIdentityColumnOptionListAlterI
      */
     public function withAlterIdentityColumnOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\AlterIdentityColumnOptionListForm $alterIdentityColumnOptionList): self
     {
-        return new self($alterIdentityColumnOptionList, $this->alterIdentityColumnOption);
+        return new self($alterIdentityColumnOptionList, $this->alterIdentityColumnOption, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class AlterIdentityColumnOptionListWithAlterIdentityColumnOptionListAlterI
      */
     public function withAlterIdentityColumnOption(\SqlSemantics\Statement\Model\PostgreSql\Role\AlterIdentityColumnOptionForm $alterIdentityColumnOption): self
     {
-        return new self($this->alterIdentityColumnOptionList, $alterIdentityColumnOption);
+        return new self($this->alterIdentityColumnOptionList, $alterIdentityColumnOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->alterIdentityColumnOptionList, $this->alterIdentityColumnOption, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class StmtmultiWithStmtmultiToplevelStmt_39421977 implements \SqlSemantics
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm $stmtmulti,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm $toplevelStmt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($stmtmulti), 'The stmtmulti must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($toplevelStmt), 'The toplevelStmt must be a generated immutable SQL value.');
@@ -32,9 +33,32 @@ final class StmtmultiWithStmtmultiToplevelStmt_39421977 implements \SqlSemantics
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->stmtmulti->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(';');
+        $writer->comments($this->comments, 2);
         $this->toplevelStmt->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->stmtmulti, $this->toplevelStmt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->stmtmulti, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm::class, $replace), $this->replacement($this->toplevelStmt, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,7 +66,7 @@ final class StmtmultiWithStmtmultiToplevelStmt_39421977 implements \SqlSemantics
      */
     public function withStmtmulti(\SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm $stmtmulti): self
     {
-        return new self($stmtmulti, $this->toplevelStmt);
+        return new self($stmtmulti, $this->toplevelStmt, $this->comments);
     }
 
     /**
@@ -50,6 +74,14 @@ final class StmtmultiWithStmtmultiToplevelStmt_39421977 implements \SqlSemantics
      */
     public function withToplevelStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm $toplevelStmt): self
     {
-        return new self($this->stmtmulti, $toplevelStmt);
+        return new self($this->stmtmulti, $toplevelStmt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->stmtmulti, $this->toplevelStmt, $comments);
     }
 }

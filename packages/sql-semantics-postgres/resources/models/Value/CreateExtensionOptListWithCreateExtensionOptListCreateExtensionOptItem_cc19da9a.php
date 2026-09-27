@@ -17,11 +17,12 @@ final class CreateExtensionOptListWithCreateExtensionOptListCreateExtensionOptIt
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreateExtensionOptListForm $createExtensionOptList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreateExtensionOptItemForm $createExtensionOptItem,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createExtensionOptList), 'The createExtensionOptList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createExtensionOptItem), 'The createExtensionOptItem must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class CreateExtensionOptListWithCreateExtensionOptListCreateExtensionOptIt
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->createExtensionOptList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->createExtensionOptItem->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->createExtensionOptList, $this->createExtensionOptItem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->createExtensionOptList, \SqlSemantics\Statement\Model\PostgreSql\Role\CreateExtensionOptListForm::class, $replace), $this->replacement($this->createExtensionOptItem, \SqlSemantics\Statement\Model\PostgreSql\Role\CreateExtensionOptItemForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class CreateExtensionOptListWithCreateExtensionOptListCreateExtensionOptIt
      */
     public function withCreateExtensionOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\CreateExtensionOptListForm $createExtensionOptList): self
     {
-        return new self($createExtensionOptList, $this->createExtensionOptItem);
+        return new self($createExtensionOptList, $this->createExtensionOptItem, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class CreateExtensionOptListWithCreateExtensionOptListCreateExtensionOptIt
      */
     public function withCreateExtensionOptItem(\SqlSemantics\Statement\Model\PostgreSql\Role\CreateExtensionOptItemForm $createExtensionOptItem): self
     {
-        return new self($this->createExtensionOptList, $createExtensionOptItem);
+        return new self($this->createExtensionOptList, $createExtensionOptItem, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->createExtensionOptList, $this->createExtensionOptItem, $comments);
     }
 }

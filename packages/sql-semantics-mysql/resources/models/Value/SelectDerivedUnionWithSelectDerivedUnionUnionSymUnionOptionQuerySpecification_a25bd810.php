@@ -17,12 +17,13 @@ final class SelectDerivedUnionWithSelectDerivedUnionUnionSymUnionOptionQuerySpec
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedUnionForm $selectDerivedUnion,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UnionOptionForm $unionOption,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\QuerySpecificationForm $query,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectDerivedUnion), 'The selectDerivedUnion must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($unionOption), 'The unionOption must be a generated immutable SQL value.');
@@ -34,10 +35,34 @@ final class SelectDerivedUnionWithSelectDerivedUnionUnionSymUnionOptionQuerySpec
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->selectDerivedUnion->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('UNION');
+        $writer->comments($this->comments, 2);
         $this->unionOption->write($writer);
+        $writer->comments($this->comments, 3);
         $this->query->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->selectDerivedUnion, $this->unionOption, $this->query];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->selectDerivedUnion, \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedUnionForm::class, $replace), $this->replacement($this->unionOption, \SqlSemantics\Statement\Model\MySql\Role\UnionOptionForm::class, $replace), $this->replacement($this->query, \SqlSemantics\Statement\Model\MySql\Role\QuerySpecificationForm::class, $replace), $this->comments);
     }
 
     /**
@@ -45,7 +70,7 @@ final class SelectDerivedUnionWithSelectDerivedUnionUnionSymUnionOptionQuerySpec
      */
     public function withSelectDerivedUnion(\SqlSemantics\Statement\Model\MySql\Role\SelectDerivedUnionForm $selectDerivedUnion): self
     {
-        return new self($selectDerivedUnion, $this->unionOption, $this->query);
+        return new self($selectDerivedUnion, $this->unionOption, $this->query, $this->comments);
     }
 
     /**
@@ -53,7 +78,7 @@ final class SelectDerivedUnionWithSelectDerivedUnionUnionSymUnionOptionQuerySpec
      */
     public function withUnionOption(\SqlSemantics\Statement\Model\MySql\Role\UnionOptionForm $unionOption): self
     {
-        return new self($this->selectDerivedUnion, $unionOption, $this->query);
+        return new self($this->selectDerivedUnion, $unionOption, $this->query, $this->comments);
     }
 
     /**
@@ -61,6 +86,14 @@ final class SelectDerivedUnionWithSelectDerivedUnionUnionSymUnionOptionQuerySpec
      */
     public function withQuery(\SqlSemantics\Statement\Model\MySql\Role\QuerySpecificationForm $query): self
     {
-        return new self($this->selectDerivedUnion, $this->unionOption, $query);
+        return new self($this->selectDerivedUnion, $this->unionOption, $query, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->selectDerivedUnion, $this->unionOption, $this->query, $comments);
     }
 }

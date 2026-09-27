@@ -17,11 +17,12 @@ final class OptCreatePartitioningEtcWithPartitionClauseOptDuplicateAsQe_58c41092
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartitionClauseForm $partitionClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptDuplicateAsQeForm $optDuplicateAsQe,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partitionClause), 'The partitionClause must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDuplicateAsQe), 'The optDuplicateAsQe must be a generated immutable SQL value.');
@@ -32,8 +33,30 @@ final class OptCreatePartitioningEtcWithPartitionClauseOptDuplicateAsQe_58c41092
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->partitionClause->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optDuplicateAsQe->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->partitionClause, $this->optDuplicateAsQe];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->partitionClause, \SqlSemantics\Statement\Model\MySql\Role\PartitionClauseForm::class, $replace), $this->replacement($this->optDuplicateAsQe, \SqlSemantics\Statement\Model\MySql\Role\OptDuplicateAsQeForm::class, $replace), $this->comments);
     }
 
     /**
@@ -41,7 +64,7 @@ final class OptCreatePartitioningEtcWithPartitionClauseOptDuplicateAsQe_58c41092
      */
     public function withPartitionClause(\SqlSemantics\Statement\Model\MySql\Role\PartitionClauseForm $partitionClause): self
     {
-        return new self($partitionClause, $this->optDuplicateAsQe);
+        return new self($partitionClause, $this->optDuplicateAsQe, $this->comments);
     }
 
     /**
@@ -49,6 +72,14 @@ final class OptCreatePartitioningEtcWithPartitionClauseOptDuplicateAsQe_58c41092
      */
     public function withOptDuplicateAsQe(\SqlSemantics\Statement\Model\MySql\Role\OptDuplicateAsQeForm $optDuplicateAsQe): self
     {
-        return new self($this->partitionClause, $optDuplicateAsQe);
+        return new self($this->partitionClause, $optDuplicateAsQe, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->partitionClause, $this->optDuplicateAsQe, $comments);
     }
 }

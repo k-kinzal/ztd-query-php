@@ -17,10 +17,11 @@ final class OptOnConflictWithOnConflictOptConfExprDoNothing_8a8cc4a7 implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptConfExprForm $optConfExpr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optConfExpr), 'The optConfExpr must be a generated immutable SQL value.');
     }
@@ -30,11 +31,36 @@ final class OptOnConflictWithOnConflictOptConfExprDoNothing_8a8cc4a7 implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ON');
+        $writer->comments($this->comments, 1);
         $writer->append('CONFLICT');
+        $writer->comments($this->comments, 2);
         $this->optConfExpr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('DO');
+        $writer->comments($this->comments, 4);
         $writer->append('NOTHING');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optConfExpr];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optConfExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\OptConfExprForm::class, $replace), $this->comments);
     }
 
     /**
@@ -42,6 +68,14 @@ final class OptOnConflictWithOnConflictOptConfExprDoNothing_8a8cc4a7 implements 
      */
     public function withOptConfExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\OptConfExprForm $optConfExpr): self
     {
-        return new self($optConfExpr);
+        return new self($optConfExpr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optConfExpr, $comments);
     }
 }

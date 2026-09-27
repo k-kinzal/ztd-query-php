@@ -17,10 +17,11 @@ final class OptTsDatafileNameWithAddTsDatafile_1fa8c8fc implements \SqlSemantics
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TsDatafileForm $tsDatafile,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tsDatafile), 'The tsDatafile must be a generated immutable SQL value.');
     }
@@ -30,8 +31,30 @@ final class OptTsDatafileNameWithAddTsDatafile_1fa8c8fc implements \SqlSemantics
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ADD');
+        $writer->comments($this->comments, 1);
         $this->tsDatafile->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tsDatafile];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tsDatafile, \SqlSemantics\Statement\Model\MySql\Role\TsDatafileForm::class, $replace), $this->comments);
     }
 
     /**
@@ -39,6 +62,14 @@ final class OptTsDatafileNameWithAddTsDatafile_1fa8c8fc implements \SqlSemantics
      */
     public function withTsDatafile(\SqlSemantics\Statement\Model\MySql\Role\TsDatafileForm $tsDatafile): self
     {
-        return new self($tsDatafile);
+        return new self($tsDatafile, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tsDatafile, $comments);
     }
 }

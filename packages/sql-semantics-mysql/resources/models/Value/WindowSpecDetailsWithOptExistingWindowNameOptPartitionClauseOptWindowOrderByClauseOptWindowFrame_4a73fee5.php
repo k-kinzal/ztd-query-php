@@ -17,13 +17,14 @@ final class WindowSpecDetailsWithOptExistingWindowNameOptPartitionClauseOptWindo
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptExistingWindowNameForm $optExistingWindowName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptPartitionClauseForm $optPartitionClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWindowOrderByClauseForm $optWindowOrderByClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWindowFrameClauseForm $optWindowFrameClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optExistingWindowName), 'The optExistingWindowName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optPartitionClause), 'The optPartitionClause must be a generated immutable SQL value.');
@@ -36,10 +37,34 @@ final class WindowSpecDetailsWithOptExistingWindowNameOptPartitionClauseOptWindo
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optExistingWindowName->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optPartitionClause->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optWindowOrderByClause->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optWindowFrameClause->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optExistingWindowName, $this->optPartitionClause, $this->optWindowOrderByClause, $this->optWindowFrameClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optExistingWindowName, \SqlSemantics\Statement\Model\MySql\Role\OptExistingWindowNameForm::class, $replace), $this->replacement($this->optPartitionClause, \SqlSemantics\Statement\Model\MySql\Role\OptPartitionClauseForm::class, $replace), $this->replacement($this->optWindowOrderByClause, \SqlSemantics\Statement\Model\MySql\Role\OptWindowOrderByClauseForm::class, $replace), $this->replacement($this->optWindowFrameClause, \SqlSemantics\Statement\Model\MySql\Role\OptWindowFrameClauseForm::class, $replace), $this->comments);
     }
 
     /**
@@ -47,7 +72,7 @@ final class WindowSpecDetailsWithOptExistingWindowNameOptPartitionClauseOptWindo
      */
     public function withOptExistingWindowName(\SqlSemantics\Statement\Model\MySql\Role\OptExistingWindowNameForm $optExistingWindowName): self
     {
-        return new self($optExistingWindowName, $this->optPartitionClause, $this->optWindowOrderByClause, $this->optWindowFrameClause);
+        return new self($optExistingWindowName, $this->optPartitionClause, $this->optWindowOrderByClause, $this->optWindowFrameClause, $this->comments);
     }
 
     /**
@@ -55,7 +80,7 @@ final class WindowSpecDetailsWithOptExistingWindowNameOptPartitionClauseOptWindo
      */
     public function withOptPartitionClause(\SqlSemantics\Statement\Model\MySql\Role\OptPartitionClauseForm $optPartitionClause): self
     {
-        return new self($this->optExistingWindowName, $optPartitionClause, $this->optWindowOrderByClause, $this->optWindowFrameClause);
+        return new self($this->optExistingWindowName, $optPartitionClause, $this->optWindowOrderByClause, $this->optWindowFrameClause, $this->comments);
     }
 
     /**
@@ -63,7 +88,7 @@ final class WindowSpecDetailsWithOptExistingWindowNameOptPartitionClauseOptWindo
      */
     public function withOptWindowOrderByClause(\SqlSemantics\Statement\Model\MySql\Role\OptWindowOrderByClauseForm $optWindowOrderByClause): self
     {
-        return new self($this->optExistingWindowName, $this->optPartitionClause, $optWindowOrderByClause, $this->optWindowFrameClause);
+        return new self($this->optExistingWindowName, $this->optPartitionClause, $optWindowOrderByClause, $this->optWindowFrameClause, $this->comments);
     }
 
     /**
@@ -71,6 +96,14 @@ final class WindowSpecDetailsWithOptExistingWindowNameOptPartitionClauseOptWindo
      */
     public function withOptWindowFrameClause(\SqlSemantics\Statement\Model\MySql\Role\OptWindowFrameClauseForm $optWindowFrameClause): self
     {
-        return new self($this->optExistingWindowName, $this->optPartitionClause, $this->optWindowOrderByClause, $optWindowFrameClause);
+        return new self($this->optExistingWindowName, $this->optPartitionClause, $this->optWindowOrderByClause, $optWindowFrameClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optExistingWindowName, $this->optPartitionClause, $this->optWindowOrderByClause, $this->optWindowFrameClause, $comments);
     }
 }

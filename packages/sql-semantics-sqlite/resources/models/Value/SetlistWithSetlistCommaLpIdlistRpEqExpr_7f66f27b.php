@@ -17,13 +17,14 @@ final class SetlistWithSetlistCommaLpIdlistRpEqExpr_7f66f27b implements \SqlSema
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SetlistForm $setlist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\IdlistForm $idlist,
         public readonly string $eq,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($setlist), 'The setlist must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($idlist), 'The idlist must be a generated immutable SQL value.');
@@ -36,13 +37,40 @@ final class SetlistWithSetlistCommaLpIdlistRpEqExpr_7f66f27b implements \SqlSema
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->setlist->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $writer->append('(');
+        $writer->comments($this->comments, 3);
         $this->idlist->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
+        $writer->comments($this->comments, 5);
         $writer->append($this->eq);
+        $writer->comments($this->comments, 6);
         $this->expr->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->setlist, $this->idlist, $this->expr];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->setlist, \SqlSemantics\Statement\Model\Sqlite\Role\SetlistForm::class, $replace), $this->replacement($this->idlist, \SqlSemantics\Statement\Model\Sqlite\Role\IdlistForm::class, $replace), $this->eq, $this->replacement($this->expr, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm::class, $replace), $this->comments);
     }
 
     /**
@@ -50,7 +78,7 @@ final class SetlistWithSetlistCommaLpIdlistRpEqExpr_7f66f27b implements \SqlSema
      */
     public function withSetlist(\SqlSemantics\Statement\Model\Sqlite\Role\SetlistForm $setlist): self
     {
-        return new self($setlist, $this->idlist, $this->eq, $this->expr);
+        return new self($setlist, $this->idlist, $this->eq, $this->expr, $this->comments);
     }
 
     /**
@@ -58,7 +86,7 @@ final class SetlistWithSetlistCommaLpIdlistRpEqExpr_7f66f27b implements \SqlSema
      */
     public function withIdlist(\SqlSemantics\Statement\Model\Sqlite\Role\IdlistForm $idlist): self
     {
-        return new self($this->setlist, $idlist, $this->eq, $this->expr);
+        return new self($this->setlist, $idlist, $this->eq, $this->expr, $this->comments);
     }
 
     /**
@@ -66,7 +94,7 @@ final class SetlistWithSetlistCommaLpIdlistRpEqExpr_7f66f27b implements \SqlSema
      */
     public function withEq(string $eq): self
     {
-        return new self($this->setlist, $this->idlist, $eq, $this->expr);
+        return new self($this->setlist, $this->idlist, $eq, $this->expr, $this->comments);
     }
 
     /**
@@ -74,6 +102,14 @@ final class SetlistWithSetlistCommaLpIdlistRpEqExpr_7f66f27b implements \SqlSema
      */
     public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
     {
-        return new self($this->setlist, $this->idlist, $this->eq, $expr);
+        return new self($this->setlist, $this->idlist, $this->eq, $expr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->setlist, $this->idlist, $this->eq, $this->expr, $comments);
     }
 }

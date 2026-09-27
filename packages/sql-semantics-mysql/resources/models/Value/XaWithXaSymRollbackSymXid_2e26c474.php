@@ -17,10 +17,11 @@ final class XaWithXaSymRollbackSymXid_2e26c474 implements \SqlSemantics\Statemen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\XidForm $xid,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($xid), 'The xid must be a generated immutable SQL value.');
     }
@@ -30,9 +31,32 @@ final class XaWithXaSymRollbackSymXid_2e26c474 implements \SqlSemantics\Statemen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('XA');
+        $writer->comments($this->comments, 1);
         $writer->append('ROLLBACK');
+        $writer->comments($this->comments, 2);
         $this->xid->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->xid];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->xid, \SqlSemantics\Statement\Model\MySql\Role\XidForm::class, $replace), $this->comments);
     }
 
     /**
@@ -40,6 +64,14 @@ final class XaWithXaSymRollbackSymXid_2e26c474 implements \SqlSemantics\Statemen
      */
     public function withXid(\SqlSemantics\Statement\Model\MySql\Role\XidForm $xid): self
     {
-        return new self($xid);
+        return new self($xid, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->xid, $comments);
     }
 }

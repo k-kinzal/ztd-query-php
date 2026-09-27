@@ -17,13 +17,14 @@ final class CmdWithAlterTableAddColumnFullnameAddKwcolumnOptColumnnameCarglist_8
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\AddColumnFullnameForm $addColumnFullname,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\KwcolumnOptForm $kwcolumnOpt,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ColumnnameForm $columnname,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CarglistForm $carglist,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($addColumnFullname), 'The addColumnFullname must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($kwcolumnOpt), 'The kwcolumnOpt must be a generated immutable SQL value.');
@@ -36,13 +37,40 @@ final class CmdWithAlterTableAddColumnFullnameAddKwcolumnOptColumnnameCarglist_8
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('TABLE');
+        $writer->comments($this->comments, 2);
         $this->addColumnFullname->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('ADD');
+        $writer->comments($this->comments, 4);
         $this->kwcolumnOpt->write($writer);
+        $writer->comments($this->comments, 5);
         $this->columnname->write($writer);
+        $writer->comments($this->comments, 6);
         $this->carglist->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->addColumnFullname, $this->kwcolumnOpt, $this->columnname, $this->carglist];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->addColumnFullname, \SqlSemantics\Statement\Model\Sqlite\Role\AddColumnFullnameForm::class, $replace), $this->replacement($this->kwcolumnOpt, \SqlSemantics\Statement\Model\Sqlite\Role\KwcolumnOptForm::class, $replace), $this->replacement($this->columnname, \SqlSemantics\Statement\Model\Sqlite\Role\ColumnnameForm::class, $replace), $this->replacement($this->carglist, \SqlSemantics\Statement\Model\Sqlite\Role\CarglistForm::class, $replace), $this->comments);
     }
 
     /**
@@ -50,7 +78,7 @@ final class CmdWithAlterTableAddColumnFullnameAddKwcolumnOptColumnnameCarglist_8
      */
     public function withAddColumnFullname(\SqlSemantics\Statement\Model\Sqlite\Role\AddColumnFullnameForm $addColumnFullname): self
     {
-        return new self($addColumnFullname, $this->kwcolumnOpt, $this->columnname, $this->carglist);
+        return new self($addColumnFullname, $this->kwcolumnOpt, $this->columnname, $this->carglist, $this->comments);
     }
 
     /**
@@ -58,7 +86,7 @@ final class CmdWithAlterTableAddColumnFullnameAddKwcolumnOptColumnnameCarglist_8
      */
     public function withKwcolumnOpt(\SqlSemantics\Statement\Model\Sqlite\Role\KwcolumnOptForm $kwcolumnOpt): self
     {
-        return new self($this->addColumnFullname, $kwcolumnOpt, $this->columnname, $this->carglist);
+        return new self($this->addColumnFullname, $kwcolumnOpt, $this->columnname, $this->carglist, $this->comments);
     }
 
     /**
@@ -66,7 +94,7 @@ final class CmdWithAlterTableAddColumnFullnameAddKwcolumnOptColumnnameCarglist_8
      */
     public function withColumnname(\SqlSemantics\Statement\Model\Sqlite\Role\ColumnnameForm $columnname): self
     {
-        return new self($this->addColumnFullname, $this->kwcolumnOpt, $columnname, $this->carglist);
+        return new self($this->addColumnFullname, $this->kwcolumnOpt, $columnname, $this->carglist, $this->comments);
     }
 
     /**
@@ -74,6 +102,14 @@ final class CmdWithAlterTableAddColumnFullnameAddKwcolumnOptColumnnameCarglist_8
      */
     public function withCarglist(\SqlSemantics\Statement\Model\Sqlite\Role\CarglistForm $carglist): self
     {
-        return new self($this->addColumnFullname, $this->kwcolumnOpt, $this->columnname, $carglist);
+        return new self($this->addColumnFullname, $this->kwcolumnOpt, $this->columnname, $carglist, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->addColumnFullname, $this->kwcolumnOpt, $this->columnname, $this->carglist, $comments);
     }
 }

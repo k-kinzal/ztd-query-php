@@ -17,12 +17,13 @@ final class AlterListItemWithAddColumnColumnDefOptPlace_4b1261e2 implements \Sql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AddColumnForm $addColumn,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ColumnDefForm $columnDef,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptPlaceForm $optPlace,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($addColumn), 'The addColumn must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($columnDef), 'The columnDef must be a generated immutable SQL value.');
@@ -34,9 +35,32 @@ final class AlterListItemWithAddColumnColumnDefOptPlace_4b1261e2 implements \Sql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->addColumn->write($writer);
+        $writer->comments($this->comments, 1);
         $this->columnDef->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optPlace->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->addColumn, $this->columnDef, $this->optPlace];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->addColumn, \SqlSemantics\Statement\Model\MySql\Role\AddColumnForm::class, $replace), $this->replacement($this->columnDef, \SqlSemantics\Statement\Model\MySql\Role\ColumnDefForm::class, $replace), $this->replacement($this->optPlace, \SqlSemantics\Statement\Model\MySql\Role\OptPlaceForm::class, $replace), $this->comments);
     }
 
     /**
@@ -44,7 +68,7 @@ final class AlterListItemWithAddColumnColumnDefOptPlace_4b1261e2 implements \Sql
      */
     public function withAddColumn(\SqlSemantics\Statement\Model\MySql\Role\AddColumnForm $addColumn): self
     {
-        return new self($addColumn, $this->columnDef, $this->optPlace);
+        return new self($addColumn, $this->columnDef, $this->optPlace, $this->comments);
     }
 
     /**
@@ -52,7 +76,7 @@ final class AlterListItemWithAddColumnColumnDefOptPlace_4b1261e2 implements \Sql
      */
     public function withColumnDef(\SqlSemantics\Statement\Model\MySql\Role\ColumnDefForm $columnDef): self
     {
-        return new self($this->addColumn, $columnDef, $this->optPlace);
+        return new self($this->addColumn, $columnDef, $this->optPlace, $this->comments);
     }
 
     /**
@@ -60,6 +84,14 @@ final class AlterListItemWithAddColumnColumnDefOptPlace_4b1261e2 implements \Sql
      */
     public function withOptPlace(\SqlSemantics\Statement\Model\MySql\Role\OptPlaceForm $optPlace): self
     {
-        return new self($this->addColumn, $this->columnDef, $optPlace);
+        return new self($this->addColumn, $this->columnDef, $optPlace, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->addColumn, $this->columnDef, $this->optPlace, $comments);
     }
 }

@@ -17,7 +17,7 @@ final class FuncExprCommonSubexprWithJsonValueJsonValueExprAExprJsonPassingClaus
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprForm $jsonValueExpr,
@@ -25,6 +25,7 @@ final class FuncExprCommonSubexprWithJsonValueJsonValueExprAExprJsonPassingClaus
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonPassingClauseOptForm $jsonPassingClauseOpt,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonReturningClauseOptForm $jsonReturningClauseOpt,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorClauseOptForm $jsonBehaviorClauseOpt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonValueExpr), 'The jsonValueExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
@@ -38,15 +39,44 @@ final class FuncExprCommonSubexprWithJsonValueJsonValueExprAExprJsonPassingClaus
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('JSON_VALUE');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->jsonValueExpr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(',');
+        $writer->comments($this->comments, 4);
         $this->aExpr->write($writer);
+        $writer->comments($this->comments, 5);
         $this->jsonPassingClauseOpt->write($writer);
+        $writer->comments($this->comments, 6);
         $this->jsonReturningClauseOpt->write($writer);
+        $writer->comments($this->comments, 7);
         $this->jsonBehaviorClauseOpt->write($writer);
+        $writer->comments($this->comments, 8);
         $writer->append(')');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->jsonValueExpr, $this->aExpr, $this->jsonPassingClauseOpt, $this->jsonReturningClauseOpt, $this->jsonBehaviorClauseOpt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->jsonValueExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprForm::class, $replace), $this->replacement($this->aExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm::class, $replace), $this->replacement($this->jsonPassingClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonPassingClauseOptForm::class, $replace), $this->replacement($this->jsonReturningClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonReturningClauseOptForm::class, $replace), $this->replacement($this->jsonBehaviorClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorClauseOptForm::class, $replace), $this->comments);
     }
 
     /**
@@ -54,7 +84,7 @@ final class FuncExprCommonSubexprWithJsonValueJsonValueExprAExprJsonPassingClaus
      */
     public function withJsonValueExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprForm $jsonValueExpr): self
     {
-        return new self($jsonValueExpr, $this->aExpr, $this->jsonPassingClauseOpt, $this->jsonReturningClauseOpt, $this->jsonBehaviorClauseOpt);
+        return new self($jsonValueExpr, $this->aExpr, $this->jsonPassingClauseOpt, $this->jsonReturningClauseOpt, $this->jsonBehaviorClauseOpt, $this->comments);
     }
 
     /**
@@ -62,7 +92,7 @@ final class FuncExprCommonSubexprWithJsonValueJsonValueExprAExprJsonPassingClaus
      */
     public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
     {
-        return new self($this->jsonValueExpr, $aExpr, $this->jsonPassingClauseOpt, $this->jsonReturningClauseOpt, $this->jsonBehaviorClauseOpt);
+        return new self($this->jsonValueExpr, $aExpr, $this->jsonPassingClauseOpt, $this->jsonReturningClauseOpt, $this->jsonBehaviorClauseOpt, $this->comments);
     }
 
     /**
@@ -70,7 +100,7 @@ final class FuncExprCommonSubexprWithJsonValueJsonValueExprAExprJsonPassingClaus
      */
     public function withJsonPassingClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonPassingClauseOptForm $jsonPassingClauseOpt): self
     {
-        return new self($this->jsonValueExpr, $this->aExpr, $jsonPassingClauseOpt, $this->jsonReturningClauseOpt, $this->jsonBehaviorClauseOpt);
+        return new self($this->jsonValueExpr, $this->aExpr, $jsonPassingClauseOpt, $this->jsonReturningClauseOpt, $this->jsonBehaviorClauseOpt, $this->comments);
     }
 
     /**
@@ -78,7 +108,7 @@ final class FuncExprCommonSubexprWithJsonValueJsonValueExprAExprJsonPassingClaus
      */
     public function withJsonReturningClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonReturningClauseOptForm $jsonReturningClauseOpt): self
     {
-        return new self($this->jsonValueExpr, $this->aExpr, $this->jsonPassingClauseOpt, $jsonReturningClauseOpt, $this->jsonBehaviorClauseOpt);
+        return new self($this->jsonValueExpr, $this->aExpr, $this->jsonPassingClauseOpt, $jsonReturningClauseOpt, $this->jsonBehaviorClauseOpt, $this->comments);
     }
 
     /**
@@ -86,6 +116,14 @@ final class FuncExprCommonSubexprWithJsonValueJsonValueExprAExprJsonPassingClaus
      */
     public function withJsonBehaviorClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorClauseOptForm $jsonBehaviorClauseOpt): self
     {
-        return new self($this->jsonValueExpr, $this->aExpr, $this->jsonPassingClauseOpt, $this->jsonReturningClauseOpt, $jsonBehaviorClauseOpt);
+        return new self($this->jsonValueExpr, $this->aExpr, $this->jsonPassingClauseOpt, $this->jsonReturningClauseOpt, $jsonBehaviorClauseOpt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->jsonValueExpr, $this->aExpr, $this->jsonPassingClauseOpt, $this->jsonReturningClauseOpt, $this->jsonBehaviorClauseOpt, $comments);
     }
 }

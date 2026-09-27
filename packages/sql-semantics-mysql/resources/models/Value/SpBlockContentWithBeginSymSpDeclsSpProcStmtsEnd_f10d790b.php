@@ -17,11 +17,12 @@ final class SpBlockContentWithBeginSymSpDeclsSpProcStmtsEnd_f10d790b implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpDeclsForm $spDecls,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtsForm $spProcStmts,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spDecls), 'The spDecls must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spProcStmts), 'The spProcStmts must be a generated immutable SQL value.');
@@ -32,10 +33,34 @@ final class SpBlockContentWithBeginSymSpDeclsSpProcStmtsEnd_f10d790b implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('BEGIN');
+        $writer->comments($this->comments, 1);
         $this->spDecls->write($writer);
+        $writer->comments($this->comments, 2);
         $this->spProcStmts->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('END');
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->spDecls, $this->spProcStmts];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->spDecls, \SqlSemantics\Statement\Model\MySql\Role\SpDeclsForm::class, $replace), $this->replacement($this->spProcStmts, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtsForm::class, $replace), $this->comments);
     }
 
     /**
@@ -43,7 +68,7 @@ final class SpBlockContentWithBeginSymSpDeclsSpProcStmtsEnd_f10d790b implements 
      */
     public function withSpDecls(\SqlSemantics\Statement\Model\MySql\Role\SpDeclsForm $spDecls): self
     {
-        return new self($spDecls, $this->spProcStmts);
+        return new self($spDecls, $this->spProcStmts, $this->comments);
     }
 
     /**
@@ -51,6 +76,14 @@ final class SpBlockContentWithBeginSymSpDeclsSpProcStmtsEnd_f10d790b implements 
      */
     public function withSpProcStmts(\SqlSemantics\Statement\Model\MySql\Role\SpProcStmtsForm $spProcStmts): self
     {
-        return new self($this->spDecls, $spProcStmts);
+        return new self($this->spDecls, $spProcStmts, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->spDecls, $this->spProcStmts, $comments);
     }
 }
