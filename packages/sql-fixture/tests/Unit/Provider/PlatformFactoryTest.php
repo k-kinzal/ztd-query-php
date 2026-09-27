@@ -276,8 +276,6 @@ final class PlatformFactoryTest extends TestCase
     }
 
     /**
-     * The server behind each DSN runs the release named by its `_VERSION` variable, or the default release.
-     *
      * @return iterable<string, array{string, string, string}>
      */
     public static function providerDatabaseVersions(): iterable
