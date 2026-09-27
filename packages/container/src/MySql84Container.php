@@ -9,9 +9,9 @@ namespace Container;
  *
  * @example Inspect the pinned server image without starting Docker
  *     $container = new \Container\MySql84Container();
- *     assert($container->image() === 'container-registry.oracle.com/mysql/community-server:8.4.7');
+ *     assert($container->image() === 'container-registry.oracle.com/mysql/community-server:8.4.12');
  */
 final class MySql84Container extends MySqlContainer
 {
-    protected static $IMAGE = 'container-registry.oracle.com/mysql/community-server:8.4.7';
+    protected static $IMAGE = 'container-registry.oracle.com/mysql/community-server:8.4.12';
 }
