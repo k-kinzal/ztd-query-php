@@ -66,6 +66,26 @@ final class ViewStmtWithCreateOrReplaceOptTempViewQualifiedNameOptColumnListOptR
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optTemp, $this->qualifiedName, $this->optColumnList, $this->optReloptions, $this->selectStmt, $this->optCheckOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optTemp, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm::class, $replace), $this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->optColumnList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnListForm::class, $replace), $this->replacement($this->optReloptions, \SqlSemantics\Statement\Model\PostgreSql\Role\OptReloptionsForm::class, $replace), $this->replacement($this->selectStmt, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm::class, $replace), $this->replacement($this->optCheckOption, \SqlSemantics\Statement\Model\PostgreSql\Role\OptCheckOptionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optTemp, preserving every other field.
      */
     public function withOptTemp(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm $optTemp): self

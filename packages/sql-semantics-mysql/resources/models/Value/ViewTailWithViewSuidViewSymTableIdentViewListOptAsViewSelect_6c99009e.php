@@ -52,6 +52,26 @@ final class ViewTailWithViewSuidViewSymTableIdentViewListOptAsViewSelect_6c99009
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->viewSuid, $this->tableIdent, $this->viewListOpt, $this->viewSelect];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->viewSuid, \SqlSemantics\Statement\Model\MySql\Role\ViewSuidForm::class, $replace), $this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->viewListOpt, \SqlSemantics\Statement\Model\MySql\Role\ViewListOptForm::class, $replace), $this->replacement($this->viewSelect, \SqlSemantics\Statement\Model\MySql\Role\ViewSelectForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new viewSuid, preserving every other field.
      */
     public function withViewSuid(\SqlSemantics\Statement\Model\MySql\Role\ViewSuidForm $viewSuid): self

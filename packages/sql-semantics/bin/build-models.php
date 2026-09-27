@@ -47,10 +47,12 @@ $roleNames = [];
 $patterns = [];
 $bindings = [];
 $entryRules = [];
+$hints = [];
 foreach ($versions as $version) {
     [$dialect, $url, $reader] = source($version);
     $grammar = $reader->read($fetcher->fetch($url));
     $entryRules[$dialect][] = $grammar->symbols->name($grammar->startSymbol());
+    $hints[$version] = terminalHints($grammar);
     $formSet = forms($grammar, $version);
     $lexical = terminalPatterns($grammar, $version, $dialect);
     foreach (bindingContracts($grammar, $formSet) as $name => $contract) {
@@ -95,17 +97,18 @@ foreach ($releases as $version => [$dialect, $formSet]) {
             }
         }
         if (count($choices) === count($alternatives)) {
-            $mapping[$name] = choiceEnum($directory, $dialect, $name, $choices, $interfaces);
+            $mapping[$name] = choiceEnum($directory, $dialect, $name, $choices, $interfaces, $alternatives);
             continue;
         }
         foreach ($alternatives as $ordinal => $symbols) {
-            $mapping[$name][$ordinal] = count($symbols) === 1 && !$symbols[0]['terminal']
+            $mapping[$name][$ordinal] = (count($symbols) === 1 && !$symbols[0]['terminal']
                 ? ['forward' => 0]
-                : valueClass($directory, $dialect, $name, $symbols, $interfaces, $bindings);
+                : valueClass($directory, $dialect, $name, $symbols, $interfaces, $bindings)) + ['symbols' => array_column($symbols, 'name')];
         }
     }
     $code = preg_replace('/[ \t]+$/m', '', var_export($mapping, true));
-    file_put_contents($directory . '/mapping/' . $version . '.php', "<?php\n\ndeclare(strict_types=1);\n\n/** Generated construction recipes; never retained by a Statement. */\nreturn new \\SqlSemantics\\Core\\Analysis\\ValueReader(" . $code . ");\n");
+    $lexicalHints = preg_replace('/[ \t]+$/m', '', var_export($hints[$version]['classes'], true)) . ', ' . preg_replace('/[ \t]+$/m', '', var_export($hints[$version]['fallbacks'], true));
+    file_put_contents($directory . '/mapping/' . $version . '.php', "<?php\n\ndeclare(strict_types=1);\n\n/** Generated construction recipes; never retained by a Statement. */\nreturn new \\SqlSemantics\\Core\\Analysis\\Vocabulary(" . $code . ', ' . $lexicalHints . ");\n");
     fwrite(STDOUT, "Wrote {$version}\n");
 }
 writeContracts($directory, $dialect, $patterns, $bindings);

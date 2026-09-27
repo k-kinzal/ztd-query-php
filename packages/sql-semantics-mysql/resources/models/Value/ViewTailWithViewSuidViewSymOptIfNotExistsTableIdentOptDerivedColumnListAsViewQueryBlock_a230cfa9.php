@@ -56,6 +56,26 @@ final class ViewTailWithViewSuidViewSymOptIfNotExistsTableIdentOptDerivedColumnL
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->viewSuid, $this->optIfNotExists, $this->tableIdent, $this->optDerivedColumnList, $this->viewQueryBlock];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->viewSuid, \SqlSemantics\Statement\Model\MySql\Role\ViewSuidForm::class, $replace), $this->replacement($this->optIfNotExists, \SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm::class, $replace), $this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->optDerivedColumnList, \SqlSemantics\Statement\Model\MySql\Role\OptDerivedColumnListForm::class, $replace), $this->replacement($this->viewQueryBlock, \SqlSemantics\Statement\Model\MySql\Role\ViewQueryBlockForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new viewSuid, preserving every other field.
      */
     public function withViewSuid(\SqlSemantics\Statement\Model\MySql\Role\ViewSuidForm $viewSuid): self

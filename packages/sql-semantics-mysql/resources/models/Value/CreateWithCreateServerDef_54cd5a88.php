@@ -38,6 +38,26 @@ final class CreateWithCreateServerDef_54cd5a88 implements \SqlSemantics\Statemen
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->serverDef];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->serverDef, \SqlSemantics\Statement\Model\MySql\Role\ServerDefForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new serverDef, preserving every other field.
      */
     public function withServerDef(\SqlSemantics\Statement\Model\MySql\Role\ServerDefForm $serverDef): self

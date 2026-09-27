@@ -46,6 +46,26 @@ final class SpDeclWithDeclareSymIdentCursorSymForSymSelect_8e2448b4 implements \
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->ident, $this->select];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->ident, \SqlSemantics\Statement\Model\MySql\Role\IdentForm::class, $replace), $this->replacement($this->select, \SqlSemantics\Statement\Model\MySql\Role\SelectForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new ident, preserving every other field.
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self

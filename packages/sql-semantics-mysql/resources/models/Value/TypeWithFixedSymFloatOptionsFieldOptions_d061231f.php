@@ -42,6 +42,26 @@ final class TypeWithFixedSymFloatOptionsFieldOptions_d061231f implements \SqlSem
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->floatOptions, $this->fieldOptions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->floatOptions, \SqlSemantics\Statement\Model\MySql\Role\FloatOptionsForm::class, $replace), $this->replacement($this->fieldOptions, \SqlSemantics\Statement\Model\MySql\Role\FieldOptionsForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new floatOptions, preserving every other field.
      */
     public function withFloatOptions(\SqlSemantics\Statement\Model\MySql\Role\FloatOptionsForm $floatOptions): self

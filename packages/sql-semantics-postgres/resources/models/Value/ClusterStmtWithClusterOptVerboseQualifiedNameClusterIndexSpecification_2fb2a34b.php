@@ -46,6 +46,26 @@ final class ClusterStmtWithClusterOptVerboseQualifiedNameClusterIndexSpecificati
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optVerbose, $this->qualifiedName, $this->clusterIndexSpecification];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optVerbose, \SqlSemantics\Statement\Model\PostgreSql\Role\OptVerboseForm::class, $replace), $this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->clusterIndexSpecification, \SqlSemantics\Statement\Model\PostgreSql\Role\ClusterIndexSpecificationForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optVerbose, preserving every other field.
      */
     public function withOptVerbose(\SqlSemantics\Statement\Model\PostgreSql\Role\OptVerboseForm $optVerbose): self

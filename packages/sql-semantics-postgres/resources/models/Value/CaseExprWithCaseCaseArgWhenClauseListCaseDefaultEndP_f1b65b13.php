@@ -48,6 +48,26 @@ final class CaseExprWithCaseCaseArgWhenClauseListCaseDefaultEndP_f1b65b13 implem
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->caseArg, $this->whenClauseList, $this->caseDefault];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->caseArg, \SqlSemantics\Statement\Model\PostgreSql\Role\CaseArgForm::class, $replace), $this->replacement($this->whenClauseList, \SqlSemantics\Statement\Model\PostgreSql\Role\WhenClauseListForm::class, $replace), $this->replacement($this->caseDefault, \SqlSemantics\Statement\Model\PostgreSql\Role\CaseDefaultForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new caseArg, preserving every other field.
      */
     public function withCaseArg(\SqlSemantics\Statement\Model\PostgreSql\Role\CaseArgForm $caseArg): self

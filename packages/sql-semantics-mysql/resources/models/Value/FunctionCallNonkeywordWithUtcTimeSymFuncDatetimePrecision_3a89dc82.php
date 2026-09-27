@@ -38,6 +38,26 @@ final class FunctionCallNonkeywordWithUtcTimeSymFuncDatetimePrecision_3a89dc82 i
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->funcDatetimePrecision];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->funcDatetimePrecision, \SqlSemantics\Statement\Model\MySql\Role\FuncDatetimePrecisionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new funcDatetimePrecision, preserving every other field.
      */
     public function withFuncDatetimePrecision(\SqlSemantics\Statement\Model\MySql\Role\FuncDatetimePrecisionForm $funcDatetimePrecision): self

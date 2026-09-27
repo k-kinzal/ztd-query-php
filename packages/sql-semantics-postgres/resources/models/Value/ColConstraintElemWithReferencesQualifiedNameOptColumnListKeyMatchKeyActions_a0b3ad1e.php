@@ -50,6 +50,26 @@ final class ColConstraintElemWithReferencesQualifiedNameOptColumnListKeyMatchKey
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->qualifiedName, $this->optColumnList, $this->keyMatch, $this->keyActions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->optColumnList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnListForm::class, $replace), $this->replacement($this->keyMatch, \SqlSemantics\Statement\Model\PostgreSql\Role\KeyMatchForm::class, $replace), $this->replacement($this->keyActions, \SqlSemantics\Statement\Model\PostgreSql\Role\KeyActionsForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new qualifiedName, preserving every other field.
      */
     public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self

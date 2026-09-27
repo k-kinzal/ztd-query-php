@@ -56,6 +56,26 @@ final class AlterUserStmtWithAlterUserCommandAlterUserListRequireClauseConnectOp
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->alterUserCommand, $this->alterUserList, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->alterUserCommand, \SqlSemantics\Statement\Model\MySql\Role\AlterUserCommandForm::class, $replace), $this->replacement($this->alterUserList, \SqlSemantics\Statement\Model\MySql\Role\AlterUserListForm::class, $replace), $this->replacement($this->requireClause, \SqlSemantics\Statement\Model\MySql\Role\RequireClauseForm::class, $replace), $this->replacement($this->connectOptions, \SqlSemantics\Statement\Model\MySql\Role\ConnectOptionsForm::class, $replace), $this->replacement($this->optAccountLockPasswordExpireOptions, \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionsForm::class, $replace), $this->replacement($this->optUserAttribute, \SqlSemantics\Statement\Model\MySql\Role\OptUserAttributeForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new alterUserCommand, preserving every other field.
      */
     public function withAlterUserCommand(\SqlSemantics\Statement\Model\MySql\Role\AlterUserCommandForm $alterUserCommand): self

@@ -60,6 +60,26 @@ final class JsonTableColumnDefinitionWithColIdTypenameJsonFormatClauseJsonTableC
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->colId, $this->typename, $this->jsonFormatClause, $this->jsonTableColumnPathClauseOpt, $this->jsonWrapperBehavior, $this->jsonQuotesClauseOpt, $this->jsonBehaviorClauseOpt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->colId, \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm::class, $replace), $this->replacement($this->typename, \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm::class, $replace), $this->replacement($this->jsonFormatClause, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonFormatClauseForm::class, $replace), $this->replacement($this->jsonTableColumnPathClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnPathClauseOptForm::class, $replace), $this->replacement($this->jsonWrapperBehavior, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonWrapperBehaviorForm::class, $replace), $this->replacement($this->jsonQuotesClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonQuotesClauseOptForm::class, $replace), $this->replacement($this->jsonBehaviorClauseOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorClauseOptForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new colId, preserving every other field.
      */
     public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self

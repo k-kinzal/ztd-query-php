@@ -40,6 +40,26 @@ final class TableOptionsWithTableOptionTableOptions_87262d47 implements \SqlSema
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableOption, $this->tableOptions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableOption, \SqlSemantics\Statement\Model\MySql\Role\TableOptionForm::class, $replace), $this->replacement($this->tableOptions, \SqlSemantics\Statement\Model\MySql\Role\TableOptionsForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new tableOption, preserving every other field.
      */
     public function withTableOption(\SqlSemantics\Statement\Model\MySql\Role\TableOptionForm $tableOption): self

@@ -46,6 +46,26 @@ final class TconsWithCheckLpExprRpOnconf_f04e4700 implements \SqlSemantics\State
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->expr, $this->onconf];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->expr, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm::class, $replace), $this->replacement($this->onconf, \SqlSemantics\Statement\Model\Sqlite\Role\OnconfForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new expr, preserving every other field.
      */
     public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self

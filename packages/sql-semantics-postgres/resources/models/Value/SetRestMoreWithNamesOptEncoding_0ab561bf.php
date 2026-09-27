@@ -38,6 +38,26 @@ final class SetRestMoreWithNamesOptEncoding_0ab561bf implements \SqlSemantics\St
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optEncoding];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optEncoding, \SqlSemantics\Statement\Model\PostgreSql\Role\OptEncodingForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optEncoding, preserving every other field.
      */
     public function withOptEncoding(\SqlSemantics\Statement\Model\PostgreSql\Role\OptEncodingForm $optEncoding): self

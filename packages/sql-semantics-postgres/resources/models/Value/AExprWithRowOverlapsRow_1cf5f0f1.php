@@ -42,6 +42,26 @@ final class AExprWithRowOverlapsRow_1cf5f0f1 implements \SqlSemantics\Statement\
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->row, $this->row2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->row, \SqlSemantics\Statement\Model\PostgreSql\Role\RowForm::class, $replace), $this->replacement($this->row2, \SqlSemantics\Statement\Model\PostgreSql\Role\RowForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new row, preserving every other field.
      */
     public function withRow(\SqlSemantics\Statement\Model\PostgreSql\Role\RowForm $row): self

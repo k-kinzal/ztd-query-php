@@ -42,6 +42,26 @@ final class XmlNamespaceListWithXmlNamespaceListXmlNamespaceEl_59a08796 implemen
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->xmlNamespaceList, $this->xmlNamespaceEl];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->xmlNamespaceList, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlNamespaceListForm::class, $replace), $this->replacement($this->xmlNamespaceEl, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlNamespaceElForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new xmlNamespaceList, preserving every other field.
      */
     public function withXmlNamespaceList(\SqlSemantics\Statement\Model\PostgreSql\Role\XmlNamespaceListForm $xmlNamespaceList): self

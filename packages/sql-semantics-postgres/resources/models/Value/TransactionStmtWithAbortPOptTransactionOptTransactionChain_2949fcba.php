@@ -42,6 +42,26 @@ final class TransactionStmtWithAbortPOptTransactionOptTransactionChain_2949fcba 
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optTransaction, $this->optTransactionChain];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optTransaction, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTransactionForm::class, $replace), $this->replacement($this->optTransactionChain, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTransactionChainForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optTransaction, preserving every other field.
      */
     public function withOptTransaction(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTransactionForm $optTransaction): self

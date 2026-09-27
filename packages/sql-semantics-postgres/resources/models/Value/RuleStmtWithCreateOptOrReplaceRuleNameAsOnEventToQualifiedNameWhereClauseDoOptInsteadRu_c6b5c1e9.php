@@ -72,6 +72,26 @@ final class RuleStmtWithCreateOptOrReplaceRuleNameAsOnEventToQualifiedNameWhereC
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optOrReplace, $this->name, $this->event, $this->qualifiedName, $this->where, $this->optInstead, $this->ruleActionList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optOrReplace, \SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm::class, $replace), $this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->event, \SqlSemantics\Statement\Model\PostgreSql\Role\EventForm::class, $replace), $this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\PostgreSql\Role\WhereClauseForm::class, $replace), $this->replacement($this->optInstead, \SqlSemantics\Statement\Model\PostgreSql\Role\OptInsteadForm::class, $replace), $this->replacement($this->ruleActionList, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optOrReplace, preserving every other field.
      */
     public function withOptOrReplace(\SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm $optOrReplace): self

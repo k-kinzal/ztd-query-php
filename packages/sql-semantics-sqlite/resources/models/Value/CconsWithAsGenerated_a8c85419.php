@@ -38,6 +38,26 @@ final class CconsWithAsGenerated_a8c85419 implements \SqlSemantics\Statement\Mod
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->generated];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->generated, \SqlSemantics\Statement\Model\Sqlite\Role\GeneratedForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new generated, preserving every other field.
      */
     public function withGenerated(\SqlSemantics\Statement\Model\Sqlite\Role\GeneratedForm $generated): self

@@ -56,6 +56,26 @@ final class InsertStmtWithOptWithClauseInsertIntoInsertTargetInsertRestOptOnConf
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->with, $this->insertTarget, $this->insertRest, $this->optOnConflict, $this->returningClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->with, \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithClauseForm::class, $replace), $this->replacement($this->insertTarget, \SqlSemantics\Statement\Model\PostgreSql\Role\InsertTargetForm::class, $replace), $this->replacement($this->insertRest, \SqlSemantics\Statement\Model\PostgreSql\Role\InsertRestForm::class, $replace), $this->replacement($this->optOnConflict, \SqlSemantics\Statement\Model\PostgreSql\Role\OptOnConflictForm::class, $replace), $this->replacement($this->returningClause, \SqlSemantics\Statement\Model\PostgreSql\Role\ReturningClauseForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new with, preserving every other field.
      */
     public function withWith(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithClauseForm $with): self

@@ -32,7 +32,27 @@ final class ExprWithIdj_e1794d68 implements \SqlSemantics\Statement\Model\Sqlite
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->comments($this->comments, 0);
-        $writer->append($this->idj);
+        $writer->append($this->idj, true);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [];
+    }
+
+    /**
+     * This form holds no values to replace.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return $this;
     }
 
     /**

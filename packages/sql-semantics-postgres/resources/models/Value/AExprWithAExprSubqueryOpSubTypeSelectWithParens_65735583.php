@@ -27,7 +27,7 @@ final class AExprWithAExprSubqueryOpSubTypeSelectWithParens_65735583 implements 
         public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($aExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 12,));
+        $this->assertOperandBindingStrength($aExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 12,), \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_RULES, 'a_expr');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($subqueryOp), 'The subqueryOp must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($subType), 'The subType must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($selectWithParens), 'The selectWithParens must be a generated immutable SQL value.');
@@ -46,6 +46,26 @@ final class AExprWithAExprSubqueryOpSubTypeSelectWithParens_65735583 implements 
         $this->subType->write($writer);
         $writer->comments($this->comments, 3);
         $this->selectWithParens->write($writer);
+    }
+
+    /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->aExpr, $this->subqueryOp, $this->subType, $this->selectWithParens];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->aExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm::class, $replace), $this->replacement($this->subqueryOp, \SqlSemantics\Statement\Model\PostgreSql\Role\SubqueryOpForm::class, $replace), $this->replacement($this->subType, \SqlSemantics\Statement\Model\PostgreSql\Role\SubTypeForm::class, $replace), $this->replacement($this->selectWithParens, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectWithParensForm::class, $replace), $this->comments);
     }
 
     /**

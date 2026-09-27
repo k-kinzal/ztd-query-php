@@ -48,6 +48,26 @@ final class WindowSpecDetailsWithOptExistingWindowNameOptPartitionClauseOptWindo
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optExistingWindowName, $this->optPartitionClause, $this->optWindowOrderByClause, $this->optWindowFrameClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optExistingWindowName, \SqlSemantics\Statement\Model\MySql\Role\OptExistingWindowNameForm::class, $replace), $this->replacement($this->optPartitionClause, \SqlSemantics\Statement\Model\MySql\Role\OptPartitionClauseForm::class, $replace), $this->replacement($this->optWindowOrderByClause, \SqlSemantics\Statement\Model\MySql\Role\OptWindowOrderByClauseForm::class, $replace), $this->replacement($this->optWindowFrameClause, \SqlSemantics\Statement\Model\MySql\Role\OptWindowFrameClauseForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optExistingWindowName, preserving every other field.
      */
     public function withOptExistingWindowName(\SqlSemantics\Statement\Model\MySql\Role\OptExistingWindowNameForm $optExistingWindowName): self

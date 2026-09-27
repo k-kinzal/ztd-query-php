@@ -42,6 +42,26 @@ final class TableLikeOptionListWithTableLikeOptionListIncludingTableLikeOption_c
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tableLikeOptionList, $this->tableLikeOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tableLikeOptionList, \SqlSemantics\Statement\Model\PostgreSql\Role\TableLikeOptionListForm::class, $replace), $this->replacement($this->tableLikeOption, \SqlSemantics\Statement\Model\PostgreSql\Role\TableLikeOptionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new tableLikeOptionList, preserving every other field.
      */
     public function withTableLikeOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\TableLikeOptionListForm $tableLikeOptionList): self

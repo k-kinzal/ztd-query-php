@@ -50,6 +50,26 @@ final class AnalyzeTableStmtWithAnalyzeSymOptNoWriteToBinlogTableOrTablesTableLi
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optNoWriteToBinlog, $this->tableOrTables, $this->tableList, $this->optHistogram];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optNoWriteToBinlog, \SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm::class, $replace), $this->replacement($this->tableOrTables, \SqlSemantics\Statement\Model\MySql\Role\TableOrTablesForm::class, $replace), $this->replacement($this->tableList, \SqlSemantics\Statement\Model\MySql\Role\TableListForm::class, $replace), $this->replacement($this->optHistogram, \SqlSemantics\Statement\Model\MySql\Role\OptHistogramForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optNoWriteToBinlog, preserving every other field.
      */
     public function withOptNoWriteToBinlog(\SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog): self

@@ -42,6 +42,26 @@ final class SpHcondListWithSpHcondListSpHcondElement_e7ce5eea implements \SqlSem
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->spHcondList, $this->spHcondElement];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->spHcondList, \SqlSemantics\Statement\Model\MySql\Role\SpHcondListForm::class, $replace), $this->replacement($this->spHcondElement, \SqlSemantics\Statement\Model\MySql\Role\SpHcondElementForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new spHcondList, preserving every other field.
      */
     public function withSpHcondList(\SqlSemantics\Statement\Model\MySql\Role\SpHcondListForm $spHcondList): self

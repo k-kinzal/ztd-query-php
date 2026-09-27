@@ -40,6 +40,26 @@ final class FetchArgsWithFromInCursorName_95a6a6c1 implements \SqlSemantics\Stat
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->fromIn, $this->cursorName];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->fromIn, \SqlSemantics\Statement\Model\PostgreSql\Role\FromInForm::class, $replace), $this->replacement($this->cursorName, \SqlSemantics\Statement\Model\PostgreSql\Role\CursorNameForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new fromIn, preserving every other field.
      */
     public function withFromIn(\SqlSemantics\Statement\Model\PostgreSql\Role\FromInForm $fromIn): self

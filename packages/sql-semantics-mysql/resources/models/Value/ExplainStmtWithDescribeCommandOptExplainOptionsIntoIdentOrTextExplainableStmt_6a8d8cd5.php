@@ -52,6 +52,26 @@ final class ExplainStmtWithDescribeCommandOptExplainOptionsIntoIdentOrTextExplai
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->describeCommand, $this->optExplainOptions, $this->identOrText, $this->explainableStmt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->describeCommand, \SqlSemantics\Statement\Model\MySql\Role\DescribeCommandForm::class, $replace), $this->replacement($this->optExplainOptions, \SqlSemantics\Statement\Model\MySql\Role\OptExplainOptionsForm::class, $replace), $this->replacement($this->identOrText, \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm::class, $replace), $this->replacement($this->explainableStmt, \SqlSemantics\Statement\Model\MySql\Role\ExplainableStmtForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new describeCommand, preserving every other field.
      */
     public function withDescribeCommand(\SqlSemantics\Statement\Model\MySql\Role\DescribeCommandForm $describeCommand): self

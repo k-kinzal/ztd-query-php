@@ -40,6 +40,26 @@ final class CreateWithCreateTablespaceSymTablespaceInfo_5b42b356 implements \Sql
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->tablespaceInfo];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->tablespaceInfo, \SqlSemantics\Statement\Model\MySql\Role\TablespaceInfoForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new tablespaceInfo, preserving every other field.
      */
     public function withTablespaceInfo(\SqlSemantics\Statement\Model\MySql\Role\TablespaceInfoForm $tablespaceInfo): self

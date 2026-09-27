@@ -126,6 +126,26 @@ final class LoadStmtWithLoadDataOrXmlLoadDataLockOptFromKeywordOptLocalLoadSourc
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->dataOrXml, $this->loadDataLock, $this->optFromKeyword, $this->optLocal, $this->loadSourceType, $this->textStringFilesystem, $this->optSourceCount, $this->optSourceOrder, $this->optDuplicate, $this->tableIdent, $this->optUsePartition, $this->optLoadDataCharset, $this->optCompressionAlgorithm, $this->optXmlRowsIdentifiedBy, $this->optFieldTerm, $this->optLineTerm, $this->optIgnoreLines, $this->optFieldOrVarSpec, $this->optLoadDataSetSpec, $this->optLoadParallel, $this->optLoadMemory, $this->optLoadAlgorithm];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->dataOrXml, \SqlSemantics\Statement\Model\MySql\Role\DataOrXmlForm::class, $replace), $this->replacement($this->loadDataLock, \SqlSemantics\Statement\Model\MySql\Role\LoadDataLockForm::class, $replace), $this->replacement($this->optFromKeyword, \SqlSemantics\Statement\Model\MySql\Role\OptFromKeywordForm::class, $replace), $this->replacement($this->optLocal, \SqlSemantics\Statement\Model\MySql\Role\OptLocalForm::class, $replace), $this->replacement($this->loadSourceType, \SqlSemantics\Statement\Model\MySql\Role\LoadSourceTypeForm::class, $replace), $this->replacement($this->textStringFilesystem, \SqlSemantics\Statement\Model\MySql\Role\TextStringFilesystemForm::class, $replace), $this->replacement($this->optSourceCount, \SqlSemantics\Statement\Model\MySql\Role\OptSourceCountForm::class, $replace), $this->replacement($this->optSourceOrder, \SqlSemantics\Statement\Model\MySql\Role\OptSourceOrderForm::class, $replace), $this->replacement($this->optDuplicate, \SqlSemantics\Statement\Model\MySql\Role\OptDuplicateForm::class, $replace), $this->replacement($this->tableIdent, \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm::class, $replace), $this->replacement($this->optUsePartition, \SqlSemantics\Statement\Model\MySql\Role\OptUsePartitionForm::class, $replace), $this->replacement($this->optLoadDataCharset, \SqlSemantics\Statement\Model\MySql\Role\OptLoadDataCharsetForm::class, $replace), $this->replacement($this->optCompressionAlgorithm, \SqlSemantics\Statement\Model\MySql\Role\OptCompressionAlgorithmForm::class, $replace), $this->replacement($this->optXmlRowsIdentifiedBy, \SqlSemantics\Statement\Model\MySql\Role\OptXmlRowsIdentifiedByForm::class, $replace), $this->replacement($this->optFieldTerm, \SqlSemantics\Statement\Model\MySql\Role\OptFieldTermForm::class, $replace), $this->replacement($this->optLineTerm, \SqlSemantics\Statement\Model\MySql\Role\OptLineTermForm::class, $replace), $this->replacement($this->optIgnoreLines, \SqlSemantics\Statement\Model\MySql\Role\OptIgnoreLinesForm::class, $replace), $this->replacement($this->optFieldOrVarSpec, \SqlSemantics\Statement\Model\MySql\Role\OptFieldOrVarSpecForm::class, $replace), $this->replacement($this->optLoadDataSetSpec, \SqlSemantics\Statement\Model\MySql\Role\OptLoadDataSetSpecForm::class, $replace), $this->replacement($this->optLoadParallel, \SqlSemantics\Statement\Model\MySql\Role\OptLoadParallelForm::class, $replace), $this->replacement($this->optLoadMemory, \SqlSemantics\Statement\Model\MySql\Role\OptLoadMemoryForm::class, $replace), $this->replacement($this->optLoadAlgorithm, \SqlSemantics\Statement\Model\MySql\Role\OptLoadAlgorithmForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new dataOrXml, preserving every other field.
      */
     public function withDataOrXml(\SqlSemantics\Statement\Model\MySql\Role\DataOrXmlForm $dataOrXml): self

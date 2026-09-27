@@ -48,6 +48,26 @@ final class FuncTableWithRowsFromRowsfromListOptOrdinality_d2a3bf98 implements \
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->rowsfromList, $this->optOrdinality];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->rowsfromList, \SqlSemantics\Statement\Model\PostgreSql\Role\RowsfromListForm::class, $replace), $this->replacement($this->optOrdinality, \SqlSemantics\Statement\Model\PostgreSql\Role\OptOrdinalityForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new rowsfromList, preserving every other field.
      */
     public function withRowsfromList(\SqlSemantics\Statement\Model\PostgreSql\Role\RowsfromListForm $rowsfromList): self

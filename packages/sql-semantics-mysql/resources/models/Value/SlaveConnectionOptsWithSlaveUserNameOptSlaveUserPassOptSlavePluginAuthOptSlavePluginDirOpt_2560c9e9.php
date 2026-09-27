@@ -48,6 +48,26 @@ final class SlaveConnectionOptsWithSlaveUserNameOptSlaveUserPassOptSlavePluginAu
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->slaveUserNameOpt, $this->slaveUserPassOpt, $this->slavePluginAuthOpt, $this->slavePluginDirOpt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->slaveUserNameOpt, \SqlSemantics\Statement\Model\MySql\Role\SlaveUserNameOptForm::class, $replace), $this->replacement($this->slaveUserPassOpt, \SqlSemantics\Statement\Model\MySql\Role\SlaveUserPassOptForm::class, $replace), $this->replacement($this->slavePluginAuthOpt, \SqlSemantics\Statement\Model\MySql\Role\SlavePluginAuthOptForm::class, $replace), $this->replacement($this->slavePluginDirOpt, \SqlSemantics\Statement\Model\MySql\Role\SlavePluginDirOptForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new slaveUserNameOpt, preserving every other field.
      */
     public function withSlaveUserNameOpt(\SqlSemantics\Statement\Model\MySql\Role\SlaveUserNameOptForm $slaveUserNameOpt): self

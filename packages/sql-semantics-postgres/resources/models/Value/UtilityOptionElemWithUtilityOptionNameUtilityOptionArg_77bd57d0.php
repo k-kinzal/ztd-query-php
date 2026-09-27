@@ -40,6 +40,26 @@ final class UtilityOptionElemWithUtilityOptionNameUtilityOptionArg_77bd57d0 impl
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->utilityOptionName, $this->utilityOptionArg];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->utilityOptionName, \SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionNameForm::class, $replace), $this->replacement($this->utilityOptionArg, \SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionArgForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new utilityOptionName, preserving every other field.
      */
     public function withUtilityOptionName(\SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionNameForm $utilityOptionName): self

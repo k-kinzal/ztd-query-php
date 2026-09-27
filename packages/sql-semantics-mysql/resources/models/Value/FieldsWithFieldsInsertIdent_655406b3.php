@@ -42,6 +42,26 @@ final class FieldsWithFieldsInsertIdent_655406b3 implements \SqlSemantics\Statem
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->fields, $this->insertIdent];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->fields, \SqlSemantics\Statement\Model\MySql\Role\FieldsForm::class, $replace), $this->replacement($this->insertIdent, \SqlSemantics\Statement\Model\MySql\Role\InsertIdentForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new fields, preserving every other field.
      */
     public function withFields(\SqlSemantics\Statement\Model\MySql\Role\FieldsForm $fields): self

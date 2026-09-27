@@ -54,6 +54,26 @@ final class TableConstraintDefWithSpatialSymOptKeyOrIndexOptIdentKeyListWithExpr
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optKeyOrIndex, $this->optIdent, $this->keyListWithExpression, $this->optSpatialIndexOptions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optKeyOrIndex, \SqlSemantics\Statement\Model\MySql\Role\OptKeyOrIndexForm::class, $replace), $this->replacement($this->optIdent, \SqlSemantics\Statement\Model\MySql\Role\OptIdentForm::class, $replace), $this->replacement($this->keyListWithExpression, \SqlSemantics\Statement\Model\MySql\Role\KeyListWithExpressionForm::class, $replace), $this->replacement($this->optSpatialIndexOptions, \SqlSemantics\Statement\Model\MySql\Role\OptSpatialIndexOptionsForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optKeyOrIndex, preserving every other field.
      */
     public function withOptKeyOrIndex(\SqlSemantics\Statement\Model\MySql\Role\OptKeyOrIndexForm $optKeyOrIndex): self

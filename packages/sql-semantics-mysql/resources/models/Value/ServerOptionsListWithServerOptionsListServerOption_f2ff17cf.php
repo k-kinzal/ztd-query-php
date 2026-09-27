@@ -42,6 +42,26 @@ final class ServerOptionsListWithServerOptionsListServerOption_f2ff17cf implemen
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->serverOptionsList, $this->serverOption];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->serverOptionsList, \SqlSemantics\Statement\Model\MySql\Role\ServerOptionsListForm::class, $replace), $this->replacement($this->serverOption, \SqlSemantics\Statement\Model\MySql\Role\ServerOptionForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new serverOptionsList, preserving every other field.
      */
     public function withServerOptionsList(\SqlSemantics\Statement\Model\MySql\Role\ServerOptionsListForm $serverOptionsList): self

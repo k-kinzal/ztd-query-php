@@ -62,6 +62,26 @@ final class TriggerCmdWithScanptInsertCmdIntoTrnmIdlistOptSelectUpsertScanpt_362
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->scanpt, $this->insertCmd, $this->trnm, $this->idlistOpt, $this->select, $this->upsert, $this->scanpt2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->scanpt, \SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm::class, $replace), $this->replacement($this->insertCmd, \SqlSemantics\Statement\Model\Sqlite\Role\InsertCmdForm::class, $replace), $this->replacement($this->trnm, \SqlSemantics\Statement\Model\Sqlite\Role\TrnmForm::class, $replace), $this->replacement($this->idlistOpt, \SqlSemantics\Statement\Model\Sqlite\Role\IdlistOptForm::class, $replace), $this->replacement($this->select, \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm::class, $replace), $this->replacement($this->upsert, \SqlSemantics\Statement\Model\Sqlite\Role\UpsertForm::class, $replace), $this->replacement($this->scanpt2, \SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new scanpt, preserving every other field.
      */
     public function withScanpt(\SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt): self

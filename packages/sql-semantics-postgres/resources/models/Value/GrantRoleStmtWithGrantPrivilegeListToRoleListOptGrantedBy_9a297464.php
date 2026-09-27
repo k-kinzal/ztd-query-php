@@ -48,6 +48,26 @@ final class GrantRoleStmtWithGrantPrivilegeListToRoleListOptGrantedBy_9a297464 i
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->privilegeList, $this->roleList, $this->optGrantedBy];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->privilegeList, \SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegeListForm::class, $replace), $this->replacement($this->roleList, \SqlSemantics\Statement\Model\PostgreSql\Role\RoleListForm::class, $replace), $this->replacement($this->optGrantedBy, \SqlSemantics\Statement\Model\PostgreSql\Role\OptGrantedByForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new privilegeList, preserving every other field.
      */
     public function withPrivilegeList(\SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegeListForm $privilegeList): self

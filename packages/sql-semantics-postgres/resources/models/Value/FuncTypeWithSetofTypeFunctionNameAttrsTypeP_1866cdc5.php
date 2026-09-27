@@ -46,6 +46,26 @@ final class FuncTypeWithSetofTypeFunctionNameAttrsTypeP_1866cdc5 implements \Sql
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->typeFunctionName, $this->attrs];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->typeFunctionName, \SqlSemantics\Statement\Model\PostgreSql\Role\TypeFunctionNameForm::class, $replace), $this->replacement($this->attrs, \SqlSemantics\Statement\Model\PostgreSql\Role\AttrsForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new typeFunctionName, preserving every other field.
      */
     public function withTypeFunctionName(\SqlSemantics\Statement\Model\PostgreSql\Role\TypeFunctionNameForm $typeFunctionName): self

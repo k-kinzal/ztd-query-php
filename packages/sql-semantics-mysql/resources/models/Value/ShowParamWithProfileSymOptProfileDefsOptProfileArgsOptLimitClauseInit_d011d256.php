@@ -46,6 +46,26 @@ final class ShowParamWithProfileSymOptProfileDefsOptProfileArgsOptLimitClauseIni
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optProfileDefs, $this->optProfileArgs, $this->optLimitClauseInit];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optProfileDefs, \SqlSemantics\Statement\Model\MySql\Role\OptProfileDefsForm::class, $replace), $this->replacement($this->optProfileArgs, \SqlSemantics\Statement\Model\MySql\Role\OptProfileArgsForm::class, $replace), $this->replacement($this->optLimitClauseInit, \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseInitForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optProfileDefs, preserving every other field.
      */
     public function withOptProfileDefs(\SqlSemantics\Statement\Model\MySql\Role\OptProfileDefsForm $optProfileDefs): self

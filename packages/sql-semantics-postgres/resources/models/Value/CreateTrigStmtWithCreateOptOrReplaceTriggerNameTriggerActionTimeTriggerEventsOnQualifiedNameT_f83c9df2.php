@@ -88,6 +88,26 @@ final class CreateTrigStmtWithCreateOptOrReplaceTriggerNameTriggerActionTimeTrig
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optOrReplace, $this->name, $this->triggerActionTime, $this->triggerEvents, $this->qualifiedName, $this->triggerReferencing, $this->triggerForSpec, $this->triggerWhen, $this->functionOrProcedure, $this->funcName, $this->triggerFuncArgs];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optOrReplace, \SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm::class, $replace), $this->replacement($this->name, \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm::class, $replace), $this->replacement($this->triggerActionTime, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerActionTimeForm::class, $replace), $this->replacement($this->triggerEvents, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerEventsForm::class, $replace), $this->replacement($this->qualifiedName, \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm::class, $replace), $this->replacement($this->triggerReferencing, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerReferencingForm::class, $replace), $this->replacement($this->triggerForSpec, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerForSpecForm::class, $replace), $this->replacement($this->triggerWhen, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerWhenForm::class, $replace), $this->replacement($this->functionOrProcedure, \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionOrProcedureForm::class, $replace), $this->replacement($this->funcName, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm::class, $replace), $this->replacement($this->triggerFuncArgs, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerFuncArgsForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optOrReplace, preserving every other field.
      */
     public function withOptOrReplace(\SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm $optOrReplace): self

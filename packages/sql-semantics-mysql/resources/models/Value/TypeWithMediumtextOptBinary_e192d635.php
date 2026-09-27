@@ -38,6 +38,26 @@ final class TypeWithMediumtextOptBinary_e192d635 implements \SqlSemantics\Statem
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optBinary];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optBinary, \SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optBinary, preserving every other field.
      */
     public function withOptBinary(\SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm $optBinary): self

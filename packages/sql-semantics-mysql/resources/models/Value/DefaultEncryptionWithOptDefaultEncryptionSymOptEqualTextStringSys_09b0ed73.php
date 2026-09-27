@@ -46,6 +46,26 @@ final class DefaultEncryptionWithOptDefaultEncryptionSymOptEqualTextStringSys_09
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optDefault, $this->optEqual, $this->textStringSys];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optDefault, \SqlSemantics\Statement\Model\MySql\Role\OptDefaultForm::class, $replace), $this->replacement($this->optEqual, \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm::class, $replace), $this->replacement($this->textStringSys, \SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optDefault, preserving every other field.
      */
     public function withOptDefault(\SqlSemantics\Statement\Model\MySql\Role\OptDefaultForm $optDefault): self

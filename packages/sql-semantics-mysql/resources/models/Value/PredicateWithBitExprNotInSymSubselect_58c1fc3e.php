@@ -50,6 +50,26 @@ final class PredicateWithBitExprNotInSymSubselect_58c1fc3e implements \SqlSemant
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->bitExpr, $this->not, $this->subselect];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->bitExpr, \SqlSemantics\Statement\Model\MySql\Role\BitExprForm::class, $replace), $this->replacement($this->not, \SqlSemantics\Statement\Model\MySql\Role\NotForm::class, $replace), $this->replacement($this->subselect, \SqlSemantics\Statement\Model\MySql\Role\SubselectForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new bitExpr, preserving every other field.
      */
     public function withBitExpr(\SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr): self

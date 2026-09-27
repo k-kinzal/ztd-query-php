@@ -38,6 +38,26 @@ final class AlterListItemWithAddKeyDef_ee3f9089 implements \SqlSemantics\Stateme
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->keyDef];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->keyDef, \SqlSemantics\Statement\Model\MySql\Role\KeyDefForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new keyDef, preserving every other field.
      */
     public function withKeyDef(\SqlSemantics\Statement\Model\MySql\Role\KeyDefForm $keyDef): self

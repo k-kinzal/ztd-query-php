@@ -46,6 +46,26 @@ final class FuncExprCommonSubexprWithJsonJsonValueExprJsonKeyUniquenessConstrain
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->jsonValueExpr, $this->jsonKeyUniquenessConstraintOpt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->jsonValueExpr, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprForm::class, $replace), $this->replacement($this->jsonKeyUniquenessConstraintOpt, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonKeyUniquenessConstraintOptForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new jsonValueExpr, preserving every other field.
      */
     public function withJsonValueExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprForm $jsonValueExpr): self

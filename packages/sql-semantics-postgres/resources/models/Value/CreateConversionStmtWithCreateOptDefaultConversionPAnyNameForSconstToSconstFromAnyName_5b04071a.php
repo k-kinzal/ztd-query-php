@@ -62,6 +62,26 @@ final class CreateConversionStmtWithCreateOptDefaultConversionPAnyNameForSconstT
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optDefault, $this->anyName, $this->sconst, $this->sconst2, $this->anyName2];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optDefault, \SqlSemantics\Statement\Model\PostgreSql\Role\OptDefaultForm::class, $replace), $this->replacement($this->anyName, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm::class, $replace), $this->replacement($this->sconst, \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm::class, $replace), $this->replacement($this->sconst2, \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm::class, $replace), $this->replacement($this->anyName2, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optDefault, preserving every other field.
      */
     public function withOptDefault(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDefaultForm $optDefault): self

@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql;
 
+use InvalidArgumentException;
 use SqlParser\MySql\MySqlParser;
 use SqlParser\MySql\MySqlVersion;
 use SqlParser\Parser\SqlParser;
 use SqlSemantics\Core\Analysis\TriviaReader;
+use SqlSemantics\Core\Builder as Composer;
 use SqlSemantics\Core\Dialect;
+use SqlSemantics\Core\Language;
+use SqlSemantics\Core\Mode as SessionMode;
+use SqlSemantics\Core\Parameters;
 use SqlSemantics\Core\Platform as Contract;
 use SqlSemantics\Core\Policy;
 
@@ -27,11 +32,25 @@ final class Platform implements Contract
     }
 
     /**
-     * Configures the selected grammar release.
+     * Configures the selected grammar release under the session's `sql_mode` and parameter syntax.
+     *
+     * @throws InvalidArgumentException When the mode is not this database's Mode
      */
-    public function parser(?string $version = null): SqlParser
+    public function parser(?string $version = null, ?SessionMode $mode = null, Parameters $parameters = Parameters::Native): SqlParser
     {
-        return new MySqlParser($version);
+        if ($mode !== null && !$mode instanceof Mode) {
+            throw new InvalidArgumentException('The mode must be a ' . Mode::class . ', ' . $mode::class . ' given.');
+        }
+
+        return new MySqlParser($version, $mode === null ? new \SqlParser\MySql\SqlMode() : $mode->sqlMode, parameters: $parameters->syntax());
+    }
+
+    /**
+     * Composes this database's values for a language.
+     */
+    public function builder(Language $language): Composer
+    {
+        return new Builder($language);
     }
 
     /**
@@ -78,29 +97,6 @@ final class Platform implements Contract
             'createHeader' => [],
             'tableName' => ['table_ident'],
             'tableConstraint' => ['table_constraint_def'],
-            'columnReference' => ['simple_ident'],
-            'identifierToken' => ['IDENT', 'IDENT_QUOTED'],
-            'parameterToken' => ['PARAM_MARKER'],
-            'projectionList' => ['select_item_list'],
-            'projectionExpression' => ['expr', 'table_wild'],
-            'projectionAlias' => ['select_alias'],
-            'selectStatement' => ['select_stmt', 'select'],
-            'selectBody' => ['query_specification'],
-            'from' => ['from_clause'],
-            'where' => ['where_clause'],
-            'selectOptions' => ['select_options'],
-            'orderingChildren' => ['expr', 'opt_ordering_direction', 'ordering_direction'],
-            'orderingDirection' => ['opt_ordering_direction', 'ordering_direction'],
-            'nullsOrder' => [],
-            'stringToken' => ['TEXT_STRING'],
-            'limit' => ['limit_clause'],
-            'offset' => [],
-            'paginationExpression' => ['expr', 'limit_option'],
-            'selectChildren' => ['from_clause', 'where_clause', 'select_options', 'select_item_list', 'opt_from_clause', 'opt_where_clause'],
-            'unsupportedModifier' => ['with_clause', 'into_clause', 'opt_into', 'locking_clause', 'locking_clause_list'],
-            'relation' => ['table_ref', 'table_reference'],
-            'qualifiedExpression' => ['expr'],
-            'qualifiedPart' => [],
         ]);
     }
 
@@ -128,11 +124,4 @@ final class Platform implements Contract
         return new SchemaRules();
     }
 
-    /**
-     * Supplies query semantics.
-     */
-    public function query(): Policy\QueryRules
-    {
-        return new QueryRules();
-    }
 }

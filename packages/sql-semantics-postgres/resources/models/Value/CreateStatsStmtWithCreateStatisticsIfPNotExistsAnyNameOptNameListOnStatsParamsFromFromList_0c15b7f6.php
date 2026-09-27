@@ -62,6 +62,26 @@ final class CreateStatsStmtWithCreateStatisticsIfPNotExistsAnyNameOptNameListOnS
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->anyName, $this->optNameList, $this->statsParams, $this->fromList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->anyName, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm::class, $replace), $this->replacement($this->optNameList, \SqlSemantics\Statement\Model\PostgreSql\Role\OptNameListForm::class, $replace), $this->replacement($this->statsParams, \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamsForm::class, $replace), $this->replacement($this->fromList, \SqlSemantics\Statement\Model\PostgreSql\Role\FromListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new anyName, preserving every other field.
      */
     public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self

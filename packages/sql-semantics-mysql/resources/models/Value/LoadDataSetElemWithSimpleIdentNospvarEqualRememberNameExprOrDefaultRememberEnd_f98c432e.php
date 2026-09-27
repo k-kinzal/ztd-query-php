@@ -52,6 +52,26 @@ final class LoadDataSetElemWithSimpleIdentNospvarEqualRememberNameExprOrDefaultR
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->simpleIdentNospvar, $this->equal, $this->rememberName, $this->exprOrDefault, $this->rememberEnd];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->simpleIdentNospvar, \SqlSemantics\Statement\Model\MySql\Role\SimpleIdentNospvarForm::class, $replace), $this->replacement($this->equal, \SqlSemantics\Statement\Model\MySql\Role\EqualForm::class, $replace), $this->replacement($this->rememberName, \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm::class, $replace), $this->replacement($this->exprOrDefault, \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm::class, $replace), $this->replacement($this->rememberEnd, \SqlSemantics\Statement\Model\MySql\Role\RememberEndForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new simpleIdentNospvar, preserving every other field.
      */
     public function withSimpleIdentNospvar(\SqlSemantics\Statement\Model\MySql\Role\SimpleIdentNospvarForm $simpleIdentNospvar): self

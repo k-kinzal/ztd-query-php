@@ -54,6 +54,26 @@ final class DeclareCursorStmtWithDeclareCursorNameCursorOptionsCursorOptHoldForS
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->cursorName, $this->cursorOptions, $this->optHold, $this->selectStmt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->cursorName, \SqlSemantics\Statement\Model\PostgreSql\Role\CursorNameForm::class, $replace), $this->replacement($this->cursorOptions, \SqlSemantics\Statement\Model\PostgreSql\Role\CursorOptionsForm::class, $replace), $this->replacement($this->optHold, \SqlSemantics\Statement\Model\PostgreSql\Role\OptHoldForm::class, $replace), $this->replacement($this->selectStmt, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new cursorName, preserving every other field.
      */
     public function withCursorName(\SqlSemantics\Statement\Model\PostgreSql\Role\CursorNameForm $cursorName): self

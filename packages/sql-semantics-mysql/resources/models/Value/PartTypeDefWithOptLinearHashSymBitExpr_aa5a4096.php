@@ -46,6 +46,26 @@ final class PartTypeDefWithOptLinearHashSymBitExpr_aa5a4096 implements \SqlSeman
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optLinear, $this->bitExpr];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optLinear, \SqlSemantics\Statement\Model\MySql\Role\OptLinearForm::class, $replace), $this->replacement($this->bitExpr, \SqlSemantics\Statement\Model\MySql\Role\BitExprForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optLinear, preserving every other field.
      */
     public function withOptLinear(\SqlSemantics\Statement\Model\MySql\Role\OptLinearForm $optLinear): self

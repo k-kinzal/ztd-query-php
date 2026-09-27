@@ -38,6 +38,26 @@ final class TriggerReferencingWithReferencingTriggerTransitions_7180c721 impleme
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->triggerTransitions];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->triggerTransitions, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerTransitionsForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new triggerTransitions, preserving every other field.
      */
     public function withTriggerTransitions(\SqlSemantics\Statement\Model\PostgreSql\Role\TriggerTransitionsForm $triggerTransitions): self

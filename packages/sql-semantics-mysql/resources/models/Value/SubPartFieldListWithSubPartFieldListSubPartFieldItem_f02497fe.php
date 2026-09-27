@@ -42,6 +42,26 @@ final class SubPartFieldListWithSubPartFieldListSubPartFieldItem_f02497fe implem
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->subPartFieldList, $this->subPartFieldItem];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->subPartFieldList, \SqlSemantics\Statement\Model\MySql\Role\SubPartFieldListForm::class, $replace), $this->replacement($this->subPartFieldItem, \SqlSemantics\Statement\Model\MySql\Role\SubPartFieldItemForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new subPartFieldList, preserving every other field.
      */
     public function withSubPartFieldList(\SqlSemantics\Statement\Model\MySql\Role\SubPartFieldListForm $subPartFieldList): self

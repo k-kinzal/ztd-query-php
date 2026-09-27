@@ -66,6 +66,26 @@ final class SimpleSelectWithSelectDistinctClauseTargetListIntoClauseFromClauseWh
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->distinct, $this->projections, $this->intoClause, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->distinct, \SqlSemantics\Statement\Model\PostgreSql\Role\DistinctClauseForm::class, $replace), $this->replacement($this->projections, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetListForm::class, $replace), $this->replacement($this->intoClause, \SqlSemantics\Statement\Model\PostgreSql\Role\IntoClauseForm::class, $replace), $this->replacement($this->from, \SqlSemantics\Statement\Model\PostgreSql\Role\FromClauseForm::class, $replace), $this->replacement($this->where, \SqlSemantics\Statement\Model\PostgreSql\Role\WhereClauseForm::class, $replace), $this->replacement($this->groupBy, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupClauseForm::class, $replace), $this->replacement($this->having, \SqlSemantics\Statement\Model\PostgreSql\Role\HavingClauseForm::class, $replace), $this->replacement($this->windowClause, \SqlSemantics\Statement\Model\PostgreSql\Role\WindowClauseForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new distinct, preserving every other field.
      */
     public function withDistinct(\SqlSemantics\Statement\Model\PostgreSql\Role\DistinctClauseForm $distinct): self

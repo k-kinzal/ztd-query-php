@@ -46,6 +46,26 @@ final class ValuesClauseWithValuesClauseExprList_bf82b178 implements \SqlSemanti
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->valuesClause, $this->exprList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->valuesClause, \SqlSemantics\Statement\Model\PostgreSql\Role\ValuesClauseForm::class, $replace), $this->replacement($this->exprList, \SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new valuesClause, preserving every other field.
      */
     public function withValuesClause(\SqlSemantics\Statement\Model\PostgreSql\Role\ValuesClauseForm $valuesClause): self

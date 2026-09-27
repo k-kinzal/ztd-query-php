@@ -62,6 +62,26 @@ final class TconsWithForeignKeyLpEidlistRpReferencesNmEidlistOptRefargsDeferSubc
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->eidlist, $this->nm, $this->eidlistOpt, $this->refargs, $this->deferSubclauseOpt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->eidlist, \SqlSemantics\Statement\Model\Sqlite\Role\EidlistForm::class, $replace), $this->replacement($this->nm, \SqlSemantics\Statement\Model\Sqlite\Role\NmForm::class, $replace), $this->replacement($this->eidlistOpt, \SqlSemantics\Statement\Model\Sqlite\Role\EidlistOptForm::class, $replace), $this->replacement($this->refargs, \SqlSemantics\Statement\Model\Sqlite\Role\RefargsForm::class, $replace), $this->replacement($this->deferSubclauseOpt, \SqlSemantics\Statement\Model\Sqlite\Role\DeferSubclauseOptForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new eidlist, preserving every other field.
      */
     public function withEidlist(\SqlSemantics\Statement\Model\Sqlite\Role\EidlistForm $eidlist): self

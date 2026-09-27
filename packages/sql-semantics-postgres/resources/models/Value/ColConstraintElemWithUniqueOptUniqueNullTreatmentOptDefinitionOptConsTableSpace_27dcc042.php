@@ -46,6 +46,26 @@ final class ColConstraintElemWithUniqueOptUniqueNullTreatmentOptDefinitionOptCon
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optUniqueNullTreatment, $this->optDefinition, $this->optConsTableSpace];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optUniqueNullTreatment, \SqlSemantics\Statement\Model\PostgreSql\Role\OptUniqueNullTreatmentForm::class, $replace), $this->replacement($this->optDefinition, \SqlSemantics\Statement\Model\PostgreSql\Role\OptDefinitionForm::class, $replace), $this->replacement($this->optConsTableSpace, \SqlSemantics\Statement\Model\PostgreSql\Role\OptConsTableSpaceForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optUniqueNullTreatment, preserving every other field.
      */
     public function withOptUniqueNullTreatment(\SqlSemantics\Statement\Model\PostgreSql\Role\OptUniqueNullTreatmentForm $optUniqueNullTreatment): self

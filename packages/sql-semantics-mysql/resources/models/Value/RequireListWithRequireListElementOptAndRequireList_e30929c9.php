@@ -44,6 +44,26 @@ final class RequireListWithRequireListElementOptAndRequireList_e30929c9 implemen
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->requireListElement, $this->optAnd, $this->requireList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->requireListElement, \SqlSemantics\Statement\Model\MySql\Role\RequireListElementForm::class, $replace), $this->replacement($this->optAnd, \SqlSemantics\Statement\Model\MySql\Role\OptAndForm::class, $replace), $this->replacement($this->requireList, \SqlSemantics\Statement\Model\MySql\Role\RequireListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new requireListElement, preserving every other field.
      */
     public function withRequireListElement(\SqlSemantics\Statement\Model\MySql\Role\RequireListElementForm $requireListElement): self

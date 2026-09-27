@@ -40,6 +40,26 @@ final class SpatialKeyOptsWithSpatialKeyOptsSpatialKeyOpt_7e8d204d implements \S
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->spatialKeyOpts, $this->spatialKeyOpt];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->spatialKeyOpts, \SqlSemantics\Statement\Model\MySql\Role\SpatialKeyOptsForm::class, $replace), $this->replacement($this->spatialKeyOpt, \SqlSemantics\Statement\Model\MySql\Role\SpatialKeyOptForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new spatialKeyOpts, preserving every other field.
      */
     public function withSpatialKeyOpts(\SqlSemantics\Statement\Model\MySql\Role\SpatialKeyOptsForm $spatialKeyOpts): self

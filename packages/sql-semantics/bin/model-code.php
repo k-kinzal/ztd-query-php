@@ -3,6 +3,14 @@
 declare(strict_types=1);
 
 /**
+ * The terminals and terminal classes whose text is a name, which `.` follows directly and `(` does not.
+ *
+ * A keyword used as a name is one too, except in MySQL, whose lexer reads a
+ * word followed directly by `.` as an identifier rather than a keyword.
+ */
+const IDENTIFIER_SYMBOLS = ['IDENT', 'IDENT_QUOTED', 'ID', 'UIDENT', 'id', 'ids', 'idj', 'nm'];
+
+/**
  * Turns a grammar label into a PHP name, without storing that label in a value.
  */
 function modelName(string $name): string
@@ -77,7 +85,7 @@ function roles(string $name, string $dialect, array $parents, array $entryRules 
 
     $roles = array_values(array_unique(array_map(static fn (string $role): string => '\\SqlSemantics\\Statement\\Model\\' . $dialect . '\\Role\\' . modelName($role) . 'Form', $names)));
     $roots = match ($dialect) {
-        'MySql' => ['start_entry', 'sql_statement', 'simple_statement_or_begin'],
+        'MySql' => ['start_entry', 'sql_statement', 'simple_statement_or_begin', 'query', 'verb_clause', 'statement'],
         'PostgreSql' => ['parse_toplevel', 'stmtmulti', 'toplevel_stmt', 'stmt'],
         'Sqlite' => ['input', 'cmdlist', 'ecmd', 'cmdx', 'cmd'],
     };
@@ -113,6 +121,7 @@ function valueClass(string $directory, string $dialect, string $rule, array $sym
     $counts = [];
     $types = [];
     $assertions = [];
+    $children = [];
     $contract = '\\SqlSemantics\\Statement\\Model\\' . $dialect . '\\Contract\\Contracts';
     $comments = '\\SqlSemantics\\Statement\\Comments';
     foreach ($symbols as $index => $symbol) {
@@ -139,16 +148,19 @@ function valueClass(string $directory, string $dialect, string $rule, array $sym
             }
         }
         if ($minimums !== []) {
-            $assertions[] = "        \$this->assertOperandBindingStrength(\${$field}, {$contract}::BINDING_POWERS, " . str_replace("\n", '', var_export($minimums, true)) . ');';
+            $assertions[] = "        \$this->assertOperandBindingStrength(\${$field}, {$contract}::BINDING_POWERS, " . str_replace("\n", '', var_export($minimums, true)) . ", {$contract}::BINDING_RULES, " . var_export($symbol['name'], true) . ');';
         }
-        $identifier = in_array($symbol['name'], ['IDENT', 'IDENT_QUOTED', 'ID', 'UIDENT'], true) ? ', true' : '';
+        $identifier = in_array($symbol['name'], IDENTIFIER_SYMBOLS, true) || ($dialect !== 'MySql' && ($symbol['identifier'] ?? false)) ? ', true' : '';
         $writes[] = $symbol['terminal'] ? "        \$writer->append(\$this->{$field}{$identifier});" : "        \$this->{$field}->write(\$writer);";
+        if (!$symbol['terminal']) {
+            $children[$field] = $type;
+        }
         $fields[] = $index;
     }
     $parameters[] = "        public readonly {$comments} \$comments = new {$comments}(),";
     $types['comments'] = $comments;
-    $constructor = ($assertions === [] ? '' : "    use \\SqlSemantics\\Statement\\Assertion;\n\n") . "    /**\n     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.\n     */\n    public function __construct(\n" . implode("\n", $parameters) . "\n    ) {\n" . ($assertions === [] ? '' : implode("\n", $assertions) . "\n") . "    }\n\n";
-    $body = modelDoc($rule, $fqcn) . "final class {$name} implements " . implode(', ', $roles) . "\n{\n{$constructor}    /**\n     * Writes SQL entirely from this value's fields.\n     */\n    public function write(\\SqlSemantics\\Statement\\Writer \$writer): void\n    {\n" . implode("\n", $writes) . "\n    }" . copyMethods($types) . "\n}";
+    $constructor = ($assertions === [] && $children === [] ? '' : "    use \\SqlSemantics\\Statement\\Assertion;\n\n") . "    /**\n     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.\n     */\n    public function __construct(\n" . implode("\n", $parameters) . "\n    ) {\n" . ($assertions === [] ? '' : implode("\n", $assertions) . "\n") . "    }\n\n";
+    $body = modelDoc($rule, $fqcn) . "final class {$name} implements " . implode(', ', $roles) . "\n{\n{$constructor}    /**\n     * Writes SQL entirely from this value's fields.\n     */\n    public function write(\\SqlSemantics\\Statement\\Writer \$writer): void\n    {\n" . implode("\n", $writes) . "\n    }" . traversalMethods($types, $children) . copyMethods($types) . "\n}";
     writeModel($directory, $dialect, 'Value', $name, $body);
 
     return ['class' => $fqcn, 'fields' => $fields];
@@ -174,7 +186,7 @@ function valueName(string $rule, array $symbols): string
  * @param list<string> $roles
  * @return array<int, array{constant: string}>
  */
-function choiceEnum(string $directory, string $dialect, string $rule, array $choices, array $roles): array
+function choiceEnum(string $directory, string $dialect, string $rule, array $choices, array $roles, array $alternatives = []): array
 {
     $name = modelName($rule) . 'Choice_' . substr(hash('sha256', json_encode($choices, JSON_THROW_ON_ERROR)), 0, 8);
     $fqcn = 'SqlSemantics\\Statement\\Model\\' . $dialect . '\\Choice\\' . $name;
@@ -186,9 +198,9 @@ function choiceEnum(string $directory, string $dialect, string $rule, array $cho
         }
         $case = 'Use' . substr(modelName($sql), 0, 80) . '_' . substr(hash('sha256', $sql), 0, 8);
         $cases[$case] = '    case ' . $case . ' = ' . var_export($sql, true) . ';';
-        $mapping[$ordinal] = ['constant' => $fqcn . '::' . $case];
+        $mapping[$ordinal] = ['constant' => $fqcn . '::' . $case, 'symbols' => array_column($alternatives[$ordinal] ?? [], 'name')];
     }
-    $body = modelDoc($rule, $fqcn) . "enum {$name}: string implements " . implode(', ', $roles) . "\n{\n" . implode("\n", $cases) . "\n\n    /**\n     * Writes the selected SQL option.\n     */\n    public function write(\\SqlSemantics\\Statement\\Writer \$writer): void\n    {\n        foreach (explode(' ', \$this->value) as \$word) {\n            \$writer->append(\$word);\n        }\n    }\n}";
+    $body = modelDoc($rule, $fqcn) . "enum {$name}: string implements " . implode(', ', $roles) . "\n{\n" . implode("\n", $cases) . "\n\n    /**\n     * Writes the selected SQL option.\n     */\n    public function write(\\SqlSemantics\\Statement\\Writer \$writer): void\n    {\n        foreach (explode(' ', \$this->value) as \$word) {\n            \$writer->append(\$word);\n        }\n    }\n\n    /**\n     * A choice is made of no values.\n     *\n     * @return list<\\SqlSemantics\\Statement\\Element>\n     */\n    public function children(): array\n    {\n        return [];\n    }\n\n    /**\n     * A choice has nothing to replace.\n     *\n     * @param callable(\\SqlSemantics\\Statement\\Element): \\SqlSemantics\\Statement\\Element \$replace\n     */\n    public function map(callable \$replace): static\n    {\n        return \$this;\n    }\n}";
     writeModel($directory, $dialect, 'Choice', $name, $body);
 
     return $mapping;
@@ -248,4 +260,26 @@ function publishModels(string $directory, string $destination, bool $check): int
     fwrite(STDOUT, count($generated) . " resources; {$changes} " . ($check ? 'differences' : 'updates') . "\n");
 
     return $check && $changes !== 0 ? 1 : 0;
+}
+
+/**
+ * Generates the child listing and the rebuilding map of a value class.
+ *
+ * @param array<string, string> $types Every field and its type, the comments last
+ * @param array<string, string> $children The fields that hold values and their role types
+ */
+function traversalMethods(array $types, array $children): string
+{
+    $element = '\\SqlSemantics\\Statement\\Element';
+    $list = implode(', ', array_map(static fn (string $field): string => '$this->' . $field, array_keys($children)));
+    $methods = "\n\n    /**\n     * Lists the values of this form, in writing order.\n     *\n     * @return list<{$element}>\n     */\n    public function children(): array\n    {\n        return [{$list}];\n    }";
+    if ($children === []) {
+        return $methods . "\n\n    /**\n     * This form holds no values to replace.\n     *\n     * @param callable({$element}): {$element} \$replace\n     */\n    public function map(callable \$replace): static\n    {\n        return \$this;\n    }";
+    }
+    $arguments = [];
+    foreach ($types as $field => $type) {
+        $arguments[] = isset($children[$field]) ? "\$this->replacement(\$this->{$field}, {$type}::class, \$replace)" : '$this->' . $field;
+    }
+
+    return $methods . "\n\n    /**\n     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.\n     *\n     * @param callable({$element}): {$element} \$replace\n     */\n    public function map(callable \$replace): static\n    {\n        return new self(" . implode(', ', $arguments) . ");\n    }";
 }

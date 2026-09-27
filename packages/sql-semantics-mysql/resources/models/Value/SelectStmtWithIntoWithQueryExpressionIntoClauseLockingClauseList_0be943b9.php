@@ -44,6 +44,26 @@ final class SelectStmtWithIntoWithQueryExpressionIntoClauseLockingClauseList_0be
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->query, $this->intoClause, $this->lockingClauseList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->query, \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionForm::class, $replace), $this->replacement($this->intoClause, \SqlSemantics\Statement\Model\MySql\Role\IntoClauseForm::class, $replace), $this->replacement($this->lockingClauseList, \SqlSemantics\Statement\Model\MySql\Role\LockingClauseListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new query, preserving every other field.
      */
     public function withQuery(\SqlSemantics\Statement\Model\MySql\Role\QueryExpressionForm $query): self

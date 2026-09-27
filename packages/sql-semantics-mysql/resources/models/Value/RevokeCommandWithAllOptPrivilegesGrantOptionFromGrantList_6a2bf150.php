@@ -50,6 +50,26 @@ final class RevokeCommandWithAllOptPrivilegesGrantOptionFromGrantList_6a2bf150 i
     }
 
     /**
+     * Lists the values of this form, in writing order.
+     *
+     * @return list<\SqlSemantics\Statement\Element>
+     */
+    public function children(): array
+    {
+        return [$this->optPrivileges, $this->grantList];
+    }
+
+    /**
+     * Returns a copy whose values are replaced by what the function answers for each, keeping lexical fields and comments.
+     *
+     * @param callable(\SqlSemantics\Statement\Element): \SqlSemantics\Statement\Element $replace
+     */
+    public function map(callable $replace): static
+    {
+        return new self($this->replacement($this->optPrivileges, \SqlSemantics\Statement\Model\MySql\Role\OptPrivilegesForm::class, $replace), $this->replacement($this->grantList, \SqlSemantics\Statement\Model\MySql\Role\GrantListForm::class, $replace), $this->comments);
+    }
+
+    /**
      * Returns a copy with a new optPrivileges, preserving every other field.
      */
     public function withOptPrivileges(\SqlSemantics\Statement\Model\MySql\Role\OptPrivilegesForm $optPrivileges): self
