@@ -57,6 +57,14 @@ final class TypeReader
     ];
 
     /**
+     * Reports whether a builtin type is a type of PostgreSQL.
+     */
+    public static function supports(Builtin $name): bool
+    {
+        return in_array($name, self::CATALOG, true);
+    }
+
+    /**
      * Reads one Typename; a set-returning type is not a column type.
      *
      * A declaration the database rejects, such as a SETOF column or a type

@@ -132,9 +132,12 @@ $rewritten = Traversal::rewrite($statement->command, static fn (Element $value):
 Writer::render($rewritten);                                         // 'SELECT id FROM members WHERE active = 1'
 
 $builder = $semantics->builder();
-$rows = $builder->unionAll($semantics->analyze("SELECT 1 AS id, 'a' AS name")->command, $semantics->analyze("SELECT 2, 'b'")->command);
+$rows = $builder->unionAll(
+    $builder->select([[$builder->integer(1), 'id'], [$builder->string('a'), 'name']]),
+    $builder->select([[$builder->integer(2), 'id'], [$builder->string('b'), 'name']]),
+);
 Writer::render($builder->with([$builder->cte('users', $rows)], $statement->command));
-// "WITH users AS( SELECT 1 AS id , 'a' AS name UNION ALL SELECT 2 , 'b' ) SELECT id FROM users WHERE active = 1"
+// "WITH users AS( SELECT 1 AS id , 'a' AS name UNION ALL SELECT 2 AS id , 'b' AS name ) SELECT id FROM users WHERE active = 1"
 Writer::render($builder->compare($builder->column('select'), '=', $builder->string("it's")));
 // "\"select\" = 'it''s'"
 ```

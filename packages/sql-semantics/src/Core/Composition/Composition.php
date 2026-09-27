@@ -24,6 +24,8 @@ use SqlSemantics\Statement\Writer;
  */
 abstract class Composition implements Builder
 {
+    use Templating;
+
     protected readonly LeafReader $leaves;
     protected readonly Vocabulary $vocabulary;
 

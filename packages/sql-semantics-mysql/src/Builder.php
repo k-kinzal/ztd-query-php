@@ -10,6 +10,7 @@ use Override;
 use SqlSemantics\Core\Composition\Composition;
 use SqlSemantics\Core\Composition\Operands;
 use SqlSemantics\Core\CompositionException;
+use SqlSemantics\Statement\Declaration\TypeDescriptor;
 use SqlSemantics\Statement\Element;
 use SqlSemantics\Statement\Model\MySql\Contract\Contracts;
 use SqlSemantics\Statement\Model\MySql\Role\ExprForm;
@@ -44,6 +45,7 @@ final class Builder extends Composition
     use Expressions;
     use Queries;
     use LegacyUnions;
+    use Casts;
 
     private const COMPARISONS = ['=' => 'EQ', '<=>' => 'EQUAL_SYM', '>=' => 'GE', '>' => 'GT_SYM', '<=' => 'LE', '<' => 'LT', '<>' => 'NE', '!=' => 'NE'];
 
@@ -206,6 +208,72 @@ final class Builder extends Composition
         assert($value instanceof SimpleExprForm);
 
         return $value;
+    }
+
+    /**
+     * `IS NULL`, or `IS NOT NULL` when negated.
+     */
+    #[Override]
+    public function isNull(Element $operand, bool $negated = false): ExprForm
+    {
+        $value = parent::isNull($operand, $negated);
+        assert($value instanceof ExprForm);
+
+        return $value;
+    }
+
+    /**
+     * `IN` a list of values, or `NOT IN` when negated.
+     */
+    #[Override]
+    public function in(Element $operand, array $values, bool $negated = false): ExprForm
+    {
+        $value = parent::in($operand, $values, $negated);
+        assert($value instanceof ExprForm);
+
+        return $value;
+    }
+
+    /**
+     * A searched CASE.
+     */
+    #[Override]
+    public function case(array $whens, ?Element $else = null): ExprForm
+    {
+        $value = parent::case($whens, $else);
+        assert($value instanceof ExprForm);
+
+        return $value;
+    }
+
+    /**
+     * A call of a function by name.
+     */
+    #[Override]
+    public function call(string $name, array $arguments = []): ExprForm
+    {
+        $value = parent::call($name, $arguments);
+        assert($value instanceof ExprForm);
+
+        return $value;
+    }
+
+    /**
+     * `CAST` of an operand to a type.
+     */
+    #[Override]
+    public function cast(Element $operand, TypeDescriptor $type): ExprForm
+    {
+        $value = parent::cast($operand, $type);
+        assert($value instanceof ExprForm);
+
+        return $value;
+    }
+
+    #[Override]
+    protected function expressionSymbol(): string
+    {
+        return 'expr';
     }
 
     #[Override]
