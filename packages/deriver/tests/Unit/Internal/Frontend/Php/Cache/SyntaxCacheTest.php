@@ -21,6 +21,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\SyntaxTree::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Source\MagicContext::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Source\SyntaxSize::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\Validation\ClassScope::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\TargetSyntax::class)]
 #[Small]
 final class SyntaxCacheTest extends TestCase

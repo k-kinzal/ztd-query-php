@@ -56,6 +56,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Frontend\Php\Source\SyntaxSize::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\StatementLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Traits\Composition::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\Validation\ClassScope::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\TargetSyntax::class)]
 #[UsesClass(\Deriver\Internal\IR\BasicBlock::class)]
 #[UsesClass(\Deriver\Internal\IR\CallableIR::class)]
@@ -326,4 +327,29 @@ final class ExpressionLoweringTest extends TestCase
         self::assertSame($register, $lowering->graph->instructions[0][2]->result);
     }
 
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerClassFetchSyntax')]
+    public function testLowerKeepsLiteralClassSyntaxDistinctFromEvaluatedClassValues(string $expression, bool $literal, bool $className): void
+    {
+        $index = \Tests\Fake\FrontendFixture::index('<?php function target($x,$name){return '.$expression.';}');
+        $body = $index->callable('target');
+        self::assertNotNull($body);
+        $instructions = array_values(array_filter($body->blocks[0]->instructions, static fn (\Deriver\Internal\IR\Instruction $instruction): bool => $instruction->operation === 'class-constant'));
+        self::assertCount(1, $instructions);
+        self::assertSame($literal, $instructions[0]->attributes['literal-class']);
+        self::assertSame($className, $instructions[0]->attributes['class-name']);
+    }
+
+    /**
+     * @return iterable<string,array{string,bool,bool}>
+     */
+    public static function providerClassFetchSyntax(): iterable
+    {
+        yield 'literal class name' => ['Missing::class',true,true];
+        yield 'dynamic class name' => ['$x::class',false,true];
+        yield 'literal class dynamic constant' => ['Box::{$name}',true,false];
+        yield 'dynamic class dynamic constant' => ['$x::{$name}',false,false];
+        yield 'class keyword case' => ['Box::ClAsS',true,true];
+        yield 'ordinary constant' => ['Box::VALUE',true,false];
+    }
 }

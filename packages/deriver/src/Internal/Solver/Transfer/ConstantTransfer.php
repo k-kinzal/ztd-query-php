@@ -6,7 +6,6 @@ namespace Deriver\Internal\Solver\Transfer;
 
 use Deriver\Internal\IR\CallableIR;
 use Deriver\Internal\IR\Instruction;
-use Deriver\Internal\Solver\Call\Dispatch;
 use Deriver\Internal\Solver\Machine;
 use Deriver\Internal\Solver\State;
 use Deriver\Value\Term;
@@ -49,18 +48,24 @@ final class ConstantTransfer
     {
         $class = $state->value($instruction->operands[0]);
         $name = $state->value($instruction->operands[1]);
-        if ($class->kind !== 'constant' || $name->kind !== 'constant' || !is_string($class->literal) || !is_string($name->literal)) {
-            $state->registers[$instruction->result] = $this->machine->context->frontier('UNSUPPORTED_LANGUAGE_FEATURE', $instruction->source, 'dynamic-class-constant', [$class, $name]);
-            return [$state];
+        $names = new \Deriver\Internal\Solver\Constant\ClassNames($this->machine->context);
+        $literal = ($instruction->attributes['literal-class'] ?? true) === true;
+        $syntax = ($instruction->attributes['class-name'] ?? false) === true;
+        $resolved = $syntax && !$literal ? $names->runtime($class) : $names->resolve($class, $literal, $caller, $state);
+        if ($resolved->kind === 'throwable') {
+            return $this->finish($instruction, $state, $resolved);
         }
-        $resolved = (new Dispatch($this->machine->context->program))->className($class->literal, $caller->className, $state->lateStaticClass);
+        if ($resolved->kind !== 'constant' || !is_string($resolved->literal) || $name->kind !== 'constant' || !is_string($name->literal)) {
+            return $this->finish($instruction, $state, Term::opaque('UNSUPPORTED_LANGUAGE_FEATURE', dependencies:[$class,$name]));
+        }
         if (strtolower($name->literal) === 'class') {
-            $state->registers[$instruction->result] = Term::constant($resolved, $class->isSecret());
-            return [$state];
+            $canonical = $syntax ? $resolved->literal : $names->canonical($resolved->literal);
+            return $this->finish($instruction, $state, $canonical === null ? Term::opaque('INCOMPLETE_SOURCE', dependencies:[$class,$name]) : Term::constant($canonical, $class->isSecret() || $name->isSecret()));
         }
+        $resolved = $resolved->literal;
         $lookup = new \Deriver\Internal\Solver\Call\Member\Constants($this->machine->context->program);
         $constant = $lookup->find($resolved, $name->literal);
-        if ($constant === null && !isset($this->machine->context->program->classes()[strtolower($resolved)])) {
+        if ($constant === null && $names->canonical($resolved) === null) {
             $state->registers[$instruction->result] = $this->machine->context->frontier('INCOMPLETE_SOURCE', $instruction->source, $resolved . '::' . $name->literal);
             return [$state];
         }
@@ -69,6 +74,23 @@ final class ConstantTransfer
             return [$state];
         }
         return $this->initializer($constant->className . '::' . $constant->name, $instruction, $state, $constant);
+    }
+
+    /**
+     * Applies an exact class value, conversion error, or explicit unresolved dependency.
+     * @param Instruction $instruction Fetch destination and provenance
+     * @param State $state Current path
+     * @param Term $value Resolved outcome
+     * @return list<State> One completed fetch path
+     */
+    public function finish(Instruction $instruction, State $state, Term $value): array
+    {
+        if ($value->kind === 'throwable') {
+            $state->completion = new \Deriver\Internal\Solver\Completion('throw', $value);
+        } else {
+            $state->registers[$instruction->result] = $value->kind === 'opaque' && is_string($value->literal) ? $this->machine->context->frontier($value->literal, $instruction->source, 'dynamic-class-constant', array_values($value->operands)) : $value;
+        }
+        return [$state];
     }
 
     /**

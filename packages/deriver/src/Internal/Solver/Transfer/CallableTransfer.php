@@ -38,14 +38,6 @@ final class CallableTransfer
         }
         $a = $state->value($instruction->operands[0] ?? '');
         $b = $state->value($instruction->operands[1] ?? '');
-        $dispatch = new Dispatch($this->context->program);
-        if ($instruction->operation === 'class-constant' && is_string($a->literal) && is_string($b->literal)) {
-            $class = $dispatch->className($a->literal, $callable->className, $state->lateStaticClass);
-            if (strtolower($b->literal) === 'class') {
-                return Term::constant($class);
-            }
-            return $this->context->program->classes()[strtolower($class)]->constants[$b->literal] ?? $this->context->frontier('INCOMPLETE_SOURCE', $instruction->source, $class . '::' . $b->literal);
-        }
         if ($instruction->operation === 'instanceof') {
             return $this->instance($callable, $state, $a, $b);
         }

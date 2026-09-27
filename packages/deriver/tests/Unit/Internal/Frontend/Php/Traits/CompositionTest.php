@@ -34,6 +34,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Frontend\Php\Traits\LexicalConstants::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Traits\Members::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Traits\PropertyScope::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\Validation\ClassScope::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\TargetSyntax::class)]
 #[UsesClass(\Deriver\Internal\IR\BasicBlock::class)]
 #[UsesClass(\Deriver\Internal\IR\CallableIR::class)]

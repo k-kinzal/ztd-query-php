@@ -77,7 +77,7 @@ final class InstructionTransfer
             $key = $instruction->operands[1] === '' ? null : $state->value($instruction->operands[1]);
             $item = $state->registers[$instruction->operands[2]] ?? Term::opaque('UNCOMPUTED_REGISTER');
             $value = (new Arrays())->set($array, $key, $item);
-        } elseif (in_array($op, ['closure', 'callable', 'callable-method', 'class-constant', 'instanceof'], true)) {
+        } elseif (in_array($op, ['closure', 'callable', 'callable-method', 'instanceof'], true)) {
             $value = (new CallableTransfer($context))->evaluate($callable, $instruction, $state);
         } else {
             $value = $this->other($callable, $instruction, $state);

@@ -32,17 +32,21 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Api\Result\Assessment::class)]
 #[UsesClass(\Deriver\Api\Result\Derivation::class)]
 #[UsesClass(\Deriver\Api\Result\DerivationResult::class)]
+#[UsesClass(\Deriver\Api\Result\Frontier::class)]
 #[UsesClass(\Deriver\Api\Result\Statistics::class)]
 #[UsesClass(\Deriver\Api\Result\StorageSnapshot::class)]
 #[UsesClass(\Deriver\Internal\Api\QueryExecution::class)]
 #[UsesClass(\Deriver\Internal\Api\QueryValidation::class)]
 #[UsesClass(\Deriver\Internal\Api\ResultAssessment::class)]
 #[UsesClass(\Deriver\Internal\Api\Session::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\AggregateLowering::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\AssignmentLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\GraphCache::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\GraphTemplate::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\SnapshotRebase::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\SyntaxCache::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\SyntaxTree::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\CallLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\CallableCompiler::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\CallableSource::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Control\ExceptionLowering::class)]
@@ -58,6 +62,9 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Frontend\Php\Source\SyntaxSize::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\StatementLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Traits\Composition::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\Traits\LexicalConstants::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\Traits\Members::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\Validation\ClassScope::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\TargetSyntax::class)]
 #[UsesClass(\Deriver\Internal\IR\BasicBlock::class)]
 #[UsesClass(\Deriver\Internal\IR\CallableIR::class)]
@@ -67,26 +74,45 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\IR\ClassDeclaration::class)]
 #[UsesClass(\Deriver\Internal\IR\ExceptionRegion::class)]
 #[UsesClass(\Deriver\Internal\IR\Instruction::class)]
+#[UsesClass(\Deriver\Internal\IR\Parameter::class)]
 #[UsesClass(\Deriver\Internal\IR\PropertyDeclaration::class)]
 #[UsesClass(\Deriver\Internal\IR\Terminator::class)]
 #[UsesClass(\Deriver\Internal\Memory\Location::class)]
 #[UsesClass(\Deriver\Internal\Memory\Materialization::class)]
 #[UsesClass(\Deriver\Internal\Memory\Memory::class)]
+#[UsesClass(\Deriver\Internal\Memory\ReferenceConstraint::class)]
 #[UsesClass(\Deriver\Internal\Memory\StorageCapture::class)]
 #[UsesClass(\Deriver\Internal\Model\Extensions::class)]
 #[UsesClass(\Deriver\Internal\Model\ProviderInputs::class)]
 #[UsesClass(\Deriver\Internal\Model\Registry::class)]
 #[UsesClass(\Deriver\Internal\Model\StateRegistry::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Allocation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\ArgumentBinding::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\ArgumentOrder::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\CallExecutor::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\CallResolution::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\CallableCheck::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Creation\Access::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Creation\Builtins::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Dispatch::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Member\Access::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Member\Constants::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Member\Invocation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\MethodInvocation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Native\Invocation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Native\Properties::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Native\Signatures::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\ParameterBinding::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\PassedArgument::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Creation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Methods::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Resolution::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Target::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Transfer::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeBinding::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeCheck::class)]
 #[UsesClass(\Deriver\Internal\Solver\Completion::class)]
+#[UsesClass(\Deriver\Internal\Solver\Constant\ClassNames::class)]
 #[UsesClass(\Deriver\Internal\Solver\Context::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\ExceptionChain::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\ExceptionMatch::class)]
@@ -104,6 +130,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\InstructionTransfer::class)]
 #[UsesClass(\Deriver\Internal\Solver\Machine::class)]
 #[UsesClass(\Deriver\Internal\Solver\Model\SlotReference::class)]
+#[UsesClass(\Deriver\Internal\Solver\Model\StateStorage::class)]
 #[UsesClass(\Deriver\Internal\Solver\ObservationCollector::class)]
 #[UsesClass(\Deriver\Internal\Solver\Operation\Conversions::class)]
 #[UsesClass(\Deriver\Internal\Solver\Operation\ScalarErrors::class)]
@@ -112,6 +139,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Summary\Evaluation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Summary\Invocation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Summary\Isolation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Transfer\CallableTransfer::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\MemoryStep::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\ObjectAccess::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\PropertyAccessCheck::class)]
@@ -125,6 +153,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Value\Arrays::class)]
 #[UsesClass(\Deriver\Internal\Value\Identity::class)]
 #[UsesClass(\Deriver\Internal\Value\PhpSemantics::class)]
+#[UsesClass(\Deriver\Model\Provider\DispatchDecision::class)]
 #[UsesClass(\Deriver\Report\JsonText::class)]
 #[UsesClass(\Deriver\Report\QueryEncoding::class)]
 #[UsesClass(\Deriver\Report\ValueGraph::class)]
@@ -158,5 +187,77 @@ final class ConstantTransferTest extends TestCase
     {
         $result = \Tests\Fake\Analysis::returns('<?php enum Flag:int{case A=1+2;}function target(){return Flag::A->value;}');
         self::assertSame(3, $result->normalOutcomes[0]->values['return']->native());
+    }
+
+    /**
+     * @throws JsonException If fixture metadata cannot be encoded
+     */
+    #[\PHPUnit\Framework\Attributes\DataProviderExternal(\Tests\Fake\Programs\ClassNamePrograms::class, 'cases')]
+    public function testMemberPreservesOracleCheckedClassNameAndConstantSemantics(string $source, string $expected): void
+    {
+        $result = \Tests\Fake\Analysis::returns($source);
+        self::assertSame([], $result->frontiers);
+        self::assertSame([], $result->projectDiagnostics);
+        self::assertSame([], $result->exceptionalOutcomes);
+        self::assertCount(1, $result->normalOutcomes);
+        self::assertSame(json_decode($expected, true, flags:JSON_THROW_ON_ERROR), $result->normalOutcomes[0]->values['return']->native());
+    }
+
+    /**
+     * @throws JsonException If fixture metadata cannot be encoded
+     */
+    public function testMemberKeepsUnavailableDynamicClassLookupsExplicit(): void
+    {
+        $result = \Tests\Fake\Analysis::returns('<?php function target(){$name="class";return Missing::{$name};}');
+        self::assertSame('open', $result->assessment->closure);
+        self::assertCount(1, $result->normalOutcomes);
+        self::assertSame('opaque', $result->normalOutcomes[0]->values['return']->kind);
+        self::assertContains('INCOMPLETE_SOURCE', array_column($result->frontiers, 'code'));
+    }
+
+    public function testFinishRetainsTheExactClassValueAndExistingState(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $state = new \Deriver\Internal\Solver\State();
+        $source = new \Deriver\Api\Reference\SourceRef('snapshot', 'class.php', 4, 18);
+        $instruction = new \Deriver\Internal\IR\Instruction('fetch', 'class-constant', $source, 'result');
+        $value = \Deriver\Value\Term::constant('Box', true);
+        $paths = (new \Deriver\Internal\Solver\Transfer\ConstantTransfer(new \Deriver\Internal\Solver\Machine($context)))->finish($instruction, $state, $value);
+        self::assertSame([$state], $paths);
+        self::assertSame($value, $paths[0]->registers['result']);
+        self::assertSame('normal', $paths[0]->completion->kind);
+        self::assertSame([], $context->frontiers);
+    }
+
+    public function testFinishPropagatesClassResolutionErrorsWithoutWritingAValue(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $state = new \Deriver\Internal\Solver\State();
+        $instruction = new \Deriver\Internal\IR\Instruction('fetch', 'class-constant', new \Deriver\Api\Reference\SourceRef('snapshot', 'class.php', 4, 18), 'result');
+        $error = new \Deriver\Value\Term('throwable', 'TypeError');
+        $paths = (new \Deriver\Internal\Solver\Transfer\ConstantTransfer(new \Deriver\Internal\Solver\Machine($context)))->finish($instruction, $state, $error);
+        self::assertSame([$state], $paths);
+        self::assertSame('throw', $paths[0]->completion->kind);
+        self::assertSame($error, $paths[0]->completion->value);
+        self::assertArrayNotHasKey('result', $paths[0]->registers);
+    }
+
+    public function testFinishRecordsTheUnresolvedClassDependencyAtItsSource(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $source = new \Deriver\Api\Reference\SourceRef('snapshot', 'class.php', 4, 18);
+        $instruction = new \Deriver\Internal\IR\Instruction('fetch', 'class-constant', $source, 'result');
+        $dependency = \Deriver\Value\Term::parameter('class');
+        $value = \Deriver\Value\Term::opaque('INCOMPLETE_SOURCE', dependencies: [$dependency]);
+        $paths = (new \Deriver\Internal\Solver\Transfer\ConstantTransfer(new \Deriver\Internal\Solver\Machine($context)))->finish($instruction, new \Deriver\Internal\Solver\State(), $value);
+        self::assertSame('opaque', $paths[0]->registers['result']->kind);
+        self::assertSame('INCOMPLETE_SOURCE', $paths[0]->registers['result']->literal);
+        self::assertCount(1, $context->frontiers);
+        $frontier = array_values($context->frontiers)[0];
+        self::assertSame('INCOMPLETE_SOURCE', $frontier->code);
+        self::assertSame('dynamic-class-constant', $frontier->operation);
+        self::assertSame($source, $frontier->at);
+        self::assertNotNull($frontier->residual);
+        self::assertSame([$dependency], $frontier->residual->operands);
     }
 }
