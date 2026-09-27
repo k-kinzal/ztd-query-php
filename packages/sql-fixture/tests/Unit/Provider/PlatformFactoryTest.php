@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Provider;
 
+use Container\MySqlRelease;
+use Container\PostgreSqlRelease;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -274,12 +276,16 @@ final class PlatformFactoryTest extends TestCase
     }
 
     /**
+     * The server behind each DSN runs the release named by its `_VERSION` variable, or the default release.
+     *
      * @return iterable<string, array{string, string, string}>
      */
     public static function providerDatabaseVersions(): iterable
     {
-        yield 'mysql' => ['SQL_FIXTURE_MYSQL', 'mysql', 'mysql-8.4.7'];
-        yield 'postgres' => ['SQL_FIXTURE_PGSQL', 'pgsql', 'pg-17.2'];
+        $mysql = getenv('SQL_FIXTURE_MYSQL_VERSION');
+        $postgres = getenv('SQL_FIXTURE_PGSQL_VERSION');
+        yield 'mysql' => ['SQL_FIXTURE_MYSQL', 'mysql', 'mysql-' . ($mysql === false || $mysql === '' ? MySqlRelease::DEFAULT : $mysql)];
+        yield 'postgres' => ['SQL_FIXTURE_PGSQL', 'pgsql', 'pg-' . ($postgres === false || $postgres === '' ? PostgreSqlRelease::DEFAULT : $postgres)];
     }
 
     #[Test]
