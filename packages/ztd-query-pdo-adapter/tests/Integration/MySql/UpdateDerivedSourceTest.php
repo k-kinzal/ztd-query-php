@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration\MySql;
 
 use Container\Endpoint;
-use Container\MySql80Container;
-use Container\MySql84Container;
+use Container\MySqlRelease;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
@@ -19,7 +18,7 @@ final class UpdateDerivedSourceTest extends TestCase
 {
     public function testUpdateJoinPreservesDerivedAggregateSource(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(MySqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),
@@ -61,7 +60,7 @@ final class UpdateDerivedSourceTest extends TestCase
 
     public function testUpdateJoinPreservesWindowedDerivedSource(): void
     {
-        $endpoint = \Testcontainers\Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class)->getData(Endpoint::class);
+        $endpoint = \Testcontainers\Testcontainers::run(MySqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
             $endpoint->dsn(),

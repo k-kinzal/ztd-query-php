@@ -28,7 +28,7 @@ use ZtdQuery\Rewrite\RewritePlan;
  *
  * @visibility public
  * @example Execute a parameterized simulated insert
- *     $container = \Testcontainers\Testcontainers::run(\Container\MySql80Container::class);
+ *     $container = \Testcontainers\Testcontainers::run(\Container\MySqlRelease::fromEnvironment());
  *     $endpoint = $container->getData(\Container\Endpoint::class);
  *     $native = new \mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
  *     $native->set_charset('utf8mb4');

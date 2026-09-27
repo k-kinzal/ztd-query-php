@@ -25,6 +25,7 @@ return [
     'postgresql' => [
         'default' => 'pg-17.2',
         'versions' => [
+            'pg-16.6' => ['table' => 'tables/pg-16.6.bin', 'keywords' => 'keywords/pg-16.6.php'],
             'pg-17.2' => ['table' => 'tables/pg-17.2.bin', 'keywords' => 'keywords/pg-17.2.php'],
         ],
     ],

@@ -68,7 +68,7 @@ final class SqlVersionRegistryTest extends TestCase
 
     public function testAllEnumeratesEveryReleaseOfEveryDialect(): void
     {
-        self::assertCount(11, (new SqlVersionRegistry())->all());
+        self::assertCount(12, (new SqlVersionRegistry())->all());
     }
 
     public function testEntriesReadsTheRecordOfGeneratedReleases(): void

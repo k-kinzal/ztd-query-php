@@ -3,8 +3,9 @@
 /**
  * Compare grammar-generated SQL with native MySql execution and check ZTD isolation.
  *
- * Usage: vendor/bin/php-fuzzer fuzz fuzz/fuzz_behavior.php /path/to/corpus/ --timeout=60
- * Copy sql-faker/seeds/mysql/mysql-8.4.7/* into that corpus to replay grammar seeds.
+ * Usage: MYSQL_VERSION=9.1.0 vendor/bin/php-fuzzer fuzz fuzz/fuzz_behavior.php /path/to/corpus/ --timeout=60
+ * MYSQL_VERSION selects the MySQL release and its grammar (default: 8.4.7).
+ * Copy sql-faker/seeds/mysql/mysql-<release>/* into that corpus to replay grammar seeds.
  * Default mode uses the exact sql-faker byte decoder and unconstrained statement root.
  * ZTD_FUZZ_FIXTURES=1 constrains DML table/column roles through Plan for populated fixtures;
  * use a separate corpus for this mode. SQLFAKER_COVERAGE=0 disables coverage recording.
@@ -14,7 +15,13 @@
 declare(strict_types=1);
 
 use Container\Endpoint;
+use Container\MySql80Container;
+use Container\MySql81Container;
+use Container\MySql82Container;
+use Container\MySql83Container;
 use Container\MySql84Container;
+use Container\MySql90Container;
+use Container\MySql91Container;
 use Faker\Factory;
 use Fuzz\Target\BehaviorTarget;
 use SqlFaker\Generation\Choice\BytePlanCompiler;
@@ -34,12 +41,35 @@ register_shutdown_function(static function (): void {
         pcntl_alarm(0);
     }
 });
-$endpoint = Testcontainers::run(MySql84Container::class)->getData(Endpoint::class);
+$mysqlVersion = getenv('MYSQL_VERSION') !== false ? getenv('MYSQL_VERSION') : '8.4.7';
+
+/**
+ * Container and grammar version of each MySQL release ZTD Query supports.
+ */
+$containerMap = [
+    '8.0.44' => [MySql80Container::class, 'mysql-8.0.44'],
+    '8.1.0' => [MySql81Container::class, 'mysql-8.1.0'],
+    '8.2.0' => [MySql82Container::class, 'mysql-8.2.0'],
+    '8.3.0' => [MySql83Container::class, 'mysql-8.3.0'],
+    '8.4.7' => [MySql84Container::class, 'mysql-8.4.7'],
+    '9.0.1' => [MySql90Container::class, 'mysql-9.0.1'],
+    '9.1.0' => [MySql91Container::class, 'mysql-9.1.0'],
+];
+
+if (!isset($containerMap[$mysqlVersion])) {
+    fwrite(STDERR, "Unknown MySQL version: {$mysqlVersion}\n");
+    fwrite(STDERR, 'Supported versions: ' . implode(', ', array_keys($containerMap)) . "\n");
+    exit(1);
+}
+
+[$containerClass, $grammarVersion] = $containerMap[$mysqlVersion];
+
+$endpoint = Testcontainers::run($containerClass)->getData(Endpoint::class);
 $target = new BehaviorTarget("mysql:host={$endpoint->host};port={$endpoint->port}");
 
 $fixtures = getenv('ZTD_FUZZ_FIXTURES') === '1';
 $coverage = getenv('SQLFAKER_COVERAGE') === '0' ? null : new GrammarCoverage(__DIR__ . '/coverage/' . ($fixtures ? 'fixtures' : 'behavior'));
-$provider = new MySqlProvider(Factory::create(), 'mysql-8.4.7', $coverage);
+$provider = new MySqlProvider(Factory::create(), $grammarVersion, $coverage);
 $planner = $provider->planner();
 $constraints = GenerationPlan::fromRule('simple_statement_or_begin')->requiringNonEmpty();
 if ($fixtures) {

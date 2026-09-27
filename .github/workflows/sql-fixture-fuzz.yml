@@ -34,16 +34,16 @@ jobs:
       fail-fast: false
       matrix:
         target:
-          - { name: create-table-5.6.51, script: fuzz_create_table.php, corpus: create-table, grammar: mysql-5.6.51, extensions: 'mbstring, pcntl' }
-          - { name: create-table-5.7.44, script: fuzz_create_table.php, corpus: create-table, grammar: mysql-5.7.44, extensions: 'mbstring, pcntl' }
-          - { name: create-table-8.0.44, script: fuzz_create_table.php, corpus: create-table, grammar: mysql-8.0.44, extensions: 'mbstring, pcntl' }
-          - { name: create-table-8.1.0, script: fuzz_create_table.php, corpus: create-table, grammar: mysql-8.1.0, extensions: 'mbstring, pcntl' }
-          - { name: create-table-8.2.0, script: fuzz_create_table.php, corpus: create-table, grammar: mysql-8.2.0, extensions: 'mbstring, pcntl' }
-          - { name: create-table-8.3.0, script: fuzz_create_table.php, corpus: create-table, grammar: mysql-8.3.0, extensions: 'mbstring, pcntl' }
-          - { name: create-table-8.4.7, script: fuzz_create_table.php, corpus: create-table, grammar: mysql-8.4.7, extensions: 'mbstring, pcntl' }
-          - { name: create-table-9.0.1, script: fuzz_create_table.php, corpus: create-table, grammar: mysql-9.0.1, extensions: 'mbstring, pcntl' }
-          - { name: create-table-9.1.0, script: fuzz_create_table.php, corpus: create-table, grammar: mysql-9.1.0, extensions: 'mbstring, pcntl' }
-          - { name: insert-select, script: fuzz_insert_select.php, corpus: insert-select, grammar: mysql-8.4.7, extensions: 'mbstring, pcntl, pdo, pdo_mysql' }
+          - { name: create-table-5.6.51, script: fuzz_create_table.php, corpus: create-table, mysql: 5.6.51, extensions: 'mbstring, pcntl' }
+          - { name: create-table-5.7.44, script: fuzz_create_table.php, corpus: create-table, mysql: 5.7.44, extensions: 'mbstring, pcntl' }
+          - { name: create-table-8.0.44, script: fuzz_create_table.php, corpus: create-table, mysql: 8.0.44, extensions: 'mbstring, pcntl' }
+          - { name: create-table-8.1.0, script: fuzz_create_table.php, corpus: create-table, mysql: 8.1.0, extensions: 'mbstring, pcntl' }
+          - { name: create-table-8.2.0, script: fuzz_create_table.php, corpus: create-table, mysql: 8.2.0, extensions: 'mbstring, pcntl' }
+          - { name: create-table-8.3.0, script: fuzz_create_table.php, corpus: create-table, mysql: 8.3.0, extensions: 'mbstring, pcntl' }
+          - { name: create-table-8.4.7, script: fuzz_create_table.php, corpus: create-table, mysql: 8.4.7, extensions: 'mbstring, pcntl' }
+          - { name: create-table-9.0.1, script: fuzz_create_table.php, corpus: create-table, mysql: 9.0.1, extensions: 'mbstring, pcntl' }
+          - { name: create-table-9.1.0, script: fuzz_create_table.php, corpus: create-table, mysql: 9.1.0, extensions: 'mbstring, pcntl' }
+          - { name: insert-select, script: fuzz_insert_select.php, corpus: insert-select, mysql: 9.1.0, extensions: 'mbstring, pcntl, pdo, pdo_mysql' }
     defaults:
       run:
         working-directory: packages/sql-fixture
@@ -85,7 +85,7 @@ jobs:
       - name: Run PHP-Fuzzer
         env:
           FUZZ_MAX_RUNS: ${{ inputs.max_runs || '10000' }}
-          MYSQL_VERSION: ${{ matrix.target.grammar }}
+          MYSQL_VERSION: ${{ matrix.target.mysql }}
         run: |
           set -euo pipefail
           mkdir -p build/fuzz "fuzz/corpus/${{ matrix.target.corpus }}"
@@ -98,7 +98,7 @@ jobs:
         env:
           FUZZ_TARGET: ${{ matrix.target.name }}
           FUZZ_SCRIPT: ${{ matrix.target.script }}
-          MYSQL_VERSION: ${{ matrix.target.grammar }}
+          MYSQL_VERSION: ${{ matrix.target.mysql }}
         with:
           script: |
             const fs = require('node:fs');

@@ -16,7 +16,18 @@ name: CI (ztd-query-pdo-adapter)
     - .github/workflows/ztd-query-pdo-adapter.yml
     - '!packages/**/README.md'
     - '!packages/**/docs/**'
-  workflow_dispatch: null
+  workflow_dispatch:
+    inputs:
+      mysql_version:
+        description: MySQL release to run the tests against
+        required: false
+        default: '9.1.0'
+        type: string
+      pg_version:
+        description: PostgreSQL release to run the tests against
+        required: false
+        default: '17.2'
+        type: string
 permissions:
   contents: read
 concurrency:
@@ -28,7 +39,7 @@ defaults:
     working-directory: packages/ztd-query-pdo-adapter
 jobs:
   test:
-    name: Tests (PHP ${{ matrix.php }}, MySQL ${{ matrix.mysql }}, PostgreSQL 16, SQLite)
+    name: Tests (PHP ${{ matrix.php }}, MySQL ${{ inputs.mysql_version || '9.1.0' }}, PostgreSQL ${{ inputs.pg_version || '17.2' }}, SQLite)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -40,11 +51,9 @@ jobs:
         - '8.3'
         - '8.4'
         - '8.5'
-        mysql:
-        - 8.0.44
-        - 8.4.7
     env:
-      MYSQL_VERSION: ${{ matrix.mysql }}
+      MYSQL_VERSION: ${{ inputs.mysql_version || '9.1.0' }}
+      PG_VERSION: ${{ inputs.pg_version || '17.2' }}
     steps:
     - name: Check out the repository
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -76,8 +85,9 @@ jobs:
         php <<'PHP'
         <?php
         require 'vendor/autoload.php';
-        $mysql = getenv('MYSQL_VERSION') === '8.4.7' ? new Container\MySql84Container() : new Container\MySql80Container();
-        foreach ([$mysql, new Container\PostgreSql16Container()] as $container) {
+        $mysql = Container\MySqlRelease::fromEnvironment();
+        $postgres = Container\PostgreSqlRelease::fromEnvironment();
+        foreach ([new $mysql(), new $postgres()] as $container) {
             passthru('docker pull ' . escapeshellarg($container->image()), $status);
             if ($status !== 0) {
                 exit($status);

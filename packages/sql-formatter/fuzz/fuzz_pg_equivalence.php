@@ -4,12 +4,13 @@
  * PHP-Fuzzer entry point: PostgreSQL answers a generated statement and its formatted text alike.
  *
  * Usage:
- *   SQLFORMATTER_STYLE=expanded vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_equivalence.php fuzz/corpus/equivalence-pg/
+ *   SQLFORMATTER_STYLE=expanded PG_VERSION=16.6 vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_equivalence.php fuzz/corpus/equivalence-pg/
  *
  * The input is decoded by sql-faker exactly as its own syntax targets decode it, so the
  * seed corpora under packages/sql-faker/seeds replay here as they are.
  *
  * Environment variables:
+ *   PG_VERSION         - PostgreSQL release to test (default: 17.2)
  *   SQLFORMATTER_STYLE - Layout preset: compact, expanded, tabular or river (default: expanded)
  *   SQLFAKER_COVERAGE  - Set to 0 to run without recording grammar coverage under fuzz/coverage/pg
  */
@@ -29,6 +30,7 @@ register_shutdown_function(static function (): void {
 });
 
 use Container\Endpoint;
+use Container\PostgreSql16Container;
 use Container\PostgreSql17Container;
 use Faker\Factory;
 use Fuzz\Target\PgEquivalence;
@@ -51,16 +53,33 @@ if ($style === null) {
     exit(1);
 }
 
-fwrite(STDERR, "Starting PostgreSQL container...\n");
+$pgVersion = getenv('PG_VERSION') !== false ? getenv('PG_VERSION') : '17.2';
 
-$endpoint = Testcontainers::run(PostgreSql17Container::class)->getData(Endpoint::class);
+/**
+ * Container and grammar version of each PostgreSQL release.
+ */
+$containerMap = [
+    '16.6' => [PostgreSql16Container::class, 'pg-16.6'],
+    '17.2' => [PostgreSql17Container::class, 'pg-17.2'],
+];
+
+if (!isset($containerMap[$pgVersion])) {
+    fwrite(STDERR, "Unknown PostgreSQL version: {$pgVersion}\n");
+    fwrite(STDERR, 'Supported versions: ' . implode(', ', array_keys($containerMap)) . "\n");
+    exit(1);
+}
+
+[$containerClass, $grammarVersion] = $containerMap[$pgVersion];
+
+fwrite(STDERR, "Starting PostgreSQL {$pgVersion} container...\n");
+
+$endpoint = Testcontainers::run($containerClass)->getData(Endpoint::class);
 $host = $endpoint->host;
 $port = $endpoint->port;
 
-fwrite(STDERR, "PostgreSQL ready on {$host}:{$port}\n");
-fwrite(STDERR, "Grammar version: pg-17.2, style: {$style->value}\n");
+fwrite(STDERR, "PostgreSQL {$pgVersion} ready on {$host}:{$port}\n");
+fwrite(STDERR, "Grammar version: {$grammarVersion}, style: {$style->value}\n");
 
-$grammarVersion = 'pg-17.2';
 $coverage = getenv('SQLFAKER_COVERAGE') === '0' ? null : new GrammarCoverage(__DIR__ . '/coverage/pg');
 $provider = new PostgreSqlProvider(Factory::create(), $grammarVersion, $coverage);
 $planner = $provider->planner();

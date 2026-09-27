@@ -122,6 +122,6 @@ final class PostgreSqlParserTest extends TestCase
 
     public function testVersions(): void
     {
-        self::assertSame(['pg-17.2'], PostgreSqlParser::versions());
+        self::assertSame(['pg-16.6', 'pg-17.2'], PostgreSqlParser::versions());
     }
 }

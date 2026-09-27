@@ -34,6 +34,7 @@ The following database versions are supported. Pass the dialect and, optionally,
 
 | Version | Version tag | Default |
 |---------|-------------|---------|
+| 16.6 | `pg-16.6` | |
 | 17.2 | `pg-17.2` | Yes |
 
 ### SQLite

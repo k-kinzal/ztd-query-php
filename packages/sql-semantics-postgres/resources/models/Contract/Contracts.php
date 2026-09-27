@@ -225,6 +225,7 @@ final class Contracts
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterDatabaseStmtWithAlterDatabaseNameWithCreatedbOptList_4a0b8750' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterDefaultPrivilegesStmtWithAlterDefaultPrivilegesDefAclOptionListDefAclAction_0e07c0f2' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterDomainStmtWithAlterDomainPAnyNameAddPDomainConstraint_f745cad2' => true,
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterDomainStmtWithAlterDomainPAnyNameAddPTableConstraint_dfd828df' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterDomainStmtWithAlterDomainPAnyNameAlterColumnDefault_753474c3' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterDomainStmtWithAlterDomainPAnyNameDropConstraintIfPExistsNameOptDropBehavior_7dc9dbc7' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterDomainStmtWithAlterDomainPAnyNameDropConstraintNameOptDropBehavior_b3a3c34d' => true,
@@ -358,7 +359,9 @@ final class Contracts
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterSeqStmtWithAlterSequenceIfPExistsQualifiedNameSeqOptList_41106629' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterSeqStmtWithAlterSequenceQualifiedNameSeqOptList_87c7c255' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterStatsStmtWithAlterStatisticsAnyNameSetStatisticsSetStatisticsValue_d63a164c' => true,
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterStatsStmtWithAlterStatisticsAnyNameSetStatisticsSignedIconst_834f2ade' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterStatsStmtWithAlterStatisticsIfPExistsAnyNameSetStatisticsSetStatisticsValue_3596a0cc' => true,
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterStatsStmtWithAlterStatisticsIfPExistsAnyNameSetStatisticsSignedIconst_804dd400' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterSubscriptionStmtWithAlterSubscriptionNameAddPPublicationNameListOptDefinition_ab73d50e' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterSubscriptionStmtWithAlterSubscriptionNameConnectionSconst_cbf12abb' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterSubscriptionStmtWithAlterSubscriptionNameDisableP_bd85c97f' => true,
@@ -393,7 +396,9 @@ final class Contracts
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterTableCmdWithAlterOptColumnColIdSetNotNullP_198186f8' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterTableCmdWithAlterOptColumnColIdSetReloptions_9966b442' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterTableCmdWithAlterOptColumnColIdSetStatisticsSetStatisticsValue_84aea2bf' => true,
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterTableCmdWithAlterOptColumnColIdSetStatisticsSignedIconst_04e71bd3' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterTableCmdWithAlterOptColumnIconstSetStatisticsSetStatisticsValue_6025904f' => true,
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterTableCmdWithAlterOptColumnIconstSetStatisticsSignedIconst_140e4f4d' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterTableCmdWithClusterOnName_2a23360c' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterTableCmdWithDisablePRowLevelSecurity_83474a36' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterTableCmdWithDisablePRuleName_616c2fb7' => true,
@@ -422,6 +427,7 @@ final class Contracts
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterTableCmdWithOwnerToRoleSpec_717bdcd0' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterTableCmdWithReplicaIdentityPReplicaIdentity_a3cdcaa3' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterTableCmdWithResetReloptions_98f5fc39' => true,
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterTableCmdWithSetAccessMethodName_0aa12a22' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterTableCmdWithSetAccessMethodSetAccessMethodName_f7df5d5c' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterTableCmdWithSetLogged_653b2c20' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AlterTableCmdWithSetReloptions_864fe3a9' => true,
@@ -1455,13 +1461,18 @@ final class Contracts
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncExprCommonSubexprWithCurrentUser_2c1f2638' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncExprCommonSubexprWithExtractExtractList_5dee0e54' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncExprCommonSubexprWithGreatestExprList_1dec28e1' => true,
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncExprCommonSubexprWithJsonArrayJsonOutputClauseOpt_5387ba52' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncExprCommonSubexprWithJsonArrayJsonReturningClauseOpt_0b0e2233' => true,
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncExprCommonSubexprWithJsonArrayJsonValueExprListJsonArrayConstructorNullClauseOptJsonOutputClause_902c19aa' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncExprCommonSubexprWithJsonArrayJsonValueExprListJsonArrayConstructorNullClauseOptJsonReturningCla_4424e9e1' => true,
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncExprCommonSubexprWithJsonArraySelectNoParensJsonFormatClauseOptJsonOutputClauseOpt_b1d061ec' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncExprCommonSubexprWithJsonArraySelectNoParensJsonFormatClauseOptJsonReturningClauseOpt_5e66f95d' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncExprCommonSubexprWithJsonExistsJsonValueExprAExprJsonPassingClauseOptJsonOnErrorClauseOpt_7fca87cc' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncExprCommonSubexprWithJsonJsonValueExprJsonKeyUniquenessConstraintOpt_c6097138' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncExprCommonSubexprWithJsonObjectFuncArgList_3e678fa4' => true,
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncExprCommonSubexprWithJsonObjectJsonNameAndValueListJsonObjectConstructorNullClauseOptJsonKeyUniq_70521e69' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncExprCommonSubexprWithJsonObjectJsonNameAndValueListJsonObjectConstructorNullClauseOptJsonKeyUniq_bcbc04dd' => true,
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncExprCommonSubexprWithJsonObjectJsonOutputClauseOpt_42ca9b00' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncExprCommonSubexprWithJsonObjectJsonReturningClauseOpt_b2324021' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncExprCommonSubexprWithJsonQueryJsonValueExprAExprJsonPassingClauseOptJsonReturningClauseOptJsonWr_ae6d993b' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\FuncExprCommonSubexprWithJsonScalarAExpr_07944d90' => true,
@@ -1583,8 +1594,10 @@ final class Contracts
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JoinedTableWithTableRefJoinTypeJoinTableRefJoinQual_b11a13a0' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JoinedTableWithTableRefNaturalJoinTableRef_aad2e35c' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JoinedTableWithTableRefNaturalJoinTypeJoinTableRef_3182d06c' => true,
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonAggregateFuncWithJsonArrayaggJsonValueExprJsonArrayAggregateOrderByClauseOptJsonArrayConstru_5dd568f3' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonAggregateFuncWithJsonArrayaggJsonValueExprJsonArrayAggregateOrderByClauseOptJsonArrayConstru_f339643a' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonAggregateFuncWithJsonObjectaggJsonNameAndValueJsonObjectConstructorNullClauseOptJsonKeyUniqu_10d60da5' => true,
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonAggregateFuncWithJsonObjectaggJsonNameAndValueJsonObjectConstructorNullClauseOptJsonKeyUniqu_d57aabc1' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonArgumentWithJsonValueExprAsColLabel_fb72418e' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonArgumentsWithJsonArgumentsJsonArgument_9b9d8d39' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonArrayAggregateOrderByClauseOptWithOrderBySortbyList_e1a6629b' => true,
@@ -1594,6 +1607,9 @@ final class Contracts
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonBehaviorClauseOptWithJsonBehaviorOnErrorP_0eabf0a2' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonBehaviorClauseOptWith_4de5a559' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonBehaviorWithDefaultAExpr_04520313' => true,
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonEncodingClauseOptWithEncodingName_6f3e79c1' => true,
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonEncodingClauseOptWith_10dd57aa' => true,
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonFormatClauseOptWithFormatLaJsonJsonEncodingClauseOpt_bc163c5f' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonFormatClauseOptWith_b5dab6cd' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonFormatClauseWithFormatLaJsonEncodingName_35bf3aa1' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonFormatClauseWithFormatLaJson_7d30f13c' => true,
@@ -1602,6 +1618,8 @@ final class Contracts
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonNameAndValueWithCExprValuePJsonValueExpr_207d85d4' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonOnErrorClauseOptWithJsonBehaviorOnErrorP_85158a1e' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonOnErrorClauseOptWith_815b262a' => true,
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonOutputClauseOptWithReturningTypenameJsonFormatClauseOpt_e4085cb3' => true,
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonOutputClauseOptWith_29f5c990' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonPassingClauseOptWithPassingJsonArguments_6ca3d500' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonPassingClauseOptWith_7da6e85d' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonReturningClauseOptWithReturningTypenameJsonFormatClauseOpt_980775e8' => true,
@@ -1659,6 +1677,7 @@ final class Contracts
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\MergeInsertWithInsertMergeValuesClause_42a59c6a' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\MergeInsertWithInsertOverridingOverrideKindValuePMergeValuesClause_3b4bd7f0' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\MergeStmtWithOptWithClauseMergeIntoRelationExprOptAliasUsingTableRefOnAExprMergeWhenList_76187741' => true,
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\MergeStmtWithOptWithClauseMergeIntoRelationExprOptAliasUsingTableRefOnAExprMergeWhenList_bea4f4a9' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\MergeUpdateWithUpdateSetSetClauseList_b459cfe0' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\MergeValuesClauseWithValuesExprList_2557e1d0' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\MergeWhenClauseWithMergeWhenTgtMatchedOptMergeWhenConditionThenDoNothing_40b3949f' => true,
@@ -1666,6 +1685,11 @@ final class Contracts
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\MergeWhenClauseWithMergeWhenTgtMatchedOptMergeWhenConditionThenMergeUpdate_fb4998e6' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\MergeWhenClauseWithMergeWhenTgtNotMatchedOptMergeWhenConditionThenDoNothing_9a1a146c' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\MergeWhenClauseWithMergeWhenTgtNotMatchedOptMergeWhenConditionThenMergeInsert_9729b2e6' => true,
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\MergeWhenClauseWithWhenMatchedOptMergeWhenConditionThenDoNothing_66ca5630' => true,
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\MergeWhenClauseWithWhenMatchedOptMergeWhenConditionThenMergeDelete_6b808d16' => true,
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\MergeWhenClauseWithWhenMatchedOptMergeWhenConditionThenMergeUpdate_99aba05f' => true,
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\MergeWhenClauseWithWhenNotMatchedOptMergeWhenConditionThenDoNothing_d8b633fa' => true,
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\MergeWhenClauseWithWhenNotMatchedOptMergeWhenConditionThenMergeInsert_9309b416' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\MergeWhenListWithMergeWhenListMergeWhenClause_0a8954fc' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\NameListWithNameListName_0786bfd5' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\NonReservedWordWithIdent_aa8e4e33' => true,
@@ -2481,6 +2505,7 @@ final class Contracts
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\UnreservedKeywordWithInstead_5af65c63' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\UnreservedKeywordWithInvoker_6a125100' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\UnreservedKeywordWithIsolation_0dd92765' => true,
+  'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\UnreservedKeywordWithJson_abe2620a' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\UnreservedKeywordWithKeep_f6b0f150' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\UnreservedKeywordWithKey_1697e136' => true,
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\UnreservedKeywordWithKeys_bae66ec9' => true,
@@ -3281,42 +3306,52 @@ final class Contracts
     public const BINDING_POWERS = array (
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_0db717aa' =>
   array (
+    'pg-16.6' => 8,
     'pg-17.2' => 7,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_13ac9fee' =>
   array (
+    'pg-16.6' => 17,
     'pg-17.2' => 13,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_24c5a085' =>
   array (
+    'pg-16.6' => 8,
     'pg-17.2' => 7,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_93da98b3' =>
   array (
+    'pg-16.6' => 18,
     'pg-17.2' => 14,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_a6e8e5ce' =>
   array (
+    'pg-16.6' => 17,
     'pg-17.2' => 13,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_ac74014b' =>
   array (
+    'pg-16.6' => 8,
     'pg-17.2' => 7,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_afc84b1e' =>
   array (
+    'pg-16.6' => 18,
     'pg-17.2' => 14,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_c9d0adc9' =>
   array (
+    'pg-16.6' => 19,
     'pg-17.2' => 15,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_fe8837ab' =>
   array (
+    'pg-16.6' => 18,
     'pg-17.2' => 14,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAndAExpr_d8da0043' =>
   array (
+    'pg-16.6' => 5,
     'pg-17.2' => 4,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAtLocal_f7c569db' =>
@@ -3325,298 +3360,372 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAtTimeZoneAExpr_34c8e63b' =>
   array (
+    'pg-16.6' => 20,
     'pg-17.2' => 16,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprBetweenOptAsymmetricBExprAndAExpr_770a2a8e' =>
   array (
+    'pg-16.6' => 9,
     'pg-17.2' => 8,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprBetweenSymmetricBExprAndAExpr_e94db72e' =>
   array (
+    'pg-16.6' => 9,
     'pg-17.2' => 8,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprCollateAnyName_8b12aefc' =>
   array (
+    'pg-16.6' => 21,
     'pg-17.2' => 17,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprGreaterEqualsAExpr_7d19ac70' =>
   array (
+    'pg-16.6' => 8,
     'pg-17.2' => 7,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIlikeAExprEscapeAExpr_3c1383cc' =>
   array (
+    'pg-16.6' => 9,
     'pg-17.2' => 8,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIlikeAExpr_c47aa30a' =>
   array (
+    'pg-16.6' => 9,
     'pg-17.2' => 8,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprInPInExpr_03378548' =>
   array (
+    'pg-16.6' => 9,
     'pg-17.2' => 8,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsDistinctFromAExpr_4cf9c884' =>
   array (
+    'pg-16.6' => 7,
     'pg-17.2' => 6,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsDocumentP_af196ce8' =>
   array (
+    'pg-16.6' => 7,
     'pg-17.2' => 6,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsFalseP_335a1016' =>
   array (
+    'pg-16.6' => 7,
     'pg-17.2' => 6,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsJsonPredicateTypeConstraintJsonKeyUniquenessConstraintOpt_25f5c4f8' =>
   array (
+    'pg-16.6' => 7,
     'pg-17.2' => 6,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNormalized_1ed5cf4d' =>
   array (
+    'pg-16.6' => 7,
     'pg-17.2' => 6,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotDistinctFromAExpr_3f110746' =>
   array (
+    'pg-16.6' => 7,
     'pg-17.2' => 6,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotDocumentP_10826c8a' =>
   array (
+    'pg-16.6' => 7,
     'pg-17.2' => 6,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotFalseP_79d9e977' =>
   array (
+    'pg-16.6' => 7,
     'pg-17.2' => 6,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotJsonPredicateTypeConstraintJsonKeyUniquenessConstraintOpt_1b6db014' =>
   array (
+    'pg-16.6' => 7,
     'pg-17.2' => 6,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotNormalized_944144d7' =>
   array (
+    'pg-16.6' => 7,
     'pg-17.2' => 6,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotNullP_bbeb34b7' =>
   array (
+    'pg-16.6' => 7,
     'pg-17.2' => 6,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotTrueP_9abc9f2d' =>
   array (
+    'pg-16.6' => 7,
     'pg-17.2' => 6,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotUnicodeNormalFormNormalized_3b8205d0' =>
   array (
+    'pg-16.6' => 7,
     'pg-17.2' => 6,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotUnknown_7d0941e4' =>
   array (
+    'pg-16.6' => 7,
     'pg-17.2' => 6,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNullP_7751c3ac' =>
   array (
+    'pg-16.6' => 7,
     'pg-17.2' => 6,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsTrueP_e3e84644' =>
   array (
+    'pg-16.6' => 7,
     'pg-17.2' => 6,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsUnicodeNormalFormNormalized_ce3efbcd' =>
   array (
+    'pg-16.6' => 7,
     'pg-17.2' => 6,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsUnknown_6dc2eece' =>
   array (
+    'pg-16.6' => 7,
     'pg-17.2' => 6,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsnull_8363259b' =>
   array (
+    'pg-16.6' => 7,
     'pg-17.2' => 6,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprLessEqualsAExpr_84fef888' =>
   array (
+    'pg-16.6' => 8,
     'pg-17.2' => 7,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprLikeAExprEscapeAExpr_53fbfeff' =>
   array (
+    'pg-16.6' => 9,
     'pg-17.2' => 8,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprLikeAExpr_8d82e593' =>
   array (
+    'pg-16.6' => 9,
     'pg-17.2' => 8,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotEqualsAExpr_27e5f813' =>
   array (
+    'pg-16.6' => 8,
     'pg-17.2' => 7,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaBetweenOptAsymmetricBExprAndAExpr_ed8e9725' =>
   array (
+    'pg-16.6' => 9,
     'pg-17.2' => 8,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaBetweenSymmetricBExprAndAExpr_6ed5dfc6' =>
   array (
+    'pg-16.6' => 9,
     'pg-17.2' => 8,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaIlikeAExprEscapeAExpr_8644ddc2' =>
   array (
+    'pg-16.6' => 9,
     'pg-17.2' => 8,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaIlikeAExpr_bd2d9cfe' =>
   array (
+    'pg-16.6' => 9,
     'pg-17.2' => 8,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaInPInExpr_a743de66' =>
   array (
+    'pg-16.6' => 9,
     'pg-17.2' => 8,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaLikeAExprEscapeAExpr_a57ce8bd' =>
   array (
+    'pg-16.6' => 9,
     'pg-17.2' => 8,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaLikeAExpr_4650559c' =>
   array (
+    'pg-16.6' => 9,
     'pg-17.2' => 8,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaSimilarToAExprEscapeAExpr_3d5bdcef' =>
   array (
+    'pg-16.6' => 9,
     'pg-17.2' => 8,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaSimilarToAExpr_adecc524' =>
   array (
+    'pg-16.6' => 9,
     'pg-17.2' => 8,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotnull_df392d26' =>
   array (
+    'pg-16.6' => 7,
     'pg-17.2' => 6,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprOrAExpr_ac9947a4' =>
   array (
+    'pg-16.6' => 4,
     'pg-17.2' => 3,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprQualOpAExpr_41175adc' =>
   array (
+    'pg-16.6' => 16,
     'pg-17.2' => 12,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprSimilarToAExprEscapeAExpr_e2fba479' =>
   array (
+    'pg-16.6' => 9,
     'pg-17.2' => 8,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprSimilarToAExpr_7a772180' =>
   array (
+    'pg-16.6' => 9,
     'pg-17.2' => 8,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprSubqueryOpSubTypeAExpr_cd3712f4' =>
   array (
+    'pg-16.6' => 16,
     'pg-17.2' => 12,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprSubqueryOpSubTypeSelectWithParens_65735583' =>
   array (
+    'pg-16.6' => 16,
     'pg-17.2' => 12,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprTypecastTypename_251785d1' =>
   array (
+    'pg-16.6' => 25,
     'pg-17.2' => 21,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExpr_754cdd93' =>
   array (
+    'pg-16.6' => 22,
     'pg-17.2' => 18,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExpr_8ff574e6' =>
   array (
+    'pg-16.6' => 22,
     'pg-17.2' => 18,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithNotAExpr_00b8874f' =>
   array (
+    'pg-16.6' => 6,
     'pg-17.2' => 5,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithNotLaAExpr_1ebc1180' =>
   array (
+    'pg-16.6' => 6,
     'pg-17.2' => 5,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithQualOpAExpr_43bfb7f8' =>
   array (
+    'pg-16.6' => 16,
     'pg-17.2' => 12,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_03794e77' =>
   array (
+    'pg-16.6' => 18,
     'pg-17.2' => 14,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_0e191771' =>
   array (
+    'pg-16.6' => 19,
     'pg-17.2' => 15,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_2968b814' =>
   array (
+    'pg-16.6' => 18,
     'pg-17.2' => 14,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_2ec9aee1' =>
   array (
+    'pg-16.6' => 8,
     'pg-17.2' => 7,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_5c9a3111' =>
   array (
+    'pg-16.6' => 17,
     'pg-17.2' => 13,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_6acac436' =>
   array (
+    'pg-16.6' => 8,
     'pg-17.2' => 7,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_7cc500ab' =>
   array (
+    'pg-16.6' => 18,
     'pg-17.2' => 14,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_80309f96' =>
   array (
+    'pg-16.6' => 8,
     'pg-17.2' => 7,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_9c226265' =>
   array (
+    'pg-16.6' => 17,
     'pg-17.2' => 13,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprGreaterEqualsBExpr_317ca80d' =>
   array (
+    'pg-16.6' => 8,
     'pg-17.2' => 7,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprIsDistinctFromBExpr_637bbb2c' =>
   array (
+    'pg-16.6' => 7,
     'pg-17.2' => 6,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprIsDocumentP_23b22804' =>
   array (
+    'pg-16.6' => 7,
     'pg-17.2' => 6,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprIsNotDistinctFromBExpr_fe469b0a' =>
   array (
+    'pg-16.6' => 7,
     'pg-17.2' => 6,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprIsNotDocumentP_aadd75a8' =>
   array (
+    'pg-16.6' => 7,
     'pg-17.2' => 6,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprLessEqualsBExpr_290e9b93' =>
   array (
+    'pg-16.6' => 8,
     'pg-17.2' => 7,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprNotEqualsBExpr_976e0805' =>
   array (
+    'pg-16.6' => 8,
     'pg-17.2' => 7,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprQualOpBExpr_b7fdc6b2' =>
   array (
+    'pg-16.6' => 16,
     'pg-17.2' => 12,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprTypecastTypename_b682d353' =>
   array (
+    'pg-16.6' => 25,
     'pg-17.2' => 21,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExpr_4bb217fb' =>
   array (
+    'pg-16.6' => 22,
     'pg-17.2' => 18,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExpr_d6a8b1b1' =>
   array (
+    'pg-16.6' => 22,
     'pg-17.2' => 18,
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithQualOpBExpr_e6ab4191' =>
   array (
+    'pg-16.6' => 16,
     'pg-17.2' => 12,
   ),
 );
@@ -3628,6 +3737,11 @@ final class Contracts
     public const BINDING_OPERANDS = array (
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_0db717aa' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 9,
+      2 => 9,
+    ),
     'pg-17.2' =>
     array (
       0 => 8,
@@ -3636,6 +3750,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_13ac9fee' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 17,
+      2 => 18,
+    ),
     'pg-17.2' =>
     array (
       0 => 13,
@@ -3644,6 +3763,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_24c5a085' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 9,
+      2 => 9,
+    ),
     'pg-17.2' =>
     array (
       0 => 8,
@@ -3652,6 +3776,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_93da98b3' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 18,
+      2 => 19,
+    ),
     'pg-17.2' =>
     array (
       0 => 14,
@@ -3660,6 +3789,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_a6e8e5ce' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 17,
+      2 => 18,
+    ),
     'pg-17.2' =>
     array (
       0 => 13,
@@ -3668,6 +3802,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_ac74014b' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 9,
+      2 => 9,
+    ),
     'pg-17.2' =>
     array (
       0 => 8,
@@ -3676,6 +3815,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_afc84b1e' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 18,
+      2 => 19,
+    ),
     'pg-17.2' =>
     array (
       0 => 14,
@@ -3684,6 +3828,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_c9d0adc9' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
     'pg-17.2' =>
     array (
       0 => 15,
@@ -3692,6 +3841,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAExpr_fe8837ab' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 18,
+      2 => 19,
+    ),
     'pg-17.2' =>
     array (
       0 => 14,
@@ -3700,6 +3854,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAndAExpr_d8da0043' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 5,
+      2 => 6,
+    ),
     'pg-17.2' =>
     array (
       0 => 4,
@@ -3715,6 +3874,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprAtTimeZoneAExpr_34c8e63b' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 20,
+      4 => 21,
+    ),
     'pg-17.2' =>
     array (
       0 => 16,
@@ -3723,6 +3887,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprBetweenOptAsymmetricBExprAndAExpr_770a2a8e' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 10,
+      5 => 10,
+    ),
     'pg-17.2' =>
     array (
       0 => 9,
@@ -3731,6 +3900,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprBetweenSymmetricBExprAndAExpr_e94db72e' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 10,
+      5 => 10,
+    ),
     'pg-17.2' =>
     array (
       0 => 9,
@@ -3739,6 +3913,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprCollateAnyName_8b12aefc' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 21,
+    ),
     'pg-17.2' =>
     array (
       0 => 17,
@@ -3746,6 +3924,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprGreaterEqualsAExpr_7d19ac70' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 9,
+      2 => 9,
+    ),
     'pg-17.2' =>
     array (
       0 => 8,
@@ -3754,6 +3937,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIlikeAExprEscapeAExpr_3c1383cc' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 10,
+      4 => 10,
+    ),
     'pg-17.2' =>
     array (
       0 => 9,
@@ -3762,6 +3950,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIlikeAExpr_c47aa30a' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 10,
+      2 => 10,
+    ),
     'pg-17.2' =>
     array (
       0 => 9,
@@ -3770,6 +3963,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprInPInExpr_03378548' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 10,
+    ),
     'pg-17.2' =>
     array (
       0 => 9,
@@ -3777,6 +3974,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsDistinctFromAExpr_4cf9c884' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 8,
+      4 => 8,
+    ),
     'pg-17.2' =>
     array (
       0 => 7,
@@ -3785,6 +3987,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsDocumentP_af196ce8' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 8,
+    ),
     'pg-17.2' =>
     array (
       0 => 7,
@@ -3792,6 +3998,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsFalseP_335a1016' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 8,
+    ),
     'pg-17.2' =>
     array (
       0 => 7,
@@ -3799,6 +4009,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsJsonPredicateTypeConstraintJsonKeyUniquenessConstraintOpt_25f5c4f8' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 8,
+    ),
     'pg-17.2' =>
     array (
       0 => 7,
@@ -3806,6 +4020,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNormalized_1ed5cf4d' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 8,
+    ),
     'pg-17.2' =>
     array (
       0 => 7,
@@ -3813,6 +4031,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotDistinctFromAExpr_3f110746' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 8,
+      5 => 8,
+    ),
     'pg-17.2' =>
     array (
       0 => 7,
@@ -3821,6 +4044,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotDocumentP_10826c8a' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 8,
+    ),
     'pg-17.2' =>
     array (
       0 => 7,
@@ -3828,6 +4055,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotFalseP_79d9e977' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 8,
+    ),
     'pg-17.2' =>
     array (
       0 => 7,
@@ -3835,6 +4066,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotJsonPredicateTypeConstraintJsonKeyUniquenessConstraintOpt_1b6db014' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 8,
+    ),
     'pg-17.2' =>
     array (
       0 => 7,
@@ -3842,6 +4077,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotNormalized_944144d7' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 8,
+    ),
     'pg-17.2' =>
     array (
       0 => 7,
@@ -3849,6 +4088,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotNullP_bbeb34b7' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 8,
+    ),
     'pg-17.2' =>
     array (
       0 => 7,
@@ -3856,6 +4099,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotTrueP_9abc9f2d' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 8,
+    ),
     'pg-17.2' =>
     array (
       0 => 7,
@@ -3863,6 +4110,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotUnicodeNormalFormNormalized_3b8205d0' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 8,
+    ),
     'pg-17.2' =>
     array (
       0 => 7,
@@ -3870,6 +4121,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNotUnknown_7d0941e4' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 8,
+    ),
     'pg-17.2' =>
     array (
       0 => 7,
@@ -3877,6 +4132,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsNullP_7751c3ac' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 8,
+    ),
     'pg-17.2' =>
     array (
       0 => 7,
@@ -3884,6 +4143,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsTrueP_e3e84644' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 8,
+    ),
     'pg-17.2' =>
     array (
       0 => 7,
@@ -3891,6 +4154,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsUnicodeNormalFormNormalized_ce3efbcd' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 8,
+    ),
     'pg-17.2' =>
     array (
       0 => 7,
@@ -3898,6 +4165,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsUnknown_6dc2eece' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 8,
+    ),
     'pg-17.2' =>
     array (
       0 => 7,
@@ -3905,6 +4176,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprIsnull_8363259b' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 8,
+    ),
     'pg-17.2' =>
     array (
       0 => 7,
@@ -3912,6 +4187,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprLessEqualsAExpr_84fef888' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 9,
+      2 => 9,
+    ),
     'pg-17.2' =>
     array (
       0 => 8,
@@ -3920,6 +4200,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprLikeAExprEscapeAExpr_53fbfeff' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 10,
+      4 => 10,
+    ),
     'pg-17.2' =>
     array (
       0 => 9,
@@ -3928,6 +4213,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprLikeAExpr_8d82e593' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 10,
+      2 => 10,
+    ),
     'pg-17.2' =>
     array (
       0 => 9,
@@ -3936,6 +4226,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotEqualsAExpr_27e5f813' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 9,
+      2 => 9,
+    ),
     'pg-17.2' =>
     array (
       0 => 8,
@@ -3944,6 +4239,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaBetweenOptAsymmetricBExprAndAExpr_ed8e9725' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 10,
+      6 => 10,
+    ),
     'pg-17.2' =>
     array (
       0 => 9,
@@ -3952,6 +4252,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaBetweenSymmetricBExprAndAExpr_6ed5dfc6' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 10,
+      6 => 10,
+    ),
     'pg-17.2' =>
     array (
       0 => 9,
@@ -3960,6 +4265,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaIlikeAExprEscapeAExpr_8644ddc2' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 10,
+      5 => 10,
+    ),
     'pg-17.2' =>
     array (
       0 => 9,
@@ -3968,6 +4278,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaIlikeAExpr_bd2d9cfe' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 10,
+      3 => 10,
+    ),
     'pg-17.2' =>
     array (
       0 => 9,
@@ -3976,6 +4291,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaInPInExpr_a743de66' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 10,
+    ),
     'pg-17.2' =>
     array (
       0 => 9,
@@ -3983,6 +4302,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaLikeAExprEscapeAExpr_a57ce8bd' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 10,
+      5 => 10,
+    ),
     'pg-17.2' =>
     array (
       0 => 9,
@@ -3991,6 +4315,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaLikeAExpr_4650559c' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 10,
+      3 => 10,
+    ),
     'pg-17.2' =>
     array (
       0 => 9,
@@ -3999,6 +4328,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaSimilarToAExprEscapeAExpr_3d5bdcef' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 10,
+      6 => 10,
+    ),
     'pg-17.2' =>
     array (
       0 => 9,
@@ -4007,6 +4341,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotLaSimilarToAExpr_adecc524' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 10,
+      4 => 10,
+    ),
     'pg-17.2' =>
     array (
       0 => 9,
@@ -4015,6 +4354,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprNotnull_df392d26' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 8,
+    ),
     'pg-17.2' =>
     array (
       0 => 7,
@@ -4022,6 +4365,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprOrAExpr_ac9947a4' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 4,
+      2 => 5,
+    ),
     'pg-17.2' =>
     array (
       0 => 3,
@@ -4030,6 +4378,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprQualOpAExpr_41175adc' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 16,
+      2 => 17,
+    ),
     'pg-17.2' =>
     array (
       0 => 12,
@@ -4038,6 +4391,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprSimilarToAExprEscapeAExpr_e2fba479' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 10,
+      5 => 10,
+    ),
     'pg-17.2' =>
     array (
       0 => 9,
@@ -4046,6 +4404,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprSimilarToAExpr_7a772180' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 10,
+      3 => 10,
+    ),
     'pg-17.2' =>
     array (
       0 => 9,
@@ -4054,6 +4417,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprSubqueryOpSubTypeAExpr_cd3712f4' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 16,
+    ),
     'pg-17.2' =>
     array (
       0 => 12,
@@ -4061,6 +4428,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprSubqueryOpSubTypeSelectWithParens_65735583' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 16,
+    ),
     'pg-17.2' =>
     array (
       0 => 12,
@@ -4068,6 +4439,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExprTypecastTypename_251785d1' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 25,
+    ),
     'pg-17.2' =>
     array (
       0 => 21,
@@ -4075,6 +4450,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExpr_754cdd93' =>
   array (
+    'pg-16.6' =>
+    array (
+      1 => 22,
+    ),
     'pg-17.2' =>
     array (
       1 => 18,
@@ -4082,6 +4461,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithAExpr_8ff574e6' =>
   array (
+    'pg-16.6' =>
+    array (
+      1 => 22,
+    ),
     'pg-17.2' =>
     array (
       1 => 18,
@@ -4089,6 +4472,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithNotAExpr_00b8874f' =>
   array (
+    'pg-16.6' =>
+    array (
+      1 => 6,
+    ),
     'pg-17.2' =>
     array (
       1 => 5,
@@ -4096,6 +4483,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithNotLaAExpr_1ebc1180' =>
   array (
+    'pg-16.6' =>
+    array (
+      1 => 6,
+    ),
     'pg-17.2' =>
     array (
       1 => 5,
@@ -4103,6 +4494,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\AExprWithQualOpAExpr_43bfb7f8' =>
   array (
+    'pg-16.6' =>
+    array (
+      1 => 17,
+    ),
     'pg-17.2' =>
     array (
       1 => 13,
@@ -4110,6 +4505,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_03794e77' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 18,
+      2 => 19,
+    ),
     'pg-17.2' =>
     array (
       0 => 14,
@@ -4118,6 +4518,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_0e191771' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 19,
+      2 => 20,
+    ),
     'pg-17.2' =>
     array (
       0 => 15,
@@ -4126,6 +4531,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_2968b814' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 18,
+      2 => 19,
+    ),
     'pg-17.2' =>
     array (
       0 => 14,
@@ -4134,6 +4544,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_2ec9aee1' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 9,
+      2 => 9,
+    ),
     'pg-17.2' =>
     array (
       0 => 8,
@@ -4142,6 +4557,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_5c9a3111' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 17,
+      2 => 18,
+    ),
     'pg-17.2' =>
     array (
       0 => 13,
@@ -4150,6 +4570,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_6acac436' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 9,
+      2 => 9,
+    ),
     'pg-17.2' =>
     array (
       0 => 8,
@@ -4158,6 +4583,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_7cc500ab' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 18,
+      2 => 19,
+    ),
     'pg-17.2' =>
     array (
       0 => 14,
@@ -4166,6 +4596,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_80309f96' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 9,
+      2 => 9,
+    ),
     'pg-17.2' =>
     array (
       0 => 8,
@@ -4174,6 +4609,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprBExpr_9c226265' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 17,
+      2 => 18,
+    ),
     'pg-17.2' =>
     array (
       0 => 13,
@@ -4182,6 +4622,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprGreaterEqualsBExpr_317ca80d' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 9,
+      2 => 9,
+    ),
     'pg-17.2' =>
     array (
       0 => 8,
@@ -4190,6 +4635,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprIsDistinctFromBExpr_637bbb2c' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 8,
+      4 => 8,
+    ),
     'pg-17.2' =>
     array (
       0 => 7,
@@ -4198,6 +4648,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprIsDocumentP_23b22804' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 8,
+    ),
     'pg-17.2' =>
     array (
       0 => 7,
@@ -4205,6 +4659,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprIsNotDistinctFromBExpr_fe469b0a' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 8,
+      5 => 8,
+    ),
     'pg-17.2' =>
     array (
       0 => 7,
@@ -4213,6 +4672,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprIsNotDocumentP_aadd75a8' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 8,
+    ),
     'pg-17.2' =>
     array (
       0 => 7,
@@ -4220,6 +4683,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprLessEqualsBExpr_290e9b93' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 9,
+      2 => 9,
+    ),
     'pg-17.2' =>
     array (
       0 => 8,
@@ -4228,6 +4696,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprNotEqualsBExpr_976e0805' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 9,
+      2 => 9,
+    ),
     'pg-17.2' =>
     array (
       0 => 8,
@@ -4236,6 +4709,11 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprQualOpBExpr_b7fdc6b2' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 16,
+      2 => 17,
+    ),
     'pg-17.2' =>
     array (
       0 => 12,
@@ -4244,6 +4722,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExprTypecastTypename_b682d353' =>
   array (
+    'pg-16.6' =>
+    array (
+      0 => 25,
+    ),
     'pg-17.2' =>
     array (
       0 => 21,
@@ -4251,6 +4733,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExpr_4bb217fb' =>
   array (
+    'pg-16.6' =>
+    array (
+      1 => 22,
+    ),
     'pg-17.2' =>
     array (
       1 => 18,
@@ -4258,6 +4744,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithBExpr_d6a8b1b1' =>
   array (
+    'pg-16.6' =>
+    array (
+      1 => 22,
+    ),
     'pg-17.2' =>
     array (
       1 => 18,
@@ -4265,6 +4755,10 @@ final class Contracts
   ),
   'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\BExprWithQualOpBExpr_e6ab4191' =>
   array (
+    'pg-16.6' =>
+    array (
+      1 => 17,
+    ),
     'pg-17.2' =>
     array (
       1 => 13,

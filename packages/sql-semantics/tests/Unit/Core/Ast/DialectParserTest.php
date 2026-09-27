@@ -25,6 +25,7 @@ use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 #[Medium]
 final class DialectParserTest extends TestCase
 {
+    #[TestWith([PostgreSqlDialect::PostgreSql, 'parse_toplevel', 'pg-16.6'])]
     #[TestWith([PostgreSqlDialect::PostgreSql, 'parse_toplevel', 'pg-17.2'])]
     #[TestWith([MySqlDialect::MySql, 'start_entry', 'mysql-8.4.7'])]
     #[TestWith([SqliteDialect::Sqlite, 'input', 'sqlite-3.47.2'])]

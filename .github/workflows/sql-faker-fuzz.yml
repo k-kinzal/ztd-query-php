@@ -10,6 +10,16 @@ on:
         required: true
         default: '10000'
         type: string
+      mysql_version:
+        description: MySQL release the MySQL target generates for and runs against
+        required: false
+        default: '9.1.0'
+        type: string
+      pg_version:
+        description: PostgreSQL release the PostgreSQL target generates for and runs against
+        required: false
+        default: '17.2'
+        type: string
 
 permissions:
   contents: read
@@ -20,7 +30,8 @@ concurrency:
 
 env:
   COMPOSER_NO_INTERACTION: '1'
-  MYSQL_VERSION: '8.4.7'
+  MYSQL_VERSION: ${{ inputs.mysql_version || '9.1.0' }}
+  PG_VERSION: ${{ inputs.pg_version || '17.2' }}
 
 jobs:
   syntax:

@@ -33,6 +33,7 @@ The following grammar versions are supported. Pass the dialect of your database 
 
 | Version | Version tag | Default |
 |---------|-------------|---------|
+| 16.6 | `pg-16.6` | |
 | 17.2 | `pg-17.2` | Yes |
 
 ### SQLite

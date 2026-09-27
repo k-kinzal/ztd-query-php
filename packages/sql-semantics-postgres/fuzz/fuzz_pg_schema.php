@@ -4,6 +4,7 @@
  * Fuzz complete declarations through analysis with dependencies: each must resolve to one readable table.
  * Usage: vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_schema.php fuzz/corpus/pg-schema/
  * SQLFAKER_COVERAGE=0 disables grammar accounting.
+ * PG_VERSION selects the PostgreSQL release whose grammar is used (default: 17.2).
  */
 
 declare(strict_types=1);
@@ -22,7 +23,7 @@ use SqlParser\PostgreSql\PostgreSqlParser;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\PostgreSql\Dialect;
 
-$grammarVersion = 'pg-17.2';
+$grammarVersion = 'pg-' . (getenv('PG_VERSION') !== false ? getenv('PG_VERSION') : '17.2');
 $coverage = getenv('SQLFAKER_COVERAGE') === '0' ? null : new GrammarCoverage(__DIR__ . '/coverage/pg-schema');
 $provider = new PostgreSqlProvider(Factory::create(), $grammarVersion, $coverage);
 $target = new SchemaTarget(new Semantics(Dialect::PostgreSql, $grammarVersion), new Formatter(new PostgreSqlParser($grammarVersion), new FormatOptions(Style::Compact)), $grammarVersion);

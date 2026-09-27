@@ -25,7 +25,7 @@ final class AExprWithAExprIsUnicodeNormalFormNormalized_ce3efbcd implements \Sql
         public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
-        $this->assertOperandBindingStrength($aExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 7,), \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_RULES, 'a_expr');
+        $this->assertOperandBindingStrength($aExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-16.6' => 8,  'pg-17.2' => 7,), \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_RULES, 'a_expr');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($unicodeNormalForm), 'The unicodeNormalForm must be a generated immutable SQL value.');
     }
 

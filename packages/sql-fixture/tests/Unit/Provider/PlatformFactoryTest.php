@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Provider;
 
+use Container\MySqlRelease;
+use Container\PostgreSqlRelease;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -278,14 +280,16 @@ final class PlatformFactoryTest extends TestCase
      */
     public static function providerDatabaseVersions(): iterable
     {
-        yield 'mysql' => ['SQL_FIXTURE_MYSQL', 'mysql', 'mysql-8.4.7'];
-        yield 'postgres' => ['SQL_FIXTURE_PGSQL', 'pgsql', 'pg-17.2'];
+        $mysql = getenv('SQL_FIXTURE_MYSQL_VERSION');
+        $postgres = getenv('SQL_FIXTURE_PGSQL_VERSION');
+        yield 'mysql' => ['SQL_FIXTURE_MYSQL', 'mysql', 'mysql-' . ($mysql === false || $mysql === '' ? MySqlRelease::DEFAULT : $mysql)];
+        yield 'postgres' => ['SQL_FIXTURE_PGSQL', 'pgsql', 'pg-' . ($postgres === false || $postgres === '' ? PostgreSqlRelease::DEFAULT : $postgres)];
     }
 
     #[Test]
     public function testGetSupportedVersionsListsTheTagsOfADriver(): void
     {
-        self::assertSame(['pg-17.2'], PlatformFactory::getSupportedVersions(PlatformFactory::DRIVER_PGSQL));
+        self::assertSame(['pg-16.6', 'pg-17.2'], PlatformFactory::getSupportedVersions(PlatformFactory::DRIVER_PGSQL));
         self::assertContains('mysql-5.6.51', PlatformFactory::getSupportedVersions(PlatformFactory::DRIVER_MYSQL));
         self::assertContains('mysql-9.1.0', PlatformFactory::getSupportedVersions(PlatformFactory::DRIVER_MYSQL));
     }

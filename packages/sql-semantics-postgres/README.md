@@ -17,6 +17,7 @@ The following grammar versions are supported. Pass the version tag as the second
 
 | Version | Version tag | Default |
 |---------|-------------|---------|
+| 16.6 | `pg-16.6` | |
 | 17.2 | `pg-17.2` | Yes |
 
 ## Installation
