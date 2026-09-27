@@ -117,4 +117,45 @@ final class BudgetTest extends TestCase
         self::assertSame('BUDGET_EXCEEDED', $result->frontiers[0]->code);
         self::assertSame('opaque', $result->normalOutcomes[0]->values['return']->kind);
     }
+
+    public function testDefaultsProvideReproducibleLogicalWorkBounds(): void
+    {
+        $budget = new \Deriver\Api\Query\Budget();
+        self::assertSame(100000, $budget->transfers);
+        self::assertSame(32, $budget->partitions);
+        self::assertSame(16, $budget->iterations);
+        self::assertSame(64, $budget->recursion);
+        self::assertSame(20000, $budget->nodes);
+    }
+
+    public function testEveryDimensionAcceptsTheMinimumPositiveBudget(): void
+    {
+        $budget = new \Deriver\Api\Query\Budget(1, 1, 1, 1, 1);
+        self::assertSame([1,1,1,1,1], [$budget->transfers,$budget->partitions,$budget->iterations,$budget->recursion,$budget->nodes]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerInvalidBudgets')]
+    public function testEveryDimensionRejectsNonpositiveBudgets(int $transfers, int $partitions, int $iterations, int $recursion, int $nodes): void
+    {
+        $this->expectException(\Deriver\Api\InvalidInputException::class);
+        $this->expectExceptionMessage('Every logical budget must be positive.');
+        new \Deriver\Api\Query\Budget($transfers, $partitions, $iterations, $recursion, $nodes);
+    }
+
+    /**
+     * @return iterable<string,array{int,int,int,int,int}>
+     */
+    public static function providerInvalidBudgets(): iterable
+    {
+        yield 'zero transfers' => [0,1,1,1,1];
+        yield 'zero partitions' => [1,0,1,1,1];
+        yield 'zero iterations' => [1,1,0,1,1];
+        yield 'zero recursion' => [1,1,1,0,1];
+        yield 'zero nodes' => [1,1,1,1,0];
+        yield 'negative transfers' => [-1,1,1,1,1];
+        yield 'negative partitions' => [1,-1,1,1,1];
+        yield 'negative iterations' => [1,1,-1,1,1];
+        yield 'negative recursion' => [1,1,1,-1,1];
+        yield 'negative nodes' => [1,1,1,1,-1];
+    }
 }

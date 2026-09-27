@@ -32,6 +32,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Api\Result\Assessment::class)]
 #[UsesClass(\Deriver\Api\Result\Derivation::class)]
 #[UsesClass(\Deriver\Api\Result\DerivationResult::class)]
+#[UsesClass(\Deriver\Api\Result\Frontier::class)]
 #[UsesClass(\Deriver\Api\Result\Statistics::class)]
 #[UsesClass(\Deriver\Api\Result\StorageSnapshot::class)]
 #[UsesClass(\Deriver\Internal\Api\QueryExecution::class)]
@@ -50,6 +51,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Frontend\Php\CallableSource::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Control\ExceptionLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\DeclarationScanner::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\EffectInspection::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\ExpressionLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\GraphBuilder::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Lowering::class)]
@@ -85,6 +87,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Call\ArgumentBinding::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\ArgumentOrder::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\CallExecutor::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\CallResolution::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Creation\Access::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Creation\Builtins::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Dispatch::class)]
@@ -105,6 +108,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Call\ProviderDispatch::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeBinding::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeCheck::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\UnknownCall::class)]
 #[UsesClass(\Deriver\Internal\Solver\Completion::class)]
 #[UsesClass(\Deriver\Internal\Solver\Context::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\ExceptionChain::class)]
@@ -120,6 +124,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Demand\Key::class)]
 #[UsesClass(\Deriver\Internal\Solver\Demand\Table::class)]
 #[UsesClass(\Deriver\Internal\Solver\Dependencies::class)]
+#[UsesClass(\Deriver\Internal\Solver\Havoc::class)]
 #[UsesClass(\Deriver\Internal\Solver\InstructionTransfer::class)]
 #[UsesClass(\Deriver\Internal\Solver\Machine::class)]
 #[UsesClass(\Deriver\Internal\Solver\Model\SlotReference::class)]
@@ -132,11 +137,22 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Summary\Evaluation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Summary\Invocation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Summary\Isolation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Transfer\CallableTransfer::class)]
+#[UsesClass(\Deriver\Internal\Solver\Transfer\ConstantTransfer::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\MemoryStep::class)]
+#[UsesClass(\Deriver\Internal\Solver\Transfer\ObjectAccess::class)]
+#[UsesClass(\Deriver\Internal\Solver\Transfer\PropertyAccessCheck::class)]
+#[UsesClass(\Deriver\Internal\Solver\Transfer\PropertyLookup::class)]
+#[UsesClass(\Deriver\Internal\Solver\Transfer\PropertyMagic::class)]
+#[UsesClass(\Deriver\Internal\Solver\Transfer\PropertySlot::class)]
+#[UsesClass(\Deriver\Internal\Solver\Transfer\PropertyTransfer::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\PureStep::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\ReferenceAssignment::class)]
+#[UsesClass(\Deriver\Internal\Value\Arithmetic::class)]
 #[UsesClass(\Deriver\Internal\Value\Arrays::class)]
+#[UsesClass(\Deriver\Internal\Value\Comparison::class)]
 #[UsesClass(\Deriver\Internal\Value\Identity::class)]
+#[UsesClass(\Deriver\Internal\Value\NumericString::class)]
 #[UsesClass(\Deriver\Internal\Value\PhpSemantics::class)]
 #[UsesClass(\Deriver\Model\Provider\DispatchDecision::class)]
 #[UsesClass(\Deriver\Model\Provider\DispatchRequest::class)]
@@ -181,5 +197,172 @@ final class InvocationTest extends TestCase
         self::assertNull($invocation->assigned('previous', \Deriver\Value\Term::constant(null), $entry));
         self::assertSame(0, $invocation->assigned('line', \Deriver\Value\Term::constant(null), $entry)?->literal);
         self::assertNull($invocation->assigned('code', \Deriver\Value\Term::constant(0), $entry));
+    }
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerNativeCoercions')]
+    public function testCoercionsUsesParameterPositionAndNameWithoutChangingReferenceMetadata(?string $name, int $position, \Deriver\Value\Term $input, \Deriver\Value\Term $expected): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $signature = (new \Deriver\Internal\Solver\Call\Native\Signatures($context->program))->graph('ErrorException', '__construct', new \Deriver\Api\Reference\SourceRef('s', 'a.php', 0, 1));
+        $location = new \Deriver\Internal\Memory\Location('argument', ['key']);
+        $argument = new \Deriver\Internal\Solver\Call\PassedArgument($input, $name, $location);
+        $arguments = array_fill(0, $position, new \Deriver\Internal\Solver\Call\PassedArgument(\Deriver\Value\Term::constant(1)));
+        $arguments[] = $argument;
+        $result = (new \Deriver\Internal\Solver\Call\Native\Invocation(new \Deriver\Internal\Solver\Machine($context)))->coercions($signature, $arguments, false);
+        self::assertSame($expected->kind, $result[$position]->value->kind);
+        self::assertSame($expected->literal, $result[$position]->value->literal);
+        self::assertSame($expected->secret, $result[$position]->value->secret);
+        self::assertSame($name, $result[$position]->name);
+        self::assertSame($location, $result[$position]->location);
+        self::assertCount($position + 1, $result);
+    }
+
+    /**
+     * @return iterable<string,array{?string,int,\Deriver\Value\Term,\Deriver\Value\Term}>
+     */
+    public static function providerNativeCoercions(): iterable
+    {
+        yield 'positional message' => [null,0,\Deriver\Value\Term::constant(null),\Deriver\Value\Term::constant('')];
+        yield 'positional code' => [null,1,\Deriver\Value\Term::constant(null),\Deriver\Value\Term::constant(0)];
+        yield 'positional severity' => [null,2,\Deriver\Value\Term::constant(null),\Deriver\Value\Term::constant(0)];
+        yield 'nullable filename' => [null,3,\Deriver\Value\Term::constant(null),\Deriver\Value\Term::constant(null)];
+        yield 'nullable line' => [null,4,\Deriver\Value\Term::constant(null),\Deriver\Value\Term::constant(null)];
+        yield 'named message' => ['message',0,\Deriver\Value\Term::constant(null, true),\Deriver\Value\Term::constant('', true)];
+        yield 'named code' => ['code',0,\Deriver\Value\Term::constant(null),\Deriver\Value\Term::constant(0)];
+        yield 'unknown parameter' => ['missing',0,\Deriver\Value\Term::constant(null),\Deriver\Value\Term::constant(null)];
+        yield 'extra positional' => [null,6,\Deriver\Value\Term::constant(null),\Deriver\Value\Term::constant(null)];
+        yield 'false unchanged' => ['message',0,\Deriver\Value\Term::constant(false),\Deriver\Value\Term::constant(false)];
+        yield 'symbolic unchanged' => ['message',0,\Deriver\Value\Term::parameter('x'),\Deriver\Value\Term::parameter('x')];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerAssignedFields')]
+    public function testAssignedFollowsNativeFieldRetentionAndFilenameRules(string $name, \Deriver\Value\Term $value, \Deriver\Value\Term $filename, ?\Deriver\Value\Term $expected): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $entry = new \Deriver\Internal\Solver\State();
+        $entry->memory->write($entry->local('filename'), $filename);
+        $result = (new \Deriver\Internal\Solver\Call\Native\Invocation(new \Deriver\Internal\Solver\Machine($context)))->assigned($name, $value, $entry);
+        self::assertEquals($expected, $result);
+    }
+
+    /**
+     * @return iterable<string,array{string,\Deriver\Value\Term,\Deriver\Value\Term,?\Deriver\Value\Term}>
+     */
+    public static function providerAssignedFields(): iterable
+    {
+        $null = \Deriver\Value\Term::constant(null);
+        yield 'zero code' => ['code',\Deriver\Value\Term::constant(0),$null,null];
+        yield 'nonzero code' => ['code',\Deriver\Value\Term::constant(7),$null,\Deriver\Value\Term::constant(7)];
+        yield 'symbolic code' => ['code',\Deriver\Value\Term::parameter('n', 'int'),$null,\Deriver\Value\Term::parameter('n', 'int')];
+        yield 'null previous' => ['previous',$null,$null,null];
+        yield 'null filename' => ['filename',$null,$null,null];
+        yield 'null line no file' => ['line',$null,$null,null];
+        yield 'null line chosen file' => ['line',$null,\Deriver\Value\Term::constant('chosen.php'),\Deriver\Value\Term::constant(0)];
+        yield 'null line unknown file' => ['line',$null,\Deriver\Value\Term::parameter('file', 'string|null'),\Deriver\Value\Term::opaque('RUNTIME_STACK', 'int')];
+        yield 'explicit line' => ['line',\Deriver\Value\Term::constant(42),$null,\Deriver\Value\Term::constant(42)];
+        yield 'empty message' => ['message',\Deriver\Value\Term::constant(''),$null,\Deriver\Value\Term::constant('')];
+    }
+
+    public function testApplyDeclinesUnknownNativeClassesAndMethods(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $invocation = new \Deriver\Internal\Solver\Call\Native\Invocation(new \Deriver\Internal\Solver\Machine($context));
+        $instruction = new \Deriver\Internal\IR\Instruction('i', 'method', new \Deriver\Api\Reference\SourceRef('s', 'a.php', 0, 1), 'result');
+        $receiver = new \Deriver\Value\Term('object', 'e', attributes:['class' => 'Exception']);
+        self::assertNull($invocation->apply('UnknownClass', 'run', [], new \Deriver\Internal\Solver\State(), $instruction, null, false));
+        self::assertNull($invocation->apply('Exception', 'missing', [], new \Deriver\Internal\Solver\State(), $instruction, $receiver, false));
+        self::assertSame([], $context->frontiers);
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerInvalidNativeReceivers')]
+    public function testApplyRejectsCloningAndIncompatibleReceivers(string $method, ?\Deriver\Value\Term $receiver): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $instruction = new \Deriver\Internal\IR\Instruction('i', 'method', new \Deriver\Api\Reference\SourceRef('s', 'a.php', 0, 1), 'result');
+        $paths = (new \Deriver\Internal\Solver\Call\Native\Invocation(new \Deriver\Internal\Solver\Machine($context)))->apply('Exception', $method, [], new \Deriver\Internal\Solver\State(), $instruction, $receiver, false);
+        self::assertNotNull($paths);
+        self::assertCount(1, $paths);
+        self::assertSame('throw', $paths[0]->completion->kind);
+        self::assertSame('Error', $paths[0]->completion->value?->literal);
+        self::assertArrayNotHasKey('result', $paths[0]->registers);
+    }
+
+    /**
+     * @return iterable<string,array{string,?\Deriver\Value\Term}>
+     */
+    public static function providerInvalidNativeReceivers(): iterable
+    {
+        yield 'clone' => ['__clone',new \Deriver\Value\Term('object', 'e', attributes:['class' => 'Exception'])];
+        yield 'missing receiver' => ['getMessage',null];
+        yield 'wrong class' => ['getMessage',new \Deriver\Value\Term('object', 'e', attributes:['class' => 'stdClass'])];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerNativeResidualMethods')]
+    public function testApplyKeepsRuntimeStackAndSerializationMethodsBehindABoundary(string $method): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $instruction = new \Deriver\Internal\IR\Instruction('i', 'method', new \Deriver\Api\Reference\SourceRef('s', 'a.php', 0, 1), 'result');
+        $receiver = new \Deriver\Value\Term('object', 'e', attributes:['class' => 'Exception']);
+        $paths = (new \Deriver\Internal\Solver\Call\Native\Invocation(new \Deriver\Internal\Solver\Machine($context)))->apply('Exception', $method, [], new \Deriver\Internal\Solver\State(), $instruction, $receiver, false);
+        self::assertNotNull($paths);
+        self::assertSame(['normal','throw'], array_map(static fn (\Deriver\Internal\Solver\State $path): string => $path->completion->kind, $paths));
+        self::assertSame('MISSING_CALL_MODEL', array_values($context->frontiers)[0]->code);
+    }
+
+    /**
+     * @return iterable<string,array{string}>
+     */
+    public static function providerNativeResidualMethods(): iterable
+    {
+        yield 'trace' => ['getTrace'];
+        yield 'trace string' => ['getTraceAsString'];
+        yield 'string conversion' => ['__toString'];
+        yield 'wake up' => ['__wakeup'];
+    }
+
+    /**
+     * @throws JsonException If fixture metadata cannot be encoded
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerNativePrograms')]
+    public function testApplyPreservesOracleCheckedNativeConstructorsAndGetters(string $source, string $expected): void
+    {
+        $result = \Tests\Fake\Analysis::returns($source);
+        self::assertSame([], $result->frontiers);
+        self::assertSame([], $result->exceptionalOutcomes);
+        self::assertCount(1, $result->normalOutcomes);
+        self::assertSame(json_decode($expected, true, flags:JSON_THROW_ON_ERROR), $result->normalOutcomes[0]->values['return']->native());
+    }
+
+    /**
+     * @return iterable<string,array{string,string}>
+     */
+    public static function providerNativePrograms(): iterable
+    {
+        return [
+            'native:messageCode' => ['<?php function target(){$e=new Exception("hello",7);return [$e->getMessage(),$e->getCode(),$e->getPrevious()];}', '["hello",7,null]'],
+            'native:named' => ['<?php function target(){$e=new RuntimeException(code:7,message:"hello");return [$e->getMessage(),$e->getCode()];}', '["hello",7]'],
+            'native:inherited' => ['<?php class X extends Exception{}function target(){$e=new X(code:7,message:"hello");return [$e->getMessage(),$e->getCode()];}', '["hello",7]'],
+            'native:codeZero' => ['<?php class X extends Exception{protected $message="x";protected $code=9;}function target(){$a=new X;$b=new X(code:0);$c=new X(message:"a");return [$a->getMessage(),$a->getCode(),$b->getMessage(),$b->getCode(),$c->getMessage(),$c->getCode()];}', '["x",9,"",9,"a",9]'],
+            'native:previous' => ['<?php function target(){$p=new Exception("first");$e=new Exception(previous:$p);$previous=$e->getPrevious();$equal=$previous===$p;return [$equal,$previous->getMessage()];}', '[true,"first"]'],
+            'native:parent' => ['<?php class X extends Exception{function __construct(){parent::__construct("a",2);}}function target(){$e=new X;return [$e->getMessage(),$e->getCode()];}', '["a",2]'],
+            'native:clone' => ['<?php function target(){try{$x=clone new Exception;}catch(Error $e){return "error";}return 999;}', '"error"'],
+            'native:arrayMessage' => ['<?php function target(){try{new Exception([]);}catch(TypeError $e){return "type";}return 999;}', '"type"'],
+            'native:badCode' => ['<?php function target(){try{new Exception(code:"no");}catch(TypeError $e){return "type";}return 999;}', '"type"'],
+            'native:badPrevious' => ['<?php function target(){try{new Exception(previous:new stdClass);}catch(TypeError $e){return "type";}return 999;}', '"type"'],
+            'native:unknownNamed' => ['<?php function target(){try{new Exception(other:1);}catch(Error $e){return "name";}return 999;}', '"name"'],
+            'native:extra' => ['<?php function target(){try{new Exception("",0,null,1);}catch(ArgumentCountError $e){return "count";}return 999;}', '"count"'],
+            'native:strict' => ['<?php declare(strict_types=1);function target(){try{new Exception(1);}catch(TypeError $e){return "type";}return 999;}', '"type"'],
+            'native:weak' => ['<?php function target(){$e=new Exception(1,"2");return [$e->getMessage(),$e->getCode()];}', '["1",2]'],
+            'native:errorDefaults' => ['<?php class X extends ErrorException{protected $message="x";protected $code=9;protected int $severity=2;}function target(){$x=new X;return [$x->getMessage(),$x->getCode(),$x->getSeverity()];}', '["x",9,1]'],
+            'native:repeatPrevious' => ['<?php class X extends Exception{function clear(){parent::__construct();}function reset(){parent::__construct(previous:null);}}function target(){$p=new Exception;$x=new X("x",9,$p);$x->clear();$previous=$x->getPrevious();$a=[$x->getMessage(),$x->getCode(),$previous===$p];$x->reset();$previous=$x->getPrevious();return [$a,$x->getMessage(),$x->getCode(),$previous===$p];}', '[["x",9,true],"",9,true]'],
+            'native:severity' => ['<?php function target(){$x=new ErrorException(severity:8);return [$x->getMessage(),$x->getCode(),$x->getSeverity()];}', '["",0,8]'],
+            'native:getterArity' => ['<?php function target(){try{(new Exception)->getMessage(1);}catch(ArgumentCountError $e){return "count";}return 999;}', '"count"'],
+            'native:protected' => ['<?php function target(){try{return (new Exception("a"))->message;}catch(Error $e){return "access";}}', '"access"'],
+            'native:sourceProperty' => ['<?php class X extends Exception{function change(){$this->message=42;$this->code="custom";}}function target(){$e=new X;$e->change();return [$e->getMessage(),$e->getCode()];}', '["42","custom"]'],
+            'native:caseInsensitive' => ['<?php function target(){try{throw new runtimeexception;}catch(EXCEPTION $e){return "caught";}}', '"caught"'],
+            'native:errorHierarchy' => ['<?php function target(){$e=new DivisionByZeroError("zero");return [$e instanceof ArithmeticError,$e instanceof Throwable,$e->getMessage()];}', '[true,true,"zero"]'],
+            'native:missingMethod' => ['<?php function target(){try{(new Exception)->absent();}catch(Error $e){return "missing";}return 999;}', '"missing"'],
+            'native:filename' => ['<?php function target(){$e=new ErrorException(filename:"chosen.php");return [$e->getFile(),$e->getLine()];}', '["chosen.php",0]'],
+            'native:line' => ['<?php function target(){$e=new ErrorException(filename:"chosen.php",line:42);return [$e->getFile(),$e->getLine()];}', '["chosen.php",42]'],
+        ];
     }
 }

@@ -37,6 +37,8 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Api\QueryValidation::class)]
 #[UsesClass(\Deriver\Internal\Api\ResultAssessment::class)]
 #[UsesClass(\Deriver\Internal\Api\Session::class)]
+#[UsesClass(\Deriver\Internal\Constraint\Constraints::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\AggregateLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\GraphCache::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\GraphTemplate::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\SnapshotRebase::class)]
@@ -67,12 +69,14 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Memory\Location::class)]
 #[UsesClass(\Deriver\Internal\Memory\Materialization::class)]
 #[UsesClass(\Deriver\Internal\Memory\Memory::class)]
+#[UsesClass(\Deriver\Internal\Memory\ReferenceConstraint::class)]
 #[UsesClass(\Deriver\Internal\Memory\StorageCapture::class)]
 #[UsesClass(\Deriver\Internal\Model\Extensions::class)]
 #[UsesClass(\Deriver\Internal\Model\ModelBoundary::class)]
 #[UsesClass(\Deriver\Internal\Model\ModelPrecedence::class)]
 #[UsesClass(\Deriver\Internal\Model\PlanActions::class)]
 #[UsesClass(\Deriver\Internal\Model\PlanFootprints::class)]
+#[UsesClass(\Deriver\Internal\Model\PlanLocations::class)]
 #[UsesClass(\Deriver\Internal\Model\PlanValidation::class)]
 #[UsesClass(\Deriver\Internal\Model\ProviderInputs::class)]
 #[UsesClass(\Deriver\Internal\Model\Registry::class)]
@@ -112,14 +116,17 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\State::class)]
 #[UsesClass(\Deriver\Internal\Solver\Summary\Evaluation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Summary\Isolation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Transfer\ConstantTransfer::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\MemoryStep::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\PureStep::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\ReferenceAssignment::class)]
 #[UsesClass(\Deriver\Internal\Value\Arithmetic::class)]
+#[UsesClass(\Deriver\Internal\Value\Arrays::class)]
 #[UsesClass(\Deriver\Internal\Value\Identity::class)]
 #[UsesClass(\Deriver\Internal\Value\PhpSemantics::class)]
 #[UsesClass(\Deriver\Model\Binding\ArgumentBindings::class)]
 #[UsesClass(\Deriver\Model\Binding\BoundArgument::class)]
+#[UsesClass(\Deriver\Model\Binding\LocationRef::class)]
 #[UsesClass(\Deriver\Model\CallDescription::class)]
 #[UsesClass(\Deriver\Model\CallModel::class)]
 #[UsesClass(\Deriver\Model\ModelDecision::class)]
@@ -189,5 +196,142 @@ final class PlanCompilerTest extends TestCase
         $body = $compiler->compile(new \Deriver\Model\ModelDescriptor('sample', '1', 'Box::same', new \Deriver\Model\Signature\Signature(returnType: 'self')), new \Deriver\Model\Plan\SemanticPlan([\Deriver\Model\Plan\Action::returns(\Deriver\Model\Plan\Expression::receiver())]));
         self::assertSame('Box', $body->className);
         self::assertSame('self', $body->returnType);
+    }
+    public function testCompileRetainsSignatureDefaultsAndSourceMethodMetadata(): void
+    {
+        $at = new \Deriver\Api\Reference\SourceRef('snapshot', 'model:sample', 2, 8, 3);
+        $default = \Deriver\Value\Term::constant(null);
+        $signature = new \Deriver\Model\Signature\Signature([
+            new \Deriver\Model\Signature\Parameter('item', 'int', true),
+            new \Deriver\Model\Signature\Parameter('fallback', 'string|null', default:$default),
+            new \Deriver\Model\Signature\Parameter('rest', 'mixed', variadic:true),
+        ], returnType:'self', allowExtraArguments:false, byReference:true);
+        $source = new \Deriver\Internal\IR\CallableIR('Child::alias', [], [], $at, className:'ParentClass', visibility:'protected', static:true);
+        $body = (new \Deriver\Internal\Model\PlanCompiler($at))->compile(new \Deriver\Model\ModelDescriptor('sample', '1', 'Child::alias', $signature), new \Deriver\Model\Plan\SemanticPlan([]), $source);
+        self::assertSame('Child::alias', $body->symbol);
+        self::assertSame('ParentClass', $body->className);
+        self::assertSame('protected', $body->visibility);
+        self::assertTrue($body->static);
+        self::assertTrue($body->byReference);
+        self::assertFalse($body->allowExtraArguments);
+        self::assertSame('self', $body->returnType);
+        self::assertSame($at, $body->source);
+        self::assertSame(['item','fallback','rest'], array_column($body->parameters, 'name'));
+        self::assertSame(['int','string|null','mixed'], array_column($body->parameters, 'type'));
+        self::assertSame([true,false,false], array_column($body->parameters, 'byReference'));
+        self::assertSame([false,false,true], array_column($body->parameters, 'variadic'));
+        self::assertNull($body->parameters[0]->default);
+        self::assertNull($body->parameters[2]->default);
+        $initializer = $body->parameters[1]->default;
+        self::assertNotNull($initializer);
+        self::assertSame('Child::alias:default:fallback', $initializer->symbol);
+        self::assertSame($default, $initializer->blocks[0]->instructions[0]->constant);
+        self::assertSame('constant', $initializer->blocks[0]->instructions[0]->operation);
+        self::assertSame($initializer->blocks[0]->instructions[0]->result, $initializer->blocks[0]->terminator->operand);
+        self::assertSame('return', $initializer->blocks[0]->terminator->kind);
+        self::assertSame('return', $body->blocks[0]->terminator->kind);
+    }
+
+    public function testExpressionReadsAnAbstractSlotThroughItsReceiverAddress(): void
+    {
+        $compiler = new \Deriver\Internal\Model\PlanCompiler(new \Deriver\Api\Reference\SourceRef('s', 'model:sample', 0, 1));
+        $result = $compiler->expression(\Deriver\Model\Plan\Expression::state('domain.value', \Deriver\Model\Plan\Expression::parameter('owner')));
+        $instructions = $compiler->instructions[0];
+        self::assertSame(['local','read','model-state-address','read'], array_column($instructions, 'operation'));
+        self::assertSame('owner', $instructions[0]->name);
+        self::assertSame('domain.value', $instructions[2]->name);
+        self::assertSame([$instructions[1]->result], $instructions[2]->operands);
+        self::assertSame([$instructions[2]->result], $instructions[3]->operands);
+        self::assertSame($instructions[3]->result, $result);
+    }
+
+    public function testExpressionReadsADeclaredParameterLocation(): void
+    {
+        $compiler = new \Deriver\Internal\Model\PlanCompiler(new \Deriver\Api\Reference\SourceRef('s', 'model:sample', 0, 1));
+        $result = $compiler->expression(\Deriver\Model\Plan\Expression::read(\Deriver\Model\Binding\LocationRef::parameter('input')));
+        $instructions = $compiler->instructions[0];
+        self::assertSame(['local','read'], array_column($instructions, 'operation'));
+        self::assertSame('input', $instructions[0]->name);
+        self::assertSame([$instructions[0]->result], $instructions[1]->operands);
+        self::assertSame($instructions[1]->result, $result);
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerPureExpressions')]
+    public function testExpressionPreservesTheOpcodePayloadAndOperandOrder(string $opcode, string $name): void
+    {
+        $compiler = new \Deriver\Internal\Model\PlanCompiler(new \Deriver\Api\Reference\SourceRef('s', 'model:sample', 0, 1));
+        $left = \Deriver\Value\Term::constant(10);
+        $right = \Deriver\Value\Term::constant(3);
+        $result = $compiler->expression(new \Deriver\Model\Plan\Expression($opcode, $name, [\Deriver\Model\Plan\Expression::literal($left),\Deriver\Model\Plan\Expression::literal($right)]));
+        $instructions = $compiler->instructions[0];
+        self::assertSame(['constant','constant',$opcode], array_column($instructions, 'operation'));
+        self::assertSame($left, $instructions[0]->constant);
+        self::assertSame($right, $instructions[1]->constant);
+        self::assertSame([$instructions[0]->result,$instructions[1]->result], $instructions[2]->operands);
+        self::assertSame($name, $instructions[2]->name);
+        self::assertSame($result, $instructions[2]->result);
+    }
+
+    /**
+     * @return iterable<string,array{string,string}>
+     */
+    public static function providerPureExpressions(): iterable
+    {
+        yield 'binary' => ['binary','-'];
+        yield 'intrinsic' => ['intrinsic','domain.join'];
+        yield 'array read' => ['array-read',''];
+    }
+
+    public function testExpressionRejectsUnsupportedOpcodes(): void
+    {
+        $compiler = new \Deriver\Internal\Model\PlanCompiler(new \Deriver\Api\Reference\SourceRef('s', 'model:sample', 0, 1));
+        $this->expectException(\Deriver\Api\InvalidInputException::class);
+        $this->expectExceptionMessage('MODEL_CONTRACT_VIOLATION: unsupported expression missing');
+        $compiler->expression(new \Deriver\Model\Plan\Expression('missing'));
+    }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testChoiceJoinsFallingThroughBranchesBeforeTheCommonReturn(): void
+    {
+        $chosen = \Deriver\Model\Plan\Expression::parameter('@chosen');
+        $plan = new \Deriver\Model\Plan\SemanticPlan([
+            \Deriver\Model\Plan\Action::choice(\Deriver\Model\Plan\Expression::parameter('flag'), [
+                new \Deriver\Model\Plan\Action('write-parameter', [\Deriver\Model\Plan\Expression::literal(\Deriver\Value\Term::constant('yes'))], '@chosen'),
+            ], [
+                new \Deriver\Model\Plan\Action('write-parameter', [\Deriver\Model\Plan\Expression::literal(\Deriver\Value\Term::constant('no'))], '@chosen'),
+            ]),
+            \Deriver\Model\Plan\Action::returns($chosen),
+        ]);
+        $model = new \Tests\Fake\PlanModel(new \Deriver\Model\ModelDescriptor('sample', '1', 'remote', new \Deriver\Model\Signature\Signature([new \Deriver\Model\Signature\Parameter('flag', 'bool')])), $plan);
+        $session = \Tests\Fake\Analysis::session('<?php function target(){return [remote(true),remote(false)];}', new \Deriver\Api\Project\Configuration(models:[$model]));
+        $result = $session->derive(new \Deriver\Api\Query\ReturnQuery('target'));
+        self::assertSame([], $result->frontiers);
+        self::assertSame([], $result->exceptionalOutcomes);
+        self::assertCount(1, $result->normalOutcomes);
+        self::assertSame(['yes','no'], $result->normalOutcomes[0]->values['return']->native());
+    }
+
+    public function testEmitRetainsArgumentsAttributesAndPerBlockProvenance(): void
+    {
+        $at = new \Deriver\Api\Reference\SourceRef('s', 'model:sample', 0, 1);
+        $compiler = new \Deriver\Internal\Model\PlanCompiler($at);
+        $argument = new \Deriver\Internal\IR\Argument('input', 'named', true);
+        $first = $compiler->emit('call', ['callable'], 'target', arguments:[$argument], attributes:['by-reference' => true]);
+        $compiler->current = 1;
+        $second = $compiler->emit('copy', [$first]);
+        self::assertSame('m0', $first);
+        self::assertSame('m1', $second);
+        self::assertSame('model:sample:m0', $compiler->instructions[0][0]->id);
+        self::assertSame($at, $compiler->instructions[0][0]->source);
+        self::assertSame('call', $compiler->instructions[0][0]->operation);
+        self::assertSame('target', $compiler->instructions[0][0]->name);
+        self::assertSame([$argument], $compiler->instructions[0][0]->arguments);
+        self::assertSame(['by-reference' => true], $compiler->instructions[0][0]->attributes);
+        self::assertSame('model:sample:m1', $compiler->instructions[1][0]->id);
+        self::assertSame([$first], $compiler->instructions[1][0]->operands);
+        self::assertCount(1, $compiler->instructions[0]);
+        self::assertCount(1, $compiler->instructions[1]);
     }
 }

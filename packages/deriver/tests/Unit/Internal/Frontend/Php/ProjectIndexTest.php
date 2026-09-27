@@ -57,6 +57,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Frontend\Php\ExpressionLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\GraphBuilder::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Lowering::class)]
+#[UsesClass(ProjectIndex::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Source\ConstantSignatures::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Source\LineMap::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Source\MagicContext::class)]

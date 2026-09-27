@@ -90,7 +90,11 @@ final class Memory
         $value = $this->dereference($this->cells[$location->root] ?? new Term('uninitialized'));
         foreach ($location->path as $key) {
             if ($value->kind !== 'array') {
-                return $value->kind === 'uninitialized' ? $value : new Term('array-read', operands: [$value, Term::constant($key)]);
+                if ($value->kind === 'uninitialized') {
+                    return $value;
+                }
+                $value = new Term('array-read', operands: [$value, Term::constant($key)]);
+                continue;
             }
             $value = $this->element($value, $key);
         }

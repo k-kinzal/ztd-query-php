@@ -307,4 +307,213 @@ final class MemoryTest extends TestCase
         self::assertTrue($memory->read(new \Deriver\Internal\Memory\Location($reference))->secret);
     }
 
+    public function testFreshSeparatesAllocationCategoriesAcrossOneMonotonicSequence(): void
+    {
+        $memory = new \Deriver\Internal\Memory\Memory();
+        self::assertSame('object:0', $memory->fresh('object'));
+        self::assertSame('cell:1', $memory->fresh('cell'));
+        self::assertSame('object:2', $memory->fresh('object'));
+        self::assertSame(3, $memory->sequence);
+    }
+
+    public function testReadKeepsUnknownAddressesOpaqueEvenWhenTheirRootContainsAKnownValue(): void
+    {
+        $memory = new \Deriver\Internal\Memory\Memory();
+        $memory->cells['a'] = \Deriver\Value\Term::constant(1);
+        $value = $memory->read(new \Deriver\Internal\Memory\Location('a', unknown:true));
+        self::assertSame('opaque', $value->kind);
+        self::assertSame('UNKNOWN_LOCATION', $value->literal);
+        self::assertSame('partial', $value->attributes['dependencyCoverage']);
+    }
+
+    public function testReadRetainsAResidualArrayAccessAndMissingStorage(): void
+    {
+        $memory = new \Deriver\Internal\Memory\Memory();
+        $parameter = \Deriver\Value\Term::parameter('value');
+        $memory->cells['a'] = $parameter;
+        $value = $memory->read(new \Deriver\Internal\Memory\Location('a', ['key']));
+        self::assertSame('array-read', $value->kind);
+        self::assertSame($parameter, $value->operands[0]);
+        self::assertSame('key', $value->operands[1]->literal);
+        self::assertSame('uninitialized', $memory->read(new \Deriver\Internal\Memory\Location('missing', ['nested','key']))->kind);
+    }
+
+    public function testElementTreatsAnUnmarkedShapeAsClosedAndPublic(): void
+    {
+        $memory = new \Deriver\Internal\Memory\Memory();
+        $array = new \Deriver\Value\Term('array', operands:['key' => \Deriver\Value\Term::constant(1)]);
+        self::assertFalse($memory->element($array, 'key')->secret);
+        self::assertSame('uninitialized', $memory->element($array, 'missing')->kind);
+        self::assertFalse($memory->element($array, 'missing')->secret);
+    }
+
+    public function testDereferencePreservesPublicReferencesAndMarksCyclesAsIncomplete(): void
+    {
+        $memory = new \Deriver\Internal\Memory\Memory();
+        $value = \Deriver\Value\Term::constant('public');
+        $memory->cells['a'] = new \Deriver\Value\Term('cell', 'b');
+        $memory->cells['b'] = $value;
+        self::assertSame($value, $memory->dereference(new \Deriver\Value\Term('cell', 'a')));
+        $memory->cells['b'] = new \Deriver\Value\Term('cell', 'a');
+        $cycle = $memory->dereference(new \Deriver\Value\Term('cell', 'a'));
+        self::assertSame('opaque', $cycle->kind);
+        self::assertSame('CYCLIC_REFERENCE', $cycle->literal);
+        self::assertSame(['type' => 'mixed','dependencyCoverage' => 'partial'], $cycle->attributes);
+        self::assertFalse($cycle->secret);
+        self::assertSame('uninitialized', $memory->dereference(new \Deriver\Value\Term('cell', 'missing'))->kind);
+    }
+
+    public function testWriteTracksEveryVersionAndRetainsUnknownWriteDependencies(): void
+    {
+        $memory = new \Deriver\Internal\Memory\Memory();
+        $location = new \Deriver\Internal\Memory\Location('new');
+        $memory->write($location, \Deriver\Value\Term::constant(1));
+        $first = $memory->versions['new'];
+        $memory->write($location, \Deriver\Value\Term::constant(2));
+        $second = $memory->versions['new'];
+        $dependency = \Deriver\Value\Term::constant('private', true);
+        $memory->write(new \Deriver\Internal\Memory\Location('new', unknown:true), $dependency);
+        self::assertSame(1, $first);
+        self::assertSame(2, $second);
+        self::assertSame(3, $memory->versions['new']);
+        self::assertSame('UNKNOWN_WRITE', $memory->cells['new']->literal);
+        self::assertSame([$dependency], $memory->cells['new']->operands);
+        self::assertTrue($memory->cells['new']->isSecret());
+    }
+
+    public function testWritePathFollowsRootAliasesAndUpdatesTheirLiveArrayCursor(): void
+    {
+        $memory = new \Deriver\Internal\Memory\Memory();
+        $memory->cells['alias'] = new \Deriver\Value\Term('cell', 'array');
+        $memory->cells['array'] = \Deriver\Value\Term::fromNative([10,20]);
+        $memory->liveArrays['cursor'] = new \Deriver\Internal\Memory\LiveArray(new \Deriver\Internal\Memory\Location('array'), [1], 0);
+        $memory->writePath('alias', [0], \Deriver\Value\Term::constant(30));
+        $afterElement = $memory->liveArrays['cursor']->remaining;
+        $memory->writePath('alias', [], \Deriver\Value\Term::fromNative([40,50]));
+        self::assertSame([1], $afterElement);
+        self::assertSame([0,1], $memory->liveArrays['cursor']->remaining);
+        self::assertSame([40,50], $memory->read(new \Deriver\Internal\Memory\Location('alias'))->native());
+        self::assertSame('cell', $memory->cells['alias']->kind);
+        self::assertSame('array', $memory->cells['alias']->literal);
+    }
+
+    public function testReplaceKeepsAReferenceWrapperAndReplacesTheReferencedArray(): void
+    {
+        $memory = new \Deriver\Internal\Memory\Memory();
+        $memory->cells['array'] = \Deriver\Value\Term::fromNative([10,20]);
+        $memory->liveArrays['cursor'] = new \Deriver\Internal\Memory\LiveArray(new \Deriver\Internal\Memory\Location('array'), [1], 0);
+        $reference = new \Deriver\Value\Term('cell', 'array');
+        $result = $memory->replace($reference, [], \Deriver\Value\Term::fromNative([30,40]));
+        self::assertSame($reference, $result);
+        self::assertSame([30,40], $memory->cells['array']->native());
+        self::assertSame([0,1], $memory->liveArrays['cursor']->remaining);
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerReplacementBases')]
+    public function testReplaceDistinguishesEmptyStorageFromUnknownExistingKeys(\Deriver\Value\Term $before, bool $open): void
+    {
+        $result = (new \Deriver\Internal\Memory\Memory())->replace($before, ['nested','key'], \Deriver\Value\Term::constant(7));
+        self::assertSame('array', $result->kind);
+        self::assertSame($open, $result->attributes['open']);
+        self::assertSame(false, $result->operands['nested']->attributes['open']);
+        self::assertSame(7, $result->operands['nested']->operands['key']->literal);
+    }
+
+    /**
+     * @return iterable<string,array{\Deriver\Value\Term,bool}>
+     */
+    public static function providerReplacementBases(): iterable
+    {
+        yield 'uninitialized' => [new \Deriver\Value\Term('uninitialized'),false];
+        yield 'null' => [\Deriver\Value\Term::constant(null),false];
+        yield 'unknown parameter' => [\Deriver\Value\Term::parameter('x'),true];
+        yield 'known closed array' => [\Deriver\Value\Term::fromNative(['other' => 1]),false];
+        yield 'open array' => [\Deriver\Value\Term::array([], true),true];
+    }
+
+    public function testReferenceInitializesMissingStorageAndFollowsExistingRootAliases(): void
+    {
+        $memory = new \Deriver\Internal\Memory\Memory();
+        $memory->cells['alias'] = new \Deriver\Value\Term('cell', 'target');
+        $root = $memory->reference(new \Deriver\Internal\Memory\Location('alias'));
+        self::assertSame('target', $root);
+        self::assertSame('constant', $memory->cells['target']->kind);
+        self::assertNull($memory->cells['target']->literal);
+        self::assertSame('target', $memory->cells['alias']->literal);
+        self::assertSame('unseen', $memory->reference(new \Deriver\Internal\Memory\Location('unseen', unknown:true)));
+        self::assertArrayNotHasKey('unseen', $memory->cells);
+    }
+
+    public function testReferenceTerminatesForCyclesAndDoesNotMistakeStringsForCellLinks(): void
+    {
+        $memory = new \Deriver\Internal\Memory\Memory();
+        $memory->cells['a'] = new \Deriver\Value\Term('cell', 'b');
+        $memory->cells['b'] = new \Deriver\Value\Term('cell', 'a');
+        $memory->cells['text'] = \Deriver\Value\Term::constant('a');
+        self::assertSame('a', $memory->reference(new \Deriver\Internal\Memory\Location('a')));
+        self::assertSame('text', $memory->reference(new \Deriver\Internal\Memory\Location('text')));
+    }
+
+    public function testReferenceMaterializesStringElementsWithoutMarkingPublicCellsSecret(): void
+    {
+        $memory = new \Deriver\Internal\Memory\Memory();
+        $array = $memory->allocate(\Deriver\Value\Term::fromNative(['key' => 'text']));
+        $location = new \Deriver\Internal\Memory\Location($array->root, ['key']);
+        $first = $memory->reference($location);
+        $second = $memory->reference($location);
+        self::assertSame($first, $second);
+        self::assertSame('text', $memory->cells[$first]->literal);
+        self::assertSame('constant', $memory->cells[$first]->kind);
+        self::assertFalse($memory->cells[$first]->secret);
+        self::assertSame('cell', $memory->raw($location)->kind);
+    }
+
+    public function testRemoveRootLeavesOtherCellsUntouched(): void
+    {
+        $memory = new \Deriver\Internal\Memory\Memory();
+        $memory->cells['a'] = \Deriver\Value\Term::constant(1);
+        $memory->cells['b'] = \Deriver\Value\Term::constant(2);
+        $memory->remove(new \Deriver\Internal\Memory\Location('a'));
+        self::assertSame(['b'], array_keys($memory->cells));
+        self::assertSame(2, $memory->cells['b']->literal);
+    }
+
+    public function testRemoveRetainsOpenShapeMetadataAndDoesNotRestartLiveIteration(): void
+    {
+        $memory = new \Deriver\Internal\Memory\Memory();
+        $memory->cells['a'] = new \Deriver\Value\Term('array', operands:[0 => \Deriver\Value\Term::constant(10),1 => \Deriver\Value\Term::constant(20),2 => \Deriver\Value\Term::constant(30)], attributes:['open' => true,'next' => 8], secret:true);
+        $memory->liveArrays['cursor'] = new \Deriver\Internal\Memory\LiveArray(new \Deriver\Internal\Memory\Location('a'), [2], 1);
+        $memory->remove(new \Deriver\Internal\Memory\Location('a', [1]));
+        self::assertSame(['open' => true,'next' => null], $memory->cells['a']->attributes);
+        self::assertTrue($memory->cells['a']->secret);
+        self::assertSame([0,2], array_keys($memory->cells['a']->operands));
+        self::assertSame([2], $memory->liveArrays['cursor']->remaining);
+    }
+
+    public function testSynchronizeChangesOnlyCursorsBoundToTheMutatedRoot(): void
+    {
+        $memory = new \Deriver\Internal\Memory\Memory();
+        $before = \Deriver\Value\Term::fromNative([1,2]);
+        $after = \Deriver\Value\Term::fromNative([3,4,5]);
+        $cursor = new \Deriver\Internal\Memory\LiveArray(new \Deriver\Internal\Memory\Location('a'), [1], 0);
+        $other = new \Deriver\Internal\Memory\LiveArray(new \Deriver\Internal\Memory\Location('b'), [1], 0);
+        $memory->liveArrays = ['chosen' => $cursor,'other' => $other];
+        $memory->synchronize('a', $before, $after, false);
+        self::assertSame([1,2], $memory->liveArrays['chosen']->remaining);
+        self::assertSame($other, $memory->liveArrays['other']);
+        self::assertSame([1], $cursor->remaining);
+    }
+
+    public function testReadKeepsEveryKeyInAnUnresolvedNestedPath(): void
+    {
+        $memory = new \Deriver\Internal\Memory\Memory();
+        $input = \Deriver\Value\Term::parameter('record');
+        $memory->cells['a'] = $input;
+        $value = $memory->read(new \Deriver\Internal\Memory\Location('a', ['outer','inner']));
+        self::assertSame('array-read', $value->kind);
+        self::assertSame('inner', $value->operands[1]->literal);
+        self::assertSame('array-read', $value->operands[0]->kind);
+        self::assertSame('outer', $value->operands[0]->operands[1]->literal);
+        self::assertSame($input, $value->operands[0]->operands[0]);
+    }
 }
