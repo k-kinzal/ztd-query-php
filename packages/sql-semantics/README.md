@@ -1,8 +1,9 @@
 # SQL Semantics
 
+[![Packagist Downloads](https://img.shields.io/packagist/dt/k-kinzal/sql-semantics.svg?label=Packagist)](https://packagist.org/packages/k-kinzal/sql-semantics)
+[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docs](https://img.shields.io/badge/docs-sql--semantics-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics/)
-[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
 SQL Semantics is the semantic phase of a database front end for MySQL, PostgreSQL, and SQLite. It reads SQL as the server reads it: with the grammar of one release, under the session settings that change tokenization, and with the parameter markers the statement was written for. Every statement of the shipped grammars becomes an immutable, typed statement model that writes the SQL back, can be walked and rewritten without naming its classes, and can be composed from PHP values under stable names. A statement analyzed with the statements it depends on, the declarations that came before it, also resolves every table name it writes. No database connection is needed. This package is the shared runtime; install it through the package of your database.

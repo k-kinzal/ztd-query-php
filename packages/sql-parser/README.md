@@ -1,8 +1,9 @@
 # SQL Parser
 
+[![Packagist Downloads](https://img.shields.io/packagist/dt/k-kinzal/sql-parser.svg?label=Packagist)](https://packagist.org/packages/k-kinzal/sql-parser)
+[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docs](https://img.shields.io/badge/docs-sql--parser-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-parser/)
-[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
 SQL Parser is a set of LALR(1) parsers for MySQL, PostgreSQL, and SQLite written in PHP. Each parser is generated from the official grammar of a server version (`sql_yacc.yy` for MySQL, `gram.y` for PostgreSQL, and `parse.y` for SQLite), and its lexer is a port of the server's own scanner, so text is tokenized and parsed the way the server does it. The syntax tree names the nonterminals of the upstream grammar, and parsing is lossless: a tree writes back the text it was parsed from, byte for byte, including comments and whitespace.

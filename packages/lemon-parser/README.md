@@ -1,8 +1,9 @@
 # Lemon Parser
 
+[![Packagist Downloads](https://img.shields.io/packagist/dt/k-kinzal/lemon-parser.svg?label=Packagist)](https://packagist.org/packages/k-kinzal/lemon-parser)
+[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docs](https://img.shields.io/badge/docs-lemon--parser-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/lemon-parser/)
-[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
 Lemon Parser reads grammar files of the [Lemon parser generator](https://sqlite.org/lemon.html) into a syntax tree that keeps everything the file says, with the position of each part. It reads the language the Lemon manual defines, so a file Lemon accepts is read as Lemon reads it and a file Lemon rejects raises an error with Lemon's message. The manual is the specification, and [spec/features](spec/features) states it clause by clause as scenarios that run the parser.
