@@ -133,4 +133,37 @@ final class AnalyzerTest extends TestCase
         $this->expectException($error);
         (new Analyzer(new Language($dialect), $dialect->platform()->searchPath()))->analyzeAll($sql, dependencies: [], declarations: Declarations::Partial);
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith([\SqlSemantics\Platform\MySql\Dialect::MySql, "CREATE TABLE t (a INT NOT NULL DEFAULT 1 COMMENT 'x', b ENUM('p','q') COLLATE utf8mb4_bin, c INT AS (a + 1) STORED, UNIQUE KEY u (b), CHECK (a > 0), FOREIGN KEY (a) REFERENCES p (id)) ENGINE=InnoDB"])]
+    #[\PHPUnit\Framework\Attributes\TestWith([\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, "CREATE TABLE t (a INT NOT NULL DEFAULT 1 PRIMARY KEY, b TEXT COLLATE \"C\" CHECK (b <> ''), c INT GENERATED ALWAYS AS (a + 1) STORED, UNIQUE (b), FOREIGN KEY (a) REFERENCES p (id))"])]
+    #[\PHPUnit\Framework\Attributes\TestWith([SqliteDialect::Sqlite, 'CREATE TABLE t (a INTEGER PRIMARY KEY DEFAULT 1, b TEXT COLLATE NOCASE UNIQUE, c INT AS (a + 1) STORED, CHECK (a > 0), FOREIGN KEY (a) REFERENCES p (id)) STRICT'])]
+    public function testAnalyzeDeclaresTheValuesOfItsOwnCommand(Dialect $dialect, string $sql): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics($dialect);
+        \Tests\Contract\Declared::assertValuesOfTheCommand($semantics->analyze($sql, [], Declarations::Partial));
+        $users = $semantics->analyze('CREATE TABLE users (id INT, name VARCHAR(10) DEFAULT NULL)');
+        $query = $semantics->analyze('SELECT name FROM users', [$users]);
+        $reference = $query->resolution?->tables()[0];
+        self::assertNotNull($reference);
+        self::assertSame($users, $reference->declaration);
+        $table = $reference->table;
+        self::assertNotNull($table);
+        $held = array_map(spl_object_id(...), iterator_to_array(\SqlSemantics\Statement\Traversal::walk($users->command), false));
+        self::assertContains(spl_object_id($table->source), $held);
+        self::assertContains(spl_object_id($table->columns[1]->source), $held);
+    }
+
+    public function testResolveMakesADependencyDeclareTheValuesOfItsOwnCommand(): void
+    {
+        $language = new Language(SqliteDialect::Sqlite);
+        $analyzer = new Analyzer($language, ['main']);
+        $orders = $analyzer->analyze('CREATE TABLE orders (id INTEGER PRIMARY KEY, total NUMERIC DEFAULT 0)');
+        $tree = $language->parser()->parse('SELECT total FROM orders');
+        $command = $language->values()->command($tree)[0];
+        $resolution = $analyzer->resolve($tree, $command, [$orders]);
+        $reference = $resolution->tables()[0];
+        self::assertSame($orders, $reference->declaration);
+        $held = array_map(spl_object_id(...), iterator_to_array(\SqlSemantics\Statement\Traversal::walk($orders->command), false));
+        self::assertContains(spl_object_id($reference->table?->columns[1]->defaultExpression ?? $command), $held);
+    }
 }

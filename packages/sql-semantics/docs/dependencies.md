@@ -26,9 +26,19 @@ $query->resolution->tables(); // the two references to dependencies
 
 The dependencies are applied in order. A `CREATE TABLE` declares a table with its columns, types, nullability, defaults, generated columns, collations, constraints, and table options, read as `Statement\Declaration\TableDefinition` and available as `$statement->resolution->declarations` and on each reference as `->table`. A `DROP TABLE` removes an earlier declaration, so a later statement that names the table is an error. `CREATE TABLE IF NOT EXISTS` of a table already declared and `DROP TABLE IF EXISTS` of one not declared change nothing; their references are marked `conditional`. A declaration of a table already declared, an unconditional drop of an unknown table, a duplicate column, or a constraint over an unknown column is a `SemanticException` with a stable `reason`.
 
+A declaration is made of the values of the statement that declares it. The `source` of a table, column, or constraint, a column's default, collation, attributes and generation clause, a CHECK expression, the members of an enumeration type, and the table options are values of the statement's `command`, not copies, so a value found in a declaration is found and replaced in the statement by identity:
+
+```php
+$builder = $semantics->builder();
+$users = $semantics->analyze('CREATE TABLE users (id INT, name VARCHAR(64) DEFAULT NULL)', []);
+$name = $users->resolution->declarations[0]->columns[1];
+$changed = Traversal::rewrite($users->command, static fn (Element $value): Element => $value === $name->defaultValue ? $builder->string('anonymous') : $value);
+$users->withCommand($changed)->toString(); // "CREATE TABLE users ( id INT , name VARCHAR( 64 ) DEFAULT 'anonymous' )"
+```
+
 A declaration whose columns come from another relation, such as `CREATE TABLE ... LIKE`, `CREATE TABLE ... AS SELECT`, or a partition of another table, declares its name but no readable table: its reference is a `Declaration` with a null `table`, and later references to it resolve with a null `table` too. Views, indexes, and other objects that are not tables are neither declared nor referenced. Computing the columns such statements would produce needs query evaluation and is left to the application, which has the statement model to do it from.
 
-A dependency that was analyzed without dependencies is resolved from its own SQL, against the dependencies before it, when it is used, so a plain `analyze('CREATE TABLE ...')` can be passed as a dependency, and its foreign keys refer to the tables declared before it. `analyzeAll()` with dependencies resolves each statement of a script against the dependencies and the statements before it, which is how a script of declarations is read.
+A dependency that was analyzed without dependencies is resolved from its own SQL, against the dependencies before it, when it is used, so a plain `analyze('CREATE TABLE ...')` can be passed as a dependency, and its foreign keys refer to the tables declared before it. Its declarations are made of the values of its own command too, and a reference to a table it declares names that dependency, the statement that was passed. `analyzeAll()` with dependencies resolves each statement of a script against the dependencies and the statements before it, which is how a script of declarations is read.
 
 ## Types
 

@@ -12,9 +12,6 @@ use SqlSemantics\Core\Language;
 use SqlSemantics\Core\Verification\Readback;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect as MySql;
-use SqlSemantics\Platform\Sqlite\Dialect as Sqlite;
-use SqlSemantics\Statement\Model\Sqlite\Value\CmdWithCommitEndTransOpt_ccca6149 as Commit;
-use SqlSemantics\Statement\Model\Sqlite\Value\TransOptWith_6ac05548 as NoTransaction;
 use SqlSemantics\Statement\StatementException;
 
 #[CoversClass(Readback::class)]
@@ -51,15 +48,5 @@ final class ReadbackTest extends TestCase
         $this->expectException(StatementException::class);
         $this->expectExceptionMessage('The statement is not SQL of mysql-5.6.51');
         (new Readback(new Language(MySql::MySql, 'mysql-5.6.51')))->check($statement);
-    }
-
-    public function testEnclosesLooksThroughFormsThatWriteNothingMore(): void
-    {
-        $language = new Language(Sqlite::Sqlite);
-        $read = $language->values()->command($language->parser()->parse('COMMIT'))[0];
-        $readback = new Readback($language);
-        self::assertTrue($readback->encloses($read, new Commit('COMMIT', new NoTransaction())));
-        self::assertTrue($readback->encloses($read, $read));
-        self::assertFalse($readback->encloses($read, new Commit('END', new NoTransaction())));
     }
 }

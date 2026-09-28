@@ -8,6 +8,7 @@ use Error;
 use SqlSemantics\Core\Verification\Losslessness;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Statement\ReferenceKind;
+use SqlSemantics\Statement\Traversal;
 use SqlSemantics\Statement\Writer;
 use Throwable;
 
@@ -43,6 +44,23 @@ final class SchemaTarget
             $again = $this->semantics->analyze($printed, [])->resolution;
             if ($again === null || serialize($again->declarations) !== $before || serialize($resolution->declarations) !== $before) {
                 throw new Error('The declaration is not stable across reconstruction.');
+            }
+            $held = [];
+            foreach (Traversal::walk($statement->command) as $value) {
+                $held[spl_object_id($value)] = true;
+            }
+            $table = $resolution->declarations[0];
+            $declared = [$table->source, ...$table->options];
+            foreach ($table->columns as $column) {
+                array_push($declared, $column->source, $column->defaultExpression, $column->defaultValue, $column->collation, $column->generation?->clause, $column->generation?->expression, ...$column->attributes, ...$column->type->members);
+            }
+            foreach ($table->constraints as $constraint) {
+                array_push($declared, $constraint->source, $constraint->expression);
+            }
+            foreach ($declared as $value) {
+                if ($value !== null && !isset($held[spl_object_id($value)])) {
+                    throw new Error('A declared value is not a value of the statement: ' . $value::class);
+                }
             }
             if (str_contains($before, 'SqlParser\\')) {
                 throw new Error('The declaration retained a parser object.');

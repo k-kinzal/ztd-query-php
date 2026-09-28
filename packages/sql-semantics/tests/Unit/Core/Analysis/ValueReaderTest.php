@@ -27,6 +27,7 @@ use WeakReference;
 #[UsesClass(\SqlSemantics\Core\Ast\DialectParser::class)]
 #[UsesClass(\SqlSemantics\Core\Language::class)]
 #[UsesClass(\SqlSemantics\Statement\Equality::class)]
+#[UsesClass(\SqlSemantics\Statement\Traversal::class)]
 #[UsesClass(\SqlSemantics\Platform\MySql\Platform::class)]
 #[UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
 #[UsesClass(\SqlSemantics\Platform\Sqlite\Platform::class)]
@@ -98,5 +99,18 @@ SELECT /* a */ 1 /* end */'));
         self::assertSame(['/* a /* nested */ b */'], $comments->leading);
         self::assertSame(['-- d'], $comments->trailing);
         self::assertSame(['/* c */'], $comments->before($tree->tokens()[1]));
+    }
+
+    public function testAdoptMakesTheNodesOfATreeAnswerTheValuesOfTheCommand(): void
+    {
+        $language = new \SqlSemantics\Core\Language(SqliteDialect::Sqlite);
+        $command = $language->values()->command($language->parser()->parse('SELECT a FROM t'))[0];
+        $tree = $language->parser()->parse(\SqlSemantics\Statement\Writer::render($command));
+        $language->values()->adopt($tree, $command);
+        $held = array_map(spl_object_id(...), iterator_to_array(\SqlSemantics\Statement\Traversal::walk($command), false));
+        $names = $tree->find('nm');
+        self::assertCount(1, $names);
+        self::assertContains(spl_object_id($language->values()->read($names[0])), $held);
+        self::assertContains(spl_object_id($language->values()->read($tree)), $held);
     }
 }

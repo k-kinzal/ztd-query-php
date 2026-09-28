@@ -6,12 +6,14 @@ namespace SqlSemantics\Core\Analysis;
 
 use LogicException;
 use SqlParser\Lexer\SourceException;
+use SqlParser\Parser\Node;
 use SqlSemantics\Core\AnalysisException;
 use SqlSemantics\Core\Ast\DialectParser;
 use SqlSemantics\Core\Ast\Identifiers;
 use SqlSemantics\Core\Ast\SchemaReader;
 use SqlSemantics\Core\Declarations;
 use SqlSemantics\Core\Language;
+use SqlSemantics\Statement\Command;
 use SqlSemantics\Statement\Resolution;
 use SqlSemantics\Statement\Statement;
 use SqlSemantics\Statement\StatementException;
@@ -42,9 +44,6 @@ final class Analyzer
     /**
      * Parses and lowers one statement, resolving its table names against the dependencies when they are given.
      *
-     * A dependency analyzed without dependencies is resolved from its own
-     * SQL against the dependencies before it.
-     *
      * @param list<Statement>|null $dependencies The declarations the statement is read against, in order, or null to structure it only
      * @param Declarations $declarations Whether the dependencies declare every table the statement names
      *
@@ -60,22 +59,48 @@ final class Analyzer
             throw new AnalysisException($error->getMessage(), 0, $error);
         }
         [$command, $comments] = $this->values->command($tree);
-        $resolution = null;
-        if ($dependencies !== null) {
-            $resolved = [];
-            $before = [];
-            foreach ($dependencies as $dependency) {
-                $read = $dependency->resolution ?? $this->analyze($dependency->toString(), $before, $declarations)->resolution ?? new Resolution();
-                $resolved[] = [$dependency, $read];
-                $before[] = $dependency->resolution === null ? new Statement($dependency->syntax, $dependency->command, $dependency->comments, $read) : $dependency;
-            }
-            $resolution = $this->resolver->resolve($tree, $command, $resolved, $declarations);
-        }
+        $resolution = $dependencies === null ? null : $this->resolve($tree, $command, $dependencies, $declarations);
         try {
             return new Statement($this->language, $command, $comments, $resolution);
         } catch (StatementException $error) {
             throw new LogicException('The model of ' . $this->language->version . ' does not write back what it read: ' . $error->getMessage(), 0, $error);
         }
+    }
+
+    /**
+     * Resolves the table names of a command, read from its tree, against the dependencies.
+     *
+     * A dependency analyzed without dependencies is resolved from a tree of
+     * its own SQL against the dependencies before it; the nodes of that tree
+     * answer the values of the dependency's command, so what it declares is
+     * made of the values it holds. A reference to a table a dependency
+     * declares names the dependency given.
+     *
+     * @param list<Statement> $dependencies The declarations the command is read against, in order
+     *
+     * @throws \SqlSemantics\Core\SemanticException When a name resolves to nothing under complete declarations or a declaration conflicts
+     * @throws LogicException When a dependency is not SQL this language reads as itself
+     */
+    public function resolve(Node $tree, Command $command, array $dependencies, Declarations $declarations = Declarations::Complete): Resolution
+    {
+        $resolved = [];
+        $before = [];
+        foreach ($dependencies as $dependency) {
+            $resolution = $dependency->resolution;
+            if ($resolution === null) {
+                try {
+                    $own = $this->parser->parse($dependency->toString());
+                } catch (SourceException $error) {
+                    throw new LogicException('A dependency is not SQL of ' . $this->language->version . ': ' . $error->getMessage(), 0, $error);
+                }
+                $this->values->adopt($own, $dependency->command);
+                $resolution = $this->resolve($own, $dependency->command, $before, $declarations);
+            }
+            $resolved[] = [$dependency, $resolution];
+            $before[] = $dependency->resolution === null ? new Statement($dependency->syntax, $dependency->command, $dependency->comments, $resolution) : $dependency;
+        }
+
+        return $this->resolver->resolve($tree, $command, $resolved, $declarations);
     }
 
     /**

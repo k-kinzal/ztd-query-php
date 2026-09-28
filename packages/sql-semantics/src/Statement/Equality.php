@@ -20,6 +20,10 @@ use UnitEnum;
  * @example Values read from the same SQL are equal
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
  *     \SqlSemantics\Statement\Equality::same($semantics->analyze('SELECT a')->command, $semantics->analyze('select  a')->command) // => true
+ * @example Finding a command inside the envelope of the grammar's start form
+ *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
+ *     $command = $semantics->analyze('SELECT 1')->command;
+ *     \SqlSemantics\Statement\Equality::enclosed($command, $command) === $command // => true
  * @example A different spelling is a different value
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
  *     \SqlSemantics\Statement\Equality::same($semantics->analyze('SELECT a')->command, $semantics->analyze('SELECT A')->command) // => false
@@ -51,5 +55,25 @@ final class Equality
         }
 
         return true;
+    }
+
+    /**
+     * Finds the value equal to another inside a value that encloses it in forms that write nothing more, or answers null.
+     *
+     * The grammar reads a statement into its start form, which ends it with
+     * an optional terminator; a command built without that envelope writes
+     * the same SQL and is the value the envelope holds.
+     */
+    public static function enclosed(Element $outer, Element $inner): ?Element
+    {
+        while (!self::same($outer, $inner)) {
+            $written = array_values(array_filter($outer->children(), static fn (Element $child): bool => Writer::render($child) !== ''));
+            if (count($written) !== 1 || Writer::render($outer) !== Writer::render($written[0])) {
+                return null;
+            }
+            $outer = $written[0];
+        }
+
+        return $outer;
     }
 }
