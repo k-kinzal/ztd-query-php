@@ -301,4 +301,13 @@ final class QueryExecutionTest extends TestCase
         self::assertSame('target', $execution->owner($query));
     }
 
+    public function testInitialStateCapturesGlobalsBeforeEffects(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $configuration = new Configuration(environment: ['global:db' => Term::parameter('db', 'DB')]);
+        $snapshot = new ProjectSnapshot('test', [], [], $configuration->target, false, 'none');
+        $execution = new QueryExecution($context->program, $configuration, $context->models, $snapshot);
+        self::assertSame('DB', $execution->initialState()->memory->cells['global:db']->attributes['type']);
+    }
+
 }

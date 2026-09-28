@@ -35,6 +35,15 @@ use Override;
 final class Session implements AnalysisSession
 {
     /**
+     * @return \Deriver\Model\Metadata\DeclarationLookup Captured declaration facts
+     */
+    #[Override]
+    public function declarations(): \Deriver\Model\Metadata\DeclarationLookup
+    {
+        return new \Deriver\Model\Registration\Declarations($this->program);
+    }
+
+    /**
      * Captured declaration and lazy graph index.
      */
     public readonly ProjectIndex $program;
@@ -91,7 +100,7 @@ final class Session implements AnalysisSession
         ksort($sourceModes);
         $models = [];
         foreach ($this->models->manifest as $descriptor) {
-            $models['model:' . $descriptor->id] = hash('sha256', serialize([$descriptor->version, $descriptor->symbol, $descriptor->priority, $descriptor->replaces, $descriptor->replaceSource, (new SignatureIdentity())->key($descriptor->signature)]));
+            $models['model:' . $descriptor->id] = hash('sha256', serialize([$descriptor->version, $descriptor->symbol, $descriptor->priority, $descriptor->replaces, $descriptor->replaceSource, $descriptor->useSourceSignature, (new SignatureIdentity())->key($descriptor->signature)]));
         }
         $models = [...$models, ...$this->models->extensions->manifest, ...$this->models->state->manifest, ...$this->providerInputs->manifest];
         ksort($models);
@@ -175,7 +184,7 @@ final class Session implements AnalysisSession
     #[Override]
     public function callsTo(string $symbol): array
     {
-        return (new CallObservations($this->program))->find($symbol);
+        return (new CallObservations($this->program, $this->models))->find($symbol);
     }
     /**
      * Returns entries explicitly contributed by registered providers.

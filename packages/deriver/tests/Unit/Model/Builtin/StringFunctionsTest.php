@@ -204,4 +204,11 @@ final class StringFunctionsTest extends TestCase
         self::assertSame('opaque', $result->kind);
         self::assertSame('UNSUPPORTED_MODEL_CASE', $result->literal);
     }
+    public function testValidArgumentsRejectsUnresolvedTrimmingMasks(): void
+    {
+        $functions = new StringFunctions();
+        self::assertFalse($functions->validArguments('ltrim', [Term::constant('x'), Term::parameter('mask', 'string')]));
+        self::assertTrue($functions->validArguments('ucfirst', [Term::constant('x')]));
+    }
+
 }

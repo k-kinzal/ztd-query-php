@@ -49,6 +49,7 @@ final class PureStep
             'magic-constant' => $this->magic($callable, $instruction),
             'array-read' => $this->arrayRead($a, $b, $state),
             'external' => $this->external($instruction, $state),
+            'evaluation-order' => Term::parameter($state->memory->fresh('evaluation-order'), 'bool'),
             'raise' => new Term('throwable', $instruction->name),
             default => $this->context->frontier('UNSUPPORTED_LANGUAGE_FEATURE', $instruction->source, $instruction->operation, [$a, $b]),
         };

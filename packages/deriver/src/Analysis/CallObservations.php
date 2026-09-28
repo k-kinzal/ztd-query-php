@@ -4,10 +4,18 @@ declare(strict_types=1);
 
 namespace Deriver\Analysis;
 
+use Deriver\ControlFlow\CallableGraph;
 use Deriver\ControlFlow\CallableIdentity;
+use Deriver\ControlFlow\Instruction;
 use Deriver\ControlFlow\Program;
+use Deriver\Evaluation\Call\CallResolution;
+use Deriver\Evaluation\Context;
+use Deriver\Model\Registration\Registry;
+use Deriver\Project\Configuration;
+use Deriver\Query\ReturnQuery;
 use Deriver\Reference\ExpressionRef;
 use Deriver\Reference\Observation;
+use Deriver\Reference\SourceRef;
 
 /**
  * Projects source call instructions into stable public observation references.
@@ -17,8 +25,9 @@ final class CallObservations
 {
     /**
      * @param Program $program Captured callable graphs
+     * @param Registry|null $models Captured model selection for namespace fallback
      */
-    public function __construct(public readonly Program $program)
+    public function __construct(public readonly Program $program, public readonly ?Registry $models = null)
     {
     }
 
@@ -30,40 +39,76 @@ final class CallObservations
     public function find(string $symbol): array
     {
         $result = [];
+        $configuration = $this->models->configuration ?? new Configuration();
+        $resolution = new CallResolution(new Context($this->program, new ReturnQuery(''), $configuration, $this->models ?? new Registry($configuration)));
         foreach ($this->program->callOwners($symbol) as $owner) {
             $callable = $this->program->callable($owner);
             if ($callable === null) {
                 continue;
             }
-            $constants = [];
-            $sources = [];
-            foreach ($callable->blocks as $block) {
-                foreach ($block->instructions as $instruction) {
-                    $sources[$instruction->result] = $instruction->source;
-                    if ($instruction->constant !== null) {
-                        $constants[$instruction->result] = $instruction->constant;
-                    }
-                    if (!in_array($instruction->operation, ['invoke', 'invoke-method', 'invoke-static'], true)) {
-                        continue;
-                    }
-                    $index = $instruction->operation === 'invoke' ? 0 : 1;
-                    $name = $constants[$instruction->operands[$index] ?? '']->literal ?? null;
-                    if (!is_string($name) || (new CallableIdentity())->key($name) !== (new CallableIdentity())->key($symbol)) {
-                        continue;
-                    }
-                    $arguments = [];
-                    foreach ($instruction->arguments as $position => $argument) {
-                        $reference = new ExpressionRef($sources[$argument->register] ?? $instruction->source, $owner, $argument->register);
-                        $arguments[$position] = $reference;
-                        if ($argument->name !== null) {
-                            $arguments[$argument->name] = $reference;
-                        }
-                    }
-                    $result[] = new Observation($instruction->source, $owner, $instruction->id, $name, $arguments, new ExpressionRef($instruction->source, $owner, $instruction->result));
-                }
-            }
+            array_push($result, ...$this->within($callable, $symbol, $resolution));
         }
         usort($result, static fn (Observation $a, Observation $b): int => [$a->source->path, $a->source->start, $a->callable] <=> [$b->source->path, $b->source->start, $b->callable]);
         return $result;
     }
+    /**
+     * Collects definitions before looking at calls, independent of block allocation order.
+     * @param CallableGraph $callable Captured owner
+     * @param string $selector Requested function or method name
+     * @param CallResolution $resolution Captured namespace resolution
+     * @return list<Observation> Matching occurrences
+     */
+    public function within(CallableGraph $callable, string $selector, CallResolution $resolution): array
+    {
+        $constants = [];
+        $sources = [];
+        $calls = [];
+        foreach ($callable->blocks as $block) {
+            foreach ($block->instructions as $instruction) {
+                $sources[$instruction->result] = $instruction->source;
+                if ($instruction->constant !== null) {
+                    $constants[$instruction->result] = $instruction->constant;
+                }
+                if (in_array($instruction->operation, ['invoke', 'invoke-method', 'invoke-static'], true)) {
+                    $calls[] = $instruction;
+                }
+            }
+        }
+        $result = [];
+        foreach ($calls as $instruction) {
+            $index = $instruction->operation === 'invoke' ? 0 : 1;
+            $name = $constants[$instruction->operands[$index] ?? '']->literal ?? null;
+            if (!is_string($name)) {
+                continue;
+            }
+            $name = $instruction->operation === 'invoke' ? $resolution->name($name, $instruction) : $name;
+            if ($selector === '*' || (new CallableIdentity())->key($name) === (new CallableIdentity())->key($selector)) {
+                $result[] = $this->observation($callable->symbol, $instruction, $name, $sources);
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Projects evaluated operand references without resolving them a second time.
+     * @param string $owner Declaring callable
+     * @param Instruction $instruction Invocation
+     * @param string $name Resolved function or method spelling
+     * @param array<string, SourceRef> $sources Register source locations
+     * @return Observation Queryable occurrence
+     */
+    public function observation(string $owner, Instruction $instruction, string $name, array $sources): Observation
+    {
+        $arguments = [];
+        foreach ($instruction->arguments as $position => $argument) {
+            $reference = new ExpressionRef($sources[$argument->register] ?? $instruction->source, $owner, $argument->register);
+            $arguments[$position] = $reference;
+            if ($argument->name !== null) {
+                $arguments[$argument->name] = $reference;
+            }
+        }
+        $receiver = $instruction->operation === 'invoke' ? null : new ExpressionRef($sources[$instruction->operands[0]] ?? $instruction->source, $owner, $instruction->operands[0]);
+        return new Observation($instruction->source, $owner, $instruction->id, $name, $arguments, new ExpressionRef($instruction->source, $owner, $instruction->result), $receiver, $instruction->operation);
+    }
+
 }

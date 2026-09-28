@@ -137,4 +137,22 @@ final class CallObservationsTest extends TestCase
         self::assertSame(2, $result->normalOutcomes[0]->values['after']->native());
         self::assertSame([], $result->frontiers);
     }
+    public function testWithinFindsCallsAfterBothOperandOrders(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context('<?php function f($x){return $x;} function target(){return f(1)+f(2);}');
+        $body = $context->program->callable('target');
+        self::assertNotNull($body);
+        $calls = (new CallObservations($context->program))->within($body, 'f', new \Deriver\Evaluation\Call\CallResolution($context));
+        self::assertCount(2, $calls);
+    }
+
+    public function testObservationRetainsTheObjectOperand(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $source = new \Deriver\Reference\SourceRef('s', 'test.php', 0, 1);
+        $instruction = new \Deriver\ControlFlow\Instruction('i', 'invoke-method', $source, 'returned', ['object','name']);
+        $call = (new CallObservations($context->program))->observation('target', $instruction, 'query', []);
+        self::assertSame('object', $call->receiver?->register);
+    }
+
 }

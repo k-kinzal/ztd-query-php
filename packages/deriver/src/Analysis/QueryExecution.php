@@ -92,7 +92,11 @@ final class QueryExecution
             $arguments[] = new PassedArgument($value, is_string($name) ? $name : null);
         }
         $receiver = $body->static ? null : ($entry->receiver ?? ($body->className === '' ? null : Term::parameter('this', $body->className)));
-        $states = (new ArgumentBinding($machine))->bind($body, new State(), $arguments, $receiver, symbolic: $symbolic);
+        $captures = [];
+        foreach ($symbolic ? $body->captures : [] as $name => $byReference) {
+            $captures[$name] = Term::parameter('capture:' . $name);
+        }
+        $states = (new ArgumentBinding($machine))->bind($body, $this->initialState(), $arguments, $receiver, $captures, symbolic: $symbolic);
         foreach ($states as $state) {
             if ($state->completion->kind === 'normal') {
                 $machine->run($body, $state);
@@ -100,6 +104,21 @@ final class QueryExecution
                 (new ObservationCollector($context))->completion($body, $state);
             }
         }
+    }
+
+    /**
+     * Materializes explicit globals before any source operation can mutate shared storage.
+     * @return State Captured entry environment
+     */
+    public function initialState(): State
+    {
+        $state = new State();
+        foreach ($this->configuration->environment as $name => $value) {
+            if (str_starts_with($name, 'global:')) {
+                $state->memory->cells[$name] = $value;
+            }
+        }
+        return $state;
     }
 
     /**

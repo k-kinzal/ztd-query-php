@@ -23,6 +23,12 @@ use Deriver\Result\ResultSet;
 interface AnalysisSession
 {
     /**
+     * Provides declaration and signature facts for selecting entries and building models.
+     * @return Model\Metadata\DeclarationLookup Captured read-only metadata
+     */
+    public function declarations(): Model\Metadata\DeclarationLookup;
+
+    /**
      * Derives a value, state, return, or correlated tuple.
      * @param Query $query Immutable query
      * @return DerivationResult Values and quality assessment

@@ -472,4 +472,15 @@ final class SessionTest extends TestCase
         self::assertArrayHasKey('model:domain:example.policy', $a->snapshot()->models);
     }
 
+    /**
+     * @throws JsonException If the declaration snapshot cannot be encoded
+     */
+    public function testDeclarationsExposeCapturedSignatures(): void
+    {
+        $session = \Tests\Fake\Analysis::session('<?php function target(string $sql){}');
+        $signature = $session->declarations()->signature('target');
+        self::assertNotNull($signature);
+        self::assertSame('sql', $signature->parameters[0]->name);
+    }
+
 }

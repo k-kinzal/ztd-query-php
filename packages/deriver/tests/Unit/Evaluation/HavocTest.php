@@ -327,4 +327,13 @@ final class HavocTest extends TestCase
         self::assertSame('EVAL', $state->memory->cells['global:value']->literal);
         self::assertSame([$global], $state->memory->cells['global:value']->operands);
     }
+    public function testSymbolsInvalidateExistingAndFutureLocalBindings(): void
+    {
+        $state = new State();
+        $state->memory->write($state->local('sql'), Term::constant('old'));
+        (new Havoc())->symbols($state, 'DYNAMIC_VARIABLE_WRITE');
+        self::assertSame('opaque', $state->memory->read($state->local('sql'))->kind);
+        self::assertSame('opaque', $state->memory->read($state->local('new'))->kind);
+    }
+
 }

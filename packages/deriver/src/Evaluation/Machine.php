@@ -205,6 +205,10 @@ final class Machine
      */
     public function terminate(CallableGraph $callable, Terminator $end, State $state): array
     {
+        if ($end->kind === 'exit') {
+            $state->completion = new Completion('exit');
+            return [$state];
+        }
         if ($end->kind === 'branch') {
             return $this->branch($end, $state);
         }

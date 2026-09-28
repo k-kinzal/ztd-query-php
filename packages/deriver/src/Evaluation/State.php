@@ -93,6 +93,10 @@ final class State
      */
     public bool $observed = false;
     /**
+     * Cause of unknown writes to this frame's symbol table, including future bindings.
+     */
+    public ?string $unknownLocals = null;
+    /**
      * Late static binding class.
      */
     public string $lateStaticClass = '';
@@ -142,6 +146,9 @@ final class State
     {
         if (!isset($this->locals[$name])) {
             $initial = in_array($name, ['_GET', '_POST', '_COOKIE', '_SERVER', '_ENV', '_REQUEST', '_FILES', '_SESSION'], true) ? new Term('external', 'superglobal:' . $name, attributes: ['type' => 'array', 'stability' => 'request']) : new Term('uninitialized');
+            if ($this->unknownLocals !== null) {
+                $initial = Term::opaque($this->unknownLocals);
+            }
             $this->locals[$name] = $this->memory->allocate($initial);
         }
         $location = $this->locals[$name];
@@ -157,6 +164,9 @@ final class State
     {
         $cell = $this->memory->reference($source);
         if ($destination->local !== '' && $destination->path === []) {
+            if (str_starts_with($destination->root, 'global:') && $destination->root !== $cell) {
+                $this->memory->writePath($destination->root, [], new Term('cell', $cell), true);
+            }
             $this->locals[$destination->local] = new Location($cell);
             return;
         }

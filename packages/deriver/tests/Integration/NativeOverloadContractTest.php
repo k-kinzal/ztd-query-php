@@ -85,7 +85,8 @@ final class NativeOverloadContractTest extends TestCase
     public function testImplicitConversionsInsideStandardModelsRetainPossibleThrowables(): void
     {
         $result = Analysis::returns('<?php class B{function __toString():string{throw new RuntimeException;}}function target(){return implode(",",[new B]);}');
-        self::assertContains('UNSUPPORTED_MODEL_CASE', array_column($result->frontiers, 'code'));
+        self::assertSame([], $result->frontiers);
+        self::assertSame([], $result->normalOutcomes);
         self::assertNotEmpty($result->exceptionalOutcomes);
     }
 

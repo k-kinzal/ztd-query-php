@@ -50,6 +50,9 @@ final class FunctionModel implements CallModel
     public function describe(CallDescription $call): ModelDecision
     {
         $operands = array_map(static fn (Parameter $parameter): Expression => Expression::parameter($parameter->name), $this->parameters);
+        if ($this->name === 'strval') {
+            return ModelDecision::handled(new SemanticPlan([Action::returns(new Expression('cast', 'string', $operands))]));
+        }
         if ($this->name === 'sort') {
             return ModelDecision::handled(new SemanticPlan([new Action('write-parameter', [new Expression('intrinsic', 'sort-values', $operands)], 'array'), Action::returns(Expression::literal(Term::constant(true)))], writes: ['parameter:array']));
         }

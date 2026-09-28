@@ -92,8 +92,9 @@ final class Dispatch
     {
         $candidates = [];
         foreach ($this->program->classes() as $class) {
-            if (!$class->interface && !$class->abstract && $this->subtype($class->name, $bound)) {
-                $target = $this->method($class->name, $method);
+            $bounds = explode('|', $bound);
+            if (!$class->interface && !$class->abstract && array_filter($bounds, fn (string $type): bool => $this->subtype($class->name, $type)) !== []) {
+                $target = $this->method($class->name, $method) ?? $this->method($class->name, '__call');
                 if ($target !== null) {
                     $candidates[$class->name] = $target;
                 }

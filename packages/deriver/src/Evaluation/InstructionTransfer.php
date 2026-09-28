@@ -86,7 +86,7 @@ final class InstructionTransfer
         if (in_array($op, ['invoke', 'invoke-method', 'invoke-static', 'new', 'clone', 'intrinsic'], true)) {
             return (new CallExecutor($this->machine))->instruction($callable, $instruction, $state);
         }
-        if (in_array($op, ['local', 'element-address', 'field-address', 'static-address', 'unsupported-address', 'returned-address', 'read', 'read-silent', 'write', 'alias', 'reference', 'increment', 'unset', 'global', 'static-local', 'static-initialized'], true)) {
+        if (in_array($op, ['local', 'dynamic-local', 'element-address', 'field-address', 'static-address', 'unsupported-address', 'returned-address', 'read', 'read-silent', 'write', 'alias', 'reference', 'increment', 'unset', 'global', 'static-local', 'static-initialized'], true)) {
             $value = (new MemoryStep($context))->evaluate($callable, $instruction, $state);
         } elseif (in_array($op, ['iterator', 'iterate', 'iterator-key', 'iterator-value', 'iterator-address', 'iterator-release'], true)) {
             $value = (new IterationStep($context))->evaluate($instruction, $state);
@@ -259,8 +259,13 @@ final class InstructionTransfer
         }
         if (in_array($instruction->operation, ['unsupported', 'symbol-table-boundary', 'uncertain-order'], true)) {
             $reason = $instruction->operation === 'uncertain-order' ? 'UNSPECIFIED_EVALUATION_ORDER' : ($instruction->operation === 'symbol-table-boundary' ? $instruction->name : 'UNSUPPORTED_LANGUAGE_FEATURE');
-            (new Havoc())->all($state, $reason);
-            return $context->frontier($reason, $instruction->source, $instruction->name);
+            $values = array_map($state->value(...), $instruction->operands);
+            if (($instruction->attributes['effects'] ?? '') === 'reachable') {
+                (new Havoc())->call($state, $values, [], $reason);
+            } else {
+                (new Havoc())->all($state, $reason);
+            }
+            return $context->frontier($reason, $instruction->source, $instruction->name, $values, (string) ($instruction->attributes['type'] ?? 'mixed'));
         }
         return (new PureStep($context))->evaluate($callable, $instruction, $state);
     }

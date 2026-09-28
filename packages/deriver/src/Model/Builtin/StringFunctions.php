@@ -30,7 +30,7 @@ final class StringFunctions
         if ($name === 'substr') {
             return $this->substring($values);
         }
-        if ($name === 'trim' && (($values[1]->kind ?? '') !== 'constant' || !is_string($values[1]->literal) || !$this->validMask($values[1]->literal))) {
+        if (!$this->validArguments($name, $values)) {
             return Term::opaque('UNSUPPORTED_MODEL_CASE', 'string', $values);
         }
         $a = $values[0] ?? Term::constant(null);
@@ -128,12 +128,12 @@ final class StringFunctions
             return Term::opaque('UNSUPPORTED_MODEL_CASE', 'string', $values);
         }
         $string = $a->literal;
-        if ($name === 'trim' && (($values[1]->kind ?? '') !== 'constant' || !is_string($values[1]->literal) || !$this->validMask($values[1]->literal))) {
+        if (!$this->validArguments($name, $values)) {
             return Term::opaque('UNSUPPORTED_MODEL_CASE', 'string', $values);
         }
-        if ($name === 'strtolower' || $name === 'strtoupper' || $name === 'trim') {
+        if (in_array($name, ['strtolower', 'strtoupper', 'ucfirst', 'lcfirst', 'trim', 'ltrim', 'rtrim'], true)) {
             return Term::constant(match ($name) {
-                'strtolower' => strtr($string, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'strtoupper' => strtr($string, 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 'trim' => trim($string, is_string($values[1]->literal ?? null) ? $values[1]->literal : " \n\r\t\v\0")
+                'strtolower' => strtr($string, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'strtoupper' => strtr($string, 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 'ucfirst' => $string === '' ? '' : strtr($string[0], 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ') . substr($string, 1), 'lcfirst' => $string === '' ? '' : strtr($string[0], 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') . substr($string, 1), 'ltrim' => ltrim($string, (string) $values[1]->literal), 'rtrim' => rtrim($string, (string) $values[1]->literal), 'trim' => trim($string, is_string($values[1]->literal ?? null) ? $values[1]->literal : " \n\r\t\v\0")
             }, $a->isSecret() || ($values[1] ?? Term::constant(null))->isSecret());
         }
         return match ($name) {
@@ -141,6 +141,17 @@ final class StringFunctions
             'explode' => $this->split($values),
             default => Term::opaque('UNSUPPORTED_MODEL_CASE', dependencies: $values),
         };
+    }
+
+    /**
+     * Checks trimming masks without asking the host to emit diagnostics.
+     * @param string $name Transformation
+     * @param list<Term> $values Bound arguments
+     * @return bool Whether the mask is concrete and well formed
+     */
+    public function validArguments(string $name, array $values): bool
+    {
+        return !in_array($name, ['trim', 'ltrim', 'rtrim'], true) || (($values[1]->kind ?? '') === 'constant' && is_string($values[1]->literal) && $this->validMask($values[1]->literal));
     }
 
     /**

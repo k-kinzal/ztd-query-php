@@ -87,8 +87,14 @@ final class StatementLowering
         if ($node instanceof Stmt\Const_ || $node instanceof Stmt\Nop || $node instanceof Stmt\Function_ || $node instanceof Stmt\ClassLike || $node instanceof Stmt\Use_ || $node instanceof Stmt\GroupUse) {
             return;
         }
-        if ($node instanceof Stmt\Namespace_) {
+        if ($node instanceof Stmt\Namespace_ || $node instanceof Stmt\Block) {
             $l->statements($node->stmts);
+            return;
+        }
+        if ($node instanceof Stmt\Echo_) {
+            foreach ($node->exprs as $expression) {
+                $l->graph->emit($expression, 'cast', [$l->expression($expression)], 'string');
+            }
             return;
         }
         if ($node instanceof Stmt\Declare_) {

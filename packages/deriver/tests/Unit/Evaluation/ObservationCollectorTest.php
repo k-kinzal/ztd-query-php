@@ -465,4 +465,12 @@ final class ObservationCollectorTest extends TestCase
         yield 'case variant' => ['n\\TARGET'];
         yield 'qualified variant' => ['\\N\\TARGET'];
     }
+    public function testRepeatedRecognizesAControlFlowCycle(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $source = new SourceRef('s', 'test.php', 0, 1);
+        $body = new CallableGraph('target', [], [new \Deriver\ControlFlow\BasicBlock(0, [], new \Deriver\ControlFlow\Terminator('jump', targets: [0]))], $source);
+        self::assertTrue((new ObservationCollector($context))->repeated($body, 0));
+    }
+
 }
