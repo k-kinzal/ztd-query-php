@@ -10,8 +10,10 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Statement\Command;
 use SqlSemantics\Statement\Comments;
 use SqlSemantics\Statement\Element;
+use SqlSemantics\Statement\Equality;
 use SqlSemantics\Statement\Statement;
 use SqlSemantics\Statement\Syntax;
+use WeakMap;
 
 /**
  * Lowers transient parser nodes into typed SQL arguments and finite options.
@@ -27,12 +29,20 @@ final class ValueReader
     private readonly Comments $none;
 
     /**
+     * The value each node of a tree still in use was lowered into, so a node read again answers the same value.
+     *
+     * @var WeakMap<Node, Element>
+     */
+    private WeakMap $lowered;
+
+    /**
      * @param Vocabulary $vocabulary Complete construction vocabulary of the release
      * @param TriviaReader $trivia Reads the comments of the language
      */
     public function __construct(public readonly Vocabulary $vocabulary, private readonly TriviaReader $trivia = new TriviaReader())
     {
         $this->none = new Comments();
+        $this->lowered = new WeakMap();
     }
 
     /**
@@ -85,6 +95,45 @@ final class ValueReader
     }
 
     /**
+     * Makes the nodes of a tree of a command's own SQL answer the values of that command.
+     *
+     * The tree is lowered, and each value lowered is matched, form by form,
+     * with the value of the command at the same place, so reading a node of
+     * the tree answers the value the command already holds. A command built
+     * without the envelope of the grammar's start form is matched inside it.
+     *
+     * @throws LogicException When the tree is not of the command's SQL
+     */
+    public function adopt(Node $root, Command $command): void
+    {
+        $read = Equality::enclosed($this->command($root)[0], $command);
+        if ($read === null) {
+            throw new LogicException('The tree is not of the SQL of the command it adopts.');
+        }
+        $matched = [];
+        $match = static function (Element $own, Element $copy) use (&$match, &$matched): void {
+            $matched[spl_object_id($copy)] = $own;
+            $copies = $copy->children();
+            foreach ($own->children() as $index => $child) {
+                $match($child, $copies[$index]);
+            }
+        };
+        $match($command, $read);
+        $adopt = function (Node $node) use (&$adopt, $matched): void {
+            $value = $this->lowered[$node] ?? null;
+            if ($value !== null && isset($matched[spl_object_id($value)])) {
+                $this->lowered[$node] = $matched[spl_object_id($value)];
+            }
+            foreach ($node->children as $child) {
+                if ($child instanceof Node) {
+                    $adopt($child);
+                }
+            }
+        };
+        $adopt($root);
+    }
+
+    /**
      * Reads the comments of a complete parse tree as the language reads them.
      */
     public function comments(Node $root): SourceComments
@@ -93,16 +142,19 @@ final class ValueReader
     }
 
     /**
-     * Discards the input node after assigning its values to their named fields.
+     * Answers the value of a node: the one its tree was lowered into, or a value lowered from the node alone.
      *
-     * Comments before the first token and after the last one are not kept; use
-     * statement() for a complete tree.
+     * A node of a tree lowered by command() answers the value the command
+     * holds, so what is read from the tree, such as a declared column, is the
+     * value of the statement itself and can be found and replaced by
+     * identity. Comments before the first token and after the last one are
+     * not kept; use statement() for a complete tree.
      *
      * @throws LogicException When parser and model resources disagree
      */
     public function read(Node $node): Element
     {
-        return $this->lower($node, $this->trivia->read($node), true);
+        return $this->lowered[$node] ?? $this->lower($node, $this->trivia->read($node), true);
     }
 
     /**
@@ -125,7 +177,7 @@ final class ValueReader
                 throw new LogicException('Forwarding model requires a structured value');
             }
 
-            return $this->lower($child, $comments, $firstKept);
+            return $this->lowered[$node] = $this->lower($child, $comments, $firstKept);
         }
         if (isset($recipe['constant'])) {
             $choice = constant($recipe['constant']);
@@ -133,7 +185,7 @@ final class ValueReader
                 throw new LogicException('A model choice must implement Element');
             }
 
-            return $choice;
+            return $this->lowered[$node] = $choice;
         }
         $positions = [];
         $begins = [];
@@ -161,6 +213,6 @@ final class ValueReader
             $arguments[] = $child instanceof Token ? $child->text : $this->lower($child, $comments, isset($begins[$index]));
         }
 
-        return new ($recipe['class'])(...$arguments, comments: $positions === [] ? $this->none : new Comments($positions));
+        return $this->lowered[$node] = new ($recipe['class'])(...$arguments, comments: $positions === [] ? $this->none : new Comments($positions));
     }
 }

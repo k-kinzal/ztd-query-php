@@ -57,4 +57,15 @@ final class EqualityTest extends TestCase
         self::assertFalse(Equality::same($semantics->analyze('SELECT 0x10')->command, $semantics->analyze('SELECT 16')->command));
         self::assertTrue(Equality::same($semantics->analyze('SELECT 1e1')->command, $semantics->analyze('select 1e1')->command));
     }
+
+    public function testEnclosedLooksThroughFormsThatWriteNothingMore(): void
+    {
+        $language = new \SqlSemantics\Core\Language(Dialect::Sqlite);
+        $read = $language->values()->command($language->parser()->parse('COMMIT'))[0];
+        $commit = new Commit('COMMIT', new NoTransaction());
+        self::assertInstanceOf(Commit::class, Equality::enclosed($read, $commit));
+        self::assertTrue(Equality::same($commit, Equality::enclosed($read, $commit)));
+        self::assertSame($read, Equality::enclosed($read, $read));
+        self::assertNull(Equality::enclosed($read, new Commit('END', new NoTransaction())));
+    }
 }
