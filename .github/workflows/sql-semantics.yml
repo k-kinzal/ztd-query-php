@@ -12,6 +12,7 @@ on:
       - 'packages/sql-faker/**'
       - 'packages/sql-formatter/**'
       - 'packages/sql-parser/**'
+      - 'packages/requirements/**'
       - '.github/workflows/sql-semantics.yml'
       - '!packages/**/README.md'
       - '!packages/**/docs/**'
@@ -211,3 +212,47 @@ jobs:
           name: ${{ matrix.package }}-phpbench
           path: packages/${{ matrix.package }}/build/phpbench/
           if-no-files-found: ignore
+
+  requirements:
+    name: Requirements (${{ matrix.package }})
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [sql-semantics-postgres]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: packages/${{ matrix.package }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.3'
+          extensions: dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter, zlib
+          coverage: none
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda # 4.0.0
+        with:
+          working-directory: packages/${{ matrix.package }}
+          dependency-versions: locked
+          composer-options: --prefer-dist
+          require-lock-file: true
+      - name: Install the traceability tool
+        run: composer install --working-dir=../requirements --no-interaction --prefer-dist
+      - name: Validate the specifications against the manuals they quote
+        run: |
+          php ../requirements/bin/requirements lint
+          php ../requirements/bin/requirements format --check
+          php ../requirements/bin/requirements check
+      - name: Run the tests every specification links
+        run: php ../requirements/bin/requirements spec
+      - name: Enforce coverage and keep the checked-in coverage snapshot reproducible
+        run: |
+          php ../requirements/bin/requirements coverage --write-snapshot /tmp/current-snapshot.json
+          cmp requirements-snapshot.json /tmp/current-snapshot.json
+

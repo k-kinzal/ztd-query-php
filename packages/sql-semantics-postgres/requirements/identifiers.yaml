@@ -1,0 +1,171 @@
+$schema: 'https://raw.githubusercontent.com/k-kinzal/ztd-query-php/main/packages/requirements/schemas/definition.schema.json'
+version: 1
+source:
+  id: postgresql-17-identifiers
+  uri: 'https://www.postgresql.org/docs/17/sql-syntax-lexical.html'
+  format: html
+  selector: '#SQL-SYNTAX-IDENTIFIERS p'
+items:
+  -
+    id: PG-IDENT-001
+    statement: 'When a key word is written in any letter case, the analyzer shall read the same key word.'
+    evidence:
+      -
+        selector: '#SQL-SYNTAX-IDENTIFIERS p:nth-of-type(1)'
+        quote: 'Tokens such as SELECT, UPDATE, or VALUES in the example above are examples of key words, that is, words that have a fixed meaning in the SQL language. The tokens MY_TABLE and A are examples of identifiers. They identify names of tables, columns, or other database objects, depending on the command they are used in. Therefore they are sometimes simply called “names”. Key words and identifiers have the same lexical structure, meaning that one cannot know whether a token is an identifier or a key word without knowing the language. A complete list of key words can be found in Appendix C.'
+      -
+        selector: '#SQL-SYNTAX-IDENTIFIERS p:nth-of-type(4)'
+        quote: 'Key words and unquoted identifiers are case-insensitive. Therefore:'
+      -
+        selector: '#SQL-SYNTAX-IDENTIFIERS p:nth-of-type(5)'
+        quote: 'can equivalently be written as:'
+      -
+        selector: '#SQL-SYNTAX-IDENTIFIERS p:nth-of-type(6)'
+        quote: 'A convention often used is to write key words in upper case and names in lower case, e.g.:'
+    tests:
+      -
+        runner: unit
+        target: 'Tests\Unit\NameRulesTest::testAnalyzeReadsKeyWordsInAnyLetterCase'
+    category: identifiers
+  -
+    id: PG-IDENT-002
+    statement: 'When a bare name begins with a letter or an underscore and continues with letters, underscores, digits or dollar signs, the analyzer shall read it as one name.'
+    evidence:
+      -
+        selector: '#SQL-SYNTAX-IDENTIFIERS p:nth-of-type(2)'
+        quote: 'SQL identifiers and key words must begin with a letter (a-z, but also letters with diacritical marks and non-Latin letters) or an underscore (_). Subsequent characters in an identifier or key word can be letters, underscores, digits (0-9), or dollar signs ($). Note that dollar signs are not allowed in identifiers according to the letter of the SQL standard, so their use might render applications less portable. The SQL standard will not define a key word that contains digits or starts or ends with an underscore, so identifiers of this form are safe against possible conflict with future extensions of the standard.'
+    tests:
+      -
+        runner: unit
+        target: 'Tests\Unit\NameRulesTest::testDecodeReadsLettersDigitsUnderscoresAndDollarSignsAsOneBareName'
+    category: identifiers
+  -
+    id: PG-IDENT-003
+    statement: 'When a name is longer than 63 bytes, the analyzer shall read its first 63 bytes, cut back to the end of the last whole character.'
+    evidence:
+      -
+        selector: '#SQL-SYNTAX-IDENTIFIERS p:nth-of-type(3)'
+        quote: 'The system uses no more than NAMEDATALEN-1 bytes of an identifier; longer names can be written in commands, but they will be truncated. By default, NAMEDATALEN is 64 so the maximum identifier length is 63 bytes. If this limit is problematic, it can be raised by changing the NAMEDATALEN constant in src/include/pg_config_manual.h.'
+      -
+        selector: '#SQL-SYNTAX-IDENTIFIERS p:nth-of-type(8)'
+        quote: 'Quoted identifiers can contain any character, except the character with code zero. (To include a double quote, write two double quotes.) This allows constructing table or column names that would otherwise not be possible, such as ones containing spaces or ampersands. The length limitation still applies.'
+    tests:
+      -
+        runner: unit
+        target: 'Tests\Unit\NameRulesTest::testDecodeTruncatesANameToTheBytesTheServerStores'
+    category: identifiers
+  -
+    id: PG-IDENT-004
+    statement: 'When a bare name is read, the analyzer shall fold it to lower case.'
+    evidence:
+      -
+        selector: '#SQL-SYNTAX-IDENTIFIERS p:nth-of-type(9)'
+        quote: 'Quoting an identifier also makes it case-sensitive, whereas unquoted names are always folded to lower case. For example, the identifiers FOO, foo, and "foo" are considered the same by PostgreSQL, but "Foo" and "FOO" are different from these three and each other. (The folding of unquoted names to lower case in PostgreSQL is incompatible with the SQL standard, which says that unquoted names should be folded to upper case. Thus, foo should be equivalent to "FOO" not "foo" according to the standard. If you want to write portable applications you are advised to always quote a particular name or never quote it.)'
+    tests:
+      -
+        runner: unit
+        target: 'Tests\Unit\NameRulesTest::testDecodeFoldsABareNameAndKeepsTheCaseOfAQuotedOne'
+    category: identifiers
+  -
+    id: PG-IDENT-005
+    statement: 'When a quoted name is read, the analyzer shall keep the letter case it is written in.'
+    evidence:
+      -
+        selector: '#SQL-SYNTAX-IDENTIFIERS p:nth-of-type(9)'
+        quote: 'Quoting an identifier also makes it case-sensitive, whereas unquoted names are always folded to lower case. For example, the identifiers FOO, foo, and "foo" are considered the same by PostgreSQL, but "Foo" and "FOO" are different from these three and each other. (The folding of unquoted names to lower case in PostgreSQL is incompatible with the SQL standard, which says that unquoted names should be folded to upper case. Thus, foo should be equivalent to "FOO" not "foo" according to the standard. If you want to write portable applications you are advised to always quote a particular name or never quote it.)'
+    tests:
+      -
+        runner: unit
+        target: 'Tests\Unit\NameRulesTest::testDecodeFoldsABareNameAndKeepsTheCaseOfAQuotedOne'
+    category: identifiers
+  -
+    id: PG-IDENT-006
+    statement: 'When a quoted name spells a key word, the analyzer shall read it as a name.'
+    evidence:
+      -
+        selector: '#SQL-SYNTAX-IDENTIFIERS p:nth-of-type(7)'
+        quote: 'There is a second kind of identifier: the delimited identifier or quoted identifier. It is formed by enclosing an arbitrary sequence of characters in double-quotes ("). A delimited identifier is always an identifier, never a key word. So "select" could be used to refer to a column or table named “select”, whereas an unquoted select would be taken as a key word and would therefore provoke a parse error when used where a table or column name is expected. The example can be written with quoted identifiers like this:'
+    tests:
+      -
+        runner: unit
+        target: 'Tests\Unit\NameRulesTest::testDecodeReadsAQuotedKeyWordAsAName'
+    category: identifiers
+  -
+    id: PG-IDENT-007
+    statement: 'When a quoted name contains two double quotes, the analyzer shall read one double quote.'
+    evidence:
+      -
+        selector: '#SQL-SYNTAX-IDENTIFIERS p:nth-of-type(8)'
+        quote: 'Quoted identifiers can contain any character, except the character with code zero. (To include a double quote, write two double quotes.) This allows constructing table or column names that would otherwise not be possible, such as ones containing spaces or ampersands. The length limitation still applies.'
+    tests:
+      -
+        runner: unit
+        target: 'Tests\Unit\NameRulesTest::testNameDecodesEscapedQuotes'
+      -
+        runner: unit
+        target: 'Tests\Unit\NameRulesTest::testDecodeReadsAQuotedKeyWordAsAName'
+    category: identifiers
+  -
+    id: PG-IDENT-008
+    statement: 'When a Unicode name is read, the analyzer shall replace each escape of a four-digit or six-digit hexadecimal code point with the character of that code point.'
+    evidence:
+      -
+        selector: '#SQL-SYNTAX-IDENTIFIERS p:nth-of-type(10)'
+        quote: 'A variant of quoted identifiers allows including escaped Unicode characters identified by their code points. This variant starts with U& (upper or lower case U followed by ampersand) immediately before the opening double quote, without any spaces in between, for example U&"foo". (Note that this creates an ambiguity with the operator &. Use spaces around the operator to avoid this problem.) Inside the quotes, Unicode characters can be specified in escaped form by writing a backslash followed by the four-digit hexadecimal code point number or alternatively a backslash followed by a plus sign followed by a six-digit hexadecimal code point number. For example, the identifier "data" could be written as'
+      -
+        selector: '#SQL-SYNTAX-IDENTIFIERS p:nth-of-type(11)'
+        quote: 'The following less trivial example writes the Russian word “slon” (elephant) in Cyrillic letters:'
+    tests:
+      -
+        runner: unit
+        target: 'Tests\Unit\NameRulesTest::testDecodeReadsUnicodeEscapesInAUnicodeName'
+    category: identifiers
+  -
+    id: PG-IDENT-009
+    statement: 'When a Unicode name is followed by a UESCAPE clause, the analyzer shall read its escapes with the escape character the clause names.'
+    evidence:
+      -
+        selector: '#SQL-SYNTAX-IDENTIFIERS p:nth-of-type(12)'
+        quote: 'If a different escape character than backslash is desired, it can be specified using the UESCAPE clause after the string, for example:'
+      -
+        selector: '#SQL-SYNTAX-IDENTIFIERS p:nth-of-type(14)'
+        quote: 'To include the escape character in the identifier literally, write it twice.'
+    tests:
+      -
+        runner: unit
+        target: 'Tests\Unit\NameRulesTest::testDecodeReadsTheEscapeCharacterAUescapeClauseNames'
+    category: identifiers
+  -
+    id: PG-IDENT-010
+    statement: 'If a UESCAPE clause names a hexadecimal digit, a plus sign, a quote or a whitespace character, then the analyzer shall reject the statement.'
+    evidence:
+      -
+        selector: '#SQL-SYNTAX-IDENTIFIERS p:nth-of-type(13)'
+        quote: 'The escape character can be any single character other than a hexadecimal digit, the plus sign, a single quote, a double quote, or a whitespace character. Note that the escape character is written in single quotes, not double quotes, after UESCAPE.'
+    tests:
+      -
+        runner: unit
+        target: 'Tests\Unit\NameRulesTest::testAnalyzeRejectsAnEscapeCharacterTheServerRejects'
+    category: identifiers
+  -
+    id: PG-IDENT-011
+    statement: 'When a Unicode name escapes a UTF-16 surrogate pair, the analyzer shall read the one character the pair encodes.'
+    evidence:
+      -
+        selector: '#SQL-SYNTAX-IDENTIFIERS p:nth-of-type(15)'
+        quote: 'Either the 4-digit or the 6-digit escape form can be used to specify UTF-16 surrogate pairs to compose characters with code points larger than U+FFFF, although the availability of the 6-digit form technically makes this unnecessary. (Surrogate pairs are not stored directly, but are combined into a single code point.)'
+    tests:
+      -
+        runner: unit
+        target: 'Tests\Unit\NameRulesTest::testDecodeReadsUnicodeEscapesInAUnicodeName'
+    category: identifiers
+  -
+    id: PG-IDENT-012
+    statement: 'The analyzer shall convert the code points of a Unicode name to a server encoding other than UTF-8.'
+    status: unsupported
+    reason: 'Names are read in UTF-8, the encoding the model assumes for every server; a server in another encoding is not modeled.'
+    evidence:
+      -
+        selector: '#SQL-SYNTAX-IDENTIFIERS p:nth-of-type(16)'
+        quote: "If the server encoding is not UTF-8, the Unicode code point identified by one of these escape sequences is converted to the actual server encoding; an error is reported if that's not possible."
+    category: identifiers

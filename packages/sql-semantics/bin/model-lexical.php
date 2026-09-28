@@ -41,12 +41,15 @@ function lexicalPatterns(string $dialect): array
     }
     if ($dialect === 'PostgreSql') {
         $continuation = '(?:[ \\t\\f\\v]|--[^\\n\\r])*[\\n\\r](?:[ \\t\\n\\r\\f\\v]+|--[^\\n\\r]*[\\n\\r])*';
+        $trivia = '(?:\\s|--[^\\n\\r]*|/\\*[\\s\\S]*?\\*/)*';
+        // The lexer reads a Unicode identifier or string and its UESCAPE clause as one plain token.
+        $uescape = "(?:{$trivia}UESCAPE{$trivia}'[^0-9A-Fa-f+'\"\\s]')?";
 
         return [
-            'IDENT' => $word . '|"(?:[^"]|"")+"', 'UIDENT' => '[uU]&"(?:[^"]|"")+"',
+            'IDENT' => $word . '|"(?:[^"]|"")+"|[uU]&"(?:[^"]|"")+"' . $uescape, 'UIDENT' => '[uU]&"(?:[^"]|"")+"',
             'MODE_TYPE_NAME' => '', 'MODE_PLPGSQL_EXPR' => '', 'MODE_PLPGSQL_ASSIGN1' => '', 'MODE_PLPGSQL_ASSIGN2' => '', 'MODE_PLPGSQL_ASSIGN3' => '',
             'ICONST' => "{$integer}|{$based}", 'FCONST' => "{$number}|{$based}",
-            'SCONST' => "{$single}(?:{$continuation}{$single})*|[eE]{$escaped}(?:{$continuation}{$escaped})*|{$dollar}",
+            'SCONST' => "{$single}(?:{$continuation}{$single})*|[eE]{$escaped}(?:{$continuation}{$escaped})*|{$dollar}|[uU]&{$single}(?:{$continuation}{$single})*{$uescape}",
             'USCONST' => "[uU]&{$single}(?:{$continuation}{$single})*",
             'BCONST' => "[bB]'[^']*'(?:{$continuation}'[^']*')*",
             'XCONST' => "[xX]'[^']*'(?:{$continuation}'[^']*')*",
