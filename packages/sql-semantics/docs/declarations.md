@@ -92,3 +92,8 @@ Parentheses and numeric unary signs can surround a literal. Functions, casts, op
 MySQL NULL attributes apply in writing order. `SERIAL DEFAULT VALUE` implies NOT NULL, AUTO_INCREMENT, and UNIQUE, while an AUTO_INCREMENT column without a key is rejected. PostgreSQL rejects conflicting NULL and NOT NULL attributes. SQLite rejects expressions in table PRIMARY KEY and UNIQUE constraints while accepting collated or parenthesized column names. These checks describe declaration semantics; they do not emulate storage engines or execute queries.
 
 Reuse a `Semantics` instance for a DDL directory so its resolved language, parser, and model vocabulary are reused. Returned statements and declaration values remain independent and immutable. An application may cache those values without sharing writable analysis state.
+
+## Verification
+
+Declarations are compared with the databases themselves. The catalog fuzz target of each database package runs every CREATE TABLE statement sql-faker generates on a disposable server of the release, or an in-memory SQLite database, and requires each statement the server accepts to be analyzed into one declaration that states what the catalog then holds: the table name as stored, and for each column in order its stored name, whether it can hold NULL, whether it is numbered automatically, and the precision and scale an exact decimal type enforces. A statement the server rejects is skipped, because the model reads SQL and does not validate it. Nightly fuzzing runs this against every supported MySQL and PostgreSQL release. It is how PostgreSQL's truncation of names longer than 63 bytes was found: a name is read as the server stores it, cut to the 63 bytes that fit without splitting a character.
+
