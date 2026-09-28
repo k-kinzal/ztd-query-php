@@ -1,21 +1,22 @@
 <?php
 
 /**
- * PHP-Fuzzer entry point: every MySQL statement sql-faker generates must round-trip through semantic statement data.
+ * PHP-Fuzzer entry point: a MySQL statement sql-faker generates, with one value replaced by another
+ * value of the same role, must be refused or be valid SQL that reads back as itself.
  *
  * Usage:
- *   MYSQL_VERSION=8.4.7 vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql_roundtrip.php fuzz/corpus/mysql/
+ *   MYSQL_VERSION=8.4.7 vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql_splice.php fuzz/corpus/mysql-splice/
  *
  * Environment variables:
  *   MYSQL_VERSION     - MySQL release to test (default: 8.4.7)
  *                       Supported: 5.6.51, 5.7.44, 8.0.44, 8.1.0, 8.2.0, 8.3.0, 8.4.7, 9.0.1, 9.1.0
- *   SQLFAKER_COVERAGE - Set to 0 to run without recording grammar coverage under fuzz/coverage/mysql
+ *   SQLFAKER_COVERAGE - Set to 0 to run without recording grammar coverage under fuzz/coverage/mysql-splice
  */
 
 declare(strict_types=1);
 
 use Faker\Factory;
-use Fuzz\Target\RoundTripTarget;
+use Fuzz\Target\SpliceTarget;
 use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Plan\GenerationPlan;
@@ -48,9 +49,9 @@ if (!isset($roots[$mysqlVersion])) {
 }
 
 $grammarVersion = "mysql-{$mysqlVersion}";
-$coverage = getenv('SQLFAKER_COVERAGE') === '0' ? null : new GrammarCoverage(__DIR__ . '/coverage/mysql');
+$coverage = getenv('SQLFAKER_COVERAGE') === '0' ? null : new GrammarCoverage(__DIR__ . '/coverage/mysql-splice');
 $provider = new MySqlProvider(Factory::create(), $grammarVersion, $coverage);
-$target = new RoundTripTarget(
+$target = new SpliceTarget(
     new Semantics(Dialect::MySql, $grammarVersion),
     $grammarVersion,
 );

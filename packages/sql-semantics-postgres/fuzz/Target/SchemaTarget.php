@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Fuzz\Target;
 
 use Error;
-use SqlFormatter\Facade\Formatter;
+use SqlSemantics\Core\Verification\Losslessness;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Statement\ReferenceKind;
 use SqlSemantics\Statement\Writer;
@@ -16,8 +16,11 @@ use Throwable;
  */
 final class SchemaTarget
 {
-    public function __construct(private readonly Semantics $semantics, private readonly Formatter $compact, private readonly string $grammarVersion)
+    private readonly Losslessness $losslessness;
+
+    public function __construct(private readonly Semantics $semantics, private readonly string $grammarVersion)
     {
+        $this->losslessness = new Losslessness($semantics->language());
     }
 
     /**
@@ -33,8 +36,9 @@ final class SchemaTarget
             }
             $before = serialize($resolution->declarations);
             $printed = Writer::render($resolution->declarations[0]->source);
-            if ($this->compact->format($sql) !== $this->compact->format($printed)) {
-                throw new Error('The declaration lost its structure.');
+            $difference = $this->losslessness->difference($sql, $printed);
+            if ($difference !== null) {
+                throw new Error('The declaration lost information: ' . $difference);
             }
             $again = $this->semantics->analyze($printed, [])->resolution;
             if ($again === null || serialize($again->declarations) !== $before || serialize($resolution->declarations) !== $before) {

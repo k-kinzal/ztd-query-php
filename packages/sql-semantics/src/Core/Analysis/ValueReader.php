@@ -7,10 +7,11 @@ namespace SqlSemantics\Core\Analysis;
 use LogicException;
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
-use SqlSemantics\Statement\Assertion;
+use SqlSemantics\Statement\Command;
 use SqlSemantics\Statement\Comments;
 use SqlSemantics\Statement\Element;
 use SqlSemantics\Statement\Statement;
+use SqlSemantics\Statement\Syntax;
 
 /**
  * Lowers transient parser nodes into typed SQL arguments and finite options.
@@ -23,8 +24,6 @@ use SqlSemantics\Statement\Statement;
  */
 final class ValueReader
 {
-    use Assertion;
-
     private readonly Comments $none;
 
     /**
@@ -49,15 +48,31 @@ final class ValueReader
     }
 
     /**
-     * Lowers a complete parse tree into a statement that keeps its comments, and discards the tree.
+     * Lowers a complete parse tree into a statement of the language that keeps its comments, and discards the tree.
      *
      * @throws LogicException When parser and model resources disagree
+     * @throws \SqlSemantics\Statement\StatementException When the lowered statement does not read back as itself in the language
      */
-    public function statement(Node $root): Statement
+    public function statement(Node $root, Syntax $syntax): Statement
+    {
+        [$command, $comments] = $this->command($root);
+
+        return new Statement($syntax, $command, $comments);
+    }
+
+    /**
+     * Lowers a complete parse tree into its command and the comments written around it, and discards the tree.
+     *
+     * @return array{Command, Comments}
+     * @throws LogicException When parser and model resources disagree
+     */
+    public function command(Node $root): array
     {
         $comments = $this->trivia->read($root);
         $command = $this->lower($root, $comments, true);
-        $this->assertCompleteCommand($command);
+        if (!$command instanceof Command) {
+            throw new LogicException('A statement root must be a complete SQL command or command sequence, ' . $command::class . ' given.');
+        }
         $around = [];
         if ($comments->leading !== []) {
             $around[Statement::BEFORE] = $comments->leading;
@@ -66,7 +81,15 @@ final class ValueReader
             $around[Statement::AFTER] = $comments->trailing;
         }
 
-        return new Statement($command, $around === [] ? $this->none : new Comments($around));
+        return [$command, $around === [] ? $this->none : new Comments($around)];
+    }
+
+    /**
+     * Reads the comments of a complete parse tree as the language reads them.
+     */
+    public function comments(Node $root): SourceComments
+    {
+        return $this->trivia->read($root);
     }
 
     /**

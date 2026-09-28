@@ -69,6 +69,19 @@ final class Comments
     }
 
     /**
+     * Answers whether both hold the same comments, byte for byte, before the same symbols.
+     */
+    public function equals(self $other): bool
+    {
+        $texts = $this->texts;
+        $others = $other->texts;
+        ksort($texts);
+        ksort($others);
+
+        return $texts === $others;
+    }
+
+    /**
      * Returns a copy with more comments written before the symbol at a position.
      */
     public function with(int $position, string ...$comments): self

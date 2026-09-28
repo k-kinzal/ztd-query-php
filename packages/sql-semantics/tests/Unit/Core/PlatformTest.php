@@ -129,7 +129,7 @@ final class PlatformTest extends TestCase
         $parser = $platform->parser();
         $value = $platform->values($parser->version())->read($parser->parse('SELECT 42'));
         self::assertInstanceOf(\SqlSemantics\Statement\Command::class, $value);
-        self::assertSame('SELECT 42', (new \SqlSemantics\Statement\Statement($value))->toString());
+        self::assertSame('SELECT 42', (new \SqlSemantics\Statement\Statement(new \SqlSemantics\Core\Language(PostgreSqlDialect::PostgreSql), $value))->toString());
     }
 
     public function testLiteralsSuppliesTheDialectDecoder(): void

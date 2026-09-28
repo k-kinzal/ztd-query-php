@@ -6,8 +6,6 @@ namespace Tests\Unit\Statement;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
-use PHPUnit\Framework\Attributes\PreserveGlobalState;
-use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
@@ -29,6 +27,13 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\SqlSemantics\Platform\Sqlite\Platform::class)]
 #[UsesClass(\SqlSemantics\Statement\Resolution::class)]
 #[UsesClass(\SqlSemantics\Statement\Declaration\Invariant::class)]
+#[UsesClass(\SqlSemantics\Statement\StatementException::class)]
+#[UsesClass(\SqlSemantics\Statement\Equality::class)]
+#[UsesClass(\SqlSemantics\Statement\Traversal::class)]
+#[UsesClass(\SqlSemantics\Core\Language::class)]
+#[UsesClass(\SqlSemantics\Core\Verification\Losslessness::class)]
+#[UsesClass(\SqlSemantics\Core\Verification\TreeComparison::class)]
+#[UsesClass(\SqlSemantics\Core\Verification\Readback::class)]
 #[Medium]
 final class StatementTest extends TestCase
 {
@@ -36,33 +41,72 @@ final class StatementTest extends TestCase
     {
         $command = new \SqlSemantics\Statement\Model\Sqlite\Value\CmdWithCommitEndTransOpt_ccca6149('COMMIT', new \SqlSemantics\Statement\Model\Sqlite\Value\TransOptWith_6ac05548());
         $resolution = new \SqlSemantics\Statement\Resolution();
-        $statement = new \SqlSemantics\Statement\Statement($command, new \SqlSemantics\Statement\Comments(), $resolution);
+        $statement = new \SqlSemantics\Statement\Statement(new \SqlSemantics\Core\Language(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite), $command, new \SqlSemantics\Statement\Comments(), $resolution);
         self::assertSame($resolution, $statement->resolution);
         self::assertNull($statement->withCommand($command)->resolution);
         self::assertSame($resolution, $statement->withComments(new \SqlSemantics\Statement\Comments())->resolution);
     }
 
-    #[RunInSeparateProcess]
-    #[PreserveGlobalState(false)]
-    public function testWithCommandConstructsAndUpdatesWithoutLoadingTheSqlParser(): void
+    public function testWithCommandKeepsTheLanguageOfTheStatement(): void
     {
-        self::assertFalse(class_exists(\SqlParser\Parser\LrParser::class, false));
+        $sqlite = new \SqlSemantics\Core\Language(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
         $command = new \SqlSemantics\Statement\Model\Sqlite\Value\CmdWithCommitEndTransOpt_ccca6149(
             'COMMIT',
             new \SqlSemantics\Statement\Model\Sqlite\Value\TransOptWith_6ac05548(),
         );
-        $statement = new \SqlSemantics\Statement\Statement($command);
+        $statement = new \SqlSemantics\Statement\Statement($sqlite, $command);
         $updated = $statement->withCommand($command->withTransOpt(new \SqlSemantics\Statement\Model\Sqlite\Value\TransOptWithTransaction_ea573324()));
+        self::assertSame($sqlite, $updated->syntax);
         self::assertSame('COMMIT TRANSACTION', $updated->toString());
         self::assertSame('COMMIT', $statement->toString());
-        self::assertFalse(class_exists(\SqlParser\Parser\LrParser::class, false));
+    }
+
+    public function testWithCommandRejectsAReservedWordWrittenAsAName(): void
+    {
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT a FROM t');
+        $renamed = \SqlSemantics\Statement\Traversal::rewrite($statement->command, static fn (\SqlSemantics\Statement\Element $value): \SqlSemantics\Statement\Element => $value instanceof \SqlSemantics\Statement\Model\Sqlite\Value\NmWithIdj_a2015ecf && $value->name === 't' ? $value->withName('select') : $value);
+        self::assertInstanceOf(\SqlSemantics\Statement\Command::class, $renamed);
+        $this->expectException(\SqlSemantics\Statement\StatementException::class);
+        $this->expectExceptionMessage('is not SQL of sqlite-3.47.2');
+        $statement->withCommand($renamed);
+    }
+
+    public function testWithCommandRejectsAnOperandThatWouldBeReadWithAnotherGrouping(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $statement = $semantics->analyze('SELECT 1 UNION SELECT 2');
+        $intersect = $semantics->analyze('SELECT 3 INTERSECT SELECT 4')->command;
+        $operations = \SqlSemantics\Statement\Traversal::find($intersect, \SqlSemantics\Statement\Model\PostgreSql\Value\SimpleSelectWithSelectClauseIntersectSetQuantifierSelectClause_f15b6f33::class);
+        $unions = \SqlSemantics\Statement\Traversal::find($statement->command, \SqlSemantics\Statement\Model\PostgreSql\Value\SimpleSelectWithSelectClauseUnionSetQuantifierSelectClause_80993a60::class);
+        self::assertCount(1, $operations);
+        self::assertCount(1, $unions);
+        $nested = \SqlSemantics\Statement\Traversal::rewrite($intersect, static fn (\SqlSemantics\Statement\Element $value): \SqlSemantics\Statement\Element => $value === $operations[0]->selectClause ? $unions[0] : $value);
+        self::assertInstanceOf(\SqlSemantics\Statement\Command::class, $nested);
+        $this->expectException(\SqlSemantics\Statement\StatementException::class);
+        $this->expectExceptionMessage('read back as other SQL in pg-17.2');
+        $statement->withCommand($nested);
+    }
+
+    public function testWithCommentsRejectsACommentThatWouldBeReadAsSql(): void
+    {
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1');
+        $this->expectException(\SqlSemantics\Statement\StatementException::class);
+        $statement->withComments(new \SqlSemantics\Statement\Comments([\SqlSemantics\Statement\Statement::AFTER => ['# note']]));
+    }
+
+    public function testAStatementOfAnotherReleaseMustBeSqlOfThatRelease(): void
+    {
+        $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.4.7'))->analyze('WITH x AS (SELECT 1) SELECT * FROM x');
+        $this->expectException(\SqlSemantics\Statement\StatementException::class);
+        $this->expectExceptionMessage('mysql-5.6.51');
+        new \SqlSemantics\Statement\Statement(new \SqlSemantics\Core\Language(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.6.51'), $query->command);
     }
 
     public function testWithCommandSharesUnchangedValuesAndPreservesTheOriginal(): void
     {
         $transaction = new \SqlSemantics\Statement\Model\Sqlite\Value\TransOptWithTransaction_ea573324();
         $command = new \SqlSemantics\Statement\Model\Sqlite\Value\CmdWithCommitEndTransOpt_ccca6149('COMMIT', $transaction);
-        $original = new \SqlSemantics\Statement\Statement($command);
+        $original = new \SqlSemantics\Statement\Statement(new \SqlSemantics\Core\Language(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite), $command);
         $updated = $original->withCommand($command->withCommitEnd('END'));
         self::assertSame('COMMIT TRANSACTION', $original->toString());
         self::assertSame('END TRANSACTION', $updated->toString());
@@ -96,8 +140,8 @@ final class StatementTest extends TestCase
     public function testToStringUsesIndependentlyConstructedData(): void
     {
         $transaction = new \SqlSemantics\Statement\Model\Sqlite\Value\TransOptWithTransaction_ea573324();
-        $commit = new \SqlSemantics\Statement\Statement(new \SqlSemantics\Statement\Model\Sqlite\Value\CmdWithCommitEndTransOpt_ccca6149('COMMIT', $transaction));
-        $end = new \SqlSemantics\Statement\Statement(new \SqlSemantics\Statement\Model\Sqlite\Value\CmdWithCommitEndTransOpt_ccca6149('END', $transaction));
+        $commit = new \SqlSemantics\Statement\Statement(new \SqlSemantics\Core\Language(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite), new \SqlSemantics\Statement\Model\Sqlite\Value\CmdWithCommitEndTransOpt_ccca6149('COMMIT', $transaction));
+        $end = new \SqlSemantics\Statement\Statement(new \SqlSemantics\Core\Language(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite), new \SqlSemantics\Statement\Model\Sqlite\Value\CmdWithCommitEndTransOpt_ccca6149('END', $transaction));
         self::assertSame('COMMIT TRANSACTION', $commit->toString());
         self::assertSame('END TRANSACTION', $end->toString());
         self::assertSame('COMMIT TRANSACTION', $commit->toString());
@@ -116,7 +160,7 @@ final class StatementTest extends TestCase
 
     public function testWithCommentsReplacesTheCommentsAroundTheSameCommand(): void
     {
-        $original = new \SqlSemantics\Statement\Statement(new \SqlSemantics\Statement\Model\Sqlite\Value\CmdWithCommitEndTransOpt_ccca6149('COMMIT', new \SqlSemantics\Statement\Model\Sqlite\Value\TransOptWith_6ac05548()));
+        $original = new \SqlSemantics\Statement\Statement(new \SqlSemantics\Core\Language(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite), new \SqlSemantics\Statement\Model\Sqlite\Value\CmdWithCommitEndTransOpt_ccca6149('COMMIT', new \SqlSemantics\Statement\Model\Sqlite\Value\TransOptWith_6ac05548()));
         $updated = $original->withComments(new \SqlSemantics\Statement\Comments([\SqlSemantics\Statement\Statement::BEFORE => ['-- before'], \SqlSemantics\Statement\Statement::AFTER => ['/* after */']]));
         self::assertSame("-- before\nCOMMIT /* after */", $updated->toString());
         self::assertSame('COMMIT', $original->toString());

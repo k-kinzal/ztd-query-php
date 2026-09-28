@@ -50,7 +50,7 @@ final class Templates
             } catch (SourceException $error) {
                 throw new CompositionException('No form for ' . $sql . ' in ' . $this->language->version . ': ' . $error->getMessage(), 0, $error);
             }
-            $this->commands[$sql] = $this->language->values()->statement($tree)->command;
+            $this->commands[$sql] = $this->language->values()->command($tree)[0];
         }
 
         return $this->commands[$sql];

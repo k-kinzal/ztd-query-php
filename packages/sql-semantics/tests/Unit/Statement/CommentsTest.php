@@ -41,4 +41,13 @@ final class CommentsTest extends TestCase
         self::assertSame(['*/'], $updated->before(2));
         self::assertSame([0, 2], $updated->positions());
     }
+
+    public function testEqualsComparesTheCommentsOfEveryPositionByteForByte(): void
+    {
+        self::assertTrue((new Comments([2 => ['-- a'], 0 => ['/* b */']]))->equals(new Comments([0 => ['/* b */'], 2 => ['-- a']])));
+        self::assertTrue((new Comments())->equals(new Comments()));
+        self::assertFalse((new Comments([0 => ['-- a']]))->equals(new Comments([1 => ['-- a']])));
+        self::assertFalse((new Comments([0 => ['-- a']]))->equals(new Comments([0 => ['-- A']])));
+        self::assertFalse((new Comments([0 => ['-- a', '-- b']]))->equals(new Comments([0 => ['-- b', '-- a']])));
+    }
 }

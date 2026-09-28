@@ -25,6 +25,8 @@ use WeakReference;
 #[UsesClass(\SqlSemantics\Core\Analysis\TriviaReader::class)]
 #[UsesClass(\SqlSemantics\Core\Analysis\SourceComments::class)]
 #[UsesClass(\SqlSemantics\Core\Ast\DialectParser::class)]
+#[UsesClass(\SqlSemantics\Core\Language::class)]
+#[UsesClass(\SqlSemantics\Statement\Equality::class)]
 #[UsesClass(\SqlSemantics\Platform\MySql\Platform::class)]
 #[UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
 #[UsesClass(\SqlSemantics\Platform\Sqlite\Platform::class)]
@@ -42,7 +44,7 @@ final class ValueReaderTest extends TestCase
         self::assertNull($treeReference->get());
         self::assertNull($tokenReference->get());
         self::assertInstanceOf(\SqlSemantics\Statement\Command::class, $value);
-        self::assertSame('SELECT 123', (new \SqlSemantics\Statement\Statement($value))->toString());
+        self::assertSame('SELECT 123', (new \SqlSemantics\Statement\Statement(new \SqlSemantics\Core\Language(SqliteDialect::Sqlite), $value))->toString());
     }
 
     public function testFromFileLoadsTheDatabasePackageVocabulary(): void
@@ -50,13 +52,13 @@ final class ValueReaderTest extends TestCase
         $parser = PostgreSqlDialect::PostgreSql->platform()->parser();
         $value = PostgreSqlDialect::PostgreSql->platform()->values($parser->version())->read($parser->parse('VALUES (42)'));
         self::assertInstanceOf(\SqlSemantics\Statement\Command::class, $value);
-        self::assertSame('VALUES( 42 )', (new \SqlSemantics\Statement\Statement($value))->toString());
+        self::assertSame('VALUES( 42 )', (new \SqlSemantics\Statement\Statement(new \SqlSemantics\Core\Language(PostgreSqlDialect::PostgreSql), $value))->toString());
     }
 
     public function testStatementGivesTheOuterCommentsToTheStatementAndTheInnerOnesToValues(): void
     {
         $parser = SqliteDialect::Sqlite->platform()->parser();
-        $statement = SqliteDialect::Sqlite->platform()->values($parser->version())->statement($parser->parse('/* lead */ SELECT /* a */ 1 -- end'));
+        $statement = SqliteDialect::Sqlite->platform()->values($parser->version())->statement($parser->parse('/* lead */ SELECT /* a */ 1 -- end'), new \SqlSemantics\Core\Language(SqliteDialect::Sqlite));
         self::assertSame(['/* lead */'], $statement->comments->before(\SqlSemantics\Statement\Statement::BEFORE));
         self::assertSame(['-- end'], $statement->comments->before(\SqlSemantics\Statement\Statement::AFTER));
         self::assertSame('/* lead */ SELECT /* a */ 1 -- end', $statement->toString());
@@ -76,5 +78,25 @@ final class ValueReaderTest extends TestCase
         self::assertSame(['/* a */'], $select->comments->before(3));
         self::assertSame('SELECT foo /* a */ FROM items', \SqlSemantics\Statement\Writer::render($command));
         self::assertSame('SELECT foo FROM items', \SqlSemantics\Statement\Writer::render($command->withCmdx($select->withComments(new \SqlSemantics\Statement\Comments()))));
+    }
+
+    public function testCommandAnswersTheCommandAndTheCommentsAroundIt(): void
+    {
+        $parser = SqliteDialect::Sqlite->platform()->parser();
+        [$command, $comments] = SqliteDialect::Sqlite->platform()->values($parser->version())->command($parser->parse('-- lead
+SELECT /* a */ 1 /* end */'));
+        self::assertSame('SELECT /* a */ 1', \SqlSemantics\Statement\Writer::render($command));
+        self::assertSame(['-- lead'], $comments->before(\SqlSemantics\Statement\Statement::BEFORE));
+        self::assertSame(['/* end */'], $comments->before(\SqlSemantics\Statement\Statement::AFTER));
+    }
+
+    public function testCommentsReadsTheCommentsOfATreeAsTheLanguageDoes(): void
+    {
+        $parser = PostgreSqlDialect::PostgreSql->platform()->parser();
+        $tree = $parser->parse('/* a /* nested */ b */ SELECT /* c */ 1 -- d');
+        $comments = PostgreSqlDialect::PostgreSql->platform()->values($parser->version())->comments($tree);
+        self::assertSame(['/* a /* nested */ b */'], $comments->leading);
+        self::assertSame(['-- d'], $comments->trailing);
+        self::assertSame(['/* c */'], $comments->before($tree->tokens()[1]));
     }
 }

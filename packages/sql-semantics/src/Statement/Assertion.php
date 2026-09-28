@@ -14,29 +14,18 @@ use InvalidArgumentException;
 trait Assertion
 {
     /**
-     * States that lowering a parser root produced a complete command.
-     *
-     * @phpstan-assert Command $element
-     */
-    protected function assertCompleteCommand(Element $element): void
-    {
-        $this->assert($element instanceof Command, 'A statement root must be a complete SQL command or command sequence.');
-    }
-
-    /**
-     * States that sharing the value graph cannot expose mutable object state.
-     */
-    protected function assertImmutableValueGraph(Element $element): void
-    {
-        $this->assert((new ImmutableGraph())->containsOnlyImmutableValues($element), 'A shared SQL value graph must contain only final objects with readonly scalar or immutable SQL fields.');
-    }
-
-    /**
      * States a condition that must hold for the represented SQL structure.
+     *
+     * The condition is checked in every configuration, so no value exists
+     * whose construction broke one of its invariants.
+     *
+     * @throws InvalidArgumentException When the condition does not hold
      */
     protected function assert(bool $condition, string $description): void
     {
-        assert($condition, $description);
+        if (!$condition) {
+            throw new InvalidArgumentException($description);
+        }
     }
 
     /**

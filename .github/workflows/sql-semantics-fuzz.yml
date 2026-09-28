@@ -52,6 +52,9 @@ jobs:
           - { database: mysql-schema, package: sql-semantics-mysql, script: fuzz_mysql_schema.php, extensions: 'mbstring, pcntl, zlib' }
           - { database: pg-schema, package: sql-semantics-postgres, script: fuzz_pg_schema.php, extensions: 'mbstring, pcntl, zlib' }
           - { database: sqlite-schema, package: sql-semantics-sqlite, script: fuzz_sqlite_schema.php, extensions: 'mbstring, pcntl, zlib' }
+          - { database: mysql-splice, package: sql-semantics-mysql, script: fuzz_mysql_splice.php, extensions: 'mbstring, pcntl, zlib' }
+          - { database: pg-splice, package: sql-semantics-postgres, script: fuzz_pg_splice.php, extensions: 'mbstring, pcntl, zlib' }
+          - { database: sqlite-splice, package: sql-semantics-sqlite, script: fuzz_sqlite_splice.php, extensions: 'mbstring, pcntl, zlib' }
     defaults:
       run:
         working-directory: packages/${{ matrix.target.package }}
@@ -101,13 +104,14 @@ jobs:
         env:
           DATABASE: ${{ matrix.target.database }}
         run: |
-          case "$DATABASE" in
+          seeds="${DATABASE%-splice}"
+          case "$seeds" in
             mysql) version="mysql-$MYSQL_VERSION" ;;
             pg) version="pg-$PG_VERSION" ;;
             sqlite) version='sqlite-3.47.2' ;;
           esac
           mkdir -p "fuzz/corpus/$DATABASE"
-          cp "../sql-faker/seeds/$DATABASE/$version/"* "fuzz/corpus/$DATABASE/"
+          cp "../sql-faker/seeds/$seeds/$version/"* "fuzz/corpus/$DATABASE/"
       - name: Run PHP-Fuzzer
         env:
           FUZZ_MAX_RUNS: ${{ inputs.max_runs || '10000' }}
@@ -149,7 +153,7 @@ jobs:
             const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const body = [
               marker,
-              `PHP-Fuzzer found a statement the ${database} semantic analysis cannot round-trip.`,
+              `PHP-Fuzzer found a statement the ${database} semantic analysis cannot round-trip, or a rewrite it neither refuses nor reads back.`,
               `Commit: ${context.sha}`,
               `Workflow and input artifact: ${run} (sql-semantics-fuzz-${database})`,
               `Run from packages/${process.env.FUZZ_PACKAGE} after extracting the artifact:`,

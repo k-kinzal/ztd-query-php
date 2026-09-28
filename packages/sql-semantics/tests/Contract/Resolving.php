@@ -41,7 +41,7 @@ final class Resolving
         return [
             new Resolver($language, new SchemaReader(new Identifiers($dialect), $platform->searchPath()[0], $language->values()), $platform->searchPath()),
             $tree,
-            $language->values()->statement($tree)->command,
+            $language->values()->command($tree)[0],
             new Relations($platform->names(), $platform->searchPath()),
         ];
     }
