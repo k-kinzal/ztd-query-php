@@ -131,4 +131,13 @@ final class PlatformTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Statement\Command::class, $value);
         self::assertSame('SELECT 42', (new \SqlSemantics\Statement\Statement($value))->toString());
     }
+
+    public function testLiteralsSuppliesTheDialectDecoder(): void
+    {
+        $language = new \SqlSemantics\Core\Language(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $tokens = array_values(array_filter($language->parser()->tokenize("'x'"), static fn ($token): bool => $token->text !== ''));
+        self::assertNotEmpty($tokens);
+        self::assertSame('x', $language->dialect->platform()->literals($language)->decode($tokens)->value());
+    }
+
 }

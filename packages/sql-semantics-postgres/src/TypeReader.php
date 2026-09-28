@@ -11,6 +11,7 @@ use SqlSemantics\Core\Ast\Tree;
 use SqlSemantics\Core\SemanticException;
 use SqlSemantics\Statement\Declaration\Builtin;
 use SqlSemantics\Statement\Declaration\IntervalFields;
+use SqlSemantics\Statement\Declaration\NumericSize;
 use SqlSemantics\Statement\Declaration\TypeDeclaration;
 use SqlSemantics\Statement\Declaration\TypeDescriptor;
 use SqlSemantics\Statement\Declaration\TypeName;
@@ -94,7 +95,7 @@ final class TypeReader
             'GenericType' => $this->generic($inner, $facts),
             default => Tree::unsupported($node, 'column type'),
         };
-        $type = new TypeDescriptor($name, $facts['length'], $facts['precision'], $facts['scale'], arrayDimensions: $this->dimensions($node), intervalFields: $facts['fields']);
+        $type = new TypeDescriptor($name, $facts['length'], $facts['precision'], $facts['scale'], arrayDimensions: $this->dimensions($node), intervalFields: $facts['fields'], effectiveNumericSize: $this->numericSize($name, $facts['precision'], $facts['scale'], $node));
 
         return new TypeDeclaration($type, autoIncrement: $facts['autoIncrement'], notNull: $facts['autoIncrement']);
     }
@@ -317,5 +318,21 @@ final class TypeReader
         }
 
         return $value;
+    }
+
+    /**
+     * Resolves the default scale while leaving unconstrained numeric types unconstrained.
+     * @throws SemanticException When precision or scale is outside the server's range
+     */
+    public function numericSize(Builtin|TypeName $kind, ?int $precision, ?int $scale, Node $source): ?NumericSize
+    {
+        if ($kind !== Builtin::Numeric || $precision === null) {
+            return null;
+        }
+        $scale ??= 0;
+        if ($precision < 1 || $precision > 1000 || $scale < -1000 || $scale > 1000) {
+            throw new SemanticException('invalid-type-modifier', 'Invalid numeric precision or scale.', $source);
+        }
+        return new NumericSize($precision, $scale);
     }
 }

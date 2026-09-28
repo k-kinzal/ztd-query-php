@@ -36,15 +36,23 @@ $patterns = $old ? [
     'field_list' => [ProductionPattern::exactly('field_list_item')],
     'field_list_item' => [ProductionPattern::exactly('column_def')],
     'opt_attribute_list' => [ProductionPattern::exactly('attribute')],
+    'attribute' => [ProductionPattern::excluding(ProductionPattern::containing('AUTO_INC'))],
     'field_length' => [ProductionPattern::excluding(ProductionPattern::anyOf(ProductionPattern::containing('ULONGLONG_NUM'), ProductionPattern::containing('DECIMAL_NUM')))],
 ] : [
     'create_table_stmt' => [ProductionPattern::containing('table_element_list')],
     'table_element_list' => [ProductionPattern::exactly('table_element')],
     'table_element' => [ProductionPattern::exactly('column_def')],
     'column_attribute_list' => [ProductionPattern::exactly('column_attribute')],
+    'column_attribute' => [ProductionPattern::excluding(ProductionPattern::containing('AUTO_INC'))],
     'opt_duplicate_as_qe' => [ProductionPattern::exactly()],
     'field_length' => [ProductionPattern::excluding(ProductionPattern::anyOf(ProductionPattern::containing('ULONGLONG_NUM'), ProductionPattern::containing('DECIMAL_NUM')))],
 ];
+// A single attribute cannot supply both AUTO_INCREMENT and its required key.
+// SERIAL still exercises automatic numbering with its implied unique key.
+// This property requires successful declarations. Explicit decimal bounds and
+// rejected sizes are exercised by the server corpus; statement round-trip
+// fuzzing continues to generate every numeric modifier form.
+$patterns['float_options'] = [ProductionPattern::exactly()];
 $constraints = GenerationPlan::constrained('create_table_stmt', $patterns)->requiringNonEmpty();
 
 /** @var PhpFuzzer\Config $config */

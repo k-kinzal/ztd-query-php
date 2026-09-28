@@ -4,19 +4,28 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Facade;
 
+use PDO;
+use PDOException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Declarations;
+use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\Parameters;
 use SqlSemantics\Core\SearchPath;
 use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect as MySql;
 use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
 use SqlSemantics\Platform\MySql\Mode;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSql;
+use SqlSemantics\Platform\Sqlite\Dialect as Sqlite;
 use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
+use SqlSemantics\Statement\Declaration\Nullability;
 use SqlSemantics\Statement\Reference;
 use SqlSemantics\Statement\ReferenceKind;
+use SqlSemantics\Statement\Writer;
 use Tests\Contract\Resolved;
 
 #[CoversClass(Semantics::class)]
@@ -37,7 +46,7 @@ use Tests\Contract\Resolved;
 #[UsesClass(\SqlSemantics\Core\Composition\Operands::class)]
 #[UsesClass(\SqlSemantics\Statement\Statement::class)]
 #[UsesClass(\SqlSemantics\Statement\Comments::class)]
-#[UsesClass(\SqlSemantics\Statement\Writer::class)]
+#[UsesClass(Writer::class)]
 #[UsesClass(\SqlSemantics\Statement\Assertion::class)]
 #[UsesClass(\SqlSemantics\Statement\ImmutableGraph::class)]
 #[UsesClass(\SqlSemantics\Platform\MySql\Platform::class)]
@@ -138,6 +147,134 @@ final class SemanticsTest extends TestCase
     {
         $semantics = new Semantics(SqliteDialect::Sqlite);
         $builder = $semantics->builder();
-        self::assertSame("\"select\" = 'it''s'", \SqlSemantics\Statement\Writer::render($builder->compare($builder->column('select'), '=', $builder->string("it's"))));
+        self::assertSame("\"select\" = 'it''s'", Writer::render($builder->compare($builder->column('select'), '=', $builder->string("it's"))));
+    }
+
+    public function testTypeReadsCatalogTypeText(): void
+    {
+        $type = (new Semantics(PostgreSql::PostgreSql))->type('numeric(7,2)')->type;
+        self::assertSame(7, $type->precision);
+        self::assertSame(2, $type->scale);
+    }
+
+    public function testDecodeLiteralReadsBuilderValuesWithoutChangingThem(): void
+    {
+        $semantics = new Semantics(MySqlDialect::MySql);
+        $value = $semantics->builder()->string("it's a value");
+        $before = serialize($value);
+        self::assertSame("it's a value", $semantics->decodeLiteral($value)->value());
+        self::assertSame($before, serialize($value));
+    }
+
+
+    #[TestWith([MySql::MySql])]
+    #[TestWith([PostgreSql::PostgreSql])]
+    #[TestWith([Sqlite::Sqlite])]
+    public function testPartialDeclarationsKeepForeignNamesAndCanBeResolvedLater(Dialect $dialect): void
+    {
+        $semantics = new Semantics($dialect);
+        $sql = 'CREATE TABLE child(id INT PRIMARY KEY, parent_id INT, FOREIGN KEY(parent_id) REFERENCES parent(id))';
+        $statement = $semantics->analyze($sql, dependencies: [], declarations: Declarations::Partial);
+        $resolution = $statement->resolution ?? self::fail('Missing partial resolution');
+        self::assertCount(1, $resolution->declarations);
+        self::assertSame(['parent'], $resolution->references[1]->name);
+        self::assertSame(ReferenceKind::Undeclared, $resolution->references[1]->kind);
+        self::assertNull($resolution->references[1]->table);
+        $before = serialize($statement);
+        $parent = $semantics->analyze('CREATE TABLE parent(id INT PRIMARY KEY)', []);
+        $resolved = $semantics->analyze($statement->toString(), [$parent]);
+        self::assertSame(ReferenceKind::Dependency, $resolved->resolution?->references[1]->kind);
+        self::assertSame($parent, $resolved->resolution->references[1]->declaration);
+        self::assertSame($before, serialize($statement));
+        $this->expectException(\SqlSemantics\Core\SemanticException::class);
+        $semantics->analyze($sql, []);
+    }
+
+    public function testPartialScriptsRetainStatementOrderAndNeverInventTables(): void
+    {
+        $semantics = new Semantics(PostgreSql::PostgreSql);
+        $statements = $semantics->analyzeAll('CREATE TABLE child(id INT REFERENCES parent(id)); SELECT * FROM child; SELECT * FROM absent', dependencies: [], declarations: Declarations::Partial);
+        self::assertSame(ReferenceKind::Dependency, $statements[1]->resolution?->references[0]->kind);
+        self::assertSame(ReferenceKind::Undeclared, $statements[2]->resolution?->references[0]->kind);
+        self::assertSame([], $statements[2]->resolution->declarations);
+        $this->expectException(\SqlSemantics\Core\SemanticException::class);
+        $semantics->analyze('CREATE TABLE invalid(a INT, a INT)', dependencies: [], declarations: Declarations::Partial);
+    }
+
+    #[TestWith([MySql::MySql, "CREATE TABLE t(a VARCHAR(8) DEFAULT 'x')", "'x'"])]
+    #[TestWith([MySql::MySql, 'CREATE TABLE t(a INT DEFAULT -2)', '- 2'])]
+    #[TestWith([PostgreSql::PostgreSql, "CREATE TABLE t(a TEXT CONSTRAINT d DEFAULT 'x'::text)", "'x' :: text"])]
+    #[TestWith([Sqlite::Sqlite, 'CREATE TABLE t(a INT DEFAULT -2)', '- 2'])]
+    #[TestWith([Sqlite::Sqlite, 'CREATE TABLE t(a TEXT DEFAULT xyz)', "'xyz'"])]
+    public function testDefaultsKeepTheirCompleteClauseAndTheirValue(Dialect $dialect, string $sql, string $value): void
+    {
+        $column = (new Semantics($dialect))->analyze($sql, [])->resolution?->declarations[0]->columns[0] ?? self::fail('Missing column');
+        self::assertNotNull($column->defaultExpression);
+        self::assertStringContainsString('DEFAULT', Writer::render($column->defaultExpression));
+        self::assertNotNull($column->defaultValue);
+        self::assertSame($value, Writer::render($column->defaultValue));
+        self::assertSame($column->defaultValue, $column->withNullability(Nullability::NotNull)->defaultValue);
+    }
+
+    public function testTemporaryTablesAreReadableAndShadowTheMainNamespace(): void
+    {
+        $semantics = new Semantics(Sqlite::Sqlite);
+        $main = $semantics->analyze('CREATE TABLE t(a INT)', []);
+        $temp = $semantics->analyze('CREATE TEMP TABLE t(b TEXT)', [$main]);
+        self::assertSame('temp', $temp->resolution?->declarations[0]->schema);
+        self::assertSame('b', $semantics->analyze('SELECT * FROM t', [$main, $temp])->resolution?->references[0]->table?->columns[0]->name);
+        self::assertSame('a', $semantics->analyze('SELECT * FROM main.t', [$main, $temp])->resolution?->references[0]->table?->columns[0]->name);
+        $drop = $semantics->analyze('DROP TABLE t', [$main, $temp]);
+        self::assertSame('a', $semantics->analyze('SELECT * FROM t', [$main, $temp, $drop])->resolution?->references[0]->table?->columns[0]->name);
+    }
+
+    public function testAnalyzeKeepsTemporaryTablesAheadOfAttachedDatabasesInPartialDeclarations(): void
+    {
+        $semantics = new Semantics(Sqlite::Sqlite, searchPath: new SearchPath('main', 'attached'));
+        $statements = $semantics->analyzeAll('CREATE TABLE attached.t(a INT); CREATE TEMP TABLE t(b TEXT REFERENCES absent(id)); SELECT * FROM t; DROP TABLE t; SELECT * FROM t', [], Declarations::Partial);
+        self::assertSame('temp', $statements[1]->resolution?->declarations[0]->schema);
+        self::assertSame(ReferenceKind::Undeclared, $statements[1]->resolution->references[1]->kind);
+        self::assertSame($statements[1], $statements[2]->resolution?->references[0]->declaration);
+        self::assertSame($statements[0], $statements[4]->resolution?->references[0]->declaration);
+        self::assertSame(['main', 'attached'], $semantics->searchPath());
+    }
+
+    public function testAnalyzePreservesAllNameValuesOfAnUndeclaredQualifiedReference(): void
+    {
+        $semantics = new Semantics(Sqlite::Sqlite);
+        $reference = $semantics->analyze('SELECT * FROM attached.absent', [], Declarations::Partial)->resolution?->references[0] ?? self::fail('Missing reference');
+        self::assertSame(ReferenceKind::Undeclared, $reference->kind);
+        self::assertSame(['attached', 'absent'], $reference->name);
+        self::assertCount(2, $reference->values);
+        self::assertSame($reference->value, $reference->values[0]);
+        self::assertNull($reference->table);
+    }
+
+
+    #[TestWith(['a COLLATE NOCASE'])]
+    #[TestWith(['(a)'])]
+    #[TestWith(["'a'"])]
+    public function testAnalyzeReadsSqliteKeyColumnsAcceptedByTheEngine(string $key): void
+    {
+        $sql = 'CREATE TABLE t(a INT, b INT, PRIMARY KEY (' . $key . ', b))';
+        (new PDO('sqlite::memory:'))->exec($sql);
+        $table = (new Semantics(Sqlite::Sqlite))->analyze($sql, [])->resolution?->declarations[0] ?? self::fail('Missing table');
+        self::assertSame(['a', 'b'], $table->constraints[0]->columns);
+    }
+
+    #[TestWith(['a + b'])]
+    #[TestWith(['a || b'])]
+    #[TestWith(['abs(a)'])]
+    public function testAnalyzeRejectsSqliteKeyExpressionsRejectedByTheEngine(string $key): void
+    {
+        $sql = 'CREATE TABLE t(a INT, b INT, PRIMARY KEY (' . $key . ', b))';
+        try {
+            (new PDO('sqlite::memory:'))->exec($sql);
+            self::fail('The engine accepted an expression in a table key.');
+        } catch (PDOException $error) {
+            self::assertStringContainsString('expressions prohibited', $error->getMessage());
+        }
+        $this->expectException(\SqlSemantics\Core\SemanticException::class);
+        (new Semantics(Sqlite::Sqlite))->analyze($sql, []);
     }
 }

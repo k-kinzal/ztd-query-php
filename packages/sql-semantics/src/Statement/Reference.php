@@ -23,6 +23,9 @@ use SqlSemantics\Statement\Declaration\TableDefinition;
  *     $users = $semantics->analyze('CREATE TABLE users (id INTEGER)', []);
  *     $reference = $semantics->analyze('SELECT id FROM users', [$users])->resolution?->references[0];
  *     [$reference?->name, $reference?->kind?->name, $reference?->declaration === $users] // => [['users'], 'Dependency', true]
+ * @example An unresolved reference cannot claim to be a conditional declaration
+ *     $value = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->builder()->column('t');
+ *     new \SqlSemantics\Statement\Reference($value, ['t'], \SqlSemantics\Statement\ReferenceKind::Undeclared, conditional: true) // throws \InvalidArgumentException
  */
 final class Reference
 {
@@ -53,10 +56,13 @@ final class Reference
         public readonly bool $conditional = false,
         array $values = [],
     ) {
-        Declaration\Invariant::names($name);
+        Declaration\Invariant::nonEmptyNames($name);
+        Declaration\Invariant::elements($value);
+        Declaration\Invariant::ensure($kind !== ReferenceKind::Undeclared || !$conditional, 'An undeclared reference cannot be conditional.');
         Declaration\Invariant::ensure(!in_array($kind, [ReferenceKind::Undeclared, ReferenceKind::CommonTableExpression], true) || ($declaration === null && $table === null), 'A reference to an undeclared table or a common table expression has no declaration.');
         Declaration\Invariant::members($values, Element::class);
         Declaration\Invariant::ensure($values === [] || $values[0] === $value, 'The values that write a name start with the value of the reference.');
+        Declaration\Invariant::elements(...$values);
         $this->values = $values === [] ? [$value] : $values;
     }
 }

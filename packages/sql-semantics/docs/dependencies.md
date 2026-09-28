@@ -1,6 +1,6 @@
 # Dependencies
 
-A statement means something against the statements that came before it. `Semantics::analyze()` takes those statements as its dependencies, in order, and answers a statement whose `resolution` says what it declares and what every table name it writes resolves to. Without dependencies, a statement is structured only and its `resolution` is null.
+A statement means something against the statements that came before it. `Semantics::analyze()` takes those statements as its dependencies, in order, and answers a statement whose `resolution` says what it declares and what every table name it writes resolves to. Without dependencies, a statement is structured only and its `resolution` is null. Pass an empty dependency list to request resolution against no preceding declarations. [Partial declaration reading](declarations.md) preserves absent dependencies as explicit unresolved references.
 
 ```php
 use SqlSemantics\Facade\Semantics;
@@ -71,7 +71,7 @@ The references are listed in writing order. Table names are found where each gra
 
 ## Search path
 
-A server reads a table name without a schema in the schemas of its session: MySQL in the current database, PostgreSQL in the schemas of `search_path`, and SQLite in `main` and then the attached databases. Pass them to `Semantics` as a `Core\SearchPath`, as the server stores their names. An unqualified name refers to the table of the first schema that has one, and an unqualified declaration creates its table in the first schema:
+A server reads a table name without a schema in the schemas of its session: MySQL in the current database, PostgreSQL in the schemas of `search_path`, and SQLite in `main` and then the attached databases. Declared SQLite temporary tables in `temp` take precedence over this path. Pass them to `Semantics` as a `Core\SearchPath`, as the server stores their names. An unqualified name refers to the table of the first schema that has one, and an unqualified declaration creates its table in the first schema:
 
 ```php
 use SqlSemantics\Core\SearchPath;
@@ -124,3 +124,5 @@ The table an INSERT, UPDATE, DELETE, or MERGE writes to is always a table in Pos
 ## Verification
 
 Each database package fuzzes declarations: every `CREATE TABLE` sql-faker generates from the grammar must resolve to one readable table, write back the same SQL, and read the same declaration again, unchanged by an unrelated conditional drop before it. Resolution against dependencies is stated by unit tests for every statement kind above in each dialect. The visibility of common table expressions was read from MySQL 8.4, PostgreSQL 17, and SQLite 3 running each case against real tables, and the unit tests state those outcomes.
+
+The [declaration and literal APIs](declarations.md) preserve declared precision and scale separately from effective numeric size, expose default values without their DEFAULT envelope, and decode literal values without evaluating expressions.

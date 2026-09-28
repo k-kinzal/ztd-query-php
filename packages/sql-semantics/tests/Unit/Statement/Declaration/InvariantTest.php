@@ -90,4 +90,11 @@ final class InvariantTest extends TestCase
         self::assertSame(['b', 'a'], $state->declarations[0]->constraints[0]->columns);
         self::assertSame(['y', 'x'], $state->declarations[0]->constraints[0]->referencedColumns);
     }
+
+    public function testNonEmptyNamesAcceptsAQualifiedPath(): void
+    {
+        $reference = new \SqlSemantics\Statement\Reference(new \SqlSemantics\Statement\Model\Sqlite\Value\NmWithIdj_a2015ecf('users'), ['app', 'users'], \SqlSemantics\Statement\ReferenceKind::Undeclared);
+        self::assertSame(['app', 'users'], $reference->name);
+    }
+
 }

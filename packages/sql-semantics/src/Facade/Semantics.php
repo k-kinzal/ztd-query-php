@@ -136,6 +136,29 @@ final class Semantics
     }
 
     /**
+     * Decodes a literal without evaluating an expression or applying a column type.
+     *
+     * Numeric values remain exact decimal text. SQL NULL has its own variant;
+     * a value requiring evaluation throws rather than pretending to be NULL.
+     * @throws \SqlSemantics\Core\Literal\DecodingException When the value is not a decodable literal
+     */
+    public function decodeLiteral(\SqlSemantics\Statement\Element $value): \SqlSemantics\Statement\Literal\Literal
+    {
+        return (new \SqlSemantics\Core\Literal\Reader($this->language))->read($value);
+    }
+
+    /**
+     * Reads a standalone column type, keeping its syntax, declared facts, and effective numeric size.
+     *
+     * @throws \SqlSemantics\Core\AnalysisException When input is not exactly one type
+     * @throws \SqlSemantics\Core\SemanticException When the declared type has invalid parameters
+     */
+    public function type(string $sql): \SqlSemantics\Statement\Declaration\TypeDeclaration
+    {
+        return (new \SqlSemantics\Core\Ast\TypeInput($this->language))->read($sql);
+    }
+
+    /**
      * Answers the composer of values for this language, spelling names and literals as the release and mode read them.
      */
     public function builder(): Builder

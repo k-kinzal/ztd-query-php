@@ -180,4 +180,12 @@ final class TypeReaderTest extends TestCase
         $this->expectException(SemanticException::class);
         (new TypeReader())->integer([new Token(1, 'DECIMAL_NUM', '99999999999999999999999', 0)], $node);
     }
+
+    public function testNumericSizeSeparatesWrittenAndEffectiveScale(): void
+    {
+        $type = (new Semantics(Dialect::MySql))->type('DECIMAL(5)')->type;
+        self::assertNull($type->scale);
+        self::assertSame(0, $type->effectiveNumericSize?->scale);
+    }
+
 }

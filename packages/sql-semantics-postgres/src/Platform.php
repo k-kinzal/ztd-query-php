@@ -54,6 +54,14 @@ final class Platform implements Contract
     }
 
     /**
+     * Supplies the literal decoder for the resolved language.
+     */
+    public function literals(Language $language): Policy\LiteralRules
+    {
+        return new LiteralDecoder($language);
+    }
+
+    /**
      * Reads unqualified names in the schemas of the `search_path`, by default `public`.
      */
     public function searchPath(?SessionSearchPath $path = null): array

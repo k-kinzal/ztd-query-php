@@ -52,6 +52,17 @@ final class Invariant
     }
 
     /**
+     * Requires a name path rather than an empty list.
+     * @param list<string> $names
+     * @throws InvalidArgumentException When there are no name parts
+     */
+    public static function nonEmptyNames(array $names): void
+    {
+        self::names($names);
+        self::ensure($names !== [], 'A reference needs a name.');
+    }
+
+    /**
      * @throws InvalidArgumentException When a name has the wrong type or the list has the wrong shape
      * Requires an ordered list of names; dialects may allow empty quoted names.
      * @template T

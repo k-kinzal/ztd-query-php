@@ -55,6 +55,14 @@ final class Platform implements Contract
     }
 
     /**
+     * Supplies the literal decoder for the resolved language.
+     */
+    public function literals(Language $language): Policy\LiteralRules
+    {
+        return new LiteralDecoder($language);
+    }
+
+    /**
      * Reads unqualified names in the current database, the one schema of the path; without one, in an unnamed database of their own.
      *
      * @throws InvalidArgumentException When the path has more than one schema, as MySQL has one current database

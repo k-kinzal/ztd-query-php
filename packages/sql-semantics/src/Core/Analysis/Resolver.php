@@ -65,7 +65,7 @@ final class Resolver
      */
     public function resolve(Node $tree, Command $command, array $dependencies, Declarations $declarations = Declarations::Complete): Resolution
     {
-        $relations = new Relations($this->language->dialect->platform()->names(), $this->path);
+        $relations = new Relations($this->language->dialect->platform()->names(), $this->path, $this->language->dialect->platform()->schema()->implicitSchemas());
         foreach ($dependencies as [$dependency, $resolution]) {
             foreach ($resolution->references as $reference) {
                 $relations->apply($reference, $dependency);
@@ -105,6 +105,14 @@ final class Resolver
     public function declare(NameSite $site, Relations $relations, array $declarations, Node $tree): Reference
     {
         [$schema, $table] = $relations->qualified($site->name);
+        if (count($site->name) === 1) {
+            foreach ($declarations as $candidate) {
+                if ($relations->same($candidate->schema, $candidate->name, $candidate->schema, $table)) {
+                    $schema = $candidate->schema;
+                    break;
+                }
+            }
+        }
         $known = $relations->lookup($schema, $table);
         if ($known !== null && !$site->conditional) {
             throw new SemanticException('duplicate-table', 'Duplicate table declaration: ' . $table, $tree);

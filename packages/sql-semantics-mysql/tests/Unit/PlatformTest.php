@@ -209,4 +209,13 @@ final class PlatformTest extends TestCase
         $formatter = new \SqlFormatter\Facade\Formatter(Dialect::MySql->platform()->parser($version), new \SqlFormatter\Core\FormatOptions(\SqlFormatter\Core\Style::Compact));
         self::assertSame($formatter->format($sql), $formatter->format($statement->toString()));
     }
+
+    public function testLiteralsSuppliesTheDecoder(): void
+    {
+        $language = new Language(Dialect::MySql);
+        $tokens = array_values(array_filter($language->parser()->tokenize("'x'"), static fn ($token): bool => $token->text !== ''));
+        self::assertNotEmpty($tokens);
+        self::assertSame('x', $language->dialect->platform()->literals($language)->decode($tokens)->value());
+    }
+
 }

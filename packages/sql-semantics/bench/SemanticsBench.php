@@ -70,4 +70,15 @@ final class SemanticsBench
         $users = $this->semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)', []);
         $this->semantics->analyze('SELECT child.id FROM users child LEFT JOIN users parent ON child.parent_id = parent.id', [$users]);
     }
+
+    /**
+     * Reads an isolated declaration, including a default and an unresolved foreign key.
+     */
+    #[Benchmark\BeforeMethods('setUp')]
+    #[Benchmark\Revs(100)]
+    #[Benchmark\Iterations(5)]
+    public function benchDeclaration(): void
+    {
+        $this->semantics->analyze('CREATE TABLE items (id INTEGER PRIMARY KEY, parent_id INTEGER REFERENCES parent(id), amount NUMERIC(7) DEFAULT 1.25)', dependencies: [], declarations: \SqlSemantics\Core\Declarations::Partial);
+    }
 }

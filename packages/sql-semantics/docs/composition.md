@@ -93,3 +93,5 @@ A value the release has no form for is a `CompositionException`: MySQL 5.6 and 5
 ## Verification
 
 Every value the builder composes must survive `Semantics::analyze()` and write the same SQL, and the value found in the analyzed statement must equal the composed one. Float spellings were read back by MySQL 8.4, PostgreSQL 17, and SQLite 3 for thousands of random doubles, each to the same bits, and rows composed with `select()`, `cast()`, `case()`, `in()`, `isNull()`, and `call()` ran on those servers with the values and column types they state. The unit tests of each database package state this for names, literals, conditions, set operations, and common table expressions, in each MySQL release whose query grammar differs. The builder is built on the same vocabulary the round-trip fuzzing exercises, and it names no generated class.
+
+Use [`Semantics::decodeLiteral()`](declarations.md#defaults-and-literal-values) to read a typed literal back under the same language and mode. Exact numeric text and bit widths remain distinct from PHP floating-point and byte-string conversions.

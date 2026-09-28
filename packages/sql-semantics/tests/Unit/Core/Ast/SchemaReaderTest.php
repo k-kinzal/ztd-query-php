@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Core\Ast;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -113,4 +114,57 @@ final class SchemaReaderTest extends TestCase
         $table = Resolved::of((new Semantics(SqliteDialect::Sqlite))->analyze('CREATE TABLE users (id INTEGER, PRIMARY KEY (ID))', []))->declarations[0];
         self::assertSame(Nullability::NotNull, $table->columns[0]->nullability);
     }
+
+    /**
+     * @return iterable<string, array{Dialect, string, bool, bool, int|null, int|null, bool, string}>
+     */
+    public static function providerAcceptedCorpus(): iterable
+    {
+        foreach (\Tests\Contract\DeclarationCorpus::cases() as $name => [$dialect, $sql, $accepted, $nullable, $automatic, $precision, $scale, $unique]) {
+            if ($accepted) {
+                foreach (\Tests\Contract\DeclarationCorpus::versions($dialect) as $version) {
+                    yield $name . '-' . $version => [match ($dialect) {
+                        'mysql' => MySqlDialect::MySql,
+                        'pg' => PostgreSqlDialect::PostgreSql,
+                        default => SqliteDialect::Sqlite,
+                    }, $sql, $nullable, $automatic, $precision, $scale, $unique, $version];
+                }
+            }
+        }
+    }
+    /**
+     * @return iterable<string, array{Dialect, string, string}>
+     */
+    public static function providerRejectedCorpus(): iterable
+    {
+        foreach (\Tests\Contract\DeclarationCorpus::cases() as $name => [$dialect, $sql, $accepted]) {
+            if (!$accepted) {
+                foreach (\Tests\Contract\DeclarationCorpus::versions($dialect) as $version) {
+                    yield $name . '-' . $version => [match ($dialect) {
+                        'mysql' => MySqlDialect::MySql,
+                        'pg' => PostgreSqlDialect::PostgreSql,
+                        default => SqliteDialect::Sqlite,
+                    }, $sql, $version];
+                }
+            }
+        }
+    }
+    #[DataProvider('providerAcceptedCorpus')]
+    public function testTableMatchesServerCorpus(Dialect $dialect, string $sql, bool $nullable, bool $automatic, ?int $precision, ?int $scale, bool $unique, string $version): void
+    {
+        $table = (new Semantics($dialect, $version))->analyze($sql, dependencies: [], declarations: \SqlSemantics\Core\Declarations::Partial)->resolution?->declarations[0] ?? self::fail('Missing declaration');
+        $column = $table->columns[0];
+        self::assertSame($nullable, $column->nullability === Nullability::MaybeNull);
+        self::assertSame($automatic, $column->autoIncrement);
+        self::assertSame([$precision, $scale], [$column->type->effectiveNumericSize?->precision, $column->type->effectiveNumericSize?->scale]);
+        self::assertSame($unique, array_filter($table->constraints, static fn ($constraint): bool => $constraint->kind === \SqlSemantics\Statement\Declaration\ConstraintKind::Unique) !== []);
+        self::assertStringNotContainsString('SqlParser\\', serialize($table));
+    }
+    #[DataProvider('providerRejectedCorpus')]
+    public function testTableRejectsServerRejectedCorpus(Dialect $dialect, string $sql, string $version): void
+    {
+        $this->expectException(SemanticException::class);
+        (new Semantics($dialect, $version))->analyze($sql, dependencies: [], declarations: \SqlSemantics\Core\Declarations::Partial);
+    }
+
 }

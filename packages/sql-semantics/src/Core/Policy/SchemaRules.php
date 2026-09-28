@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace SqlSemantics\Core\Policy;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Core\Analysis\ValueReader;
 use SqlSemantics\Core\Ast\Identifiers;
 use SqlSemantics\Statement\Declaration\ColumnDefinition;
+use SqlSemantics\Statement\Declaration\Nullability;
 use SqlSemantics\Statement\Declaration\TableConstraint;
 use SqlSemantics\Statement\Declaration\TableDefinition;
+use SqlSemantics\Statement\Element;
 
 /**
  * Supplies declaration syntax and constraint behavior.
@@ -17,6 +20,29 @@ use SqlSemantics\Statement\Declaration\TableDefinition;
  */
 interface SchemaRules
 {
+    /**
+     * Applies explicit NULL attributes under the dialect's conflict rules.
+     * @param list<Node> $attributes
+     */
+    public function nullability(Node $column, array $attributes, Nullability $implicit): Nullability;
+
+    /**
+     * Reads the value of a DEFAULT clause independently of the clause itself.
+     */
+    public function defaultValue(Node $attribute, ValueReader $values): Element;
+
+    /**
+     * Implicit namespaces searched before the session path for declared tables.
+     * @return list<string>
+     */
+    public function implicitSchemas(): array;
+
+    /**
+     * Reads key columns without interpreting expression operands as column names.
+     * @return list<string>
+     */
+    public function keyColumns(Node $constraint, Identifiers $identifiers): array;
+
     /**
      * Rejects declarations whose column state requires evaluating another relation.
      */

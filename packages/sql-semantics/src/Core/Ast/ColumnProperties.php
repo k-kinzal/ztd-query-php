@@ -82,7 +82,7 @@ final class ColumnProperties
             $clauses = [$attribute, ...Tree::outer($attribute, $this->identifiers->dialect->platform()->syntax()->nodes('autoIncrement'))];
             foreach ($clauses as $clause) {
                 foreach ($clause->children as $token) {
-                    if ($token instanceof Token && in_array(strtoupper($token->text), ['AUTO_INCREMENT', 'AUTOINCREMENT'], true)) {
+                    if ($token instanceof Token && (in_array(strtoupper($token->text), ['AUTO_INCREMENT', 'AUTOINCREMENT'], true) || $token->name === 'SERIAL_SYM')) {
                         return true;
                     }
                 }

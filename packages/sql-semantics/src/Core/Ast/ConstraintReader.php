@@ -46,8 +46,7 @@ final class ConstraintReader
         if ($kind === null) {
             return null;
         }
-        $groups = TokenGroups::parentheses($tokens);
-        $columns = $column === null ? TokenGroups::keyNames($groups[0] ?? [], $this->identifiers) : [$column];
+        $columns = $column === null && $kind !== ConstraintKind::Check ? $this->identifiers->dialect->platform()->schema()->keyColumns($node, $this->identifiers) : ($column === null ? [] : [$column]);
         $table = [];
         $references = [];
         if ($kind === ConstraintKind::ForeignKey) {

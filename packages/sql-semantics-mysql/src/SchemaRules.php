@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Core\Analysis\ValueReader;
+use SqlSemantics\Core\Ast\ColumnAttributes;
 use SqlSemantics\Core\Ast\Identifiers;
 use SqlSemantics\Core\Ast\Tree;
 use SqlSemantics\Core\Policy\SchemaRules as Contract;
 use SqlSemantics\Statement\Declaration\ColumnDefinition;
+use SqlSemantics\Statement\Declaration\Nullability;
 use SqlSemantics\Statement\Declaration\TableConstraint;
 use SqlSemantics\Statement\Declaration\TableDefinition;
+use SqlSemantics\Statement\Element;
 
 /**
  * MySql SchemaRules implementation.
@@ -20,10 +24,50 @@ use SqlSemantics\Statement\Declaration\TableDefinition;
 final class SchemaRules implements Contract
 {
     /**
+     * Implicit namespaces searched before the session path for declared tables.
+     * @return list<string>
+     */
+    public function implicitSchemas(): array
+    {
+        return [];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function keyColumns(Node $constraint, Identifiers $identifiers): array
+    {
+        return \SqlSemantics\Core\Ast\TokenGroups::keyNames(\SqlSemantics\Core\Ast\TokenGroups::parentheses($constraint->tokens())[0] ?? [], $identifiers);
+    }
+
+    /**
+     * The last explicit NULL attribute wins.
+     * @param list<Node> $attributes
+     */
+    public function nullability(Node $column, array $attributes, Nullability $implicit): Nullability
+    {
+        $facts = ColumnAttributes::nulls($attributes);
+        return $facts === [] ? $implicit : $facts[count($facts) - 1];
+    }
+
+    /**
+     * Removes the DEFAULT envelope while keeping its expression.
+     */
+    public function defaultValue(Node $attribute, ValueReader $values): Element
+    {
+        $expression = Tree::outer($attribute, ['now_or_signed_literal', 'expr'])[0] ?? null;
+        if ($expression === null) {
+            Tree::unsupported($attribute, 'default expression');
+        }
+        return $values->read($expression);
+    }
+
+    /**
      * Rejects declarations whose column state requires evaluating another relation.
      */
     public function validate(Node $source, Node $header): void
     {
+        (new Declaration\AutoIncrement())->validate($source);
         foreach (Tree::outer($source, ['opt_create_table_options_etc', 'create3']) as $options) {
             foreach (Tree::outer($options, ['query_expression', 'query_expression_with_opt_locking_clauses', 'create_table_query_expression', 'create_select']) as $query) {
                 Tree::unsupported($query, 'catalog columns derived from a query');

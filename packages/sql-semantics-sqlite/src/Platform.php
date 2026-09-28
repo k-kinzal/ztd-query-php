@@ -54,6 +54,14 @@ final class Platform implements Contract
     }
 
     /**
+     * Supplies the literal decoder for the resolved language.
+     */
+    public function literals(Language $language): Policy\LiteralRules
+    {
+        return new LiteralDecoder();
+    }
+
+    /**
      * Reads unqualified names in `main` and then in the attached databases the path lists after it.
      *
      * @throws InvalidArgumentException When the path does not start with `main`, where SQLite creates an unqualified table
@@ -121,6 +129,8 @@ final class Platform implements Contract
                 ['rule' => 'cmd', 'requires' => ['DROP', 'INDEX'], 'name' => 'fullname'],
             ],
             pairs: [
+                ['rule' => 'ccons', 'requires' => ['REFERENCES', 'nm'], 'pair' => ['nm']],
+                ['rule' => 'tcons', 'requires' => ['FOREIGN', 'REFERENCES', 'nm'], 'pair' => ['nm']],
                 ['rule' => 'seltablist', 'requires' => ['nm', 'dbnm'], 'pair' => ['nm', 'dbnm']],
                 ['rule' => 'cmd', 'requires' => ['createkw', 'INDEX', 'ON'], 'pair' => ['nm']],
             ],

@@ -12,8 +12,8 @@ use SqlSemantics\Statement\Declaration\TableDefinition;
  * A statement is analyzed with its dependencies: the declarations that came
  * before it, in order. The resolution keeps those dependencies, the tables
  * the statement itself declares, and every table name it writes with what
- * that name resolves to. A name that resolves to nothing is an error at
- * analysis, not a missing entry here.
+ * that name resolves to. Partial analysis records missing references with
+ * ReferenceKind::Undeclared; strict analysis rejects them.
  *
  * @visibility public
  * @example Reading what a declaration declares

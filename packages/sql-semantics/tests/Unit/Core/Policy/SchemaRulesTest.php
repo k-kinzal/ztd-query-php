@@ -114,4 +114,26 @@ final class SchemaRulesTest extends TestCase
         self::assertSame(true, $dialect->platform()->schema()->primaryOptionsNotNull($source));
     }
 
+
+    public function testNullabilityPreservesExplicitNotNull(): void
+    {
+        $table = (new Semantics(PostgreSqlDialect::PostgreSql))->analyze('CREATE TABLE t(a INT NOT NULL)', [])->resolution?->declarations[0];
+        self::assertSame(Nullability::NotNull, $table?->columns[0]->nullability);
+    }
+    public function testDefaultValueSeparatesTheExpression(): void
+    {
+        $value = (new Semantics(PostgreSqlDialect::PostgreSql))->analyze('CREATE TABLE t(a INT DEFAULT 42)', [])->resolution?->declarations[0]->columns[0]->defaultValue;
+        self::assertNotNull($value);
+        self::assertSame('42', \SqlSemantics\Statement\Writer::render($value));
+    }
+    public function testKeyColumnsKeepOrder(): void
+    {
+        $table = (new Semantics(PostgreSqlDialect::PostgreSql))->analyze('CREATE TABLE t(a INT, b INT, PRIMARY KEY(b,a))', [])->resolution?->declarations[0];
+        self::assertSame(['b', 'a'], $table?->constraints[0]->columns);
+    }
+    public function testImplicitSchemasDefinesUnqualifiedLookupOrder(): void
+    {
+        self::assertSame([], (new Semantics(PostgreSqlDialect::PostgreSql))->language()->dialect->platform()->schema()->implicitSchemas());
+    }
+
 }

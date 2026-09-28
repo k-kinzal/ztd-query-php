@@ -126,6 +126,18 @@ final class RelationsTest extends TestCase
         self::assertNull($relations->find(['users']));
     }
 
+    public function testFindPrefersImplicitNamespacesWithoutChangingTheCreationNamespace(): void
+    {
+        $relations = new Relations(MySqlDialect::MySql->platform()->names(), ['main', 'attached'], ['temp']);
+        $relations->declare('temp', 'users', null, null);
+        $relations->declare('attached', 'users', null, null);
+        self::assertSame(['temp', 'users', null, null], $relations->find(['users']));
+        self::assertSame(['main', 'users'], $relations->qualified(['users']));
+        self::assertNull($relations->find(['main', 'users']));
+        $relations->drop('temp', 'users');
+        self::assertSame(['attached', 'users', null, null], $relations->find(['users']));
+    }
+
     public function testGoneTellsATableTheDropsTookOutUntilItIsDeclaredAgain(): void
     {
         $relations = new Relations(PostgreSqlDialect::PostgreSql->platform()->names(), ['app', 'public']);

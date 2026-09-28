@@ -12,6 +12,7 @@ use SqlSemantics\Core\Ast\TokenGroups;
 use SqlSemantics\Core\Ast\Tree;
 use SqlSemantics\Core\SemanticException;
 use SqlSemantics\Statement\Declaration\Builtin;
+use SqlSemantics\Statement\Declaration\NumericSize;
 use SqlSemantics\Statement\Declaration\TypeDeclaration;
 use SqlSemantics\Statement\Declaration\TypeDescriptor;
 
@@ -119,7 +120,7 @@ final class TypeReader
         }
         $character = $kind->isCharacter();
 
-        return new TypeDeclaration(new TypeDescriptor($kind, $length, $precision, $scale, $kind->isNumeric() && $facts['unsigned'], $kind->isNumeric() && $facts['zerofill'], $character && $facts['binary'], $character ? $facts['characterSet'] : null, $members));
+        return new TypeDeclaration(new TypeDescriptor($kind, $length, $precision, $scale, $kind->isNumeric() && $facts['unsigned'], $kind->isNumeric() && $facts['zerofill'], $character && $facts['binary'], $character ? $facts['characterSet'] : null, $members, effectiveNumericSize: $this->numericSize($kind, $precision, $scale, $node)));
     }
 
     /**
@@ -239,5 +240,22 @@ final class TypeReader
         }
 
         return $value;
+    }
+
+    /**
+     * Resolves decimal defaults and validates the effective size before constructing it.
+     * @throws SemanticException When precision or scale is outside the server's range
+     */
+    public function numericSize(Builtin $kind, ?int $precision, ?int $scale, Node $source): ?NumericSize
+    {
+        if ($kind !== Builtin::Numeric) {
+            return null;
+        }
+        $precision = $precision === null || $precision === 0 ? 10 : $precision;
+        $scale ??= 0;
+        if ($precision < 1 || $precision > 65 || $scale < 0 || $scale > 30 || $scale > $precision) {
+            throw new SemanticException('invalid-type-modifier', 'Invalid decimal precision or scale.', $source);
+        }
+        return new NumericSize($precision, $scale);
     }
 }

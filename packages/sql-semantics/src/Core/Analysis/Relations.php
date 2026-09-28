@@ -36,8 +36,9 @@ final class Relations
      * Starts with no table in force.
      *
      * @param non-empty-list<string> $path The schemas an unqualified name is read in, in order
+     * @param list<string> $implicitSchemas Implicit namespaces searched before the session path for declared tables
      */
-    public function __construct(private readonly NameRules $names, private readonly array $path)
+    public function __construct(private readonly NameRules $names, private readonly array $path, private readonly array $implicitSchemas = [])
     {
     }
 
@@ -47,7 +48,7 @@ final class Relations
     public function apply(Reference $reference, Statement $dependency): void
     {
         if ($reference->kind === ReferenceKind::Declaration) {
-            [$schema, $name] = $this->qualified($reference->name);
+            [$schema, $name] = ($reference->table === null || $reference->table->schema === '') ? $this->qualified($reference->name) : [$reference->table->schema, $reference->table->name];
             $this->declare($schema, $name, $reference->table, $dependency);
         } elseif ($reference->kind === ReferenceKind::Drop) {
             $found = $this->find($reference->name) ?? $this->qualified($reference->name);
@@ -117,7 +118,7 @@ final class Relations
     {
         $parts = array_slice($name, -2);
         $table = $parts[count($parts) - 1];
-        foreach (count($parts) === 2 ? [$parts[0]] : $this->path as $schema) {
+        foreach (count($parts) === 2 ? [$parts[0]] : [...$this->implicitSchemas, ...$this->path] as $schema) {
             foreach ($this->tables as [$knownSchema, $knownName, $definition, $owner]) {
                 if ($this->same($knownSchema, $knownName, $schema, $table)) {
                     return [$knownSchema, $knownName, $definition, $owner];

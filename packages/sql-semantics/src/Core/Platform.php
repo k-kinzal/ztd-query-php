@@ -40,6 +40,11 @@ interface Platform
     public function builder(Language $language): Builder;
 
     /**
+     * Supplies literal decoding under the language's session settings.
+     */
+    public function literals(Language $language): Policy\LiteralRules;
+
+    /**
      * Answers the schemas an unqualified table name is read in, in order, for the session's search path or the server's default; an unqualified declaration creates its table in the first.
      *
      * @param SearchPath|null $path The session's search path, or null for the server's default
