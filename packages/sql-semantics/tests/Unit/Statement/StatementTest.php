@@ -191,4 +191,14 @@ final class StatementTest extends TestCase
         $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT @a, @@global.max_connections, @`b`, @'c'");
         self::assertSame("SELECT @a , @@GLOBAL .max_connections , @`b` , @'c'", $statement->toString());
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith([\SqlSemantics\Platform\Sqlite\Dialect::Sqlite, 'CREATE TABLE IF /* a */ NOT /* b */ EXISTS t (x)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([\SqlSemantics\Platform\MySql\Dialect::MySql, 'SELECT 1 FROM t WHERE a NOT /* a */ IN (1) ORDER BY x DESC'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'DROP TABLE IF /* a */ EXISTS t'])]
+    public function testToStringKeepsACommentBetweenTheWordsOfAFixedPhrase(\SqlSemantics\Core\Dialect $dialect, string $sql): void
+    {
+        $statement = (new \SqlSemantics\Facade\Semantics($dialect))->analyze($sql);
+        self::assertStringContainsString('/* a */', $statement->toString());
+        self::assertNull((new \SqlSemantics\Core\Verification\Losslessness(new \SqlSemantics\Core\Language($dialect)))->difference($sql, $statement->toString()));
+    }
 }

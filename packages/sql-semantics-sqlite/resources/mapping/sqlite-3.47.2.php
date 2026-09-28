@@ -89,7 +89,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Choice\\ExplainChoice_417275df::UseExplain_a42f134d',
+      'class' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExplainWithExplain_d272947b',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'EXPLAIN',
@@ -97,7 +100,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Choice\\ExplainChoice_417275df::UseExplainQueryPlan_6195a6a3',
+      'class' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ExplainWithExplainQueryPlan_cea054e4',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'EXPLAIN',
@@ -898,14 +904,20 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Choice\\IfnotexistsChoice_f381f4e9::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\IfnotexistsWith_0b0b9d93',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Choice\\IfnotexistsChoice_f381f4e9::UseIfNotExists_addd9a5c',
+      'class' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\IfnotexistsWithIfNotExists_89782dca',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'IF',
@@ -1634,7 +1646,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Choice\\RefactChoice_2802cc9d::UseSetNull_a5f7c4e6',
+      'class' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\RefactWithSetNull_db0e85ba',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'SET',
@@ -1643,7 +1658,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Choice\\RefactChoice_2802cc9d::UseSetDefault_639a6c2d',
+      'class' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\RefactWithSetDefault_af2a4c92',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'SET',
@@ -1652,7 +1670,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Choice\\RefactChoice_2802cc9d::UseCascade_86844e57',
+      'class' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\RefactWithCascade_57ac19da',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'CASCADE',
@@ -1660,7 +1681,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Choice\\RefactChoice_2802cc9d::UseRestrict_bd7a04e6',
+      'class' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\RefactWithRestrict_2b270421',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'RESTRICT',
@@ -1668,7 +1692,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     4 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Choice\\RefactChoice_2802cc9d::UseNoAction_25595c7c',
+      'class' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\RefactWithNoAction_aa8fa031',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'NO',
@@ -1710,14 +1737,20 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Choice\\InitDeferredPredOptChoice_ed380d4f::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\InitDeferredPredOptWith_3c679ef0',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Choice\\InitDeferredPredOptChoice_ed380d4f::UseInitiallyDeferred_6e9191be',
+      'class' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\InitDeferredPredOptWithInitiallyDeferred_f3a776bf',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'INITIALLY',
@@ -1726,7 +1759,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Choice\\InitDeferredPredOptChoice_ed380d4f::UseInitiallyImmediate_0e67cf0a',
+      'class' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\InitDeferredPredOptWithInitiallyImmediate_64aae120',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'INITIALLY',
@@ -2011,7 +2047,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Choice\\IfexistsChoice_1b8cb991::UseIfExists_82cdccc7',
+      'class' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\IfexistsWithIfExists_ae50ded3',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'IF',
@@ -2020,7 +2059,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Choice\\IfexistsChoice_1b8cb991::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\IfexistsWith_7b0c06e4',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -2928,7 +2970,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Choice\\NullsChoice_6b2c7d75::UseNullsFirst_898b9843',
+      'class' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\NullsWithNullsFirst_dbfb53e1',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'NULLS',
@@ -2937,7 +2982,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Choice\\NullsChoice_6b2c7d75::UseNullsLast_7faeba30',
+      'class' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\NullsWithNullsLast_e1f7498f',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'NULLS',
@@ -2946,7 +2994,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Choice\\NullsChoice_6b2c7d75::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\NullsWith_c9558528',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -4246,7 +4297,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Choice\\BetweenOpChoice_06f4f5f4::UseBetween_c8d5a3e5',
+      'class' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\BetweenOpWithBetween_1ed31440',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'BETWEEN',
@@ -4254,7 +4308,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Choice\\BetweenOpChoice_06f4f5f4::UseNotBetween_d916108b',
+      'class' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\BetweenOpWithNotBetween_161fe3d3',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'NOT',
@@ -4266,7 +4323,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Choice\\InOpChoice_0915428e::UseIn_fed1d872',
+      'class' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\InOpWithIn_369f7c19',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'IN',
@@ -4274,7 +4334,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Choice\\InOpChoice_0915428e::UseNotIn_d63494f8',
+      'class' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\InOpWithNotIn_704e0ad0',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'NOT',
@@ -4785,14 +4848,20 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Choice\\ForeachClauseChoice_a60da7c2::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ForeachClauseWith_6244f88c',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Choice\\ForeachClauseChoice_a60da7c2::UseForEachRow_eac7d28e',
+      'class' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\ForeachClauseWithForEachRow_f9f14ce7',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'FOR',
@@ -5322,7 +5391,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Choice\\WqasChoice_5d67ccbe::UseAs_de148153',
+      'class' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\WqasWithAs_12fe9239',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'AS',
@@ -5330,7 +5402,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Choice\\WqasChoice_5d67ccbe::UseAsMaterialized_64837926',
+      'class' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\WqasWithAsMaterialized_b6e563eb',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'AS',
@@ -5339,7 +5414,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Choice\\WqasChoice_5d67ccbe::UseAsNotMaterialized_6050d450',
+      'class' => 'SqlSemantics\\Statement\\Model\\Sqlite\\Value\\WqasWithAsNotMaterialized_4bc5108c',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'AS',
