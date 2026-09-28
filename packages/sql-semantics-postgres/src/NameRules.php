@@ -24,16 +24,31 @@ final class NameRules implements Contract
     }
 
     /**
-     * Decodes the spelling of a name as written, quoted or bare.
+     * Decodes the spelling of a name as written, quoted or bare, into the name the server stores.
+     *
+     * A bare name is folded to lower case. A name of 64 bytes or more is
+     * truncated to the 63 bytes that fit in the server's NAMEDATALEN without
+     * splitting a character, as the scanner's truncate_identifier() does, so
+     * two names that differ only after their 63rd byte are the same name.
      */
     public function decode(string $text): string
     {
         $quote = substr($text, 0, 1);
         if (in_array($quote, ['"', '`', '['], true)) {
             $close = $quote === '[' ? ']' : $quote;
-            return str_replace($close . $close, $close, substr($text, 1, -1));
+            $name = str_replace($close . $close, $close, substr($text, 1, -1));
+        } else {
+            $name = strtolower($text);
         }
-        return strtolower($text);
+        if (strlen($name) < 64) {
+            return $name;
+        }
+        $length = 63;
+        while ($length > 0 && (ord($name[$length]) & 0xC0) === 0x80) {
+            $length--;
+        }
+
+        return substr($name, 0, $length);
     }
 
     /**

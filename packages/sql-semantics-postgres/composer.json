@@ -127,6 +127,11 @@
             "@php -r \"is_dir('fuzz/corpus/pg-schema') || mkdir('fuzz/corpus/pg-schema', 0777, true);\" --",
             "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_schema.php fuzz/corpus/pg-schema/ --timeout=60"
         ],
+        "fuzz:catalog": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php -r \"is_dir('fuzz/corpus/pg-catalog') || mkdir('fuzz/corpus/pg-catalog', 0777, true);\" --",
+            "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_catalog.php fuzz/corpus/pg-catalog/ --timeout=60"
+        ],
         "fuzz:splice": [
             "Composer\\Config::disableProcessTimeout",
             "@php -r \"is_dir('fuzz/corpus/pg-splice') || mkdir('fuzz/corpus/pg-splice', 0777, true);\" --",
@@ -171,6 +176,7 @@
         "format:check": "Check the code style with PHP-CS-Fixer without changing files.",
         "fuzz": "Run this database round-trip property with a bounded smoke budget.",
         "fuzz:schema": "Fuzz immutable pre-state declarations using sql-faker generation plans.",
+        "fuzz:catalog": "Fuzz declarations against the disposable server named by SEMANTICS_DSN: each one it accepts must state what its catalog holds.",
         "fuzz:splice": "Fuzz rewrites that replace a value with another of its role: each must be refused or read back as itself.",
         "fuzz:smoke": "Replay both corpora and run 100 mutations of state and statement analysis.",
         "lint": "Run every static check: autoload, formatting, PHPStan, PHP compatibility, size and tree guards, and layer dependencies.",

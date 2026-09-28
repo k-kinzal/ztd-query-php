@@ -49,6 +49,21 @@ final class NameRulesTest extends TestCase
         self::assertSame('mixed', $rules->decode('Mixed'));
     }
 
+    public function testDecodeTruncatesANameToTheBytesTheServerStores(): void
+    {
+        $rules = Dialect::PostgreSql->platform()->names();
+        self::assertSame(str_repeat('a', 63), $rules->decode(str_repeat('A', 70)));
+        self::assertSame(str_repeat('a', 63), $rules->decode('"' . str_repeat('a', 64) . '"'));
+        self::assertSame(str_repeat('a', 63), $rules->decode(str_repeat('a', 63)));
+        self::assertSame(str_repeat('a', 62), $rules->decode('"' . str_repeat('a', 62) . "\u{732B}" . '"'));
+        self::assertSame(str_repeat('a', 60) . "\u{732B}", $rules->decode('"' . str_repeat('a', 60) . "\u{732B}b" . '"'));
+        $semantics = new Semantics(Dialect::PostgreSql);
+        $table = $semantics->analyze('CREATE TABLE ' . str_repeat('t', 70) . ' (' . str_repeat('c', 64) . ' INT)', [])->resolution?->declarations[0];
+        self::assertNotNull($table);
+        self::assertSame(str_repeat('t', 63), $table->name);
+        self::assertSame(str_repeat('c', 63), $table->columns[0]->name);
+    }
+
     public function testNameDecodesEscapedQuotes(): void
     {
         self::assertSame('a"b', (new \SqlSemantics\Platform\PostgreSql\NameRules())->name(new Token(1, 'ID', '"a""b"', 0)));
