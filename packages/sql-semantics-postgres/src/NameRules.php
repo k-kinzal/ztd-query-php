@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql;
 
 use SqlParser\Lexer\Token;
+use SqlSemantics\Core\AnalysisException;
 use SqlSemantics\Core\Dialect;
+use SqlSemantics\Core\Literal\DecodingException;
 use SqlSemantics\Core\Policy\NameRules as Contract;
 
 /**
@@ -26,15 +28,25 @@ final class NameRules implements Contract
     /**
      * Decodes the spelling of a name as written, quoted or bare, into the name the server stores.
      *
-     * A bare name is folded to lower case. A name of 64 bytes or more is
+     * A bare name is folded to lower case; a Unicode name, U&"...", is decoded
+     * with its escape character, a backslash unless UESCAPE names another,
+     * and keeps its case. A name of 64 bytes or more is
      * truncated to the 63 bytes that fit in the server's NAMEDATALEN without
      * splitting a character, as the scanner's truncate_identifier() does, so
      * two names that differ only after their 63rd byte are the same name.
+     *
+     * @throws AnalysisException When a Unicode name has an invalid escape, which the server rejects
      */
     public function decode(string $text): string
     {
         $quote = substr($text, 0, 1);
-        if (in_array($quote, ['"', '`', '['], true)) {
+        if (preg_match('/\A[uU]&"((?:[^"]|"")*)"(?:[\s\S]*\'([\s\S])\')?\z/', $text, $unicode) === 1) {
+            try {
+                $name = (new Literal\Escapes())->unicode(str_replace('""', '"', $unicode[1]), $unicode[2] ?? '\\');
+            } catch (DecodingException $error) {
+                throw new AnalysisException('Invalid Unicode escape in the identifier ' . $text . ': ' . $error->getMessage(), 0, $error);
+            }
+        } elseif (in_array($quote, ['"', '`', '['], true)) {
             $close = $quote === '[' ? ']' : $quote;
             $name = str_replace($close . $close, $close, substr($text, 1, -1));
         } else {
