@@ -155,7 +155,7 @@ final class Conversions
      */
     public function boundary(CallableGraph $caller, Instruction $instruction, State $state, string $operation): array
     {
-        return (new InstructionTransfer($this->machine))->boundary($caller, new Instruction($instruction->id, 'unsupported', $instruction->source, $instruction->result, $instruction->operands, $operation), $state);
+        return (new InstructionTransfer($this->machine))->boundary($caller, new Instruction($instruction->id, 'unsupported', $instruction->source, $instruction->result, $instruction->operands, $operation, attributes: ['effects' => 'reachable', 'type' => $operation === 'dynamic-string-conversion' ? 'string' : 'mixed']), $state);
     }
 
     /**

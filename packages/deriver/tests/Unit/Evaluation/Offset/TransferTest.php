@@ -262,11 +262,11 @@ final class TransferTest extends TestCase
         $state = new State();
         $location = $state->local('value');
         $state->memory->write($location, Term::constant(1));
-        $paths = (new Transfer(new Machine($context)))->boundary($state, $instruction);
+        $paths = (new Transfer(new Machine($context)))->boundary($state, $instruction, Term::opaque('OFFSET_OPERATION'));
         self::assertCount(2, $paths);
         self::assertSame('normal', $paths[0]->completion->kind);
         self::assertSame('throw', $paths[1]->completion->kind);
-        self::assertSame('opaque', $paths[0]->memory->read($location)->kind);
+        self::assertSame(1, $paths[0]->memory->read($location)->native());
         self::assertSame(['UNSUPPORTED_LANGUAGE_FEATURE'], array_column(array_values($context->frontiers), 'code'));
     }
     /**

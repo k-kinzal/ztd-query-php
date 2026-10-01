@@ -119,9 +119,9 @@ final class EffectInspectionTest extends TestCase
     public function testConflictsPreservesTheSemanticContract(): void
     {
         $result = \Tests\Fake\Analysis::returns('<?php function target(){$x=1;return $x+$x++;}');
-        self::assertSame('UNSPECIFIED_EVALUATION_ORDER', $result->frontiers[0]->code);
-        self::assertSame('unavailable', $result->assessment->coverage);
-        self::assertFalse($result->normalOutcomes[0]->values['return']->isConcrete());
+        self::assertSame([], $result->frontiers);
+        self::assertSame('over-approximation', $result->assessment->coverage);
+        self::assertEqualsCanonicalizing([2, 3], array_map(static fn ($outcome) => $outcome->values['return']->native(), $result->normalOutcomes));
     }
     public function testEffectfulFindsWritesInsideExpressions(): void
     {

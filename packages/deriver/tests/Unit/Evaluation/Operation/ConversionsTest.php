@@ -206,7 +206,7 @@ final class ConversionsTest extends TestCase
         $state = new State();
         $state->memory->write($state->local('x'), Term::constant(1));
         $paths = (new Conversions(new Machine($context)))->boundary($body, new Instruction('x', 'cast', $body->source, 'result'), $state, 'object-cast');
-        self::assertSame('opaque', $paths[0]->snapshot()['x']->kind);
+        self::assertSame(1, $paths[0]->snapshot()['x']->native());
         self::assertSame('throw', $paths[1]->completion->kind);
     }
     /**

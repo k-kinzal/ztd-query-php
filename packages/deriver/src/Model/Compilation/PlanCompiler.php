@@ -68,6 +68,9 @@ final class PlanCompiler
             $parameters[] = new Parameter($parameter->name, $parameter->type, $parameter->byReference, $parameter->variadic, $default);
         }
         $blocks = [];
+        if ($descriptor->useSourceSignature && $declaration !== null) {
+            $parameters = $declaration->parameters;
+        }
         foreach ($this->instructions as $id => $instructions) {
             $blocks[$id] = new BasicBlock($id, $instructions, $this->terminators[$id] ?? new Terminator('return'));
         }

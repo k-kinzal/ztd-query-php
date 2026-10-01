@@ -35,8 +35,8 @@ final class Library
     {
         $null = Term::constant(null);
         return match ($name) {
-            'strlen', 'strtolower', 'strtoupper' => [new Parameter('string', 'string')],
-            'trim' => [new Parameter('string', 'string'), new Parameter('characters', 'string', default: Term::constant(" \n\r\t\v\0"))],
+            'strlen', 'strtolower', 'strtoupper', 'ucfirst', 'lcfirst' => [new Parameter('string', 'string')],
+            'trim', 'ltrim', 'rtrim' => [new Parameter('string', 'string'), new Parameter('characters', 'string', default: Term::constant(" \n\r\t\v\0"))],
             'implode', 'join' => [new Parameter('separator', 'array|string'), new Parameter('array', 'array|null', default: $null)],
             'explode' => [new Parameter('separator', 'string'), new Parameter('string', 'string'), new Parameter('limit', 'int', default: Term::constant(9223372036854775807))],
             'substr' => [new Parameter('string', 'string'), new Parameter('offset', 'int'), new Parameter('length', 'int|null', default: $null)],
@@ -46,10 +46,27 @@ final class Library
             'random_int' => [new Parameter('min', 'int'), new Parameter('max', 'int')],
             'mt_rand', 'rand' => [new Parameter('min', 'int', default: new Term('omitted')), new Parameter('max', 'int', default: new Term('omitted'))],
             'time' => [],
+            'define' => [new Parameter('constant_name', 'string'), new Parameter('value'), new Parameter('case_insensitive', 'bool', default: Term::constant(false))],
             'get_class' => [new Parameter('object', 'object', default: new Term('omitted'))],
             'microtime' => [new Parameter('as_float', 'bool', default: Term::constant(false))],
             'is_array', 'is_string', 'is_int', 'is_integer', 'is_float', 'is_double', 'is_bool', 'is_null', 'is_object', 'is_numeric', 'is_scalar' => [new Parameter('value')],
             'is_callable' => [new Parameter('value'), new Parameter('syntax_only', 'bool', default: Term::constant(false)), new Parameter('callable_name', byReference: true, default: new Term('omitted'))],
+            default => $this->valueFunctions($name),
+        };
+    }
+
+    /**
+     * Supplies signatures for deterministic construction helpers.
+     * @param string $name Built-in name
+     * @return list<Parameter>|null Supported signature
+     */
+    public function valueFunctions(string $name): ?array
+    {
+        return match ($name) {
+            'str_repeat' => [new Parameter('string', 'string'), new Parameter('times', 'int')],
+            'strval' => [new Parameter('value')],
+            'intval' => [new Parameter('value'), new Parameter('base', 'int', default: Term::constant(10))],
+            'vsprintf' => [new Parameter('format', 'string'), new Parameter('values', 'array')],
             default => $this->arrays($name),
         };
     }
@@ -64,6 +81,7 @@ final class Library
         $null = Term::constant(null);
         return match ($name) {
             'count' => [new Parameter('value', 'array|Countable'), new Parameter('mode', 'int', default: Term::constant(0))],
+            'array_fill' => [new Parameter('start_index', 'int'), new Parameter('count', 'int'), new Parameter('value')],
             'array_values' => [new Parameter('array', 'array')],
             'array_keys' => [new Parameter('array', 'array'), new Parameter('filter_value', default: new Term('omitted')), new Parameter('strict', 'bool', default: Term::constant(false))],
             'array_merge' => [new Parameter('arrays', 'array', variadic: true)],

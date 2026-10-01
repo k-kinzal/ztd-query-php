@@ -39,7 +39,16 @@ final class ConstantTransfer
         if ($instruction->operation === 'class-constant') {
             return $this->member($caller, $instruction, $state);
         }
-        return $this->initializer($instruction->name, $instruction, $state);
+        $name = $instruction->name;
+        $fallback = $instruction->attributes['fallback'] ?? '';
+        if (is_string($fallback) && $fallback !== '' && $this->machine->context->program->constant($name) === null && !isset($state->memory->cells['constant:' . $name]) && !isset($this->machine->context->configuration->environment['constant:' . $name])) {
+            $name = $fallback;
+        }
+        if (isset($state->memory->cells['constant:' . $name])) {
+            $state->registers[$instruction->result] = $state->memory->cells['constant:' . $name];
+            return [$state];
+        }
+        return $this->initializer($name, $instruction, $state);
     }
 
     /**

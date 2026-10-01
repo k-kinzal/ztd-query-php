@@ -241,4 +241,45 @@ final class StateJoinTest extends TestCase
         self::assertSame(1, $first->memory->cells['first']->native());
         self::assertSame(2, $last->memory->cells['last']->native());
     }
+    public function testOrderKeyIgnoresEvidenceMultiplicityButRetainsScalarTypes(): void
+    {
+        $join = new StateJoin(\Tests\Fake\SolverFixture::context());
+        $a = new State();
+        $a->registers['order'] = Term::parameter('order', 'bool');
+        $a->registers['value'] = Term::constant(1);
+        $a->evidence = ['a','b','a'];
+        $b = $a->fork();
+        $b->evidence = ['b','a'];
+        self::assertSame($join->orderKey($a, 'order'), $join->orderKey($b, 'order'));
+        $b->registers['value'] = Term::constant('1');
+        self::assertNotSame($join->orderKey($a, 'order'), $join->orderKey($b, 'order'));
+    }
+
+    public function testFingerprintIgnoresObjectSharingAndKeepsArrayOrder(): void
+    {
+        $join = new StateJoin(\Tests\Fake\SolverFixture::context());
+        $value = Term::constant(1);
+        $a = new State();
+        $a->registers = ['a' => $value, 'b' => $value];
+        $b = new State();
+        $b->registers = ['a' => Term::constant(1), 'b' => Term::constant(1)];
+        self::assertSame($join->fingerprint($a), $join->fingerprint($b));
+        $a->registers['array'] = Term::fromNative(['a' => 1, 'b' => 2]);
+        $b->registers['array'] = Term::fromNative(['b' => 2, 'a' => 1]);
+        self::assertNotSame($join->fingerprint($a), $join->fingerprint($b));
+    }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testOrdersCoalescesPureCallsWithoutDroppingEffectAlternatives(): void
+    {
+        $pure = \Tests\Fake\Analysis::returns('<?php function target(){$a=[1,2,3,4,5,6,7,8,9,10];for($i=0;$i<count($a);$i++){}return $i;}');
+        self::assertCount(1, $pure->normalOutcomes);
+        self::assertSame(10, $pure->normalOutcomes[0]->values['return']->native());
+        self::assertSame([], $pure->frontiers);
+        $effects = \Tests\Fake\Analysis::returns('<?php function target(){$i=1;return $i+++$i;}');
+        self::assertEqualsCanonicalizing([2,3], array_map(static fn ($outcome) => $outcome->values['return']->native(), $effects->normalOutcomes));
+    }
+
 }

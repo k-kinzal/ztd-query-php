@@ -75,7 +75,7 @@ final class Protocol
         $class = $access->receiver->attributes['class'] ?? '';
         $symbol = is_string($class) ? (new Dispatch($this->machine->context->program))->method($class, $method) : null;
         if ($symbol === null) {
-            return (new Transfer($this->machine))->boundary($state, $instruction);
+            return (new Transfer($this->machine))->boundary($state, $instruction, Term::opaque('OFFSET_OPERATION', dependencies: [$access->receiver]));
         }
         $call = new Instruction($instruction->id . ':' . $method, 'invoke-method', $instruction->source, $instruction->result);
         return (new CallExecutor($this->machine))->symbol($symbol, $arguments, $state, $call, $access->receiver, strict: $caller->strict);

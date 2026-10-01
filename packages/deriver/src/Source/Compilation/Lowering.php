@@ -64,6 +64,9 @@ final class Lowering
         if ($expression instanceof Expr\Variable && is_string($expression->name)) {
             return $this->graph->emit($expression, 'local', name: $expression->name);
         }
+        if ($expression instanceof Expr\Variable) {
+            return $this->graph->emit($expression, 'dynamic-local', [$this->expression($expression->name)]);
+        }
         if ($expression instanceof Expr\ArrayDimFetch) {
             $parent = $this->location($expression->var);
             $key = $expression->dim === null ? '' : $this->expression($expression->dim);

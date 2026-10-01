@@ -262,12 +262,12 @@ final class StatementLoweringTest extends TestCase
     public function testOtherMarksUnsupportedStatementsAtTheirOwnSourceRange(): void
     {
         $lowering = SourceFixture::lowering();
-        $node = new Stmt\Echo_([new Int_(17)], ['startFilePos' => 6,'endFilePos' => 10]);
+        $node = new Stmt\Goto_(new \PhpParser\Node\Identifier('label'), ['startFilePos' => 6,'endFilePos' => 10]);
         (new StatementLowering($lowering))->other($node);
         self::assertCount(1, $lowering->graph->instructions[0]);
         $instruction = $lowering->graph->instructions[0][0];
         self::assertSame('unsupported', $instruction->operation);
-        self::assertSame('Stmt_Echo', $instruction->name);
+        self::assertSame('Stmt_Goto', $instruction->name);
         self::assertSame(6, $instruction->source->start);
         self::assertSame(11, $instruction->source->end);
     }

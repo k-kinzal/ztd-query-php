@@ -82,6 +82,10 @@ final class CallExecutor
         }
         if ($target->kind === 'constant' && is_string($target->literal)) {
             $symbol = (new CallResolution($this->machine->context))->name($target->literal, $instruction);
+            if (strtolower(ltrim($symbol, '\\')) === 'extract' && $this->machine->context->program->callable($symbol) === null && !isset($this->machine->context->models->models['extract'])) {
+                (new \Deriver\Evaluation\Havoc())->symbols($state, 'DYNAMIC_VARIABLE_WRITE');
+                return (new UnknownCall($this->machine->context))->apply($state, $instruction, $arguments, null, 'DYNAMIC_VARIABLE_WRITE');
+            }
             return $this->symbol($symbol, $arguments, $state, $instruction, strict: $caller->strict);
         }
         return (new UnknownCall($this->machine->context))->apply($state, $instruction, $arguments, $target, 'OPEN_DISPATCH');
@@ -102,7 +106,7 @@ final class CallExecutor
     public function symbol(string $symbol, array $arguments, State $state, Instruction $instruction, ?Term $receiver = null, array $captures = [], bool $strict = false, ?string $calledClass = null): array
     {
         $context = $this->machine->context;
-        $receiverType = $receiver?->attributes['class'] ?? '';
+        $receiverType = $calledClass ?? $receiver?->attributes['class'] ?? $receiver?->attributes['type'] ?? '';
         $body = (new CallResolution($context))->body($symbol, $instruction, $arguments, $state, is_string($receiverType) ? $receiverType : '');
         if ($body === null) {
             return (new UnknownCall($context))->apply($state, $instruction, $arguments, $receiver, $context->callFailures[$instruction->id] ?? 'MISSING_CALL_MODEL');

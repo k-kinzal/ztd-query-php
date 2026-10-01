@@ -43,7 +43,7 @@ final class PropertyMagic
             return null;
         }
         if (isset($state->offsets[$instruction->operands[0]]) && (new Dispatch($this->machine->context->program))->method($class, '__get') !== null) {
-            return (new Transfer($this->machine))->boundary($state, $instruction);
+            return (new Transfer($this->machine))->boundary($state, $instruction, Term::opaque('OFFSET_OPERATION', dependencies: [$slot->receiver]));
         }
         if ($instruction->operation === 'read-silent') {
             return $this->silent($caller, $instruction, $state, $slot, $class);

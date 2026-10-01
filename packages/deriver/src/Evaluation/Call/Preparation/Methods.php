@@ -65,7 +65,7 @@ final class Methods
             return $this->declared($method, $instruction, $state, $receiver, $class, $static);
         }
         if (isset($context->models->models[strtolower($class . '::' . $name->literal)])) {
-            return new Target((new CallResolution($context))->body($class . '::' . $name->literal, $instruction));
+            return new Target((new CallResolution($context))->body($class . '::' . $name->literal, $instruction, receiverType: $class));
         }
         $native = $this->native($instruction, $state, $receiver, $class, $name->literal, $static);
         if ($native !== null) {
@@ -93,7 +93,7 @@ final class Methods
         if (($static || $receiver->kind === 'object') && $method->abstract || $static && !$method->static && !(new Invocation($this->machine))->instance($bound, $class)) {
             return new Target(error: 'Error');
         }
-        return new Target((new CallResolution($this->machine->context))->body($method->symbol, $instruction));
+        return new Target((new CallResolution($this->machine->context))->body($method->symbol, $instruction, receiverType: (new MethodInvocation($this->machine))->calledClass($receiver, $state, $class, $static)));
     }
 
     /**

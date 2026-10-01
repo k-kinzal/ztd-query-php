@@ -7,6 +7,7 @@ namespace Deriver\Evaluation\Transfer;
 use Deriver\ControlFlow\CallableGraph;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Context;
+use Deriver\Evaluation\Havoc;
 use Deriver\Evaluation\Offset\Address;
 use Deriver\Evaluation\State;
 use Deriver\Memory\Location;
@@ -38,15 +39,15 @@ final class MemoryStep
     public function evaluate(CallableGraph $callable, Instruction $instruction, State $state): Term
     {
         $op = $instruction->operation;
-        if ($op === 'local' && str_starts_with($callable->symbol, 'script:')) {
-            $root = 'global:' . $instruction->name;
-            $state->memory->cells[$root] ??= $state->memory->read($state->local($instruction->name));
-            $state->locals[$instruction->name] = new Location($root);
-        }
-        if (in_array($op, ['local', 'element-address', 'field-address', 'static-address', 'unsupported-address', 'returned-address'], true)) {
-            return $this->prepareAddress($instruction, $state);
+        $prepared = $this->prepareStorage($callable, $instruction, $state);
+        if ($prepared !== null) {
+            return $prepared;
         }
         $address = $state->addresses[$instruction->operands[0] ?? ''] ?? new Location('unknown', unknown: true);
+        if ($address->root === 'symbol-table' && !in_array($op, ['read', 'read-silent'], true)) {
+            (new Havoc())->symbols($state, 'DYNAMIC_VARIABLE_WRITE');
+            $this->context->frontier('DYNAMIC_VARIABLE_WRITE', $instruction->source, $op);
+        }
         if ($op === 'read' || $op === 'read-silent') {
             $value = $state->memory->read($address);
             if ($value->kind === 'uninitialized' && $op === 'read') {
@@ -77,6 +78,35 @@ final class MemoryStep
             return ($instruction->attributes['post'] ?? false) === true ? $before : $after;
         }
         return $this->binding($callable, $instruction, $state, $address);
+    }
+
+    /**
+     * Resolves local and dynamic names before ordinary storage operations.
+     * @param CallableGraph $callable Current scope
+     * @param Instruction $instruction Address instruction
+     * @param State $state Current frame
+     * @return Term|null Address token, or an ordinary storage operation
+     */
+    public function prepareStorage(CallableGraph $callable, Instruction $instruction, State $state): ?Term
+    {
+        $op = $instruction->operation;
+        if ($op === 'dynamic-local') {
+            $name = (new Operations())->cast('string', $state->value($instruction->operands[0]));
+            if ($name->kind === 'constant' && is_string($name->literal)) {
+                return $this->evaluate($callable, new Instruction($instruction->id, 'local', $instruction->source, $instruction->result, name: $name->literal), $state);
+            }
+            $state->addresses[$instruction->result] = new Location('symbol-table', unknown: true);
+            return new Term('location', 'symbol-table');
+        }
+        if ($op === 'local' && (str_starts_with($callable->symbol, 'script:') || in_array($instruction->name, ['_GET', '_POST', '_COOKIE', '_SERVER', '_ENV', '_REQUEST', '_FILES', '_SESSION'], true))) {
+            $root = 'global:' . $instruction->name;
+            $state->memory->cells[$root] ??= $this->context->configuration->environment[$root] ?? $state->memory->read($state->local($instruction->name));
+            $state->locals[$instruction->name] = new Location($root);
+        }
+        if (in_array($op, ['local', 'element-address', 'field-address', 'static-address', 'unsupported-address', 'returned-address'], true)) {
+            return $this->prepareAddress($instruction, $state);
+        }
+        return null;
     }
 
     /**
@@ -191,7 +221,7 @@ final class MemoryStep
             }
         } elseif ($instruction->operation === 'global') {
             $root = 'global:' . $address->local;
-            $state->memory->cells[$root] ??= new Term('external', $root, attributes: ['type' => 'mixed']);
+            $state->memory->cells[$root] ??= $this->context->configuration->environment[$root] ?? new Term('external', $root, attributes: ['type' => 'mixed']);
             $state->locals[$address->local] = new Location($root);
         } elseif ($instruction->operation === 'static-local') {
             $root = 'static:' . $callable->symbol . ':' . $address->local;

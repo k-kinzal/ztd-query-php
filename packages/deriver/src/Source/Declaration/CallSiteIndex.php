@@ -71,7 +71,7 @@ final class CallSiteIndex
             if ($name instanceof Node\Name || $name instanceof Node\Identifier) {
                 $resolved = $name->getAttribute('namespacedName');
                 $spelling = $resolved instanceof Node\Name ? $resolved->toString() : $name->toString();
-                $found = (new CallableIdentity())->key($spelling) === (new CallableIdentity())->key($selector);
+                $found = $selector === '*' || (new CallableIdentity())->key($spelling) === (new CallableIdentity())->key($selector) || $this->fallback($node, $selector);
             }
         }
         foreach ((new EffectInspection())->children($node) as $child) {
@@ -79,4 +79,15 @@ final class CallSiteIndex
         }
         return $found;
     }
+    /**
+     * Matches an unqualified function spelling that may fall back to the global namespace.
+     * @param Node $node Possible invocation
+     * @param string $selector Requested global function
+     * @return bool Whether namespace fallback can select this name
+     */
+    public function fallback(Node $node, string $selector): bool
+    {
+        return $node instanceof Expr\FuncCall && $node->name instanceof Node\Name && $node->name->isUnqualified() && (new CallableIdentity())->key($node->name->toString()) === (new CallableIdentity())->key($selector);
+    }
+
 }
