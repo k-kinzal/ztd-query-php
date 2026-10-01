@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Statement\Projection;
 
+use SqlSemantics\Statement\Expression\BooleanReference;
 use SqlSemantics\Statement\Expression\ColumnReference;
 use SqlSemantics\Statement\Expression\ScalarExpression;
 use SqlSemantics\Statement\Identifier\Name;
@@ -28,11 +29,12 @@ final class Field
     /**
      * An unaliased non-column expression needs its dialect's derived output label.
      */
-    public function __construct(public readonly ScalarExpression $expression, public readonly ?Name $alias = null, ?Name $derivedName = null)
+    public function __construct(public readonly ScalarExpression $expression, public readonly ?Name $alias = null, ?Name $derivedName = null, public readonly bool $explicitAlias = true)
     {
         assert((new SemanticGraph())->containsOnlyValues($expression), 'An expression must consist of immutable semantic values.');
-        $columnName = $expression instanceof ColumnReference
-            ? ($expression->resolution instanceof ResolvedColumn ? $expression->resolution->column->name : $expression->name)
+        $column = $expression instanceof BooleanReference ? $expression->column : ($expression instanceof ColumnReference ? $expression : null);
+        $columnName = $column !== null
+            ? ($column->resolution instanceof ResolvedColumn ? $column->resolution->column->name : $column->name)
             : null;
         $name = $alias ?? $columnName ?? $derivedName;
         assert($name !== null, 'An unaliased expression requires its result column label.');
@@ -45,6 +47,6 @@ final class Field
      */
     public function toString(): string
     {
-        return $this->expression->toString() . ($this->alias === null ? '' : ' AS ' . $this->alias->toString());
+        return $this->expression->toString() . ($this->alias === null ? '' : ($this->explicitAlias ? ' AS ' : ' ') . $this->alias->toString());
     }
 }

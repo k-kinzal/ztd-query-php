@@ -7,6 +7,7 @@ namespace SqlSemantics\Statement\Expression;
 use SqlSemantics\Statement\Declaration\Nullability;
 use SqlSemantics\Statement\Declaration\TypeDescriptor;
 use SqlSemantics\Statement\Type\Invalid;
+use SqlSemantics\Statement\Type\NullDomain;
 use SqlSemantics\Statement\Type\Unresolved;
 
 /**
@@ -20,7 +21,7 @@ interface ScalarExpression
     /**
      * Returns the expression type, or the specific fact preventing its determination.
      */
-    public function type(): TypeDescriptor|Unresolved|Invalid;
+    public function type(): TypeDescriptor|NullDomain|Unresolved|Invalid;
 
     /**
      * Returns the SQL NULL fact for this expression at its lookup site.

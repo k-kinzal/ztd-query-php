@@ -27,7 +27,7 @@ final class TableReference
     /**
      * Derives every declaration match instead of accepting an unrelated table pointer.
      */
-    public function __construct(public readonly Catalog $catalog, public readonly QualifiedName $name, public readonly ?Name $alias = null)
+    public function __construct(public readonly Catalog $catalog, public readonly QualifiedName $name, public readonly ?Name $alias = null, public readonly bool $explicitAlias = true)
     {
         $this->declarations = $catalog->matchingTables($name);
     }
@@ -72,6 +72,6 @@ final class TableReference
      */
     public function toString(): string
     {
-        return $this->name->toString() . ($this->alias === null ? '' : ' AS ' . $this->alias->toString());
+        return $this->name->toString() . ($this->alias === null ? '' : ($this->explicitAlias ? ' AS ' : ' ') . $this->alias->toString());
     }
 }
