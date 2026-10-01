@@ -2,26 +2,20 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\Sqlite;
+namespace SqlSemantics\Platform\Sqlite\Analysis;
 
-use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
 use SqlSemantics\Core\Ast\Tree;
+use SqlSemantics\Platform\Sqlite\IdentifierReader;
 use SqlSemantics\Statement\Expression\BooleanReference;
 use SqlSemantics\Statement\Expression\ColumnReference;
-use SqlSemantics\Statement\Expression\NullConstant;
-use SqlSemantics\Statement\Expression\ScalarExpression;
-use SqlSemantics\Statement\Expression\SqliteInteger;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Identifier\Quote;
-use SqlSemantics\Statement\Literal\Radix;
-use SqlSemantics\Statement\Literal\UnsignedInteger;
 use SqlSemantics\Statement\Projection\Field;
 use SqlSemantics\Statement\Projection\Fields;
 use SqlSemantics\Statement\Query\Quantifier;
 use SqlSemantics\Statement\Query\Select;
-use SqlSemantics\Statement\Reference\ResolvedColumn;
 use SqlSemantics\Statement\Relation\Scope;
 use SqlSemantics\Statement\Relation\TableReference;
 use SqlSemantics\Statement\Schema\Catalog;
@@ -51,7 +45,7 @@ final class SelectReader
         assert($projection !== null, 'This query grammar requires a projection.');
         $fields = new Fields($scope, ...$this->projection($projection, $scope));
         $predicate = Tree::child($select, ['where_opt']);
-        $where = $predicate === null ? null : $this->expression(Tree::outer($predicate, ['expr'])[0], $scope);
+        $where = $predicate === null ? null : (new ExpressionReader())->read(Tree::outer($predicate, ['expr'])[0], $scope);
         $quantifier = Tree::child($select, ['distinct']);
         return new Select($fields, $where, $quantifier === null ? Quantifier::Default : Quantifier::from(strtoupper(Tree::text($quantifier))));
     }
@@ -96,55 +90,20 @@ final class SelectReader
         $expression = Tree::child($source, ['expr']);
         assert($expression !== null, 'An expression projection has an expression.');
         [$alias, $explicit] = $this->alias(Tree::child($source, ['as']));
-        $operand = $this->expression($expression, $scope);
-        $derived = $alias === null && ($operand instanceof NullConstant || $operand instanceof SqliteInteger) ? new Name($operand->toString(), Quote::Double) : null;
-        $fields[] = new Field($operand, $alias, derivedName: $derived, explicitAlias: $explicit);
-        return $fields;
-    }
-
-    /**
-     * Separates numeric and NULL constants from names with possible truth alternatives.
-     */
-    public function expression(Node $source, Scope $scope): ScalarExpression
-    {
-        $term = Tree::child($source, ['term']);
-        if ($term !== null && count($term->tokens()) === 1 && $term->tokens()[0]->name === 'NULL') {
-            return new NullConstant($term->tokens()[0]->text);
-        }
-        if ($term !== null && count($term->tokens()) === 1 && in_array($term->tokens()[0]->name, ['INTEGER', 'QNUMBER'], true)) {
-            $text = $term->tokens()[0]->text;
-            $hexadecimal = str_starts_with(strtolower($text), '0x');
-            if ($hexadecimal || ctype_digit(str_replace('_', '', $text))) {
-                return new SqliteInteger(new UnsignedInteger($hexadecimal ? substr($text, 2) : $text, $hexadecimal ? Radix::Hexadecimal : Radix::Decimal), uppercasePrefix: str_starts_with($text, '0X'));
+        $operand = (new ExpressionReader())->read($expression, $scope);
+        $columnLabel = $operand instanceof ColumnReference || ($operand instanceof BooleanReference && !$operand->column->resolution instanceof \SqlSemantics\Statement\Reference\MissingColumn);
+        $derived = null;
+        if ($alias === null && !$columnLabel) {
+            $tokens = $expression->tokens();
+            $label = substr($expression->toString(), strlen($tokens[0]->leading));
+            $derived = new Name($label, Quote::Double);
+            if ($label !== $operand->toString()) {
+                $alias = $derived;
+                $derived = null;
             }
         }
-        $column = $this->column($source, $scope);
-        return $column->qualifier === null && $column->name->quote === Quote::None && in_array(strtoupper($column->name->value), ['TRUE', 'FALSE'], true)
-            ? new BooleanReference($column)
-            : $column;
-    }
-
-    /**
-     * Reads a column lookup without treating other expression forms as names.
-     */
-    public function column(Node $source, Scope $scope): ColumnReference
-    {
-        $children = Tree::significant($source);
-        if (count($children) === 1 && $children[0] instanceof Token && in_array($children[0]->name, ['ID', 'INDEXED', 'JOIN_KW'], true)) {
-            $parts = [$children[0]];
-        } else {
-            Tree::assertChildren($source, ['nm'], ['.']);
-            $parts = Tree::outer($source, ['nm']);
-        }
-        assert(count($parts) >= 1 && count($parts) <= 3, 'A column has up to three name positions.');
-        $names = array_map((new IdentifierReader())->name(...), $parts);
-        $name = $names[count($names) - 1];
-        $qualifier = count($names) === 1 ? null : new QualifiedName($names[count($names) - 2], count($names) === 3 ? $names[0] : null);
-        $column = new ColumnReference($scope, $name, $qualifier);
-        if ($qualifier === null && !$column->resolution instanceof ResolvedColumn && $name->quote === Quote::Double) {
-            Tree::unsupported($source, 'identifier with a literal alternative');
-        }
-        return $column;
+        $fields[] = new Field($operand, $alias, derivedName: $derived, explicitAlias: $explicit);
+        return $fields;
     }
 
     /**

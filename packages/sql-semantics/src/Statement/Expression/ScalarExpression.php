@@ -8,6 +8,7 @@ use SqlSemantics\Statement\Declaration\Nullability;
 use SqlSemantics\Statement\Declaration\TypeDescriptor;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\NullDomain;
+use SqlSemantics\Statement\Type\SqliteNumericDomain;
 use SqlSemantics\Statement\Type\Unresolved;
 
 /**
@@ -21,7 +22,7 @@ interface ScalarExpression
     /**
      * Returns the expression type, or the specific fact preventing its determination.
      */
-    public function type(): TypeDescriptor|NullDomain|Unresolved|Invalid;
+    public function type(): TypeDescriptor|NullDomain|Unresolved|Invalid|SqliteNumericDomain;
 
     /**
      * Returns the SQL NULL fact for this expression at its lookup site.
@@ -29,7 +30,7 @@ interface ScalarExpression
     public function nullability(): Nullability;
 
     /**
-     * Returns all column lookups owned by this expression.
+     * Returns the column dependencies the database must resolve for this expression.
      * @return list<ColumnReference>
      */
     public function references(): array;

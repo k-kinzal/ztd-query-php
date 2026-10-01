@@ -2,14 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit;
+namespace Tests\Unit\Analysis;
 
+use PDO;
+use PDOStatement;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Sqlite\SqliteParser;
-use SqlSemantics\Platform\Sqlite\SelectReader;
+use SqlSemantics\Platform\Sqlite\Analysis\SelectReader;
 use SqlSemantics\Statement\Declaration\Builtin;
 use SqlSemantics\Statement\Declaration\Nullability;
 use SqlSemantics\Statement\Declaration\TypeDescriptor;
@@ -41,6 +44,10 @@ final class SelectReaderTest extends TestCase
     #[TestWith(['SELECT b.foo AS result FROM bar AS b WHERE b.foo'])]
     #[TestWith(['SELECT b.foo result FROM bar b'])]
     #[TestWith(['SELECT a.foo AS left_foo, b.foo AS right_foo FROM bar a, bar b'])]
+    #[TestWith(["SELECT 'a''b\\c' AS text, X'00fFA1' AS bytes"])]
+    #[TestWith(["SELECT '', x'', '日本語', x'00Ff41'"])]
+    #[TestWith(['SELECT 1.0, 1_000.3_0E+0_2'])]
+    #[TestWith(['SELECT CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP'])]
     #[TestWith(['SELECT NULL'])]
     #[TestWith(['SELECT nUlL AS result'])]
     #[TestWith(['SELECT null, NULL'])]
@@ -142,5 +149,60 @@ final class SelectReaderTest extends TestCase
         self::assertInstanceOf(SqliteInteger::class, $literal);
         self::assertSame('-1', $literal->value->value());
         self::assertSame(Invalid::IntegerLiteralOverflow, $query->field('invalid')->expression->type());
+    }
+
+    #[DataProvider('providerBinaryExpressions')]
+    #[DataProvider('providerComputedExpressions')]
+    public function testReadPreservesComputedOutputLabelsWhenRenderingGroupedOperands(string $sql): void
+    {
+        $catalog = new Catalog(new SearchPath(new Name('main')));
+        $reader = new SelectReader();
+        $parser = new SqliteParser();
+        $query = $reader->read($parser->parse($sql)->find('select')[0], $catalog);
+        $db = new PDO('sqlite::memory:');
+        $original = $db->query($sql);
+        $rebuilt = $db->query($query->toString());
+        self::assertInstanceOf(PDOStatement::class, $original);
+        self::assertInstanceOf(PDOStatement::class, $rebuilt);
+        self::assertSame($original->fetch(PDO::FETCH_ASSOC), $rebuilt->fetch(PDO::FETCH_ASSOC));
+        self::assertSame((new SemanticGraph())->fingerprint($query), (new SemanticGraph())->fingerprint($reader->read($parser->parse($query->toString())->find('select')[0], $catalog)));
+    }
+
+    /**
+     * @return list<array{string}>
+     */
+    public static function providerComputedExpressions(): array
+    {
+        return [
+            ['SELECT ((TRUE)), (null), ((1))'],
+            ['SELECT 1+2*3, (1+2)*3'],
+            ['SELECT 2 IS TRUE, 2 IS (+TRUE)'],
+            ['SELECT NULL = NULL, NULL IS NULL'],
+            ['SELECT 1 BETWEEN 2 AND NULL, NULL IN ()'],
+            ['SELECT absent NOT IN ()'],
+            ['SELECT 1 IN (NULL, 1)'],
+            ['SELECT 0 AND absent, absent AND 0'],
+            ['SELECT -1'],
+            ['SELECT -(+3), +NULL'],
+            ['SELECT NOT 1 AS result'],
+            ['SELECT ~ 1, +2'],
+        ];
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerBinaryExpressions(): iterable
+    {
+        $operands = ['NULL', '0', '1', '-1', '1.5', '1e999', "'x'", "X'01'"];
+        $operators = ['+', '-', '*', '/', '%', '&', '|', '<<', '>>', '||', '<', '>', '<=', '>=', '=', '==', '!=', '<>', 'IS', 'IS NOT', 'IS DISTINCT FROM', 'IS NOT DISTINCT FROM', 'AND', 'OR'];
+        foreach ($operators as $operator) {
+            foreach ($operands as $left) {
+                foreach ($operands as $right) {
+                    $sql = 'SELECT ' . $left . ' ' . $operator . ' ' . $right;
+                    yield $sql => [$sql];
+                }
+            }
+        }
     }
 }

@@ -56,6 +56,33 @@ SQL is written from these values. Source locations may accompany diagnostics, bu
 the writer must not read source text or a parser tree. Formatting, redundant
 parentheses, and keyword synonyms are not semantic identities.
 
+## Expression results
+
+An expression owns its semantic operands and exposes their declaration
+dependencies. Its result facts follow from those operands and the database's
+rules. A SQLite string literal has text storage, whereas arithmetic may produce
+either integer or real storage depending on input values and overflow. That
+numeric alternative is a known result domain, not an unimplemented or unknown
+type. NULL facts are separate from the non-NULL storage domain.
+
+NULL propagation also belongs to each operation. A NULL-safe comparison always
+returns a truth value; ordinary equality can return NULL. A range test evaluates
+its subject once, so it must not become two independently evaluated comparisons.
+SQLite's empty membership list has a constant result even for a NULL or unresolved
+subject. These distinctions follow the
+[SQLite expression rules](https://sqlite.org/lang_expr.html).
+
+Literal values are decoded without first rounding through a PHP floating-point
+number. A numeral can be grammatically valid but exceed the database's literal
+range; its value and range diagnostic remain available in the structure. Clock
+expressions describe requests that the database evaluates, without sampling the
+clock during analysis.
+
+A computed output name is part of the result shape. SQLite can derive that name
+from the expression's written form. Reconstruction may therefore need an explicit
+result alias when it normalizes expression grouping. The stored name is an output
+identifier; the expression itself is still written from its typed operands.
+
 ## Uncertainty and implementation defects
 
 An unknown fact must name the missing information, such as an absent catalog or a
