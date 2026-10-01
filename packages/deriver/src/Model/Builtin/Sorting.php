@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Deriver\Model\Builtin;
 
+use Deriver\Value\FloatConversion;
 use Deriver\Value\Term;
 
 /**
@@ -12,6 +13,13 @@ use Deriver\Value\Term;
  */
 final class Sorting
 {
+    /**
+     * @param int|null $floatPrecision Captured target precision for float-to-string conversion; null when unknown
+     */
+    public function __construct(public readonly ?int $floatPrecision = null)
+    {
+    }
+
     /**
      * Produces the reindexed array; the declarative model performs its reference write.
      * @param list<Term> $values Bound array and flags
@@ -31,7 +39,10 @@ final class Sorting
             }
             $native[] = $value->literal;
         }
-        sort($native, $flags->literal);
+        $flags = $flags->literal;
+        (new FloatConversion($this->floatPrecision))->within(static function () use (&$native, $flags): bool {
+            return sort($native, $flags);
+        });
         return Term::fromNative($native, $array->isSecret());
     }
 }

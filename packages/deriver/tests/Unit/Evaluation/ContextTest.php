@@ -121,6 +121,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Source\Validation\TargetSyntax::class)]
 #[UsesClass(\Deriver\Value\Identity::class)]
 #[UsesClass(Term::class)]
+#[UsesClass(\Deriver\Value\Operations::class)]
 #[Small]
 final class ContextTest extends TestCase
 {

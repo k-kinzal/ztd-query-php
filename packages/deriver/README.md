@@ -62,6 +62,27 @@ echo $result->normalOutcomes[0]->values['return']->native(); // user:42
 
 Inspect the result's assessment, unresolved dependencies, and exceptional outcomes before treating a normal value as exhaustive. A symbolic value can be complete even when its input is unknown.
 
+A closed assessment does not mean the result is a single fixed value. Reading an undefined variable is closed and concrete, yet it carries a `PHP_WARNING` frontier, because an error handler can turn the warning into an exception. When you need one value PHP always produces, use `definite()`. It returns the only normal outcome when every value is concrete and the result has no frontiers, exceptional outcomes or project diagnostics, and `null` otherwise:
+
+```php
+$outcome = $result->definite();
+if ($outcome !== null) {
+    echo $outcome->values['return']->native(); // user:42
+}
+```
+
+Converting a float to a string depends on the `precision` directive of the runtime, so `'v' . 0.25` stays unresolved with a `FLOAT_STRING_CONFIGURATION` frontier. Pass the directive your application runs with to resolve these conversions. The value is part of the snapshot identity, and a call to `ini_set()` in the analyzed code remains an unresolved dependency:
+
+```php
+use Deriver\Project\Configuration;
+use Deriver\Project\TargetProfile;
+
+$input = new ProjectInput([new SourceFile('app.php', '<?php function label(float $rate): string { return "rate:" . $rate; }')]);
+$session = (new Analyzer())->open($input, new Configuration(new TargetProfile(floatPrecision: 14)));
+```
+
+Deriver evaluates operators without the diagnostics that newer host PHP versions add, such as the PHP 8.4 deprecation of raising zero to a negative power.
+
 Queries, models, and result types are described in the [API documentation](https://k-kinzal.github.io/ztd-query-php/k-kinzal/deriver/).
 
 ## License

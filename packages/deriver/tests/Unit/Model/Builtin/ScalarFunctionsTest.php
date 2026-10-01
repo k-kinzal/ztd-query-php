@@ -150,6 +150,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Value\Arithmetic::class)]
 #[UsesClass(\Deriver\Value\Arrays::class)]
 #[UsesClass(\Deriver\Value\Comparison::class)]
+#[UsesClass(\Deriver\Value\FloatConversion::class)]
 #[UsesClass(\Deriver\Value\Identity::class)]
 #[UsesClass(\Deriver\Value\Operations::class)]
 #[UsesClass(Term::class)]

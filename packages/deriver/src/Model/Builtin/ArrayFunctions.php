@@ -16,6 +16,13 @@ use Deriver\Value\Term;
 final class ArrayFunctions
 {
     /**
+     * @param int|null $floatPrecision Captured target precision for float-to-string conversion; null when unknown
+     */
+    public function __construct(public readonly ?int $floatPrecision = null)
+    {
+    }
+
+    /**
      * Evaluates a supported standard array function.
      * @param string $name Function name
      * @param list<Term> $values Bound arguments
@@ -119,7 +126,7 @@ final class ArrayFunctions
         }
         $unknown = false;
         foreach ($array->operands as $element) {
-            $comparison = (new Comparison())->apply(($values[2]->literal ?? false) === true ? '===' : '==', $needle, $element);
+            $comparison = (new Comparison($this->floatPrecision))->apply(($values[2]->literal ?? false) === true ? '===' : '==', $needle, $element);
             if ($comparison->kind === 'constant' && $comparison->literal === true) {
                 return Term::constant(true);
             }
@@ -150,7 +157,7 @@ final class ArrayFunctions
         }
         $keys = [];
         foreach ($array->operands as $key => $element) {
-            $equal = (new Comparison())->apply($strict->literal === true ? '===' : '==', $filter, $element);
+            $equal = (new Comparison($this->floatPrecision))->apply($strict->literal === true ? '===' : '==', $filter, $element);
             if ($equal->kind !== 'constant') {
                 return Term::opaque('UNSUPPORTED_MODEL_CASE', 'array', $values);
             }

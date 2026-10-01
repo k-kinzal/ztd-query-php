@@ -232,4 +232,35 @@ final class ArithmeticTest extends TestCase
         self::assertFalse($arithmetic->warning('%', Term::constant('bad'), Term::constant(2)));
         self::assertFalse($arithmetic->warning('%', Term::constant(2), Term::constant('bad')));
     }
+
+    /**
+     * @param int|float $base
+     * @param int|float $exponent
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerZeroBasePowers')]
+    public function testPowerOfZeroToANegativeExponentIsASignedInfinityWithoutHostDiagnostics(int|float $base, int|float $exponent, float $expected): void
+    {
+        self::assertSame($expected, (new Arithmetic())->calculate('**', $base, $exponent));
+    }
+
+    /**
+     * @return array<string, array{int|float, int|float, float}>
+     */
+    public static function providerZeroBasePowers(): array
+    {
+        return [
+            'integer zero' => [0, -1, INF],
+            'positive zero with fraction' => [0.0, -0.5, INF],
+            'negative zero with odd exponent' => [-0.0, -3, -INF],
+            'negative zero with even exponent' => [-0.0, -2, INF],
+            'negative zero with fraction' => [-0.0, -2.5, INF],
+            'negative zero with negative infinity' => [-0.0, -INF, INF],
+            'negative zero with minimum integer' => [-0.0, PHP_INT_MIN, INF],
+        ];
+    }
+
+    public function testXorTreatsNanAsTrueWithoutHostDiagnostics(): void
+    {
+        self::assertTrue((new Arithmetic())->apply('xor', Term::constant(NAN), Term::constant(0))->native());
+    }
 }

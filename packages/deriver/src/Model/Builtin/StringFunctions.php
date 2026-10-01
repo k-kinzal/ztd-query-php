@@ -14,6 +14,13 @@ use Deriver\Value\Term;
 final class StringFunctions
 {
     /**
+     * @param int|null $floatPrecision Captured target precision for float-to-string conversion; null when unknown
+     */
+    public function __construct(public readonly ?int $floatPrecision = null)
+    {
+    }
+
+    /**
      * Applies a supported string operation or retains its symbolic relationship.
      * @param string $name Function name
      * @param list<Term> $values Bound arguments
@@ -71,14 +78,14 @@ final class StringFunctions
             if ($part->kind !== 'constant' && (new TypePredicates())->apply('is_scalar', $part)->literal !== true) {
                 return Term::opaque('UNSUPPORTED_MODEL_CASE', 'string', $values);
             }
-            $part = (new Operations())->cast('string', $part);
+            $part = (new Operations($this->floatPrecision))->cast('string', $part);
             if ($part->kind === 'opaque') {
                 return $part;
             }
             if (!$first) {
-                $result = (new Operations())->binary('.', $result, $separator);
+                $result = (new Operations($this->floatPrecision))->binary('.', $result, $separator);
             }
-            $result = (new Operations())->binary('.', $result, $part);
+            $result = (new Operations($this->floatPrecision))->binary('.', $result, $part);
             $first = false;
         }
         return $result;

@@ -94,7 +94,7 @@ final class Conversions
             $this->machine->context->frontier('PHP_WARNING', $instruction->source, 'array-to-string');
             $state->registers[$instruction->result] = Term::constant('Array', $value->isSecret());
         } else {
-            $converted = (new Operations())->cast('string', $value);
+            $converted = (new Operations($this->machine->context->configuration->target->floatPrecision))->cast('string', $value);
             if ($converted->kind === 'opaque' && is_string($converted->literal)) {
                 $this->machine->context->frontier($converted->literal, $instruction->source, 'string-conversion', [$value], 'string');
             }
@@ -123,7 +123,7 @@ final class Conversions
             $a = $first->value($instruction->result);
             foreach ($this->string($caller, $instruction, $first, $right) as $second) {
                 if ($second->completion->kind === 'normal') {
-                    $second->registers[$instruction->result] = (new Operations())->binary('.', $a, $second->value($instruction->result));
+                    $second->registers[$instruction->result] = (new Operations($this->machine->context->configuration->target->floatPrecision))->binary('.', $a, $second->value($instruction->result));
                 }
                 $results[] = $second;
             }
