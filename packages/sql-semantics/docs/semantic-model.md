@@ -44,6 +44,14 @@ scope. A field from a different scope cannot be transplanted with stale bindings
 Updates return a new statement; the original remains valid and unchanged. Changing
 an INSERT source form requires constructing the other statement type.
 
+Structural invariants and database validity are distinct. Grammar-valid input can
+refer to a missing column or supply incompatible row widths. It still identifies
+an operation and its operands. Such contradictions belong to derived semantic
+diagnostics on that concrete operation, not an unknown statement or a discarded
+syntax fragment. An invariant ensures that a reference belongs to its scope and
+that its facts match the represented operands; it must not conceal a language
+coverage gap by refusing every statement with a database-level semantic error.
+
 SQL is written from these values. Source locations may accompany diagnostics, but
 the writer must not read source text or a parser tree. Formatting, redundant
 parentheses, and keyword synonyms are not semantic identities.

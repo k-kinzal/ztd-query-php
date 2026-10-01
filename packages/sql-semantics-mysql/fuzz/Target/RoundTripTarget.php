@@ -8,6 +8,7 @@ use Error;
 use SqlFormatter\Facade\Formatter;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Statement\Element;
+use SqlSemantics\Statement\SemanticGraph;
 use SqlSemantics\Statement\Traversal;
 use Throwable;
 
@@ -35,6 +36,9 @@ final class RoundTripTarget
         $printed = null;
         try {
             $statement = $this->semantics->analyze($sql);
+            if (!(new SemanticGraph())->isSemanticOperation($statement)) {
+                throw new Error('Analysis returned a syntax representation instead of an immutable semantic operation: ' . $statement::class);
+            }
             $printed = $statement->toString();
             $expected = $this->compact->format($sql);
             $actual = $this->compact->format($printed);
