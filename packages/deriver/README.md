@@ -62,8 +62,6 @@ echo $result->normalOutcomes[0]->values['return']->native(); // user:42
 
 Inspect the result's assessment, unresolved dependencies, and exceptional outcomes before treating a normal value as exhaustive. A symbolic value can be complete even when its input is unknown.
 
-For scopes, caller inventories, receiver observations, external state, model metadata, and partial results, see [Integrating a value catalog](docs/analysis-contract.md).
-
 Queries, models, and result types are described in the [API documentation](https://k-kinzal.github.io/ztd-query-php/k-kinzal/deriver/).
 
 ## License
