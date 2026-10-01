@@ -41,7 +41,7 @@ final class TypeInput
             throw new AnalysisException('Expected exactly one declared type, without column attributes.');
         }
         $values = $this->language->values();
-        $declaration = (new TypeReader($this->language->dialect))->read($types[0], $values);
+        $declaration = (new TypeReader($this->language))->read($types[0]);
         return new TypeDeclaration($declaration->type, $declaration->autoIncrement, $declaration->notNull, $declaration->unique, $values->read($types[0]));
     }
 }

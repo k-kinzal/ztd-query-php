@@ -59,6 +59,14 @@ use Tests\Contract\Resolved;
 #[CoversClass(\SqlSemantics\Statement\Assertion::class)]
 final class InvariantTest extends TestCase
 {
+    public function testAlternativesPreservesExactEnumerationValueObjects(): void
+    {
+        $text = new \SqlSemantics\Statement\Literal\StringLiteral('alpha');
+        $bytes = new \SqlSemantics\Statement\Literal\BinaryLiteral("\0A");
+        $type = new \SqlSemantics\Statement\Declaration\TypeDescriptor(\SqlSemantics\Statement\Declaration\Builtin::Enum, members: [$text, $bytes]);
+        self::assertSame([$text, $bytes], $type->members);
+    }
+
     public function testMembersPreservesDeclarationOrder(): void
     {
         $table = Resolved::of((new Semantics(PostgreSqlDialect::PostgreSql))->analyze('CREATE TABLE t (z INT, a TEXT)', []))->declarations[0];

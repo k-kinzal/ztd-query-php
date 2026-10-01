@@ -21,12 +21,14 @@ use SqlSemantics\Statement\Declaration\TableConstraint;
 final class ColumnReader
 {
     private readonly ValueReader $values;
+    private readonly Language $language;
     /**
      * Binds the dependencies used for semantic binding.
      */
-    public function __construct(public readonly Identifiers $identifiers, ?ValueReader $values = null)
+    public function __construct(public readonly Identifiers $identifiers, ?ValueReader $values = null, ?Language $language = null)
     {
-        $this->values = $values ?? $identifiers->dialect->platform()->values((new Language($identifiers->dialect))->version);
+        $this->language = $language ?? new Language($identifiers->dialect);
+        $this->values = $values ?? $this->language->values();
     }
 
     /**
@@ -41,7 +43,7 @@ final class ColumnReader
             Tree::unsupported($node, 'column declaration');
         }
         $name = $this->identifiers->parts($nameNode)[0];
-        $declared = (new TypeReader($this->identifiers->dialect))->read($typeNode, $this->values, $table);
+        $declared = (new TypeReader($this->language))->read($typeNode, $table);
         $rules = $this->identifiers->dialect->platform()->schema();
         $nullability = $rules->nullability($node, $attributes, $declared->notNull ? Nullability::NotNull : Nullability::MaybeNull);
         $default = null;

@@ -65,8 +65,7 @@ final class TypeRulesTest extends TestCase
         $platform->method('types')->willReturn($types);
         $dialect = self::createStub(Dialect::class);
         $dialect->method('platform')->willReturn($platform);
-        $values = PostgreSqlDialect::PostgreSql->platform()->values(PostgreSqlDialect::PostgreSql->platform()->parser()->version());
-        self::assertSame($declaration, (new \SqlSemantics\Core\Ast\TypeReader($dialect))->read(new Node('Typename', 0, []), $values));
+        self::assertSame($declaration, (new \SqlSemantics\Core\Ast\TypeReader(new \SqlSemantics\Core\Language($dialect)))->read(new Node('Typename', 0, [])));
     }
     public function testReadPreservesPrecisionAndScale(): void
     {

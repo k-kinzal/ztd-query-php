@@ -49,6 +49,23 @@ use Tests\Contract\Resolved;
 #[\PHPUnit\Framework\Attributes\Medium]
 final class TypeReaderTest extends TestCase
 {
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.6.51'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.7.44'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.0.44'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.4.7'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-9.1.0'])]
+    public function testMemberDecodesValuesIndependentOfSyntax(string $version): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $version);
+        $type = $semantics->type("ENUM('a''b', X'41')")->type;
+        self::assertSame("a'b", $type->members[0]->value());
+        self::assertSame('A', $type->members[1]->value());
+        self::assertInstanceOf(\SqlSemantics\Statement\Literal\StringLiteral::class, $type->members[0]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Literal\BinaryLiteral::class, $type->members[1]);
+        self::assertStringNotContainsString('Statement\\Model\\', serialize($type));
+        self::assertStringNotContainsString('SqlParser\\', serialize($type));
+    }
+
     /**
      * @param array{length?: int, precision?: int, scale?: int, unsigned?: bool, zerofill?: bool, binaryCollation?: bool, characterSet?: string, members?: int, autoIncrement?: bool, arrayDimensions?: int, intervalFields?: \SqlSemantics\Statement\Declaration\IntervalFields, nullability?: \SqlSemantics\Statement\Declaration\Nullability} $facts
      */

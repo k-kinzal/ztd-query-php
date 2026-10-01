@@ -52,6 +52,21 @@ final class Invariant
     }
 
     /**
+     * Asserts the native array boundary for a collection of concrete value variants.
+     * @template T
+     * @param array<array-key, T> $members
+     * @param class-string $first
+     * @param class-string $second
+     */
+    public static function alternatives(array $members, string $first, string $second): void
+    {
+        assert(array_is_list($members), 'Members must be an ordered list.');
+        foreach ($members as $member) {
+            assert($member instanceof $first || $member instanceof $second, 'A member has the wrong value variant.');
+        }
+    }
+
+    /**
      * Requires a name path rather than an empty list.
      * @param list<string> $names
      * @throws InvalidArgumentException When there are no name parts

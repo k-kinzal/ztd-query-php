@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Statement\Declaration;
 
 use InvalidArgumentException;
-use SqlSemantics\Statement\Element;
+use SqlSemantics\Statement\Literal\BinaryLiteral;
+use SqlSemantics\Statement\Literal\StringLiteral;
 
 /**
  * A database type: its identity and every declared fact that is independent of the name.
@@ -34,7 +35,7 @@ final class TypeDescriptor
      * @param bool $zerofill Whether displayed values are padded with zeros; implies unsigned
      * @param bool $binaryCollation Whether the binary collation of the character set was requested
      * @param string|null $characterSet Declared character set name; only for character types
-     * @param list<Element> $members Enumeration members as typed literals; exactly the enumeration types have them
+     * @param list<StringLiteral|BinaryLiteral> $members Decoded enumeration members; exactly the enumeration types have them
      * @param int $arrayDimensions Number of array dimensions; zero for a scalar
      * @param IntervalFields|null $intervalFields Fields an interval is restricted to
      * @param Affinity|null $affinity Storage affinity, in dialects that have one; not a runtime storage-class guarantee
@@ -62,8 +63,7 @@ final class TypeDescriptor
         Invariant::ensure(!$zerofill || $unsigned, 'Zero padding implies an unsigned type.');
         Invariant::ensure(!$unsigned || ($name instanceof Builtin && $name->isNumeric()), 'Only numeric types carry a sign fact.');
         Invariant::ensure((!$binaryCollation && $characterSet === null) || ($name instanceof Builtin && $name->isCharacter()), 'Only character types carry a character set or collation fact.');
-        Invariant::members($members, Element::class);
-        Invariant::elements(...$members);
+        Invariant::alternatives($members, StringLiteral::class, BinaryLiteral::class);
         Invariant::ensure(($members !== []) === in_array($name, [Builtin::Enum, Builtin::Set], true), 'Exactly the enumeration types have members.');
         Invariant::ensure($arrayDimensions >= 0, 'Array dimensions cannot be negative.');
         Invariant::ensure($intervalFields === null || $name === Builtin::Interval, 'Only intervals carry interval fields.');

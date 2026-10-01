@@ -34,7 +34,7 @@ final class Analyzer
     {
         $this->parser = new DialectParser($language);
         $this->values = $language->values();
-        $this->resolver = new Resolver($language, new SchemaReader(new Identifiers($language->dialect), $path[0], $this->values), $path);
+        $this->resolver = new Resolver($language, new SchemaReader(new Identifiers($language->dialect), $path[0], $this->values, $language), $path);
     }
 
     /**
