@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Statement\Declaration;
 
-use InvalidArgumentException;
 use SqlSemantics\Statement\Element;
 
 /**
@@ -29,7 +28,6 @@ final class TypeDeclaration
      * @param bool $notNull Whether the declaration excludes NULL without a NOT NULL attribute
      * @param bool $unique Whether the declaration implies a unique key on the column
      * @param Element|null $source Complete typed syntax when read as a standalone type
-     * @throws InvalidArgumentException When the supplied syntax is mutable
      */
     public function __construct(
         public readonly TypeDescriptor $type,

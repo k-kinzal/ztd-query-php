@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Statement\Declaration;
 
-use InvalidArgumentException;
 use SqlSemantics\Statement\Literal\BinaryLiteral;
 use SqlSemantics\Statement\Literal\StringLiteral;
 
@@ -40,7 +39,6 @@ final class TypeDescriptor
      * @param IntervalFields|null $intervalFields Fields an interval is restricted to
      * @param Affinity|null $affinity Storage affinity, in dialects that have one; not a runtime storage-class guarantee
      * @param NumericSize|null $effectiveNumericSize Enforced decimal size, including dialect defaults; null for unconstrained or affinity-only types
-     * @throws InvalidArgumentException When the facts contradict each other
      */
     public function __construct(
         public readonly Builtin|TypeName $name,

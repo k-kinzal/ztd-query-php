@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Statement\Declaration;
 
-use InvalidArgumentException;
 use SqlSemantics\Statement\Element;
 
 /**
@@ -13,10 +12,6 @@ use SqlSemantics\Statement\Element;
  * @example Accept this semantic value in a database-independent consumer
  *     $consume = static fn (\SqlSemantics\Statement\Declaration\ColumnDefinition $value): string => $value::class;
  *     $consume instanceof \Closure // => true
- * @example A default clause and its value must be supplied together
- *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
- *     $column = $semantics->analyze('CREATE TABLE t(a INT DEFAULT 1)', [])->resolution->declarations[0]->columns[0];
- *     new \SqlSemantics\Statement\Declaration\ColumnDefinition($column->name, $column->type, $column->nullability, $column->source, defaultExpression: $column->defaultExpression) // throws \InvalidArgumentException
  *
  * @visibility public
  */
@@ -30,7 +25,6 @@ final class ColumnDefinition
      * @param Element|null $defaultExpression Typed default clause, evaluated on insertion
      * @param list<Element> $attributes Complete typed column attributes, in declaration order
      * @param Element|null $defaultValue The default value expression without the DEFAULT envelope
-     * @throws InvalidArgumentException When supplied state violates its invariants
      */
     public function __construct(
         public readonly string $name,
@@ -51,7 +45,6 @@ final class ColumnDefinition
 
     /**
      * Refines a column's NULL fact while preserving all declaration data.
-     * @throws InvalidArgumentException When supplied state violates its invariants
      */
     public function withNullability(Nullability $nullability): self
     {

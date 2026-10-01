@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Statement\Declaration;
 
-use InvalidArgumentException;
 use SqlSemantics\Statement\Element;
 
 /**
@@ -18,7 +17,6 @@ final class ColumnGeneration
 {
     /**
      * An identity has no computation expression; virtual and stored columns do.
-     * @throws InvalidArgumentException When supplied state violates its invariants
      */
     public function __construct(
         public readonly GenerationKind $kind,

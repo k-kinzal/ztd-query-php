@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Statement\Declaration;
 
-use InvalidArgumentException;
-
 /**
  * A type the binder knows only by its declared name: a user-defined, domain, or unmodeled type.
  *
@@ -23,7 +21,6 @@ final class TypeName
 {
     /**
      * @param list<string> $parts Qualified name in declaration order, decoded like identifiers; never empty
-     * @throws InvalidArgumentException When the name is not a non-empty ordered list of strings
      */
     public function __construct(public readonly array $parts)
     {
