@@ -15,6 +15,7 @@ use SqlSemantics\Statement\Declaration\Nullability;
 use SqlSemantics\Statement\Declaration\TypeDescriptor;
 use SqlSemantics\Statement\Expression\BooleanReference;
 use SqlSemantics\Statement\Expression\ColumnReference;
+use SqlSemantics\Statement\Expression\SqliteInteger;
 use SqlSemantics\Statement\Identifier\Comparison;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -45,6 +46,11 @@ final class SelectReaderTest extends TestCase
     #[TestWith(['SELECT null, NULL'])]
     #[TestWith(['SELECT TRUE, false'])]
     #[TestWith(['SELECT TRUE AS result FROM bar'])]
+    #[TestWith(['SELECT 42 AS result'])]
+    #[TestWith(['SELECT 1_000, 0X00_FF'])]
+    #[TestWith(['SELECT 0xffffffffffffffff'])]
+    #[TestWith(['SELECT 9223372036854775808'])]
+    #[TestWith(['SELECT 0x10000000000000000'])]
     public function testReadProducesASemanticQueryWithStableReferences(string $sql): void
     {
         $catalog = new Catalog(new SearchPath(new Name('main')), complete: false);
@@ -126,5 +132,15 @@ final class SelectReaderTest extends TestCase
         self::assertSame($column, $expression->column->resolution->column);
         self::assertSame($column->name, $query->field('true')->name);
         self::assertSame($column->type, $expression->type());
+    }
+
+    public function testExpressionKeepsExactNumbersWithoutMachineRounding(): void
+    {
+        $catalog = new Catalog(new SearchPath(new Name('main')), complete: false);
+        $query = (new SelectReader())->read((new SqliteParser())->parse('SELECT 0xffffffffffffffff AS signed, 0x10000000000000000 AS invalid')->find('select')[0], $catalog);
+        $literal = $query->field('signed')->expression;
+        self::assertInstanceOf(SqliteInteger::class, $literal);
+        self::assertSame('-1', $literal->value->value());
+        self::assertSame(Invalid::IntegerLiteralOverflow, $query->field('invalid')->expression->type());
     }
 }

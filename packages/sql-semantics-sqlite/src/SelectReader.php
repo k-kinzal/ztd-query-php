@@ -11,9 +11,12 @@ use SqlSemantics\Statement\Expression\BooleanReference;
 use SqlSemantics\Statement\Expression\ColumnReference;
 use SqlSemantics\Statement\Expression\NullConstant;
 use SqlSemantics\Statement\Expression\ScalarExpression;
+use SqlSemantics\Statement\Expression\SqliteInteger;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Identifier\Quote;
+use SqlSemantics\Statement\Literal\Radix;
+use SqlSemantics\Statement\Literal\UnsignedInteger;
 use SqlSemantics\Statement\Projection\Field;
 use SqlSemantics\Statement\Projection\Fields;
 use SqlSemantics\Statement\Query\Quantifier;
@@ -94,18 +97,26 @@ final class SelectReader
         assert($expression !== null, 'An expression projection has an expression.');
         [$alias, $explicit] = $this->alias(Tree::child($source, ['as']));
         $operand = $this->expression($expression, $scope);
-        $fields[] = new Field($operand, $alias, derivedName: $alias === null && $operand instanceof NullConstant ? new Name($operand->keyword, Quote::Double) : null, explicitAlias: $explicit);
+        $derived = $alias === null && ($operand instanceof NullConstant || $operand instanceof SqliteInteger) ? new Name($operand->toString(), Quote::Double) : null;
+        $fields[] = new Field($operand, $alias, derivedName: $derived, explicitAlias: $explicit);
         return $fields;
     }
 
     /**
-     * Distinguishes a NULL constant from a column expression before name resolution.
+     * Separates numeric and NULL constants from names with possible truth alternatives.
      */
     public function expression(Node $source, Scope $scope): ScalarExpression
     {
         $term = Tree::child($source, ['term']);
         if ($term !== null && count($term->tokens()) === 1 && $term->tokens()[0]->name === 'NULL') {
             return new NullConstant($term->tokens()[0]->text);
+        }
+        if ($term !== null && count($term->tokens()) === 1 && in_array($term->tokens()[0]->name, ['INTEGER', 'QNUMBER'], true)) {
+            $text = $term->tokens()[0]->text;
+            $hexadecimal = str_starts_with(strtolower($text), '0x');
+            if ($hexadecimal || ctype_digit(str_replace('_', '', $text))) {
+                return new SqliteInteger(new UnsignedInteger($hexadecimal ? substr($text, 2) : $text, $hexadecimal ? Radix::Hexadecimal : Radix::Decimal), uppercasePrefix: str_starts_with($text, '0X'));
+            }
         }
         $column = $this->column($source, $scope);
         return $column->qualifier === null && $column->name->quote === Quote::None && in_array(strtoupper($column->name->value), ['TRUE', 'FALSE'], true)
