@@ -5,7 +5,7 @@
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
-SQL Semantics for MySQL adds MySQL to [SQL Semantics](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics): the typed statement models of the official MySQL grammars and the MySQL rules for schema binding. Installing it also installs the shared SQL Semantics runtime, and `Dialect::MySql` selects MySQL in the runtime's `Semantics`, `SchemaBuilder`, and `Binder`. No database connection is needed.
+SQL Semantics for MySQL adds MySQL to [SQL Semantics](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics): semantic lowering from the official MySQL grammars and the MySQL rules for schema binding. Installing it also installs the shared SQL Semantics runtime, and `Dialect::MySql` selects MySQL in the runtime's `Semantics`. No database connection is needed.
 
 ## Requirements
 
@@ -13,7 +13,7 @@ SQL Semantics for MySQL adds MySQL to [SQL Semantics](https://github.com/k-kinza
 
 ## Support Syntax
 
-The following grammar versions are supported. Pass the version tag as the second argument of `Semantics` or the third argument of `SchemaBuilder`; omitting it uses the default. Schema binding requires MySQL 8.0 or later.
+The following parser grammar releases are available. Pass the version tag as the second argument of `Semantics`; omitting it uses the default. Semantic lowering has the narrower scope linked below.
 
 | Version | Version tag | Default |
 |---------|-------------|---------|
@@ -39,12 +39,14 @@ composer require k-kinzal/sql-semantics-mysql
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 
-$statement = (new Semantics(Dialect::MySql))->analyze("INSERT INTO users (id, name) VALUES (1, 'Alice') ON DUPLICATE KEY UPDATE name = 'Alice'");
+$statement = (new Semantics(Dialect::MySql))->analyze("INSERT INTO users (id, name) VALUES (1, 'Alice')");
 
-$statement->toString(); // "INSERT INTO users ( id , name ) VALUES( 1 , 'Alice' ) ON DUPLICATE KEY UPDATE name = 'Alice'"
+$statement->toString(); // "INSERT INTO users (id, name) VALUES (1, 'Alice')"
 ```
 
 See the [SQL Semantics documentation](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics) for statement models and schema binding.
+
+Semantic coverage is limited to the operations documented in [statement models](../sql-semantics/docs/statements.md). `Semantics::analyze()` performs schema-free and schema-aware analysis; the separate `Binder` API and generated grammar models have been removed.
 
 ## License
 

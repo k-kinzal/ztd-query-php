@@ -6,7 +6,6 @@ namespace Tests\Unit\Core;
 
 use PHPUnit\Framework\TestCase;
 use SqlParser\Lexer\Token;
-use SqlSemantics\Core\Binder;
 use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\Model\Expression;
 use SqlSemantics\Core\Model\ExpressionKind;
@@ -14,11 +13,11 @@ use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\Type\Nullability;
 use SqlSemantics\Core\Type\TypeDescriptor;
 use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
+use Tests\Scenario\BindingHarness as Binder;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\SemanticException::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(SchemaBuilder::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(Binder::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\NullFacts::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\TypeResolution::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\IdentitySequence::class)]
@@ -74,10 +73,6 @@ use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\NameRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\SchemaRules::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Analysis\ValueReader::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Statement\Statement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Statement\Writer::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Statement\Element::class)]
 final class PlatformTest extends TestCase
 {
     public function testParserAcceptsAnApplicationImplementation(): void
@@ -136,12 +131,16 @@ final class PlatformTest extends TestCase
         $bound = (new Binder($schema))->bind('SELECT label, id FROM items');
         self::assertSame(['label', 'id'], array_column($bound->outputs, 'name'));
     }
-    public function testValuesReconstructsUsingTheParserRelease(): void
+    public function testRelationsAndInsertsUseSemanticLowering(): void
     {
         $platform = PostgreSqlDialect::PostgreSql->platform();
         $parser = $platform->parser();
-        $value = $platform->values($parser->version())->read($parser->parse('SELECT 42'));
-        self::assertInstanceOf(\SqlSemantics\Statement\Command::class, $value);
-        self::assertSame('SELECT 42', (new \SqlSemantics\Statement\Statement($value))->toString());
+        $value = (new \SqlSemantics\Facade\Semantics($platform->types()->boolean()->dialect, $parser->version()))->analyze('SELECT 42');
+        self::assertInstanceOf(\SqlSemantics\Semantic\Statement\Select::class, $value);
+        self::assertSame('SELECT 42', $value->toString());
+    }
+    public function testInsertsProvidesSemanticSourceVariants(): void
+    {
+        self::assertInstanceOf(\SqlSemantics\Semantic\Statement\InsertRows::class, (new \SqlSemantics\Facade\Semantics(PostgreSqlDialect::PostgreSql))->analyze('INSERT INTO bar (foo) VALUES (1)'));
     }
 }

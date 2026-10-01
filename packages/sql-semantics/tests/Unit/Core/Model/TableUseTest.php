@@ -7,10 +7,10 @@ namespace Tests\Unit\Core\Model;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Core\Binder;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\SemanticException;
 use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
+use Tests\Scenario\BindingHarness as Binder;
 
 #[CoversClass(\SqlSemantics\Core\Model\TableUse::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
@@ -23,7 +23,6 @@ use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 #[CoversClass(\SqlSemantics\Core\Binding\SyntaxGuard::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\SelectModifiersBinder::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\TypeResolution::class)]
-#[CoversClass(Binder::class)]
 #[CoversClass(SchemaBuilder::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\DialectParser::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\ColumnReader::class)]

@@ -5,7 +5,9 @@
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
-SQL Semantics is the semantic phase of a database front end for MySQL, PostgreSQL, and SQLite. It turns any statement of the shipped grammars into an immutable, typed statement model that writes the SQL back, and it binds SELECT statements against a schema built from CREATE TABLE statements, resolving names, types, conservative NULL facts, and the relation occurrences each value comes from. No database connection is needed. This package is the shared runtime; install it through the package of your database.
+SQL Semantics turns SQL into immutable semantic data: statement operations, result fields, relation occurrences, column references, and type facts. `Semantics::analyze()` is the single entry point with or without a catalog. Models reconstruct SQL from their values and support persistent changes guarded by assertions. No database connection is needed.
+
+The semantic implementation is incomplete. It currently covers the SELECT, INSERT, and single-table DELETE forms described in [statement models](docs/statements.md). Other constructs fail explicitly; parser acceptance and grammar coverage are not claims of semantic coverage. See the [semantic model contract](docs/semantic-model.md).
 
 ## Requirements
 
@@ -13,7 +15,7 @@ SQL Semantics is the semantic phase of a database front end for MySQL, PostgreSQ
 
 ## Support Syntax
 
-The following grammar versions are supported. Pass the dialect of your database package and, optionally, the version tag to `Semantics` or `SchemaBuilder`; omitting the version tag uses the default for that database. Schema binding with `SchemaBuilder` and `Binder` requires MySQL 8.0 or later.
+The following parser grammar releases are available. Semantic lowering has the narrower boundary documented above. Pass the dialect of your database package and, optionally, the version tag to `Semantics`; omitting the version tag uses the default for that database.
 
 ### MySQL
 
@@ -69,44 +71,26 @@ Each package provides its dialect: `SqlSemantics\Platform\MySql\Dialect::MySql`,
 
 ```php
 use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\PostgreSql\Dialect;
+use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Semantic\Name;
+use SqlSemantics\Semantic\Projection\Field;
+use SqlSemantics\Semantic\Statement\Select;
 
-$statement = (new Semantics(Dialect::PostgreSql))->analyze(<<<'SQL'
-WITH changed AS (
-    UPDATE accounts SET balance = balance + 10 WHERE id = 7 RETURNING id, balance
-)
-SELECT id, balance FROM changed;
-SQL);
+$statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT foo FROM bar');
+assert($statement instanceof Select);
 
-$statement->command;    // the typed model of the statement
-$statement->toString(); // 'WITH changed AS( UPDATE accounts SET balance = balance + 10 WHERE id = 7 RETURNING id , balance ) SELECT id , balance FROM changed ;'
+$statement->field('foo')->type->name; // 'unknown': the catalog was not supplied
+$statement->tables[0]->name->name->value; // 'bar'
+$statement->toString(); // 'SELECT foo FROM bar'
+
+$fields = $statement->fields()->addField(new Field($statement->scope->column(new Name('label'))));
+$updated = $statement->withFields($fields);
+$updated->toString(); // 'SELECT foo, label FROM bar'
 ```
 
-Update a SQLite WHERE clause with structured values while keeping the original statement:
+Pass an array of table declarations as the second argument to resolve fields to their exact table and column objects. Omitting the array means an absent catalog; `[]` means a known empty catalog. Missing and ambiguous references are distinct from undetermined facts.
 
-```php
-use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
-use SqlSemantics\Statement\Model\Sqlite\Value\EcmdWithCmdxSemi_b7577a8f as CommandEnvelope;
-use SqlSemantics\Statement\Model\Sqlite\Value\ExprWithExprEqNeExpr_49d16f16 as Comparison;
-use SqlSemantics\Statement\Model\Sqlite\Value\ExprWithIdj_e1794d68 as Field;
-use SqlSemantics\Statement\Model\Sqlite\Value\OneselectWithSelectDistinctSelcollistFromWhereOptGroupbyOptHavingOptOrderbyOptLimitOpt_218e0475 as Select;
-use SqlSemantics\Statement\Model\Sqlite\Value\TermWithInteger_298801b2 as IntegerValue;
-use SqlSemantics\Statement\Model\Sqlite\Value\WhereOptWithWhereExpr_93445e09 as Where;
-
-$original = (new Semantics(SqliteDialect::Sqlite))->analyze('SELECT foo FROM items');
-$command = $original->command;
-
-if ($command instanceof CommandEnvelope && $command->cmdx instanceof Select) {
-    $where = new Where(new Comparison(new Field('foo'), '=', new IntegerValue('1')));
-    $select = $command->cmdx->withWhere($where);
-    $updated = $original->withCommand($command->withCmdx($select));
-
-    $original->toString(); // 'SELECT foo FROM items'
-    $updated->toString();  // 'SELECT foo FROM items WHERE foo = 1'
-}
-```
-
-See [statement models](docs/statements.md) for building statements without SQL, and [schema binding](docs/binding.md) for names, types, and NULL facts.
+See [reference resolution](docs/binding.md) for catalog construction and [statement models](docs/statements.md) for immutable updates and separate INSERT source types.
 
 ## License
 

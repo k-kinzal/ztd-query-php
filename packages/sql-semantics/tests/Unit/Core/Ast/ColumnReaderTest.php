@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Core\Binder;
 use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\SemanticException;
@@ -28,7 +27,6 @@ use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 #[CoversClass(\SqlSemantics\Core\Binding\SyntaxGuard::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\SelectModifiersBinder::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\TypeResolution::class)]
-#[CoversClass(Binder::class)]
 #[CoversClass(SchemaBuilder::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\DialectParser::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\ConstraintReader::class)]

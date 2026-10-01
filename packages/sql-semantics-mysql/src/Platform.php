@@ -33,14 +33,6 @@ final class Platform implements Contract
     }
 
     /**
-     * Loads this package's statement construction map for the resolved release.
-     */
-    public function values(string $version): \SqlSemantics\Core\Analysis\ValueReader
-    {
-        return \SqlSemantics\Core\Analysis\ValueReader::fromFile(dirname(__DIR__) . '/resources/mapping/' . basename($version) . '.php');
-    }
-
-    /**
      * Supplies the default declaration namespace.
      */
     public function defaultSchema(): string
@@ -51,9 +43,11 @@ final class Platform implements Contract
     /**
      * @return array{string, string}
      */
-    public function statementNames(): array
+    public function statementNames(?string $version = null): array
     {
-        return ['start_entry', 'simple_statement'];
+        return $version !== null && str_starts_with($version, 'mysql-5.')
+            ? ['query', 'statement']
+            : ['start_entry', 'simple_statement'];
     }
 
     /**
@@ -75,10 +69,17 @@ final class Platform implements Contract
             'projectionList' => ['select_item_list'],
             'projectionExpression' => ['expr', 'table_wild'],
             'projectionAlias' => ['select_alias'],
+            'deleteStatement' => ['delete_stmt', 'delete'],
+            'deleteChildren' => ['table_ident', 'opt_table_alias', 'where_clause', 'opt_where_clause', 'single_multi'],
+            'deleteWrapper' => ['single_multi'],
+            'deleteTable' => ['table_ident'],
+            'deleteAlias' => ['opt_table_alias'],
+            'deleteWhere' => ['where_clause', 'opt_where_clause'],
+            'insertStatement' => ['insert_stmt', 'insert'],
             'selectStatement' => ['select_stmt', 'select'],
-            'selectBody' => ['query_specification'],
-            'from' => ['from_clause'],
-            'where' => ['where_clause'],
+            'selectBody' => ['query_specification', 'select_part2', 'create_select'],
+            'from' => ['from_clause', 'select_from'],
+            'where' => ['where_clause', 'opt_where_clause'],
             'selectOptions' => ['select_options'],
             'orderingChildren' => ['expr', 'opt_ordering_direction', 'ordering_direction'],
             'orderingDirection' => ['opt_ordering_direction', 'ordering_direction'],
@@ -87,8 +88,9 @@ final class Platform implements Contract
             'limit' => ['limit_clause'],
             'offset' => [],
             'paginationExpression' => ['expr', 'limit_option'],
-            'selectChildren' => ['from_clause', 'where_clause', 'select_options', 'select_item_list', 'opt_from_clause', 'opt_where_clause'],
-            'unsupportedModifier' => ['with_clause', 'into_clause', 'opt_into', 'locking_clause', 'locking_clause_list'],
+            'selectChildren' => ['from_clause', 'where_clause', 'select_options', 'select_item_list', 'opt_from_clause', 'opt_where_clause', 'select_into', 'select_from', 'select_options_and_item_list', 'opt_select_from', 'table_expression', 'join_table_list', 'opt_order_clause', 'opt_limit_clause'],
+            'selectWrapper' => ['select_into', 'select_from', 'select_options_and_item_list', 'opt_select_from', 'table_expression'],
+            'unsupportedModifier' => ['with_clause', 'into_clause', 'opt_into', 'locking_clause', 'locking_clause_list', 'select_lock_type', 'opt_select_lock_type', 'procedure_analyse_clause', 'opt_procedure_analyse_clause'],
             'relation' => ['table_ref', 'table_reference'],
             'qualifiedExpression' => ['expr'],
             'qualifiedPart' => [],
@@ -126,4 +128,20 @@ final class Platform implements Contract
     {
         return new QueryRules();
     }
+    /**
+     * Supplies semantic relation lowering.
+     */
+    public function relations(): Policy\RelationRules
+    {
+        return new SemanticRelations();
+    }
+
+    /**
+     * Supplies semantic insertion lowering.
+     */
+    public function inserts(): Policy\InsertRules
+    {
+        return new SemanticInsert();
+    }
+
 }

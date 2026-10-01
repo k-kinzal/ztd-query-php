@@ -46,7 +46,7 @@ final class SelectBinder
         $from = $fromNode === null ? null : (new FromBinder($this->tables, new IdentitySequence()))->bind($fromNode);
         $scope = $from->scope ?? new Scope($this->tables->identifiers);
         $whereNode = Tree::outer($select, $this->tables->identifiers->dialect->platform()->syntax()->nodes('where'))[0] ?? null;
-        $predicateNode = $whereNode === null ? null : Tree::child($whereNode, $this->tables->identifiers->dialect->platform()->syntax()->nodes('expression'));
+        $predicateNode = $whereNode === null ? null : Tree::outer($whereNode, $this->tables->identifiers->dialect->platform()->syntax()->nodes('expression'))[0] ?? null;
         $predicate = $predicateNode === null ? null : (new ExpressionBinder())->bind($predicateNode, $scope);
         if ($predicate !== null) {
             (new ExpressionRules($this->tables->identifiers->dialect))->predicate($predicate);

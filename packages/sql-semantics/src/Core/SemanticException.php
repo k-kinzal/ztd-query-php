@@ -23,12 +23,12 @@ final class SemanticException extends RuntimeException
     /**
      * @param string $reason Stable machine-readable failure code
      * @param string $message Human-readable explanation
-     * @param Node|Token $source Original syntax responsible for the failure
+     * @param Node|Token|null $source Original syntax responsible for the failure
      */
     public function __construct(
         public readonly string $reason,
         string $message,
-        public readonly Node|Token $source,
+        public readonly Node|Token|null $source,
     ) {
         parent::__construct($message);
     }

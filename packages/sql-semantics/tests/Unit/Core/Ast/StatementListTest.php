@@ -22,7 +22,6 @@ use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 #[UsesClass(\SqlSemantics\Core\Binding\SyntaxGuard::class)]
 #[UsesClass(\SqlSemantics\Core\Binding\SelectModifiersBinder::class)]
 #[UsesClass(\SqlSemantics\Core\Binding\TypeResolution::class)]
-#[UsesClass(\SqlSemantics\Core\Binder::class)]
 #[UsesClass(\SqlSemantics\Core\SchemaBuilder::class)]
 #[UsesClass(\SqlSemantics\Core\Ast\DialectParser::class)]
 #[UsesClass(\SqlSemantics\Core\Ast\ColumnReader::class)]

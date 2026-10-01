@@ -20,6 +20,9 @@ final class SyntaxGuard
     public static function select(Node $statement, Node $select, \SqlSemantics\Core\Policy\SyntaxRules $syntax): void
     {
         Tree::assertChildren($select, $syntax->nodes('selectChildren'), ['SELECT']);
+        foreach (array_merge(...array_map($select->find(...), $syntax->nodes('selectWrapper'))) as $wrapper) {
+            Tree::assertChildren($wrapper, $syntax->nodes('selectChildren'), ['FROM']);
+        }
         $forbidden = $syntax->nodes('unsupportedModifier');
         foreach ($forbidden as $name) {
             foreach ($statement->find($name) as $node) {

@@ -23,7 +23,6 @@ use SqlFaker\MySql\MySqlProvider;
 use SqlFormatter\Core\FormatOptions;
 use SqlFormatter\Core\Style;
 use SqlFormatter\Facade\Formatter;
-use SqlParser\MySql\MySqlParser;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 
@@ -54,10 +53,9 @@ if (!isset($roots[$mysqlVersion])) {
 $grammarVersion = "mysql-{$mysqlVersion}";
 $coverage = getenv('SQLFAKER_COVERAGE') === '0' ? null : new GrammarCoverage(__DIR__ . '/coverage/mysql');
 $provider = new MySqlProvider(Factory::create(), $grammarVersion, $coverage);
-$parser = new MySqlParser($grammarVersion);
 $target = new RoundTripTarget(
     new Semantics(Dialect::MySql, $grammarVersion),
-    new Formatter($parser, new FormatOptions(Style::Compact)),
+    new Formatter(Dialect::MySql->platform()->parser($grammarVersion), new FormatOptions(Style::Compact)),
     $grammarVersion,
 );
 $planner = $provider->planner();

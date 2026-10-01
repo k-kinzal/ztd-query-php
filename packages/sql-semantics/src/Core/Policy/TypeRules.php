@@ -46,7 +46,7 @@ interface TypeRules
      * @param list<Expression> $expressions
      * @throws SemanticException
      */
-    public function common(array $expressions, Node|Token $source): TypeDescriptor;
+    public function common(array $expressions, Node|Token|null $source): TypeDescriptor;
 
     /**
      * Returns the dialect result type of a predicate.
@@ -58,7 +58,7 @@ interface TypeRules
      *
      * @param non-empty-list<Expression> $operands
      */
-    public function arithmetic(string $operator, array $operands, Node $source): TypeDescriptor;
+    public function arithmetic(string $operator, array $operands, ?Node $source): TypeDescriptor;
 
     /**
      * @throws SemanticException

@@ -83,8 +83,8 @@ final class Tree
     /**
      * @throws SemanticException
      */
-    public static function unsupported(Node|Token $node, string $context): never
+    public static function unsupported(Node|Token|null $node, string $context): never
     {
-        throw new SemanticException('unsupported-syntax', 'Unsupported ' . $context . ': ' . self::text($node), $node);
+        throw new SemanticException('unsupported-syntax', 'Unsupported ' . $context . ($node === null ? '' : ': ' . self::text($node)), $node);
     }
 }

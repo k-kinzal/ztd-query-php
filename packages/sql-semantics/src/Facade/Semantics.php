@@ -6,25 +6,26 @@ namespace SqlSemantics\Facade;
 
 use SqlSemantics\Core\Analysis\Analyzer;
 use SqlSemantics\Core\Dialect;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Semantic\Schema\Table;
+use SqlSemantics\Semantic\Statement\Delete;
+use SqlSemantics\Semantic\Statement\InsertRows;
+use SqlSemantics\Semantic\Statement\InsertSelect;
+use SqlSemantics\Semantic\Statement\Select;
 
 /**
- * Structures every statement of a selected SQL language into independent values.
- *
- * This entry point needs no schema or database connection. Use Binder separately
- * when schema-dependent name, type, and nullability facts are needed.
+ * Structures SQL meaning, optionally resolving references against a closed catalog.
  *
  * @visibility public
- * @example Reconstructing SQL with the SQLite database package
+ * @example Analyzing a query without declarations
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
- *     $semantics->analyze('DROP TABLE example')->toString() // => 'DROP TABLE example'
+ *     $semantics->analyze('SELECT foo FROM bar')->field('foo')->type->name // => 'unknown'
  */
 final class Semantics
 {
     private readonly Analyzer $analyzer;
 
     /**
-     * Selects the dialect and optionally one of its shipped grammar releases.
+     * Selects the SQL dialect and its parser release.
      */
     public function __construct(Dialect $dialect, ?string $grammarVersion = null)
     {
@@ -32,12 +33,11 @@ final class Semantics
     }
 
     /**
-     * Builds an immutable statement from SQL without keeping its original syntax.
-     *
+     * @param list<Table>|null $tables Null leaves declarations unknown; [] supplies a closed empty catalog.
      * @throws \SqlSemantics\Core\AnalysisException When SQL is not in the selected language
      */
-    public function analyze(string $sql): Statement
+    public function analyze(string $sql, ?array $tables = null): Select|InsertRows|InsertSelect|Delete
     {
-        return $this->analyzer->analyze($sql);
+        return $this->analyzer->analyze($sql, $tables);
     }
 }

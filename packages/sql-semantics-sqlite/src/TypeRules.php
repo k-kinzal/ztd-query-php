@@ -132,7 +132,7 @@ final class TypeRules implements Contract
     /**
      * @param list<Expression> $expressions
      */
-    public function common(array $expressions, Node|Token $source): TypeDescriptor
+    public function common(array $expressions, Node|Token|null $source): TypeDescriptor
     {
         $types = [];
         foreach ($expressions as $expression) {
@@ -163,7 +163,7 @@ final class TypeRules implements Contract
      *
      * @param non-empty-list<Expression> $operands
      */
-    public function arithmetic(string $operator, array $operands, Node $source): TypeDescriptor
+    public function arithmetic(string $operator, array $operands, ?Node $source): TypeDescriptor
     {
         return new TypeDescriptor($this->dialect, 'dynamic');
     }

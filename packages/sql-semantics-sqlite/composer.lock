@@ -173,7 +173,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-semantics",
-                "reference": "41b81719091399afb4cf15b5f875c9c0f3afc3ab"
+                "reference": "7ef1f30b17b7bbdb796533f374057c7c527ea036"
             },
             "require": {
                 "composer-runtime-api": "^2.2",
@@ -183,6 +183,7 @@
             "require-dev": {
                 "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
+                "ext-pdo_sqlite": "*",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
                 "k-kinzal/bison-parser": "dev-main",
                 "k-kinzal/lemon-parser": "dev-main",
@@ -197,9 +198,6 @@
                 "phpunit/phpunit": "^10.5",
                 "squizlabs/php_codesniffer": "^4.0.4"
             },
-            "bin": [
-                "bin/build-models.php"
-            ],
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -285,7 +283,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "Typed SQL statement analysis and reconstruction, with schema-dependent binding and value provenance",
+            "description": "Typed statement models, SQL reconstruction, and schema binding for MySQL, PostgreSQL, and SQLite",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics/"

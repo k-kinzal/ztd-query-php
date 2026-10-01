@@ -7,7 +7,6 @@ namespace Tests\Unit;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
-use SqlSemantics\Core\Binder;
 use SqlSemantics\Core\Model\Expression;
 use SqlSemantics\Core\Model\ExpressionKind;
 use SqlSemantics\Core\SchemaBuilder;
@@ -18,7 +17,6 @@ use SqlSemantics\Platform\MySql\Dialect;
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\SemanticException::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(SchemaBuilder::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(Binder::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\NullFacts::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\TypeResolution::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\IdentitySequence::class)]

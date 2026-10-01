@@ -24,7 +24,7 @@ final class Expression
      * @param ExpressionKind $kind Semantic operation
      * @param TypeDescriptor $type Result type
      * @param Nullability $nullability Conservative NULL fact at this evaluation stage
-     * @param Node|Token $source Original syntax object, never a reparsed copy
+     * @param Node|Token|null $source Original syntax object, never a reparsed copy
      * @param list<Expression> $operands Ordered inputs to the operation
      * @param ColumnBinding|null $binding Resolved declaration for a column reference
      * @param string|null $symbol Operator, parameter name, or literal spelling
@@ -34,7 +34,7 @@ final class Expression
         public readonly ExpressionKind $kind,
         public readonly TypeDescriptor $type,
         public readonly Nullability $nullability,
-        public readonly Node|Token $source,
+        public readonly Node|Token|null $source,
         public readonly array $operands = [],
         public readonly ?ColumnBinding $binding = null,
         public readonly ?string $symbol = null,

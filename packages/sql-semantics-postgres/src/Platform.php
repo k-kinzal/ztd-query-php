@@ -33,14 +33,6 @@ final class Platform implements Contract
     }
 
     /**
-     * Loads this package's statement construction map for the resolved release.
-     */
-    public function values(string $version): \SqlSemantics\Core\Analysis\ValueReader
-    {
-        return \SqlSemantics\Core\Analysis\ValueReader::fromFile(dirname(__DIR__) . '/resources/mapping/' . basename($version) . '.php');
-    }
-
-    /**
      * Supplies the default declaration namespace.
      */
     public function defaultSchema(): string
@@ -51,7 +43,7 @@ final class Platform implements Contract
     /**
      * @return array{string, string}
      */
-    public function statementNames(): array
+    public function statementNames(?string $version = null): array
     {
         return ['parse_toplevel', 'stmt'];
     }
@@ -75,6 +67,13 @@ final class Platform implements Contract
             'projectionList' => [],
             'projectionExpression' => ['a_expr'],
             'projectionAlias' => ['ColLabel', 'BareColLabel'],
+            'deleteStatement' => ['DeleteStmt'],
+            'deleteChildren' => ['relation_expr_opt_alias', 'where_or_current_clause', 'relation_expr', 'qualified_name'],
+            'deleteWrapper' => ['relation_expr_opt_alias', 'relation_expr'],
+            'deleteTable' => ['qualified_name'],
+            'deleteAlias' => [],
+            'deleteWhere' => ['where_or_current_clause'],
+            'insertStatement' => ['InsertStmt'],
             'selectStatement' => ['SelectStmt'],
             'selectBody' => ['simple_select'],
             'from' => ['from_clause'],
@@ -126,4 +125,20 @@ final class Platform implements Contract
     {
         return new QueryRules();
     }
+    /**
+     * Supplies semantic relation lowering.
+     */
+    public function relations(): Policy\RelationRules
+    {
+        return new SemanticRelations();
+    }
+
+    /**
+     * Supplies semantic insertion lowering.
+     */
+    public function inserts(): Policy\InsertRules
+    {
+        return new SemanticInsert();
+    }
+
 }

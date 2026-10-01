@@ -31,7 +31,7 @@ final class ExpressionRules
      * @param list<Expression> $operands
      * @throws SemanticException
      */
-    public function call(string $name, array $operands, Node $source): Expression
+    public function call(string $name, array $operands, ?Node $source): Expression
     {
         if ($operands === [] || ($name === 'NULLIF' && count($operands) !== 2)) {
             throw new SemanticException('invalid-arity', 'Invalid argument count for ' . $name, $source);
@@ -69,7 +69,7 @@ final class ExpressionRules
     /**
      * @param non-empty-list<Expression> $operands
      */
-    public function operator(string $operator, array $operands, Node $source): Expression
+    public function operator(string $operator, array $operands, ?Node $source): Expression
     {
         $operator = strtoupper($operator);
         $nullability = NullFacts::strict($operands);
@@ -103,7 +103,7 @@ final class ExpressionRules
      *
      * @param non-empty-list<Expression> $operands
      */
-    public function arithmetic(string $operator, array $operands, Node $source): TypeDescriptor
+    public function arithmetic(string $operator, array $operands, ?Node $source): TypeDescriptor
     {
         return $this->dialect->platform()->types()->arithmetic($operator, $operands, $source);
     }

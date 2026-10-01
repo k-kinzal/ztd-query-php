@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "082b69c31e25762563ae8bd29cfe08db",
+    "content-hash": "a1289170c85ae9dbf7750ebb07eb13e2",
     "packages": [
         {
             "name": "k-kinzal/sql-parser",
@@ -1587,7 +1587,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-semantics-mysql",
-                "reference": "987031fc7bf99812e5c2833441a092a281ca2b3f"
+                "reference": "a89d1afa28da5b63c60c112cd1f7f7cd06a73114"
             },
             "require": {
                 "k-kinzal/sql-parser": "dev-main",
@@ -1614,8 +1614,7 @@
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "SqlSemantics\\Platform\\MySql\\": "src/",
-                    "SqlSemantics\\Statement\\Model\\MySql\\": "resources/models/"
+                    "SqlSemantics\\Platform\\MySql\\": "src/"
                 }
             },
             "autoload-dev": {
@@ -1637,12 +1636,6 @@
                 ],
                 "bench:quick": [
                     "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
-                ],
-                "build:models": [
-                    "@php -d memory_limit=1G vendor/bin/build-models.php --dialect=mysql --output=resources"
-                ],
-                "build:models:check": [
-                    "@build:models --check"
                 ],
                 "compat": [
                     "phpcs"
@@ -1678,11 +1671,8 @@
                 ],
                 "fuzz:roundtrip": [
                     "Composer\\Config::disableProcessTimeout",
-                    "@fuzz:seeds --",
-                    "@php fuzz/run.php mysql"
-                ],
-                "fuzz:seeds": [
-                    "@php fuzz/seed.php mysql"
+                    "@php -r \"is_dir('fuzz/corpus/mysql') || mkdir('fuzz/corpus/mysql', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql_roundtrip.php fuzz/corpus/mysql/ --timeout=60"
                 ],
                 "fuzz:smoke": [
                     "@fuzz:roundtrip --max-runs=100"
@@ -1718,7 +1708,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "MySql statement models, SQL reconstruction, and semantic binding for SQL Semantics",
+            "description": "MySQL statement models, SQL reconstruction, and schema binding for SQL Semantics",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics-mysql",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-mysql/"
@@ -1733,7 +1723,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-semantics-postgres",
-                "reference": "d1aadb0c9197b0d3f536090d69540c4be861e53e"
+                "reference": "ec8bdf049efbc4e15f7afcca9e3b7fbf6f43dbc8"
             },
             "require": {
                 "k-kinzal/sql-parser": "dev-main",
@@ -1760,8 +1750,7 @@
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "SqlSemantics\\Platform\\PostgreSql\\": "src/",
-                    "SqlSemantics\\Statement\\Model\\PostgreSql\\": "resources/models/"
+                    "SqlSemantics\\Platform\\PostgreSql\\": "src/"
                 }
             },
             "autoload-dev": {
@@ -1783,12 +1772,6 @@
                 ],
                 "bench:quick": [
                     "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
-                ],
-                "build:models": [
-                    "@php -d memory_limit=1G vendor/bin/build-models.php --dialect=postgresql --output=resources"
-                ],
-                "build:models:check": [
-                    "@build:models --check"
                 ],
                 "compat": [
                     "phpcs"
@@ -1824,11 +1807,8 @@
                 ],
                 "fuzz:roundtrip": [
                     "Composer\\Config::disableProcessTimeout",
-                    "@fuzz:seeds --",
-                    "@php fuzz/run.php pg"
-                ],
-                "fuzz:seeds": [
-                    "@php fuzz/seed.php pg"
+                    "@php -r \"is_dir('fuzz/corpus/pg') || mkdir('fuzz/corpus/pg', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_roundtrip.php fuzz/corpus/pg/ --timeout=60"
                 ],
                 "fuzz:smoke": [
                     "@fuzz:roundtrip --max-runs=100"
@@ -1864,7 +1844,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "PostgreSql statement models, SQL reconstruction, and semantic binding for SQL Semantics",
+            "description": "PostgreSQL statement models, SQL reconstruction, and schema binding for SQL Semantics",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics-postgres",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-postgres/"
@@ -1879,7 +1859,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-semantics-sqlite",
-                "reference": "3df32d72bd6591539561b22988674edea35d88b8"
+                "reference": "88bee753aadb158fddb0cda9ab7bd98cf0394f87"
             },
             "require": {
                 "k-kinzal/sql-parser": "dev-main",
@@ -1906,8 +1886,7 @@
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "SqlSemantics\\Platform\\Sqlite\\": "src/",
-                    "SqlSemantics\\Statement\\Model\\Sqlite\\": "resources/models/"
+                    "SqlSemantics\\Platform\\Sqlite\\": "src/"
                 }
             },
             "autoload-dev": {
@@ -1929,12 +1908,6 @@
                 ],
                 "bench:quick": [
                     "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
-                ],
-                "build:models": [
-                    "@php -d memory_limit=1G vendor/bin/build-models.php --dialect=sqlite --output=resources"
-                ],
-                "build:models:check": [
-                    "@build:models --check"
                 ],
                 "compat": [
                     "phpcs"
@@ -1970,11 +1943,8 @@
                 ],
                 "fuzz:roundtrip": [
                     "Composer\\Config::disableProcessTimeout",
-                    "@fuzz:seeds --",
-                    "@php fuzz/run.php sqlite"
-                ],
-                "fuzz:seeds": [
-                    "@php fuzz/seed.php sqlite"
+                    "@php -r \"is_dir('fuzz/corpus/sqlite') || mkdir('fuzz/corpus/sqlite', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_sqlite_roundtrip.php fuzz/corpus/sqlite/ --timeout=60"
                 ],
                 "fuzz:smoke": [
                     "@fuzz:roundtrip --max-runs=100"
@@ -2010,7 +1980,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "Sqlite statement models, SQL reconstruction, and semantic binding for SQL Semantics",
+            "description": "SQLite statement models, SQL reconstruction, and schema binding for SQL Semantics",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics-sqlite",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-sqlite/"
@@ -6614,7 +6584,9 @@
         "php": "^8.1",
         "composer-runtime-api": "^2.2"
     },
-    "platform-dev": {},
+    "platform-dev": {
+        "ext-pdo_sqlite": "*"
+    },
     "platform-overrides": {
         "php": "8.1.0"
     },

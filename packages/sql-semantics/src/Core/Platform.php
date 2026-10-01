@@ -23,11 +23,6 @@ interface Platform
     public function parser(?string $version = null): SqlParser;
 
     /**
-     * Supplies statement construction data for the resolved grammar release.
-     */
-    public function values(string $version): Analysis\ValueReader;
-
-    /**
      * Supplies the unqualified declaration namespace.
      */
     public function defaultSchema(): string;
@@ -35,7 +30,7 @@ interface Platform
     /**
      * @return array{string, string} Root and statement grammar names
      */
-    public function statementNames(): array;
+    public function statementNames(?string $version = null): array;
 
     /**
      * Supplies the configured grammar vocabulary.
@@ -61,4 +56,14 @@ interface Platform
      * Supplies query syntax interpretation.
      */
     public function query(): QueryRules;
+    /**
+     * Supplies semantic relation lowering.
+     */
+    public function relations(): Policy\RelationRules;
+
+    /**
+     * Supplies semantic insertion lowering.
+     */
+    public function inserts(): Policy\InsertRules;
+
 }

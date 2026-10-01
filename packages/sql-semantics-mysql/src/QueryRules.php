@@ -40,6 +40,9 @@ final class QueryRules implements Contract
      */
     public function orderingNodes(Node $statement): array
     {
+        if (Tree::outer($statement, ['order_ident']) !== []) {
+            Tree::unsupported($statement, 'legacy ORDER BY representation');
+        }
         return Tree::outer($statement, ['sortby', 'order_expr']);
     }
 

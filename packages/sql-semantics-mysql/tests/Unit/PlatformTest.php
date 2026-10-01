@@ -6,18 +6,17 @@ namespace Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 use SqlParser\Lexer\Token;
-use SqlSemantics\Core\Binder;
 use SqlSemantics\Core\Model\Expression;
 use SqlSemantics\Core\Model\ExpressionKind;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\Type\Nullability;
 use SqlSemantics\Core\Type\TypeDescriptor;
 use SqlSemantics\Platform\MySql\Dialect;
+use Tests\Scenario\BindingHarness as Binder;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\SemanticException::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(SchemaBuilder::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(Binder::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\NullFacts::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\TypeResolution::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\IdentitySequence::class)]
@@ -64,10 +63,6 @@ use SqlSemantics\Platform\MySql\Dialect;
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\SchemaRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(Dialect::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Analysis\ValueReader::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Statement\Statement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Statement\Writer::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Statement\Element::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Facade\Semantics::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Analysis\Analyzer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\AnalysisException::class)]
@@ -118,13 +113,13 @@ final class PlatformTest extends TestCase
         $bound = (new Binder($schema))->bind('SELECT label, id FROM items');
         self::assertSame(['label', 'id'], array_column($bound->outputs, 'name'));
     }
-    public function testValuesReconstructsUsingTheParserRelease(): void
+    public function testRelationsAndInsertsUseSemanticLowering(): void
     {
         $platform = Dialect::MySql->platform();
         $parser = $platform->parser();
-        $value = $platform->values($parser->version())->read($parser->parse('SELECT 42'));
-        self::assertInstanceOf(\SqlSemantics\Statement\Command::class, $value);
-        self::assertSame('SELECT 42', (new \SqlSemantics\Statement\Statement($value))->toString());
+        $value = (new \SqlSemantics\Facade\Semantics($platform->types()->boolean()->dialect, $parser->version()))->analyze('SELECT 42');
+        self::assertInstanceOf(\SqlSemantics\Semantic\Statement\Select::class, $value);
+        self::assertSame('SELECT 42', $value->toString());
     }
 
     #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'CREATE LOGFILE GROUP logs ADD UNDOFILE \'undo.dat\''])]
@@ -155,6 +150,8 @@ final class PlatformTest extends TestCase
     public function testAnalyzeWithEveryGrammarRelease(string $version): void
     {
         $statement = (new \SqlSemantics\Facade\Semantics(Dialect::MySql, $version))->analyze('DELETE FROM absent_table WHERE id = 1');
+        self::assertInstanceOf(\SqlSemantics\Semantic\Statement\Delete::class, $statement);
+        self::assertSame('absent_table', $statement->table->name->name->value);
         self::assertSame('DELETE FROM absent_table WHERE id = 1', $statement->toString());
     }
 
@@ -179,5 +176,27 @@ final class PlatformTest extends TestCase
         $statement = (new \SqlSemantics\Facade\Semantics(Dialect::MySql, $version))->analyze($sql);
         $formatter = new \SqlFormatter\Facade\Formatter(Dialect::MySql->platform()->parser($version), new \SqlFormatter\Core\FormatOptions(\SqlFormatter\Core\Style::Compact));
         self::assertSame($formatter->format($sql), $formatter->format($statement->toString()));
+    }
+    public function testInsertsProvidesSemanticSourceVariants(): void
+    {
+        $statement = (new \SqlSemantics\Facade\Semantics(Dialect::MySql))->analyze('INSERT INTO bar (foo) VALUES (1)');
+        self::assertInstanceOf(\SqlSemantics\Semantic\Statement\InsertRows::class, $statement);
+        self::assertSame('INSERT INTO bar (foo) VALUES (1)', $statement->toString());
+    }
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.6.51'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.7.44'])]
+    public function testAnalyzeResolvesBasicLegacyGrammarOperations(string $version): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(Dialect::MySql, $version);
+        $select = $semantics->analyze('SELECT foo FROM bar WHERE foo = 1');
+        self::assertInstanceOf(\SqlSemantics\Semantic\Statement\Select::class, $select);
+        self::assertSame('SELECT foo FROM bar WHERE foo = 1', $select->toString());
+        self::assertSame('foo', $select->field('foo')->name?->value);
+        $rows = $semantics->analyze('INSERT INTO bar (foo) VALUES (1), (2)');
+        self::assertInstanceOf(\SqlSemantics\Semantic\Statement\InsertRows::class, $rows);
+        self::assertCount(2, $rows->rows);
+        $query = $semantics->analyze('INSERT INTO bar (foo) SELECT foo FROM bar');
+        self::assertInstanceOf(\SqlSemantics\Semantic\Statement\InsertSelect::class, $query);
+        self::assertSame('foo', $query->source->field('foo')->name?->value);
     }
 }

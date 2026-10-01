@@ -8,13 +8,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Core\Binder;
 use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\SemanticException;
 use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
 use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
+use Tests\Scenario\BindingHarness as Binder;
 
 #[CoversClass(\SqlSemantics\Core\Binding\SelectModifiersBinder::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
@@ -26,7 +26,6 @@ use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 #[CoversClass(\SqlSemantics\Core\Binding\SelectBinder::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\SyntaxGuard::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\TypeResolution::class)]
-#[CoversClass(Binder::class)]
 #[CoversClass(SchemaBuilder::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\DialectParser::class)]
 #[CoversClass(\SqlSemantics\Core\Ast\ColumnReader::class)]

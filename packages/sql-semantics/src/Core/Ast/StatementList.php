@@ -19,9 +19,9 @@ final class StatementList
      * @return list<Node>
      * @throws SemanticException
      */
-    public static function read(Node $tree, Dialect $dialect): array
+    public static function read(Node $tree, Dialect $dialect, ?string $version = null): array
     {
-        [$root, $statement] = $dialect->platform()->statementNames();
+        [$root, $statement] = $dialect->platform()->statementNames($version);
         if ($tree->name !== $root) {
             throw new SemanticException('dialect-mismatch', 'Expected a ' . $dialect->value . ' parser root.', $tree);
         }

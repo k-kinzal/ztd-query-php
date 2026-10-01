@@ -29,7 +29,7 @@ final class TypeResolution
      * @param list<Expression> $expressions
      * @throws SemanticException
      */
-    public function common(array $expressions, Node|Token $source): TypeDescriptor
+    public function common(array $expressions, Node|Token|null $source): TypeDescriptor
     {
         return $this->dialect->platform()->types()->common($expressions, $source);
     }
