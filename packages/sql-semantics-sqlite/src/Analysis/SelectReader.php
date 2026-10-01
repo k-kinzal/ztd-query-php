@@ -38,7 +38,7 @@ final class SelectReader
         Tree::assertChildren($body, ['oneselect'], []);
         $select = Tree::child($body, ['oneselect']);
         assert($select !== null, 'A simple query has a SELECT body.');
-        Tree::assertChildren($select, ['distinct', 'selcollist', 'from', 'where_opt'], ['SELECT']);
+        Tree::assertChildren($select, ['distinct', 'selcollist', 'from', 'where_opt', 'limit_opt'], ['SELECT']);
         $from = Tree::child($select, ['from']);
         $tables = $from === null ? [] : $this->tables(Tree::outer($from, ['seltablist'])[0], $catalog);
         $scope = new Scope($catalog, ...$tables);
@@ -61,7 +61,8 @@ final class SelectReader
             }
         }
         $quantifier = Tree::child($select, ['distinct']);
-        return new Select($fields, $where, $quantifier === null ? Quantifier::Default : Quantifier::from(strtoupper(Tree::text($quantifier))));
+        $limit = Tree::child($select, ['limit_opt']);
+        return new Select($fields, $where, $quantifier === null ? Quantifier::Default : Quantifier::from(strtoupper(Tree::text($quantifier))), $limit === null ? null : (new LimitReader())->read($limit, $catalog));
     }
 
     /**

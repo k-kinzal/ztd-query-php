@@ -51,6 +51,8 @@ final class SelectReaderTest extends TestCase
     #[TestWith(["SELECT '', x'', '日本語', x'00Ff41'"])]
     #[TestWith(['SELECT 1.0, 1_000.3_0E+0_2'])]
     #[TestWith(['SELECT CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP'])]
+    #[TestWith(['SELECT foo FROM bar LIMIT 2 OFFSET 1'])]
+    #[TestWith(['SELECT foo FROM bar LIMIT 1, 2'])]
     #[TestWith(['SELECT NULL'])]
     #[TestWith(['SELECT nUlL AS result'])]
     #[TestWith(['SELECT null, NULL'])]
@@ -256,5 +258,34 @@ final class SelectReaderTest extends TestCase
         self::assertSame($query->field('n'), $query->where->alias->field);
         self::assertInstanceOf(CandidateColumn::class, $query->where->column->resolution);
         self::assertSame([$query->scope->tables[0]], $query->where->column->resolution->possibilities);
+    }
+
+    #[TestWith(['LIMIT 2'])]
+    #[TestWith(['LIMIT 2 OFFSET 1'])]
+    #[TestWith(['LIMIT 1, 2'])]
+    #[TestWith(['LIMIT 1+1 OFFSET 1+0'])]
+    #[TestWith(['LIMIT -1 OFFSET 2'])]
+    #[TestWith(['LIMIT -2, -1'])]
+    #[TestWith(['LIMIT 1.0'])]
+    #[TestWith(["LIMIT '2'"])]
+    public function testReadPreservesRowRestrictionExpressionsAndTheirSeparateScope(string $clause): void
+    {
+        $table = new Table(new QualifiedName(new Name('bar')), new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer)));
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, $table);
+        $sql = 'SELECT foo FROM bar ' . $clause;
+        $reader = new SelectReader();
+        $parser = new SqliteParser();
+        $query = $reader->read($parser->parse($sql)->find('select')[0], $catalog);
+        self::assertNotNull($query->limit);
+        self::assertNotSame($query->scope, $query->limit->scope);
+        self::assertSame($query->scope->catalog, $query->limit->scope->catalog);
+        $db = new PDO('sqlite::memory:');
+        $db->exec('CREATE TABLE bar(foo INTEGER); INSERT INTO bar VALUES(1),(2),(3),(4)');
+        $original = $db->query($sql);
+        $rebuilt = $db->query($query->toString());
+        self::assertInstanceOf(PDOStatement::class, $original);
+        self::assertInstanceOf(PDOStatement::class, $rebuilt);
+        self::assertSame($original->fetchAll(PDO::FETCH_ASSOC), $rebuilt->fetchAll(PDO::FETCH_ASSOC));
+        self::assertSame((new SemanticGraph())->fingerprint($query), (new SemanticGraph())->fingerprint($reader->read($parser->parse($query->toString())->find('select')[0], $catalog)));
     }
 }

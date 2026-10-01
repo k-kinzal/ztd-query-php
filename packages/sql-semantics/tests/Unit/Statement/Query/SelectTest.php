@@ -25,6 +25,7 @@ use SqlSemantics\Statement\Projection\ColumnOrAlias;
 use SqlSemantics\Statement\Projection\Field;
 use SqlSemantics\Statement\Projection\Fields;
 use SqlSemantics\Statement\Query\Select;
+use SqlSemantics\Statement\Query\SqliteLimit;
 use SqlSemantics\Statement\Reference\ResolvedColumn;
 use SqlSemantics\Statement\Relation\Scope;
 use SqlSemantics\Statement\Relation\TableReference;
@@ -168,5 +169,25 @@ final class SelectTest extends TestCase
         self::assertSame($expected, $result->fetchAll(PDO::FETCH_NUM));
         self::assertSame([$field], $query->fields()->items);
         self::assertSame($where, $changed->where);
+    }
+
+    public function testWithLimitKeepsTheProjectionAndPredicateIndependentOfTheRowBound(): void
+    {
+        $catalog = new Catalog(new SearchPath(new Name('main')));
+        $scope = new Scope($catalog);
+        $value = new SqliteInteger(new UnsignedInteger('1'));
+        $field = new Field($value, new Name('answer'));
+        $query = new Select(new Fields($scope, $field), $value);
+        $limit = new SqliteLimit(new Scope($catalog), new SqliteInteger(new UnsignedInteger('0')));
+        $changed = $query->withLimit($limit);
+        self::assertNull($query->limit);
+        self::assertSame($query->fields(), $changed->fields());
+        self::assertSame($query->where, $changed->where);
+        self::assertSame($limit, $changed->limit);
+        self::assertSame($limit, $changed->withWhere($value)->limit);
+        self::assertSame($limit, $changed->withFields($query->fields())->limit);
+        $result = (new PDO('sqlite::memory:'))->query($changed->toString());
+        self::assertInstanceOf(PDOStatement::class, $result);
+        self::assertSame([], $result->fetchAll(PDO::FETCH_NUM));
     }
 }

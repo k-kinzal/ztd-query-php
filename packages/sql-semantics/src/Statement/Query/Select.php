@@ -33,9 +33,10 @@ final class Select implements Operation
     /**
      * Keeps one source of truth for references and asserts predicate ownership.
      */
-    public function __construct(private readonly Fields $projection, public readonly ?ScalarExpression $where = null, public readonly Quantifier $quantifier = Quantifier::Default)
+    public function __construct(private readonly Fields $projection, public readonly ?ScalarExpression $where = null, public readonly Quantifier $quantifier = Quantifier::Default, public readonly ?SqliteLimit $limit = null)
     {
         $this->scope = $projection->scope;
+        assert($limit === null || $limit->scope->catalog === $this->scope->catalog, 'The row restriction must use this query declaration context.');
         assert((new SemanticGraph())->containsOnlyValues($this), 'A SELECT retains only immutable semantic values.');
         foreach ($where?->references() ?? [] as $reference) {
             assert($reference->scope === $this->scope, 'Every predicate column must belong to this SELECT scope.');
@@ -67,7 +68,7 @@ final class Select implements Operation
     public function withFields(Fields $fields): self
     {
         assert($fields->scope === $this->scope, 'Replacing a projection must preserve its input scope.');
-        return new self($fields, $this->where, $this->quantifier);
+        return new self($fields, $this->where, $this->quantifier, $this->limit);
     }
 
     /**
@@ -75,7 +76,15 @@ final class Select implements Operation
      */
     public function withWhere(?ScalarExpression $where): self
     {
-        return new self($this->projection, $where, $this->quantifier);
+        return new self($this->projection, $where, $this->quantifier, $this->limit);
+    }
+
+    /**
+     * Replaces the row restriction without changing projection or predicate bindings.
+     */
+    public function withLimit(?SqliteLimit $limit): self
+    {
+        return new self($this->projection, $this->where, $this->quantifier, $limit);
     }
 
     /**
@@ -85,6 +94,7 @@ final class Select implements Operation
     {
         $sql = 'SELECT' . ($this->quantifier === Quantifier::Default ? '' : ' ' . $this->quantifier->value) . ($this->projection->items === [] ? '' : ' ' . $this->projection->toString());
         $sql .= $this->scope->tables === [] ? '' : ' FROM ' . implode(', ', array_map(static fn (TableReference $table): string => $table->toString(), $this->scope->tables));
-        return $sql . ($this->where === null ? '' : ' WHERE ' . $this->where->toString());
+        $sql .= $this->where === null ? '' : ' WHERE ' . $this->where->toString();
+        return $sql . ($this->limit === null ? '' : ' ' . $this->limit->toString());
     }
 }
