@@ -61,6 +61,9 @@ final class OperationReader
     public function command(Node $source, Catalog $catalog): Operation
     {
         assert($source->name === 'cmd', 'A command reader receives one complete command.');
+        if (Tree::child($source, ['create_table']) !== null) {
+            return (new CreateTableReader())->read($source);
+        }
         $query = Tree::child($source, ['select']);
         if ($query !== null) {
             Tree::assertChildren($source, ['select'], []);
