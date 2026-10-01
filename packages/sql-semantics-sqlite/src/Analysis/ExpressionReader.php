@@ -58,6 +58,10 @@ final class ExpressionReader
     public function read(Node $source, Scope $scope): ScalarExpression
     {
         assert($this->projection === null || $this->projection->scope === $scope, 'Alias and input lookup must share a scope.');
+        $conversion = (new ConversionReader())->read($source, $scope, $this);
+        if ($conversion !== null) {
+            return $conversion;
+        }
         $term = Tree::child($source, ['term']);
         if ($term !== null) {
             assert(count($term->tokens()) === 1, 'A literal term has one terminal.');
