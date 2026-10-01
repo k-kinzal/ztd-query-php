@@ -217,7 +217,10 @@ analysis of the query, not execution of earlier statements.
 
 This contract describes the required result, not a completed coverage claim. The
 initial prototype covered SELECT, basic INSERT source variants, and single-table
-DELETE. That subset did not meet the completion criterion. The migration is being
-integrated with the current main branch, including its language settings, typed
-declarations, and consumers. Existing syntax-based round-trip success is not
+DELETE. That subset did not meet the completion criterion. The public `Semantics::analyze()` now invokes semantic lowering directly, retains
+supplied declaration objects, and returns `Operation`. The previous grammar-model
+reader and resolver are no longer its execution path. SQLite has a growing set of
+concrete operations; MySQL and PostgreSQL still need most of their lowering.
+Existing consumers and tests that expect the old command/resolution wrapper also
+require migration. Existing syntax-based round-trip success is not
 credited as semantic coverage.

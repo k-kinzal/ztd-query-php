@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Script\Sequence;
  * Lowers statement boundaries into concrete operations against one unchanged declaration context.
  * @visibility SqlSemantics
  */
-final class OperationReader
+final class OperationReader implements \SqlSemantics\Core\Policy\OperationRules
 {
     /**
      * Reads the complete input, retaining operation order without simulating earlier requests.

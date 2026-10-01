@@ -45,7 +45,8 @@ final class SemanticGraphTest extends TestCase
 {
     public function testIsSemanticOperationRejectsAGrammarTreeEvenWhenItReconstructsSql(): void
     {
-        $syntax = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1');
+        $language = new \SqlSemantics\Core\Language(Dialect::Sqlite);
+        $syntax = $language->values()->statement($language->parser()->parse('SELECT 1'));
         self::assertSame('SELECT 1', $syntax->toString());
         self::assertFalse((new SemanticGraph())->isSemanticOperation($syntax));
     }

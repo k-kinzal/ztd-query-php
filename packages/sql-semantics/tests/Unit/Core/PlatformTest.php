@@ -140,4 +140,18 @@ final class PlatformTest extends TestCase
         self::assertSame('x', $language->dialect->platform()->literals($language)->decode($tokens)->value());
     }
 
+
+    public function testOperationsSuppliesTheSemanticLoweringContract(): void
+    {
+        $language = new \SqlSemantics\Core\Language(PostgreSqlDialect::PostgreSql);
+        self::assertInstanceOf(\SqlSemantics\Core\Policy\OperationRules::class, $language->dialect->platform()->operations($language));
+    }
+
+    public function testCatalogKeepsTheDatabaseNamespacePolicies(): void
+    {
+        $platform = PostgreSqlDialect::PostgreSql->platform();
+        $catalog = $platform->catalog($platform->searchPath(), true);
+        self::assertSame('public', $catalog->declarationSchema->value);
+        self::assertSame(\SqlSemantics\Statement\Identifier\Comparison::Sensitive, $catalog->columnNames);
+    }
 }

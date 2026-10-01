@@ -7,8 +7,8 @@ namespace Fuzz\Target;
 use Error;
 use SqlFormatter\Facade\Formatter;
 use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Statement\ReferenceKind;
-use SqlSemantics\Statement\Writer;
+use SqlSemantics\Statement\Schema\DeclarationProvider;
+use SqlSemantics\Statement\SemanticGraph;
 use Throwable;
 
 /**
@@ -27,29 +27,26 @@ final class SchemaTarget
     {
         try {
             $statement = $this->semantics->analyze($sql, []);
-            $resolution = $statement->resolution ?? throw new Error('A statement analyzed with dependencies must be resolved.');
-            if (count($resolution->declarations) !== 1 || count($resolution->references) !== 1 || $resolution->references[0]->kind !== ReferenceKind::Declaration) {
-                throw new Error('A planned declaration must declare one table and name nothing else.');
+            $graph = new SemanticGraph();
+            if (!$statement instanceof DeclarationProvider || !$graph->isSemanticOperation($statement) || count($statement->declaredTables()) !== 1) {
+                throw new Error('A planned declaration must describe one table using immutable semantic values.');
             }
-            $before = serialize($resolution->declarations);
-            $printed = Writer::render($resolution->declarations[0]->source);
-            if ($this->compact->format($sql) !== $this->compact->format($printed)) {
-                throw new Error('The declaration lost its structure.');
+            $before = serialize($statement);
+            $printed = $statement->toString();
+            $again = $this->semantics->analyze($printed, []);
+            if ($graph->fingerprint($statement) !== $graph->fingerprint($again)) {
+                throw new Error('The declaration changed across reconstruction.');
             }
-            $again = $this->semantics->analyze($printed, [])->resolution;
-            if ($again === null || serialize($again->declarations) !== $before || serialize($resolution->declarations) !== $before) {
-                throw new Error('The declaration is not stable across reconstruction.');
-            }
-            if (str_contains($before, 'SqlParser\\')) {
-                throw new Error('The declaration retained a parser object.');
+            if ($this->compact->format($printed) !== $this->compact->format($again->toString())) {
+                throw new Error('Declaration reconstruction did not reach a stable SQL form.');
             }
             $reset = $this->semantics->analyze('DROP TABLE IF EXISTS schema_fuzz_previous', []);
-            $after = $this->semantics->analyze($printed, [$reset])->resolution;
-            if ($after === null || serialize($after->declarations) !== $before) {
+            $after = $this->semantics->analyze($printed, [$reset]);
+            if ($graph->fingerprint($after) !== $graph->fingerprint($statement)) {
                 throw new Error('An unrelated conditional drop changed the declaration.');
             }
             $dependent = $this->semantics->analyze($printed, [$statement, $reset]);
-            if ($dependent->resolution === null || serialize($dependent->resolution->declarations) !== $before) {
+            if ($graph->fingerprint($dependent) !== $graph->fingerprint($statement) || serialize($statement) !== $before) {
                 throw new Error('Declaration context changed the statement itself.');
             }
         } catch (Throwable $error) {

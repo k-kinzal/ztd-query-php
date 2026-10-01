@@ -16,6 +16,12 @@ use SqlSemantics\Core\Parameters;
 use SqlSemantics\Core\Platform as Contract;
 use SqlSemantics\Core\Policy;
 use SqlSemantics\Core\SearchPath as SessionSearchPath;
+use SqlSemantics\Statement\Identifier\Comparison;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Identifier\Quote;
+use SqlSemantics\Statement\Schema\Catalog;
+use SqlSemantics\Statement\Schema\SearchPath;
+use SqlSemantics\Statement\Schema\Table;
 
 /**
  * Assembles MySql semantic behavior from independent core contracts.
@@ -36,6 +42,24 @@ final class Platform implements Contract
         }
 
         return new MySqlParser($version, $mode === null ? new \SqlParser\MySql\SqlMode() : $mode->sqlMode, parameters: $parameters->syntax());
+    }
+
+    /**
+     * Supplies operations without retaining parser or grammar-model objects.
+     */
+    public function operations(Language $language): Policy\OperationRules
+    {
+        return new Analysis\OperationReader();
+    }
+
+    /**
+     * Keeps the exact declaration objects and the database's namespace policies.
+     * @param non-empty-list<string> $path
+     */
+    public function catalog(array $path, bool $complete, Table ...$tables): Catalog
+    {
+        $schemas = array_map(static fn (string $schema): Name => new Name($schema, Quote::Double), $path);
+        return new Catalog(new SearchPath(...$schemas), Comparison::Sensitive, Comparison::AsciiInsensitive, $complete, null, $schemas[0], ...$tables);
     }
 
     /**

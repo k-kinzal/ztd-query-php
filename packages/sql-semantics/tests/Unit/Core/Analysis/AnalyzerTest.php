@@ -133,4 +133,101 @@ final class AnalyzerTest extends TestCase
         $this->expectException($error);
         (new Analyzer(new Language($dialect), $dialect->platform()->searchPath()))->analyzeAll($sql, dependencies: [], declarations: Declarations::Partial);
     }
+
+    public function testAnalyzeReturnsColumnMeaningWithoutDeclarations(): void
+    {
+        $analyzer = new Analyzer(new Language(SqliteDialect::Sqlite), ['temp', 'main']);
+        $query = $analyzer->analyze('SELECT foo FROM bar');
+        self::assertInstanceOf(\SqlSemantics\Statement\Query\Select::class, $query);
+        $column = $query->field('foo')->expression;
+        self::assertInstanceOf(\SqlSemantics\Statement\Expression\ColumnReference::class, $column);
+        self::assertSame(\SqlSemantics\Statement\Type\Unresolved::MissingDeclaration, $column->type());
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\CandidateColumn::class, $column->resolution);
+        self::assertSame([$query->fields()->scope->tables[0]], $column->resolution->possibilities);
+        self::assertSame('bar', $query->fields()->scope->tables[0]->name->name->value);
+        self::assertSame('SELECT foo FROM bar', $query->toString());
+        self::assertTrue((new \SqlSemantics\Statement\SemanticGraph())->isSemanticOperation($query));
+    }
+
+    public function testAnalyzeRetainsExactSuppliedDeclarationObjects(): void
+    {
+        $column = new \SqlSemantics\Statement\Schema\Column(new \SqlSemantics\Statement\Identifier\Name('foo'), new \SqlSemantics\Statement\Declaration\TypeDescriptor(\SqlSemantics\Statement\Declaration\Builtin::Integer));
+        $table = new \SqlSemantics\Statement\Schema\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('bar')), $column);
+        $analyzer = new Analyzer(new Language(SqliteDialect::Sqlite), ['temp', 'main']);
+        $query = $analyzer->analyze('SELECT foo FROM bar', [$table]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Query\Select::class, $query);
+        $expression = $query->field('foo')->expression;
+        self::assertInstanceOf(\SqlSemantics\Statement\Expression\ColumnReference::class, $expression);
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\ResolvedColumn::class, $expression->resolution);
+        self::assertSame($table, $expression->resolution->table);
+        self::assertSame($column, $expression->resolution->column);
+        self::assertSame($column->type, $expression->type());
+        self::assertSame($table, $query->fields()->scope->tables[0]->declarations[0]);
+    }
+
+    public function testAnalyzeDistinguishesMissingColumnsFromMissingMetadata(): void
+    {
+        $analyzer = new Analyzer(new Language(SqliteDialect::Sqlite), ['temp', 'main']);
+        $table = $analyzer->analyze('CREATE TABLE bar (other INTEGER)');
+        $query = $analyzer->analyze('SELECT foo FROM bar', [$table]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Query\Select::class, $query);
+        $expression = $query->field('foo')->expression;
+        self::assertInstanceOf(\SqlSemantics\Statement\Expression\ColumnReference::class, $expression);
+        self::assertSame(\SqlSemantics\Statement\Reference\MissingColumn::Value, $expression->resolution);
+        self::assertSame(\SqlSemantics\Statement\Type\Invalid::MissingColumn, $expression->type());
+        $empty = $analyzer->analyze('SELECT foo FROM bar', []);
+        self::assertInstanceOf(\SqlSemantics\Statement\Query\Select::class, $empty);
+        self::assertSame(\SqlSemantics\Statement\Type\Invalid::MissingColumn, $empty->field('foo')->expression->type());
+    }
+
+    public function testAnalyzeKeepsSafeProjectionUpdatesPersistent(): void
+    {
+        $analyzer = new Analyzer(new Language(SqliteDialect::Sqlite), ['temp', 'main']);
+        $table = $analyzer->analyze('CREATE TABLE bar (foo INTEGER, baz TEXT)');
+        self::assertInstanceOf(\SqlSemantics\Statement\Schema\Definition\SqliteCreateTable::class, $table);
+        $query = $analyzer->analyze('SELECT foo FROM bar', [$table]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Query\Select::class, $query);
+        $before = serialize($query);
+        $field = new \SqlSemantics\Statement\Projection\Field(new \SqlSemantics\Statement\Expression\ColumnReference($query->fields()->scope, new \SqlSemantics\Statement\Identifier\Name('baz')));
+        $changed = $query->withFields($query->fields()->addField($field));
+        self::assertSame('SELECT foo, baz FROM bar', $changed->toString());
+        self::assertSame($field, $changed->field('baz'));
+        $expression = $field->expression;
+        self::assertInstanceOf(\SqlSemantics\Statement\Expression\ColumnReference::class, $expression);
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\ResolvedColumn::class, $expression->resolution);
+        self::assertSame($table->table, $expression->resolution->table);
+        self::assertSame($table->table->columns[1], $expression->resolution->column);
+        self::assertSame($before, serialize($query));
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith([false])]
+    #[\PHPUnit\Framework\Attributes\TestWith([true])]
+    public function testAnalyzeNeverSimulatesContextRequests(bool $reverse): void
+    {
+        $analyzer = new Analyzer(new Language(SqliteDialect::Sqlite), ['temp', 'main']);
+        $table = $analyzer->analyze('CREATE TABLE bar (foo INTEGER)');
+        self::assertInstanceOf(\SqlSemantics\Statement\Schema\Definition\SqliteCreateTable::class, $table);
+        $requests = [$table, $analyzer->analyze('ALTER TABLE bar RENAME COLUMN foo TO baz'), $analyzer->analyze('DROP TABLE bar'), $analyzer->analyze('INSERT INTO bar VALUES (1)')];
+        $context = $reverse ? array_reverse($requests) : $requests;
+        $query = $analyzer->analyze('SELECT foo FROM bar', $context);
+        self::assertInstanceOf(\SqlSemantics\Statement\Query\Select::class, $query);
+        $expression = $query->field('foo')->expression;
+        self::assertInstanceOf(\SqlSemantics\Statement\Expression\ColumnReference::class, $expression);
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\ResolvedColumn::class, $expression->resolution);
+        self::assertSame($table->table, $expression->resolution->table);
+        self::assertSame($table->table->columns[0], $expression->resolution->column);
+        self::assertSame('foo', $expression->resolution->column->name->value);
+    }
+
+    public function testAnalyzeAllDoesNotMakeEarlierDeclarationsAvailable(): void
+    {
+        $analyzer = new Analyzer(new Language(SqliteDialect::Sqlite), ['temp', 'main']);
+        $operations = $analyzer->analyzeAll('CREATE TABLE bar (foo INTEGER); SELECT foo FROM bar');
+        self::assertCount(2, $operations);
+        self::assertInstanceOf(\SqlSemantics\Statement\Query\Select::class, $operations[1]);
+        self::assertSame(\SqlSemantics\Statement\Type\Unresolved::MissingDeclaration, $operations[1]->field('foo')->expression->type());
+        $complete = $analyzer->analyzeAll('CREATE TABLE bar (foo INTEGER); SELECT foo FROM bar', []);
+        self::assertInstanceOf(\SqlSemantics\Statement\Query\Select::class, $complete[1]);
+        self::assertSame(\SqlSemantics\Statement\Type\Invalid::MissingColumn, $complete[1]->field('foo')->expression->type());
+    }
 }

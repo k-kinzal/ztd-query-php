@@ -15,6 +15,12 @@ use SqlSemantics\Core\Parameters;
 use SqlSemantics\Core\Platform as Contract;
 use SqlSemantics\Core\Policy;
 use SqlSemantics\Core\SearchPath as SessionSearchPath;
+use SqlSemantics\Statement\Identifier\Comparison;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Identifier\Quote;
+use SqlSemantics\Statement\Schema\Catalog;
+use SqlSemantics\Statement\Schema\SearchPath;
+use SqlSemantics\Statement\Schema\Table;
 
 /**
  * Assembles Sqlite semantic behavior from independent core contracts.
@@ -35,6 +41,24 @@ final class Platform implements Contract
         }
 
         return new SqliteParser($version);
+    }
+
+    /**
+     * Supplies operations without retaining parser or grammar-model objects.
+     */
+    public function operations(Language $language): Policy\OperationRules
+    {
+        return new Analysis\OperationReader();
+    }
+
+    /**
+     * Keeps the exact declaration objects and the database's namespace policies.
+     * @param non-empty-list<string> $path
+     */
+    public function catalog(array $path, bool $complete, Table ...$tables): Catalog
+    {
+        $schemas = array_map(static fn (string $schema): Name => new Name($schema, Quote::Double), $path);
+        return new Catalog(new SearchPath(...$schemas), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, $complete, null, new Name('main'), ...$tables);
     }
 
     /**
@@ -62,20 +86,19 @@ final class Platform implements Contract
     }
 
     /**
-     * Reads unqualified names in `main` and then in the attached databases the path lists after it.
-     *
-     * @throws InvalidArgumentException When the path does not start with `main`, where SQLite creates an unqualified table
+     * Searches temporary relations before main and the explicitly supplied attached schemas.
+     * @throws InvalidArgumentException When main does not follow the temporary namespace
      */
     public function searchPath(?SessionSearchPath $path = null): array
     {
-        if ($path === null) {
-            return ['main'];
+        $schemas = $path === null ? ['main'] : $path->schemas;
+        if (strcasecmp($schemas[0], 'temp') === 0) {
+            array_shift($schemas);
         }
-        if (strcasecmp($path->schemas[0], 'main') !== 0) {
-            throw new InvalidArgumentException('SQLite creates an unqualified table in main, so the search path starts with main, ' . $path->schemas[0] . ' given.');
+        if ($schemas === [] || strcasecmp($schemas[0], 'main') !== 0) {
+            throw new InvalidArgumentException('SQLite searches temp, main, then the attached schemas.');
         }
-
-        return $path->schemas;
+        return ['temp', ...$schemas];
     }
 
     /**
