@@ -8,6 +8,7 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Schema\Column;
 use SqlSemantics\Statement\Schema\DeclarationProvider;
+use SqlSemantics\Statement\Schema\SqliteRowIdentifier;
 use SqlSemantics\Statement\Schema\Table;
 
 /**
@@ -37,11 +38,17 @@ final class SqliteCreateTable implements DeclarationProvider
     {
         assert($columns !== [], 'A table definition contains at least one column.');
         assert($name->catalog === null, 'SQLite table creation identifies at most a database and table.');
+        $alias = null;
         foreach ($columns as $column) {
             assert($column->type->strict === $strict, 'Column storage behavior must use the table strictness.');
+            foreach ($column->constraints as $constraint) {
+                if ($alias === null && $column->type->permitsRowidAlias() && $constraint instanceof ColumnPrimaryKey && $constraint->direction !== KeyDirection::Descending) {
+                    $alias = $column->column;
+                }
+            }
         }
         $this->columns = array_values($columns);
-        $this->table = new Table(new QualifiedName($name->name, $name->schema ?? new Name($temporary ? 'temp' : 'main')), ...array_map(static fn (SqliteColumnDefinition $column): Column => $column->column, $this->columns));
+        $this->table = new Table(new QualifiedName($name->name, $name->schema ?? new Name($temporary ? 'temp' : 'main')), ...[...array_map(static fn (SqliteColumnDefinition $column): Column => $column->column, $this->columns), new SqliteRowIdentifier($alias)]);
     }
 
     /**

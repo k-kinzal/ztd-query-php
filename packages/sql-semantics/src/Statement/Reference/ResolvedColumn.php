@@ -26,6 +26,6 @@ final class ResolvedColumn
     public function __construct(public readonly TableReference $relation, public readonly Table $table, public readonly Column $column)
     {
         assert(in_array($table, $relation->declarations, true), 'The table must be a declaration of this relation occurrence.');
-        assert(in_array($column, $table->columns, true), 'The column must belong to the referenced table declaration.');
+        assert($table->ownsColumn($column), 'The column must belong to the referenced table declaration.');
     }
 }

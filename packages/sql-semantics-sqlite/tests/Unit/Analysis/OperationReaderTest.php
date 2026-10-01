@@ -15,8 +15,10 @@ use SqlSemantics\Platform\Sqlite\Analysis\OperationReader;
 use SqlSemantics\Statement\Declaration\Builtin;
 use SqlSemantics\Statement\Declaration\TypeDescriptor;
 use SqlSemantics\Statement\Expression\ColumnReference;
+use SqlSemantics\Statement\Identifier\Comparison;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use SqlSemantics\Statement\Insertion\InsertRows;
 use SqlSemantics\Statement\Inspection\ExplainPlan;
 use SqlSemantics\Statement\Inspection\ExplainProgram;
 use SqlSemantics\Statement\Maintenance\Analyze;
@@ -25,6 +27,7 @@ use SqlSemantics\Statement\Query\Select;
 use SqlSemantics\Statement\Reference\ResolvedColumn;
 use SqlSemantics\Statement\Schema\Catalog;
 use SqlSemantics\Statement\Schema\Column;
+use SqlSemantics\Statement\Schema\Definition\SqliteCreateTable;
 use SqlSemantics\Statement\Schema\DropTable;
 use SqlSemantics\Statement\Schema\RenameColumn;
 use SqlSemantics\Statement\Schema\RenameTable;
@@ -112,5 +115,56 @@ final class OperationReaderTest extends TestCase
         self::assertInstanceOf(PDOStatement::class, $original);
         self::assertInstanceOf(PDOStatement::class, $rebuilt);
         self::assertSame($original->fetchAll(PDO::FETCH_ASSOC), $rebuilt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    #[TestWith(['CREATE TABLE bar (foo TEXT)', 'rowid', 'rowid'])]
+    #[TestWith(['CREATE TABLE bar (foo TEXT)', '_rowid_', 'rowid'])]
+    #[TestWith(['CREATE TABLE bar (Id INTEGER PRIMARY KEY, foo TEXT)', 'oid', 'Id'])]
+    #[TestWith(['CREATE TABLE bar (Id INTEGER PRIMARY KEY DESC, foo TEXT)', 'oid', 'rowid'])]
+    #[TestWith(['CREATE TABLE bar (Id "INTEGER"(123) PRIMARY KEY, foo TEXT)', 'oid', 'rowid'])]
+    #[TestWith(['CREATE TABLE bar (rowid TEXT, foo TEXT)', '_ROWID_', 'rowid'])]
+    public function testReadSharesThePhysicalRowIdentityAndMatchesDatabaseOutputNames(string $schema, string $referenceName, string $resultName): void
+    {
+        $parser = new SqliteParser();
+        $reader = new OperationReader();
+        $empty = new Catalog(new SearchPath(new Name('main')), complete: false);
+        $create = $reader->read($parser->parse($schema), $empty);
+        self::assertInstanceOf(SqliteCreateTable::class, $create);
+        $catalog = new Catalog($empty->searchPath, Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, $create->table);
+        $query = $reader->read($parser->parse('SELECT ' . $referenceName . ' FROM bar'), $catalog);
+        self::assertInstanceOf(Select::class, $query);
+        $field = $query->field($resultName);
+        self::assertInstanceOf(ColumnReference::class, $field->expression);
+        self::assertInstanceOf(ResolvedColumn::class, $field->expression->resolution);
+        self::assertNotNull($create->table->rowIdentifier);
+        self::assertSame($create->table->rowIdentifier->column, $field->expression->resolution->column);
+        self::assertSame(Builtin::Integer, $field->expression->resolution->column->type->name);
+        $database = new PDO('sqlite::memory:');
+        $database->exec($schema);
+        $database->exec('INSERT INTO bar DEFAULT VALUES');
+        $result = $database->query($query->toString());
+        self::assertInstanceOf(PDOStatement::class, $result);
+        self::assertSame([[$resultName => 1]], $result->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    public function testReadKeepsImplicitInsertionColumnsSeparateFromTheRowIdentifier(): void
+    {
+        $parser = new SqliteParser();
+        $reader = new OperationReader();
+        $empty = new Catalog(new SearchPath(new Name('main')), complete: false);
+        $create = $reader->read($parser->parse('CREATE TABLE bar (foo TEXT)'), $empty);
+        self::assertInstanceOf(SqliteCreateTable::class, $create);
+        $catalog = new Catalog($empty->searchPath, tables: $create->table);
+        $implicit = $reader->read($parser->parse("INSERT INTO bar VALUES ('text')"), $catalog);
+        $explicit = $reader->read($parser->parse('INSERT INTO bar (rowid) VALUES (42)'), $catalog);
+        self::assertInstanceOf(InsertRows::class, $implicit);
+        self::assertInstanceOf(InsertRows::class, $explicit);
+        self::assertNotNull($implicit->target->columns);
+        self::assertCount(1, $implicit->target->columns);
+        self::assertInstanceOf(ResolvedColumn::class, $implicit->target->columns[0]->resolution);
+        self::assertSame($create->table->columns[0], $implicit->target->columns[0]->resolution->column);
+        self::assertNotNull($explicit->target->columns);
+        self::assertInstanceOf(ResolvedColumn::class, $explicit->target->columns[0]->resolution);
+        self::assertSame($create->table->rowIdentifier?->column, $explicit->target->columns[0]->resolution->column);
     }
 }

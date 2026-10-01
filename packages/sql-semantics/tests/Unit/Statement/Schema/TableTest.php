@@ -13,6 +13,7 @@ use SqlSemantics\Statement\Identifier\Comparison;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Schema\Column;
+use SqlSemantics\Statement\Schema\SqliteRowIdentifier;
 use SqlSemantics\Statement\Schema\Table;
 
 #[CoversClass(Table::class)]
@@ -40,4 +41,36 @@ final class TableTest extends TestCase
         self::assertSame([$original, $added], $changed->columns);
         self::assertSame($table->name, $changed->name);
     }
+    public function testMatchingColumnsLetsExplicitDeclarationsShadowOnlyTheirOwnRowidSpelling(): void
+    {
+        $rowid = new SqliteRowIdentifier();
+        $declared = new Column(new Name('rowid'), new TypeDescriptor(Builtin::Text));
+        $table = new Table(new QualifiedName(new Name('bar')), $declared, $rowid);
+        self::assertSame([$declared], $table->columns);
+        self::assertSame([$declared], $table->matchingColumns('ROWID', Comparison::AsciiInsensitive));
+        self::assertSame([$rowid->column], $table->matchingColumns('_rowid_', Comparison::AsciiInsensitive));
+        self::assertSame([$rowid->column], $table->matchingColumns('oid', Comparison::AsciiInsensitive));
+    }
+
+    public function testOwnsColumnRequiresIdentityAndIncludesItsImplicitRowIdentifier(): void
+    {
+        $rowid = new SqliteRowIdentifier();
+        $declared = new Column(new Name('foo'), new TypeDescriptor(Builtin::Text));
+        $table = new Table(new QualifiedName(new Name('bar')), $declared, $rowid);
+        self::assertTrue($table->ownsColumn($declared));
+        self::assertTrue($table->ownsColumn($rowid->column));
+        self::assertFalse($table->ownsColumn(clone $rowid->column));
+    }
+
+    public function testWithColumnPreservesRowIdentityWhenAddingAShadowingDeclaration(): void
+    {
+        $rowid = new SqliteRowIdentifier();
+        $table = new Table(new QualifiedName(new Name('bar')), $rowid);
+        $declared = new Column(new Name('rowid'), new TypeDescriptor(Builtin::Text));
+        $changed = $table->withColumn($declared);
+        self::assertSame($rowid, $changed->rowIdentifier);
+        self::assertSame([$rowid->column], $table->matchingColumns('rowid', Comparison::AsciiInsensitive));
+        self::assertSame([$declared], $changed->matchingColumns('rowid', Comparison::AsciiInsensitive));
+    }
+
 }

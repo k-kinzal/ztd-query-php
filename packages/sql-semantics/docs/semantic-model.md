@@ -98,6 +98,12 @@ transform them. A script supplied as context contributes its explicit declaratio
 without simulating their order of execution. Repeating the same declaration object
 is harmless, while distinct conflicting declarations remain distinguishable.
 
+SQLite's row identifier is a separate part of the table declaration. Its three
+unshadowed names refer to one physical column identity, which can be the original
+INTEGER PRIMARY KEY column. Ordinary declared columns take precedence for their
+own names. The implicit identifier does not enter a star projection or an implicit
+insertion column list, and analysis never allocates a rowid value.
+
 SQLite's stored type name and its native type identity are separate facts. For
 example, `INTEGER` and `"INTEGER"(123)` can have the same displayed type name but
 different eligibility for an INTEGER PRIMARY KEY rowid alias. Text inside an
