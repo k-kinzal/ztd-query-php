@@ -49,12 +49,8 @@ final class SchemaTarget
                 throw new Error('An unrelated conditional drop changed the declaration.');
             }
             $dependent = $this->semantics->analyze($printed, [$statement, $reset]);
-            if ($dependent->resolution?->references[0]->kind !== ReferenceKind::Declaration && !$dependent->resolution?->references[0]->conditional) {
-                throw new Error('A repeated declaration must be rejected or read as conditional.');
-            }
-        } catch (\SqlSemantics\Core\SemanticException $error) {
-            if ($error->reason !== 'duplicate-table') {
-                throw new Error("Schema property failed\nGrammar: {$this->grammarVersion}\nInput (hex): " . bin2hex($input) . "\nSQL: {$sql}\n{$error->getMessage()}", 0, $error);
+            if ($dependent->resolution === null || serialize($dependent->resolution->declarations) !== $before) {
+                throw new Error('Declaration context changed the statement itself.');
             }
         } catch (Throwable $error) {
             throw new Error("Schema property failed\nGrammar: {$this->grammarVersion}\nInput (hex): " . bin2hex($input) . "\nSQL: {$sql}\n{$error->getMessage()}", 0, $error);

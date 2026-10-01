@@ -21,8 +21,7 @@ use SqlSemantics\Statement\Statement;
  * This entry point needs no database connection. Statements are read as the
  * server reads them: with the grammar of one release, under the session
  * settings given as the mode, and with the selected parameter markers. A
- * statement analyzed with its dependencies, the declarations that came
- * before it, also resolves every table name it writes, reading a name
+ * statement analyzed with its declaration context also resolves every table name it writes, reading a name
  * without a schema in the schemas of the session's search path; a name no
  * dependency declares is an error unless the declarations are partial.
  *
@@ -92,11 +91,11 @@ final class Semantics
      * none, the statement is also resolved: the tables it declares are read,
      * and every table name it writes must be a common table expression it
      * defines, a table a dependency declares, or a table it declares or
-     * drops itself. Dependencies are applied in order, so a later DROP TABLE
-     * removes an earlier declaration. With partial declarations, a name no
+     * drops itself. Dependencies describe declarations; ALTER, DROP and
+     * writes never change those declarations. With partial declarations, a name no
      * dependency declares is an undeclared table instead of an error.
      *
-     * @param list<Statement>|null $dependencies The declarations the statement is read against, in order
+     * @param list<Statement>|null $dependencies The explicit declaration context
      * @param Declarations $declarations Whether the dependencies declare every table of the database, or only some
      *
      * @throws \SqlSemantics\Core\AnalysisException When SQL is not one statement of the selected language
@@ -108,7 +107,7 @@ final class Semantics
     }
 
     /**
-     * Builds one immutable statement for each statement of a script, in order, each resolved against the dependencies and the statements before it when dependencies are given.
+     * Builds one immutable statement for each statement of a script, in order, each resolved against the same explicit context.
      *
      * @param list<Statement>|null $dependencies
      * @return list<Statement>

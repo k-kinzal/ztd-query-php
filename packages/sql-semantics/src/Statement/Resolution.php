@@ -9,8 +9,8 @@ use SqlSemantics\Statement\Declaration\TableDefinition;
 /**
  * What a statement means against the statements it depends on.
  *
- * A statement is analyzed with its dependencies: the declarations that came
- * before it, in order. The resolution keeps those dependencies, the tables
+ * A statement is analyzed with its dependencies: an explicit declaration
+ * context, not an execution history. The resolution keeps those dependencies, the tables
  * the statement itself declares, and every table name it writes with what
  * that name resolves to. Partial analysis records missing references with
  * ReferenceKind::Undeclared; strict analysis rejects them.
@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Declaration\TableDefinition;
 final class Resolution
 {
     /**
-     * @param list<Statement> $dependencies The statements this one was analyzed against, in order
+     * @param list<Statement> $dependencies The explicit declaration context
      * @param list<TableDefinition> $declarations The tables this statement declares
      * @param list<Reference> $references Every table name written in the statement, in writing order
      */

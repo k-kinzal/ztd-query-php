@@ -73,13 +73,13 @@ final class SchemaReaderTest extends TestCase
         self::assertNotNull($table->constraints[3]->expression);
     }
 
-    public function testTableRejectsDuplicateDeclarations(): void
+    public function testTableRejectsConflictingContextDeclarations(): void
     {
         $builder = new Semantics(PostgreSqlDialect::PostgreSql);
         $sql = 'CREATE TABLE users (id INTEGER)';
         $this->expectException(SemanticException::class);
-        $this->expectExceptionMessage('Duplicate table');
-        $builder->analyze($sql, [$builder->analyze($sql)]);
+        $this->expectExceptionMessage('Conflicting context declarations');
+        $builder->analyze('SELECT * FROM users', [$builder->analyze($sql), $builder->analyze($sql)]);
     }
 
     public function testPrimaryKeysRejectsMissingColumn(): void

@@ -24,11 +24,15 @@ $query->resolution->tables(); // the two references to dependencies
 
 ## Declarations
 
-The dependencies are applied in order. A `CREATE TABLE` declares a table with its columns, types, nullability, defaults, generated columns, collations, constraints, and table options, read as `Statement\Declaration\TableDefinition` and available as `$statement->resolution->declarations` and on each reference as `->table`. A `DROP TABLE` removes an earlier declaration, so a later statement that names the table is an error. `CREATE TABLE IF NOT EXISTS` of a table already declared and `DROP TABLE IF EXISTS` of one not declared change nothing; their references are marked `conditional`. A declaration of a table already declared, an unconditional drop of an unknown table, a duplicate column, or a constraint over an unknown column is a `SemanticException` with a stable `reason`.
+Dependencies are an explicit declaration context, not a script to execute. A `CREATE TABLE` describes a table with columns, types, nullability, defaults, generated columns, collations, constraints, and table options. Its definition is available as `$statement->resolution->declarations` and on references as `->table`.
 
-A declaration whose columns come from another relation, such as `CREATE TABLE ... LIKE`, `CREATE TABLE ... AS SELECT`, or a partition of another table, declares its name but no readable table: its reference is a `Declaration` with a null `table`, and later references to it resolve with a null `table` too. Views, indexes, and other objects that are not tables are neither declared nor referenced. Computing the columns such statements would produce needs query evaluation and is left to the application, which has the statement model to do it from.
+`ALTER TABLE`, `DROP TABLE`, and data writes in the context do not change, remove, or create definitions. Permuting context statements does not change the referenced definition. For example, a SELECT of `foo` from `bar` still refers to the original `CREATE TABLE bar (foo INTEGER)` when the context also includes an ALTER that renames or drops `foo`. SQL Semantics describes the ALTER operation separately; it never applies it to the declaration.
 
-A dependency that was analyzed without dependencies is resolved from its own SQL, against the dependencies before it, when it is used, so a plain `analyze('CREATE TABLE ...')` can be passed as a dependency, and its foreign keys refer to the tables declared before it. `analyzeAll()` with dependencies resolves each statement of a script against the dependencies and the statements before it, which is how a script of declarations is read.
+`CREATE TABLE IF NOT EXISTS` describes its own declaration and records the condition; it does not choose the existing table's definition by evaluating that condition. Distinct context declarations for the same qualified name are conflicting, even when conditional, and produce a `SemanticException` with reason `duplicate-table`. Repeating the same declaration object is harmless. A statement's own declaration is visible to its self-references.
+
+A dependency analyzed without a context is read independently with partial declarations when supplied as context. References to absent tables in that dependency do not prevent use of the declarations it supplies. Already analyzed definitions retain their exact object identity. `analyzeAll()` analyzes every statement against the same explicit context: earlier statements in the script are not automatically added to it.
+
+The current declaration reader still leaves derived definitions (`CREATE TABLE ... LIKE`, `CREATE TABLE ... AS SELECT`, and partitions) without column descriptions. This is an implementation gap, not uncertainty inherent in SQL. See the [semantic model contract](semantic-model.md) for the required replacement and completion criteria.
 
 ## Types
 
@@ -96,7 +100,7 @@ $query = $semantics->analyze('SELECT * FROM users JOIN audit_log USING (id)', [$
 // users is a Dependency with its declared table, audit_log is Undeclared
 ```
 
-Under partial declarations, dropping an undeclared table is a `Drop` without a declaration. A table the dependencies dropped is known not to exist, so naming it is still an `unknown-table` error until a later dependency declares it again. Declarations that conflict with a dependency are errors either way.
+Under partial declarations, dropping an undeclared table is a `Drop` without a declaration. Supplying that DROP in another analysis does not establish that the table is absent. Conflicting context declarations are errors under either policy.
 
 ## Common table expressions
 

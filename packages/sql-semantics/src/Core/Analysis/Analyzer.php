@@ -40,10 +40,10 @@ final class Analyzer
     /**
      * Parses and lowers one statement, resolving its table names against the dependencies when they are given.
      *
-     * A dependency analyzed without dependencies is resolved from its own
-     * SQL against the dependencies before it.
+     * Dependencies provide declarations, not a history to execute. Reading
+     * a dependency never applies another dependency's DDL effects.
      *
-     * @param list<Statement>|null $dependencies The declarations the statement is read against, in order, or null to structure it only
+     * @param list<Statement>|null $dependencies The declaration context, or null to structure it only
      * @param Declarations $declarations Whether the dependencies declare every table the statement names
      *
      * @throws AnalysisException When SQL is not one statement of the selected language
@@ -61,18 +61,16 @@ final class Analyzer
             return $statement;
         }
         $resolved = [];
-        $before = [];
         foreach ($dependencies as $dependency) {
-            $resolution = $dependency->resolution ?? $this->analyze($dependency->toString(), $before, $declarations)->resolution ?? new Resolution();
+            $resolution = $dependency->resolution ?? $this->analyze($dependency->toString(), [], Declarations::Partial)->resolution ?? new Resolution();
             $resolved[] = [$dependency, $resolution];
-            $before[] = $dependency->resolution === null ? new Statement($dependency->command, $dependency->comments, $resolution) : $dependency;
         }
 
         return new Statement($statement->command, $statement->comments, $this->resolver->resolve($tree, $statement->command, $resolved, $declarations));
     }
 
     /**
-     * Parses and lowers every statement of a script, each resolved against the dependencies and the statements before it.
+     * Parses and lowers every statement of a script against the same explicit context.
      *
      * @param list<Statement>|null $dependencies
      * @return list<Statement>
@@ -83,7 +81,7 @@ final class Analyzer
     {
         $statements = [];
         foreach ($this->split($sql) as $text) {
-            $statements[] = $this->analyze($text, $dependencies === null ? null : [...$dependencies, ...$statements], $declarations);
+            $statements[] = $this->analyze($text, $dependencies, $declarations);
         }
 
         return $statements;
