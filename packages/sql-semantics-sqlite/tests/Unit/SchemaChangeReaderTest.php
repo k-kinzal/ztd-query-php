@@ -63,7 +63,7 @@ final class SchemaChangeReaderTest extends TestCase
     {
         $column = new Column(new Name('id'), new TypeDescriptor(Builtin::Integer));
         $table = new Table(new QualifiedName(new Name('users')), $column);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, $table);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $table);
         $operation = (new SchemaChangeReader())->read((new SqliteParser())->parse('ALTER TABLE users RENAME COLUMN id TO key')->find('cmd')[0], $catalog);
         self::assertInstanceOf(RenameColumn::class, $operation);
         self::assertInstanceOf(ResolvedColumn::class, $operation->column->resolution);

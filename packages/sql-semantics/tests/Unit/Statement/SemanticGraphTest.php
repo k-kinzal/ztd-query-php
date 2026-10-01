@@ -74,8 +74,8 @@ final class SemanticGraphTest extends TestCase
         $shared = new Table(new QualifiedName(new Name('b')), $column);
         $distinct = new Table(new QualifiedName(new Name('b')), new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer)));
         $path = new SearchPath(new Name('main'));
-        $sharedCatalog = new Catalog($path, \SqlSemantics\Statement\Identifier\Comparison::Sensitive, \SqlSemantics\Statement\Identifier\Comparison::Sensitive, true, null, $first, $shared);
-        $distinctCatalog = new Catalog($path, \SqlSemantics\Statement\Identifier\Comparison::Sensitive, \SqlSemantics\Statement\Identifier\Comparison::Sensitive, true, null, $first, $distinct);
+        $sharedCatalog = new Catalog($path, \SqlSemantics\Statement\Identifier\Comparison::Sensitive, \SqlSemantics\Statement\Identifier\Comparison::Sensitive, true, null, null, $first, $shared);
+        $distinctCatalog = new Catalog($path, \SqlSemantics\Statement\Identifier\Comparison::Sensitive, \SqlSemantics\Statement\Identifier\Comparison::Sensitive, true, null, null, $first, $distinct);
         $left = [];
         $right = [];
         self::assertNotSame((new SemanticGraph())->describe($sharedCatalog, $left), (new SemanticGraph())->describe($distinctCatalog, $right));

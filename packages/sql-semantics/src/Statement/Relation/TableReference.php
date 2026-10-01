@@ -60,7 +60,7 @@ final class TableReference
         $resolvedName = $this->declarations[0]->name ?? $this->name;
         $schemas = $resolvedName->schema === null && $this->declarations === []
             ? $this->catalog->searchPath->schemas
-            : [$resolvedName->schema ?? $this->catalog->searchPath->schemas[0]];
+            : [$resolvedName->schema ?? $this->catalog->declarationSchema];
         $catalog = $resolvedName->catalog ?? $this->catalog->currentCatalog;
         $schemaMatches = array_filter($schemas, fn (Name $schema): bool => $this->catalog->tableNames->equal($schema->value, $qualifier->schema->value));
         return $schemaMatches !== []

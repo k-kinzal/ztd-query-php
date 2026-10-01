@@ -33,7 +33,7 @@ final class DropColumnTest extends TestCase
         $db->exec("INSERT INTO users VALUES (1, 'Alice')");
         $column = new Column(new Name('id'), new TypeDescriptor(Builtin::Integer));
         $table = new Table(new QualifiedName(new Name('users')), $column);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, $table);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $table);
         $relation = new TableReference($catalog, $table->name);
         $operation = new DropColumn($relation, new Name('id'));
         $db->exec($operation->toString());

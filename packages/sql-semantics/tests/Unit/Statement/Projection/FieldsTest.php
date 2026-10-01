@@ -35,7 +35,7 @@ final class FieldsTest extends TestCase
 
         $declared = new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer), Nullability::NotNull);
         $table = new Table(new QualifiedName(new Name('bar')), $declared);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, $table);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $table);
         $relation = new TableReference($catalog, $table->name);
         $scope = new Scope($catalog, $relation);
 
@@ -55,7 +55,7 @@ final class FieldsTest extends TestCase
 
         $declared = new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer), Nullability::NotNull);
         $table = new Table(new QualifiedName(new Name('bar')), $declared);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, $table);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $table);
         $relation = new TableReference($catalog, $table->name);
         $scope = new Scope($catalog, $relation);
 
@@ -68,7 +68,7 @@ final class FieldsTest extends TestCase
 
         $declared = new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer), Nullability::NotNull);
         $table = new Table(new QualifiedName(new Name('bar')), $declared);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, $table);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $table);
         $relation = new TableReference($catalog, $table->name);
         $scope = new Scope($catalog, $relation);
 
@@ -83,7 +83,7 @@ final class FieldsTest extends TestCase
 
         $declared = new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer), Nullability::NotNull);
         $table = new Table(new QualifiedName(new Name('bar')), $declared);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, $table);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $table);
         $relation = new TableReference($catalog, $table->name);
         $scope = new Scope($catalog, $relation);
 
@@ -97,7 +97,7 @@ final class FieldsTest extends TestCase
 
         $declared = new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer), Nullability::NotNull);
         $table = new Table(new QualifiedName(new Name('bar')), $declared);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, $table);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $table);
         $relation = new TableReference($catalog, $table->name);
         $scope = new Scope($catalog, $relation);
 

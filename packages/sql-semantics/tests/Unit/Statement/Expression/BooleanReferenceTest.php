@@ -34,7 +34,7 @@ final class BooleanReferenceTest extends TestCase
     {
         $column = new Column(new Name('true'), new TypeDescriptor(Builtin::Text), Nullability::MaybeNull);
         $table = new Table(new QualifiedName(new Name('users')), $column);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, $table);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, null, $table);
         $scope = new Scope($catalog, new TableReference($catalog, $table->name));
         $expression = new BooleanReference(new ColumnReference($scope, new Name('TRUE')));
         self::assertSame($column->type, $expression->type());

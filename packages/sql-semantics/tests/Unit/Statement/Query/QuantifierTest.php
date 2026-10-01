@@ -42,7 +42,7 @@ final class QuantifierTest extends TestCase
     {
         $column = new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer), Nullability::NotNull);
         $table = new Table(new QualifiedName(new Name('bar')), $column);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, $table);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $table);
         $relation = new TableReference($catalog, $table->name);
         $scope = new Scope($catalog, $relation);
         $field = new Field(new ColumnReference($scope, new Name('foo')));

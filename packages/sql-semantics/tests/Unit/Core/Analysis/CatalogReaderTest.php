@@ -46,7 +46,7 @@ final class CatalogReaderTest extends TestCase
         $dependencies = array_map(static fn (int $position) => $operations[$position], $order);
         $tables = (new CatalogReader())->tables(new Sequence(...$dependencies));
         self::assertSame([$create->table], $tables);
-        $context = new Catalog($catalog->searchPath, Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, ...$tables);
+        $context = new Catalog($catalog->searchPath, Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, null, ...$tables);
         $query = $reader->read($parser->parse('SELECT foo FROM bar'), $context);
         self::assertInstanceOf(Select::class, $query);
         $reference = $query->field('foo')->expression;
@@ -67,7 +67,7 @@ final class CatalogReaderTest extends TestCase
         self::assertInstanceOf(SqliteCreateTable::class, $second);
         $tables = (new CatalogReader())->tables($first, $first->table, $first, $second);
         self::assertSame([$first->table, $second->table], $tables);
-        $context = new Catalog($catalog->searchPath, Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, ...$tables);
+        $context = new Catalog($catalog->searchPath, Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, null, ...$tables);
         $query = $reader->read($parser->parse('SELECT foo FROM bar'), $context);
         self::assertInstanceOf(Select::class, $query);
         $reference = $query->field('foo')->expression;

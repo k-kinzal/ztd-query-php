@@ -72,7 +72,7 @@ final class CreateTableReaderTest extends TestCase
         $empty = new Catalog(new SearchPath(new Name('main')), complete: false);
         $create = $reader->read($parser->parse('CREATE TABLE bar (foo INTEGER NOT NULL)'), $empty);
         self::assertInstanceOf(SqliteCreateTable::class, $create);
-        $catalog = new Catalog($empty->searchPath, Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, $create->table);
+        $catalog = new Catalog($empty->searchPath, Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, null, $create->table);
         $query = $reader->read($parser->parse('SELECT foo FROM bar'), $catalog);
         self::assertInstanceOf(Select::class, $query);
         $expression = $query->field('foo')->expression;

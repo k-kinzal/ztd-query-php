@@ -31,7 +31,7 @@ final class AmbiguousTableTest extends TestCase
         $column = new Column(new Name('id'), new TypeDescriptor(Builtin::Integer));
         $first = new Table(new QualifiedName(new Name('users')), $column);
         $second = new Table($first->name);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, $first, $second);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $first, $second);
         $relation = new TableReference($catalog, $first->name);
         $expression = new ColumnReference(new Scope($catalog, $relation), new Name('id'));
         self::assertInstanceOf(AmbiguousTable::class, $expression->resolution);

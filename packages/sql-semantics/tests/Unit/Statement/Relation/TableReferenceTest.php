@@ -49,7 +49,7 @@ final class TableReferenceTest extends TestCase
     public function testMatchesUsesTheResolvedNamespaceRatherThanTheFirstSearchSchema(): void
     {
         $table = new Table(new QualifiedName(new Name('users'), new Name('public')));
-        $catalog = new Catalog(new SearchPath(new Name('app'), new Name('public')), Comparison::Sensitive, Comparison::Sensitive, true, null, $table);
+        $catalog = new Catalog(new SearchPath(new Name('app'), new Name('public')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $table);
         $relation = new TableReference($catalog, new QualifiedName(new Name('users')));
         self::assertSame([$table], $relation->declarations);
         self::assertTrue($relation->matches($table->name));
@@ -64,4 +64,14 @@ final class TableReferenceTest extends TestCase
         self::assertTrue($relation->matches(new QualifiedName(new Name('users'), new Name('public'))));
         self::assertFalse($relation->matches(new QualifiedName(new Name('users'), new Name('absent'))));
     }
+    public function testMatchesUsesTheDeclarationNamespaceWhenLookupStartsElsewhere(): void
+    {
+        $table = new Table(new QualifiedName(new Name('bar')));
+        $catalog = new Catalog(new SearchPath(new Name('temp'), new Name('main')), declarationSchema: new Name('main'), tables: $table);
+        $reference = new TableReference($catalog, new QualifiedName(new Name('bar')));
+        self::assertSame([$table], $reference->declarations);
+        self::assertTrue($reference->matches(new QualifiedName(new Name('bar'), new Name('main'))));
+        self::assertFalse($reference->matches(new QualifiedName(new Name('bar'), new Name('temp'))));
+    }
+
 }

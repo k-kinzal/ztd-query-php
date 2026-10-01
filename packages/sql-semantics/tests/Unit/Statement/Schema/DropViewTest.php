@@ -32,7 +32,7 @@ final class DropViewTest extends TestCase
         $db->exec("INSERT INTO users VALUES (1, 'Alice')");
         $column = new Column(new Name('id'), new TypeDescriptor(Builtin::Integer));
         $table = new Table(new QualifiedName(new Name('users')), $column);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, $table);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $table);
         $relation = new TableReference($catalog, $table->name);
         $db->exec('CREATE VIEW user_ids AS SELECT id FROM users');
         $operation = new DropView(new TableReference($catalog, new QualifiedName(new Name('user_ids'))));

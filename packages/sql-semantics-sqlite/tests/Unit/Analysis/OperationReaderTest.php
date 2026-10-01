@@ -130,7 +130,7 @@ final class OperationReaderTest extends TestCase
         $empty = new Catalog(new SearchPath(new Name('main')), complete: false);
         $create = $reader->read($parser->parse($schema), $empty);
         self::assertInstanceOf(SqliteCreateTable::class, $create);
-        $catalog = new Catalog($empty->searchPath, Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, $create->table);
+        $catalog = new Catalog($empty->searchPath, Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, null, $create->table);
         $query = $reader->read($parser->parse('SELECT ' . $referenceName . ' FROM bar'), $catalog);
         self::assertInstanceOf(Select::class, $query);
         $field = $query->field($resultName);

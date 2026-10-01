@@ -35,7 +35,7 @@ final class FieldTest extends TestCase
         $db->exec('INSERT INTO bar VALUES (11)');
         $column = new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer), Nullability::NotNull);
         $table = new Table(new QualifiedName(new Name('bar')), $column);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, $table);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, null, $table);
         $scope = new Scope($catalog, new TableReference($catalog, $table->name));
         $field = new Field(new ColumnReference($scope, new Name('FOO')));
         $result = $db->query('SELECT ' . $field->toString() . ' FROM bar');
@@ -49,7 +49,7 @@ final class FieldTest extends TestCase
 
         $declared = new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer), Nullability::NotNull);
         $table = new Table(new QualifiedName(new Name('bar')), $declared);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, $table);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $table);
         $relation = new TableReference($catalog, $table->name);
         $scope = new Scope($catalog, $relation);
 
@@ -66,7 +66,7 @@ final class FieldTest extends TestCase
 
         $declared = new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer), Nullability::NotNull);
         $table = new Table(new QualifiedName(new Name('bar')), $declared);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, $table);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $table);
         $relation = new TableReference($catalog, $table->name);
         $scope = new Scope($catalog, $relation);
 

@@ -28,7 +28,7 @@ final class AmbiguousColumnTest extends TestCase
     {
         $column = new Column(new Name('id'), new TypeDescriptor(Builtin::Integer));
         $table = new Table(new QualifiedName(new Name('users')), $column);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, $table);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $table);
         $scope = new Scope($catalog, new TableReference($catalog, $table->name, new Name('a')), new TableReference($catalog, $table->name, new Name('b')));
         $reference = $scope->resolve(new Name('id'));
         self::assertInstanceOf(AmbiguousColumn::class, $reference);

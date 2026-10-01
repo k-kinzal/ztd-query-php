@@ -32,7 +32,7 @@ final class DropTriggerTest extends TestCase
         $db->exec("INSERT INTO users VALUES (1, 'Alice')");
         $column = new Column(new Name('id'), new TypeDescriptor(Builtin::Integer));
         $table = new Table(new QualifiedName(new Name('users')), $column);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, $table);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $table);
         $relation = new TableReference($catalog, $table->name);
         $db->exec('CREATE TABLE log(id INTEGER)');
         $db->exec('CREATE TRIGGER user_log AFTER INSERT ON users BEGIN INSERT INTO log VALUES(new.id); END');

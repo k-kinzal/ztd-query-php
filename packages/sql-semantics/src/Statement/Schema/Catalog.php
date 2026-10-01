@@ -23,6 +23,11 @@ final class Catalog
     public readonly array $tables;
 
     /**
+     * Namespace of an unqualified declaration, independent of lookup precedence.
+     */
+    public readonly Name $declarationSchema;
+
+    /**
      * Keeps declaration objects themselves; the input is not an execution history.
      */
     public function __construct(
@@ -31,8 +36,10 @@ final class Catalog
         public readonly Comparison $columnNames = Comparison::Sensitive,
         public readonly bool $complete = true,
         public readonly ?Name $currentCatalog = null,
+        ?Name $declarationSchema = null,
         Table ...$tables,
     ) {
+        $this->declarationSchema = $declarationSchema ?? $searchPath->schemas[0];
         $unique = [];
         foreach ($tables as $table) {
             $unique[spl_object_id($table)] = $table;
@@ -51,7 +58,7 @@ final class Catalog
                 $catalog = $name->catalog ?? $this->currentCatalog;
                 $declarationCatalog = $table->name->catalog ?? $this->currentCatalog;
                 return $this->tableNames->equal($table->name->name->value, $name->name->value)
-                    && $this->tableNames->equal(($table->name->schema ?? $this->searchPath->schemas[0])->value, $schema->value)
+                    && $this->tableNames->equal(($table->name->schema ?? $this->declarationSchema)->value, $schema->value)
                     && (($catalog === null && $declarationCatalog === null)
                         || ($catalog !== null && $declarationCatalog !== null && $this->tableNames->equal($catalog->value, $declarationCatalog->value)));
             }));

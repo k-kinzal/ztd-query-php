@@ -91,7 +91,7 @@ final class SelectReaderTest extends TestCase
     {
         $column = new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer), Nullability::NotNull);
         $table = new Table(new QualifiedName(new Name('bar')), $column);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, $table);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $table);
         $reader = new SelectReader();
         $parser = new SqliteParser();
         $query = $reader->read($parser->parse('SELECT foo, absent FROM bar')->find('select')[0], $catalog);
@@ -136,7 +136,7 @@ final class SelectReaderTest extends TestCase
     {
         $column = new Column(new Name('true'), new TypeDescriptor(Builtin::Text));
         $table = new Table(new QualifiedName(new Name('bar')), $column);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, $table);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, null, $table);
         $query = (new SelectReader())->read((new SqliteParser())->parse('SELECT TRUE FROM bar')->find('select')[0], $catalog);
         $expression = $query->field('true')->expression;
         self::assertInstanceOf(BooleanReference::class, $expression);
@@ -219,7 +219,7 @@ final class SelectReaderTest extends TestCase
     {
         $column = new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer), Nullability::NotNull);
         $table = new Table(new QualifiedName(new Name('bar')), $column);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, $table);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, null, $table);
         $query = (new SelectReader())->read((new SqliteParser())->parse('SELECT foo + 1 AS n FROM bar WHERE N > 2')->find('select')[0], $catalog);
         self::assertInstanceOf(SqliteBinary::class, $query->where);
         self::assertInstanceOf(AliasReference::class, $query->where->left);
@@ -235,7 +235,7 @@ final class SelectReaderTest extends TestCase
     public function testReadPreservesAliasAndInputColumnPriorityOnTheDatabase(string $sql): void
     {
         $table = new Table(new QualifiedName(new Name('bar')), new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer)));
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, $table);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, null, $table);
         $reader = new SelectReader();
         $parser = new SqliteParser();
         $query = $reader->read($parser->parse($sql)->find('select')[0], $catalog);
@@ -271,7 +271,7 @@ final class SelectReaderTest extends TestCase
     public function testReadPreservesRowRestrictionExpressionsAndTheirSeparateScope(string $clause): void
     {
         $table = new Table(new QualifiedName(new Name('bar')), new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer)));
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, $table);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, null, $table);
         $sql = 'SELECT foo FROM bar ' . $clause;
         $reader = new SelectReader();
         $parser = new SqliteParser();
