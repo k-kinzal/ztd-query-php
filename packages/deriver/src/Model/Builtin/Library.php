@@ -51,7 +51,7 @@ final class Library
             'microtime' => [new Parameter('as_float', 'bool', default: Term::constant(false))],
             'is_array', 'is_string', 'is_int', 'is_integer', 'is_float', 'is_double', 'is_bool', 'is_null', 'is_object', 'is_numeric', 'is_scalar' => [new Parameter('value')],
             'is_callable' => [new Parameter('value'), new Parameter('syntax_only', 'bool', default: Term::constant(false)), new Parameter('callable_name', byReference: true, default: new Term('omitted'))],
-            default => $this->construction($name),
+            default => $this->valueFunctions($name),
         };
     }
 
@@ -60,7 +60,7 @@ final class Library
      * @param string $name Built-in name
      * @return list<Parameter>|null Supported signature
      */
-    public function construction(string $name): ?array
+    public function valueFunctions(string $name): ?array
     {
         return match ($name) {
             'str_repeat' => [new Parameter('string', 'string'), new Parameter('times', 'int')],

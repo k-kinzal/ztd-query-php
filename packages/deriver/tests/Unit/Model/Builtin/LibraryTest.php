@@ -275,9 +275,9 @@ final class LibraryTest extends TestCase
         self::assertNull($library->parameters('unregistered_function'));
         self::assertSame([], $library->parameters('time'));
     }
-    public function testFunctionsUsePhpParameterNames(): void
+    public function testValueFunctionsUsePhpParameterNames(): void
     {
-        $parameters = (new Library())->construction('str_repeat');
+        $parameters = (new Library())->valueFunctions('str_repeat');
         self::assertNotNull($parameters);
         self::assertSame(['string','times'], array_column($parameters, 'name'));
     }
