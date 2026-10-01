@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Statement\Declaration;
 
 /**
- * A type the binder knows only by its declared name: a user-defined, domain, or unmodeled type.
+ * A database type identified by its declared name, including user-defined types and domains.
  *
  * The name parts are decoded like identifiers. Modifiers written after such a
  * name are not interpreted; the typed declaration a column keeps still has them.

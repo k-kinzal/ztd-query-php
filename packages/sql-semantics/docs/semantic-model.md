@@ -90,6 +90,33 @@ from the expression's written form. Reconstruction may therefore need an explici
 result alias when it normalizes expression grouping. The stored name is an output
 identifier; the expression itself is still written from its typed operands.
 
+## Declarations and insertion sources
+
+A table creation owns its declaration objects. Supplying that operation as context
+contributes those objects directly; supplying ALTER, DROP, or an insertion does not
+transform them. A script supplied as context contributes its explicit declarations
+without simulating their order of execution. Repeating the same declaration object
+is harmless, while distinct conflicting declarations remain distinguishable.
+
+SQLite's stored type name and its native type identity are separate facts. For
+example, `INTEGER` and `"INTEGER"(123)` can have the same displayed type name but
+different eligibility for an INTEGER PRIMARY KEY rowid alias. Text inside an
+unquoted type name, including comments, can affect its storage affinity. The model
+keeps the database's decoded name and native identity, and reconstruction preserves
+both. This is a declared name with database meaning, not an uninterpreted SQL
+fragment used in place of an operation.
+
+An insertion from explicit rows, one from SELECT, and one from defaults have
+different concrete types. Their target column references share the original
+declarations. Input expressions have their own scope: an insertion destination
+does not make its columns visible to a VALUES expression. Replacing VALUES with
+SELECT constructs another insertion operation while retaining the target object.
+
+Input widths are facts of those sources. A known mismatch is distinct from an
+implicit mapping that cannot be determined because the table declaration is
+missing or conflicting. Even a grammar-valid DEFAULT VALUES request with an
+explicit destination list remains structured and exposes its width contradiction.
+
 ## Uncertainty and implementation defects
 
 An unknown fact must name the missing information, such as an absent catalog or a

@@ -23,6 +23,7 @@ final class ExplainPlan implements Operation
     public function __construct(public readonly Operation $operation)
     {
         assert((new SemanticGraph())->isSemanticOperation($operation), 'Inspection requires a semantic operation.');
+        assert(!$operation instanceof \SqlSemantics\Statement\Script\Sequence, 'Inspection describes one operation, not a script.');
         assert(!$operation instanceof ExplainPlan && !$operation instanceof ExplainProgram, 'An operation has at most one inspection request.');
     }
 

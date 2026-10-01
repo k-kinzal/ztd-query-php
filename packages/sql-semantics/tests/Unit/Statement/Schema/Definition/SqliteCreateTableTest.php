@@ -29,6 +29,13 @@ final class SqliteCreateTableTest extends TestCase
         self::assertTrue((new SemanticGraph())->isSemanticOperation($create));
     }
 
+    public function testDeclaredTablesKeepsConditionalCreationIndependentOfExistingState(): void
+    {
+        $column = new SqliteColumnDefinition(new Name('foo'), new SqliteDeclaration('INTEGER'));
+        $create = new SqliteCreateTable(new QualifiedName(new Name('bar')), ifNotExists: true, columns: $column);
+        self::assertSame([$create->table], $create->declaredTables());
+    }
+
     public function testToStringDescribesTemporaryConditionalCreationInItsOwnNamespace(): void
     {
         $column = new SqliteColumnDefinition(new Name('foo'), new SqliteDeclaration('ANY', strict: true));

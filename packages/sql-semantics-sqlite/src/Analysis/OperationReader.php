@@ -64,10 +64,13 @@ final class OperationReader
         if (Tree::child($source, ['create_table']) !== null) {
             return (new CreateTableReader())->read($source);
         }
+        if (Tree::child($source, ['insert_cmd']) !== null) {
+            return (new InsertionReader())->read($source, $catalog);
+        }
         $query = Tree::child($source, ['select']);
         if ($query !== null) {
             Tree::assertChildren($source, ['select'], []);
-            return (new SelectReader())->read($query, $catalog);
+            return (new QueryReader())->read($query, $catalog);
         }
         $tokens = $source->tokens();
         return match (strtoupper($tokens[0]->text)) {

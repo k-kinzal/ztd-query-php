@@ -6,8 +6,8 @@ namespace SqlSemantics\Statement\Schema\Definition;
 
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Schema\Column;
+use SqlSemantics\Statement\Schema\DeclarationProvider;
 use SqlSemantics\Statement\Schema\Table;
 
 /**
@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Schema\Table;
  *     $create = new \SqlSemantics\Statement\Schema\Definition\SqliteCreateTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('users')), columns: $column);
  *     $create->toString() // => 'CREATE TABLE users (id INTEGER)'
  */
-final class SqliteCreateTable implements Operation
+final class SqliteCreateTable implements DeclarationProvider
 {
     /**
      * @var non-empty-list<SqliteColumnDefinition>
@@ -42,6 +42,15 @@ final class SqliteCreateTable implements Operation
         }
         $this->columns = array_values($columns);
         $this->table = new Table(new QualifiedName($name->name, $name->schema ?? new Name($temporary ? 'temp' : 'main')), ...array_map(static fn (SqliteColumnDefinition $column): Column => $column->column, $this->columns));
+    }
+
+    /**
+     * Exposes this CREATE's original declaration regardless of conditional existence options.
+     * @return list<Table>
+     */
+    public function declaredTables(): array
+    {
+        return [$this->table];
     }
 
     /**
