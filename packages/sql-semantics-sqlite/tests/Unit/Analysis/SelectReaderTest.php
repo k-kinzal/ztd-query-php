@@ -18,10 +18,13 @@ use SqlSemantics\Statement\Declaration\Nullability;
 use SqlSemantics\Statement\Declaration\TypeDescriptor;
 use SqlSemantics\Statement\Expression\BooleanReference;
 use SqlSemantics\Statement\Expression\ColumnReference;
+use SqlSemantics\Statement\Expression\SqliteBinary;
 use SqlSemantics\Statement\Expression\SqliteInteger;
 use SqlSemantics\Statement\Identifier\Comparison;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use SqlSemantics\Statement\Projection\AliasReference;
+use SqlSemantics\Statement\Projection\ColumnOrAlias;
 use SqlSemantics\Statement\Reference\CandidateColumn;
 use SqlSemantics\Statement\Reference\ResolvedColumn;
 use SqlSemantics\Statement\Schema\Catalog;
@@ -164,7 +167,8 @@ final class SelectReaderTest extends TestCase
         $rebuilt = $db->query($query->toString());
         self::assertInstanceOf(PDOStatement::class, $original);
         self::assertInstanceOf(PDOStatement::class, $rebuilt);
-        self::assertSame($original->fetch(PDO::FETCH_ASSOC), $rebuilt->fetch(PDO::FETCH_ASSOC));
+        self::assertSame(array_map($original->getColumnMeta(...), range(0, $original->columnCount() - 1)), array_map($rebuilt->getColumnMeta(...), range(0, $rebuilt->columnCount() - 1)));
+        self::assertSame($original->fetch(PDO::FETCH_NUM), $rebuilt->fetch(PDO::FETCH_NUM));
         self::assertSame((new SemanticGraph())->fingerprint($query), (new SemanticGraph())->fingerprint($reader->read($parser->parse($query->toString())->find('select')[0], $catalog)));
     }
 
@@ -186,6 +190,9 @@ final class SelectReaderTest extends TestCase
             ['SELECT -(+3), +NULL'],
             ['SELECT NOT 1 AS result'],
             ['SELECT ~ 1, +2'],
+            ['SELECT 1 AS answer WHERE answer'],
+            ['SELECT 1 AS n, 2 AS n WHERE n = 1'],
+            ['SELECT 1+2, 4 AS "1+2" WHERE "1+2" = 4'],
         ];
     }
 
@@ -204,5 +211,50 @@ final class SelectReaderTest extends TestCase
                 }
             }
         }
+    }
+
+    public function testReadResolvesAWhereAliasToItsActualProjectedField(): void
+    {
+        $column = new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer), Nullability::NotNull);
+        $table = new Table(new QualifiedName(new Name('bar')), $column);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, $table);
+        $query = (new SelectReader())->read((new SqliteParser())->parse('SELECT foo + 1 AS n FROM bar WHERE N > 2')->find('select')[0], $catalog);
+        self::assertInstanceOf(SqliteBinary::class, $query->where);
+        self::assertInstanceOf(AliasReference::class, $query->where->left);
+        self::assertSame($query->field('n'), $query->where->left->field);
+        self::assertSame($query->field('n')->expression->references(), $query->where->left->references());
+        self::assertInstanceOf(ResolvedColumn::class, $query->where->left->references()[0]->resolution);
+        self::assertSame($column, $query->where->left->references()[0]->resolution->column);
+    }
+
+    #[TestWith(['SELECT foo + 1 AS n FROM bar WHERE n > 2'])]
+    #[TestWith(['SELECT foo + 1 AS foo FROM bar WHERE foo > 2'])]
+    #[TestWith(['SELECT foo AS n, 10 AS n FROM bar WHERE n > 2'])]
+    public function testReadPreservesAliasAndInputColumnPriorityOnTheDatabase(string $sql): void
+    {
+        $table = new Table(new QualifiedName(new Name('bar')), new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer)));
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, $table);
+        $reader = new SelectReader();
+        $parser = new SqliteParser();
+        $query = $reader->read($parser->parse($sql)->find('select')[0], $catalog);
+        $db = new PDO('sqlite::memory:');
+        $db->exec('CREATE TABLE bar(foo INTEGER); INSERT INTO bar VALUES(1), (2), (3)');
+        $original = $db->query($sql);
+        $rebuilt = $db->query($query->toString());
+        self::assertInstanceOf(PDOStatement::class, $original);
+        self::assertInstanceOf(PDOStatement::class, $rebuilt);
+        self::assertSame($original->fetchAll(PDO::FETCH_NAMED), $rebuilt->fetchAll(PDO::FETCH_NAMED));
+        self::assertSame((new SemanticGraph())->fingerprint($query), (new SemanticGraph())->fingerprint($reader->read($parser->parse($query->toString())->find('select')[0], $catalog)));
+    }
+
+    public function testReadKeepsAnInputColumnAndAliasAsAlternativesWhenTheTableIsUndeclared(): void
+    {
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, complete: false);
+        $query = (new SelectReader())->read((new SqliteParser())->parse('SELECT foo + 1 AS n FROM bar WHERE n')->find('select')[0], $catalog);
+        self::assertInstanceOf(ColumnOrAlias::class, $query->where);
+        self::assertSame(Unresolved::MissingDeclaration, $query->where->type());
+        self::assertSame($query->field('n'), $query->where->alias->field);
+        self::assertInstanceOf(CandidateColumn::class, $query->where->column->resolution);
+        self::assertSame([$query->scope->tables[0]], $query->where->column->resolution->possibilities);
     }
 }

@@ -44,6 +44,13 @@ scope. A field from a different scope cannot be transplanted with stale bindings
 Updates return a new statement; the original remains valid and unchanged. Changing
 an INSERT source form requires constructing the other statement type.
 
+A resolved projection alias retains its target field and underlying expression.
+Replacing the projection does not silently rebind an existing predicate to a new
+expression with the same alias. SQLite can reconstruct that predicate by writing
+the resolved expression at its use site. When a missing table declaration leaves
+both an input-column and an alias interpretation possible, a projection edit must
+preserve the alias alternative until that lookup can be decided.
+
 Structural invariants and database validity are distinct. Grammar-valid input can
 refer to a missing column or supply incompatible row widths. It still identifies
 an operation and its operands. Such contradictions belong to derived semantic
@@ -119,6 +126,12 @@ Round trips can reproduce the same mistake twice. Their role is preservation.
 Database observations and specification-backed scenarios establish the meaning.
 Do not replace broad grammar generation with a restricted generator to make a
 semantic coverage gate pass.
+
+The reconstruction comparison treats immutable identifier values by value while
+preserving declaration and relation-occurrence identities. Whether two equal
+identifier objects happened to share a PHP allocation is not SQL meaning. A
+resolved SQLite alias and its substituted expression are equivalent at that use
+site; their output names and table-column dependencies must still agree.
 
 ## Specification anchors
 

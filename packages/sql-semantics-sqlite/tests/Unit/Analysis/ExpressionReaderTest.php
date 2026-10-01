@@ -13,6 +13,7 @@ use PHPUnit\Framework\TestCase;
 use SqlParser\Sqlite\SqliteParser;
 use SqlSemantics\Platform\Sqlite\Analysis\ExpressionReader;
 use SqlSemantics\Statement\Expression\ColumnReference;
+use SqlSemantics\Statement\Expression\NullConstant;
 use SqlSemantics\Statement\Expression\SqliteBetween;
 use SqlSemantics\Statement\Expression\SqliteBinary;
 use SqlSemantics\Statement\Expression\SqliteBinaryOperator;
@@ -20,6 +21,9 @@ use SqlSemantics\Statement\Expression\SqliteInList;
 use SqlSemantics\Statement\Expression\SqliteUnary;
 use SqlSemantics\Statement\Expression\SqliteUnaryOperator;
 use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Projection\AliasReference;
+use SqlSemantics\Statement\Projection\Field;
+use SqlSemantics\Statement\Projection\Fields;
 use SqlSemantics\Statement\Relation\Scope;
 use SqlSemantics\Statement\Schema\Catalog;
 use SqlSemantics\Statement\Schema\SearchPath;
@@ -117,5 +121,26 @@ final class ExpressionReaderTest extends TestCase
         self::assertInstanceOf(SqliteInList::class, $expression);
         self::assertSame([], $expression->choices);
         self::assertSame([], $expression->references());
+    }
+
+    public function testAliasReturnsTheDeclaredFieldForAnOtherwiseMissingInputName(): void
+    {
+        $scope = new Scope(new Catalog(new SearchPath(new Name('main'))));
+        $field = new Field(new NullConstant(), new Name('answer'));
+        $fields = new Fields($scope, $field);
+        $reference = (new ExpressionReader($fields, $field))->alias(new ColumnReference($scope, new Name('answer')));
+        self::assertInstanceOf(AliasReference::class, $reference);
+        self::assertSame($field, $reference->field);
+    }
+
+    public function testReferenceResolvesAQuotedAliasBeforeConsideringStringFallback(): void
+    {
+        $scope = new Scope(new Catalog(new SearchPath(new Name('main'))));
+        $field = new Field(new NullConstant(), new Name('answer'));
+        $fields = new Fields($scope, $field);
+        $source = (new SqliteParser())->parse('SELECT "answer"')->find('expr')[0];
+        $reference = (new ExpressionReader($fields, $field))->reference($source, $scope);
+        self::assertInstanceOf(AliasReference::class, $reference);
+        self::assertSame($field, $reference->field);
     }
 }

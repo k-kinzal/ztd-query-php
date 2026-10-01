@@ -19,6 +19,7 @@ use SqlSemantics\Statement\Query\Select;
 use SqlSemantics\Statement\Relation\Scope;
 use SqlSemantics\Statement\Relation\TableReference;
 use SqlSemantics\Statement\Schema\Catalog;
+use SqlSemantics\Statement\SemanticGraph;
 
 /**
  * Lowers a query's inputs and projection into references sharing one semantic scope.
@@ -43,9 +44,22 @@ final class SelectReader
         $scope = new Scope($catalog, ...$tables);
         $projection = Tree::child($select, ['selcollist']);
         assert($projection !== null, 'This query grammar requires a projection.');
-        $fields = new Fields($scope, ...$this->projection($projection, $scope));
+        $outputs = [];
+        $aliases = [];
+        foreach ($this->projection($projection, $scope) as [$field, $visibleAlias]) {
+            $outputs[] = $field;
+            if ($visibleAlias) {
+                $aliases[] = $field;
+            }
+        }
+        $fields = new Fields($scope, ...$outputs);
         $predicate = Tree::child($select, ['where_opt']);
-        $where = $predicate === null ? null : (new ExpressionReader())->read(Tree::outer($predicate, ['expr'])[0], $scope);
+        $where = $predicate === null ? null : (new ExpressionReader($fields, ...$aliases))->read(Tree::outer($predicate, ['expr'])[0], $scope);
+        foreach ($where === null ? [] : (new SemanticGraph())->conditionalAliases($where) as $reference) {
+            if (($fields->matchingAliases($reference->alias->name->value)[0] ?? null) !== $reference->alias->field) {
+                Tree::unsupported($select, 'conditional alias affected by computed output naming');
+            }
+        }
         $quantifier = Tree::child($select, ['distinct']);
         return new Select($fields, $where, $quantifier === null ? Quantifier::Default : Quantifier::from(strtoupper(Tree::text($quantifier))));
     }
@@ -80,7 +94,7 @@ final class SelectReader
 
     /**
      * Retains projection order and gives every expression the actual input scope.
-     * @return non-empty-list<Field>
+     * @return non-empty-list<array{Field, bool}>
      */
     public function projection(Node $source, Scope $scope): array
     {
@@ -90,6 +104,7 @@ final class SelectReader
         $expression = Tree::child($source, ['expr']);
         assert($expression !== null, 'An expression projection has an expression.');
         [$alias, $explicit] = $this->alias(Tree::child($source, ['as']));
+        $visibleAlias = $alias !== null;
         $operand = (new ExpressionReader())->read($expression, $scope);
         $columnLabel = $operand instanceof ColumnReference || ($operand instanceof BooleanReference && !$operand->column->resolution instanceof \SqlSemantics\Statement\Reference\MissingColumn);
         $derived = null;
@@ -102,7 +117,7 @@ final class SelectReader
                 $derived = null;
             }
         }
-        $fields[] = new Field($operand, $alias, derivedName: $derived, explicitAlias: $explicit);
+        $fields[] = [new Field($operand, $alias, derivedName: $derived, explicitAlias: $explicit), $visibleAlias];
         return $fields;
     }
 

@@ -12,6 +12,7 @@ use SqlSemantics\Statement\Declaration\Builtin;
 use SqlSemantics\Statement\Declaration\Nullability;
 use SqlSemantics\Statement\Declaration\TypeDescriptor;
 use SqlSemantics\Statement\Expression\ColumnReference;
+use SqlSemantics\Statement\Expression\NullConstant;
 use SqlSemantics\Statement\Identifier\Comparison;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -103,5 +104,15 @@ final class FieldsTest extends TestCase
         $expression = new ColumnReference($scope, new Name('foo'));
         $fields = new Fields($scope, new Field($expression, new Name('first')), new Field($expression, new Name('second')));
         self::assertSame('foo AS first, foo AS second', $fields->toString());
+    }
+
+    public function testMatchingAliasesKeepsAllMatchingFieldsInProjectionOrder(): void
+    {
+        $scope = new Scope(new Catalog(new SearchPath(new Name('main')), columnNames: Comparison::AsciiInsensitive));
+        $first = new Field(new NullConstant(), new Name('answer'));
+        $second = new Field(new NullConstant(), new Name('ANSWER'));
+        $third = new Field(new NullConstant(), new Name('unrelated'));
+        $fields = new Fields($scope, $first, $second, $third);
+        self::assertSame([$first, $second], $fields->matchingAliases('Answer'));
     }
 }

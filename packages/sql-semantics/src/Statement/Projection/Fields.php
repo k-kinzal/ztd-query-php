@@ -56,6 +56,15 @@ final class Fields
     }
 
     /**
+     * Returns every written alias matching a name, retaining order and original field identities.
+     * @return list<Field>
+     */
+    public function matchingAliases(string $name): array
+    {
+        return array_values(array_filter($this->items, fn (Field $field): bool => $field->alias !== null && $this->scope->catalog->columnNames->equal($name, $field->alias->value)));
+    }
+
+    /**
      * Reconstructs the ordered SELECT list from its expressions and aliases.
      */
     public function toString(): string

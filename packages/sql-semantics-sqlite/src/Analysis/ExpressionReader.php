@@ -20,6 +20,12 @@ use SqlSemantics\Statement\Expression\SqliteUnary;
 use SqlSemantics\Statement\Expression\SqliteUnaryOperator;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Identifier\Quote;
+use SqlSemantics\Statement\Projection\AliasReference;
+use SqlSemantics\Statement\Projection\ColumnOrAlias;
+use SqlSemantics\Statement\Projection\Field;
+use SqlSemantics\Statement\Projection\Fields;
+use SqlSemantics\Statement\Reference\CandidateColumn;
+use SqlSemantics\Statement\Reference\MissingColumn;
 use SqlSemantics\Statement\Reference\ResolvedColumn;
 use SqlSemantics\Statement\Relation\Scope;
 
@@ -30,10 +36,28 @@ use SqlSemantics\Statement\Relation\Scope;
 final class ExpressionReader
 {
     /**
+     * @var list<Field>
+     */
+    private readonly array $aliases;
+
+    /**
+     * Only aliases present in the input query enter its lookup namespace.
+     */
+    public function __construct(private readonly ?Fields $projection = null, Field ...$aliases)
+    {
+        $this->aliases = array_values($aliases);
+        foreach ($aliases as $alias) {
+            assert($projection !== null && in_array($alias, $projection->items, true), 'An alias must come from this projection.');
+            assert($alias->alias !== null, 'A visible alias must have a declared name.');
+        }
+    }
+
+    /**
      * Separates numeric and NULL constants from names with possible truth alternatives.
      */
     public function read(Node $source, Scope $scope): ScalarExpression
     {
+        assert($this->projection === null || $this->projection->scope === $scope, 'Alias and input lookup must share a scope.');
         $term = Tree::child($source, ['term']);
         if ($term !== null) {
             assert(count($term->tokens()) === 1, 'A literal term has one terminal.');
@@ -53,7 +77,22 @@ final class ExpressionReader
         if ($operation !== null) {
             return $operation;
         }
+        return $this->reference($source, $scope);
+    }
+
+    /**
+     * Applies column, alias, and truth-name lookup in their database-defined order.
+     */
+    public function reference(Node $source, Scope $scope): ScalarExpression
+    {
         $column = $this->column($source, $scope);
+        $alias = $this->alias($column);
+        if ($alias !== null) {
+            return $alias;
+        }
+        if ($column->qualifier === null && !$column->resolution instanceof ResolvedColumn && $column->name->quote === Quote::Double) {
+            Tree::unsupported($source, 'identifier with a literal alternative');
+        }
         return $column->qualifier === null && $column->name->quote === Quote::None && in_array(strtoupper($column->name->value), ['TRUE', 'FALSE'], true)
             ? new BooleanReference($column)
             : $column;
@@ -104,6 +143,24 @@ final class ExpressionReader
     }
 
     /**
+     * Input columns take precedence; missing declarations retain both possible interpretations.
+     */
+    public function alias(ColumnReference $column): AliasReference|ColumnOrAlias|null
+    {
+        if ($this->projection === null || $column->qualifier !== null || (!$column->resolution instanceof MissingColumn && !$column->resolution instanceof CandidateColumn)) {
+            return null;
+        }
+        foreach ($this->aliases as $field) {
+            assert($field->alias !== null, 'A visible alias has a declared name.');
+            if ($column->scope->catalog->columnNames->equal($field->alias->value, $column->name->value)) {
+                $alias = new AliasReference($this->projection, $field, $column->name);
+                return $column->resolution instanceof CandidateColumn ? new ColumnOrAlias($column, $alias) : $alias;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Reads a column lookup without treating other expression forms as names.
      */
     public function column(Node $source, Scope $scope): ColumnReference
@@ -119,11 +176,7 @@ final class ExpressionReader
         $names = array_map((new IdentifierReader())->name(...), $parts);
         $name = $names[count($names) - 1];
         $qualifier = count($names) === 1 ? null : new QualifiedName($names[count($names) - 2], count($names) === 3 ? $names[0] : null);
-        $column = new ColumnReference($scope, $name, $qualifier);
-        if ($qualifier === null && !$column->resolution instanceof ResolvedColumn && $name->quote === Quote::Double) {
-            Tree::unsupported($source, 'identifier with a literal alternative');
-        }
-        return $column;
+        return new ColumnReference($scope, $name, $qualifier);
     }
 
 }

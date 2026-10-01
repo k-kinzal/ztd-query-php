@@ -40,6 +40,9 @@ final class Select implements Operation
         foreach ($where?->references() ?? [] as $reference) {
             assert($reference->scope === $this->scope, 'Every predicate column must belong to this SELECT scope.');
         }
+        foreach ($where === null ? [] : (new SemanticGraph())->conditionalAliases($where) as $reference) {
+            assert(($projection->matchingAliases($reference->alias->name->value)[0] ?? null) === $reference->alias->field, 'A conditional alias must keep its original fallback field until the input declaration is known.');
+        }
     }
 
     /**

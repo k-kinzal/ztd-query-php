@@ -8,14 +8,20 @@ use PDO;
 use PDOStatement;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Statement\Declaration\Builtin;
 use SqlSemantics\Statement\Declaration\Nullability;
 use SqlSemantics\Statement\Declaration\TypeDescriptor;
 use SqlSemantics\Statement\Expression\ColumnReference;
+use SqlSemantics\Statement\Expression\NullConstant;
+use SqlSemantics\Statement\Expression\SqliteInteger;
 use SqlSemantics\Statement\Identifier\Comparison;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use SqlSemantics\Statement\Literal\UnsignedInteger;
+use SqlSemantics\Statement\Projection\AliasReference;
+use SqlSemantics\Statement\Projection\ColumnOrAlias;
 use SqlSemantics\Statement\Projection\Field;
 use SqlSemantics\Statement\Projection\Fields;
 use SqlSemantics\Statement\Query\Select;
@@ -121,5 +127,46 @@ final class SelectTest extends TestCase
         self::assertSame('SELECT foo FROM bar', $query->toString());
         self::assertSame($relation, $query->scope->tables[0]);
         self::assertTrue((new SemanticGraph())->isSemanticOperation($query));
+    }
+
+    public function testWithFieldsPreservesTheResolvedPredicateInsteadOfRebindingItsAlias(): void
+    {
+        $scope = new Scope(new Catalog(new SearchPath(new Name('main'))));
+        $original = new Field(new NullConstant(), new Name('n'));
+        $fields = new Fields($scope, $original);
+        $reference = new AliasReference($fields, $original, new Name('n'));
+        $query = new Select($fields, $reference);
+        $replacement = new Field(new SqliteInteger(new UnsignedInteger('1')), new Name('n'));
+        $changed = $query->withFields(new Fields($scope, $replacement));
+        self::assertSame($reference, $changed->where);
+        self::assertSame($original, $query->field('n'));
+        self::assertSame($replacement, $changed->field('n'));
+        $result = (new PDO('sqlite::memory:'))->query($changed->toString());
+        self::assertInstanceOf(PDOStatement::class, $result);
+        self::assertSame([], $result->fetchAll(PDO::FETCH_NUM));
+    }
+
+    /**
+     * @param list<list<int>> $expected
+     */
+    #[TestWith(['foo', [[1, 42]]])]
+    #[TestWith(['n', []])]
+    public function testWithFieldsKeepsBothConditionalAliasInterpretationsValid(string $actualColumn, array $expected): void
+    {
+        $catalog = new Catalog(new SearchPath(new Name('main')), complete: false);
+        $scope = new Scope($catalog, new TableReference($catalog, new QualifiedName(new Name('bar'))));
+        $field = new Field(new SqliteInteger(new UnsignedInteger('1')), new Name('n'));
+        $fields = new Fields($scope, $field);
+        $where = new ColumnOrAlias(new ColumnReference($scope, new Name('n')), new AliasReference($fields, $field, new Name('n')));
+        $query = new Select($fields, $where);
+        $extra = new Field(new SqliteInteger(new UnsignedInteger('42')), new Name('extra'));
+        $changed = $query->withFields($fields->addField($extra));
+        $db = new PDO('sqlite::memory:');
+        $db->exec('CREATE TABLE bar(' . $actualColumn . ' INTEGER); INSERT INTO bar VALUES(0)');
+        $result = $db->query($changed->toString());
+        self::assertInstanceOf(PDOStatement::class, $result);
+        self::assertSame($expected, $result->fetchAll(PDO::FETCH_NUM));
+        self::assertSame([$field], $query->fields()->items);
+        self::assertSame($where, $changed->where);
     }
 }
