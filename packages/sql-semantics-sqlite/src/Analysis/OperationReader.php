@@ -75,6 +75,8 @@ final class OperationReader implements \SqlSemantics\Core\Policy\OperationRules
         $tokens = $source->tokens();
         return match (strtoupper($tokens[0]->text)) {
             'BEGIN', 'COMMIT', 'END', 'ROLLBACK', 'SAVEPOINT', 'RELEASE' => (new TransactionReader())->read($source),
+            'VACUUM' => (new DatabaseReader())->vacuum($source, $catalog),
+            'ATTACH', 'DETACH' => (new DatabaseReader())->attachment($source, $catalog),
             'REINDEX', 'ANALYZE' => (new MaintenanceReader())->read($source),
             'UPDATE', 'DELETE' => (new MutationReader())->read($source, $catalog),
             'DROP' => (new SchemaChangeReader())->read($source, $catalog),
