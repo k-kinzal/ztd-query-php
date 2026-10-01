@@ -7,6 +7,7 @@ namespace SqlParser\PostgreSql\Lexer;
 use SqlParser\Lexer\Cursor;
 use SqlParser\Lexer\Lexeme;
 use SqlParser\Lexer\LexicalException;
+use SqlParser\Lexer\ParameterSyntax;
 
 /**
  * Reads PostgreSQL text into the terminals of its grammar, as `scan.l` and `parser.c` do.
@@ -23,6 +24,7 @@ final class PostgreSqlLexer
      * @param WordScanner $words Reads words
      * @param OperatorScanner $operators Reads operators and punctuation
      * @param LookaheadFilter $lookahead Renames tokens by what follows them
+     * @param ParameterSyntax $parameters Which parameter markers are read
      */
     public function __construct(
         private readonly KeywordTable $keywords,
@@ -32,6 +34,7 @@ final class PostgreSqlLexer
         private readonly WordScanner $words = new WordScanner(),
         private readonly OperatorScanner $operators = new OperatorScanner(),
         private readonly LookaheadFilter $lookahead = new LookaheadFilter(),
+        private readonly ParameterSyntax $parameters = ParameterSyntax::Native,
     ) {
     }
 
@@ -46,7 +49,7 @@ final class PostgreSqlLexer
      */
     public function scan(string $sql): array
     {
-        $scan = new Scan(new Cursor($sql), $this->keywords);
+        $scan = new Scan(new Cursor($sql), $this->keywords, $this->parameters);
         $lexemes = [];
         while (true) {
             $this->trivia->skip($scan);

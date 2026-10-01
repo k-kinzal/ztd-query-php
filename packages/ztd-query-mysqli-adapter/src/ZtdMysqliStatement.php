@@ -12,8 +12,8 @@ use ReturnTypeWillChange;
 use ZtdQuery\Adapter\Mysqli\Native\MysqliStatementBindingBridge;
 use ZtdQuery\Adapter\Mysqli\Native\MysqliStatementPropertyReader;
 use ZtdQuery\Adapter\Mysqli\Session\StatementExecution;
+use ZtdQuery\QueryExecutor;
 use ZtdQuery\Rewrite\RewritePlan;
-use ZtdQuery\Session;
 
 /**
  * mysqli_stmt wrapper that applies ZTD rewrite/simulation on execute().
@@ -28,8 +28,9 @@ use ZtdQuery\Session;
  *
  * @visibility public
  * @example Execute a parameterized simulated insert
- *     $container = \Testcontainers\Testcontainers::run(\Container\MySql80Container::class);
- *     $native = new \mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+ *     $container = \Testcontainers\Testcontainers::run(\Container\MySqlRelease::fromEnvironment());
+ *     $endpoint = $container->getData(\Container\Endpoint::class);
+ *     $native = new \mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
  *     $native->set_charset('utf8mb4');
  *     $native->query('CREATE TABLE contacts (id INT PRIMARY KEY, name VARCHAR(100))');
  *     $ztd = \ZtdQuery\Adapter\Mysqli\ZtdMysqli::fromMysqli($native);
@@ -48,10 +49,10 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     /**
      * Wrap the prepared statement with its session and optional rewrite plan.
      */
-    public function __construct(mysqli_stmt $delegate, Session $session, ?RewritePlan $plan)
+    public function __construct(mysqli_stmt $delegate, QueryExecutor $executor, ?RewritePlan $plan)
     {
         parent::__construct($delegate);
-        $this->execution = new StatementExecution($delegate, $session, $plan);
+        $this->execution = new StatementExecution($delegate, $executor, $plan);
     }
 
     /**

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use Container\MySql80Container;
-use Container\MySql84Container;
+use Container\Endpoint;
+use Container\MySqlRelease;
 use mysqli;
 use mysqli_result;
 use mysqli_stmt;
@@ -30,7 +30,6 @@ use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
-use ZtdQuery\Session;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\ShadowStore;
 
@@ -48,17 +47,18 @@ final class ZtdMysqliStatementTest extends TestCase
     #[DataProvider('providerReadPlans')]
     public function testExecuteHonorsReadAndUnplannedParameters(?QueryKind $kind, bool $withParams): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
-            $session = new Session(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
+            $executor = \Tests\Fake\QueryExecutorBuilder::create(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
             $sql = $withParams ? 'SELECT ? AS value' : 'SELECT 7 AS value';
             $native = $connection->prepare($sql);
             self::assertInstanceOf(mysqli_stmt::class, $native);
             $plan = $kind === null ? null : new RewritePlan($sql, $kind);
-            $statement = new ZtdMysqliStatement($native, $session, $plan);
+            $statement = new ZtdMysqliStatement($native, $executor, $plan);
             self::assertTrue($statement->execute($withParams ? [42] : null));
             $result = $statement->get_result();
             self::assertInstanceOf(mysqli_result::class, $result);
@@ -79,16 +79,17 @@ final class ZtdMysqliStatementTest extends TestCase
 
     public function testExecuteDoesNotRunASkippedPlan(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
-            $session = new Session(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
+            $executor = \Tests\Fake\QueryExecutorBuilder::create(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
             $connection->query('CREATE TEMPORARY TABLE skipped_rows (id INT)');
             $native = $connection->prepare('INSERT INTO skipped_rows VALUES (1)');
             self::assertInstanceOf(mysqli_stmt::class, $native);
-            $statement = new ZtdMysqliStatement($native, $session, new RewritePlan('skipped', QueryKind::SKIPPED));
+            $statement = new ZtdMysqliStatement($native, $executor, new RewritePlan('skipped', QueryKind::SKIPPED));
             self::assertFalse($statement->execute());
             $rows = $connection->query('SELECT * FROM skipped_rows');
             self::assertInstanceOf(mysqli_result::class, $rows);
@@ -101,16 +102,17 @@ final class ZtdMysqliStatementTest extends TestCase
 
     public function testExecuteAppliesRowsToTheShadowStore(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
-            $session = new Session(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
+            $executor = \Tests\Fake\QueryExecutorBuilder::create(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
             $native = $connection->prepare('SELECT ? AS id');
             self::assertInstanceOf(mysqli_stmt::class, $native);
             $plan = new RewritePlan('SELECT ? AS id', QueryKind::WRITE_SIMULATED, new InsertMutation('items'));
-            $statement = new ZtdMysqliStatement($native, $session, $plan);
+            $statement = new ZtdMysqliStatement($native, $executor, $plan);
             self::assertTrue($statement->execute([42]));
             self::assertSame([['id' => '42']], $store->get('items'));
             self::assertSame(1, $statement->ztdAffectedRows());
@@ -124,15 +126,16 @@ final class ZtdMysqliStatementTest extends TestCase
 
     public function testGet_resultConsumesTheCachedNativeResultOnce(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
-            $session = new Session(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
+            $executor = \Tests\Fake\QueryExecutorBuilder::create(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
             $native = $connection->prepare('SELECT 7 AS id');
             self::assertInstanceOf(mysqli_stmt::class, $native);
-            $statement = new ZtdMysqliStatement($native, $session, new RewritePlan('SELECT 7 AS id', QueryKind::WRITE_SIMULATED, new InsertMutation('items')));
+            $statement = new ZtdMysqliStatement($native, $executor, new RewritePlan('SELECT 7 AS id', QueryKind::WRITE_SIMULATED, new InsertMutation('items')));
             self::assertTrue($statement->execute());
             self::assertInstanceOf(mysqli_result::class, $statement->get_result());
             self::assertFalse($statement->get_result());
@@ -144,15 +147,16 @@ final class ZtdMysqliStatementTest extends TestCase
 
     public function testGet_resultReturnsFalseForAStatementWithoutRows(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
-            $session = new Session(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
+            $executor = \Tests\Fake\QueryExecutorBuilder::create(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
             $native = $connection->prepare('DO 1');
             self::assertInstanceOf(mysqli_stmt::class, $native);
-            $statement = new ZtdMysqliStatement($native, $session, new RewritePlan('DO 1', QueryKind::WRITE_SIMULATED, new InsertMutation('items')));
+            $statement = new ZtdMysqliStatement($native, $executor, new RewritePlan('DO 1', QueryKind::WRITE_SIMULATED, new InsertMutation('items')));
             self::assertTrue($statement->execute());
             self::assertSame(0, $statement->ztdAffectedRows());
             self::assertSame(0, $statement->num_rows());
@@ -168,19 +172,20 @@ final class ZtdMysqliStatementTest extends TestCase
     #[DataProvider('providerFailedPlans')]
     public function testExecuteReturnsFalseForNativeFailures(?QueryKind $kind, bool $withParams): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
-            $session = new Session(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
+            $executor = \Tests\Fake\QueryExecutorBuilder::create(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
             $connection->query('CREATE TEMPORARY TABLE duplicate_keys (id INT PRIMARY KEY)');
             $connection->query('INSERT INTO duplicate_keys VALUES (1)');
             $sql = $withParams ? 'INSERT INTO duplicate_keys VALUES (?)' : 'INSERT INTO duplicate_keys VALUES (1)';
             $native = $connection->prepare($sql);
             self::assertInstanceOf(mysqli_stmt::class, $native);
             $plan = $kind === null ? null : new RewritePlan($sql, $kind, new InsertMutation('items'));
-            $statement = new ZtdMysqliStatement($native, $session, $plan);
+            $statement = new ZtdMysqliStatement($native, $executor, $plan);
             mysqli_report(MYSQLI_REPORT_OFF);
             try {
                 self::assertFalse($statement->execute($withParams ? [1] : null));
@@ -204,15 +209,16 @@ final class ZtdMysqliStatementTest extends TestCase
 
     public function testFetchWritesBoundResultVariables(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
-            $session = new Session(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
+            $executor = \Tests\Fake\QueryExecutorBuilder::create(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
             $native = $connection->prepare('SELECT 7 AS id');
             self::assertInstanceOf(mysqli_stmt::class, $native);
-            $statement = new ZtdMysqliStatement($native, $session, null);
+            $statement = new ZtdMysqliStatement($native, $executor, null);
             $id = null;
             self::assertTrue($statement->bind_result($id));
             self::assertTrue($statement->execute());
@@ -227,15 +233,16 @@ final class ZtdMysqliStatementTest extends TestCase
 
     public function testStore_resultBuffersTheNativeRows(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
-            $session = new Session(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
+            $executor = \Tests\Fake\QueryExecutorBuilder::create(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
             $native = $connection->prepare('SELECT 1 UNION ALL SELECT 2');
             self::assertInstanceOf(mysqli_stmt::class, $native);
-            $statement = new ZtdMysqliStatement($native, $session, null);
+            $statement = new ZtdMysqliStatement($native, $executor, null);
             self::assertTrue($statement->execute());
             self::assertTrue($statement->store_result());
             self::assertSame(2, $statement->num_rows());
@@ -247,15 +254,16 @@ final class ZtdMysqliStatementTest extends TestCase
 
     public function testData_seekMovesTheNativeCursor(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
-            $session = new Session(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
+            $executor = \Tests\Fake\QueryExecutorBuilder::create(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
             $native = $connection->prepare('SELECT 1 AS id UNION ALL SELECT 2');
             self::assertInstanceOf(mysqli_stmt::class, $native);
-            $statement = new ZtdMysqliStatement($native, $session, null);
+            $statement = new ZtdMysqliStatement($native, $executor, null);
             self::assertTrue($statement->execute());
             self::assertTrue($statement->store_result());
             $id = null;
@@ -271,15 +279,16 @@ final class ZtdMysqliStatementTest extends TestCase
 
     public function testFree_resultReleasesBufferedRows(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
-            $session = new Session(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
+            $executor = \Tests\Fake\QueryExecutorBuilder::create(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
             $native = $connection->prepare('SELECT 1 UNION ALL SELECT 2');
             self::assertInstanceOf(mysqli_stmt::class, $native);
-            $statement = new ZtdMysqliStatement($native, $session, null);
+            $statement = new ZtdMysqliStatement($native, $executor, null);
             $statement->execute();
             $statement->store_result();
             self::assertSame(2, $statement->num_rows());
@@ -293,15 +302,16 @@ final class ZtdMysqliStatementTest extends TestCase
 
     public function testNum_rowsReturnsTheNativeBufferedCount(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
-            $session = new Session(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
+            $executor = \Tests\Fake\QueryExecutorBuilder::create(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
             $native = $connection->prepare('SELECT 1 UNION ALL SELECT 2');
             self::assertInstanceOf(mysqli_stmt::class, $native);
-            $statement = new ZtdMysqliStatement($native, $session, null);
+            $statement = new ZtdMysqliStatement($native, $executor, null);
             $native->execute();
             $native->store_result();
             self::assertSame(2, $statement->num_rows());
@@ -313,15 +323,16 @@ final class ZtdMysqliStatementTest extends TestCase
 
     public function testZtdAffectedRowsReturnsTheNativeWriteCount(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
-            $session = new Session(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
+            $executor = \Tests\Fake\QueryExecutorBuilder::create(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
             $native = $connection->prepare('DO 1');
             self::assertInstanceOf(mysqli_stmt::class, $native);
-            $statement = new ZtdMysqliStatement($native, $session, null);
+            $statement = new ZtdMysqliStatement($native, $executor, null);
             $statement->execute();
             self::assertSame(0, $statement->ztdAffectedRows());
             $connection->close();
@@ -332,15 +343,16 @@ final class ZtdMysqliStatementTest extends TestCase
 
     public function testResult_metadataReturnsNativeColumnInformation(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
-            $session = new Session(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
+            $executor = \Tests\Fake\QueryExecutorBuilder::create(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
             $native = $connection->prepare("SELECT 7 AS id, 'Alice' AS name");
             self::assertInstanceOf(mysqli_stmt::class, $native);
-            $statement = new ZtdMysqliStatement($native, $session, null);
+            $statement = new ZtdMysqliStatement($native, $executor, null);
             $result = $statement->result_metadata();
             self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame(['id', 'name'], array_column($result->fetch_fields(), 'name'));
@@ -352,15 +364,16 @@ final class ZtdMysqliStatementTest extends TestCase
 
     public function testAttr_setUpdatesTheNativeCursorMode(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
-            $session = new Session(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
+            $executor = \Tests\Fake\QueryExecutorBuilder::create(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
             $native = $connection->prepare('SELECT 1');
             self::assertInstanceOf(mysqli_stmt::class, $native);
-            $statement = new ZtdMysqliStatement($native, $session, null);
+            $statement = new ZtdMysqliStatement($native, $executor, null);
             self::assertTrue($statement->attr_set(MYSQLI_STMT_ATTR_CURSOR_TYPE, MYSQLI_CURSOR_TYPE_READ_ONLY));
             self::assertSame(MYSQLI_CURSOR_TYPE_READ_ONLY, $native->attr_get(MYSQLI_STMT_ATTR_CURSOR_TYPE));
             $connection->close();
@@ -371,15 +384,16 @@ final class ZtdMysqliStatementTest extends TestCase
 
     public function testAttr_getReadsTheConfiguredNativeCursorMode(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
-            $session = new Session(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
+            $executor = \Tests\Fake\QueryExecutorBuilder::create(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
             $native = $connection->prepare('SELECT 1');
             self::assertInstanceOf(mysqli_stmt::class, $native);
-            $statement = new ZtdMysqliStatement($native, $session, null);
+            $statement = new ZtdMysqliStatement($native, $executor, null);
             $native->attr_set(MYSQLI_STMT_ATTR_CURSOR_TYPE, MYSQLI_CURSOR_TYPE_READ_ONLY);
             self::assertSame(MYSQLI_CURSOR_TYPE_READ_ONLY, $statement->attr_get(MYSQLI_STMT_ATTR_CURSOR_TYPE));
             $connection->close();
@@ -390,16 +404,17 @@ final class ZtdMysqliStatementTest extends TestCase
 
     public function testGet_warningsReturnsTheNativeWarning(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
-            $session = new Session(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
+            $executor = \Tests\Fake\QueryExecutorBuilder::create(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
             $connection->query('CREATE TEMPORARY TABLE warning_values (value TINYINT)');
             $native = $connection->prepare('INSERT IGNORE INTO warning_values VALUES (1000)');
             self::assertInstanceOf(mysqli_stmt::class, $native);
-            $statement = new ZtdMysqliStatement($native, $session, null);
+            $statement = new ZtdMysqliStatement($native, $executor, null);
             $statement->execute();
             $warning = $statement->get_warnings();
             self::assertInstanceOf(mysqli_warning::class, $warning);
@@ -412,15 +427,16 @@ final class ZtdMysqliStatementTest extends TestCase
 
     public function testMore_resultsReturnsFalseAfterASingleResult(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
-            $session = new Session(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
+            $executor = \Tests\Fake\QueryExecutorBuilder::create(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
             $native = $connection->prepare('SELECT 1');
             self::assertInstanceOf(mysqli_stmt::class, $native);
-            $statement = new ZtdMysqliStatement($native, $session, null);
+            $statement = new ZtdMysqliStatement($native, $executor, null);
             $statement->execute();
             self::assertFalse($statement->more_results());
             $connection->close();
@@ -431,15 +447,16 @@ final class ZtdMysqliStatementTest extends TestCase
 
     public function testNext_resultReturnsFalseWithoutAnotherResult(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
-            $session = new Session(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
+            $executor = \Tests\Fake\QueryExecutorBuilder::create(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
             $native = $connection->prepare('SELECT 1');
             self::assertInstanceOf(mysqli_stmt::class, $native);
-            $statement = new ZtdMysqliStatement($native, $session, null);
+            $statement = new ZtdMysqliStatement($native, $executor, null);
             $statement->execute();
             $statement->store_result();
             self::assertFalse($statement->next_result());
@@ -451,15 +468,16 @@ final class ZtdMysqliStatementTest extends TestCase
 
     public function testPrepareReplacesTheDelegatedStatement(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
-            $session = new Session(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
+            $executor = \Tests\Fake\QueryExecutorBuilder::create(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
             $native = $connection->prepare('SELECT 1');
             self::assertInstanceOf(mysqli_stmt::class, $native);
-            $statement = new ZtdMysqliStatement($native, $session, null);
+            $statement = new ZtdMysqliStatement($native, $executor, null);
             self::assertTrue($statement->prepare('SELECT 42 AS value'));
             self::assertTrue($statement->execute());
             $result = $statement->get_result();
@@ -473,15 +491,16 @@ final class ZtdMysqliStatementTest extends TestCase
 
     public function testSend_long_dataConcatenatesBinaryChunks(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
-            $session = new Session(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
+            $executor = \Tests\Fake\QueryExecutorBuilder::create(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
             $native = $connection->prepare('SELECT ? AS value');
             self::assertInstanceOf(mysqli_stmt::class, $native);
-            $statement = new ZtdMysqliStatement($native, $session, null);
+            $statement = new ZtdMysqliStatement($native, $executor, null);
             $value = null;
             $statement->bind_param('b', $value);
             self::assertTrue($statement->send_long_data(0, 'first'));
@@ -498,17 +517,18 @@ final class ZtdMysqliStatementTest extends TestCase
 
     public function testResetClearsTheSimulatedAffectedRowCount(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
             $store->set('items', [['id' => 7]]);
-            $session = new Session(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
+            $executor = \Tests\Fake\QueryExecutorBuilder::create(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
             $native = $connection->prepare('SELECT 7 AS id');
             self::assertInstanceOf(mysqli_stmt::class, $native);
             $plan = new RewritePlan('SELECT 7 AS id', QueryKind::WRITE_SIMULATED, new InsertMutation('items', ['id'], true));
-            $statement = new ZtdMysqliStatement($native, $session, $plan);
+            $statement = new ZtdMysqliStatement($native, $executor, $plan);
             self::assertTrue($statement->execute());
             self::assertSame(0, $statement->ztdAffectedRows());
             self::assertTrue($statement->reset());
@@ -522,15 +542,16 @@ final class ZtdMysqliStatementTest extends TestCase
 
     public function testCloseClosesTheDelegatedStatement(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
-            $session = new Session(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
+            $executor = \Tests\Fake\QueryExecutorBuilder::create(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
             $native = $connection->prepare('SELECT 1');
             self::assertInstanceOf(mysqli_stmt::class, $native);
-            $statement = new ZtdMysqliStatement($native, $session, null);
+            $statement = new ZtdMysqliStatement($native, $executor, null);
             self::assertTrue($statement->close());
             $closed = $connection->query("SHOW SESSION STATUS LIKE 'Com_stmt_close'");
             self::assertInstanceOf(mysqli_result::class, $closed);

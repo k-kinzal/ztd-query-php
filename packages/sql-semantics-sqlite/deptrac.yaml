@@ -1,12 +1,12 @@
 deptrac:
-  paths: [./src]
+  paths: [./src, ./resources/models]
   analyser:
     types: [class, use]
   layers:
-    - name: Semantics
+    - name: Statements
       collectors:
         - type: classLike
-          value: '^SqlSemantics\\Semantic\\.*'
+          value: '^SqlSemantics\\Statement\\.*'
     - name: Core
       collectors:
         - type: classLike
@@ -28,9 +28,9 @@ deptrac:
         - type: classLike
           value: '^SqlParser\\Sqlite\\.*'
   ruleset:
-    Semantics: [Core]
-    Core: [ParserCore, Semantics]
-    Facade: [Core, Semantics]
+    Statements: []
+    Core: [ParserCore, Statements]
+    Facade: [Core, Statements]
     ParserCore: []
-    Platform: [Core, Semantics, ParserCore, ParserPlatform]
+    Platform: [Core, Statements, ParserCore, ParserPlatform]
     ParserPlatform: []

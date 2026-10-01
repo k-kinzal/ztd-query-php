@@ -1,8 +1,9 @@
 # SQL Formatter
 
+[![Packagist Downloads](https://img.shields.io/packagist/dt/k-kinzal/sql-formatter.svg?label=Packagist)](https://packagist.org/packages/k-kinzal/sql-formatter)
+[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docs](https://img.shields.io/badge/docs-sql--formatter-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-formatter/)
-[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
 SQL Formatter formats MySQL, PostgreSQL, and SQLite statements with the **Compact**, **Expanded**, **Tabular**, or **River** layout. It reads each statement with the lossless parser of [sql-parser](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-parser), which is built from the official grammar of the selected database version, Expanded, Tabular, and River change only layout whitespace and keep keywords, identifiers, literals, and comments as written; Compact writes a canonical single form of the statement, without comments or optional whitespace. Every output is parsed again to confirm that its syntax is unchanged. No schema or database connection is needed.
@@ -33,6 +34,7 @@ The following grammar versions are supported. Pass the version tag to the parser
 
 | Version | Version tag | Default |
 |---------|-------------|---------|
+| 16.6 | `pg-16.6` | |
 | 17.2 | `pg-17.2` | Yes |
 
 ### SQLite

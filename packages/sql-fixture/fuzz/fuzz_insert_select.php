@@ -4,7 +4,10 @@
  * PHP-Fuzzer entry point for INSERT/SELECT consistency validation.
  *
  * Usage:
- *   vendor/bin/php-fuzzer fuzz fuzz/fuzz_insert_select.php fuzz/corpus/insert-select/
+ *   MYSQL_VERSION=9.1.0 vendor/bin/php-fuzzer fuzz fuzz/fuzz_insert_select.php fuzz/corpus/insert-select/
+ *
+ * Environment variables:
+ *   MYSQL_VERSION - MySQL release to run against (default: 8.4.7)
  *
  * This test requires a MySQL database (uses Testcontainers).
  */
@@ -17,28 +20,28 @@ register_shutdown_function(static function (): void {
     }
 });
 
-use Container\MySql84Container;
+use Container\Endpoint;
+use Container\MySqlRelease;
 use Fuzz\Target\InsertSelectTarget;
 use Testcontainers\Testcontainers;
 
-fwrite(STDERR, "Starting MySQL 8.4 container...\n");
+$container = MySqlRelease::fromEnvironment();
 
-$instance = Testcontainers::run(MySql84Container::class);
+fwrite(STDERR, "Starting MySQL {$container::getGrammarVersion()} container...\n");
 
-$port = $instance->getMappedPort(3306);
-$host = str_replace('localhost', '127.0.0.1', $instance->getHost());
+$endpoint = Testcontainers::run($container)->getData(Endpoint::class);
 
 $pdo = new PDO(
-    "mysql:host=$host;port=$port;dbname=test;charset=utf8mb4",
-    'root',
-    'root',
+    $endpoint->dsn(),
+    $endpoint->username,
+    $endpoint->password,
     [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_EMULATE_PREPARES => false,
     ]
 );
 
-fwrite(STDERR, "MySQL ready on $host:$port\n");
+fwrite(STDERR, "MySQL ready on $endpoint->host:$endpoint->port\n");
 fwrite(STDERR, "Starting fuzzer...\n\n");
 
 $target = new InsertSelectTarget($pdo);

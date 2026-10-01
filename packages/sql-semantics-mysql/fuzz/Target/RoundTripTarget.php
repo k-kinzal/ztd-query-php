@@ -6,12 +6,13 @@ namespace Fuzz\Target;
 
 use Error;
 use SqlFormatter\Facade\Formatter;
-use SqlSemantics\Core\Analysis\ModelGraph;
 use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Statement\Element;
+use SqlSemantics\Statement\Traversal;
 use Throwable;
 
 /**
- * Every generated statement must lower into immutable semantic data and preserve its meaning on reconstruction.
+ * Every generated statement must be represented and written using its semantic data.
  */
 final class RoundTripTarget
 {
@@ -35,16 +36,16 @@ final class RoundTripTarget
         try {
             $statement = $this->semantics->analyze($sql);
             $printed = $statement->toString();
-            if ($this->compact->format($sql) !== $this->compact->format($printed)) {
-                throw new Error('Reconstruction changed formatter-normalized input SQL.');
-            }
-            $expected = (new ModelGraph())->fingerprint($statement);
-            $actual = (new ModelGraph())->fingerprint($this->semantics->analyze($printed));
+            $expected = $this->compact->format($sql);
+            $actual = $this->compact->format($printed);
         } catch (Throwable $failure) {
             throw new Error("Semantic round trip failed\n{$context}\nPrinted: {$printed}\nError: {$failure->getMessage()}", 0, $failure);
         }
         if ($actual !== $expected) {
-            throw new Error("Semantic reconstruction changed the model\n{$context}\nPrinted: {$printed}\nExpected: {$expected}\nActual: {$actual}");
+            throw new Error("Semantic round trip changed the statement\n{$context}\nPrinted: {$printed}\nExpected: {$expected}\nActual: {$actual}");
+        }
+        if (Traversal::rewrite($statement->command, static fn (Element $value): Element => $value) !== $statement->command) {
+            throw new Error("Rewriting without replacing anything rebuilt the statement\n{$context}");
         }
     }
 }

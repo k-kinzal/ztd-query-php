@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Driver;
 
-use Container\MySql80Container;
-use Container\MySql84Container;
+use Container\Endpoint;
+use Container\MySqlRelease;
 use mysqli;
 use mysqli_result;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -23,9 +23,10 @@ final class MysqliResultColumnExtractorTest extends TestCase
 {
     public function testExtractPassesNativeFieldMetadataToTheTypeResolver(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $result = $connection->query('SELECT CAST(7 AS SIGNED) AS value');
             self::assertInstanceOf(mysqli_result::class, $result);
@@ -45,9 +46,10 @@ final class MysqliResultColumnExtractorTest extends TestCase
 
     public function testExtractPreservesEveryColumnAndItsOrder(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $result = $connection->query("SELECT 1 AS id, 'Alice' AS name");
             self::assertInstanceOf(mysqli_result::class, $result);

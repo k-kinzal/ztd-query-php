@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Integration\PostgreSql;
 
-use Container\PostgreSql16Container;
+use Container\Endpoint;
+use Container\PostgreSqlRelease;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
@@ -24,12 +25,12 @@ final class SelectUnionTest extends TestCase
 {
     public function testUnion(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 
@@ -72,12 +73,12 @@ final class SelectUnionTest extends TestCase
 
     public function testUnionAll(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 
@@ -120,12 +121,12 @@ final class SelectUnionTest extends TestCase
 
     public function testExcept(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 
@@ -168,12 +169,12 @@ final class SelectUnionTest extends TestCase
 
     public function testIntersect(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Session;
 
-use Container\MySql80Container;
-use Container\MySql84Container;
+use Container\Endpoint;
+use Container\MySqlRelease;
 use mysqli;
 use mysqli_result;
 use mysqli_stmt;
@@ -32,9 +32,10 @@ final class ConnectionExecutionTest extends TestCase
 {
     public function testNativeReturnsTheProvidedConnection(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
@@ -45,16 +46,17 @@ final class ConnectionExecutionTest extends TestCase
         }
     }
 
-    public function testSessionKeepsSimulatedWritesOffTheNativeConnection(): void
+    public function testExecutorKeepsSimulatedWritesOffTheNativeConnection(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
 
-            self::assertSame(1, $execution->session()->execStatement('INSERT INTO items VALUES (7)'));
+            self::assertSame(1, $execution->executor()->execStatement('INSERT INTO items VALUES (7)'));
             $result = $native->query('SELECT COUNT(*) FROM items');
             self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame(['0'], $result->fetch_row());
@@ -65,9 +67,10 @@ final class ConnectionExecutionTest extends TestCase
 
     public function testSimulatedAffectedRowsStartsWithoutAnOverride(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
@@ -80,9 +83,10 @@ final class ConnectionExecutionTest extends TestCase
 
     public function testPreparePreservesTheWrappingCallback(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
@@ -102,9 +106,10 @@ final class ConnectionExecutionTest extends TestCase
 
     public function testQueryPreservesFacadeDispatch(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
@@ -122,17 +127,18 @@ final class ConnectionExecutionTest extends TestCase
 
     public function testRealQuerySynchronizesTransactionStatements(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
 
             self::assertTrue($execution->realQuery('BEGIN', $native->prepare(...)));
-            self::assertSame(1, $execution->session()->execStatement('INSERT INTO items VALUES (7)'));
+            self::assertSame(1, $execution->executor()->execStatement('INSERT INTO items VALUES (7)'));
             self::assertTrue($execution->realQuery('ROLLBACK', $native->prepare(...)));
-            $result = $native->query($execution->session()->rewrite('SELECT id FROM items')->sql());
+            $result = $native->query($execution->executor()->rewrite('SELECT id FROM items')->sql());
             self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame([], $result->fetch_all(MYSQLI_ASSOC));
         } finally {
@@ -142,17 +148,18 @@ final class ConnectionExecutionTest extends TestCase
 
     public function testBeginTransactionCreatesAShadowRollbackScope(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
 
             self::assertTrue($execution->beginTransaction());
-            self::assertSame(1, $execution->session()->execStatement('INSERT INTO items VALUES (7)'));
+            self::assertSame(1, $execution->executor()->execStatement('INSERT INTO items VALUES (7)'));
             self::assertTrue($execution->rollBack());
-            $result = $native->query($execution->session()->rewrite('SELECT id FROM items')->sql());
+            $result = $native->query($execution->executor()->rewrite('SELECT id FROM items')->sql());
             self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame([], $result->fetch_all(MYSQLI_ASSOC));
         } finally {
@@ -162,19 +169,20 @@ final class ConnectionExecutionTest extends TestCase
 
     public function testCommitRetainsShadowRowsAcrossRollback(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
 
             self::assertTrue($execution->beginTransaction());
-            self::assertSame(1, $execution->session()->execStatement('INSERT INTO items VALUES (7)'));
+            self::assertSame(1, $execution->executor()->execStatement('INSERT INTO items VALUES (7)'));
             self::assertTrue($execution->commit());
             self::assertTrue($execution->beginTransaction());
             self::assertTrue($execution->rollBack());
-            $result = $native->query($execution->session()->rewrite('SELECT id FROM items')->sql());
+            $result = $native->query($execution->executor()->rewrite('SELECT id FROM items')->sql());
             self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame([['id' => '7']], $result->fetch_all(MYSQLI_ASSOC));
         } finally {
@@ -184,17 +192,18 @@ final class ConnectionExecutionTest extends TestCase
 
     public function testRollBackRestoresTheShadowSnapshot(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
 
             self::assertTrue($execution->beginTransaction());
-            self::assertSame(1, $execution->session()->execStatement('INSERT INTO items VALUES (7)'));
+            self::assertSame(1, $execution->executor()->execStatement('INSERT INTO items VALUES (7)'));
             self::assertTrue($execution->rollBack());
-            $result = $native->query($execution->session()->rewrite('SELECT id FROM items')->sql());
+            $result = $native->query($execution->executor()->rewrite('SELECT id FROM items')->sql());
             self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame([], $result->fetch_all(MYSQLI_ASSOC));
         } finally {
@@ -204,19 +213,20 @@ final class ConnectionExecutionTest extends TestCase
 
     public function testAutocommitCommitsShadowRows(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
 
             self::assertTrue($execution->autocommit(false));
-            self::assertSame(1, $execution->session()->execStatement('INSERT INTO items VALUES (7)'));
+            self::assertSame(1, $execution->executor()->execStatement('INSERT INTO items VALUES (7)'));
             self::assertTrue($execution->autocommit(true));
             self::assertTrue($execution->beginTransaction());
             self::assertTrue($execution->rollBack());
-            $result = $native->query($execution->session()->rewrite('SELECT id FROM items')->sql());
+            $result = $native->query($execution->executor()->rewrite('SELECT id FROM items')->sql());
             self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame([['id' => '7']], $result->fetch_all(MYSQLI_ASSOC));
         } finally {
@@ -226,9 +236,10 @@ final class ConnectionExecutionTest extends TestCase
 
     public function testReleaseSavepointRemovesTheNativeSavepoint(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
@@ -244,18 +255,19 @@ final class ConnectionExecutionTest extends TestCase
 
     public function testSavepointRestoresShadowRowsOnRollbackToSavepoint(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
 
             self::assertTrue($execution->beginTransaction());
             self::assertTrue($execution->savepoint('one'));
-            self::assertSame(1, $execution->session()->execStatement('INSERT INTO items VALUES (7)'));
+            self::assertSame(1, $execution->executor()->execStatement('INSERT INTO items VALUES (7)'));
             self::assertTrue($execution->realQuery('ROLLBACK TO SAVEPOINT one', $native->prepare(...)));
-            $result = $native->query($execution->session()->rewrite('SELECT id FROM items')->sql());
+            $result = $native->query($execution->executor()->rewrite('SELECT id FROM items')->sql());
             self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame([], $result->fetch_all(MYSQLI_ASSOC));
             self::assertTrue($execution->rollBack());
@@ -266,9 +278,10 @@ final class ConnectionExecutionTest extends TestCase
 
     public function testExecuteQueryRetainsTheDispatchedAffectedRowCount(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
@@ -284,9 +297,10 @@ final class ConnectionExecutionTest extends TestCase
 
     public function testAffectedRowsUsesTheNativeCountBeforeSimulation(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
@@ -300,13 +314,12 @@ final class ConnectionExecutionTest extends TestCase
 
     public function testBeginTransactionDefersTheDefaultSnapshotUntilTheFirstRead(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $native->set_charset('utf8mb4');
-            $port = $container->getMappedPort(3306);
-            self::assertNotNull($port);
-            $other = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $port);
+            $other = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             try {
                 $native->query('CREATE TABLE snapshot_rows (id INT PRIMARY KEY) ENGINE=InnoDB');
                 $native->query('SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ');
@@ -328,9 +341,10 @@ final class ConnectionExecutionTest extends TestCase
 
     public function testCommitEndsTheNativeTransactionWithoutStartingAnother(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $native->set_charset('utf8mb4');
             $execution = new ConnectionExecution($native);
             self::assertTrue($execution->beginTransaction());
@@ -344,9 +358,10 @@ final class ConnectionExecutionTest extends TestCase
 
     public function testRollBackEndsTheNativeTransactionWithoutStartingAnother(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $native->set_charset('utf8mb4');
             $execution = new ConnectionExecution($native);
             self::assertTrue($execution->beginTransaction());

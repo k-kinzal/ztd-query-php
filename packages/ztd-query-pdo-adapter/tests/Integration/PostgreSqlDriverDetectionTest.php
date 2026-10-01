@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
-use Container\PostgreSql16Container;
+use Container\Endpoint;
+use Container\PostgreSqlRelease;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 use ZtdQuery\Config\ZtdConfig;
-use ZtdQuery\Platform\Postgres\PgSqlSessionFactory;
+use ZtdQuery\Platform\Postgres\PgSqlPlatform;
 
 /**
  * @requires extension pdo_pgsql
@@ -24,12 +25,12 @@ final class PostgreSqlDriverDetectionTest extends TestCase
 {
     public function testAutoDetectionCreatesPgSqlSession(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 
@@ -47,14 +48,14 @@ final class PostgreSqlDriverDetectionTest extends TestCase
         }
     }
 
-    public function testExplicitSessionFactoryInjection(): void
+    public function testExplicitPlatformInjection(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 
@@ -64,8 +65,8 @@ final class PostgreSqlDriverDetectionTest extends TestCase
 
 
         try {
-            $factory = new PgSqlSessionFactory();
-            $ztdPdo = ZtdPdo::fromPdo($rawPdo, null, $factory);
+            $platform = new PgSqlPlatform();
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo, null, $platform);
 
             self::assertTrue($ztdPdo->isZtdEnabled());
         } finally {
@@ -75,12 +76,12 @@ final class PostgreSqlDriverDetectionTest extends TestCase
 
     public function testCustomConfigPassedToSession(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(PostgreSqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $rawPdo */
         $rawPdo = new PDO(
-            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
-            'test',
-            'test',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 

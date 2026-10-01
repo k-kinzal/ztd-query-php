@@ -1,8 +1,9 @@
 # SQL Faker
 
+[![Packagist Downloads](https://img.shields.io/packagist/dt/k-kinzal/sql-faker.svg?label=Packagist)](https://packagist.org/packages/k-kinzal/sql-faker)
+[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docs](https://img.shields.io/badge/docs-sql--faker-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-faker/)
-[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
 SQL Faker is a grammar-based SQL generator for MySQL, PostgreSQL, and SQLite. It derives random statements and SQL fragments from official grammar definitions and provides both a [FakerPHP](https://fakerphp.org/) provider interface and a direct `SqlGenerator` interface. Generation plans let you select syntax and constrain its structure. Generated SQL does not require a database connection; its execution and semantic validity are subject to the [algorithm's limitations](docs/algorithm.md#limitations).
@@ -34,6 +35,7 @@ The following grammar versions are bundled. Pass the version tag to select a gra
 
 | Version | Version tag | Default |
 |---------|-------------|---------|
+| 16.6 | `pg-16.6` | |
 | 17.2 | `pg-17.2` | Yes |
 
 ### SQLite

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
-use Container\MySql80Container;
-use Container\MySql84Container;
+use Container\Endpoint;
+use Container\MySqlRelease;
 use mysqli;
 use mysqli_result;
 use PHPUnit\Framework\Attributes\Large;
@@ -30,9 +30,10 @@ final class MysqliForeignKeyCascadeTest extends TestCase
 {
     public function testForeignKeysValidateAndCascadeUpdatesAndDeletes(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $mysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $mysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $mysqli->set_charset('utf8mb4');
 
             $mysqli->query('CREATE TABLE departments (id INT PRIMARY KEY, name VARCHAR(50)) ENGINE=InnoDB');

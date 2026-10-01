@@ -4,75 +4,30 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Core\Policy;
 
-use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
-use SqlSemantics\Core\Model\Expression;
+use SqlSemantics\Core\Analysis\ValueReader;
 use SqlSemantics\Core\SemanticException;
-use SqlSemantics\Core\Type\TypeDescriptor;
+use SqlSemantics\Statement\Declaration\Builtin;
+use SqlSemantics\Statement\Declaration\TypeDeclaration;
 
 /**
- * Supplies scalar type interpretation and coercion.
+ * Supplies declared type interpretation.
  *
  * @visibility SqlSemantics
  */
 interface TypeRules
 {
     /**
-     * Reads the declared built-in type and preserves its modifiers.
-     */
-    public function read(Node $node): TypeDescriptor;
-
-    /**
-     * Resolves the built-in aliases modeled for this dialect.
-     */
-    public function canonical(string $name): ?string;
-
-    /**
-     * Computes storage affinity in the documented precedence order.
-     */
-    public function affinity(string $name): string;
-
-    /**
-     * Classifies a literal's lexical category without converting its contents.
-     */
-    public function typeName(Token $token): ?string;
-
-    /**
-     * Chooses an integer width from its decimal spelling.
-     */
-    public function integer(string $text): string;
-
-    /**
-     * @param list<Expression> $expressions
-     * @throws SemanticException
-     */
-    public function common(array $expressions, Node|Token|null $source): TypeDescriptor;
-
-    /**
-     * Returns the dialect result type of a predicate.
-     */
-    public function boolean(): TypeDescriptor;
-
-    /**
-     * Resolves supported numeric operations, including signed literal boundaries.
+     * Reads a declared type into typed facts, including table-dependent storage rules and implied column facts.
      *
-     * @param non-empty-list<Expression> $operands
+     * @param ValueReader $values Lowers declaration parts that the type keeps as typed values
+     * @param Node|null $table Enclosing table declaration, for options that change how a type is stored
+     * @throws SemanticException When the declaration is outside the modeled surface or invalid
      */
-    public function arithmetic(string $operator, array $operands, ?Node $source): TypeDescriptor;
+    public function read(Node $node, ValueReader $values, ?Node $table = null): TypeDeclaration;
 
     /**
-     * @throws SemanticException
+     * Reports whether this dialect has the built-in type.
      */
-    public function predicate(Expression $expression): void;
-
-    /**
-     * @param list<Expression> $operands
-     * @return list<Expression>
-     */
-    public function coalesce(array $operands, TypeDescriptor $type): array;
-
-    /**
-     * Resolves the output type of a projected literal.
-     */
-    public function project(Expression $expression): Expression;
+    public function supports(Builtin $type): bool;
 }

@@ -1,11 +1,12 @@
 # SQL Semantics for SQLite
 
+[![Packagist Downloads](https://img.shields.io/packagist/dt/k-kinzal/sql-semantics-sqlite.svg?label=Packagist)](https://packagist.org/packages/k-kinzal/sql-semantics-sqlite)
+[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docs](https://img.shields.io/badge/docs-sql--semantics--sqlite-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-sqlite/)
-[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
-SQL Semantics for SQLite adds SQLite to [SQL Semantics](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics): semantic lowering from the official SQLite grammars and the SQLite rules for schema binding. Installing it also installs the shared SQL Semantics runtime, and `Dialect::Sqlite` selects SQLite in the runtime's `Semantics`. No database connection is needed.
+SQL Semantics for SQLite adds SQLite to [SQL Semantics](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics): the typed statement models of the official SQLite grammars, the SQLite rules for reading declarations, and the SQLite builder that composes values under stable names. Installing it also installs the shared SQL Semantics runtime, and `Dialect::Sqlite` selects SQLite in the runtime's `Semantics`. No database connection is needed.
 
 ## Requirements
 
@@ -13,7 +14,7 @@ SQL Semantics for SQLite adds SQLite to [SQL Semantics](https://github.com/k-kin
 
 ## Support Syntax
 
-The following parser grammar releases are available. Pass the version tag as the second argument of `Semantics`; omitting it uses the default. Semantic lowering has the narrower scope linked below.
+The following grammar versions are supported. Pass the version tag as the second argument of `Semantics`; omitting it uses the default.
 
 | Version | Version tag | Default |
 |---------|-------------|---------|
@@ -31,14 +32,12 @@ composer require k-kinzal/sql-semantics-sqlite
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
 
-$statement = (new Semantics(Dialect::Sqlite))->analyze("INSERT INTO users (id, name) VALUES (1, 'Alice')");
+$statement = (new Semantics(Dialect::Sqlite))->analyze("INSERT OR REPLACE INTO users (id, name) VALUES (1, 'Alice')");
 
-$statement->toString(); // "INSERT INTO users (id, name) VALUES (1, 'Alice')"
+$statement->toString(); // "INSERT OR REPLACE INTO users( id , name ) VALUES( 1 , 'Alice' )"
 ```
 
-See the [SQL Semantics documentation](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics) for statement models and schema binding.
-
-Semantic coverage is limited to the operations documented in [statement models](../sql-semantics/docs/statements.md). `Semantics::analyze()` performs schema-free and schema-aware analysis; the separate `Binder` API and generated grammar models have been removed.
+See the [SQL Semantics documentation](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics) for statement models, traversal, dependencies, and composition.
 
 ## License
 

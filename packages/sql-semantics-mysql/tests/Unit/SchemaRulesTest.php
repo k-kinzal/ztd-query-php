@@ -5,45 +5,26 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Core\Model\Expression;
-use SqlSemantics\Core\Model\ExpressionKind;
-use SqlSemantics\Core\SchemaBuilder;
-use SqlSemantics\Core\Type\Nullability;
-use SqlSemantics\Core\Type\TypeDescriptor;
+use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Statement\Declaration\Nullability;
+use SqlSemantics\Statement\Declaration\TypeDescriptor;
+use Tests\Contract\Resolved;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\SemanticException::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(SchemaBuilder::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\NullFacts::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\TypeResolution::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\IdentitySequence::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\SyntaxGuard::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\Scope::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\BoundRelation::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\FromBinder::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\SelectModifiersBinder::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\TableResolver::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\SelectBinder::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\ProjectionBinder::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\ExpressionRules::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Binding\LiteralBinder::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\ColumnDefinition::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\TableDefinition::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\ConstraintKind::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Schema\TableConstraint::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(Semantics::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\ColumnDefinition::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TableDefinition::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\ConstraintKind::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TableConstraint::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(Nullability::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(TypeDescriptor::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(Expression::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Model\Join::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(ExpressionKind::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Model\BoundSelect::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Model\TableUse::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Model\ColumnBinding::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Model\Ordering::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Model\OutputColumn::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Model\JoinKind::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\Builtin::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TypeName::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TypeDeclaration::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\Numbers::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\Invariant::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\MySql\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\DialectParser::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\TokenGroups::class)]
@@ -52,9 +33,7 @@ use SqlSemantics\Platform\MySql\Dialect;
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\SchemaReader::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\ConstraintReader::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\Identifiers::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\StatementList::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Policy\SyntaxRules::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\QueryRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\Platform::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\TypeRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\NameRules::class)]
@@ -65,37 +44,81 @@ final class SchemaRulesTest extends TestCase
 {
     public function testValidateAcceptsOrdinaryDeclarations(): void
     {
-        $schema = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
-        self::assertCount(1, $schema->tables);
+        $schema = Resolved::of((new Semantics(Dialect::MySql))->analyze('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)', []));
+        self::assertCount(1, $schema->declarations);
     }
 
     public function testColumnNodesPreserveOrder(): void
     {
-        $schema = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
-        self::assertSame(['id', 'label'], array_column($schema->tables[0]->columns, 'name'));
+        $schema = Resolved::of((new Semantics(Dialect::MySql))->analyze('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)', []));
+        self::assertSame(['id', 'label'], array_column($schema->declarations[0]->columns, 'name'));
     }
 
     public function testPrimaryNotNullPromotesAnIntegerKey(): void
     {
-        $schema = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
-        self::assertSame(Nullability::NotNull, $schema->tables[0]->columns[0]->nullability);
+        $schema = Resolved::of((new Semantics(Dialect::MySql))->analyze('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)', []));
+        self::assertSame(Nullability::NotNull, $schema->declarations[0]->columns[0]->nullability);
     }
 
     public function testSchemaNodeRetainsOriginalDeclaration(): void
     {
-        $schema = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
-        self::assertStringContainsString('CREATE TABLE', $schema->tables[0]->source->toString());
+        $schema = Resolved::of((new Semantics(Dialect::MySql))->analyze('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)', []));
+        self::assertStringContainsString('CREATE TABLE', \SqlSemantics\Statement\Writer::render($schema->declarations[0]->source));
     }
 
     public function testTableKeyDistinguishesNames(): void
     {
-        $schema = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE first (id INT)', 'CREATE TABLE second (id INT)');
-        self::assertNotSame(Dialect::MySql->platform()->schema()->tableKey($schema->tables[0]), Dialect::MySql->platform()->schema()->tableKey($schema->tables[1]));
+        $statements = (new Semantics(Dialect::MySql))->analyzeAll('CREATE TABLE first (id INT); CREATE TABLE second (id INT)', []);
+        self::assertNotSame(Dialect::MySql->platform()->schema()->tableKey($statements[0]->resolution?->declarations[0] ?? self::fail('first')), Dialect::MySql->platform()->schema()->tableKey($statements[1]->resolution?->declarations[0] ?? self::fail('second')));
     }
 
     public function testQualifyPreservesExplicitNamespaces(): void
     {
-        $schema = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE app.items (id INT)');
-        self::assertSame('app', $schema->tables[0]->schema);
+        $schema = Resolved::of((new Semantics(Dialect::MySql))->analyze('CREATE TABLE app.items (id INT)', []));
+        self::assertSame('app', $schema->declarations[0]->schema);
     }
+
+    public function testOptionsRetainsStructuredTableChoices(): void
+    {
+        $state = Resolved::of((new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (id INT) ENGINE=InnoDB', []));
+        self::assertNotEmpty($state->declarations[0]->options);
+    }
+
+    public function testPrimaryOptionsNotNullAccountsForTablePolicy(): void
+    {
+        $dialect = Dialect::MySql;
+        $source = $dialect->platform()->parser()->parse('CREATE TABLE t (id INT) ENGINE=InnoDB');
+        self::assertSame(false, $dialect->platform()->schema()->primaryOptionsNotNull($source));
+    }
+
+
+    public function testNullabilityPreservesExplicitNotNull(): void
+    {
+        $table = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(a INT NOT NULL)', [])->resolution?->declarations[0];
+        self::assertSame(Nullability::NotNull, $table?->columns[0]->nullability);
+    }
+    public function testDefaultValueSeparatesTheExpression(): void
+    {
+        $value = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(a INT DEFAULT 42)', [])->resolution?->declarations[0]->columns[0]->defaultValue;
+        self::assertNotNull($value);
+        self::assertSame('42', \SqlSemantics\Statement\Writer::render($value));
+    }
+    public function testKeyColumnsKeepOrder(): void
+    {
+        $table = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(a INT, b INT, PRIMARY KEY(b,a))', [])->resolution?->declarations[0];
+        self::assertSame(['b', 'a'], $table?->constraints[0]->columns);
+    }
+    public function testImplicitSchemasDefinesUnqualifiedLookupOrder(): void
+    {
+        self::assertSame([], (new Semantics(Dialect::MySql))->language()->dialect->platform()->schema()->implicitSchemas());
+    }
+
+
+    public function testNullabilityAppliesAttributesInWritingOrder(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        self::assertSame(Nullability::MaybeNull, $semantics->analyze('CREATE TABLE t(a INT NOT NULL NULL)', [])->resolution?->declarations[0]->columns[0]->nullability);
+        self::assertSame(Nullability::NotNull, $semantics->analyze('CREATE TABLE t(a INT NULL NOT NULL)', [])->resolution?->declarations[0]->columns[0]->nullability);
+    }
+
 }

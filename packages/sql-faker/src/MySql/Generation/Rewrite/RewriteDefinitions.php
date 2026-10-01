@@ -20,6 +20,7 @@ use SqlFaker\MySql\Generation\Rewrite\Partition\FieldListRule;
 use SqlFaker\MySql\Generation\Rewrite\Partition\ListValueRule;
 use SqlFaker\MySql\Generation\Rewrite\Partition\ValueArityRule;
 use SqlFaker\MySql\Generation\Rewrite\Query\JoinGroupingRule;
+use SqlFaker\MySql\Generation\Rewrite\Query\LegacyDerivedTableRule;
 use SqlFaker\MySql\Generation\Rewrite\Query\QueryContextRule;
 use SqlFaker\MySql\Generation\Rewrite\Query\WindowFrameRule;
 use SqlFaker\MySql\Generation\Rewrite\Replication\StartRule;
@@ -63,6 +64,7 @@ final class RewriteDefinitions
             new WindowFrameRule(),
             new QueryContextRule(),
             new JoinGroupingRule(),
+            new LegacyDerivedTableRule(),
             new ConstraintEnforcementRule(),
             new GeneratedColumnRule(),
             new AutoIncrementRule(),

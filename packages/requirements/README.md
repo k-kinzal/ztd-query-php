@@ -1,8 +1,9 @@
 # Requirements
 
+[![Packagist Downloads](https://img.shields.io/packagist/dt/k-kinzal/requirements.svg?label=Packagist)](https://packagist.org/packages/k-kinzal/requirements)
+[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docs](https://img.shields.io/badge/docs-requirements-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/requirements/)
-[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
 Requirements connects source text, EARS specifications and executable tests for PHP projects. It finds changed quotations, unaccounted source units, unsupported behaviour and specifications without sources. Requirements are optional upstream records; specifications and their verification are the central model. Coverage is limited to explicitly selected source scopes and does not prove semantic equivalence.

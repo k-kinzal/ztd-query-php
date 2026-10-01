@@ -20,7 +20,14 @@ final class NameRules implements Contract
      */
     public function name(Token $token): string
     {
-        $text = $token->text;
+        return $this->decode($token->text);
+    }
+
+    /**
+     * Decodes the spelling of a name as written, quoted or bare.
+     */
+    public function decode(string $text): string
+    {
         $quote = substr($text, 0, 1);
         if (in_array($quote, ['"', '`', '['], true)) {
             $close = $quote === '[' ? ']' : $quote;

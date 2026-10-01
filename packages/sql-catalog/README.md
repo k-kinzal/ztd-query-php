@@ -1,8 +1,9 @@
 # SQL Catalog
 
+[![Packagist Downloads](https://img.shields.io/packagist/dt/k-kinzal/sql-catalog.svg?label=Packagist)](https://packagist.org/packages/k-kinzal/sql-catalog)
+[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docs](https://img.shields.io/badge/docs-sql--catalog-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-catalog/)
-[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
 SQL Catalog reads PHP source and reports every statement the code can send to a database: the statement text, the tables it names, the values bound to its placeholders, and where in the source it is issued. Nothing runs, and no database is needed. A statement assembled from a value the analyzer cannot follow is reported as the shape it has, with the gap marked and traced back to where the value came from.

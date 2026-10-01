@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Native;
 
-use Container\MySql80Container;
-use Container\MySql84Container;
+use Container\Endpoint;
+use Container\MySqlRelease;
 use mysqli;
 use mysqli_result;
 use mysqli_stmt;
@@ -21,9 +21,10 @@ final class MysqliStatementBindingBridgeTest extends TestCase
 {
     public function testBind_paramRetainsReferencesAcrossExecutions(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $statement = $connection->prepare('SELECT ? AS value');
             self::assertInstanceOf(mysqli_stmt::class, $statement);
@@ -43,9 +44,10 @@ final class MysqliStatementBindingBridgeTest extends TestCase
 
     public function testBind_resultWritesBackToCallerVariables(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $statement = $connection->prepare("SELECT 7 AS id, 'Alice' AS name");
             self::assertInstanceOf(mysqli_stmt::class, $statement);

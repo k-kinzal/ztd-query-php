@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Session;
 
-use Container\MySql80Container;
-use Container\MySql84Container;
+use Container\Endpoint;
+use Container\MySqlRelease;
 use mysqli;
 use mysqli_result;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -25,7 +25,6 @@ use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
-use ZtdQuery\Session;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\Mutation\ShadowMutation;
 use ZtdQuery\Shadow\ShadowStore;
@@ -40,9 +39,9 @@ final class MysqliResultProcessorTest extends TestCase
     public function testProcessCreatesAnEmptyWriteResult(): void
     {
         $store = new ShadowStore();
-        $session = new Session(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
+        $executor = \Tests\Fake\QueryExecutorBuilder::create(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
         $plan = new RewritePlan('DO 1', QueryKind::WRITE_SIMULATED, new InsertMutation('items'));
-        $result = (new MysqliResultProcessor())->process($session, $plan, false, 0);
+        $result = (new MysqliResultProcessor())->process($executor, $plan, false, 0);
         self::assertTrue($result->isSuccess());
         self::assertSame(0, $result->rowCount());
         self::assertSame([], $result->fetchAll());
@@ -50,16 +49,17 @@ final class MysqliResultProcessorTest extends TestCase
 
     public function testProcessUsesNativeRowsForTheShadowMutation(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
-            $session = new Session(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
+            $executor = \Tests\Fake\QueryExecutorBuilder::create(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
             $result = $connection->query('SELECT 7 AS id');
             self::assertInstanceOf(mysqli_result::class, $result);
             $plan = new RewritePlan('SELECT 7 AS id', QueryKind::WRITE_SIMULATED, new InsertMutation('items'));
-            $processed = (new MysqliResultProcessor())->process($session, $plan, $result, 1);
+            $processed = (new MysqliResultProcessor())->process($executor, $plan, $result, 1);
             self::assertTrue($processed->isSuccess());
             self::assertSame(1, $processed->rowCount());
             self::assertSame([['id' => '7']], $store->get('items'));
@@ -71,12 +71,13 @@ final class MysqliResultProcessorTest extends TestCase
 
     public function testProcessPreservesTheOriginalDatabaseException(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $container = Testcontainers::run(MySqlRelease::fromEnvironment());
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
-            $session = new Session(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
+            $executor = \Tests\Fake\QueryExecutorBuilder::create(self::createStub(SqlRewriter::class), $store, new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class), resultColumnTypeResolver: new MySqlResultColumnTypeResolver());
             $result = $connection->query('SELECT 7 AS id');
             self::assertInstanceOf(mysqli_result::class, $result);
             $mutation = self::createStub(ShadowMutation::class);
@@ -84,7 +85,7 @@ final class MysqliResultProcessorTest extends TestCase
             $mutation->method('apply')->willThrowException($failure);
             $plan = new RewritePlan('SELECT 7 AS id', QueryKind::WRITE_SIMULATED, $mutation);
             try {
-                (new MysqliResultProcessor())->process($session, $plan, $result, 1);
+                (new MysqliResultProcessor())->process($executor, $plan, $result, 1);
                 self::fail('Expected the MySQLi exception.');
             } catch (ZtdMysqliException $exception) {
                 self::assertSame($failure, $exception->getPrevious());

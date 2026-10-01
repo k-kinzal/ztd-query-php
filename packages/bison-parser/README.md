@@ -1,8 +1,9 @@
 # Bison Parser
 
+[![Packagist Downloads](https://img.shields.io/packagist/dt/k-kinzal/bison-parser.svg?label=Packagist)](https://packagist.org/packages/k-kinzal/bison-parser)
+[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docs](https://img.shields.io/badge/docs-bison--parser-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/bison-parser/)
-[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
 Bison Parser reads GNU Bison grammar files (`.y`, `.yy`) into a syntax tree that keeps everything the file says, with the position of each part. It reads the language the GNU Bison manual defines, so a file Bison accepts is read as Bison reads it and a file Bison rejects raises an error at the same place. The manual is the specification, and [spec/features](spec/features) states it clause by clause as scenarios that run the parser.

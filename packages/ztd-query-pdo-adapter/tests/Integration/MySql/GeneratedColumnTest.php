@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Integration\MySql;
 
-use Container\MySql80Container;
-use Container\MySql84Container;
+use Container\Endpoint;
+use Container\MySqlRelease;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
@@ -23,12 +23,12 @@ final class GeneratedColumnTest extends TestCase
 {
     public function testGeneratedValuesDriveReadsAggregatesUpdatesAndDeletes(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $endpoint = \Testcontainers\Testcontainers::run(MySqlRelease::fromEnvironment())->getData(Endpoint::class);
         /** @var PDO $pdo */
         $pdo = new PDO(
-            sprintf('mysql:host=%s;port=%d;dbname=test;charset=utf8mb4', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(3306)),
-            'root',
-            'root',
+            $endpoint->dsn(),
+            $endpoint->username,
+            $endpoint->password,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
         );
 

@@ -1,0 +1,1 @@
+$s="";while($input){$s.="x";}return $s;

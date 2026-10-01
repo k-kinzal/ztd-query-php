@@ -1,8 +1,9 @@
 # ZTD Query PDO Adapter
 
+[![Packagist Downloads](https://img.shields.io/packagist/dt/k-kinzal/ztd-query-pdo-adapter.svg?label=Packagist)](https://packagist.org/packages/k-kinzal/ztd-query-pdo-adapter)
+[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docs](https://img.shields.io/badge/docs-ztd--query--pdo--adapter-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/ztd-query-pdo-adapter/)
-[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
 ZTD Query is a Zero Table Dependency testing library for PHP: it runs the SQL of an application on a real database engine without reading or writing any physical table. Before a query reaches the database, every table it references is replaced by a CTE holding the rows the test has written, and every INSERT, UPDATE, and DELETE is turned into a SELECT whose result is kept in the session, so later queries see the change. Tests therefore need no migrations, seeding, or cleanup, and they can run in parallel against one empty database. This package is the PDO adapter: `ZtdPdo` extends `PDO` and applies ZTD to every query it runs, with the platform package of the connected database.
@@ -10,7 +11,7 @@ ZTD Query is a Zero Table Dependency testing library for PHP: it runs the SQL of
 ## Requirements
 
 - PHP 8.1+ with the PDO extension and the driver of your database
-- MySQL 8.0.11–9.1, PostgreSQL 16–17, or SQLite 3.x
+- MySQL 8.0–9.1, PostgreSQL 16–17, or SQLite 3.x
 
 ## Installation
 

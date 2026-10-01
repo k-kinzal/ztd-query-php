@@ -21,6 +21,6 @@ enum Dialect: string implements \SqlSemantics\Core\Dialect
      */
     public function platform(): \SqlSemantics\Core\Platform
     {
-        return new Platform($this);
+        return new Platform();
     }
 }
