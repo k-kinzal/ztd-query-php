@@ -63,18 +63,19 @@
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Operation</span> <span class="tok-var">$operation</span>)</span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>    {</span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>        <span class="tok-id">assert</span>((<span class="tok-kw">new</span> <span class="tok-id">SemanticGraph</span>())-&gt;<span class="tok-id">isSemanticOperation</span>(<span class="tok-var">$operation</span>), <span class="tok-str">&#039;Inspection requires a semantic operation.&#039;</span>);</span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>        <span class="tok-id">assert</span>(!<span class="tok-var">$operation</span> <span class="tok-kw">instanceof</span> <span class="tok-id">ExplainPlan</span> &amp;&amp; !<span class="tok-var">$operation</span> <span class="tok-kw">instanceof</span> <span class="tok-id">ExplainProgram</span>, <span class="tok-str">&#039;An operation has at most one inspection request.&#039;</span>);</span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>    }</span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a></span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com">     * Reconstructs the requested inspection from its operation.</span></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">toString</span>(): <span class="tok-id">string</span></span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    {</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>        <span class="tok-kw">return</span> <span class="tok-str">&#039;EXPLAIN QUERY PLAN &#039;</span> . <span class="tok-var">$this</span>-&gt;<span class="tok-id">operation</span>-&gt;<span class="tok-id">toString</span>();</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    }</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>}</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>        <span class="tok-id">assert</span>(!<span class="tok-var">$operation</span> <span class="tok-kw">instanceof</span> <span class="tok-id">\SqlSemantics\Statement\Script\Sequence</span>, <span class="tok-str">&#039;Inspection describes one operation, not a script.&#039;</span>);</span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>        <span class="tok-id">assert</span>(!<span class="tok-var">$operation</span> <span class="tok-kw">instanceof</span> <span class="tok-id">ExplainPlan</span> &amp;&amp; !<span class="tok-var">$operation</span> <span class="tok-kw">instanceof</span> <span class="tok-id">ExplainProgram</span>, <span class="tok-str">&#039;An operation has at most one inspection request.&#039;</span>);</span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>    }</span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     * Reconstructs the requested inspection from its operation.</span></span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">toString</span>(): <span class="tok-id">string</span></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    {</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        <span class="tok-kw">return</span> <span class="tok-str">&#039;EXPLAIN QUERY PLAN &#039;</span> . <span class="tok-var">$this</span>-&gt;<span class="tok-id">operation</span>-&gt;<span class="tok-id">toString</span>();</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    }</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>}</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

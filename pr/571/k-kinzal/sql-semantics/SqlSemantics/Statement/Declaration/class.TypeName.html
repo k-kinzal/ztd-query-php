@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TypeName — ZTD Query PHP</title>
 <link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/571/k-kinzal/sql-semantics/SqlSemantics/Statement/Declaration/class.TypeName.html">
-<meta name="description" content="A type the binder knows only by its declared name: a user-defined, domain, or unmodeled type.">
+<meta name="description" content="A database type identified by its declared name, including user-defined types and domains.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="ZTD Query PHP">
 <meta property="og:title" content="TypeName — ZTD Query PHP">
-<meta property="og:description" content="A type the binder knows only by its declared name: a user-defined, domain, or unmodeled type.">
+<meta property="og:description" content="A database type identified by its declared name, including user-defined types and domains.">
 <meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/571/k-kinzal/sql-semantics/SqlSemantics/Statement/Declaration/class.TypeName.html">
 <meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/571/assets/og-image.png">
 <meta property="og:image:width" content="1200">
@@ -37,9 +37,9 @@
 <main class="content" id="content">
 <p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 345e8315a60 and working tree." data-off="This page documents what 345e8315a60 had and working tree no longer has. Switch to Diff to read it." hidden></p>
 <div class="symbol-head"><h1><span class="chip chip-kind k-class">class</span>TypeName</h1><div class="symbol-meta"><a class="source-link" href="../../../../../src/packages/sql-semantics/src/Statement/Declaration/TypeName.php.html#L20">packages/sql-semantics/src/Statement/Declaration/TypeName.php:20</a></div></div>
-<pre class="signature" data-diff="same"><code><span class="t-key">final</span> <span class="t-key">class</span> <span class="signature-name">TypeName</span></code></pre>
+<pre class="signature" data-diff="modified"><code><span class="t-key">final</span> <span class="t-key">class</span> <span class="signature-name">TypeName</span></code></pre>
 <div class="notice tone-ok"><strong>Public API</strong>: explicitly declared with <code>@visibility public</code>.</div>
-<p class="lede">A type the binder knows only by its declared name: a user-defined, domain, or unmodeled type.</p>
+<p class="lede">A database type identified by its declared name, including user-defined types and domains.</p>
 <div class="prose"><p>The name parts are decoded like identifiers. Modifiers written after such a name are not interpreted; the typed declaration a column keeps still has them.</p>
 </div>
 <figure class="example code-block"><figcaption class="code-head"><span class="example-title">Reading a qualified type name</span><span class="chip chip-sm chip-doctest" title="Runs as the doctest TypeName example #1: Reading a qualified type name">doctest</span><button class="btn copy-btn" type="button" data-copy="vendor/bin/phpunit --filter &#039;/TypeName example \#1\: Reading a qualified type name/&#039;" title="Copy the command that runs this example on its own">run</button><button class="btn copy-btn" type="button" title="Copy example">copy</button></figcaption><pre class="code doctest"><code><span class="tok-var">$type</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Statement\Declaration\TypeName</span>([<span class="tok-str">&#039;app&#039;</span>, <span class="tok-str">&#039;money_amount&#039;</span>]);
