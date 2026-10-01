@@ -76,6 +76,7 @@ final class OperationReader
         return match (strtoupper($tokens[0]->text)) {
             'BEGIN', 'COMMIT', 'END', 'ROLLBACK', 'SAVEPOINT', 'RELEASE' => (new TransactionReader())->read($source),
             'REINDEX', 'ANALYZE' => (new MaintenanceReader())->read($source),
+            'UPDATE', 'DELETE' => (new MutationReader())->read($source, $catalog),
             'DROP' => (new SchemaChangeReader())->read($source, $catalog),
             'ALTER' => Tree::child($source, ['add_column_fullname']) === null
                 ? (new SchemaChangeReader())->read($source, $catalog)

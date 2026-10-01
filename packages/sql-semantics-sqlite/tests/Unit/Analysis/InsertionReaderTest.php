@@ -14,6 +14,7 @@ use PHPUnit\Framework\TestCase;
 use SqlParser\Sqlite\SqliteParser;
 use SqlSemantics\Platform\Sqlite\Analysis\InsertionReader;
 use SqlSemantics\Platform\Sqlite\Analysis\OperationReader;
+use SqlSemantics\Platform\Sqlite\Analysis\QualifiedTableReader;
 use SqlSemantics\Platform\Sqlite\Analysis\QueryReader;
 use SqlSemantics\Statement\Expression\ColumnReference;
 use SqlSemantics\Statement\Identifier\Name;
@@ -71,11 +72,11 @@ final class InsertionReaderTest extends TestCase
         self::assertSame($originalRows->fetchAll(PDO::FETCH_ASSOC), $rebuiltRows->fetchAll(PDO::FETCH_ASSOC));
     }
 
-    public function testRelationDistinguishesDatabaseTableAndAlias(): void
+    public function testReadDistinguishesDatabaseTableAndAlias(): void
     {
         $parser = new SqliteParser();
         $catalog = new Catalog(new SearchPath(new Name('main')), complete: false);
-        $relation = (new InsertionReader())->relation($parser->parse('INSERT INTO main.bar AS b (foo) VALUES (1)')->find('xfullname')[0], $catalog);
+        $relation = (new QualifiedTableReader())->read($parser->parse('INSERT INTO main.bar AS b (foo) VALUES (1)')->find('xfullname')[0], $catalog);
         self::assertSame('bar', $relation->name->name->value);
         self::assertSame('main', $relation->name->schema?->value);
         self::assertSame('b', $relation->alias?->value);
