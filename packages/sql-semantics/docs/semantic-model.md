@@ -85,6 +85,12 @@ range; its value and range diagnostic remain available in the structure. Clock
 expressions describe requests that the database evaluates, without sampling the
 clock during analysis.
 
+Explicit casts retain both their operand and the database's decoded conversion
+target. SQLite's CAST target decoding differs from CREATE TABLE type-name
+recognition: for example, an empty cast target requests numeric conversion.
+Collation choices are separate expression operations that preserve the operand's
+storage domain and NULL facts while selecting comparison behavior.
+
 A computed output name is part of the result shape. SQLite can derive that name
 from the expression's written form. Reconstruction may therefore need an explicit
 result alias when it normalizes expression grouping. The stored name is an output
@@ -122,6 +128,13 @@ Input widths are facts of those sources. A known mismatch is distinct from an
 implicit mapping that cannot be determined because the table declaration is
 missing or conflicting. Even a grammar-valid DEFAULT VALUES request with an
 explicit destination list remains structured and exposes its width contradiction.
+
+Database attachment and detachment describe file and schema expressions without
+changing the analysis catalog. SQLite converts a bare identifier to text only at
+the root of each ATTACH/DETACH operand; names nested in arithmetic or concatenation
+still require ordinary expression resolution. VACUUM in place and VACUUM INTO are
+distinct operation types. Requests targeting the temporary database expose their
+known no-op behavior, including skipping destination evaluation.
 
 ## Uncertainty and implementation defects
 
