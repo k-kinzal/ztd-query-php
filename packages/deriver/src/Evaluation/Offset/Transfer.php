@@ -129,8 +129,11 @@ final class Transfer
      */
     public function result(State $state, Instruction $instruction, Term $value): array
     {
+        if ($value->kind === 'array-read') {
+            return (new ReadCandidates($this->machine->context))->apply($state, $instruction, $value);
+        }
         if ($value->kind === 'opaque' && $value->literal === 'OFFSET_OPERATION') {
-            return $this->boundary($state, $instruction);
+            return $this->boundary($state, $instruction, $value);
         }
         $state->registers[$instruction->result] = $value;
         if ($value->kind === 'throwable') {
@@ -143,12 +146,14 @@ final class Transfer
      * Preserves potential implicit calls, writes, and exceptions at unknown offset operations.
      * @param State $state State after preceding effects
      * @param Instruction $instruction Unsupported protocol or symbolic container
+     * @param Term $value Unresolved operation with its reachable operands
      * @return list<State> Inclusive normal and unknown-throwable alternatives
      */
-    public function boundary(State $state, Instruction $instruction): array
+    public function boundary(State $state, Instruction $instruction, Term $value): array
     {
-        (new Havoc())->all($state, 'OFFSET_OPERATION');
-        $state->registers[$instruction->result] = $this->machine->context->frontier('UNSUPPORTED_LANGUAGE_FEATURE', $instruction->source, 'offset-protocol');
+        $references = in_array($instruction->operation, ['write', 'alias', 'increment', 'unset', 'reference'], true) ? [(new Path($this->machine->context))->chain($state, $instruction->operands[0])['base']] : [];
+        (new Havoc())->call($state, array_values($value->operands), $references, 'OFFSET_OPERATION');
+        $state->registers[$instruction->result] = $this->machine->context->frontier('UNSUPPORTED_LANGUAGE_FEATURE', $instruction->source, 'offset-protocol', array_values($value->operands));
         $exception = $state->fork();
         $exception->completion = new Completion('throw', new Term('throwable', 'Throwable', attributes: ['uncertain' => true]));
         return [$state, $exception];

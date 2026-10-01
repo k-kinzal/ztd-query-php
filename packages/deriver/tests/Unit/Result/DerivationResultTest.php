@@ -44,6 +44,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Evaluation\Call\Preparation\Resolution::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Preparation\Target::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Preparation\Transfer::class)]
+#[UsesClass(\Deriver\Evaluation\Call\SymbolicEnums::class)]
 #[UsesClass(\Deriver\Evaluation\Call\TypeBinding::class)]
 #[UsesClass(\Deriver\Evaluation\Call\TypeCheck::class)]
 #[UsesClass(\Deriver\Evaluation\Call\UnknownCall::class)]

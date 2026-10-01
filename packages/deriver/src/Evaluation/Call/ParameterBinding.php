@@ -42,6 +42,10 @@ final class ParameterBinding
     {
         if ($symbolic) {
             $type = (new TypeBinding($this->machine->context))->declared($parameter->type, $callable, $state);
+            $cases = (new SymbolicEnums($this->machine))->bind($callable, $parameter, $state, $type);
+            if ($cases !== null) {
+                return $cases;
+            }
             $value = Term::parameter($parameter->name, $parameter->variadic ? 'array' : $type);
             $state->memory->write($state->local($parameter->name), $value);
             return [$state];

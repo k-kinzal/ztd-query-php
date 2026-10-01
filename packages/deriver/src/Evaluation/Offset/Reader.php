@@ -40,7 +40,7 @@ final class Reader
         if (($instruction->attributes['destructure'] ?? false) === true && in_array($container->kind, ['constant', 'uninitialized'], true)) {
             return Term::constant(null, $container->isSecret());
         }
-        if ($container->kind === 'array') {
+        if ($container->kind === 'array' || $container->kind !== 'uninitialized' && ($container->attributes['type'] ?? '') === 'array') {
             return $this->array($container, $key, $instruction, $state, $silent);
         }
         if ($container->kind === 'constant' && is_string($container->literal)) {
@@ -77,7 +77,11 @@ final class Reader
             return $normalized;
         }
         if ($normalized->kind !== 'constant' || !is_int($normalized->literal) && !is_string($normalized->literal)) {
-            return Term::opaque('OFFSET_OPERATION', dependencies: [$container, $key]);
+            $types = explode('|', (string) ($key->attributes['type'] ?? 'mixed'));
+            return new Term('array-read', operands: [$container, $normalized], attributes: ['silent' => $silent, 'mayRejectKey' => array_diff($types, ['int', 'string', 'float', 'bool', 'null', 'true', 'false']) !== []]);
+        }
+        if ($container->kind !== 'array') {
+            return new Term('array-read', operands: [$container, $normalized], attributes: ['silent' => $silent]);
         }
         $value = $state->memory->element($container, $normalized->literal, $key->isSecret());
         if ($value->kind === 'uninitialized' && !$silent) {

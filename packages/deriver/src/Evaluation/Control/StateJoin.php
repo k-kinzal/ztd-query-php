@@ -32,6 +32,7 @@ final class StateJoin
      */
     public function limit(array $states, CallableGraph $callable): array
     {
+        $states = $this->orders($states, $callable);
         $groups = [];
         foreach ($states as $state) {
             $groups[$state->block][] = $state;
@@ -57,6 +58,83 @@ final class StateJoin
         return $result;
     }
 
+    /**
+     * Coalesces operand orders only when their complete resulting states are identical.
+     * @param list<State> $states States waiting at instruction blocks
+     * @param CallableGraph $callable Graph containing explicit operand-order joins
+     * @return list<State> Distinct semantic states
+     */
+    public function orders(array $states, CallableGraph $callable): array
+    {
+        $result = [];
+        $seen = [];
+        $counts = array_count_values(array_column($states, 'block'));
+        foreach ($states as $state) {
+            $register = $callable->blocks[$state->block]->instructions[0]->attributes['evaluation-order'] ?? null;
+            if (!is_string($register) || $counts[$state->block] < 2) {
+                $result[] = $state;
+                continue;
+            }
+            $key = $this->orderKey($state, $register);
+            if (isset($seen[$key])) {
+                $kept = $result[$seen[$key]];
+                unset($kept->guard[(new \Deriver\Value\Identity())->key($kept->value($register))]);
+            } else {
+                $seen[$key] = count($result);
+                $result[] = $state;
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Normalizes bookkeeping while retaining all values, storage, aliases, and source guards.
+     * @param State $state Candidate completed operand order
+     * @param string $register Hidden order predicate
+     * @return string Exact equality key, excluding only the internal order choice
+     */
+    public function orderKey(State $state, string $register): string
+    {
+        $copy = $state->fork();
+        unset($copy->guard[(new \Deriver\Value\Identity())->key($copy->value($register))]);
+        $copy->previous = -1;
+        ksort($copy->registers);
+        ksort($copy->producers);
+        ksort($copy->addresses);
+        ksort($copy->offsets);
+        ksort($copy->callTargets);
+        ksort($copy->properties);
+        ksort($copy->locals);
+        ksort($copy->guard);
+        ksort($copy->constraints);
+        $copy->evidence = array_values(array_unique($copy->evidence));
+        sort($copy->evidence);
+        sort($copy->controls);
+        ksort($copy->memory->cells);
+        ksort($copy->memory->writers);
+        ksort($copy->memory->versions);
+        return $this->fingerprint($copy);
+    }
+
+
+    /**
+     * Encodes structural equality without PHP object-sharing identifiers or scalar coercion.
+     * @param State $state Normalized, acyclic evaluator state
+     * @return string Typed structural fingerprint
+     */
+    public function fingerprint(State $state): string
+    {
+        $encode = static function ($value) use (&$encode): string {
+            if (is_object($value)) {
+                return hash('sha256', get_class($value) . ':' . $encode(get_object_vars($value)));
+            }
+            if (is_array($value)) {
+                return hash('sha256', serialize(array_map($encode, $value)));
+            }
+            return hash('sha256', serialize($value));
+        };
+        return $encode($state);
+    }
 
     /**
      * Bounds completed paths while retaining distinct normal and exceptional effects.

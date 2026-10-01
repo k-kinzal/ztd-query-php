@@ -71,4 +71,12 @@ final class CallSiteIndexTest extends TestCase
         yield 'namespace-relative syntax' => ['<?php namespace N;function target(){namespace\\sink(1);}', 'N\\sink'];
         yield 'ordinary method name' => ['<?php namespace N;function target($x){$x->sink(1);}', 'SINK'];
     }
+    public function testFallbackOnlyMatchesUnqualifiedFunctionNames(): void
+    {
+        $index = \Tests\Fake\SourceFixture::index();
+        $calls = new CallSiteIndex($index);
+        self::assertTrue($calls->fallback(new \PhpParser\Node\Expr\FuncCall(new \PhpParser\Node\Name('sink')), 'sink'));
+        self::assertFalse($calls->fallback(new \PhpParser\Node\Expr\FuncCall(new \PhpParser\Node\Name('Local\\sink')), 'sink'));
+    }
+
 }

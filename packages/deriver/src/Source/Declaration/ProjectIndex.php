@@ -97,7 +97,9 @@ final class ProjectIndex implements Program
         }
         ksort($this->files);
         ksort($this->fileHashes);
-        foreach ($this->files as $file) {
+        $ordered = array_values($this->files);
+        usort($ordered, static fn (SourceFile $a, SourceFile $b): int => [$a->declarationsOnly, $a->path] <=> [$b->declarationsOnly, $b->path]);
+        foreach ($ordered as $file) {
             $this->parse($file, $profile);
         }
         $traits = new Composition($this, hash('sha256', serialize($this->fileHashes)));
@@ -145,6 +147,9 @@ final class ProjectIndex implements Program
     {
         $key = (new CallableIdentity())->key($source->symbol);
         if (isset($this->declarations[$key])) {
+            if ($this->files[$source->path]->declarationsOnly && !$this->files[$this->declarations[$key]->path]->declarationsOnly) {
+                return;
+            }
             $this->issues[] = new Frontier('INVALID_PROGRAM', $this->builder($source->path)->source($source->node), 'duplicate:' . $source->symbol);
             return;
         }

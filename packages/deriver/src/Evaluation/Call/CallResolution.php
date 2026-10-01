@@ -56,6 +56,10 @@ final class CallResolution
             return $source;
         }
         $descriptor ??= $model->descriptor();
+        if ($descriptor->useSourceSignature && $source !== null) {
+            $signature = (new \Deriver\Model\Registration\Declarations($this->context->program))->signature($symbol) ?? $descriptor->signature;
+            $descriptor = new ModelDescriptor($descriptor->id, $descriptor->version, $descriptor->symbol, $signature, $descriptor->priority, $descriptor->replaces, $descriptor->replaceSource, true);
+        }
         $decision = $model->describe($this->description($descriptor, $symbol, $instruction, $arguments, $state, $receiverType));
         if ($decision->kind === 'declined') {
             return $source;
@@ -96,7 +100,7 @@ final class CallResolution
     {
         $receiverType = $receiverType === '' && str_contains($symbol, '::') ? explode('::', $symbol, 2)[0] : $receiverType;
         $inputs = $arguments !== null && $state !== null ? (new Inputs())->bindings($descriptor, $instruction, $arguments, $state) : null;
-        return new CallDescription($symbol, $descriptor->signature, $this->context->configuration->target, $receiverType, $inputs, $this->context->configuration->dependencyVersions);
+        return new CallDescription($symbol, $descriptor->signature, $this->context->configuration->target, $receiverType, $inputs, $this->context->configuration->dependencyVersions, $instruction->source, new \Deriver\Model\Registration\Declarations($this->context->program));
     }
 
     /**

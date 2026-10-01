@@ -23,6 +23,7 @@ final class ModelDescriptor
      * @param int $priority priority
      * @param list<string> $replaces replaces
      * @param bool $replaceSource replaceSource
+     * @param bool $useSourceSignature Bind the captured declaration's signature when present
      */
     public function __construct(
         public readonly string $id,
@@ -32,6 +33,7 @@ final class ModelDescriptor
         public readonly int $priority = 0,
         public readonly array $replaces = [],
         public readonly bool $replaceSource = false,
+        public readonly bool $useSourceSignature = false,
     ) {
     }
 }

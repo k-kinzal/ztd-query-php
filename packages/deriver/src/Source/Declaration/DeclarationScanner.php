@@ -62,6 +62,9 @@ final class DeclarationScanner
             } elseif ($node instanceof Stmt\Const_) {
                 foreach ($node->consts as $constant) {
                     $name = $constant->namespacedName?->toString() ?? $constant->name->toString();
+                    if ($this->index->files[$path]->declarationsOnly && isset($this->index->constantSources[$name])) {
+                        continue;
+                    }
                     $this->index->constantSources[$name] = new CallableSource($name, $constant->value, $path, strict: $strict);
                 }
             } elseif ($node instanceof Stmt\ClassLike && $node->name !== null) {
@@ -79,6 +82,9 @@ final class DeclarationScanner
     public function classDeclaration(Stmt\ClassLike $node, string $path, bool $strict): void
     {
         $name = $node->namespacedName?->toString() ?? $node->name?->toString() ?? '';
+        if ($this->existingClass($node, $path, $name)) {
+            return;
+        }
         $this->index->classSources[strtolower($name)] = new CallableSource($name, $node, $path, $name, $strict);
         $readonly = $node instanceof Stmt\Class_ && $node->isReadonly();
         $methods = [];
@@ -102,6 +108,25 @@ final class DeclarationScanner
         $parent = $node instanceof Stmt\Class_ ? ($node->extends?->toString() ?? '') : '';
         $interfaces = $node instanceof Stmt\Class_ || $node instanceof Stmt\Enum_ ? $node->implements : ($node instanceof Stmt\Interface_ ? $node->extends : []);
         $this->index->classIndex[strtolower($name)] = new ClassDeclaration($name, $parent, array_values(array_map(static fn (Node\Name $name): string => $name->toString(), $interfaces)), $traits, $methods, $properties, $this->constants($node), $node instanceof Stmt\Enum_ || ($node instanceof Stmt\Class_ && $node->isFinal()), $node instanceof Stmt\Trait_ || $node instanceof Stmt\Class_ && $node->isAbstract(), $node instanceof Stmt\Interface_, $readonly, $node instanceof Stmt\Enum_, constantDeclarations: (new ConstantSignatures())->read($this->index, $node, $name));
+    }
+
+    /**
+     * Gives captured source classes precedence over signature-only stubs.
+     * @param Stmt\ClassLike $node Candidate declaration
+     * @param string $path Source path
+     * @param string $name Class name
+     * @return bool Whether the existing declaration must be retained
+     */
+    public function existingClass(Stmt\ClassLike $node, string $path, string $name): bool
+    {
+        if (isset($this->index->classSources[strtolower($name)])) {
+            $previous = $this->index->classSources[strtolower($name)];
+            if (!$this->index->files[$path]->declarationsOnly || $this->index->files[$previous->path]->declarationsOnly) {
+                $this->index->issues[] = new \Deriver\Result\Frontier('INVALID_PROGRAM', $this->index->builder($path)->source($node), 'duplicate:' . $name);
+            }
+            return true;
+        }
+        return false;
     }
 
     /**

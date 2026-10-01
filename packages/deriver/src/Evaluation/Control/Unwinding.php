@@ -57,6 +57,9 @@ final class Unwinding
      */
     public function routes(State $state): array
     {
+        if ($state->completion->kind === 'exit') {
+            return [$state];
+        }
         if ($state->completion->kind !== 'throw') {
             $this->resume($state);
             return [$state];

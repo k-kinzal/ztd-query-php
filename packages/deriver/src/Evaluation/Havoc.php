@@ -30,7 +30,7 @@ final class Havoc
         }
         foreach ($references as $reference) {
             $this->reachable($state, $state->memory->read($reference), $reason, $seen);
-            $state->memory->write($reference, Term::opaque($reason));
+            $state->memory->write($reference, Term::opaque($reason, dependencies: [$state->memory->read($reference)]));
         }
         foreach ($state->memory->cells as $root => $value) {
             if (str_starts_with($root, 'global:') || str_starts_with($root, 'static:')) {
@@ -72,7 +72,7 @@ final class Havoc
                 if ($previous->kind === 'array') {
                     $entries = [];
                     foreach ($previous->operands as $key => $entry) {
-                        $entries[$key] = new Term('opaque', $reason, [$entry], ['type' => 'mixed', 'maybeUninitialized' => true]);
+                        $entries[$key] = new Term('opaque', $reason, [$entry], ['type' => $state->memory->propertyTypes[$root][$key] ?? 'mixed', 'maybeUninitialized' => true]);
                     }
                     $state->memory->cells[$root] = Term::array($entries, true);
                 } else {
@@ -132,9 +132,27 @@ final class Havoc
      */
     public function all(State $state, string $reason): void
     {
+        $state->unknownLocals = $reason;
         $state->memory->unknownShared = $reason;
         foreach ($state->memory->cells as $root => $value) {
             $state->memory->cells[$root] = Term::opaque($reason, dependencies: [$value]);
         }
+    }
+
+    /**
+     * Invalidates variables reachable through the current frame's symbol table.
+     * @param State $state Current frame
+     * @param string $reason Unknown variable mutation
+     */
+    public function symbols(State $state, string $reason): void
+    {
+        $state->unknownLocals = $reason;
+        $references = [];
+        foreach ($state->locals as $name => $location) {
+            if ($name !== 'this') {
+                $references[] = $location;
+            }
+        }
+        $this->call($state, [], $references, $reason);
     }
 }

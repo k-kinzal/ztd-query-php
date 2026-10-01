@@ -152,7 +152,9 @@ final class ExpressionLoweringTest extends TestCase
         $l = \Tests\Fake\SourceFixture::lowering();
         $node = new \PhpParser\Node\Expr\BinaryOp\Plus(new \PhpParser\Node\Expr\PostInc(new \PhpParser\Node\Expr\Variable('x')), new \PhpParser\Node\Expr\Variable('x'));
         (new ExpressionLowering($l))->binary($node);
-        self::assertSame(['local', 'increment', 'local', 'read', 'binary', 'uncertain-order'], array_column($l->graph->instructions[0], 'operation'));
+        self::assertSame(['evaluation-order'], array_column($l->graph->instructions[0], 'operation'));
+        self::assertCount(4, $l->graph->instructions);
+        self::assertSame('branch', $l->graph->terminators[0]->kind);
     }
     public function testOtherMakesEvalASymbolTableBoundary(): void
     {

@@ -449,4 +449,15 @@ final class MemoryStepTest extends TestCase
         $state->memory->write($address, Term::constant(8));
         self::assertSame(8, $state->memory->read($original)->literal);
     }
+    public function testPrepareStorageResolvesAConcreteDynamicLocal(): void
+    {
+        $context = SolverFixture::context();
+        $body = $context->program->callable('target');
+        self::assertNotNull($body);
+        $state = new State();
+        $state->registers['name'] = Term::constant('sql');
+        (new MemoryStep($context))->prepareStorage($body, new Instruction('i', 'dynamic-local', $body->source, 'address', ['name']), $state);
+        self::assertSame('sql', $state->addresses['address']->local);
+    }
+
 }

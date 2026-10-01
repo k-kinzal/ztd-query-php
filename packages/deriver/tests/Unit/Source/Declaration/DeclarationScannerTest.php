@@ -429,4 +429,12 @@ final class DeclarationScannerTest extends TestCase
         yield 'readonly class' => ['private int $value=3',true,'private',true];
         yield 'both readonly' => ['protected readonly int $value=3',true,'protected',true];
     }
+    public function testExistingClassRejectsDuplicateSourceDeclarations(): void
+    {
+        $index = SourceFixture::index('<?php class C{}');
+        $node = new Stmt\Class_('C');
+        self::assertTrue((new DeclarationScanner($index))->existingClass($node, 'fixture.php', 'C'));
+        self::assertSame('INVALID_PROGRAM', $index->diagnostics()[0]->code);
+    }
+
 }

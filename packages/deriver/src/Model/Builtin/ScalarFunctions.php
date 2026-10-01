@@ -33,8 +33,11 @@ final class ScalarFunctions
         if ($name === 'replace-pair') {
             return (new Replacement())->apply($values);
         }
-        if ($name === 'sprintf') {
+        if ($name === 'sprintf' || $name === 'vsprintf') {
             return (new Formatting($this->floatPrecision))->apply($values);
+        }
+        if (in_array($name, ['array_fill', 'str_repeat', 'intval'], true)) {
+            return (new ConstructionFunctions())->apply($name, $values);
         }
         $a = $values[0] ?? Term::constant(null);
         if ($name === 'get_class') {
@@ -46,7 +49,7 @@ final class ScalarFunctions
         if (in_array($name, ['count', 'array_keys', 'array_values', 'array_merge', 'array_key_exists', 'in_array'], true)) {
             return (new ArrayFunctions($this->floatPrecision))->apply($name, $values);
         }
-        if (in_array($name, ['strlen', 'strtolower', 'strtoupper', 'trim', 'substr', 'implode', 'join', 'explode', 'sprintf', 'str_replace'], true)) {
+        if (in_array($name, ['strlen', 'strtolower', 'strtoupper', 'ucfirst', 'lcfirst', 'trim', 'ltrim', 'rtrim', 'substr', 'implode', 'join', 'explode', 'sprintf', 'str_replace'], true)) {
             return (new StringFunctions($this->floatPrecision))->apply($name, $values);
         }
         return Term::opaque('UNSUPPORTED_MODEL_CASE', dependencies: $values);

@@ -85,4 +85,15 @@ final class AnalysisSessionTest extends TestCase
         self::assertSame('entrypoint', $query->scope()->mode);
         self::assertSame('entry', $query->scope()->entries[0]->symbol);
     }
+    /**
+     * @throws JsonException If the declaration snapshot cannot be encoded
+     */
+    public function testDeclarationsExposeCapturedSignatures(): void
+    {
+        $session = \Tests\Fake\Analysis::session('<?php function target(string $sql){}');
+        $signature = $session->declarations()->signature('target');
+        self::assertNotNull($signature);
+        self::assertSame('sql', $signature->parameters[0]->name);
+    }
+
 }

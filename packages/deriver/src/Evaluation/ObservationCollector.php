@@ -62,10 +62,41 @@ final class ObservationCollector
             $state->observed = true;
             $this->context->normal[] = new Alternative($values, $state->guard, $state->snapshot(), $state->evidence, (new StorageCapture())->capture($state->memory, $state->locals, $values));
             (new ObservationLimit($this->context))->enforce($instruction->source);
-            if ($this->context->query->scope()->mode === 'symbolic') {
+            if ($this->context->query->scope()->mode === 'symbolic' && !$this->repeated($callable, $state->block)) {
                 $state->completion = new Completion('observed');
             }
         }
+    }
+
+    /**
+     * Checks cycles, conservatively retaining loops with implicit exception-region edges.
+     * @param CallableGraph $callable Observed graph
+     * @param int $block Observation block
+     * @return bool Whether the observation lies on a control-flow cycle
+     */
+    public function repeated(CallableGraph $callable, int $block): bool
+    {
+        if ($callable->regions !== []) {
+            foreach ($callable->blocks as $candidate) {
+                if ($candidate->loopHeader) {
+                    return true;
+                }
+            }
+        }
+        $pending = $callable->blocks[$block]->terminator->targets ?? [];
+        $seen = [];
+        while ($pending !== []) {
+            $next = array_pop($pending);
+            if ($next === $block) {
+                return true;
+            }
+            if (!isset($callable->blocks[$next]) || isset($seen[$next])) {
+                continue;
+            }
+            $seen[$next] = true;
+            array_push($pending, ...$callable->blocks[$next]->terminator->targets);
+        }
+        return false;
     }
 
     /**
@@ -75,6 +106,9 @@ final class ObservationCollector
      */
     public function completion(CallableGraph $callable, State $state): void
     {
+        if ($state->completion->kind === 'exit') {
+            return;
+        }
         $q = $this->context->query;
         if (!$q instanceof ReturnQuery) {
             if ($state->completion->kind === 'throw' && !$state->observed && $callable->symbol === $this->context->entrySymbol && array_sum($this->context->active) <= 1) {

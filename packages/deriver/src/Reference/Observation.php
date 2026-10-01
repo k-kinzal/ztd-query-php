@@ -24,8 +24,10 @@ final class Observation
      * @param string $target Statically known target name
      * @param array<int|string, ExpressionRef> $arguments Original argument expression references
      * @param ExpressionRef|null $returned Return expression reference
+     * @param ExpressionRef|null $receiver Evaluated object or class operand for a method call
+     * @param string $operation Invocation kind: invoke, invoke-method, or invoke-static
      */
-    public function __construct(public readonly SourceRef $source, public readonly string $callable, public readonly string $instruction, public readonly string $target, public readonly array $arguments, public readonly ?ExpressionRef $returned = null)
+    public function __construct(public readonly SourceRef $source, public readonly string $callable, public readonly string $instruction, public readonly string $target, public readonly array $arguments, public readonly ?ExpressionRef $returned = null, public readonly ?ExpressionRef $receiver = null, public readonly string $operation = 'invoke')
     {
     }
 

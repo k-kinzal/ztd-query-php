@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Deriver\Source\Compilation;
 
+use Deriver\ControlFlow\Terminator;
 use Deriver\Source\Compilation\Control\ConditionalLowering;
 use Deriver\Value\Term;
 use PhpParser\Node\Expr;
@@ -34,7 +35,8 @@ final class ExpressionLowering
             return $g->emit($node, 'constant', constant: Term::constant($node->value));
         }
         if ($node instanceof Expr\ConstFetch) {
-            return $g->emit($node, 'constant-fetch', name: $node->name->toString());
+            $resolved = $node->name->getAttribute('namespacedName');
+            return $g->emit($node, 'constant-fetch', name: $resolved instanceof \PhpParser\Node\Name ? $resolved->toString() : $node->name->toString(), attributes: ['fallback' => $node->name->isUnqualified() ? $node->name->toString() : '']);
         }
         if ($node instanceof Scalar\MagicConst) {
             return $this->magic($node);
@@ -92,12 +94,12 @@ final class ExpressionLowering
         if ($node instanceof Expr\BinaryOp\BooleanAnd || $node instanceof Expr\BinaryOp\BooleanOr || $node instanceof Expr\BinaryOp\LogicalAnd || $node instanceof Expr\BinaryOp\LogicalOr || $node instanceof Expr\BinaryOp\Coalesce) {
             return (new ConditionalLowering($this->lowering))->binary($node);
         }
+        if ((new EffectInspection())->conflicts($node->left, $node->right)) {
+            return (new OrderLowering($this->lowering))->binary($node);
+        }
         $left = $this->lowering->expression($node->left);
         $right = $this->lowering->expression($node->right);
         $result = $this->lowering->graph->emit($node, 'binary', [$left, $right], $node->getOperatorSigil());
-        if ((new EffectInspection())->conflicts($node->left, $node->right)) {
-            return $this->lowering->graph->emit($node, 'uncertain-order', [$result]);
-        }
         return $result;
     }
 
@@ -140,6 +142,11 @@ final class ExpressionLowering
      */
     public function computed(Expr $node): string
     {
+        if ($node instanceof Expr\Exit_) {
+            $result = $node->expr === null ? '' : $this->lowering->graph->emit($node->expr, 'cast', [$this->lowering->expression($node->expr)], 'string');
+            $this->lowering->graph->end(new Terminator('exit', $result));
+            return $result;
+        }
         if ($node instanceof Expr\ArrayDimFetch && $node->dim !== null) {
             return $this->lowering->graph->emit($node, 'array-read', [$this->lowering->expression($node->var), $this->lowering->expression($node->dim)]);
         }

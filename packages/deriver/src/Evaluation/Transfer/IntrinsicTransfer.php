@@ -46,11 +46,20 @@ final class IntrinsicTransfer
                 return [$state];
             }
         }
+        if ($instruction->name === 'define') {
+            return (new \Deriver\Evaluation\Constant\Definitions($this->machine->context))->apply($instruction, $state, $values);
+        }
         if ($instruction->name === 'count' && ($values[0]->kind ?? '') === 'object') {
             return (new CountableCalls($this->machine))->apply($caller, $instruction, $state, $values);
         }
         if ($instruction->name === 'is_callable') {
             return (new CallablePredicate($this->machine->context))->apply($instruction, $state, $values);
+        }
+        if (in_array($instruction->name, ['implode', 'join'], true)) {
+            $joined = (new \Deriver\Evaluation\Operation\StringJoining($this->machine))->apply($caller, $instruction, $state, $values);
+            if ($joined !== null) {
+                return $joined;
+            }
         }
         if (in_array($instruction->name, ['array_map', 'array_filter', 'array_reduce'], true)) {
             return (new CollectionCalls($this->machine))->apply($caller, $instruction, $state, $values);

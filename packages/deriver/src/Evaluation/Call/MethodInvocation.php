@@ -88,10 +88,20 @@ final class MethodInvocation
         }
         foreach ($dispatch->candidates($class, $name) as $candidate => $target) {
             $path = $state->fork();
+            if (!(new Constraints($context))->assume($path, new Term('binary', '!==', [$receiver, Term::constant(null)], ['type' => 'bool']), true)) {
+                continue;
+            }
             $object = new Term('object', is_string($receiver->literal) ? $receiver->literal : $path->memory->fresh('parameter-object'), attributes: ['class' => $candidate]);
-            array_push($result, ...(new Invocation($this->machine))->call($caller, $instruction, $path, $arguments, $object, $candidate, $name, $target));
+            array_push($result, ...(new Invocation($this->machine))->call($caller, $instruction, $path, $arguments, $object, $candidate, $name, $dispatch->method($candidate, $name)));
         }
-        $closed = $provided->exhaustive || $context->configuration->closedWorld || ($context->program->classes()[strtolower($class)]->final ?? false);
+        $bound = implode('|', array_diff(explode('|', $class), ['null']));
+        if ($bound !== $class) {
+            $null = $state->fork();
+            if ((new Constraints($context))->assume($null, new Term('binary', '!==', [$receiver, Term::constant(null)], ['type' => 'bool']), false)) {
+                array_push($result, ...(new Invocation($this->machine))->error($null));
+            }
+        }
+        $closed = $provided->exhaustive || $context->configuration->closedWorld || ($context->program->classes()[strtolower($bound)]->final ?? false);
         if (!$closed || $result === []) {
             array_push($result, ...(new UnknownCall($context))->apply($state->fork(), $instruction, $arguments, $receiver, 'OPEN_DISPATCH'));
         }
