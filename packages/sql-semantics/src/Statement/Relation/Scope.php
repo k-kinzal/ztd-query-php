@@ -1,0 +1,80 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Statement\Relation;
+
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Identifier\QualifiedName;
+use SqlSemantics\Statement\Reference\AmbiguousColumn;
+use SqlSemantics\Statement\Reference\AmbiguousTable;
+use SqlSemantics\Statement\Reference\CandidateColumn;
+use SqlSemantics\Statement\Reference\MissingColumn;
+use SqlSemantics\Statement\Reference\ResolvedColumn;
+use SqlSemantics\Statement\Schema\Catalog;
+
+/**
+ * The relation occurrences visible at one column lookup site.
+ * @visibility public
+ * @example Resolving a name with no visible relations
+ *     $catalog = new \SqlSemantics\Statement\Schema\Catalog(new \SqlSemantics\Statement\Schema\SearchPath(new \SqlSemantics\Statement\Identifier\Name('main')), complete: false);
+ *     (new \SqlSemantics\Statement\Relation\Scope($catalog))->resolve(new \SqlSemantics\Statement\Identifier\Name('id')) === \SqlSemantics\Statement\Reference\MissingColumn::Value // => true
+ */
+final class Scope
+{
+    /**
+     * @var list<TableReference>
+     */
+    public readonly array $tables;
+
+    /**
+     * Keeps relation occurrences separate, including duplicate aliases and self joins.
+     */
+    public function __construct(public readonly Catalog $catalog, TableReference ...$tables)
+    {
+        $this->tables = array_values($tables);
+        $occurrences = [];
+        foreach ($tables as $table) {
+            assert($table->catalog === $catalog, 'Every relation must use the scope declaration context.');
+            assert(!isset($occurrences[spl_object_id($table)]), 'Each relation use must have its own occurrence identity.');
+            $occurrences[spl_object_id($table)] = true;
+        }
+    }
+
+    /**
+     * Derives column ownership solely from this scope and its supplied declarations.
+     */
+    public function resolve(Name $name, ?QualifiedName $qualifier = null): ResolvedColumn|CandidateColumn|MissingColumn|AmbiguousColumn|AmbiguousTable
+    {
+        $matches = [];
+        $candidates = [];
+        $conflicts = [];
+        foreach ($this->tables as $relation) {
+            if (!$relation->matches($qualifier)) {
+                continue;
+            }
+            if (count($relation->declarations) > 1) {
+                $conflicts[] = $relation;
+                continue;
+            }
+            if ($relation->declarations === [] && !$this->catalog->complete) {
+                $candidates[] = $relation;
+            }
+            foreach ($relation->declarations as $table) {
+                foreach ($table->matchingColumns($name->value, $this->catalog->columnNames) as $column) {
+                    $matches[] = new ResolvedColumn($relation, $table, $column);
+                }
+            }
+        }
+        if ($conflicts !== []) {
+            return new AmbiguousTable($conflicts[0], ...array_slice($conflicts, 1));
+        }
+        if (count($matches) > 1) {
+            return new AmbiguousColumn($matches[0], $matches[1], ...array_slice($matches, 2));
+        }
+        if ($candidates !== []) {
+            return new CandidateColumn($candidates[0], ...[...array_slice($candidates, 1), ...$matches]);
+        }
+        return $matches[0] ?? MissingColumn::Value;
+    }
+}

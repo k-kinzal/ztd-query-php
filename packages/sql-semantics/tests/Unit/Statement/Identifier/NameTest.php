@@ -16,6 +16,8 @@ use SqlSemantics\Statement\Identifier\Quote;
 final class NameTest extends TestCase
 {
     #[TestWith(['foo', Quote::None, 'foo'])]
+    #[TestWith(['1foo', Quote::None, '1foo'])]
+    #[TestWith(['$foo', Quote::None, '$foo'])]
     #[TestWith(['a"b', Quote::Double, '"a""b"'])]
     #[TestWith(['a`b', Quote::Backtick, '`a``b`'])]
     #[TestWith(['a b', Quote::Bracket, '[a b]'])]

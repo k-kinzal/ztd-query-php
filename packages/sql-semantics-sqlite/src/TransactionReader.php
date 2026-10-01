@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\Sqlite;
 use SqlParser\Parser\Node;
 use SqlSemantics\Core\Ast\Tree;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\Quote;
 use SqlSemantics\Statement\Transaction\Begin;
 use SqlSemantics\Statement\Transaction\Commit;
 use SqlSemantics\Statement\Transaction\CommitKeyword;
@@ -71,10 +70,6 @@ final class TransactionReader
      */
     public function name(Node $node): Name
     {
-        $tokens = $node->tokens();
-        assert(count($tokens) === 1, 'A name has one identifier token.');
-        $token = $tokens[0];
-        $quote = Quote::tryFrom(substr($token->text, 0, 1)) ?? Quote::None;
-        return new Name((new NameRules())->name($token), $quote);
+        return (new IdentifierReader())->name($node);
     }
 }
