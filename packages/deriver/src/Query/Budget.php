@@ -21,6 +21,8 @@ final class Budget
      * @param int $iterations Maximum precise visits to a loop header
      * @param int $recursion Maximum active specializations of a recursive callable
      * @param int $nodes Maximum materialized value and dependency nodes
+     * @param int $symbolicRecursion Maximum active specializations of a recursive callable entered with symbolic inputs;
+     *     each level of such recursion multiplies the paths to explore, unlike recursion over concrete values
      * @throws InvalidInputException If any budget is not positive
      */
     public function __construct(
@@ -29,8 +31,9 @@ final class Budget
         public readonly int $iterations = 16,
         public readonly int $recursion = 64,
         public readonly int $nodes = 20000,
+        public readonly int $symbolicRecursion = 4,
     ) {
-        if (min($transfers, $partitions, $iterations, $recursion, $nodes) < 1) {
+        if (min($transfers, $partitions, $iterations, $recursion, $nodes, $symbolicRecursion) < 1) {
             throw new InvalidInputException('Every logical budget must be positive.');
         }
     }

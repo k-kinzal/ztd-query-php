@@ -22,6 +22,7 @@ final class PropertyMetadata
      * @param bool $static Whether storage is shared by the class
      * @param bool $readonly Whether the property is readonly
      * @param Term|null $default Null means no initializer; opaque means an unevaluated initializer
+     * @param string $docComment Raw doc comment of the property or promoted parameter, or an empty string
      */
     public function __construct(
         public readonly string $name,
@@ -31,6 +32,7 @@ final class PropertyMetadata
         public readonly bool $static,
         public readonly bool $readonly,
         public readonly ?Term $default,
+        public readonly string $docComment = '',
     ) {
     }
 }

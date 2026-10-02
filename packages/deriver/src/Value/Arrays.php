@@ -102,4 +102,53 @@ final class Arrays
         }
         return $right->isSecret() ? new Term($left->kind, $left->literal, $left->operands, $left->attributes, true) : $left;
     }
+
+    /**
+     * Finds the closed integer-keyed destination at the start of a symbolic merge, whose entries no source can replace or reorder.
+     * @param Term $array Possibly symbolic merge
+     * @return Term|null Leading entries in order, or null when the merge has no such destination
+     */
+    public function head(Term $array): ?Term
+    {
+        if ($array->kind !== 'array-merge') {
+            return null;
+        }
+        while ($array->kind === 'array-merge' && isset($array->operands[0])) {
+            $array = $array->operands[0];
+        }
+        if ($array->kind !== 'array' || ($array->attributes['open'] ?? false) === true || $array->operands === [] || array_filter(array_keys($array->operands), is_string(...)) !== []) {
+            return null;
+        }
+        return $array;
+    }
+
+    /**
+     * Separates a single symbolic merge into its known head and the source appended after it.
+     * @param Term $array Possibly symbolic merge
+     * @return array{Term, Term}|null Head and appended source, or null when either part is not separable
+     */
+    public function split(Term $array): ?array
+    {
+        $head = $this->head($array);
+        if ($head === null || $array->operands[0] !== $head || !isset($array->operands[1])) {
+            return null;
+        }
+        return [$head, $array->operands[1]];
+    }
+
+    /**
+     * Checks that appending arrays cannot reach the occupied maximum append index; a PHP array holds fewer than 2^32 elements.
+     * @param Term $array Unpack destination
+     * @return bool Whether every later append index is provably available
+     */
+    public function appendable(Term $array): bool
+    {
+        $appended = 0;
+        while ($array->kind === 'array-merge' && isset($array->operands[0])) {
+            $appended++;
+            $array = $array->operands[0];
+        }
+        $next = $array->kind === 'array' ? $this->next($array) : null;
+        return $next !== null && $next <= PHP_INT_MAX - ($appended + 1) * 4294967296;
+    }
 }

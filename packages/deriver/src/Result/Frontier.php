@@ -22,7 +22,7 @@ final class Frontier
      * @param SourceRef $at at
      * @param string $operation operation
      * @param list<string> $affectedProjections affectedProjections
-     * @param list<string> $knownDependencies knownDependencies
+     * @param list<string> $knownDependencies Named inputs behind the frontier: `global:<name>` for a global variable, the same key `Configuration::$environment` accepts, or `variable:<name>` for a function-local variable
      * @param Term|null $residual residual
      * @param string $missingCapability missingCapability
      */

@@ -129,4 +129,49 @@ final class CatalogMetadataTest extends TestCase
         self::assertSame('user', $class->constants['KIND']->native());
         self::assertSame('Model', $class->parent);
     }
+
+    /**
+     * @throws JsonException If captured fixture values cannot be encoded
+     */
+    public function testObjectCreationIsSelectedByItsConstructor(): void
+    {
+        $session = Analysis::session('<?php namespace App; class Repo {function __construct($table){} static function make(){return new self("self");}} class Sub extends Repo {function copy(){return new static("static");} function base(){return new parent("parent");}} function target($class){$a=new Repo("users");$b=new \\Other\\Thing(1);$c=new $class(2);$d=new class {};record("call");} function record($x){}');
+        $all = $session->callsTo('*');
+        self::assertSame([['new', 'App\\Repo'], ['new', 'static'], ['new', 'App\\Repo'], ['new', 'App\\Repo'], ['new', 'Other\\Thing'], ['invoke', 'App\\record']], array_map(static fn (\Deriver\Reference\Observation $call): array => [$call->operation, $call->target], $all));
+        $constructions = $session->callsTo('app\\REPO::__construct');
+        self::assertSame(['App\\Repo::make', 'App\\Sub::base', 'App\\target'], array_map(static fn (\Deriver\Reference\Observation $call): string => $call->callable, $constructions));
+        self::assertSame([], $session->callsTo('App\\Repo'));
+        $users = $constructions[2];
+        self::assertNull($users->receiver);
+        $result = $session->derive(new TupleQuery($users->beforeInvocation(), ['table' => $users->argument(0)]));
+        self::assertSame('users', $result->normalOutcomes[0]->values['table']->native());
+        self::assertNotNull($users->returned);
+        $created = $session->derive(new ValueQuery($users->returned));
+        self::assertSame('App\\Repo', $created->normalOutcomes[0]->values['value']->attributes['class']);
+    }
+
+    /**
+     * @throws JsonException If captured fixture values cannot be encoded
+     */
+    public function testFrontiersNameGlobalsThatTheEnvironmentSupplies(): void
+    {
+        $source = '<?php function sink($sql){} function posts(){global $prefix;sink("SELECT * FROM ".$prefix."posts");} sink("SELECT * FROM ".$table);';
+        $session = Analysis::session($source);
+        $names = [];
+        foreach ($session->callsTo('sink') as $call) {
+            foreach ($session->derive(new ValueQuery($call->argument(0)))->frontiers as $frontier) {
+                array_push($names, ...$frontier->knownDependencies);
+            }
+        }
+        sort($names);
+        self::assertSame(['global:prefix', 'global:table'], $names);
+        $configured = Analysis::session($source, new Configuration(environment: ['global:prefix' => Term::constant('wp_'), 'global:table' => Term::constant('users')]));
+        $values = [];
+        foreach ($configured->callsTo('sink') as $call) {
+            $result = $configured->derive(new ValueQuery($call->argument(0)));
+            self::assertSame([], $result->frontiers);
+            $values[] = $result->definite()?->values['value']->native();
+        }
+        self::assertSame(['SELECT * FROM wp_posts', 'SELECT * FROM users'], $values);
+    }
 }

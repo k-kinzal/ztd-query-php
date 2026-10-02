@@ -10,7 +10,9 @@ use Deriver\Project\Configuration;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\SourceFile;
 use Deriver\Query\ReturnQuery;
+use Deriver\Query\ValueQuery;
 use Deriver\Result\DerivationResult;
+use Deriver\Result\Frontier;
 use JsonException;
 
 /**
@@ -41,5 +43,34 @@ final class Analysis
     public static function returns(string $source, string $symbol = 'target'): DerivationResult
     {
         return self::session($source)->derive(new ReturnQuery($symbol));
+    }
+
+    /**
+     * Derives the first argument of the first call to a sink function.
+     * @param string $source PHP source, including its opening tag and the sink declaration
+     * @param string $sink Called function
+     * @return DerivationResult Symbolic argument observation
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public static function argument(string $source, string $sink = 'sink'): DerivationResult
+    {
+        $session = self::session($source);
+        return $session->derive(new ValueQuery($session->callsTo($sink)[0]->argument(0)));
+    }
+
+    /**
+     * Selects the frontier recorded for one operation.
+     * @param DerivationResult $result Derived observation
+     * @param string $operation Frontier operation
+     * @return Frontier|null The frontier, or null when the operation recorded none
+     */
+    public static function frontier(DerivationResult $result, string $operation): ?Frontier
+    {
+        foreach ($result->frontiers as $frontier) {
+            if ($frontier->operation === $operation) {
+                return $frontier;
+            }
+        }
+        return null;
     }
 }

@@ -701,7 +701,8 @@
         "partitions",
         "iterations",
         "recursion",
-        "nodes"
+        "nodes",
+        "symbolicRecursion"
       ],
       "properties": {
         "transfers": {
@@ -723,6 +724,10 @@
         "nodes": {
           "type": "integer",
           "minimum": 1
+        },
+        "symbolicRecursion": {
+          "type": "integer",
+          "minimum": 1
         }
       },
       "additionalProperties": false
@@ -732,7 +737,8 @@
       "required": [
         "symbol",
         "arguments",
-        "receiver"
+        "receiver",
+        "properties"
       ],
       "properties": {
         "symbol": {
@@ -766,6 +772,25 @@
               "type": "null"
             }
           ]
+        },
+        "properties": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "value"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "value": {
+                "$ref": "#/$defs/valueRef"
+              }
+            },
+            "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false

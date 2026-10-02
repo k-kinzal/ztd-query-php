@@ -460,4 +460,84 @@ final class MemoryStepTest extends TestCase
         self::assertSame('sql', $state->addresses['address']->local);
     }
 
+    /**
+     * @param Location $address Read storage
+     * @param list<string> $expected Named variable
+     */
+    #[DataProvider('providerVariables')]
+    public function testVariableNamesGlobalAndLocalStorageOnly(Location $address, array $expected): void
+    {
+        self::assertSame($expected, (new MemoryStep(SolverFixture::context()))->variable($address));
+    }
+
+    /**
+     * @return iterable<string,array{Location,list<string>}>
+     */
+    public static function providerVariables(): iterable
+    {
+        yield 'local' => [new Location('cell:0', local: 'sql'), ['variable:sql']];
+        yield 'global' => [new Location('global:sql', local: 'sql'), ['global:sql']];
+        yield 'element' => [new Location('global:sql', ['k'], 'sql'), []];
+        yield 'anonymous cell' => [new Location('cell:0'), []];
+        yield 'unknown' => [new Location('global:sql', local: 'sql', unknown: true), []];
+    }
+
+    public function testUninitializedNamesTheReadVariable(): void
+    {
+        $context = SolverFixture::context();
+        $state = new State();
+        $instruction = new Instruction('read', 'read', new SourceRef('test', 'fixture.php', 0, 1), 'result');
+        (new MemoryStep($context))->uninitialized($instruction, $state->local('x'), $state);
+        self::assertSame(['variable:x'], array_values($context->frontiers)[0]->knownDependencies);
+    }
+
+    public function testReadReportsAnUnconfiguredGlobal(): void
+    {
+        $context = SolverFixture::context();
+        $state = new State();
+        $state->memory->cells['global:wpdb'] = new Term('external', 'global:wpdb', attributes: ['type' => 'mixed']);
+        $state->locals['wpdb'] = new Location('global:wpdb');
+        $state->addresses['a'] = $state->local('wpdb');
+        $value = (new MemoryStep($context))->evaluate(new CallableGraph('target', [], [], new SourceRef('test', 'fixture.php', 0, 1)), new Instruction('read', 'read', new SourceRef('test', 'fixture.php', 0, 1), 'result', ['a']), $state);
+        self::assertSame('global:wpdb', $value->literal);
+        $frontier = array_values($context->frontiers)[0];
+        self::assertSame(['EXTERNAL_INPUT', 'global-read', ['global:wpdb']], [$frontier->code, $frontier->operation, $frontier->knownDependencies]);
+    }
+
+    #[DataProvider('providerUnsetScopes')]
+    public function testUnsetKeepsAVariableUndefinedAcrossUnknownSymbolTables(string $symbol, ?string $unknown, ?string $expected): void
+    {
+        $state = new State();
+        $state->unknownLocals = $unknown;
+        $state->memory->cells['global:x'] = Term::constant(1);
+        $state->locals['x'] = new Location('global:x');
+        (new MemoryStep(SolverFixture::context()))->unset(new CallableGraph($symbol, [], [], new SourceRef('test', 'fixture.php', 0, 1)), $state, $state->local('x'));
+        self::assertSame($expected, isset($state->locals['x']) ? $state->memory->read($state->locals['x'])->kind : null);
+        self::assertSame(str_starts_with($symbol, 'script:') ? 'uninitialized' : 'constant', $state->memory->cells['global:x']->kind);
+    }
+
+    /**
+     * @return iterable<string,array{string,string|null,string|null}>
+     */
+    public static function providerUnsetScopes(): iterable
+    {
+        yield 'function' => ['target', null, null];
+        yield 'function after boundary' => ['target', 'INCLUDE_SEMANTICS_UNSUPPORTED', 'uninitialized'];
+        yield 'script' => ['script:fixture.php', null, null];
+    }
+
+    public function testUnknownSharedMakesALazilyCreatedGlobalUnknown(): void
+    {
+        $context = SolverFixture::context();
+        $state = new State();
+        $step = new MemoryStep($context);
+        self::assertNull($step->unknownShared(new State()));
+        $state->memory->unknownShared = 'MISSING_CALL_MODEL';
+        $value = $step->unknownShared($state);
+        self::assertNotNull($value);
+        self::assertSame(['opaque', 'MISSING_CALL_MODEL', true], [$value->kind, $value->literal, $value->attributes['maybeUninitialized'] ?? null]);
+        $state->addresses['g'] = new Location('global:g', local: 'g');
+        $step->binding(new CallableGraph('target', [], [], new SourceRef('test', 'fixture.php', 0, 1)), new Instruction('g', 'global', new SourceRef('test', 'fixture.php', 0, 1), 'result', ['g']), $state, $state->addresses['g']);
+        self::assertSame('opaque', $state->memory->cells['global:g']->kind);
+    }
 }

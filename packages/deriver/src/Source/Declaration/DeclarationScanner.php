@@ -107,7 +107,7 @@ final class DeclarationScanner
         (new ConstantSignatures())->initializers($this->index, $node, $path, $name, $strict);
         $parent = $node instanceof Stmt\Class_ ? ($node->extends?->toString() ?? '') : '';
         $interfaces = $node instanceof Stmt\Class_ || $node instanceof Stmt\Enum_ ? $node->implements : ($node instanceof Stmt\Interface_ ? $node->extends : []);
-        $this->index->classIndex[strtolower($name)] = new ClassDeclaration($name, $parent, array_values(array_map(static fn (Node\Name $name): string => $name->toString(), $interfaces)), $traits, $methods, $properties, $this->constants($node), $node instanceof Stmt\Enum_ || ($node instanceof Stmt\Class_ && $node->isFinal()), $node instanceof Stmt\Trait_ || $node instanceof Stmt\Class_ && $node->isAbstract(), $node instanceof Stmt\Interface_, $readonly, $node instanceof Stmt\Enum_, constantDeclarations: (new ConstantSignatures())->read($this->index, $node, $name));
+        $this->index->classIndex[strtolower($name)] = new ClassDeclaration($name, $parent, array_values(array_map(static fn (Node\Name $name): string => $name->toString(), $interfaces)), $traits, $methods, $properties, $this->constants($node), $node instanceof Stmt\Enum_ || ($node instanceof Stmt\Class_ && $node->isFinal()), $node instanceof Stmt\Trait_ || $node instanceof Stmt\Class_ && $node->isAbstract(), $node instanceof Stmt\Interface_, $readonly, $node instanceof Stmt\Enum_, constantDeclarations: (new ConstantSignatures())->read($this->index, $node, $name), docComment: $node->getDocComment()?->getText() ?? '');
     }
 
     /**
@@ -144,7 +144,7 @@ final class DeclarationScanner
         foreach ($node->props as $property) {
             $name = $property->name->toString();
             $default = $property->default === null ? null : $compiler->expression($property->default, $path, $class . '::$' . $name, $class);
-            $result[$name] = new PropertyDeclaration($name, $class, $compiler->type($node->type), $node->isPrivate() ? 'private' : ($node->isProtected() ? 'protected' : 'public'), $node->isStatic(), $default, $readonlyClass || $node->isReadonly());
+            $result[$name] = new PropertyDeclaration($name, $class, $compiler->type($node->type), $node->isPrivate() ? 'private' : ($node->isProtected() ? 'protected' : 'public'), $node->isStatic(), $default, $readonlyClass || $node->isReadonly(), $node->getDocComment()?->getText() ?? '');
         }
         return $result;
     }
@@ -191,7 +191,7 @@ final class DeclarationScanner
                 continue;
             }
             $name = $parameter->var->name;
-            $properties[$name] = new PropertyDeclaration($name, $class, (new CallableCompiler($this->index))->type($parameter->type), $parameter->isPrivate() ? 'private' : ($parameter->isProtected() ? 'protected' : 'public'), readonly: $readonlyClass || $parameter->isReadonly());
+            $properties[$name] = new PropertyDeclaration($name, $class, (new CallableCompiler($this->index))->type($parameter->type), $parameter->isPrivate() ? 'private' : ($parameter->isProtected() ? 'protected' : 'public'), readonly: $readonlyClass || $parameter->isReadonly(), docComment: $parameter->getDocComment()?->getText() ?? '');
         }
         return $properties;
     }

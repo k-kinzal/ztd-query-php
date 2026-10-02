@@ -79,6 +79,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Model\Binding\ArgumentBindings::class)]
 #[UsesClass(\Deriver\Model\Binding\BoundArgument::class)]
 #[UsesClass(\Deriver\Model\Builtin\ArrayFunctions::class)]
+#[UsesClass(\Deriver\Model\Builtin\ArrayMutation::class)]
 #[UsesClass(\Deriver\Model\Builtin\Formatting::class)]
 #[UsesClass(\Deriver\Model\Builtin\FunctionModel::class)]
 #[UsesClass(\Deriver\Model\Builtin\Library::class)]
@@ -201,6 +202,10 @@ final class ScalarFunctionsTest extends TestCase
         yield 'count' => ['count',[Term::fromNative(['a' => 1,'b' => 2])],2];
         yield 'keys' => ['array_keys',[Term::fromNative(['a' => 1,7 => 2])],['a',7]];
         yield 'values' => ['array_values',[Term::fromNative(['a' => 1,7 => 2])],[1,2]];
+        yield 'shift record' => ['array_shift',[Term::fromNative(['k' => 1,5 => 2])],['array' => [2],'result' => 1]];
+        yield 'unshift record' => ['array_unshift',[Term::fromNative([5 => 2]),Term::fromNative([1])],['array' => [1,2],'result' => 2]];
+        yield 'first key' => ['array_key_first',[Term::fromNative(['a' => 1,7 => 2])],'a'];
+        yield 'slice' => ['array_slice',[Term::fromNative([1,2,3]),Term::constant(1),Term::constant(null),Term::constant(false)],[2,3]];
         yield 'merge variadic' => ['array_merge',[Term::fromNative([[7 => 1,'x' => 2],[3,'x' => 4]])],[1,'x' => 4,3]];
         yield 'key existence' => ['array_key_exists',[Term::constant('x'),Term::fromNative(['x' => null])],true];
         yield 'membership' => ['in_array',[Term::constant(3),Term::fromNative([2,3]),Term::constant(true)],true];

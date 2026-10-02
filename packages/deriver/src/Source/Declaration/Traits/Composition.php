@@ -102,12 +102,12 @@ final class Composition
                 $properties += $this->properties($declaration, $class->name);
                 $constants += $declaration->constants;
                 foreach ($declaration->constantDeclarations as $name => $constant) {
-                    $constantDeclarations[$name] ??= new ClassConstant($class->name, $name, $constant->visibility, $constant->type, $constant->enum);
+                    $constantDeclarations[$name] ??= new ClassConstant($class->name, $name, $constant->visibility, $constant->type, $constant->enum, $constant->docComment);
                 }
                 $this->constants($declaration, $class->name);
             }
         }
-        $this->index->classIndex[strtolower($class->name)] = new ClassDeclaration($class->name, $class->parent, $class->interfaces, $class->traits, $methods, $properties, $constants, $class->final, $class->abstract, $class->interface, $class->readonly, $class->enum, true, $constantDeclarations);
+        $this->index->classIndex[strtolower($class->name)] = new ClassDeclaration($class->name, $class->parent, $class->interfaces, $class->traits, $methods, $properties, $constants, $class->final, $class->abstract, $class->interface, $class->readonly, $class->enum, true, $constantDeclarations, $class->docComment);
     }
 
     /**
@@ -121,7 +121,7 @@ final class Composition
         $properties = [];
         foreach ($trait->properties as $name => $property) {
             $default = $property->default === null ? null : (new PropertyScope())->graph($property->default, $class);
-            $properties[$name] = new PropertyDeclaration($name, $class, $property->type, $property->visibility, $property->static, $default, $property->readonly);
+            $properties[$name] = new PropertyDeclaration($name, $class, $property->type, $property->visibility, $property->static, $default, $property->readonly, $property->docComment);
         }
         return $properties;
     }

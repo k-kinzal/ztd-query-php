@@ -127,6 +127,10 @@ final class Lattice
         if ($upper->kind === 'array' && $lower->kind === 'array') {
             return $this->shape($upper, $lower);
         }
+        $prefix = (new StringPrefix())->bound($upper);
+        if ($prefix !== null) {
+            return $this->type($lower) === 'string' && (new StringPrefix())->contains($prefix, $lower);
+        }
         return (new Identity())->key($upper) === (new Identity())->key($lower);
     }
 
@@ -148,7 +152,7 @@ final class Lattice
     }
 
     /**
-     * Widens both inputs to a finite type fact that contains them.
+     * Widens both inputs to a finite type fact that contains them, keeping the bytes two strings share at the start.
      * @param Term $previous Previous loop approximation
      * @param Term $next Newly propagated value
      * @return Term Inclusive widened value
@@ -163,6 +167,12 @@ final class Lattice
         }
         $a = $this->type($previous);
         $b = $this->type($next);
+        if ($a === 'string' && $b === 'string') {
+            $prefixed = (new StringPrefix())->widen($previous, $next);
+            if ($prefixed !== null) {
+                return $prefixed;
+            }
+        }
         $types = array_values(array_unique([...explode('|', $a), ...explode('|', $b)]));
         sort($types);
         $type = in_array('mixed', $types, true) ? 'mixed' : implode('|', $types);

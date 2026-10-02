@@ -62,6 +62,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Memory\Memory::class)]
 #[UsesClass(\Deriver\Memory\ReferenceConstraint::class)]
 #[UsesClass(\Deriver\Memory\StorageCapture::class)]
+#[UsesClass(\Deriver\Model\Builtin\TypePredicates::class)]
 #[UsesClass(\Deriver\Model\Registration\Extensions::class)]
 #[UsesClass(\Deriver\Model\Registration\ProviderInputs::class)]
 #[UsesClass(\Deriver\Model\Registration\Registry::class)]
@@ -81,6 +82,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(SourceRef::class)]
 #[UsesClass(\Deriver\Result\Alternative::class)]
 #[UsesClass(\Deriver\Result\Assessment::class)]
+#[UsesClass(\Deriver\Result\Frontier::class)]
 #[UsesClass(\Deriver\Result\Derivation::class)]
 #[UsesClass(\Deriver\Result\DerivationResult::class)]
 #[UsesClass(\Deriver\Result\Serialization\JsonText::class)]
@@ -112,6 +114,8 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Source\Validation\AssignmentPatterns::class)]
 #[UsesClass(\Deriver\Source\Validation\ClassScope::class)]
 #[UsesClass(\Deriver\Source\Validation\TargetSyntax::class)]
+#[UsesClass(\Deriver\Evaluation\Havoc::class)]
+#[UsesClass(\Deriver\Model\Builtin\TypePredicates::class)]
 #[UsesClass(\Deriver\Value\Arrays::class)]
 #[UsesClass(\Deriver\Value\Identity::class)]
 #[UsesClass(\Deriver\Value\Operations::class)]
@@ -209,6 +213,84 @@ final class IterationStepTest extends TestCase
         yield 'open' => [Term::array([], true)];
         yield 'secret open' => [new Term('array', attributes:['open' => true], secret:true)];
     }
+    public function testEvaluateNeverReadsOperandsOfSymbolicIterablesAsEntries(): void
+    {
+        $state = new State();
+        $state->registers['it'] = new Term('iterator', 'cursor');
+        $state->iterators['cursor'] = new IteratorCursor(new Term('intrinsic', 'explode', [Term::constant(','), Term::parameter('s', 'string')], ['type' => 'array']), position:0);
+        $step = new IterationStep(\Tests\Fake\SolverFixture::context());
+        $source = new SourceRef('test', 'a.php', 0, 1);
+        self::assertSame('UNKNOWN_ITERABLE', $step->evaluate(new Instruction('i', 'iterator-value', $source, 'value', ['it']), $state)->literal);
+        self::assertSame('UNKNOWN_ITERABLE', $step->evaluate(new Instruction('i', 'iterator-key', $source, 'key', ['it']), $state)->literal);
+    }
+    public function testAdvanceStoresTheCursorAndReportsKnownHeadEntries(): void
+    {
+        $state = new State();
+        $merge = new Term('array-merge', operands:[Term::fromNative(['id']), Term::parameter('x', 'array')], attributes:['type' => 'array']);
+        $cursor = new IteratorCursor($merge, position:0);
+        $step = new IterationStep(\Tests\Fake\SolverFixture::context());
+        self::assertTrue($step->advance('cursor', $cursor, Term::fromNative(['id']), $state)->native());
+        self::assertSame($cursor, $state->iterators['cursor']);
+        self::assertSame('external', $step->advance('cursor', new IteratorCursor($merge, position:1), Term::fromNative(['id']), $state)->kind);
+    }
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerMergeHeads')]
+    public function testEvaluateVisitsTheKnownHeadOfAMergeBeforeItsUnknownSource(int $position, string $operation, string $kind, mixed $expected): void
+    {
+        $state = new State();
+        $state->registers['it'] = new Term('iterator', 'cursor');
+        $merge = new Term('array-merge', operands:[Term::fromNative(['id', 'name']), Term::parameter('x', 'array')], attributes:['type' => 'array']);
+        $state->iterators['cursor'] = new IteratorCursor($merge, position:$position);
+        $result = (new IterationStep(\Tests\Fake\SolverFixture::context()))->evaluate(new Instruction('i', $operation, new SourceRef('test', 'a.php', 0, 1), 'result', ['it']), $state);
+        self::assertSame($kind, $result->kind);
+        self::assertSame($expected, $result->isConcrete() ? $result->native() : $result->literal);
+    }
+    /**
+     * @return iterable<string,array{int,string,string,mixed}>
+     */
+    public static function providerMergeHeads(): iterable
+    {
+        yield 'first entry exists' => [-1,'iterate','constant',true];
+        yield 'last head entry exists' => [0,'iterate','constant',true];
+        yield 'source entries are unknown' => [1,'iterate','external','cursor:has-next:2'];
+        yield 'head key' => [1,'iterator-key','constant',1];
+        yield 'head value' => [1,'iterator-value','constant','name'];
+        yield 'source value' => [2,'iterator-value','opaque','UNKNOWN_ITERABLE'];
+    }
+    public function testKeyIsCertainOnlyForTrackedClosedStorageAndKnownSnapshotEntries(): void
+    {
+        $state = new State();
+        $location = $state->memory->allocate(Term::fromNative(['k' => 1]));
+        $state->memory->liveArrays['live'] = new LiveArray($location, [], 'k');
+        $step = new IterationStep(\Tests\Fake\SolverFixture::context());
+        self::assertSame('k', $step->key('live', new IteratorCursor(Term::array([]), $location), Term::fromNative(['k' => 1]), null, $state));
+        self::assertNull($step->key('live', new IteratorCursor(Term::array([]), $location), Term::parameter('a', 'array'), null, $state));
+        self::assertSame(0, $step->key('snapshot', new IteratorCursor(Term::fromNative([1]), position: 0), Term::fromNative([1]), null, $state));
+        $havocked = Term::array([new Term('opaque', 'UNKNOWN', attributes: ['maybeUninitialized' => true])], true);
+        self::assertNull($step->key('snapshot', new IteratorCursor($havocked, position: 0), $havocked, null, $state));
+    }
+    public function testUnknownElementInvalidatesArrayOrObjectStorage(): void
+    {
+        $state = new State();
+        $location = $state->memory->allocate(Term::fromNative([1]));
+        $step = new IterationStep(\Tests\Fake\SolverFixture::context());
+        $array = $step->unknownElement($state, $location, Term::parameter('a', 'array'));
+        self::assertSame([$location->root, true], [$array->root, $array->unknown]);
+        $object = $step->unknownElement($state, $location, new Term('object', 'o1', attributes: ['class' => 'stdClass']));
+        self::assertSame(['object:o1', true], [$object->root, $object->unknown]);
+        $untyped = $step->unknownElement($state, $location, Term::parameter('x'));
+        self::assertTrue($untyped->unknown);
+        self::assertSame('opaque', $state->memory->read($location)->kind);
+    }
+    public function testAdvanceForgetsTheTrackedBucketWhenLiveStorageBecomesUnknown(): void
+    {
+        $state = new State();
+        $location = $state->memory->allocate(Term::parameter('a', 'array'));
+        $state->memory->liveArrays['live'] = new LiveArray($location, [1], 0);
+        $step = new IterationStep(\Tests\Fake\SolverFixture::context());
+        self::assertSame('external', $step->advance('live', new IteratorCursor(Term::parameter('a', 'array'), $location, 1), null, $state)->kind);
+        self::assertNull($state->memory->liveArrays['live']->current);
+        self::assertSame([], $state->memory->liveArrays['live']->remaining);
+    }
     public function testEvaluateReleasesOnlyTheSelectedIterator(): void
     {
         $state = new State();
@@ -266,6 +348,62 @@ final class IterationStepTest extends TestCase
         self::assertSame(-1, $state->iterators[$iterator->literal]->position);
         self::assertSame([], $state->memory->liveArrays);
         self::assertSame([], $state->memory->cells);
+    }
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerSubjects')]
+    public function testIterableAcceptsOnlyArraysAndObjects(Term $subject, ?bool $expected): void
+    {
+        self::assertSame($expected, (new IterationStep(\Tests\Fake\SolverFixture::context()))->iterable($subject));
+    }
+    /**
+     * @return iterable<string,array{Term,bool|null}>
+     */
+    public static function providerSubjects(): iterable
+    {
+        yield 'null' => [Term::constant(null), false];
+        yield 'string' => [Term::constant('abc'), false];
+        yield 'false' => [Term::constant(false), false];
+        yield 'array' => [Term::array([]), true];
+        yield 'object' => [new Term('object', 'o1', attributes:['class' => 'Item']), true];
+        yield 'typed scalar' => [Term::parameter('rows', 'int|string'), false];
+        yield 'typed array' => [Term::parameter('rows', 'array'), true];
+        yield 'nullable array' => [Term::parameter('rows', 'array|null'), null];
+        yield 'mixed' => [Term::parameter('rows'), null];
+    }
+    public function testInitializeSkipsANonIterableSubjectWithAWarning(): void
+    {
+        $state = new State();
+        $state->registers['rows'] = Term::constant(null, true);
+        $context = \Tests\Fake\SolverFixture::context();
+        $step = new IterationStep($context);
+        $source = new SourceRef('test', 'a.php', 0, 1);
+        $state->registers['it'] = $step->evaluate(new Instruction('i', 'iterator', $source, 'it', ['rows']), $state);
+        $next = $step->evaluate(new Instruction('n', 'iterate', $source, 'next', ['it']), $state);
+        self::assertFalse($next->native());
+        self::assertTrue($next->isSecret());
+        self::assertSame(['foreach-non-iterable'], array_column(array_values($context->frontiers), 'operation'));
+    }
+    public function testReferencedLeavesAnUndefinedVariableUndefined(): void
+    {
+        $state = new State();
+        $state->addresses['rows'] = $state->local('rows');
+        $context = \Tests\Fake\SolverFixture::context();
+        $instruction = new Instruction('i', 'iterator', new SourceRef('test', 'a.php', 0, 1), 'it', ['rows'], attributes:['byReference' => true]);
+        (new IterationStep($context))->initialize($instruction, $state);
+        self::assertSame('uninitialized', $state->memory->read($state->local('rows'))->kind);
+        self::assertSame([], $state->memory->liveArrays);
+        $frontiers = array_values($context->frontiers);
+        self::assertSame(['uninitialized-read', 'foreach-non-iterable'], array_column($frontiers, 'operation'));
+        self::assertSame(['variable:rows'], $frontiers[0]->knownDependencies);
+    }
+    public function testReferencedCreatesAMissingElementBeforeSkippingIt(): void
+    {
+        $state = new State();
+        $root = $state->local('rows');
+        $state->memory->write($root, Term::array([]));
+        $state->addresses['element'] = new \Deriver\Memory\Location($root->root, ['k']);
+        $instruction = new Instruction('i', 'iterator', new SourceRef('test', 'a.php', 0, 1), 'it', ['element'], attributes:['byReference' => true]);
+        (new IterationStep(\Tests\Fake\SolverFixture::context()))->initialize($instruction, $state);
+        self::assertSame(['k' => null], $state->memory->materialize($state->memory->read($root))->native());
     }
 
 }

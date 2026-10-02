@@ -29,6 +29,7 @@ final class CallableGraph
      * @param bool $static Whether a method has no instance binding
      * @param bool $abstract Whether the declaration has no executable method body
      * @param bool $external Whether an external declaration supplies a signature without its implementation
+     * @param string $docComment Raw declaration doc comment, or an empty string
      */
     public function __construct(
         public readonly string $symbol,
@@ -46,6 +47,7 @@ final class CallableGraph
         public readonly bool $static = false,
         public readonly bool $abstract = false,
         public readonly bool $external = false,
+        public readonly string $docComment = '',
     ) {
     }
 }

@@ -28,6 +28,7 @@ final class ClassDeclaration
      * @param bool $composed Whether trait members are already imported into this class
      * @param array<string, ClassConstant> $constantDeclarations Constant access and initializer contracts
      * @param bool $enum Whether allocation is restricted to declared enum cases
+     * @param string $docComment Raw declaration doc comment, or an empty string
      */
     public function __construct(
         public readonly string $name,
@@ -44,6 +45,7 @@ final class ClassDeclaration
         public readonly bool $enum = false,
         public readonly bool $composed = false,
         public readonly array $constantDeclarations = [],
+        public readonly string $docComment = '',
     ) {
     }
 }

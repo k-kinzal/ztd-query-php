@@ -162,6 +162,10 @@ final class State
      */
     public function alias(Location $destination, Location $source): void
     {
+        if ($source->unknown) {
+            $this->unknownAlias($destination, $source);
+            return;
+        }
         $cell = $this->memory->reference($source);
         if ($destination->local !== '' && $destination->path === []) {
             if (str_starts_with($destination->root, 'global:') && $destination->root !== $cell) {
@@ -171,6 +175,21 @@ final class State
             return;
         }
         $this->memory->writePath($destination->root, $destination->path, new Term('cell', $cell), true);
+    }
+
+    /**
+     * Binds a reference to an unknown slot of known storage so that writes through either side invalidate that storage.
+     * @param Location $destination Left address
+     * @param Location $source Unknown slot, whose root is the storage it may belong to
+     */
+    public function unknownAlias(Location $destination, Location $source): void
+    {
+        if ($destination->local !== '' && $destination->path === [] && !str_starts_with($destination->root, 'global:')) {
+            $this->locals[$destination->local] = new Location($source->root, $source->path, $destination->local, true);
+            return;
+        }
+        $this->memory->write($source, Term::opaque('UNKNOWN_REFERENCE'));
+        $this->memory->write($destination, Term::opaque('UNKNOWN_REFERENCE'));
     }
 
     /**

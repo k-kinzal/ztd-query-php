@@ -150,6 +150,17 @@ final class NativeOverloadContractTest extends TestCase
         $result = Analysis::returns('<?php function target(array $input){return ["a"=>1,...$input,"b"=>2];}');
         self::assertSame('array-set', $result->normalOutcomes[0]->values['return']->kind);
         self::assertSame('array-merge', $result->normalOutcomes[0]->values['return']->operands[0]->kind);
+        self::assertSame([], $result->exceptionalOutcomes);
+        self::assertSame([], $result->frontiers);
+    }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testUnknownUnpackAfterTheMaximumIndexKeepsTheOccupiedIndexError(): void
+    {
+        $result = Analysis::returns('<?php function target(array $input){return [PHP_INT_MAX=>1,...$input];}');
+        self::assertSame('array-merge', $result->normalOutcomes[0]->values['return']->kind);
         self::assertSame('Error', $result->exceptionalOutcomes[0]->exception->literal);
         self::assertContains('WIDENED', array_column($result->frontiers, 'code'));
     }

@@ -86,12 +86,14 @@ final class MethodInvocation
             }
             array_push($result, ...(new CallExecutor($this->machine))->symbol($candidate->symbol, $arguments, $path, $instruction, $candidate->receiver ?? $receiver, strict: $caller->strict));
         }
-        foreach ($dispatch->candidates($class, $name) as $candidate => $target) {
+        $candidates = $dispatch->candidates($class, $name);
+        array_push($result, ...$this->modeled($caller, $instruction, $state, $arguments, $receiver, $class, $name, $candidates));
+        foreach ($candidates as $candidate => $target) {
             $path = $state->fork();
             if (!(new Constraints($context))->assume($path, new Term('binary', '!==', [$receiver, Term::constant(null)], ['type' => 'bool']), true)) {
                 continue;
             }
-            $object = new Term('object', is_string($receiver->literal) ? $receiver->literal : $path->memory->fresh('parameter-object'), attributes: ['class' => $candidate]);
+            $object = new Term('object', $this->identity($receiver, $path), attributes: ['class' => $candidate]);
             array_push($result, ...(new Invocation($this->machine))->call($caller, $instruction, $path, $arguments, $object, $candidate, $name, $dispatch->method($candidate, $name)));
         }
         $bound = implode('|', array_diff(explode('|', $class), ['null']));
@@ -104,6 +106,46 @@ final class MethodInvocation
         $closed = $provided->exhaustive || $context->configuration->closedWorld || ($context->program->classes()[strtolower($bound)]->final ?? false);
         if (!$closed || $result === []) {
             array_push($result, ...(new UnknownCall($context))->apply($state->fork(), $instruction, $arguments, $receiver, 'OPEN_DISPATCH'));
+        }
+        return $result;
+    }
+
+    /**
+     * Keeps a symbolic receiver's identity only when its spelling denotes one object along the path.
+     * @param Term $receiver Runtime receiver bound
+     * @param State $path Dispatched path
+     * @return string Stable input identity, or a fresh one for residuals that may denote distinct objects
+     */
+    public function identity(Term $receiver, State $path): string
+    {
+        $stable = in_array($receiver->kind, ['parameter', 'external', 'object'], true) || $receiver->kind === 'opaque' && isset($receiver->attributes['stability']);
+        return $stable && is_string($receiver->literal) ? $receiver->literal : $path->memory->fresh('parameter-object');
+    }
+
+    /**
+     * Invokes user models declared on the receiver's type bound, such as framework classes without source.
+     * @param CallableGraph $caller Calling graph
+     * @param Instruction $instruction Call site
+     * @param State $state Input state
+     * @param list<PassedArgument> $arguments Evaluated actuals
+     * @param Term $receiver Runtime receiver bound
+     * @param string $class Resolved declared class
+     * @param string $name Method spelling
+     * @param array<string, string> $candidates Source implementations already selected
+     * @return list<State> Modeled alternatives for a non-null receiver
+     */
+    public function modeled(CallableGraph $caller, Instruction $instruction, State $state, array $arguments, Term $receiver, string $class, string $name, array $candidates): array
+    {
+        $context = $this->machine->context;
+        $result = [];
+        foreach (array_diff(explode('|', $class), ['null', '']) as $type) {
+            if (isset($candidates[$type]) || !isset($context->models->models[strtolower($type . '::' . $name)])) {
+                continue;
+            }
+            $path = $state->fork();
+            if ((new Constraints($context))->assume($path, new Term('binary', '!==', [$receiver, Term::constant(null)], ['type' => 'bool']), true)) {
+                array_push($result, ...(new Invocation($this->machine))->call($caller, $instruction, $path, $arguments, $receiver, $type, $name, null));
+            }
         }
         return $result;
     }

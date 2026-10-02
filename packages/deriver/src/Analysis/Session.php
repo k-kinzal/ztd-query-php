@@ -177,8 +177,8 @@ final class Session implements AnalysisSession
     }
 
     /**
-     * Selects source call sites using evaluated IR argument references.
-     * @param string $symbol Function or method name
+     * Selects source call and object creation sites using evaluated IR argument references.
+     * @param string $symbol Function or method name, `Class::__construct`, or `*`
      * @return list<Observation> Deterministically ordered observations
      */
     #[Override]

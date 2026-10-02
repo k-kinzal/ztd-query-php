@@ -30,6 +30,8 @@ use Tests\Fake\SummaryFixture;
  * @covers \Deriver\Evaluation\Machine
  */
 #[CoversClass(Machine::class)]
+#[UsesClass(\Deriver\Value\Arrays::class)]
+#[UsesClass(\Deriver\Source\Compilation\AggregateLowering::class)]
 #[UsesClass(\Deriver\Constraint\Constraints::class)]
 #[UsesClass(BasicBlock::class)]
 #[UsesClass(CallableGraph::class)]
@@ -53,6 +55,7 @@ use Tests\Fake\SummaryFixture;
 #[UsesClass(Completion::class)]
 #[UsesClass(\Deriver\Evaluation\Context::class)]
 #[UsesClass(\Deriver\Evaluation\Control\ExceptionMatch::class)]
+#[UsesClass(\Deriver\Evaluation\Control\LoopConvergence::class)]
 #[UsesClass(Handler::class)]
 #[UsesClass(\Deriver\Evaluation\Control\ObservationLimit::class)]
 #[UsesClass(\Deriver\Evaluation\Control\ResidualPaths::class)]
@@ -125,6 +128,7 @@ use Tests\Fake\SummaryFixture;
 #[UsesClass(\Deriver\Value\Identity::class)]
 #[UsesClass(\Deriver\Value\NumericString::class)]
 #[UsesClass(\Deriver\Value\Operations::class)]
+#[UsesClass(\Deriver\Value\StringPrefix::class)]
 #[UsesClass(Term::class)]
 #[Small]
 final class MachineTest extends TestCase
@@ -209,15 +213,53 @@ final class MachineTest extends TestCase
         self::assertSame(1, $paths[0]->completion->value?->literal);
         self::assertSame([], $context->normal);
     }
-    public function testRunStopsLongDistinctCallChainsBeforeTheHostStackFails(): void
+    public function testRecursiveBoundsSymbolicActivationsBeforeConcreteOnes(): void
     {
-        $source = '<?php function target(){return a();}function a(){return b();}function b(){return c();}function c(){return d();}function d(){return e();}function e(){return f();}function f(){return 1;}';
+        $context = SolverFixture::context(budget: new Budget(recursion: 3, symbolicRecursion: 1));
+        $machine = new Machine($context);
+        $symbolic = new State();
+        $symbolic->memory->write($symbolic->local('n'), Term::parameter('n', 'int'));
+        $concrete = new State();
+        $concrete->memory->write($concrete->local('n'), Term::constant(1));
+        $concrete->memory->write($concrete->local('this'), new Term('object', 'object:1', attributes: ['class' => 'A']));
+        $context->active['f'] = 1;
+        self::assertFalse($machine->recursive('f', $symbolic));
+        $context->active['f'] = 2;
+        self::assertTrue($machine->recursive('f', $symbolic));
+        self::assertFalse($machine->recursive('f', $concrete));
+        $context->active['f'] = 4;
+        self::assertTrue($machine->recursive('f', $concrete));
+    }
+
+    public function testRunSealsSymbolicRecursionWithoutHavockingTheCaller(): void
+    {
+        $context = SolverFixture::context('<?php function target(array $c){return f($c);} function f(array $c){return $c ? "x" . f($c) : "";}', budget: new Budget(symbolicRecursion: 2));
+        $state = new State();
+        $caller = $state->memory->allocate(Term::constant('caller'));
+        $state->memory->write($state->local('c'), Term::parameter('c', 'array'));
+        $body = $context->program->callable('f');
+        self::assertNotNull($body);
+        $paths = (new Machine($context))->run($body, $state);
+        self::assertContains('recursive-specialization', array_column($context->frontiers, 'operation'));
+        self::assertSame(['caller'], array_values(array_unique(array_map(static fn (State $path): string|int|float|bool|null => $path->memory->read($caller)->literal, $paths))));
+        $returned = array_map(static fn (State $path): array => (new \Deriver\Value\StringPrefix())->known($path->completion->value ?? Term::constant(null)), array_values(array_filter($paths, static fn (State $path): bool => $path->completion->kind === 'return')));
+        self::assertContains(['', true], $returned);
+        self::assertContains(['xx', false], $returned);
+    }
+
+    public function testRunSealsOnlyTheCallThatExceedsTheHostStack(): void
+    {
+        $source = '<?php function target(){return [f0(),g()];}function g(){return 2;}function f20(){return 1;}' . implode('', array_map(static fn (int $i): string => 'function f' . $i . '(){return f' . ($i + 1) . '();}', range(0, 19)));
         $context = SolverFixture::context($source, configuration:new Configuration(resources:new ResourceLimits(stackFrames:64)));
         $body = SummaryFixture::body($context);
         $paths = (new Machine($context))->run($body, new State());
-        self::assertSame('STACK_LIMIT', $context->stopReason);
-        self::assertNotEmpty($paths);
-        self::assertContains('opaque', array_map(static fn (State $path): ?string => $path->completion->value?->kind, $paths));
+        self::assertNull($context->stopReason);
+        self::assertFalse($context->sealed);
+        self::assertContains('STACK_LIMIT', array_column($context->frontiers, 'code'));
+        $returned = array_values(array_filter(array_map(static fn (State $path): ?Term => $path->completion->kind === 'return' ? $path->completion->value : null, $paths)));
+        self::assertNotEmpty($returned);
+        self::assertSame('STACK_LIMIT', $returned[0]->operands[0]->literal ?? null);
+        self::assertSame(2, $returned[0]->operands[1]->native());
         self::assertContains('throwable', array_map(static fn (State $path): ?string => $path->completion->value?->kind, $paths));
     }
 
@@ -473,6 +515,29 @@ final class MachineTest extends TestCase
         self::assertCount(1, $paths);
         self::assertSame(19, $paths[0]->block);
         self::assertNull($paths[0]->stableHeader);
+    }
+
+    public function testBlockDropsAStableHeaderWithoutALoopTestAsSubsumed(): void
+    {
+        $context = SolverFixture::context();
+        $source = SummaryFixture::body($context)->source;
+        $body = new CallableGraph('target', [], [new BasicBlock(0, [], new Terminator('jump', targets:[0]), true)], $source);
+        $context->demands[$body] = [];
+        $state = new State();
+        $state->stableHeader = 0;
+        self::assertSame([], (new Machine($context))->block($body, $state));
+    }
+
+    public function testTerminateResidualCompletesWithTheBoundaryValueAndAnUnknownThrowable(): void
+    {
+        $context = SolverFixture::context();
+        $body = SummaryFixture::body($context);
+        $state = new State();
+        $state->registers['boundary'] = Term::opaque('UNSUPPORTED_LANGUAGE_FEATURE');
+        $paths = (new Machine($context))->terminate($body, new Terminator('residual', 'boundary'), $state);
+        self::assertSame(['return','throw'], array_column(array_column($paths, 'completion'), 'kind'));
+        self::assertSame('UNSUPPORTED_LANGUAGE_FEATURE', $paths[0]->completion->value?->literal);
+        self::assertTrue($paths[1]->completion->value?->attributes['uncertain']);
     }
 
     public function testBlockSkipsUndemandedInstructions(): void

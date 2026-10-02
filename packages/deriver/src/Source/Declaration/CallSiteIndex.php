@@ -73,12 +73,26 @@ final class CallSiteIndex
                 $spelling = $resolved instanceof Node\Name ? $resolved->toString() : $name->toString();
                 $found = $selector === '*' || (new CallableIdentity())->key($spelling) === (new CallableIdentity())->key($selector) || $this->fallback($node, $selector);
             }
+        } elseif ($node instanceof Expr\New_ && $node->class instanceof Node\Name) {
+            $found = $this->creation($node->class, $selector);
         }
         foreach ((new EffectInspection())->children($node) as $child) {
             $found = $this->contains($child, $selector, $source, $pending) || $found;
         }
         return $found;
     }
+    /**
+     * Matches object creation against `*` or a `Class::__construct` selector, keeping `self`, `parent`, and `static` for the compiled check.
+     * @param Node\Name $class Created class as written, resolved by the name resolver
+     * @param string $selector Requested invocation spelling
+     * @return bool Whether this creation may be selected
+     */
+    public function creation(Node\Name $class, string $selector): bool
+    {
+        $identity = new CallableIdentity();
+        return $selector === '*' || $class->isSpecialClassName() && str_ends_with(strtolower($selector), '::__construct') || $identity->key($class->toString() . '::__construct') === $identity->key($selector);
+    }
+
     /**
      * Matches an unqualified function spelling that may fall back to the global namespace.
      * @param Node $node Possible invocation

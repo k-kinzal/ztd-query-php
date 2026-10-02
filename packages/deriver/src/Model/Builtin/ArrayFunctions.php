@@ -37,6 +37,12 @@ final class ArrayFunctions
         if ($name === 'count') {
             return $this->countArguments($values);
         }
+        if ($name === 'array_key_first' || $name === 'array_key_last') {
+            return $this->boundaryKey($name, $array);
+        }
+        if ($name === 'array_slice') {
+            return $this->slice($values);
+        }
         if ($array->kind !== 'array') {
             return new Term('intrinsic', $name, $values, ['type' => 'array']);
         }
@@ -54,6 +60,34 @@ final class ArrayFunctions
             return $this->keys($array, $values);
         }
         return Term::array(array_values($array->operands));
+    }
+
+    /**
+     * Selects the first or last key of a closed shape; an open shape keeps the call symbolic.
+     * @param string $name array_key_first or array_key_last
+     * @param Term $array Bound array
+     * @return Term Key, null for an empty array, or a symbolic key
+     */
+    public function boundaryKey(string $name, Term $array): Term
+    {
+        if ($array->kind !== 'array' || ($array->attributes['open'] ?? false) === true) {
+            return new Term('intrinsic', $name, [$array], ['type' => 'int|string|null']);
+        }
+        return Term::constant($name === 'array_key_first' ? array_key_first($array->operands) : array_key_last($array->operands));
+    }
+
+    /**
+     * Slices a closed shape with constant bounds, renumbering integer keys unless they are preserved.
+     * @param list<Term> $values Bound array, offset, length, and preserve_keys
+     * @return Term Selected entries or a symbolic slice
+     */
+    public function slice(array $values): Term
+    {
+        [$array, $offset, $length, $preserve] = $values + [Term::array([]), Term::constant(0), Term::constant(null), Term::constant(false)];
+        if ($array->kind !== 'array' || ($array->attributes['open'] ?? false) === true || $offset->kind !== 'constant' || !is_int($offset->literal) || $length->kind !== 'constant' || (!is_int($length->literal) && $length->literal !== null) || $preserve->kind !== 'constant' || !is_bool($preserve->literal)) {
+            return new Term('intrinsic', 'array_slice', $values, ['type' => 'array']);
+        }
+        return new Term('array', operands: array_slice($array->operands, $offset->literal, $length->literal, $preserve->literal), attributes: ['open' => false], secret: $array->secret);
     }
 
     /**
@@ -106,7 +140,7 @@ final class ArrayFunctions
     }
 
     /**
-     * Evaluates membership while retaining uncertainty about unknown array parts.
+     * Evaluates membership while retaining uncertainty about unknown array parts, including sources merged after a known head.
      * @param string $name Membership function
      * @param list<Term> $values Bound arguments
      * @return Term Boolean predicate
@@ -115,6 +149,11 @@ final class ArrayFunctions
     {
         $needle = $values[0] ?? Term::constant(null);
         $array = $values[1] ?? Term::constant(null);
+        $head = (new Arrays())->head($array);
+        if ($head !== null) {
+            $found = $this->membership($name, [$needle, new Term('array', operands: $head->operands, attributes: ['open' => true], secret: $array->isSecret()), ...array_slice($values, 2)]);
+            return $found->kind === 'constant' && $found->literal === true ? $found : new Term('intrinsic', $name, $values, ['type' => 'bool']);
+        }
         if ($array->kind !== 'array') {
             return new Term('intrinsic', $name, $values, ['type' => 'bool']);
         }
@@ -169,7 +208,7 @@ final class ArrayFunctions
     }
 
     /**
-     * Checks key presence without treating an open remainder as absent.
+     * Checks key presence without treating an open remainder as absent or an entry that unknown code may have removed as present.
      * @param Term $needle Key value
      * @param Term $array Known array shape
      * @return Term Presence predicate
@@ -181,7 +220,7 @@ final class ArrayFunctions
             return $key;
         }
         if ($key->kind === 'constant' && (is_int($key->literal) || is_string($key->literal))) {
-            if (array_key_exists($key->literal, $array->operands)) {
+            if (array_key_exists($key->literal, $array->operands) && ($array->operands[$key->literal]->attributes['maybeUninitialized'] ?? false) !== true) {
                 return Term::constant(true);
             }
             if (($array->attributes['open'] ?? false) === false) {

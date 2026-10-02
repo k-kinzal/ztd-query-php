@@ -34,7 +34,7 @@ final class ScalarFunctions
             return (new Replacement())->apply($values);
         }
         if ($name === 'sprintf' || $name === 'vsprintf') {
-            return (new Formatting($this->floatPrecision))->apply($values);
+            return (new Formatting($this->floatPrecision))->apply($values, $name === 'vsprintf');
         }
         if (in_array($name, ['array_fill', 'str_repeat', 'intval'], true)) {
             return (new ConstructionFunctions())->apply($name, $values);
@@ -46,7 +46,10 @@ final class ScalarFunctions
         if (str_starts_with($name, 'is_')) {
             return (new TypePredicates())->apply($name, $a);
         }
-        if (in_array($name, ['count', 'array_keys', 'array_values', 'array_merge', 'array_key_exists', 'in_array'], true)) {
+        if (in_array($name, ['array_shift', 'array_pop', 'array_push', 'array_unshift'], true)) {
+            return (new ArrayMutation())->apply($name, $values);
+        }
+        if (in_array($name, ['count', 'array_keys', 'array_values', 'array_merge', 'array_key_exists', 'in_array', 'array_key_first', 'array_key_last', 'array_slice'], true)) {
             return (new ArrayFunctions($this->floatPrecision))->apply($name, $values);
         }
         if (in_array($name, ['strlen', 'strtolower', 'strtoupper', 'ucfirst', 'lcfirst', 'trim', 'ltrim', 'rtrim', 'substr', 'implode', 'join', 'explode', 'sprintf', 'str_replace'], true)) {

@@ -434,7 +434,7 @@ final class InstructionTransferTest extends TestCase
     {
         $context = SolverFixture::context();
         $state = new State();
-        $array = Term::array(['known' => Term::constant(4)]);
+        $array = Term::array(['known' => Term::constant(4), PHP_INT_MAX - 1 => Term::constant(5)]);
         $item = Term::array(['secret' => Term::constant(8, true)], open:true);
         $state->registers = ['array' => $array,'item' => $item];
         $instruction = new Instruction('unpack', 'array-unpack', new SourceRef('test', 'fixture.php', 0, 1), 'result', ['array','','item']);
@@ -449,6 +449,19 @@ final class InstructionTransferTest extends TestCase
         self::assertSame('WIDENED', $frontier->code);
         self::assertSame('symbolic-unpack-append', $frontier->operation);
         self::assertSame([$array,$item], $frontier->residual?->operands);
+    }
+
+    public function testUnpackIntoAnAppendableArrayCannotReachTheOccupiedMaximumIndex(): void
+    {
+        $context = SolverFixture::context();
+        $state = new State();
+        $state->registers = ['array' => Term::array(['known' => Term::constant(4), 7 => Term::constant(5)]),'item' => Term::parameter('input', 'array')];
+        $instruction = new Instruction('unpack', 'array-unpack', new SourceRef('test', 'fixture.php', 0, 1), 'result', ['array','','item']);
+        $paths = (new InstructionTransfer(new Machine($context)))->unpack($instruction, $state);
+        self::assertCount(1, $paths);
+        self::assertSame('normal', $paths[0]->completion->kind);
+        self::assertSame('array-merge', $paths[0]->registers['result']->kind);
+        self::assertSame([], $context->frontiers);
     }
 
     /**

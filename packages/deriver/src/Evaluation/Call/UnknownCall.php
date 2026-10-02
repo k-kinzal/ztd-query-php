@@ -31,9 +31,10 @@ final class UnknownCall
      * @param list<PassedArgument> $arguments Actual inputs and exposed addresses
      * @param Term|null $receiver Optional receiver or dynamic target
      * @param string $reason Diagnostic code
+     * @param string $type Justified type bound of a normal result
      * @return list<State> Normal and exceptional residuals
      */
-    public function apply(State $state, Instruction $instruction, array $arguments, ?Term $receiver, string $reason): array
+    public function apply(State $state, Instruction $instruction, array $arguments, ?Term $receiver, string $reason, string $type = 'mixed'): array
     {
         $values = $receiver === null ? [] : [$receiver];
         $references = [];
@@ -44,7 +45,7 @@ final class UnknownCall
             }
         }
         (new Havoc())->call($state, $values, $references, $reason);
-        $state->registers[$instruction->result] = $this->context->frontier($reason, $instruction->source, $instruction->name === '' ? 'call' : $instruction->name, $values);
+        $state->registers[$instruction->result] = $this->context->frontier($reason, $instruction->source, $instruction->name === '' ? 'call' : $instruction->name, $values, $type);
         $exception = $state->fork();
         $exception->completion = new Completion('throw', new Term('throwable', 'Throwable', attributes: ['uncertain' => true]));
         return [$state, $exception];

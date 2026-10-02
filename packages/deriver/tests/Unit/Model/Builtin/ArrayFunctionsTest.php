@@ -167,6 +167,26 @@ final class ArrayFunctionsTest extends TestCase
         self::assertSame(true, $functions->membership('in_array', $values)->native());
         self::assertSame(false, $functions->membership('in_array', [...$values, Term::constant(true)])->native());
     }
+    public function testMembershipFindsKnownHeadEntriesOfAnUnknownMerge(): void
+    {
+        $merge = (new \Deriver\Value\Arrays())->merge(Term::fromNative(['id', 'name']), Term::parameter('x', 'array'));
+        $functions = new ArrayFunctions();
+        self::assertSame(true, $functions->membership('in_array', [Term::constant('name'), $merge, Term::constant(true)])->native());
+        self::assertSame(true, $functions->membership('array_key_exists', [Term::constant(1), $merge])->native());
+        $arguments = [Term::constant('other'), $merge, Term::constant(true)];
+        $absent = $functions->membership('in_array', $arguments);
+        self::assertSame('intrinsic', $absent->kind);
+        self::assertSame($arguments, $absent->operands);
+        $key = Term::constant(2);
+        self::assertSame([$key, $merge], $functions->membership('array_key_exists', [$key, $merge])->operands);
+    }
+    public function testKeyExistsDoesNotTrustEntriesThatUnknownCodeMayHaveRemoved(): void
+    {
+        $array = Term::array(['a' => new Term('opaque', 'UNKNOWN', attributes: ['maybeUninitialized' => true]), 'b' => Term::constant(1)], true);
+        $functions = new ArrayFunctions();
+        self::assertSame('intrinsic', $functions->keyExists(Term::constant('a'), $array)->kind);
+        self::assertSame(true, $functions->keyExists(Term::constant('b'), $array)->native());
+    }
     public function testKeysFiltersWithoutRenumberingSourceKeys(): void
     {
         $array = Term::fromNative(['first' => 2, 7 => '2', 'last' => 3]);
@@ -289,6 +309,29 @@ final class ArrayFunctionsTest extends TestCase
         $result = (new ArrayFunctions())->keyExists(Term::array([]), Term::array([]));
         self::assertSame('throwable', $result->kind);
         self::assertSame('TypeError', $result->literal);
+    }
+
+    public function testBoundaryKeySelectsTheFirstOrLastKeyOfClosedShapes(): void
+    {
+        $functions = new ArrayFunctions();
+        $array = Term::fromNative(['a' => 1, 7 => 2]);
+        self::assertSame('a', $functions->apply('array_key_first', [$array])->native());
+        self::assertSame(7, $functions->apply('array_key_last', [$array])->native());
+        self::assertNull($functions->boundaryKey('array_key_first', Term::array([]))->native());
+        $open = Term::array([Term::constant(1)], true);
+        self::assertSame(['intrinsic', 'int|string|null', [$open]], [$functions->boundaryKey('array_key_last', $open)->kind, $functions->boundaryKey('array_key_last', $open)->attributes['type'], $functions->boundaryKey('array_key_last', $open)->operands]);
+    }
+
+    public function testSliceRenumbersIntegerKeysUnlessPreserved(): void
+    {
+        $functions = new ArrayFunctions();
+        $array = Term::fromNative([5 => 'a', 'k' => 'b', 9 => 'c']);
+        self::assertSame(['k' => 'b', 0 => 'c'], $functions->apply('array_slice', [$array, Term::constant(1), Term::constant(null), Term::constant(false)])->native());
+        self::assertSame([5 => 'a', 'k' => 'b'], $functions->slice([$array, Term::constant(0), Term::constant(2), Term::constant(true)])->native());
+        self::assertSame([2], $functions->slice([Term::fromNative([1, 2, 3]), Term::constant(-2), Term::constant(-1), Term::constant(false)])->native());
+        self::assertTrue($functions->slice([Term::fromNative([1], true), Term::constant(0), Term::constant(null), Term::constant(false)])->isSecret());
+        $unknown = [$array, Term::parameter('offset', 'int'), Term::constant(null), Term::constant(false)];
+        self::assertSame(['intrinsic', 'array', $unknown], [$functions->slice($unknown)->kind, $functions->slice($unknown)->attributes['type'], $functions->slice($unknown)->operands]);
     }
 
 }

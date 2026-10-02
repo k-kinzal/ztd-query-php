@@ -8,6 +8,7 @@ use Deriver\Evaluation\Control\ObservationLimit;
 use Deriver\Query\Budget;
 use Deriver\Reference\SourceRef;
 use Deriver\Result\Alternative;
+use Deriver\Result\Exceptional;
 use Deriver\Result\StorageSnapshot;
 use Deriver\Value\Lattice;
 use Deriver\Value\Term;
@@ -62,9 +63,69 @@ final class ObservationLimitTest extends TestCase
         $context = \Tests\Fake\SolverFixture::context(budget: new Budget(partitions: 2));
         $context->normal = [new Alternative(['return' => Term::constant(1)]), new Alternative(['return' => Term::constant(2)]), new Alternative(['return' => Term::constant(99)])];
         (new ObservationLimit($context))->enforce(new SourceRef('test', 'fixture.php', 0, 1));
-        self::assertCount(1, $context->normal);
-        self::assertTrue((new Lattice())->contains($context->normal[0]->values['return'], Term::constant(99)));
+        self::assertCount(2, $context->normal);
+        self::assertSame(1, $context->normal[0]->values['return']->native());
+        self::assertTrue((new Lattice())->contains($context->normal[1]->values['return'], Term::constant(2)));
+        self::assertTrue((new Lattice())->contains($context->normal[1]->values['return'], Term::constant(99)));
         self::assertCount(2, $context->frontiers);
+    }
+    public function testDistinctMergesOnlyIdenticalValuesStateAndStorage(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $limit = new ObservationLimit($context);
+        $source = new SourceRef('test', 'fixture.php', 0, 1);
+        $outcomes = [new Alternative(['v' => Term::constant(1)], ['g' => true]), new Alternative(['v' => Term::constant(1)], ['g' => true]), new Alternative(['v' => Term::constant(1)], state: ['x' => Term::constant(2)])];
+        $distinct = $limit->distinct($outcomes, $source);
+        self::assertCount(2, $distinct);
+        self::assertSame(['g' => true], $distinct[0]->guard);
+        self::assertSame([], $context->frontiers);
+    }
+    public function testDistinctExceptionsKeepsDifferentExceptionClasses(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $source = new SourceRef('test', 'fixture.php', 0, 1);
+        $outcomes = [new Exceptional(new Term('throwable', 'Error'), ['g' => true]), new Exceptional(new Term('throwable', 'Error'), ['g' => false]), new Exceptional(new Term('throwable', 'TypeError'))];
+        $distinct = (new ObservationLimit($context))->distinctExceptions($outcomes, $source);
+        self::assertSame(['Error', 'TypeError'], array_map(static fn (Exceptional $outcome): string|int|float|bool|null => $outcome->exception->literal, $distinct));
+        self::assertSame([], $distinct[0]->guard);
+        self::assertSame(['CORRELATION_RELAXED'], array_column(array_values($context->frontiers), 'code'));
+    }
+    public function testKeySeparatesValuesStateAndStorage(): void
+    {
+        $limit = new ObservationLimit(\Tests\Fake\SolverFixture::context());
+        $base = $limit->key(['v' => Term::constant(1)], [], new StorageSnapshot());
+        self::assertSame($base, $limit->key(['v' => Term::constant(1)], [], new StorageSnapshot()));
+        self::assertNotSame($base, $limit->key(['v' => Term::constant('1')], [], new StorageSnapshot()));
+        self::assertNotSame($base, $limit->key([], ['v' => Term::constant(1)], new StorageSnapshot()));
+        self::assertNotSame($base, $limit->key(['v' => Term::constant(1)], [], new StorageSnapshot(cells: ['c' => Term::constant(1)])));
+    }
+    public function testGuardKeepsSharedEntriesAndReportsRelaxation(): void
+    {
+        $source = new SourceRef('test', 'fixture.php', 0, 1);
+        $equal = \Tests\Fake\SolverFixture::context();
+        self::assertSame(['a' => true], (new ObservationLimit($equal))->guard(['a' => true], ['a' => true], $source));
+        self::assertSame([], $equal->frontiers);
+        $different = \Tests\Fake\SolverFixture::context();
+        self::assertSame(['a' => true], (new ObservationLimit($different))->guard(['a' => true, 'b' => true], ['a' => true, 'b' => false], $source));
+        self::assertSame(['CORRELATION_RELAXED'], array_column(array_values($different->frontiers), 'code'));
+    }
+    public function testEnforceMergesRepeatedOutcomesBeforeJoining(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context(budget: new Budget(partitions: 2));
+        $context->normal = [new Alternative(['return' => Term::constant(1)], ['a' => true, 'b' => true], evidence: ['x']), new Alternative(['return' => Term::constant(2)]), new Alternative(['return' => Term::constant(1)], ['a' => true, 'b' => false], evidence: ['y'])];
+        (new ObservationLimit($context))->enforce(new SourceRef('test', 'fixture.php', 0, 1));
+        self::assertSame([1, 2], array_map(static fn (Alternative $outcome): string|int|float|bool|null => $outcome->values['return']->literal, $context->normal));
+        self::assertSame(['a' => true], $context->normal[0]->guard);
+        self::assertSame(['x', 'y'], $context->normal[0]->evidence);
+        self::assertSame(['CORRELATION_RELAXED'], array_column(array_values($context->frontiers), 'code'));
+    }
+    public function testEnforceKeepsIdenticalOutcomesWithinTheBudget(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context(budget: new Budget(partitions: 2));
+        $context->normal = [new Alternative(['return' => Term::constant(1)]), new Alternative(['return' => Term::constant(1)])];
+        (new ObservationLimit($context))->enforce(new SourceRef('test', 'fixture.php', 0, 1));
+        self::assertCount(2, $context->normal);
+        self::assertSame([], $context->frontiers);
     }
     public function testJoinPreservesEqualFieldsAndIncludesAbsentFields(): void
     {
