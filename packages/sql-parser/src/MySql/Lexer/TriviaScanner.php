@@ -33,7 +33,7 @@ final class TriviaScanner
             if ($cursor->match('\s+') !== null) {
                 continue;
             }
-            if ($cursor->peek() === '#' || ($cursor->startsWith('--') && ($cursor->peek(2) === '' || ctype_space($cursor->peek(2)) || ctype_cntrl($cursor->peek(2))))) {
+            if ($cursor->peek() === '#' || ($cursor->startsWith('--') && ($cursor->peek(2) === '' || \SqlParser\Lexer\Ascii::space($cursor->peek(2)) || \SqlParser\Lexer\Ascii::control($cursor->peek(2))))) {
                 $cursor->match('[^\n]*');
                 continue;
             }

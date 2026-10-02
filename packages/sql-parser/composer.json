@@ -8,10 +8,10 @@
         "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-parser/"
     },
     "require": {
-        "php": "^8.1",
-        "ext-zlib": "*"
+        "php": "^8.1"
     },
     "require-dev": {
+        "ext-zlib": "*",
         "brianium/paratest": "^7.3",
         "deptrac/deptrac": "^3.0",
         "fakerphp/faker": "^1.23",
@@ -29,6 +29,7 @@
         "squizlabs/php_codesniffer": "^4.0.4"
     },
     "suggest": {
+        "ext-zlib": "Read legacy deflated custom parse-table caches; shipped tables do not require it",
         "k-kinzal/bison-parser": "To rebuild the MySQL and PostgreSQL parse tables with bin/build-mysql.php and bin/build-pg.php",
         "k-kinzal/lemon-parser": "To rebuild the SQLite parse tables with bin/build-sqlite.php"
     },

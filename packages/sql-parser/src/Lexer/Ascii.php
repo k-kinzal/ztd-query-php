@@ -26,4 +26,36 @@ final class Ascii
     {
         return strtr($value, 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
     }
+
+    /**
+     * Recognizes one ASCII letter without requiring the ctype extension.
+     */
+    public static function letter(string $byte): bool
+    {
+        return strlen($byte) === 1 && (($byte >= 'A' && $byte <= 'Z') || ($byte >= 'a' && $byte <= 'z'));
+    }
+
+    /**
+     * Recognizes one decimal digit; empty lookahead is never a digit.
+     */
+    public static function digit(string $byte): bool
+    {
+        return strlen($byte) === 1 && $byte >= '0' && $byte <= '9';
+    }
+
+    /**
+     * Recognizes SQL whitespace bytes independently of a host character locale.
+     */
+    public static function space(string $byte): bool
+    {
+        return strlen($byte) === 1 && str_contains(" \t\n\r\f\v", $byte);
+    }
+
+    /**
+     * Recognizes a single ASCII control byte, including DEL.
+     */
+    public static function control(string $byte): bool
+    {
+        return strlen($byte) === 1 && (ord($byte) < 32 || ord($byte) === 127);
+    }
 }

@@ -10,7 +10,9 @@ SQL Parser is a set of LALR(1) parsers for MySQL, PostgreSQL, and SQLite written
 
 ## Requirements
 
-- PHP 8.1+ with the zlib extension
+- PHP 8.1+
+
+No PHP extension is required. The shipped parse tables are stored uncompressed; see [Parse-table storage](docs/table-storage.md).
 
 ## Support Syntax
 
