@@ -118,10 +118,13 @@ final class PathJoin
                 unset($result->loopGuards[$header]);
             }
         }
-        $identity = $this->context->identity;
-        $keys = static fn (array $cells): array => array_map(static fn (Term $value): string => $identity->key($value), $cells);
         foreach ($result->approximations as $header => $cells) {
-            if (!isset($state->approximations[$header]) || $keys($cells) !== $keys($state->approximations[$header]) || ($result->loopStructures[$header] ?? null) !== ($state->loopStructures[$header] ?? null)) {
+            $other = $state->approximations[$header] ?? [];
+            $same = isset($state->approximations[$header]) && array_keys($cells) === array_keys($other) && ($result->loopStructures[$header] ?? null) === ($state->loopStructures[$header] ?? null);
+            foreach ($same ? $cells : [] as $root => $value) {
+                $same = $same && isset($other[$root]) && $this->context->identity->key($value) === $this->context->identity->key($other[$root]);
+            }
+            if (!$same) {
                 unset($result->approximations[$header], $result->loopStructures[$header]);
             }
         }
@@ -185,7 +188,7 @@ final class PathJoin
         foreach ($result as $key => $location) {
             foreach ($maps as $map) {
                 $other = $map[$key];
-                if ($other == $location) {
+                if ([$other->root, $other->path, $other->local, $other->unknown] === [$location->root, $location->path, $location->local, $location->unknown]) {
                     continue;
                 }
                 if ($other->root !== $location->root) {

@@ -85,7 +85,7 @@ final class StateJoin
             $clusters[] = $state;
             $structures[] = $structure;
         }
-        return $clusters;
+        return array_values($clusters);
     }
 
     /**
