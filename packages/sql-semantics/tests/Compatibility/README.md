@@ -23,3 +23,25 @@ The catalog comparison reads MySQL unique constraints directly, because [`COLUMN
 `AnalyzerTest` runs every input in the normal unit suite. It verifies table names and column order, reconstructed SQL stability, and independence from parser nodes. Twenty inputs have invalid syntax in their assigned dialect. Nine more are rejected for conflicting NULL constraints, multiple primary keys, an unindexed AUTO_INCREMENT column, or expressions in SQLite table keys. The remaining 352 inputs retain a complete typed statement. Seven of those use query-derived columns or `LIKE`: their typed commands remain available, but a complete table definition cannot be inferred without the source relation. No fabricated column list is asserted.
 
 The original sql-fixture output is not the semantic oracle. PostgreSQL folds unquoted names; SQLite ordinary primary keys can remain nullable; fractional-second precision is not a string length; declared numeric arguments and effective numeric size are distinct. The focused server corpus above checks the feedback's behavioral corrections directly against the database, while the full input corpus guards statement structure and declaration extraction.
+
+## Transaction request observations
+
+`TransactionCorpus` compares original and reconstructed requests on separate fresh
+connections. Run it with the same `SEMANTICS_DSN`, `SEMANTICS_USERNAME`, and
+`SEMANTICS_PASSWORD` variables:
+
+```sh
+php bin/compare-transactions.php --dialect=mysql --grammar=mysql-8.4.7
+php bin/compare-transactions.php --dialect=pg --grammar=pg-17.2
+```
+
+The MySQL corpus observes active access/isolation characteristics, snapshot
+warnings, completion defaults, explicit CHAIN/NO CHAIN, and RELEASE/NO RELEASE.
+It requires transaction instrumentation in
+`performance_schema.events_transactions_current` and access to
+`performance_schema.threads`. The PostgreSQL corpus observes transaction
+characteristics and whether completion preserves them through chaining, including
+repeated characteristic requests. Connections are closed after each observation;
+these cases do not create tables or prepared transactions. Database errors are
+compared by SQLSTATE and vendor code so contradictory requests remain testable.
+The runner fails with a nonzero exit on any discrepancy.
