@@ -44,7 +44,7 @@ final class Machine
         $this->context->active[$key] = ($this->context->active[$key] ?? 0) + 1;
         $available = $this->context->available($callable->source, call: true);
         if (!$available || $this->context->active[$key] > $this->context->query->budget()->recursion) {
-            $completed = (new ResidualPaths($this->context))->seal($initial, $callable->source, $available ? 'recursive-specialization' : 'runtime-resources');
+            $completed = (new ResidualPaths($this->context))->seal($initial, $callable->source, $available ? 'recursive-specialization' : 'runtime-resources', $available ? null : $this->context->stopReason ?? 'STACK_LIMIT');
         } else {
             $this->context->graphs[$key] = true;
             $this->context->demands[$callable] ??= (new Discovery($this->context))->instructions($callable);

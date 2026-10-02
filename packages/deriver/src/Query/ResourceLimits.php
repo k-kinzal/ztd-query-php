@@ -12,6 +12,8 @@ use Deriver\Exception\InvalidInputException;
  * Memory is additional allocated PHP memory since the query starts; source capture and
  * indexing precede this limit. A zero duration disables the optional wall-clock limit.
  * Resource interruptions are explicit frontiers and are not stored in the result cache.
+ * Memory, time, and cancellation end the whole query; the stack frame limit only seals the
+ * call it refuses as a residual with a STACK_LIMIT frontier, and the rest of the query continues.
  *
  * @visibility public
  * @example Limiting additional query memory
@@ -23,7 +25,7 @@ final class ResourceLimits
      * @param int $memoryBytes Maximum additional PHP allocation, at least one MiB
      * @param float $seconds Maximum query duration, or zero for no wall-clock limit
      * @param CancellationToken|null $cancellation Optional caller-controlled cancellation
-     * @param int $stackFrames Maximum host call frames, independently of semantic call-site history
+     * @param int $stackFrames Maximum host call frames the query adds to its caller's stack, independently of semantic call-site history; an active Xdebug nesting limit can lower it
      * @throws InvalidInputException If a memory or duration limit is invalid
      */
     public function __construct(public readonly int $memoryBytes = 268435456, public readonly float $seconds = 0.0, public readonly ?CancellationToken $cancellation = null, public readonly int $stackFrames = 2048)

@@ -33,7 +33,7 @@ final class Context
      */
     public readonly Resources $resources;
     /**
-     * Permanent resource interruption reason, when applicable.
+     * Permanent resource interruption reason, when applicable; STACK_LIMIT only seals the refused call.
      */
     public ?string $stopReason = null;
 
@@ -150,7 +150,7 @@ final class Context
      * @param SourceRef $source Next semantic operation
      * @param int $additionalBytes Anticipated allocation before executing the operation
      * @param bool $call Whether a new callable will add host stack frames
-     * @return bool Whether runtime resources permit more work
+     * @return bool Whether runtime resources permit more work; false for a call refused by STACK_LIMIT leaves later work admitted
      */
     public function available(SourceRef $source, int $additionalBytes = 0, bool $call = false): bool
     {
@@ -159,8 +159,10 @@ final class Context
         }
         $reason = $this->resources->reason($additionalBytes, $call);
         if ($reason !== null) {
-            $this->stopReason = $reason;
-            $this->sealed = true;
+            if ($reason !== 'STACK_LIMIT') {
+                $this->stopReason = $reason;
+                $this->sealed = true;
+            }
             $this->frontier($reason, $source, 'runtime-resources');
             return false;
         }
