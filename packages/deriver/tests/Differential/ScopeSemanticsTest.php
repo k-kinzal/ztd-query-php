@@ -62,6 +62,7 @@ final class ScopeSemanticsTest extends TestCase
             'unset after foreach by reference' => ['$rows=[1,2];foreach($rows as &$row){$row++;}unset($rows);sink($row);'],
             'function unsets its global binding' => ['function drop(){global $g;unset($g);} $g="kept";drop();sink($g);'],
             'unset static reference' => ['function read(){static $s=5;$r=&$s;unset($s);return $r;} sink(read());'],
+            'global created by refused recursion' => ['function f(int $n,int $d){if($n>0){f($n-1,1);return;}global $newg;$newg=$d===0?"top":"deep";} $n=random_int(1,3);f($n,0);sink($newg);'],
         ];
     }
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Semantic;
 
+use Deriver\Query\Budget;
+use Deriver\Query\ValueQuery;
 use Deriver\Result\Alternative;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -166,4 +168,41 @@ final class SymbolTableSemanticsTest extends TestCase
         self::assertSame([[false, 1]], array_map(static fn (Alternative $outcome) => $outcome->values['value']->native(), $result->normalOutcomes));
     }
 
+    /**
+     * A global first read after an unexplored call may have been created by that call.
+     * @param string $source Statements after the sink declaration
+     * @throws JsonException If fixture observations cannot be encoded
+     */
+    #[DataProvider('globalsAfterUnexploredWrites')]
+    public function testGlobalsFirstReadAfterAnUnexploredCallAreUnknown(string $source): void
+    {
+        $session = Analysis::session('<?php function sink($value){} ' . $source);
+        $result = $session->derive(new ValueQuery($session->callsTo('sink')[0]->argument(0), budget: new Budget(symbolicRecursion: 1)));
+        self::assertNotSame([], $result->normalOutcomes);
+        self::assertContains('opaque', array_map(static fn (Alternative $outcome): string => $outcome->values['value']->kind, $result->normalOutcomes));
+        self::assertNull(Analysis::frontier($result, 'uninitialized-read'));
+        self::assertNull(Analysis::frontier($result, 'global-read'));
+    }
+
+    /**
+     * @return array<string, array{string}> Sources whose first sink argument reads a global an unexplored call may set
+     */
+    public static function globalsAfterUnexploredWrites(): array
+    {
+        return [
+            'refused recursion' => ['function f(int $n,int $d){if($n>0){f($n-1,1);return;}global $newg;$newg=$d===0?"top":"deep";} $n=(int)($_GET["n"]??0);if($n>=1){f($n,0);sink($newg);}'],
+            'missing function at script scope' => ['missing_function();sink($g);'],
+            'missing function before a global statement' => ['function target(){missing_function();global $g;sink($g);}'],
+        ];
+    }
+
+    /**
+     * @throws JsonException If fixture observations cannot be encoded
+     */
+    public function testGlobalsNeverWrittenStayUndefinedWithoutUnexploredCalls(): void
+    {
+        $result = Analysis::argument('<?php function sink($value){} function f(){return 1;} f();sink($g);');
+        self::assertSame([null], array_map(static fn (Alternative $outcome) => $outcome->values['value']->native(), $result->normalOutcomes));
+        self::assertSame(['global:g'], Analysis::frontier($result, 'uninitialized-read')?->knownDependencies);
+    }
 }
