@@ -151,6 +151,29 @@ still require ordinary expression resolution. VACUUM in place and VACUUM INTO ar
 distinct operation types. Requests targeting the temporary database expose their
 known no-op behavior, including skipping destination evaluation.
 
+## Transaction requests
+
+Transaction operations describe requests without maintaining a connection or a
+transaction history. MySQL `Start` retains snapshot acquisition and the requested
+access mode. Repeated identical characteristics collapse into the same facts;
+combining READ ONLY and READ WRITE retains `Access::Conflicting`. MySQL `Commit`
+and `Rollback` keep independent nullable `chain` and `release` choices. Null means
+the connection default, while false means an explicit NO override. Their
+`conflicts()` method identifies an explicit request to both chain and disconnect.
+These distinctions follow MySQL's
+[transaction control rules](https://dev.mysql.com/doc/refman/8.4/en/commit.html).
+
+PostgreSQL `Begin` retains isolation, access, and deferrability independently, using
+the last specified value of each characteristic. PostgreSQL completion operations
+use a boolean chaining request because omission and NO CHAIN have the same meaning
+in this dialect. `Prepare`, `CommitPrepared`, and `RollbackPrepared` are distinct
+operation types. Their `PreparedIdentifier` is decoded string data, preserving
+case and bytes rather than applying SQL identifier folding. `exceedsLength()`
+reports the server's limit of fewer than 200 bytes without discarding a grammatical
+request. See PostgreSQL's [BEGIN](https://www.postgresql.org/docs/17/sql-begin.html)
+and [PREPARE TRANSACTION](https://www.postgresql.org/docs/17/sql-prepare-transaction.html)
+reference pages.
+
 ## Uncertainty and implementation defects
 
 An unknown fact must name the missing information, such as an absent catalog or a

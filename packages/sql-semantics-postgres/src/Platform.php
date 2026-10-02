@@ -48,7 +48,7 @@ final class Platform implements Contract
      */
     public function operations(Language $language): Policy\OperationRules
     {
-        return new Analysis\OperationReader();
+        return new Analysis\OperationReader($language);
     }
 
     /**
