@@ -26,7 +26,7 @@ final class ExpressionSql
             $input instanceof E\SqliteBlob, $input instanceof E\SqliteCurrentTime => $input->toString(),
             $input instanceof C\Expression\GroupedInput => '(' . $input->before . $this->write($input->operand) . $input->after . ')',
             $input instanceof C\Expression\ColumnUse => ($input->qualifier === null ? '' : $input->qualifier->toString() . '.') . $input->name->toString(),
-            $input instanceof C\Expression\UnaryInput => $input->layout === null ? $input->operator->value . ' (' . $this->write($input->operand) . ')' : $input->layout->write($this->write($input->operand), (new E\Rendering\SqlitePrecedence())->unaryGrouped($input->operand, $input->operator)),
+            $input instanceof C\Expression\UnaryInput => $this->unary($input),
             $input instanceof C\Expression\BinaryInput => $this->binary($input),
             $input instanceof C\Expression\BetweenInput => '(' . $this->write($input->subject) . ')' . ($input->negated ? ' NOT' : '') . ' BETWEEN (' . $this->write($input->lower) . ') AND (' . $this->write($input->upper) . ')',
             $input instanceof C\Expression\InListInput => '(' . $this->write($input->subject) . ')' . ($input->negated ? ' NOT' : '') . ' IN (' . implode(', ', array_map($this->write(...), $input->choices)) . ')',
@@ -66,5 +66,14 @@ final class ExpressionSql
             $sql = $arm->layout->append($sql, $arm->layout->write($this->write($arm->when), $this->write($arm->then)));
         }
         return $input->otherwise === null ? $sql : $input->layout->append($sql, $this->write($input->otherwise));
+    }
+
+    /**
+     * Prefix spelling preserves its operand boundary and the operation's binding power.
+     */
+    public function unary(C\Expression\UnaryInput $input): string
+    {
+        $operand = $this->write($input->operand);
+        return $input->layout === null ? $input->operator->value . ' (' . $operand . ')' : $input->layout->write($operand, (new E\Rendering\SqlitePrecedence())->unaryGrouped($input->operand, $input->operator));
     }
 }

@@ -36,7 +36,7 @@ final class ScalarMatch
     {
         $input = $pair->input;
         if ($input instanceof E\NullConstant || $input instanceof E\SqliteInteger || $input instanceof E\SqliteReal || $input instanceof E\SqliteText || $input instanceof E\SqliteBlob || $input instanceof E\SqliteCurrentTime) {
-            Check::invariant($pair->actual === $input, 'A closed literal input must remain the exact requested immutable value.');
+            (new LiteralMatch())->check($input, $pair->actual);
             return [];
         }
         if ($input instanceof C\Expression\ColumnUse) {

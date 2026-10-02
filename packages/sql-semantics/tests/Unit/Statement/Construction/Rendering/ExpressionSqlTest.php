@@ -34,4 +34,12 @@ final class ExpressionSqlTest extends TestCase
         $input = new C\Expression\BinaryInput(new E\SqliteInteger(new UnsignedInteger('1')), E\SqliteBinaryOperator::Subtract, $inner, $layout);
         self::assertSame('1-(2-3)', (new C\Rendering\ExpressionSql())->binary($input));
     }
+
+    public function testUnaryPreservesLowPrecedenceNotAroundAComparison(): void
+    {
+        $null = new E\NullConstant();
+        $comparison = new C\Expression\BinaryInput($null, E\SqliteBinaryOperator::Equal, $null, new E\Rendering\SqliteBinaryLayout(E\SqliteBinaryOperator::Equal, '=', '', '', false));
+        $input = new C\Expression\UnaryInput(E\SqliteUnaryOperator::Not, $comparison, new E\Rendering\SqliteUnaryLayout(E\SqliteUnaryOperator::Not, 'not', ' ', false));
+        self::assertSame('not NULL=NULL', (new C\Rendering\ExpressionSql())->unary($input));
+    }
 }

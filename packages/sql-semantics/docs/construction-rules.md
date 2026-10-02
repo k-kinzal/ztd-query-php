@@ -103,9 +103,11 @@ rendered-output correspondence remain incomplete.
   and output fields are compared by identity. A freshly reconstructed alias search
   environment is admissible only around the same scope, projection, and ordered
   visible aliases. An unrelated context with equal contents is not interchangeable.
-- Leaf contract: new construction retains each supplied closed immutable literal
-  value itself. Name uses instead create fresh lookup sites and retain the supplied
-  decoded name and quote interpretation. Resolution outcomes, including conflicts
+- Leaf contract: literals retain their exact value, literal kind, and bounded
+  output-name constraints. Equivalent immutable literal values may have distinct
+  PHP identities; numeric comparisons never pass through a PHP float. Name uses
+  create fresh lookup sites and retain the supplied decoded name and quote
+  interpretation. Resolution outcomes, including conflicts
   and conditional outer searches, are checked without selecting an alternative.
 - Enforcement: `SelectSnapshot` and `RowsSnapshot` invoke the checker after actual
   properties are derived and before normal constructor return. A mismatch is an
