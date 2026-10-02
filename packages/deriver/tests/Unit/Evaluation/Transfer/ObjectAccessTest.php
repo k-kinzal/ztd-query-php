@@ -239,4 +239,23 @@ final class ObjectAccessTest extends TestCase
         yield 'declared subtype bound' => [Term::parameter('x', 'Box'),false,'Box'];
         yield 'invalid class metadata' => [new Term('object', 'identity', attributes:['class' => 1]),false,''];
     }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerExternalReceivers')]
+    public function testPrepareCapturesFieldsOnlyOfReceiversThatMayBeObjects(Term $receiver, bool $captured): void
+    {
+        $state = new State();
+        $state->memory->cells['object:input'] = Term::array([], true);
+        (new ObjectAccess(\Tests\Fake\SolverFixture::context()))->prepare($state, 'object:input', 'x', $receiver, null);
+        self::assertSame($captured, isset($state->memory->cells['object:input']->operands['x']));
+    }
+
+    /**
+     * @return iterable<string,array{Term,bool}>
+     */
+    public static function providerExternalReceivers(): iterable
+    {
+        yield 'global' => [new Term('external', 'global:wpdb', attributes: ['type' => 'mixed']), true];
+        yield 'scalar' => [new Term('external', 'env:X', attributes: ['type' => 'string|false']), false];
+        yield 'constant' => [Term::constant(1), false];
+    }
 }

@@ -81,6 +81,14 @@ $input = new ProjectInput([new SourceFile('app.php', '<?php function label(float
 $session = (new Analyzer())->open($input, new Configuration(new TargetProfile(floatPrecision: 14)));
 ```
 
+Frontiers that depend on a variable name it in `knownDependencies`. Reading a variable that is never assigned is `null` with a `PHP_WARNING` frontier, and reading a global through `global $name` that the configuration does not supply is an external value with an `EXTERNAL_INPUT` frontier. A global variable is named `global:<name>`, the key that `Configuration::$environment` accepts, and a function-local variable is named `variable:<name>`. To analyze code with state that the application receives from outside, such as globals set by a framework bootstrap, read these names from the frontiers and supply the values:
+
+```php
+$session = (new Analyzer())->open($input, new Configuration(environment: [
+    'global:table_prefix' => Term::constant('wp_'),
+]));
+```
+
 Deriver evaluates operators without the diagnostics that newer host PHP versions add, such as the PHP 8.4 deprecation of raising zero to a negative power.
 
 Queries, models, and result types are described in the [API documentation](https://k-kinzal.github.io/ztd-query-php/k-kinzal/deriver/).

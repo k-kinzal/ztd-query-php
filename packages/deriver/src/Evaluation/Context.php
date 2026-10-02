@@ -117,13 +117,15 @@ final class Context
      * @param string $operation Affected operation
      * @param list<Term> $dependencies Known dependencies
      * @param string $type Justified residual type bound
+     * @param list<string> $knownDependencies Named inputs, such as `global:name` environment keys, that would resolve the frontier
      * @return Term Residual expression
      */
-    public function frontier(string $code, SourceRef $source, string $operation, array $dependencies = [], string $type = 'mixed'): Term
+    public function frontier(string $code, SourceRef $source, string $operation, array $dependencies = [], string $type = 'mixed', array $knownDependencies = []): Term
     {
         $id = $source->id() . ':' . $code . ':' . $operation;
         $value = Term::opaque($code, $type, $dependencies);
-        $this->frontiers[$id] = new Frontier($code, $source, $operation, ['value', 'state'], residual: $value, missingCapability: $operation);
+        $names = array_values(array_unique([...$this->frontiers[$id]->knownDependencies ?? [], ...$knownDependencies]));
+        $this->frontiers[$id] = new Frontier($code, $source, $operation, ['value', 'state'], $names, $value, $operation);
         return $value;
     }
 

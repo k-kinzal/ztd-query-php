@@ -259,4 +259,14 @@ final class ContextTest extends TestCase
         self::assertSame($source, array_values($context->frontiers)[0]->at);
         self::assertSame('runtime-resources', array_values($context->frontiers)[0]->operation);
     }
+
+    public function testFrontierAccumulatesKnownDependencyNames(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $source = new SourceRef('test', 'fixture.php', 0, 10);
+        $context->frontier('PHP_WARNING', $source, 'uninitialized-read', knownDependencies: ['global:a']);
+        $context->frontier('PHP_WARNING', $source, 'uninitialized-read', knownDependencies: ['global:b', 'global:a']);
+        $context->frontier('PHP_WARNING', $source, 'uninitialized-read');
+        self::assertSame(['global:a', 'global:b'], array_values($context->frontiers)[0]->knownDependencies);
+    }
 }

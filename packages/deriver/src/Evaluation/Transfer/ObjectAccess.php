@@ -11,6 +11,7 @@ use Deriver\Evaluation\Call\TypeBinding;
 use Deriver\Evaluation\Context;
 use Deriver\Evaluation\State;
 use Deriver\Memory\Location;
+use Deriver\Model\Builtin\TypePredicates;
 use Deriver\Value\Term;
 
 /**
@@ -83,7 +84,7 @@ final class ObjectAccess
             $state->memory->propertyTypes[$root][$slot] = (new TypeBinding($this->context))->scope($property->type, $property->className, $state->lateStaticClass);
         }
         $record = $state->memory->cells[$root];
-        if (!isset($record->operands[$slot]) && $receiver->kind === 'parameter') {
+        if (!isset($record->operands[$slot]) && ($receiver->kind === 'parameter' || $receiver->kind === 'external' && (new TypePredicates())->bound('is_object', $receiver) !== false)) {
             $state->memory->write(new Location($root, [$slot]), new Term('external', $root . ':' . $slot, attributes: ['type' => $property->type ?? 'mixed', 'stability' => 'state', 'maybeUninitialized' => true]));
         }
     }

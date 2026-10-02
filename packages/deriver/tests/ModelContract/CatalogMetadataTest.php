@@ -129,4 +129,29 @@ final class CatalogMetadataTest extends TestCase
         self::assertSame('user', $class->constants['KIND']->native());
         self::assertSame('Model', $class->parent);
     }
+
+    /**
+     * @throws JsonException If captured fixture values cannot be encoded
+     */
+    public function testFrontiersNameGlobalsThatTheEnvironmentSupplies(): void
+    {
+        $source = '<?php function sink($sql){} function posts(){global $prefix;sink("SELECT * FROM ".$prefix."posts");} sink("SELECT * FROM ".$table);';
+        $session = Analysis::session($source);
+        $names = [];
+        foreach ($session->callsTo('sink') as $call) {
+            foreach ($session->derive(new ValueQuery($call->argument(0)))->frontiers as $frontier) {
+                array_push($names, ...$frontier->knownDependencies);
+            }
+        }
+        sort($names);
+        self::assertSame(['global:prefix', 'global:table'], $names);
+        $configured = Analysis::session($source, new Configuration(environment: ['global:prefix' => Term::constant('wp_'), 'global:table' => Term::constant('users')]));
+        $values = [];
+        foreach ($configured->callsTo('sink') as $call) {
+            $result = $configured->derive(new ValueQuery($call->argument(0)));
+            self::assertSame([], $result->frontiers);
+            $values[] = $result->definite()?->values['value']->native();
+        }
+        self::assertSame(['SELECT * FROM wp_posts', 'SELECT * FROM users'], $values);
+    }
 }
