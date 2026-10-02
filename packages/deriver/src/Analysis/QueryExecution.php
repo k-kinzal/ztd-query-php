@@ -67,7 +67,8 @@ final class QueryExecution
         $assessment = (new ResultAssessment())->assess($context);
         $assumptions = array_values(array_unique($context->assumptions));
         sort($assumptions);
-        $interruption = $context->stopReason === null ? '' : ':' . $context->stopReason . ':' . $context->transfers;
+        $stopped = $context->stopReason ?? (in_array('STACK_LIMIT', array_column($context->frontiers, 'code'), true) ? 'STACK_LIMIT' : null);
+        $interruption = $stopped === null ? '' : ':' . $stopped . ':' . $context->transfers;
         $id = hash('sha256', $this->snapshot->id . ':' . $symbol . ':' . (new QueryEncoding())->key($query) . $interruption);
         $reached = $context->normal !== [] || ($query instanceof ReturnQuery && $context->exceptional !== []);
         return new DerivationResult(new ResultRef($id), $this->snapshot->id, $query, $context->normal, $context->exceptional, $reached ? 'may-reach' : 'unreachable', $assessment, array_values($context->frontiers), $assumptions, $context->evidence, new Statistics($context->transfers, count($context->graphs), cacheHits: $context->summaries->hits, seconds: microtime(true) - $start, peakMemoryBytes: memory_get_peak_usage(true)), $this->program->diagnostics());

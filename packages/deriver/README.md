@@ -126,6 +126,10 @@ $session = (new Analyzer())->open($input, new Configuration(environment: [
 
 Deriver evaluates operators without the diagnostics that newer host PHP versions add, such as the PHP 8.4 deprecation of raising zero to a negative power.
 
+An active Xdebug lowers the host stack limit to its `xdebug.max_nesting_level`, so deep call chains are sealed earlier with a `STACK_LIMIT` frontier and results can be less precise; run analyses with `xdebug.mode=off` where possible.
+
+`$session->declarations()` reads captured signatures and class metadata without autoloading. Function, method, class, property, and constant metadata carry the raw `docComment` text (an empty string when absent), so integrations can read annotations such as `@global wpdb $wpdb` themselves. Deriver never interprets PHPDoc, and doc comments do not change analysis results.
+
 Queries, models, and result types are described in the [API documentation](https://k-kinzal.github.io/ztd-query-php/k-kinzal/deriver/).
 
 ## License

@@ -46,12 +46,14 @@ final class SwitchLowering
         }
         $g->jump($default);
         $g->loops[] = ['break' => $exit, 'continue' => $exit, 'depth' => $g->handlerDepth];
+        $g->scopes[] = ['key' => 'switch:' . $exit, 'kind' => 'switch', 'iterator' => '', 'depth' => $g->handlerDepth];
         foreach ($node->cases as $index => $case) {
             $g->current = $bodies[$index];
             $l->statements($case->stmts);
             $g->jump($bodies[$index + 1] ?? $exit);
         }
         array_pop($g->loops);
+        array_pop($g->scopes);
         $g->current = $exit;
     }
 }

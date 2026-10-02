@@ -25,7 +25,7 @@ final class Resources
      */
     private string $reserve;
     /**
-     * First interruption reason, permanent for this query.
+     * First memory, time, or cancellation interruption, permanent for this query.
      */
     private ?string $stopped = null;
     /**
@@ -33,7 +33,7 @@ final class Resources
      */
     private readonly ?int $hostLimit;
     /**
-     * Conservative host frame limit, including debugger termination headroom.
+     * Absolute host frame limit: the frames present at query start plus the configured budget, capped below an active debugger nesting limit.
      */
     private readonly int $frameLimit;
 
@@ -43,7 +43,7 @@ final class Resources
     public function __construct(public readonly ResourceLimits $limits)
     {
         $debugMode = getenv('XDEBUG_MODE');
-        $this->frameLimit = self::stackLimit($limits->stackFrames, ini_get('xdebug.max_nesting_level'), $debugMode === false ? ini_get('xdebug.mode') : $debugMode);
+        $this->frameLimit = self::stackLimit(count(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)) + $limits->stackFrames, ini_get('xdebug.max_nesting_level'), $debugMode === false ? ini_get('xdebug.mode') : $debugMode);
         $this->baseline = memory_get_usage();
         $this->started = hrtime(true);
         $this->hostLimit = self::memoryLimit(ini_get('memory_limit'));
@@ -52,7 +52,8 @@ final class Resources
     }
 
     /**
-     * Returns the first resource interruption and releases termination capacity.
+     * Returns the first permanent interruption, releasing termination capacity, or a call-local stack interruption.
+     * STACK_LIMIT only refuses the callable about to be entered; later shallower calls may proceed.
      * @param int $additionalBytes Anticipated allocation before the next operation
      * @param bool $call Whether to check host stack capacity before entering another callable
      * @return string|null CANCELLED, MEMORY_LIMIT, TIME_LIMIT, STACK_LIMIT, or no interruption
@@ -60,26 +61,33 @@ final class Resources
      */
     public function reason(int $additionalBytes = 0, bool $call = false): ?string
     {
-        if ($this->stopped !== null) {
-            return $this->stopped;
-        }
-        if ($this->limits->cancellation?->isRequested() === true) {
-            $this->stopped = 'CANCELLED';
-        } elseif ($additionalBytes >= $this->limits->memoryBytes - strlen($this->reserve) - (memory_get_usage() - $this->baseline) || ($this->hostLimit !== null && $additionalBytes >= $this->hostLimit - memory_get_usage(true) - strlen($this->reserve))) {
-            $this->stopped = 'MEMORY_LIMIT';
-        } elseif ($this->limits->seconds > 0.0 && (hrtime(true) - $this->started) / 1e9 >= $this->limits->seconds) {
-            $this->stopped = 'TIME_LIMIT';
-        } elseif ($call && count(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, $this->frameLimit)) >= $this->frameLimit) {
-            $this->stopped = 'STACK_LIMIT';
-        }
+        $this->stopped ??= $this->permanent($additionalBytes);
         if ($this->stopped !== null) {
             $this->reserve = '';
+            return $this->stopped;
         }
-        return $this->stopped;
+        return $call && count(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, $this->frameLimit)) >= $this->frameLimit ? 'STACK_LIMIT' : null;
+    }
+
+    /**
+     * Checks cancellation, memory, and time, which end the whole query.
+     * @param int $additionalBytes Anticipated allocation before the next operation
+     * @return string|null CANCELLED, MEMORY_LIMIT, TIME_LIMIT, or no interruption
+     * @phpstan-impure
+     */
+    public function permanent(int $additionalBytes): ?string
+    {
+        if ($this->limits->cancellation?->isRequested() === true) {
+            return 'CANCELLED';
+        }
+        if ($additionalBytes >= $this->limits->memoryBytes - strlen($this->reserve) - (memory_get_usage() - $this->baseline) || ($this->hostLimit !== null && $additionalBytes >= $this->hostLimit - memory_get_usage(true) - strlen($this->reserve))) {
+            return 'MEMORY_LIMIT';
+        }
+        return $this->limits->seconds > 0.0 && (hrtime(true) - $this->started) / 1e9 >= $this->limits->seconds ? 'TIME_LIMIT' : null;
     }
     /**
      * Leaves space for residual construction when an active debugger limits nesting.
-     * @param int $configured Caller-selected frame limit
+     * @param int $configured Caller-selected absolute frame limit
      * @param string|false $debugLimit Captured debugger nesting setting
      * @param string|false $debugMode Captured effective debugger mode
      * @return int Effective host stack limit

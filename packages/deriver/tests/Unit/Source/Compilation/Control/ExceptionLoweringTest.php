@@ -12,6 +12,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(ExceptionLowering::class)]
+#[UsesClass(\Deriver\Source\Compilation\Control\GotoLowering::class)]
 #[UsesClass(\Deriver\Analysis\QueryExecution::class)]
 #[UsesClass(\Deriver\Analysis\QueryValidation::class)]
 #[UsesClass(\Deriver\Analysis\ResultAssessment::class)]
@@ -118,5 +119,14 @@ final class ExceptionLoweringTest extends TestCase
         self::assertSame('after', $result->normalOutcomes[0]->values['return']->native());
         self::assertSame([], $result->frontiers);
         self::assertSame([], $result->exceptionalOutcomes);
+    }
+
+    public function testScopedRecordsTheRegionPartOnlyWhileLoweringItsBody(): void
+    {
+        $lowering = \Tests\Fake\SourceFixture::lowering();
+        $label = new \PhpParser\Node\Stmt\Label('inside');
+        (new ExceptionLowering($lowering))->scoped('region:0:catch:0', 'catch', 0, [$label]);
+        self::assertSame([['key' => 'region:0:catch:0', 'kind' => 'catch', 'iterator' => '', 'depth' => 0]], $lowering->graph->labels['inside']['scopes'] ?? null);
+        self::assertSame([], $lowering->graph->scopes);
     }
 }

@@ -160,6 +160,18 @@ final class ContextTest extends TestCase
         self::assertSame(['CANCELLED'], array_values(array_map(static fn (Frontier $frontier): string => $frontier->code, $context->frontiers)));
     }
 
+    public function testAvailableRefusesOnlyTheDeepCallOnHostStackExhaustion(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context(configuration:new Configuration(resources:new ResourceLimits(stackFrames:64)));
+        $source = new SourceRef('test', 'fixture.php', 0, 1);
+        self::assertFalse(\Tests\Fake\HostStackFixture::enter($context, $source, 80));
+        self::assertNull($context->stopReason);
+        self::assertFalse($context->sealed);
+        self::assertSame(['STACK_LIMIT'], array_values(array_map(static fn (Frontier $frontier): string => $frontier->code, $context->frontiers)));
+        self::assertTrue($context->available($source, call:true));
+        self::assertTrue($context->admit($source));
+    }
+
     public function testAvailableRetainsScopeWorldEnvironmentAndVersionedProviderAssumptions(): void
     {
         $provider = self::createStub(Provider::class);

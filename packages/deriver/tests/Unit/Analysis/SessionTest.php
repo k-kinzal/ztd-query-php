@@ -30,6 +30,8 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(Session::class)]
+#[UsesClass(\Deriver\Value\Arrays::class)]
+#[UsesClass(\Deriver\Source\Compilation\AggregateLowering::class)]
 #[UsesClass(\Deriver\Analysis\CallObservations::class)]
 #[UsesClass(\Deriver\Analysis\QueryExecution::class)]
 #[UsesClass(\Deriver\Analysis\QueryValidation::class)]
@@ -253,6 +255,23 @@ final class SessionTest extends TestCase
         self::assertNotEmpty($cancelled->exceptionalOutcomes);
         self::assertSame([], $session->explain($completed->reference)->frontiers);
         self::assertNotSame($cancelled, $session->derive($query));
+    }
+    /**
+     * @throws JsonException If fixture metadata cannot be encoded
+     */
+    public function testDeriveKeepsTheQueryAfterAHostStackRefusalWithoutCachingIt(): void
+    {
+        $source = '<?php function target(){return [f0(),g()];}function g(){return 2;}function f20(){return 1;}' . implode('', array_map(static fn (int $i): string => 'function f' . $i . '(){return f' . ($i + 1) . '();}', range(0, 19)));
+        $session = \Tests\Fake\Analysis::session($source, new Configuration(resources:new ResourceLimits(stackFrames:64)));
+        $query = new ReturnQuery('target');
+        $first = $session->derive($query);
+        $second = $session->derive($query);
+        self::assertContains('STACK_LIMIT', array_column($first->frontiers, 'code'));
+        self::assertSame(2, $first->normalOutcomes[0]->values['return']->operands[1]->native());
+        self::assertNotSame($first, $second);
+        self::assertSame($first->reference->id, $second->reference->id);
+        self::assertEquals($first->normalOutcomes, $second->normalOutcomes);
+        self::assertNotSame($first->reference->id, \Tests\Fake\Analysis::session($source)->derive($query)->reference->id);
     }
     /**
      * @throws JsonException If fixture metadata cannot be encoded

@@ -31,11 +31,11 @@ final class ConstantSignatures
                 $visibility = $statement->isPrivate() ? 'private' : ($statement->isProtected() ? 'protected' : 'public');
                 foreach ($statement->consts as $constant) {
                     $name = $constant->name->toString();
-                    $result[$name] = new ClassConstant($class, $name, $visibility, (new CallableCompiler($index))->type($statement->type));
+                    $result[$name] = new ClassConstant($class, $name, $visibility, (new CallableCompiler($index))->type($statement->type), docComment: $statement->getDocComment()?->getText() ?? '');
                 }
             } elseif ($statement instanceof Stmt\EnumCase && $node instanceof Stmt\Enum_) {
                 $name = $statement->name->toString();
-                $result[$name] = new ClassConstant($class, $name, type: $node->scalarType?->toString() ?? 'mixed', enum: true);
+                $result[$name] = new ClassConstant($class, $name, type: $node->scalarType?->toString() ?? 'mixed', enum: true, docComment: $statement->getDocComment()?->getText() ?? '');
             }
         }
         return $result;

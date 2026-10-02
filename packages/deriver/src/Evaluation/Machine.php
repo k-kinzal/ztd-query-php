@@ -44,7 +44,7 @@ final class Machine
         $this->context->active[$key] = ($this->context->active[$key] ?? 0) + 1;
         $available = $this->context->available($callable->source, call: true);
         if (!$available || $this->context->active[$key] > $this->context->query->budget()->recursion) {
-            $completed = (new ResidualPaths($this->context))->seal($initial, $callable->source, $available ? 'recursive-specialization' : 'runtime-resources');
+            $completed = (new ResidualPaths($this->context))->seal($initial, $callable->source, $available ? 'recursive-specialization' : 'runtime-resources', $available ? null : $this->context->stopReason ?? 'STACK_LIMIT');
         } else {
             $this->context->graphs[$key] = true;
             $this->context->demands[$callable] ??= (new Discovery($this->context))->instructions($callable);
@@ -126,6 +126,9 @@ final class Machine
         $block = $callable->blocks[$state->block];
         if ($block->loopHeader && (new LoopConvergence($this->context))->widen($callable, $state)) {
             return (new ResidualPaths($this->context))->seal($state, $callable->source, 'loop-fixed-point');
+        }
+        if ($state->stableHeader === $state->block && $block->terminator->kind !== 'branch') {
+            return [];
         }
         $paths = [$state];
         $completed = [];
@@ -211,6 +214,9 @@ final class Machine
         }
         if ($end->kind === 'branch') {
             return $this->branch($end, $state);
+        }
+        if ($end->kind === 'residual') {
+            return (new ResidualPaths($this->context))->complete($state, $state->value($end->operand));
         }
         if ($end->kind === 'jump') {
             $state->previous = $state->block;

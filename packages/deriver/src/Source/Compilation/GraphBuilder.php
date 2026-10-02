@@ -57,6 +57,18 @@ final class GraphBuilder
      * @var list<array{break: int, continue: int, depth: int}> Active loops.
      */
     public array $loops = [];
+    /**
+     * @var list<array{key: string, kind: string, iterator: string, depth: int}> Enclosing loop, switch, and exception scopes, outermost first.
+     */
+    public array $scopes = [];
+    /**
+     * @var array<string, array{block: int, scopes: list<array{key: string, kind: string, iterator: string, depth: int}>, depth: int, position: int}|null> Goto labels, or null when declared twice.
+     */
+    public array $labels = [];
+    /**
+     * @var list<array{block: int, node: Node\Stmt\Goto_, scopes: list<array{key: string, kind: string, iterator: string, depth: int}>}> Goto statements awaiting label resolution.
+     */
+    public array $gotos = [];
 
     /**
      * @param string $snapshot Snapshot identifier

@@ -34,6 +34,6 @@ final class PropertyScope
             }
             $blocks[$id] = new BasicBlock($id, $instructions, $block->terminator, $block->loopHeader);
         }
-        return new CallableGraph($class . ':trait-property:' . $body->symbol, $body->parameters, $blocks, $body->source, $body->returnType, $body->byReference, $body->strict, $class, $body->captures, $body->regions, $body->allowExtraArguments, $body->visibility, $body->static, $body->abstract);
+        return new CallableGraph($class . ':trait-property:' . $body->symbol, $body->parameters, $blocks, $body->source, $body->returnType, $body->byReference, $body->strict, $class, $body->captures, $body->regions, $body->allowExtraArguments, $body->visibility, $body->static, $body->abstract, $body->external, $body->docComment);
     }
 }

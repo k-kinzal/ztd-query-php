@@ -8,6 +8,7 @@ use Deriver\Value\Term;
 
 /**
  * Class and composed trait facts; inherited members remain on the named parent.
+ * Doc comments are raw source text for integrations that read annotations; Deriver never interprets them.
  * @visibility public
  * @example Inspecting captured class identity
  *     (new \Deriver\Model\Metadata\ClassMetadata("User"))->name // => "User"
@@ -26,6 +27,8 @@ final class ClassMetadata
      * @param bool $abstract Whether the class is abstract
      * @param bool $interface Whether this is an interface
      * @param bool $enum Whether this is an enum
+     * @param string $docComment Raw class doc comment, or an empty string
+     * @param array<string, string> $constantDocComments Raw doc comment of each declared constant and enum case, or an empty string
      */
     public function __construct(
         public readonly string $name,
@@ -39,6 +42,8 @@ final class ClassMetadata
         public readonly bool $abstract = false,
         public readonly bool $interface = false,
         public readonly bool $enum = false,
+        public readonly string $docComment = '',
+        public readonly array $constantDocComments = [],
     ) {
     }
 }
