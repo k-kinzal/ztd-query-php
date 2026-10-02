@@ -106,6 +106,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Source\Validation\ClassScope::class)]
 #[UsesClass(\Deriver\Source\Validation\TargetSyntax::class)]
 #[UsesClass(\Deriver\Value\Arithmetic::class)]
+#[UsesClass(\Deriver\Value\FloatConversion::class)]
 #[UsesClass(\Deriver\Value\Identity::class)]
 #[UsesClass(\Deriver\Value\Operations::class)]
 #[UsesClass(Term::class)]
@@ -235,5 +236,11 @@ final class ComparisonTest extends TestCase
         self::assertNull($comparison->object('===', $object, new Term('enum', 'same')));
         self::assertNull($comparison->object('==', $object, $object));
         self::assertNull($comparison->object('===', Term::constant(1), Term::constant(1)));
+    }
+
+    public function testScalarConvertsFloatsForNonNumericStringsUnderTheCapturedPrecision(): void
+    {
+        self::assertSame(-1, (new Comparison(14))->scalar('<=>', 0.1 + 0.2, '0.3 x'));
+        self::assertSame(1, (new Comparison(-1))->scalar('<=>', 0.1 + 0.2, '0.3 x'));
     }
 }

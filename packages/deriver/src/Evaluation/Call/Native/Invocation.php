@@ -75,7 +75,7 @@ final class Invocation
                     $this->initialize($family, is_array($normalized) ? array_keys($normalized) : [], $entry, $next, $receiver);
                 }
                 $value = $slot === null ? Term::constant(null) : $next->memory->read(new Location('object:' . $receiver?->literal, [$slot]));
-                $next->registers[$instruction->result] = $slot === 'message' ? (new Operations())->cast('string', $value) : $value;
+                $next->registers[$instruction->result] = $slot === 'message' ? (new Operations($this->machine->context->configuration->target->floatPrecision))->cast('string', $value) : $value;
             }
             $result[] = $next;
         }

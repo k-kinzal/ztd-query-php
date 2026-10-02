@@ -13,6 +13,13 @@ use WeakMap;
 final class Comparison
 {
     /**
+     * @param int|null $floatPrecision Captured target precision for float-to-string comparisons; null when unknown
+     */
+    public function __construct(public readonly ?int $floatPrecision = null)
+    {
+    }
+
+    /**
      * Evaluates strict scalar equality and ordered comparisons.
      * @param string $operator PHP comparison
      * @param Term $left Left operand
@@ -88,7 +95,7 @@ final class Comparison
      */
     public function scalar(string $operator, int|float|string|bool|null $a, int|float|string|bool|null $b): bool|int
     {
-        return match ($operator) {
+        $compare = static fn (): bool|int => match ($operator) {
             '===' => $a === $b,
             '!==' => $a !== $b,
             '==' => ($a <=> $b) === 0,
@@ -100,6 +107,7 @@ final class Comparison
             '<=>' => $a <=> $b,
             default => false,
         };
+        return (is_float($a) && is_string($b)) || (is_string($a) && is_float($b)) ? (new FloatConversion($this->floatPrecision))->within($compare) : $compare();
     }
 
     /**

@@ -34,7 +34,7 @@ final class PureStep
      */
     public function evaluate(CallableGraph $callable, Instruction $instruction, State $state): Term
     {
-        $semantics = new Operations();
+        $semantics = new Operations($this->context->configuration->target->floatPrecision);
         $a = $state->value($instruction->operands[0] ?? '');
         $b = $state->value($instruction->operands[1] ?? '');
         return match ($instruction->operation) {
@@ -173,6 +173,6 @@ final class PureStep
         if ((new Arithmetic())->warning($instruction->name, $left, $right)) {
             $this->context->frontier('PHP_WARNING', $instruction->source, 'implicit-integer-precision-loss');
         }
-        return (new Operations())->binary($instruction->name, $left, $right);
+        return (new Operations($this->context->configuration->target->floatPrecision))->binary($instruction->name, $left, $right);
     }
 }

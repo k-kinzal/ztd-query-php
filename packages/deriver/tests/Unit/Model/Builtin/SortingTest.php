@@ -16,6 +16,7 @@ use PHPUnit\Framework\TestCase;
  */
 #[CoversClass(Sorting::class)]
 #[UsesClass(Term::class)]
+#[UsesClass(\Deriver\Value\FloatConversion::class)]
 #[Small]
 final class SortingTest extends TestCase
 {
@@ -26,5 +27,12 @@ final class SortingTest extends TestCase
     public function testApplyRetainsUnsupportedLocaleFlags(): void
     {
         self::assertSame('opaque', (new Sorting())->apply([Term::fromNative(['z', 'a']), Term::constant(5)])->kind);
+    }
+
+    public function testApplyConvertsFloatsForStringSortingUnderTheCapturedPrecision(): void
+    {
+        $values = [Term::fromNative(['0.3 x', 0.1 + 0.2]), Term::constant(2)];
+        self::assertSame([0.1 + 0.2, '0.3 x'], (new Sorting(14))->apply($values)->native());
+        self::assertSame(['0.3 x', 0.1 + 0.2], (new Sorting(-1))->apply($values)->native());
     }
 }

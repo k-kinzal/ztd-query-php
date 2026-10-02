@@ -56,6 +56,28 @@ final class DerivationResult
     }
 
     /**
+     * Selects the one outcome PHP 8.3 produces regardless of inputs, error handlers, and unexplored dependencies.
+     * The closed assessment alone does not establish this: a closed result may still carry PHP_WARNING frontiers, exceptional outcomes, or several alternatives.
+     * @return Alternative|null The only normal outcome when every observed value is concrete and the result has no frontiers, exceptional outcomes, or project diagnostics; null otherwise
+     * @example An undefined variable reads null, but its warning prevents a definite value
+     *     $result = (new \Deriver\Analyzer())->open(new \Deriver\Project\ProjectInput([new \Deriver\Project\SourceFile('a.php', '<?php function f() { return $missing; }')]))->derive(new \Deriver\Query\ReturnQuery('f'));
+     *     [$result->assessment->closure, $result->definite()] // => ['closed', null]
+     */
+    public function definite(): ?Alternative
+    {
+        if (count($this->normalOutcomes) !== 1 || $this->exceptionalOutcomes !== [] || $this->frontiers !== [] || $this->projectDiagnostics !== []) {
+            return null;
+        }
+        $outcome = $this->normalOutcomes[0];
+        foreach ($outcome->values as $value) {
+            if (!$value->isConcrete()) {
+                return null;
+            }
+        }
+        return $outcome;
+    }
+
+    /**
      * Serializes lossless values and shared graph references with secrets redacted.
      * @param bool $includeSecrets Whether to explicitly reveal confidential values
      * @return string Versioned JSON

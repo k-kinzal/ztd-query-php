@@ -104,6 +104,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Source\Validation\ClassScope::class)]
 #[UsesClass(\Deriver\Source\Validation\TargetSyntax::class)]
 #[UsesClass(\Deriver\Value\Identity::class)]
+#[UsesClass(\Deriver\Value\Operations::class)]
 #[UsesClass(\Deriver\Value\Term::class)]
 #[Small]
 final class ExceptionLoweringTest extends TestCase

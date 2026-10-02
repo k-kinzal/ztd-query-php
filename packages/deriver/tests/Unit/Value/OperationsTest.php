@@ -107,6 +107,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Value\Arithmetic::class)]
 #[UsesClass(\Deriver\Value\Arrays::class)]
 #[UsesClass(\Deriver\Value\Comparison::class)]
+#[UsesClass(\Deriver\Value\FloatConversion::class)]
 #[UsesClass(\Deriver\Value\Identity::class)]
 #[UsesClass(\Deriver\Value\IntegerConversion::class)]
 #[UsesClass(\Deriver\Value\NumericString::class)]
@@ -399,5 +400,25 @@ final class OperationsTest extends TestCase
             yield $index . ':public' => [$value, false];
             yield $index . ':confidential' => [$value, true];
         }
+    }
+
+    public function testTruthTreatsNanAsTrueWithoutHostDiagnostics(): void
+    {
+        self::assertTrue((new Operations())->truth(Term::constant(NAN)));
+        self::assertFalse((new Operations())->truth(Term::constant(-0.0)));
+    }
+
+    public function testCastConvertsFloatsUnderTheCapturedPrecision(): void
+    {
+        self::assertSame('0.33333333333333', (new Operations(14))->cast('string', Term::constant(1 / 3))->native());
+        self::assertSame('0.3333333333333333', (new Operations(-1))->cast('string', Term::constant(1 / 3))->native());
+        self::assertTrue((new Operations(14))->cast('string', Term::constant(0.25, true))->isSecret());
+        self::assertSame('v0.25', (new Operations(14))->binary('.', Term::constant('v'), Term::constant(0.25))->native());
+    }
+
+    public function testUnarySignsKeepNegativeZero(): void
+    {
+        self::assertSame('-0', (new Operations(14))->cast('string', (new Operations())->unary('Expr_UnaryMinus', Term::constant(0.0)))->native());
+        self::assertSame('-0', (new Operations(14))->cast('string', (new Operations())->unary('Expr_UnaryPlus', Term::constant('-0.0')))->native());
     }
 }

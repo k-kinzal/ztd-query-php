@@ -28,7 +28,8 @@ final class Arithmetic
             }, $secret);
         }
         if ($operator === 'xor') {
-            return Term::constant((bool) $a !== (bool) $b, $secret);
+            $truth = new Operations();
+            return Term::constant($truth->truth($left) !== $truth->truth($right), $secret);
         }
         $a = $this->number($a);
         $b = $this->number($b);
@@ -77,7 +78,7 @@ final class Arithmetic
             '*' => $a * $b,
             '/' => $a / $b,
             '%' => $integers->apply($a) % $integers->apply($b),
-            '**' => $a ** $b,
+            '**' => $this->power($a, $b),
             '&' => $integers->apply($a) & $integers->apply($b),
             '|' => $integers->apply($a) | $integers->apply($b),
             '^' => $integers->apply($a) ^ $integers->apply($b),
@@ -85,6 +86,20 @@ final class Arithmetic
             '>>' => $integers->apply($b) >= 64 ? ($integers->apply($a) < 0 ? -1 : 0) : $integers->apply($a) >> $integers->apply($b),
             default => null,
         };
+    }
+
+    /**
+     * Raises to a power without the zero-base deprecation that PHP 8.4 and later hosts emit.
+     * @param int|float $base Numeric base
+     * @param int|float $exponent Numeric exponent
+     * @return int|float PHP 8.3 result; a zero base with a negative exponent yields a signed infinity
+     */
+    public function power(int|float $base, int|float $exponent): int|float
+    {
+        if (($base <=> 0) === 0 && $exponent < 0) {
+            return fdiv(1, $base ** -$exponent);
+        }
+        return $base ** $exponent;
     }
 
     /**

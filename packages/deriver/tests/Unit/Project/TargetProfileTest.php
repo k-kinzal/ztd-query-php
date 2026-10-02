@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Project;
 
+use Deriver\Exception\InvalidInputException;
 use Deriver\Project\TargetProfile;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -121,5 +122,18 @@ final class TargetProfileTest extends TestCase
         self::assertSame('after:done', $result->normalOutcomes[0]->values['return']->native());
         self::assertSame([], $result->frontiers);
         self::assertSame([], $result->exceptionalOutcomes);
+    }
+
+    public function testFloatPrecisionIsPartOfTheProfileIdentity(): void
+    {
+        self::assertNull((new TargetProfile())->floatPrecision);
+        self::assertSame('php-8.3-64bit-precision14', (new TargetProfile(floatPrecision: 14))->id());
+        self::assertSame('php-8.3-64bit-precision-1', (new TargetProfile(floatPrecision: -1))->id());
+    }
+
+    public function testFloatPrecisionRejectsValuesThePrecisionDirectiveRejects(): void
+    {
+        $this->expectException(InvalidInputException::class);
+        new TargetProfile(floatPrecision: -2);
     }
 }

@@ -17,18 +17,40 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Analysis\ResultAssessment::class)]
 #[UsesClass(\Deriver\Analysis\Session::class)]
 #[UsesClass(\Deriver\Analyzer::class)]
+#[UsesClass(\Deriver\Constraint\Constraints::class)]
 #[UsesClass(\Deriver\ControlFlow\BasicBlock::class)]
 #[UsesClass(\Deriver\ControlFlow\CallableGraph::class)]
 #[UsesClass(\Deriver\ControlFlow\CallableIdentity::class)]
 #[UsesClass(\Deriver\ControlFlow\Instruction::class)]
+#[UsesClass(\Deriver\ControlFlow\Parameter::class)]
+#[UsesClass(\Deriver\ControlFlow\PropertyDeclaration::class)]
 #[UsesClass(\Deriver\ControlFlow\Terminator::class)]
+#[UsesClass(\Deriver\Evaluation\Call\Allocation::class)]
 #[UsesClass(\Deriver\Evaluation\Call\ArgumentBinding::class)]
 #[UsesClass(\Deriver\Evaluation\Call\ArgumentOrder::class)]
+#[UsesClass(\Deriver\Evaluation\Call\CallExecutor::class)]
+#[UsesClass(\Deriver\Evaluation\Call\CallResolution::class)]
+#[UsesClass(\Deriver\Evaluation\Call\CallableCheck::class)]
+#[UsesClass(\Deriver\Evaluation\Call\Creation\Access::class)]
+#[UsesClass(\Deriver\Evaluation\Call\Creation\Builtins::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Dispatch::class)]
+#[UsesClass(\Deriver\Evaluation\Call\Member\Invocation::class)]
+#[UsesClass(\Deriver\Evaluation\Call\Native\Invocation::class)]
+#[UsesClass(\Deriver\Evaluation\Call\Native\Properties::class)]
+#[UsesClass(\Deriver\Evaluation\Call\Native\Signatures::class)]
+#[UsesClass(\Deriver\Evaluation\Call\ParameterBinding::class)]
+#[UsesClass(\Deriver\Evaluation\Call\PassedArgument::class)]
+#[UsesClass(\Deriver\Evaluation\Call\Preparation\Creation::class)]
+#[UsesClass(\Deriver\Evaluation\Call\Preparation\Resolution::class)]
+#[UsesClass(\Deriver\Evaluation\Call\Preparation\Target::class)]
+#[UsesClass(\Deriver\Evaluation\Call\Preparation\Transfer::class)]
+#[UsesClass(\Deriver\Evaluation\Call\SymbolicEnums::class)]
 #[UsesClass(\Deriver\Evaluation\Call\TypeBinding::class)]
 #[UsesClass(\Deriver\Evaluation\Call\TypeCheck::class)]
+#[UsesClass(\Deriver\Evaluation\Call\UnknownCall::class)]
 #[UsesClass(\Deriver\Evaluation\Completion::class)]
 #[UsesClass(\Deriver\Evaluation\Context::class)]
+#[UsesClass(\Deriver\Evaluation\Control\ExceptionMatch::class)]
 #[UsesClass(\Deriver\Evaluation\Control\ObservationLimit::class)]
 #[UsesClass(\Deriver\Evaluation\Control\Resources::class)]
 #[UsesClass(\Deriver\Evaluation\Control\StateJoin::class)]
@@ -39,9 +61,11 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Evaluation\Demand\Key::class)]
 #[UsesClass(\Deriver\Evaluation\Demand\Table::class)]
 #[UsesClass(\Deriver\Evaluation\Dependencies::class)]
+#[UsesClass(\Deriver\Evaluation\Havoc::class)]
 #[UsesClass(\Deriver\Evaluation\InstructionTransfer::class)]
 #[UsesClass(\Deriver\Evaluation\Machine::class)]
 #[UsesClass(\Deriver\Evaluation\Model\SlotReference::class)]
+#[UsesClass(\Deriver\Evaluation\Model\StateStorage::class)]
 #[UsesClass(\Deriver\Evaluation\ObservationCollector::class)]
 #[UsesClass(\Deriver\Evaluation\Operation\Conversions::class)]
 #[UsesClass(\Deriver\Evaluation\Operation\ScalarErrors::class)]
@@ -50,11 +74,14 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Evaluation\Summary\Evaluation::class)]
 #[UsesClass(\Deriver\Evaluation\Summary\Invocation::class)]
 #[UsesClass(\Deriver\Evaluation\Summary\Isolation::class)]
+#[UsesClass(\Deriver\Evaluation\Transfer\MemoryStep::class)]
 #[UsesClass(\Deriver\Evaluation\Transfer\PureStep::class)]
 #[UsesClass(\Deriver\Evaluation\Transfer\ReferenceAssignment::class)]
+#[UsesClass(\Deriver\Memory\Location::class)]
 #[UsesClass(\Deriver\Memory\Materialization::class)]
 #[UsesClass(\Deriver\Memory\Memory::class)]
 #[UsesClass(\Deriver\Memory\StorageCapture::class)]
+#[UsesClass(\Deriver\Model\Builtin\Library::class)]
 #[UsesClass(\Deriver\Model\Registration\Extensions::class)]
 #[UsesClass(\Deriver\Model\Registration\ProviderInputs::class)]
 #[UsesClass(\Deriver\Model\Registration\Registry::class)]
@@ -75,6 +102,8 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Result\Alternative::class)]
 #[UsesClass(\Deriver\Result\Assessment::class)]
 #[UsesClass(\Deriver\Result\Derivation::class)]
+#[UsesClass(\Deriver\Result\Exceptional::class)]
+#[UsesClass(\Deriver\Result\Frontier::class)]
 #[UsesClass(\Deriver\Result\Serialization\JsonReport::class)]
 #[UsesClass(\Deriver\Result\Serialization\JsonText::class)]
 #[UsesClass(\Deriver\Result\Serialization\QueryEncoding::class)]
@@ -87,7 +116,10 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Source\Cache\SyntaxCache::class)]
 #[UsesClass(\Deriver\Source\Cache\SyntaxTree::class)]
 #[UsesClass(\Deriver\Source\Compilation\AggregateLowering::class)]
+#[UsesClass(\Deriver\Source\Compilation\CallLowering::class)]
 #[UsesClass(\Deriver\Source\Compilation\CallableCompiler::class)]
+#[UsesClass(\Deriver\Source\Compilation\Control\ConditionalLowering::class)]
+#[UsesClass(\Deriver\Source\Compilation\EffectInspection::class)]
 #[UsesClass(\Deriver\Source\Compilation\ExpressionLowering::class)]
 #[UsesClass(\Deriver\Source\Compilation\GraphBuilder::class)]
 #[UsesClass(\Deriver\Source\Compilation\Lowering::class)]
@@ -102,6 +134,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Source\Validation\AssignmentPatterns::class)]
 #[UsesClass(\Deriver\Source\Validation\ClassScope::class)]
 #[UsesClass(\Deriver\Source\Validation\TargetSyntax::class)]
+#[UsesClass(\Deriver\Value\Arithmetic::class)]
 #[UsesClass(\Deriver\Value\Arrays::class)]
 #[UsesClass(\Deriver\Value\Identity::class)]
 #[UsesClass(\Deriver\Value\Operations::class)]
@@ -120,5 +153,39 @@ final class DerivationResultTest extends TestCase
         self::assertStringContainsString('"schemaVersion": "1"', $json);
         self::assertStringContainsString('"type": "int64"', $json);
         self::assertStringContainsString('"type": "bytes"', $json);
+    }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testDefiniteSelectsTheOnlyConcreteOutcome(): void
+    {
+        $result = \Tests\Fake\Analysis::returns('<?php function target(){return ["a" => 1 + 2];}');
+        self::assertSame(['a' => 3], $result->definite()?->values['return']->native());
+    }
+
+    /**
+     * @param string $source Fixture whose closed result still is not one definite value
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerIndefiniteResults')]
+    public function testDefiniteRejectsResultsThatDependOnMoreThanTheSource(string $source): void
+    {
+        self::assertNull(\Tests\Fake\Analysis::returns($source)->definite());
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function providerIndefiniteResults(): array
+    {
+        return [
+            'warning frontier' => ['<?php function target(){return $missing;}'],
+            'exceptional outcome' => ['<?php function target(bool $flag){if ($flag) {throw new LogicException();} return 1;}'],
+            'several alternatives' => ['<?php function target(bool $flag){return $flag ? 1 : 2;}'],
+            'symbolic value' => ['<?php function target(int $id){return $id + 1;}'],
+            'unresolved dependency' => ['<?php function target(){return remote();}'],
+            'project diagnostic' => ["<?php function target(){return 1;}\nfunction target(){return 2;}"],
+        ];
     }
 }

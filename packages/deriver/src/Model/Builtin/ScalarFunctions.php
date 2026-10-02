@@ -13,6 +13,13 @@ use Deriver\Value\Term;
 final class ScalarFunctions
 {
     /**
+     * @param int|null $floatPrecision Captured target precision for float-to-string conversion; null when unknown
+     */
+    public function __construct(public readonly ?int $floatPrecision = null)
+    {
+    }
+
+    /**
      * Applies a known standard intrinsic without dynamic host-function invocation.
      * @param string $name Registered function
      * @param list<Term> $values Bound arguments
@@ -21,13 +28,13 @@ final class ScalarFunctions
     public function apply(string $name, array $values): Term
     {
         if ($name === 'sort-values') {
-            return (new Sorting())->apply($values);
+            return (new Sorting($this->floatPrecision))->apply($values);
         }
         if ($name === 'replace-pair') {
             return (new Replacement())->apply($values);
         }
         if ($name === 'sprintf' || $name === 'vsprintf') {
-            return (new Formatting())->apply($values);
+            return (new Formatting($this->floatPrecision))->apply($values);
         }
         if (in_array($name, ['array_fill', 'str_repeat', 'intval'], true)) {
             return (new ConstructionFunctions())->apply($name, $values);
@@ -40,10 +47,10 @@ final class ScalarFunctions
             return (new TypePredicates())->apply($name, $a);
         }
         if (in_array($name, ['count', 'array_keys', 'array_values', 'array_merge', 'array_key_exists', 'in_array'], true)) {
-            return (new ArrayFunctions())->apply($name, $values);
+            return (new ArrayFunctions($this->floatPrecision))->apply($name, $values);
         }
         if (in_array($name, ['strlen', 'strtolower', 'strtoupper', 'ucfirst', 'lcfirst', 'trim', 'ltrim', 'rtrim', 'substr', 'implode', 'join', 'explode', 'sprintf', 'str_replace'], true)) {
-            return (new StringFunctions())->apply($name, $values);
+            return (new StringFunctions($this->floatPrecision))->apply($name, $values);
         }
         return Term::opaque('UNSUPPORTED_MODEL_CASE', dependencies: $values);
     }

@@ -67,7 +67,7 @@ final class IntrinsicTransfer
         if (in_array($instruction->name, ['time', 'microtime', 'random_int', 'rand', 'mt_rand', 'getenv'], true)) {
             return (new ExternalTransfer($this->machine->context))->apply($instruction, $state, $values);
         }
-        $result = (new ScalarFunctions())->apply($instruction->name, $values);
+        $result = (new ScalarFunctions($this->machine->context->configuration->target->floatPrecision))->apply($instruction->name, $values);
         if ($result->kind === 'opaque') {
             $arguments = [];
             foreach ($caller->parameters as $parameter) {
