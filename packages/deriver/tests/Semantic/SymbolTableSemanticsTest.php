@@ -126,4 +126,44 @@ final class SymbolTableSemanticsTest extends TestCase
         self::assertSame(['object:global:wpdb:prefix'], array_map(static fn (Alternative $outcome) => $outcome->values['value']->literal, $property->normalOutcomes));
         self::assertSame(['global:wpdb'], Analysis::frontier($property, 'global-read')?->knownDependencies);
     }
+
+    /**
+     * Unset breaks only the binding of the name; values shared by reference stay with the other names.
+     * @param string $source Statements after the sink declaration
+     * @param list<mixed> $expected PHP 8.3 sink arguments
+     * @throws JsonException If fixture observations cannot be encoded
+     */
+    #[DataProvider('unsetReferences')]
+    public function testUnsetKeepsTheValueSharedByAReference(string $source, array $expected): void
+    {
+        $result = Analysis::argument('<?php function sink($value){} ' . $source);
+        self::assertSame($expected, array_map(static fn (Alternative $outcome) => $outcome->values['value']->native(), $result->normalOutcomes));
+        self::assertNull(Analysis::frontier($result, 'uninitialized-read'));
+    }
+
+    /**
+     * @return array<string, array{string, list<mixed>}> Sources and the PHP 8.3 value of the first sink argument
+     */
+    public static function unsetReferences(): array
+    {
+        return [
+            'script reference' => ['$x=1;$a=&$x;unset($x);sink($a);', [1]],
+            'script reference then write' => ['$x=1;$a=&$x;unset($x);$x=2;sink($a);', [1]],
+            'script reference target' => ['$x=1;$a=&$x;unset($a);sink($x);', [1]],
+            'script by-reference argument' => ['function keep(&$p){static $r;$r=&$p;} $x=1;keep($x);unset($x);$x=2;sink($x);', [2]],
+            'function global' => ['function drop(){global $g;unset($g);} $g="kept";drop();sink($g);', ['kept']],
+            'function reference' => ['function target(){$x=1;$a=&$x;unset($x);sink($a);}', [1]],
+            'static reference' => ['function target(){static $s=5;$r=&$s;unset($s);sink($r);}', [5]],
+        ];
+    }
+
+    /**
+     * @throws JsonException If fixture observations cannot be encoded
+     */
+    public function testUnsetScriptVariableIsUndefinedWhileItsReferenceKeepsTheValue(): void
+    {
+        $result = Analysis::argument('<?php function sink($value){} $x=1;$a=&$x;unset($x);sink([isset($x),$a]);');
+        self::assertSame([[false, 1]], array_map(static fn (Alternative $outcome) => $outcome->values['value']->native(), $result->normalOutcomes));
+    }
+
 }

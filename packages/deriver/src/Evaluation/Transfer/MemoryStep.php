@@ -259,6 +259,7 @@ final class MemoryStep
     }
     /**
      * Removes a variable binding or an element; an unset variable stays undefined until the next symbol-table boundary.
+     * At script scope the global slot is cleared; values shared by reference live in a separate cell, so other names keep them.
      * @param CallableGraph $callable Current scope
      * @param State $state Current path
      * @param Location $address Unset variable or element
