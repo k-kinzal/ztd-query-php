@@ -154,7 +154,7 @@ final class Strings
             $this->warning($instruction);
             return Term::constant('Array', $value->isSecret());
         }
-        $converted = (new Operations())->cast('string', $value);
+        $converted = (new Operations($this->context->configuration->target->floatPrecision))->cast('string', $value);
         return $converted->kind === 'constant' ? $converted : Term::opaque('OFFSET_OPERATION', 'string', [$value]);
     }
 

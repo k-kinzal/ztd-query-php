@@ -52,8 +52,9 @@ final class StringJoining
                         $failures[] = $converted;
                         continue;
                     }
-                    $left = $first ? $prefix : (new Operations())->binary('.', $prefix, $separator);
-                    $value = (new Operations())->binary('.', $left, $converted->value($instruction->result));
+                    $semantics = new Operations($this->machine->context->configuration->target->floatPrecision);
+                    $left = $first ? $prefix : $semantics->binary('.', $prefix, $separator);
+                    $value = $semantics->binary('.', $left, $converted->value($instruction->result));
                     $converted->registers[$instruction->result] = $value;
                     $next[] = [$converted, $value];
                 }

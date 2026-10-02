@@ -44,6 +44,9 @@ final class ConversionPrograms
             'object without string method' => ['<?php class B{} function target(){try{return (string)new B;}catch(Error $e){return "error";}}', Term::constant('error')],
             'closure string cast' => ['<?php function target(){try{return (string)(fn()=>1);}catch(Error $e){return "error";}}', Term::constant('error')],
             'enum string cast' => ['<?php enum B:string{case A="a";} function target(){try{return (string)B::A;}catch(Error $e){return "error";}}', Term::constant('error')],
+            'zero base power keeps the infinity sign' => ['<?php function target(){$z=0.0;return [0 ** -1 > PHP_INT_MAX, (-$z) ** -1 < 0, (-$z) ** -2 > 0, (-0.0) ** -2.5 > 0, $z ** -0.5 > 0];}', Term::fromNative([true, true, true, true, true])],
+            'not a number is true' => ['<?php function target(){$n=1e308 * 10 - 1e308 * 10;return [$n ? 1 : 2, $n xor false, !$n];}', Term::fromNative([1, true, false])],
+            'unary signs keep negative zero' => ['<?php function target(){$z=0.0;return [(-$z) ** -1 < 0, (+"-0.0") ** -1 < 0, (-(-$z)) ** -1 > 0];}', Term::fromNative([true, true, true])],
         ];
     }
 }

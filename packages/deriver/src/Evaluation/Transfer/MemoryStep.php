@@ -91,7 +91,7 @@ final class MemoryStep
     {
         $op = $instruction->operation;
         if ($op === 'dynamic-local') {
-            $name = (new Operations())->cast('string', $state->value($instruction->operands[0]));
+            $name = (new Operations($this->context->configuration->target->floatPrecision))->cast('string', $state->value($instruction->operands[0]));
             if ($name->kind === 'constant' && is_string($name->literal)) {
                 return $this->evaluate($callable, new Instruction($instruction->id, 'local', $instruction->source, $instruction->result, name: $name->literal), $state);
             }

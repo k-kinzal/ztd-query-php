@@ -14,6 +14,13 @@ use Deriver\Value\Term;
 final class Formatting
 {
     /**
+     * @param int|null $floatPrecision Captured target precision for float-to-string conversion; null when unknown
+     */
+    public function __construct(public readonly ?int $floatPrecision = null)
+    {
+    }
+
+    /**
      * Keeps dynamic substitutions as expressions and rejects unsupported format syntax.
      * @param list<Term> $values Bound format and variadic argument array
      * @return Term Formatted string, exception, or explicit unsupported case
@@ -28,7 +35,7 @@ final class Formatting
         $result = Term::constant('', $format->isSecret());
         $next = 0;
         $position = 0;
-        $semantics = new Operations();
+        $semantics = new Operations($this->floatPrecision);
         while ($position < strlen($format->literal)) {
             $percent = strpos($format->literal, '%', $position);
             if ($percent === false) {

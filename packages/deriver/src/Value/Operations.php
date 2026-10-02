@@ -11,14 +11,21 @@ namespace Deriver\Value;
 final class Operations
 {
     /**
-     * Converts a known or symbolic value to a PHP boolean.
+     * @param int|null $floatPrecision Captured target precision for float-to-string conversion; null when unknown
+     */
+    public function __construct(public readonly ?int $floatPrecision = null)
+    {
+    }
+
+    /**
+     * Converts a known or symbolic value to a PHP boolean without the NAN coercion warning of PHP 8.5 hosts.
      * @param Term $value Input
      * @return bool|null Known truth value, or null when symbolic
      */
     public function truth(Term $value): ?bool
     {
         if ($value->kind === 'constant') {
-            return (bool) $value->literal;
+            return is_float($value->literal) ? $value->literal !== 0.0 : (bool) $value->literal;
         }
         if ($value->kind === 'array') {
             return $value->operands !== [] ? true : (($value->attributes['open'] ?? false) === false ? false : null);
@@ -56,7 +63,11 @@ final class Operations
         }
         $native = $value->literal;
         if ($type === 'string') {
-            return is_float($native) ? Term::opaque('FLOAT_STRING_CONFIGURATION', 'string', [$value]) : Term::constant((string) $native, $value->isSecret());
+            if (is_float($native)) {
+                $string = (new FloatConversion($this->floatPrecision))->string($native);
+                return $string === null ? Term::opaque('FLOAT_STRING_CONFIGURATION', 'string', [$value]) : Term::constant($string, $value->isSecret());
+            }
+            return Term::constant((string) $native, $value->isSecret());
         }
         if ($type === 'int') {
             if (is_float($native)) {
@@ -99,13 +110,13 @@ final class Operations
             return new Term('array', operands: $left->operands + $right->operands, attributes: ['open' => ($left->attributes['open'] ?? false) === true || ($right->attributes['open'] ?? false) === true], secret: $left->isSecret() || $right->isSecret());
         }
         if (in_array($operator, ['===', '!==', '==', '!=', '<', '<=', '>', '>=', '<=>'], true)) {
-            return (new Comparison())->apply($operator, $left, $right);
+            return (new Comparison($this->floatPrecision))->apply($operator, $left, $right);
         }
         return $this->numeric($operator, $left, $right);
     }
 
     /**
-     * Applies unary operators with explicit errors.
+     * Applies unary operators with explicit errors; signs multiply by -1 or 1 as PHP compiles them, keeping negative zero.
      * @param string $operator Parser-independent operator name
      * @param Term $value Operand
      * @return Term Evaluated expression
@@ -117,7 +128,7 @@ final class Operations
             return $truth === null ? new Term('unary', '!', [$value], ['type' => 'bool']) : Term::constant(!$truth, $value->isSecret());
         }
         if ($operator === 'Expr_UnaryMinus' || $operator === 'Expr_UnaryPlus') {
-            return $this->binary($operator === 'Expr_UnaryMinus' ? '-' : '+', Term::constant(0), $value);
+            return $this->binary('*', $value, Term::constant($operator === 'Expr_UnaryMinus' ? -1 : 1));
         }
         if ($operator === 'Expr_BitwiseNot' && $value->kind === 'constant') {
             return is_int($value->literal) || is_string($value->literal) ? Term::constant(~$value->literal, $value->isSecret()) : new Term('throwable', 'TypeError');

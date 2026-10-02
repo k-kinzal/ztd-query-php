@@ -190,7 +190,7 @@ final class TypeBinding
      */
     public function coerce(Term $value, string $type): TypeCheck
     {
-        $result = (new Operations())->cast($type, $value);
+        $result = (new Operations($this->context->configuration->target->floatPrecision))->cast($type, $value);
         $warning = $type === 'int' && is_int($result->literal) && (float) $value->literal !== (float) $result->literal;
         return new TypeCheck($result, diagnostic: $warning);
     }
