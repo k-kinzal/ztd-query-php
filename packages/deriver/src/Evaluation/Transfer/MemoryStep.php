@@ -245,11 +245,7 @@ final class MemoryStep
             return Term::constant($present);
         }
         if ($instruction->operation === 'unset') {
-            if ($address->local !== '' && $address->path === []) {
-                unset($state->locals[$address->local]);
-            } else {
-                $state->memory->remove($address);
-            }
+            $this->unset($callable, $state, $address);
         } elseif ($instruction->operation === 'global') {
             $root = 'global:' . $address->local;
             $state->memory->cells[$root] ??= $this->context->configuration->environment[$root] ?? new Term('external', $root, attributes: ['type' => 'mixed']);
@@ -261,6 +257,27 @@ final class MemoryStep
         }
         return Term::constant(null);
     }
+    /**
+     * Removes a variable binding or an element; an unset variable stays undefined until the next symbol-table boundary.
+     * @param CallableGraph $callable Current scope
+     * @param State $state Current path
+     * @param Location $address Unset variable or element
+     */
+    public function unset(CallableGraph $callable, State $state, Location $address): void
+    {
+        if ($address->local === '' || $address->path !== []) {
+            $state->memory->remove($address);
+            return;
+        }
+        unset($state->locals[$address->local]);
+        if (str_starts_with($callable->symbol, 'script:')) {
+            $state->memory->cells['global:' . $address->local] = new Term('uninitialized');
+        }
+        if ($state->unknownLocals !== null) {
+            $state->locals[$address->local] = $state->memory->allocate(new Term('uninitialized'));
+        }
+    }
+
     /**
      * Resolves a returned reference or allocates permitted temporary iteration storage.
      * @param Instruction $instruction Returned-address operation and diagnostic policy

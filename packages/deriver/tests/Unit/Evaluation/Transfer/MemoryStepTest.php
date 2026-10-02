@@ -504,4 +504,25 @@ final class MemoryStepTest extends TestCase
         self::assertSame(['EXTERNAL_INPUT', 'global-read', ['global:wpdb']], [$frontier->code, $frontier->operation, $frontier->knownDependencies]);
     }
 
+    #[DataProvider('providerUnsetScopes')]
+    public function testUnsetKeepsAVariableUndefinedAcrossUnknownSymbolTables(string $symbol, ?string $unknown, ?string $expected): void
+    {
+        $state = new State();
+        $state->unknownLocals = $unknown;
+        $state->memory->cells['global:x'] = Term::constant(1);
+        $state->locals['x'] = new Location('global:x');
+        (new MemoryStep(SolverFixture::context()))->unset(new CallableGraph($symbol, [], [], new SourceRef('test', 'fixture.php', 0, 1)), $state, $state->local('x'));
+        self::assertSame($expected, isset($state->locals['x']) ? $state->memory->read($state->locals['x'])->kind : null);
+        self::assertSame(str_starts_with($symbol, 'script:') ? 'uninitialized' : 'constant', $state->memory->cells['global:x']->kind);
+    }
+
+    /**
+     * @return iterable<string,array{string,string|null,string|null}>
+     */
+    public static function providerUnsetScopes(): iterable
+    {
+        yield 'function' => ['target', null, null];
+        yield 'function after boundary' => ['target', 'INCLUDE_SEMANTICS_UNSUPPORTED', 'uninitialized'];
+        yield 'script' => ['script:fixture.php', null, null];
+    }
 }
