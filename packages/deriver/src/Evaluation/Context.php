@@ -15,6 +15,7 @@ use Deriver\Result\Alternative;
 use Deriver\Result\Derivation;
 use Deriver\Result\Exceptional;
 use Deriver\Result\Frontier;
+use Deriver\Value\Identity;
 use Deriver\Value\Term;
 use WeakMap;
 
@@ -32,6 +33,10 @@ final class Context
      * Runtime resource checks, independent of semantic transfer budgets.
      */
     public readonly Resources $resources;
+    /**
+     * Structural term keys memoized across this query's states, which share term subgraphs.
+     */
+    public readonly Identity $identity;
     /**
      * Permanent resource interruption reason, when applicable; STACK_LIMIT only seals the refused call.
      */
@@ -103,6 +108,7 @@ final class Context
         $this->demands = new WeakMap();
         $this->nativeCalls = new WeakMap();
         $this->resources = new Resources($configuration->resources);
+        $this->identity = new Identity();
         $this->assumptions = ['target:' . $configuration->target->id(), 'scope:' . $query->scope()->mode, 'world:' . ($configuration->closedWorld ? 'closed' : 'open'), 'environment:' . $configuration->environmentVersion];
         foreach ($configuration->providers as $provider) {
             [$id, $version] = [$provider->id(), $provider->version()];

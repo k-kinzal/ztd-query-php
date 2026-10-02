@@ -120,6 +120,9 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Value\Arrays::class)]
 #[UsesClass(\Deriver\Value\Identity::class)]
 #[UsesClass(\Deriver\Value\Operations::class)]
+#[UsesClass(\Deriver\Evaluation\Control\PathJoin::class)]
+#[UsesClass(\Deriver\Value\Lattice::class)]
+#[UsesClass(\Deriver\Value\StringPrefix::class)]
 #[UsesClass(Term::class)]
 #[Small]
 final class StateJoinTest extends TestCase
@@ -146,8 +149,24 @@ final class StateJoinTest extends TestCase
         $b->completion = new Completion('return', Term::constant('last'));
         $states = (new StateJoin($context))->completed([$a, $b], $body);
         self::assertCount(1, $states);
-        self::assertSame('opaque', $states[0]->completion->value?->kind);
+        self::assertSame('abstract', $states[0]->completion->value?->kind);
+        self::assertTrue((new \Deriver\Value\Lattice())->contains($states[0]->completion->value, Term::constant(1)));
+        self::assertTrue((new \Deriver\Value\Lattice())->contains($states[0]->completion->value, Term::constant('last')));
         self::assertCount(2, $context->frontiers);
+    }
+
+    public function testCompletedHavocsLateExceptionsThatCannotBeJoined(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context(budget: new Budget(partitions: 1));
+        $body = $context->program->callable('target');
+        self::assertNotNull($body);
+        $a = new State();
+        $a->completion = new Completion('throw', new Term('throwable', 'LogicException'));
+        $b = new State();
+        $b->completion = new Completion('throw', new Term('throwable', 'RuntimeException'));
+        $states = (new StateJoin($context))->completed([$a, $b], $body);
+        self::assertCount(1, $states);
+        self::assertSame(['Throwable', true], [$states[0]->completion->value?->literal, $states[0]->completion->value?->attributes['uncertain'] ?? null]);
     }
 
     public function testLimitGroupsIndependentProgramPointsBeforeApplyingTheBudget(): void
@@ -165,7 +184,7 @@ final class StateJoinTest extends TestCase
         self::assertSame([], $context->frontiers);
     }
 
-    public function testLimitKeepsKnownPartitionsAndSealsEveryRemainingStorageRoot(): void
+    public function testLimitKeepsKnownPartitionsAndSealsTheStorageOfPathsThatCannotBeJoined(): void
     {
         $context = \Tests\Fake\SolverFixture::context(budget:new Budget(partitions:2));
         $body = \Tests\Fake\SummaryFixture::body($context);
@@ -188,13 +207,62 @@ final class StateJoinTest extends TestCase
         self::assertFalse($states[2]->observed);
         self::assertSame([], $states[1]->guard);
         self::assertSame([], $states[1]->constraints);
-        self::assertSame(['a','b'], array_keys($states[1]->locals));
-        self::assertSame(['opaque','opaque'], array_column($states[1]->memory->cells, 'kind'));
+        self::assertSame(['b'], array_keys($states[1]->locals));
+        self::assertSame(['opaque'], array_column($states[1]->memory->cells, 'kind'));
         self::assertSame('BUDGET_EXCEEDED', $states[1]->memory->unknownShared);
         self::assertSame('Throwable', $states[2]->completion->value?->literal);
         self::assertSame(1, $a->memory->cells['a']->native());
         self::assertSame(2, $b->memory->cells['b']->native());
         self::assertContains('CORRELATION_RELAXED', array_column($context->frontiers, 'code'));
+    }
+
+    public function testLimitJoinsExcessPathsThatDifferOnlyInPlainValues(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context(budget:new Budget(partitions:2));
+        $body = \Tests\Fake\SummaryFixture::body($context);
+        $base = new State();
+        $base->block = 1;
+        $base->memory->write($base->local('sql'), Term::constant(''));
+        $paths = [];
+        foreach (['SELECT a', 'SELECT b', 'SELECT c'] as $sql) {
+            $path = $base->fork();
+            $path->memory->write($path->local('sql'), Term::constant($sql));
+            $paths[] = $path;
+        }
+        $states = (new StateJoin($context))->limit($paths, $body);
+        self::assertCount(2, $states);
+        self::assertSame($paths[0], $states[0]);
+        self::assertSame('normal', $states[1]->completion->kind);
+        $joined = $states[1]->memory->read($states[1]->locals['sql']);
+        self::assertSame('SELECT ', $joined->operands[0]->native());
+        self::assertSame(['BUDGET_EXCEEDED', 'CORRELATION_RELAXED'], array_column(array_values($context->frontiers), 'code'));
+    }
+
+    public function testLimitPassesCompletedResidualsThrough(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context(budget:new Budget(partitions:1));
+        $body = \Tests\Fake\SummaryFixture::body($context);
+        $a = new State();
+        $a->completion = new Completion('return', Term::constant(1));
+        $b = new State();
+        $b->completion = new Completion('throw', new Term('throwable', 'Throwable'));
+        self::assertSame([$a, $b], (new StateJoin($context))->limit([$a, $b], $body));
+        self::assertSame([], $context->frontiers);
+    }
+
+    public function testCandidateKeysSeparateStatesWithDifferentStorage(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $join = new StateJoin($context);
+        $a = new State();
+        $a->registers['order'] = Term::parameter('order', 'bool');
+        $a->memory->write($a->local('x'), Term::constant(1));
+        $b = $a->fork();
+        $b->guard[$context->identity->key(Term::parameter('order', 'bool'))] = true;
+        self::assertSame($join->candidateKey($a, 'order', $context->identity), $join->candidateKey($b, 'order', $context->identity));
+        $b->memory->write($b->local('x'), Term::constant(2));
+        self::assertNotSame($join->candidateKey($a, 'order', $context->identity), $join->candidateKey($b, 'order', $context->identity));
+        self::assertNotSame($join->orderKey($a, 'order'), $join->orderKey($b, 'order'));
     }
 
     public function testCompletedKeepsNormalAndExceptionalGroupsIndependentAtTheExactLimit(): void

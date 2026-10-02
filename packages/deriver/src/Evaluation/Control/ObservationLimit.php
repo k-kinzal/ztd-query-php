@@ -26,26 +26,60 @@ final class ObservationLimit
     }
 
     /**
-     * Joins every excess outcome instead of truncating late alternatives.
+     * Merges repeated outcomes, then joins only the excess beyond the budget instead of truncating late alternatives.
      * @param SourceRef $source Observation source
      */
     public function enforce(SourceRef $source): void
     {
-        if (count($this->context->normal) > $this->context->query->budget()->partitions) {
-            $values = [];
-            $states = [];
-            foreach ($this->context->normal as $outcome) {
-                $values[] = $outcome->values;
-                $states[] = $outcome->state;
+        $limit = $this->context->query->budget()->partitions;
+        if (count($this->context->normal) > $limit) {
+            $normal = $this->distinct($this->context->normal, $source);
+            if (count($normal) > $limit) {
+                $excess = array_slice($normal, $limit - 1);
+                $normal = [...array_slice($normal, 0, $limit - 1), new Alternative($this->join(array_map(static fn (Alternative $outcome): array => $outcome->values, $excess)), state: $this->join(array_map(static fn (Alternative $outcome): array => $outcome->state, $excess)), storage: $this->storage(array_map(static fn (Alternative $outcome): StorageSnapshot => $outcome->storage, $excess)))];
+                $this->boundary($source);
             }
-            $this->context->normal = [new Alternative($this->join($values), state: $this->join($states), storage: $this->storage(array_map(static fn (Alternative $outcome): StorageSnapshot => $outcome->storage, $this->context->normal)))];
-            $this->boundary($source);
+            $this->context->normal = $normal;
         }
-        if (count($this->context->exceptional) > $this->context->query->budget()->partitions) {
-            $states = array_map(static fn (Exceptional $outcome): array => $outcome->state, $this->context->exceptional);
-            $this->context->exceptional = [new Exceptional(new Term('throwable', 'Throwable', attributes: ['uncertain' => true]), state: $this->join($states), storage: $this->storage(array_map(static fn (Exceptional $outcome): StorageSnapshot => $outcome->storage, $this->context->exceptional)))];
-            $this->boundary($source);
+        if (count($this->context->exceptional) > $limit) {
+            $exceptional = $this->distinct($this->context->exceptional, $source);
+            if (count($exceptional) > $limit) {
+                $excess = array_slice($exceptional, $limit - 1);
+                $exceptional = [...array_slice($exceptional, 0, $limit - 1), new Exceptional(new Term('throwable', 'Throwable', attributes: ['uncertain' => true]), state: $this->join(array_map(static fn (Exceptional $outcome): array => $outcome->state, $excess)), storage: $this->storage(array_map(static fn (Exceptional $outcome): StorageSnapshot => $outcome->storage, $excess)))];
+                $this->boundary($source);
+            }
+            $this->context->exceptional = $exceptional;
         }
+    }
+
+    /**
+     * Merges outcomes with identical values, state, and storage, keeping the guard entries they share.
+     * @template T of Alternative|Exceptional
+     * @param list<T> $outcomes Observed outcomes in discovery order
+     * @param SourceRef $source Observation source
+     * @return list<T> Distinct outcomes in first-discovery order
+     */
+    public function distinct(array $outcomes, SourceRef $source): array
+    {
+        $identity = $this->context->identity;
+        $keys = static fn (array $terms): array => array_map($identity->key(...), $terms);
+        $result = [];
+        foreach ($outcomes as $outcome) {
+            $values = $outcome instanceof Alternative ? $outcome->values : ['exception' => $outcome->exception];
+            $key = hash('sha256', serialize([$keys($values), $keys($outcome->state), $keys($outcome->storage->bindings), $keys($outcome->storage->cells)]));
+            $kept = $result[$key] ?? null;
+            if ($kept === null) {
+                $result[$key] = $outcome;
+                continue;
+            }
+            $guard = array_intersect_assoc($kept->guard, $outcome->guard);
+            if ($guard !== $kept->guard || $guard !== $outcome->guard) {
+                $this->context->frontier('CORRELATION_RELAXED', $source, 'outcome-limit');
+            }
+            $evidence = array_values(array_unique([...$kept->evidence, ...$outcome->evidence]));
+            $result[$key] = $kept instanceof Alternative ? new Alternative($kept->values, $guard, $kept->state, $evidence, $kept->storage) : new Exceptional($kept->exception, $guard, $kept->state, $evidence, $kept->storage);
+        }
+        return array_values($result);
     }
 
     /**

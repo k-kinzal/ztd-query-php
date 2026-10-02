@@ -62,9 +62,29 @@ final class ObservationLimitTest extends TestCase
         $context = \Tests\Fake\SolverFixture::context(budget: new Budget(partitions: 2));
         $context->normal = [new Alternative(['return' => Term::constant(1)]), new Alternative(['return' => Term::constant(2)]), new Alternative(['return' => Term::constant(99)])];
         (new ObservationLimit($context))->enforce(new SourceRef('test', 'fixture.php', 0, 1));
-        self::assertCount(1, $context->normal);
-        self::assertTrue((new Lattice())->contains($context->normal[0]->values['return'], Term::constant(99)));
+        self::assertCount(2, $context->normal);
+        self::assertSame(1, $context->normal[0]->values['return']->native());
+        self::assertTrue((new Lattice())->contains($context->normal[1]->values['return'], Term::constant(2)));
+        self::assertTrue((new Lattice())->contains($context->normal[1]->values['return'], Term::constant(99)));
         self::assertCount(2, $context->frontiers);
+    }
+    public function testEnforceMergesRepeatedOutcomesBeforeJoining(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context(budget: new Budget(partitions: 2));
+        $context->normal = [new Alternative(['return' => Term::constant(1)], ['a' => true, 'b' => true], evidence: ['x']), new Alternative(['return' => Term::constant(2)]), new Alternative(['return' => Term::constant(1)], ['a' => true, 'b' => false], evidence: ['y'])];
+        (new ObservationLimit($context))->enforce(new SourceRef('test', 'fixture.php', 0, 1));
+        self::assertSame([1, 2], array_map(static fn (Alternative $outcome): mixed => $outcome->values['return']->native(), $context->normal));
+        self::assertSame(['a' => true], $context->normal[0]->guard);
+        self::assertSame(['x', 'y'], $context->normal[0]->evidence);
+        self::assertSame(['CORRELATION_RELAXED'], array_column(array_values($context->frontiers), 'code'));
+    }
+    public function testEnforceKeepsIdenticalOutcomesWithinTheBudget(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context(budget: new Budget(partitions: 2));
+        $context->normal = [new Alternative(['return' => Term::constant(1)]), new Alternative(['return' => Term::constant(1)])];
+        (new ObservationLimit($context))->enforce(new SourceRef('test', 'fixture.php', 0, 1));
+        self::assertCount(2, $context->normal);
+        self::assertSame([], $context->frontiers);
     }
     public function testJoinPreservesEqualFieldsAndIncludesAbsentFields(): void
     {
