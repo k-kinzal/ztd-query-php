@@ -12,6 +12,7 @@ use Deriver\Evaluation\Control\CollectionCalls;
 use Deriver\Evaluation\Machine;
 use Deriver\Evaluation\Operation\CallablePredicate;
 use Deriver\Evaluation\Operation\CountableCalls;
+use Deriver\Evaluation\Operation\PartialFormatting;
 use Deriver\Evaluation\State;
 use Deriver\Model\Builtin\ScalarFunctions;
 use Deriver\Value\Term;
@@ -59,6 +60,12 @@ final class IntrinsicTransfer
             $joined = (new \Deriver\Evaluation\Operation\StringJoining($this->machine))->apply($caller, $instruction, $state, $values);
             if ($joined !== null) {
                 return $joined;
+            }
+        }
+        if (in_array($instruction->name, ['sprintf', 'vsprintf'], true)) {
+            $formatted = (new PartialFormatting($this->machine->context))->apply($instruction, $state, $values);
+            if ($formatted !== null) {
+                return $formatted;
             }
         }
         if (in_array($instruction->name, ['array_map', 'array_filter', 'array_reduce'], true)) {
