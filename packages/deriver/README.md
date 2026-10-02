@@ -95,6 +95,8 @@ Property names are resolved from the entry method's class. A name that is not a 
 
 Inspect the result's assessment, unresolved dependencies, and exceptional outcomes before treating a normal value as exhaustive. A symbolic value can be complete even when its input is unknown.
 
+Analysis is bounded by a `Budget`. When more paths or outcomes than the budget allows reach one point, Deriver keeps the first ones exactly and joins the rest into one widened value instead of dropping them, and records a `BUDGET_EXCEEDED` frontier. A widened string keeps the bytes its candidates start with, so a loop that appends conditions to a known query yields its exact unrollings and `concat('SELECT ... WHERE 1', <string>)`. Recursion over symbolic inputs forks at every level and is bounded by `Budget::$symbolicRecursion`; recursion over concrete values is bounded by `Budget::$recursion`.
+
 A closed assessment does not mean the result is a single fixed value. Reading an undefined variable is closed and concrete, yet it carries a `PHP_WARNING` frontier, because an error handler can turn the warning into an exception. When you need one value PHP always produces, use `definite()`. It returns the only normal outcome when every value is concrete and the result has no frontiers, exceptional outcomes or project diagnostics, and `null` otherwise:
 
 ```php
