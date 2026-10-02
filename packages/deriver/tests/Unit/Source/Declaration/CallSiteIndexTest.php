@@ -79,4 +79,30 @@ final class CallSiteIndexTest extends TestCase
         self::assertFalse($calls->fallback(new \PhpParser\Node\Expr\FuncCall(new \PhpParser\Node\Name('Local\\sink')), 'sink'));
     }
 
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerCreations')]
+    public function testCreationMatchesConstructorSelectors(string $class, string $selector, bool $expected): void
+    {
+        self::assertSame($expected, (new CallSiteIndex(\Tests\Fake\SourceFixture::index()))->creation(new \PhpParser\Node\Name($class), $selector));
+    }
+
+    /**
+     * @return iterable<string,array{string,string,bool}>
+     */
+    public static function providerCreations(): iterable
+    {
+        yield 'wildcard' => ['N\\Repo', '*', true];
+        yield 'constructor' => ['N\\Repo', '\\n\\REPO::__Construct', true];
+        yield 'class name' => ['N\\Repo', 'N\\Repo', false];
+        yield 'other class' => ['N\\Repo', 'N\\Other::__construct', false];
+        yield 'lexical class' => ['self', 'N\\Repo::__construct', true];
+        yield 'lexical class by function name' => ['self', 'sink', false];
+    }
+
+    public function testOwnersFindsCreationsWithoutCompilingBodies(): void
+    {
+        $index = \Tests\Fake\SourceFixture::index('<?php namespace N;class Repo {} function target(){return new Repo;} function other($c){return new $c;}');
+        self::assertSame(['N\\target'], (new CallSiteIndex($index))->owners('N\\Repo::__construct'));
+        self::assertSame(['N\\target'], (new CallSiteIndex($index))->owners('*'));
+        self::assertSame(0, $index->graphCount());
+    }
 }

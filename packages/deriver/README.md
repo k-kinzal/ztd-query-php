@@ -89,6 +89,8 @@ $session = (new Analyzer())->open($input, new Configuration(environment: [
 ]));
 ```
 
+`callsTo()` lists call sites without running the application. A function or method name selects calls of that name, `Class::__construct` selects `new Class(...)` sites, which are reported with the `new` operation and the created class as the target, and `*` selects every call and creation whose name is written in the source.
+
 Deriver evaluates operators without the diagnostics that newer host PHP versions add, such as the PHP 8.4 deprecation of raising zero to a negative power.
 
 Queries, models, and result types are described in the [API documentation](https://k-kinzal.github.io/ztd-query-php/k-kinzal/deriver/).

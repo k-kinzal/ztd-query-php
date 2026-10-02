@@ -9,6 +9,7 @@ use Deriver\ControlFlow\CallableIdentity;
 use Deriver\ControlFlow\Instruction;
 use Deriver\ControlFlow\Program;
 use Deriver\Evaluation\Call\CallResolution;
+use Deriver\Evaluation\Call\Dispatch;
 use Deriver\Evaluation\Context;
 use Deriver\Model\Registration\Registry;
 use Deriver\Project\Configuration;
@@ -32,8 +33,8 @@ final class CallObservations
     }
 
     /**
-     * Finds statically named invocations in the captured world.
-     * @param string $symbol Function or method selector
+     * Finds statically named invocations and object creations in the captured world.
+     * @param string $symbol Function or method selector, `Class::__construct`, or `*`
      * @return list<Observation> Matching call sites
      */
     public function find(string $symbol): array
@@ -54,7 +55,7 @@ final class CallObservations
     /**
      * Collects definitions before looking at calls, independent of block allocation order.
      * @param CallableGraph $callable Captured owner
-     * @param string $selector Requested function or method name
+     * @param string $selector Requested function or method name, `Class::__construct`, or `*`
      * @param CallResolution $resolution Captured namespace resolution
      * @return list<Observation> Matching occurrences
      */
@@ -69,20 +70,26 @@ final class CallObservations
                 if ($instruction->constant !== null) {
                     $constants[$instruction->result] = $instruction->constant;
                 }
-                if (in_array($instruction->operation, ['invoke', 'invoke-method', 'invoke-static'], true)) {
+                if (in_array($instruction->operation, ['invoke', 'invoke-method', 'invoke-static', 'new'], true)) {
                     $calls[] = $instruction;
                 }
             }
         }
         $result = [];
+        $identity = new CallableIdentity();
         foreach ($calls as $instruction) {
-            $index = $instruction->operation === 'invoke' ? 0 : 1;
+            $index = in_array($instruction->operation, ['invoke', 'new'], true) ? 0 : 1;
             $name = $constants[$instruction->operands[$index] ?? '']->literal ?? null;
             if (!is_string($name)) {
                 continue;
             }
-            $name = $instruction->operation === 'invoke' ? $resolution->name($name, $instruction) : $name;
-            if ($selector === '*' || (new CallableIdentity())->key($name) === (new CallableIdentity())->key($selector)) {
+            $name = match ($instruction->operation) {
+                'invoke' => $resolution->name($name, $instruction),
+                'new' => $this->className($name, $instruction),
+                default => $name,
+            };
+            $selected = $instruction->operation === 'new' ? $name . '::__construct' : $name;
+            if ($selector === '*' || $identity->key($selected) === $identity->key($selector)) {
                 $result[] = $this->observation($callable->symbol, $instruction, $name, $sources);
             }
         }
@@ -90,10 +97,26 @@ final class CallObservations
     }
 
     /**
+     * Resolves the lexical `self` and `parent` of a creation; late-bound `static` stays as written.
+     * @param string $name Created class as compiled
+     * @param Instruction $instruction Creation with its lexical class scope
+     * @return string Created class name without a leading separator
+     */
+    public function className(string $name, Instruction $instruction): string
+    {
+        $scope = $instruction->attributes['scope'] ?? '';
+        if (($instruction->attributes['literal-class'] ?? false) !== true || !is_string($scope) || !in_array(strtolower($name), ['self', 'parent'], true)) {
+            return ltrim($name, '\\');
+        }
+        $resolved = (new Dispatch($this->program))->className($name, $scope, '');
+        return $resolved === '' ? $name : $resolved;
+    }
+
+    /**
      * Projects evaluated operand references without resolving them a second time.
      * @param string $owner Declaring callable
      * @param Instruction $instruction Invocation
-     * @param string $name Resolved function or method spelling
+     * @param string $name Resolved function, method, or created class spelling
      * @param array<string, SourceRef> $sources Register source locations
      * @return Observation Queryable occurrence
      */
@@ -107,7 +130,7 @@ final class CallObservations
                 $arguments[$argument->name] = $reference;
             }
         }
-        $receiver = $instruction->operation === 'invoke' ? null : new ExpressionRef($sources[$instruction->operands[0]] ?? $instruction->source, $owner, $instruction->operands[0]);
+        $receiver = in_array($instruction->operation, ['invoke', 'new'], true) ? null : new ExpressionRef($sources[$instruction->operands[0]] ?? $instruction->source, $owner, $instruction->operands[0]);
         return new Observation($instruction->source, $owner, $instruction->id, $name, $arguments, new ExpressionRef($instruction->source, $owner, $instruction->result), $receiver, $instruction->operation);
     }
 
