@@ -53,6 +53,7 @@ use Tests\Fake\SummaryFixture;
 #[UsesClass(Completion::class)]
 #[UsesClass(\Deriver\Evaluation\Context::class)]
 #[UsesClass(\Deriver\Evaluation\Control\ExceptionMatch::class)]
+#[UsesClass(\Deriver\Evaluation\Control\LoopConvergence::class)]
 #[UsesClass(Handler::class)]
 #[UsesClass(\Deriver\Evaluation\Control\ObservationLimit::class)]
 #[UsesClass(\Deriver\Evaluation\Control\ResidualPaths::class)]
@@ -473,6 +474,29 @@ final class MachineTest extends TestCase
         self::assertCount(1, $paths);
         self::assertSame(19, $paths[0]->block);
         self::assertNull($paths[0]->stableHeader);
+    }
+
+    public function testBlockDropsAStableHeaderWithoutALoopTestAsSubsumed(): void
+    {
+        $context = SolverFixture::context();
+        $source = SummaryFixture::body($context)->source;
+        $body = new CallableGraph('target', [], [new BasicBlock(0, [], new Terminator('jump', targets:[0]), true)], $source);
+        $context->demands[$body] = [];
+        $state = new State();
+        $state->stableHeader = 0;
+        self::assertSame([], (new Machine($context))->block($body, $state));
+    }
+
+    public function testTerminateResidualCompletesWithTheBoundaryValueAndAnUnknownThrowable(): void
+    {
+        $context = SolverFixture::context();
+        $body = SummaryFixture::body($context);
+        $state = new State();
+        $state->registers['boundary'] = Term::opaque('UNSUPPORTED_LANGUAGE_FEATURE');
+        $paths = (new Machine($context))->terminate($body, new Terminator('residual', 'boundary'), $state);
+        self::assertSame(['return','throw'], array_column(array_column($paths, 'completion'), 'kind'));
+        self::assertSame('UNSUPPORTED_LANGUAGE_FEATURE', $paths[0]->completion->value?->literal);
+        self::assertTrue($paths[1]->completion->value?->attributes['uncertain']);
     }
 
     public function testBlockSkipsUndemandedInstructions(): void

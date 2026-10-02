@@ -36,6 +36,17 @@ final class ResidualPaths
         $reason = $this->context->stopReason ?? 'BUDGET_EXCEEDED';
         $value = $this->context->frontier($reason, $source, $operation);
         (new Havoc())->all($state, $reason);
+        return $this->complete($state, $value);
+    }
+
+    /**
+     * Completes an already havocked path with a residual return and an unknown throwable.
+     * @param State $state Interrupted execution path
+     * @param Term $value Residual return value
+     * @return list<State> Normal and exceptional residuals
+     */
+    public function complete(State $state, Term $value): array
+    {
         $state->constraints = [];
         $state->completion = new Completion('return', $value);
         $exception = $state->fork();

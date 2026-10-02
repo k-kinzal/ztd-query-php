@@ -127,6 +127,9 @@ final class Machine
         if ($block->loopHeader && (new LoopConvergence($this->context))->widen($callable, $state)) {
             return (new ResidualPaths($this->context))->seal($state, $callable->source, 'loop-fixed-point');
         }
+        if ($state->stableHeader === $state->block && $block->terminator->kind !== 'branch') {
+            return [];
+        }
         $paths = [$state];
         $completed = [];
         foreach ($block->instructions as $instruction) {
@@ -211,6 +214,9 @@ final class Machine
         }
         if ($end->kind === 'branch') {
             return $this->branch($end, $state);
+        }
+        if ($end->kind === 'residual') {
+            return (new ResidualPaths($this->context))->complete($state, $state->value($end->operand));
         }
         if ($end->kind === 'jump') {
             $state->previous = $state->block;

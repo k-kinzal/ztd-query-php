@@ -67,4 +67,16 @@ final class ResidualPathsTest extends TestCase
         self::assertTrue($paths[1]->completion->value?->attributes['uncertain']);
         self::assertSame('BUDGET_EXCEEDED', array_values($context->frontiers)[0]->code);
     }
+
+    public function testCompleteKeepsTheGivenResidualWithoutRecordingAnotherFrontier(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $state = new State();
+        $state->constraints = ['x' => ['min' => 1, 'max' => null, 'equal' => null, 'excluded' => []]];
+        $paths = (new ResidualPaths($context))->complete($state, Term::opaque('UNSUPPORTED_LANGUAGE_FEATURE'));
+        self::assertSame(['return', 'throw'], array_map(static fn (State $state): string => $state->completion->kind, $paths));
+        self::assertSame('UNSUPPORTED_LANGUAGE_FEATURE', $paths[0]->completion->value?->literal);
+        self::assertSame([], $paths[0]->constraints);
+        self::assertSame([], $context->frontiers);
+    }
 }
