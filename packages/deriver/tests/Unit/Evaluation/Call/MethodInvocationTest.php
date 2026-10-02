@@ -25,6 +25,11 @@ use PHPUnit\Framework\TestCase;
 use Tests\Fake\SolverFixture;
 
 #[CoversClass(MethodInvocation::class)]
+#[UsesClass(\Deriver\Result\Exceptional::class)]
+#[UsesClass(\Deriver\Model\Registration\SignatureIdentity::class)]
+#[UsesClass(\Deriver\Model\Registration\ModelPrecedence::class)]
+#[UsesClass(\Deriver\Model\Registration\Declarations::class)]
+#[UsesClass(\Deriver\Evaluation\Call\SymbolicEnums::class)]
 #[UsesClass(\Deriver\Analysis\QueryExecution::class)]
 #[UsesClass(\Deriver\Analysis\QueryValidation::class)]
 #[UsesClass(\Deriver\Analysis\ResultAssessment::class)]
@@ -390,6 +395,31 @@ final class MethodInvocationTest extends TestCase
         $paths = (new MethodInvocation(new Machine($context)))->candidates($caller, new Instruction('call', 'invoke-method', $caller->source, 'result'), new State(), [], Term::parameter('receiver', 'Missing'), 'Missing', 'run', new DispatchDecision([new DispatchTarget('missing', condition:Term::constant(false))], true));
         self::assertCount(2, $paths);
         self::assertSame(['OPEN_DISPATCH'], array_column($context->frontiers, 'code'));
+    }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testModeledInvokesUserModelsOnATypeBoundWithoutSource(): void
+    {
+        $model = new \Tests\Fake\PlanModel(new \Deriver\Model\ModelDescriptor('example.missing-run', '1', 'Missing::run'), new \Deriver\Model\Plan\SemanticPlan([\Deriver\Model\Plan\Action::returns(\Deriver\Model\Plan\Expression::literal(Term::constant(7)))]));
+        $session = \Tests\Fake\Analysis::session('<?php function target(?Missing $value){return $value->run();}', new Configuration(closedWorld:true, models:[$model]));
+        $result = $session->derive(new ReturnQuery('target'));
+        self::assertSame([7], array_map(static fn (Alternative $a): int|float|string|bool|null => $a->values['return']->literal, $result->normalOutcomes));
+        self::assertContains('Error', array_map(static fn (\Deriver\Result\Exceptional $e): mixed => $e->exception->literal, $result->exceptionalOutcomes));
+        self::assertSame([], $result->frontiers);
+    }
+
+    public function testModeledLeavesSelectedSourceImplementationsAndUnmodeledTypesToDispatch(): void
+    {
+        $model = new \Tests\Fake\PlanModel(new \Deriver\Model\ModelDescriptor('example.missing-run', '1', 'Missing::run'), new \Deriver\Model\Plan\SemanticPlan([\Deriver\Model\Plan\Action::returns(\Deriver\Model\Plan\Expression::literal(Term::constant(7)))]));
+        $context = SolverFixture::context(configuration:new Configuration(models:[$model]));
+        $caller = $context->program->callable('target');
+        self::assertNotNull($caller);
+        $invocation = new MethodInvocation(new Machine($context));
+        $instruction = new Instruction('call', 'invoke-method', $caller->source, 'result');
+        self::assertSame([], $invocation->modeled($caller, $instruction, new State(), [], Term::parameter('receiver', 'Missing'), 'Missing', 'run', ['Missing' => 'Missing::run']));
+        self::assertSame([], $invocation->modeled($caller, $instruction, new State(), [], Term::parameter('receiver', 'Other'), 'Other|null', 'run', []));
     }
 
     public function testReceiverBindsTheCurrentInstanceForStaticSyntaxOnlyWhenOneExists(): void
