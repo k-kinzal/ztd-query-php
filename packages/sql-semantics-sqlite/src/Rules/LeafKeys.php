@@ -34,7 +34,7 @@ final class LeafKeys implements \SqlSemantics\Contract\LeafKeys
      */
     public function key(Token $token, string $signature, int $position): ?string
     {
-        if ($token->text === '' || in_array($position, Noise::POSITIONS[$signature] ?? [], true)) {
+        if ($token->text === '' || in_array($position, Noise::positions()[$signature] ?? DefinitionNoise::positions()[$signature] ?? [], true)) {
             return null;
         }
         $this->symbols[$signature] ??= explode(' ', substr($signature, (int) strpos($signature, ':') + 1 + (str_ends_with($signature, ':') ? 0 : 1)));

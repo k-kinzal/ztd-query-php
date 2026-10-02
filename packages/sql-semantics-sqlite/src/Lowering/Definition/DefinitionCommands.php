@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Lowering\Definition;
 
+use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\Sqlite\Lowering\Lowering;
@@ -21,11 +22,14 @@ use SqlSemantics\Statement\Statement;
  */
 final class DefinitionCommands
 {
+    private readonly CreateTableRule $tables;
+
     /**
      * @param Lowering $lowering The lowering this rule belongs to
      */
-    public function __construct(private readonly Lowering $lowering)
+    public function __construct(Lowering $lowering)
     {
+        $this->tables = new CreateTableRule($lowering);
     }
 
     /**
@@ -36,8 +40,18 @@ final class DefinitionCommands
     public function command(Form $form): Statement
     {
         return match ($form->signature) {
-            'cmd: create_table create_table_args' => $this->lowering->tables->create($form->node(0), $form->node(1)),
+            'cmd: create_table create_table_args' => $this->tables->create($form->node(0), $form->node(1)),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Wraps a command in the inspection request written before it.
+     *
+     * @throws ImplementationGap When the production has no rule
+     */
+    public function explained(Node $explain, Statement $command): Statement
+    {
+        throw ImplementationGap::rule('explain: ' . $explain->name . ' around ' . $command::class);
     }
 }

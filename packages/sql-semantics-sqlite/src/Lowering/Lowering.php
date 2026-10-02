@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Lowering\Productions;
-use SqlSemantics\Platform\Sqlite\Lowering\Definition\CreateTableRule;
 use SqlSemantics\Platform\Sqlite\Lowering\Definition\DefinitionCommands;
 use SqlSemantics\Platform\Sqlite\Lowering\Expression\ExpressionRule;
 use SqlSemantics\Platform\Sqlite\Lowering\Leaf\NameRule;
@@ -45,11 +44,6 @@ final class Lowering
     public readonly SelectRule $selects;
 
     /**
-     * @var CreateTableRule The table definition rules
-     */
-    public readonly CreateTableRule $tables;
-
-    /**
      * @var QueryCommands The commands that read or write rows
      */
     public readonly QueryCommands $queryCommands;
@@ -68,7 +62,6 @@ final class Lowering
         $this->names = new NameRule($this);
         $this->expressions = new ExpressionRule($this);
         $this->selects = new SelectRule($this);
-        $this->tables = new CreateTableRule($this);
         $this->queryCommands = new QueryCommands($this);
         $this->definitionCommands = new DefinitionCommands($this);
     }
@@ -104,6 +97,7 @@ final class Lowering
         return match ($form->signature) {
             'ecmd: SEMI' => null,
             'ecmd: cmdx SEMI' => $this->command($this->productions->form($form->node(0))->node(0)),
+            'ecmd: explain cmdx SEMI' => $this->definitionCommands->explained($form->node(0), $this->command($this->productions->form($form->node(1))->node(0))),
             default => throw ImplementationGap::production($form),
         };
     }

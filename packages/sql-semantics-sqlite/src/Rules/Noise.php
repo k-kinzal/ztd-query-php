@@ -15,16 +15,21 @@ namespace SqlSemantics\Platform\Sqlite\Rules;
 final class Noise
 {
     /**
-     * The noise positions by production signature.
+     * Answers the noise positions by production signature.
      *
      * - `ecmd`: the semicolon only separates commands (https://sqlite.org/lang.html).
      * - `as: AS nm`: the AS keyword before an alias is optional and changes nothing
      *   (https://sqlite.org/syntax/result-column.html).
+     *
+     * @return array<string, list<int>>
      */
-    public const POSITIONS = [
-        'ecmd: SEMI' => [0],
-        'ecmd: cmdx SEMI' => [1],
-        'ecmd: explain cmdx SEMI' => [2],
-        'as: AS nm' => [0],
-    ];
+    public static function positions(): array
+    {
+        return [
+            'ecmd: SEMI' => [0],
+            'ecmd: cmdx SEMI' => [1],
+            'ecmd: explain cmdx SEMI' => [2],
+            'as: AS nm' => [0],
+        ];
+    }
 }
