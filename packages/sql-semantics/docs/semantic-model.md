@@ -96,6 +96,21 @@ from the expression's written form. Reconstruction may therefore need an explici
 result alias when it normalizes expression grouping. The stored name is an output
 identifier; the expression itself is still written from its typed operands.
 
+`SqliteSearchedCase` applies SQLite truth conversion to its ordered tests.
+`SqliteSimpleCase` retains a single base operand and compares each test value
+against it. They preserve lazy evaluation and cannot be changed into one another
+by replacing a property. Construct the other operation explicitly when changing
+that evaluation strategy.
+
+A CASE result uses `SqliteChoiceDomain` to retain its possible branch domains;
+SQLite does not coerce every branch to a common type. Nested choices are flattened
+without losing their declaration type objects. A missing ELSE contributes NULL.
+Missing declarations remain explicit alternatives, while invalid references in
+any branch remain errors even if that branch would never execute. An always-NULL
+base selects the ELSE domain after all operands have been checked. These are
+conservative facts about a request, not execution of its conditions. See SQLite's
+[CASE expression rules](https://sqlite.org/lang_expr.html#the_case_expression).
+
 ## Declarations and insertion sources
 
 A table creation owns its declaration objects. Supplying that operation as context

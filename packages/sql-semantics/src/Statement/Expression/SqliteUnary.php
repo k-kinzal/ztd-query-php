@@ -10,6 +10,7 @@ use SqlSemantics\Statement\Declaration\TypeDescriptor;
 use SqlSemantics\Statement\SemanticGraph;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\NullDomain;
+use SqlSemantics\Statement\Type\SqliteChoiceDomain;
 use SqlSemantics\Statement\Type\SqliteNumericDomain;
 use SqlSemantics\Statement\Type\Unresolved;
 
@@ -32,7 +33,7 @@ final class SqliteUnary implements ScalarExpression
     /**
      * Negation may promote an integer; plus retains the value without restoring column affinity.
      */
-    public function type(): TypeDescriptor|NullDomain|Unresolved|Invalid|SqliteNumericDomain
+    public function type(): TypeDescriptor|NullDomain|Unresolved|Invalid|SqliteNumericDomain|SqliteChoiceDomain
     {
         $input = $this->operand->type();
         if ($input instanceof Invalid || $input instanceof NullDomain || $this->operator === SqliteUnaryOperator::Plus) {

@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Analysis;
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
 use SqlSemantics\Core\Ast\Tree;
+use SqlSemantics\Platform\Sqlite\Analysis\Expression\CaseReader;
 use SqlSemantics\Platform\Sqlite\IdentifierReader;
 use SqlSemantics\Statement\Expression\BooleanReference;
 use SqlSemantics\Statement\Expression\ColumnReference;
@@ -58,7 +59,7 @@ final class ExpressionReader
     public function read(Node $source, Scope $scope): ScalarExpression
     {
         assert($this->projection === null || $this->projection->scope === $scope, 'Alias and input lookup must share a scope.');
-        $conversion = (new ConversionReader())->read($source, $scope, $this);
+        $conversion = (new ConversionReader())->read($source, $scope, $this) ?? (new CaseReader())->read($source, $scope, $this);
         if ($conversion !== null) {
             return $conversion;
         }

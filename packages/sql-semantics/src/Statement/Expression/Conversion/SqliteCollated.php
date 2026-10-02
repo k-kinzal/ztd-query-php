@@ -12,6 +12,7 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\SemanticGraph;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\NullDomain;
+use SqlSemantics\Statement\Type\SqliteChoiceDomain;
 use SqlSemantics\Statement\Type\SqliteNumericDomain;
 use SqlSemantics\Statement\Type\Unresolved;
 
@@ -35,7 +36,7 @@ final class SqliteCollated implements ScalarExpression
     /**
      * Collation changes comparison behavior without converting the stored value.
      */
-    public function type(): TypeDescriptor|NullDomain|Unresolved|Invalid|SqliteNumericDomain
+    public function type(): TypeDescriptor|NullDomain|Unresolved|Invalid|SqliteNumericDomain|SqliteChoiceDomain
     {
         return $this->operand->type();
     }

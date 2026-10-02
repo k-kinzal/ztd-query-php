@@ -11,6 +11,7 @@ use SqlSemantics\Statement\Expression\ScalarExpression;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\NullDomain;
+use SqlSemantics\Statement\Type\SqliteChoiceDomain;
 use SqlSemantics\Statement\Type\SqliteNumericDomain;
 use SqlSemantics\Statement\Type\Unresolved;
 
@@ -37,7 +38,7 @@ final class AliasReference implements ScalarExpression
     /**
      * Alias substitution preserves the target expression's result domain.
      */
-    public function type(): TypeDescriptor|NullDomain|Unresolved|Invalid|SqliteNumericDomain
+    public function type(): TypeDescriptor|NullDomain|Unresolved|Invalid|SqliteNumericDomain|SqliteChoiceDomain
     {
         return $this->field->expression->type();
     }

@@ -8,6 +8,7 @@ use SqlSemantics\Statement\Declaration\Nullability;
 use SqlSemantics\Statement\Declaration\TypeDescriptor;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\NullDomain;
+use SqlSemantics\Statement\Type\SqliteChoiceDomain;
 use SqlSemantics\Statement\Type\SqliteNumericDomain;
 use SqlSemantics\Statement\Type\Unresolved;
 
@@ -22,7 +23,7 @@ interface ScalarExpression
     /**
      * Returns the expression type, or the specific fact preventing its determination.
      */
-    public function type(): TypeDescriptor|NullDomain|Unresolved|Invalid|SqliteNumericDomain;
+    public function type(): TypeDescriptor|NullDomain|Unresolved|Invalid|SqliteNumericDomain|SqliteChoiceDomain;
 
     /**
      * Returns the SQL NULL fact for this expression at its lookup site.
