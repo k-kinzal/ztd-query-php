@@ -38,7 +38,7 @@ final class PartialFormatting
         if (($values[0] ?? Term::constant(null))->kind !== 'concat' || $formatting->apply($values, $instruction->name === 'vsprintf')->kind !== 'opaque') {
             return null;
         }
-        $prefix = $formatting->prefix($values);
+        $prefix = $formatting->prefix($values, $instruction->name === 'vsprintf');
         if ($prefix === null) {
             return null;
         }

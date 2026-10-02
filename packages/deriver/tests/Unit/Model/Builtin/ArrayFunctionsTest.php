@@ -180,6 +180,13 @@ final class ArrayFunctionsTest extends TestCase
         $key = Term::constant(2);
         self::assertSame([$key, $merge], $functions->membership('array_key_exists', [$key, $merge])->operands);
     }
+    public function testKeyExistsDoesNotTrustEntriesThatUnknownCodeMayHaveRemoved(): void
+    {
+        $array = Term::array(['a' => new Term('opaque', 'UNKNOWN', attributes: ['maybeUninitialized' => true]), 'b' => Term::constant(1)], true);
+        $functions = new ArrayFunctions();
+        self::assertSame('intrinsic', $functions->keyExists(Term::constant('a'), $array)->kind);
+        self::assertSame(true, $functions->keyExists(Term::constant('b'), $array)->native());
+    }
     public function testKeysFiltersWithoutRenumberingSourceKeys(): void
     {
         $array = Term::fromNative(['first' => 2, 7 => '2', 'last' => 3]);

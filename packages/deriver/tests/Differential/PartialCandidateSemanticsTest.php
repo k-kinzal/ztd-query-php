@@ -80,6 +80,13 @@ final class PartialCandidateSemanticsTest extends TestCase
         foreach (['vsprintf("%s",["a"=>"x"])', 'vsprintf("%s %s",["x"])', 'sprintf(\'%0$s\',"x")', 'sprintf(\'%1$%\')', 'sprintf(\'%1$%\',"x")', 'sprintf(\'%s %0$s\')', 'sprintf(\'%2147483647$s\',"x")'] as $call) {
             $programs[] = ['<?php function build(){return ' . $call . ';}', ''];
         }
+        foreach (['sprintf("%s",x:"v")', 'sprintf("%s",...["x"=>"v"])', 'sprintf("%s","a",...["x"=>"v"])', 'sprintf(format:"%s",values:"v")', 'vsprintf("%s",["x"=>"v"])', 'sprintf(\'%2$%\',1)', 'sprintf(\'%2$%\',1,2)', 'sprintf(\'%$s\',1)', 'sprintf(\'%1$\',1)', 'sprintf(\'%1$\')', 'sprintf("a%",1)', 'sprintf("a%")', 'sprintf(\'%s %2$%\',1)', 'sprintf(\'%1$%%s\',1)', 'vsprintf(\'%2$%\',[1])'] as $call) {
+            $programs[] = ['<?php function build(){return ' . $call . ';}', ''];
+        }
+        foreach (['""', '"s"', '"$s"', '"$%"', '"%"', '"0$s"'] as $input) {
+            $programs[] = [$format . 'sprintf(\'%1$s %2\'.$f,"a","b");}', $input];
+            $programs[] = [$format . 'sprintf("%s %".$f,"a",x:"v");}', $input];
+        }
         return $programs;
     }
 }
