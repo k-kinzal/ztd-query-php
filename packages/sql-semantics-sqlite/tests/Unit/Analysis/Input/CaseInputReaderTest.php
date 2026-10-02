@@ -69,6 +69,8 @@ final class CaseInputReaderTest extends TestCase
             ["case\nwhen 0 then 0\nwhen 1 then 1\nend"],
             ['case when 1 then case 0 when 0 then 1 end else 0 end'],
             ['case when 1+2=3 then 1 else 0 end'],
+            ['case when not 0 then +1 else -1 end'],
+            ['case -(1) when -1 then 1 else 0 end'],
         ];
     }
 }

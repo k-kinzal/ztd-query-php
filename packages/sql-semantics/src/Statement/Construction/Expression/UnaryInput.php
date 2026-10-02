@@ -18,8 +18,9 @@ final class UnaryInput implements \SqlSemantics\Statement\Construction\ScalarInp
     /**
      * Retains explicit new inputs; resolution belongs to their new enclosing query.
      */
-    public function __construct(public readonly \SqlSemantics\Statement\Expression\SqliteUnaryOperator $operator, public readonly \SqlSemantics\Statement\Construction\ScalarInput $operand)
+    public function __construct(public readonly \SqlSemantics\Statement\Expression\SqliteUnaryOperator $operator, public readonly \SqlSemantics\Statement\Construction\ScalarInput $operand, public readonly \SqlSemantics\Statement\Expression\Rendering\SqliteUnaryLayout|null $layout = null)
     {
+        \SqlSemantics\Statement\Validation\Check::input($layout === null || $layout->operator === $operator, 'A unary layout must describe the actual requested operation.');
         \SqlSemantics\Statement\Construction\InputDomain::check($operand);
     }
 }

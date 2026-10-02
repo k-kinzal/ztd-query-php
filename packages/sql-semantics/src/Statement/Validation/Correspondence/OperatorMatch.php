@@ -24,7 +24,7 @@ final class OperatorMatch
         $actual = $pair->actual;
         $scope = $pair->scope;
         if ($input instanceof C\UnaryInput) {
-            Check::invariant($actual instanceof E\SqliteUnary && $input->operator === $actual->operator, 'A unary request must retain its actual operator.');
+            Check::invariant($actual instanceof E\SqliteUnary && $input->operator === $actual->operator && SpellingMatch::same($input->layout, $actual->layout), 'A unary request must retain its actual operator.');
             return [new ScalarPair($input->operand, $actual->operand, $scope)];
         }
         if ($input instanceof C\BinaryInput) {

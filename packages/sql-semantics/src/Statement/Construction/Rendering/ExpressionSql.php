@@ -26,7 +26,7 @@ final class ExpressionSql
             $input instanceof E\SqliteBlob, $input instanceof E\SqliteCurrentTime => $input->toString(),
             $input instanceof C\Expression\GroupedInput => '(' . $input->before . $this->write($input->operand) . $input->after . ')',
             $input instanceof C\Expression\ColumnUse => ($input->qualifier === null ? '' : $input->qualifier->toString() . '.') . $input->name->toString(),
-            $input instanceof C\Expression\UnaryInput => $input->operator->value . ' (' . $this->write($input->operand) . ')',
+            $input instanceof C\Expression\UnaryInput => $input->layout === null ? $input->operator->value . ' (' . $this->write($input->operand) . ')' : $input->layout->write($this->write($input->operand), (new E\Rendering\SqlitePrecedence())->unaryGrouped($input->operand, $input->operator)),
             $input instanceof C\Expression\BinaryInput => $this->binary($input),
             $input instanceof C\Expression\BetweenInput => '(' . $this->write($input->subject) . ')' . ($input->negated ? ' NOT' : '') . ' BETWEEN (' . $this->write($input->lower) . ') AND (' . $this->write($input->upper) . ')',
             $input instanceof C\Expression\InListInput => '(' . $this->write($input->subject) . ')' . ($input->negated ? ' NOT' : '') . ' IN (' . implode(', ', array_map($this->write(...), $input->choices)) . ')',

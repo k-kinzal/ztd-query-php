@@ -34,4 +34,13 @@ final class SqlitePrecedenceTest extends TestCase
         self::assertFalse($precedence->grouped($inner, E\SqliteBinaryOperator::Subtract, false));
         self::assertTrue($precedence->grouped($inner, E\SqliteBinaryOperator::Subtract, true));
     }
+
+    public function testUnaryGroupedDistinguishesLowPrecedenceNotFromNumericNegation(): void
+    {
+        $comparison = new C\Expression\BinaryInput(new E\NullConstant(), E\SqliteBinaryOperator::Equal, new E\NullConstant());
+        $precedence = new E\Rendering\SqlitePrecedence();
+        self::assertFalse($precedence->unaryGrouped($comparison, E\SqliteUnaryOperator::Not));
+        self::assertTrue($precedence->unaryGrouped($comparison, E\SqliteUnaryOperator::Negate));
+        self::assertFalse($precedence->unaryGrouped(new C\Expression\UnaryInput(E\SqliteUnaryOperator::Negate, new E\NullConstant()), E\SqliteUnaryOperator::Negate));
+    }
 }

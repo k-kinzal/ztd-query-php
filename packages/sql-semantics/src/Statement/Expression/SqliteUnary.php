@@ -27,8 +27,9 @@ final class SqliteUnary implements ScalarExpression
     /**
      * The operation's facts are derived from its immutable semantic operand.
      */
-    public function __construct(public readonly SqliteUnaryOperator $operator, public readonly ScalarExpression $operand)
+    public function __construct(public readonly SqliteUnaryOperator $operator, public readonly ScalarExpression $operand, public readonly Rendering\SqliteUnaryLayout|null $layout = null)
     {
+        \SqlSemantics\Statement\Validation\Check::input($layout === null || $layout->operator === $operator, 'A unary layout must describe the actual requested operation.');
         \SqlSemantics\Statement\Validation\Check::input((new SemanticGraph())->containsOnlyValues($operand), 'An operand must contain only immutable semantic values.');
     }
 
@@ -79,6 +80,6 @@ final class SqliteUnary implements ScalarExpression
      */
     public function toString(): string
     {
-        return $this->operator->value . ' (' . $this->operand->toString() . ')';
+        return $this->layout === null ? $this->operator->value . ' (' . $this->operand->toString() . ')' : $this->layout->write($this->operand->toString(), (new Rendering\SqlitePrecedence())->unaryGrouped($this->operand, $this->operator));
     }
 }

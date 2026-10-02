@@ -78,7 +78,7 @@ final class ExpressionReader
         if (count($children) === 2 && $children[0] instanceof Token && $children[1] instanceof Node && $children[1]->name === 'expr') {
             $operator = SqliteUnaryOperator::tryFrom(strtoupper($children[0]->text));
             if ($operator !== null) {
-                return new SqliteUnary($operator, $this->read($children[1], $scope));
+                return new SqliteUnary($operator, $this->read($children[1], $scope), new \SqlSemantics\Statement\Expression\Rendering\SqliteUnaryLayout($operator, $children[0]->text, $children[1]->tokens()[0]->leading, false));
             }
         }
         $operation = $this->infix($source, $scope) ?? $this->predicate($source, $scope);

@@ -28,7 +28,7 @@ final class ExpressionConstruction
             $input instanceof E\SqliteBlob, $input instanceof E\SqliteCurrentTime => $input,
             $input instanceof Expression\GroupedInput => new E\Rendering\GroupedExpression($this->derive($input->operand, $scope), $input->before, $input->after),
             $input instanceof Expression\ColumnUse => (new ColumnConstruction())->derive($input, $scope),
-            $input instanceof Expression\UnaryInput => new E\SqliteUnary($input->operator, $this->derive($input->operand, $scope)),
+            $input instanceof Expression\UnaryInput => new E\SqliteUnary($input->operator, $this->derive($input->operand, $scope), $input->layout),
             $input instanceof Expression\BinaryInput => new E\SqliteBinary($this->derive($input->left, $scope), $input->operator, $this->derive($input->right, $scope), $input->layout),
             $input instanceof Expression\BetweenInput => new E\SqliteBetween($this->derive($input->subject, $scope), $this->derive($input->lower, $scope), $this->derive($input->upper, $scope), $input->negated),
             $input instanceof Expression\InListInput => new E\SqliteInList($this->derive($input->subject, $scope), $input->negated, ...array_map(fn (ScalarInput $choice): ScalarExpression => $this->derive($choice, $scope), $input->choices)),

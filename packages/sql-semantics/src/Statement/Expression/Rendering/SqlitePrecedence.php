@@ -76,4 +76,12 @@ final class SqlitePrecedence
         $parentPower = $this->binary($parent);
         return $childPower < $parentPower || ($right && $childPower === $parentPower);
     }
+
+    /**
+     * Prefix operations associate to the right; only a weaker operand needs grouping.
+     */
+    public function unaryGrouped(E\ScalarExpression|C\ScalarInput $child, E\SqliteUnaryOperator $parent): bool
+    {
+        return $this->expression($child) < ($parent === E\SqliteUnaryOperator::Not ? 30 : 150);
+    }
 }

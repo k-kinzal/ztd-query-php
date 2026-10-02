@@ -17,6 +17,7 @@ final class ValueDomain
      * @var list<class-string>
      */
     private const TYPES = [
+        \SqlSemantics\Statement\Expression\Rendering\SqliteUnaryLayout::class,
         \SqlSemantics\Statement\Expression\Rendering\SqliteCaseLayout::class,
         \SqlSemantics\Statement\Expression\Rendering\SqliteCaseArmLayout::class,
         \SqlSemantics\Statement\Expression\Rendering\SqliteElseLayout::class,

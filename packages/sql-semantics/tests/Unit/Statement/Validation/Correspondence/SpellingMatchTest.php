@@ -21,6 +21,7 @@ final class SpellingMatchTest extends TestCase
         self::assertTrue(SpellingMatch::same(new R\SqliteCaseArmLayout(), new R\SqliteCaseArmLayout()));
         self::assertTrue(SpellingMatch::same(new R\SqliteElseLayout(), new R\SqliteElseLayout()));
         self::assertTrue(SpellingMatch::same(new R\SqliteBinaryLayout(SqliteBinaryOperator::Add, '+'), new R\SqliteBinaryLayout(SqliteBinaryOperator::Add, '+')));
+        self::assertTrue(SpellingMatch::same(new R\SqliteUnaryLayout(\SqlSemantics\Statement\Expression\SqliteUnaryOperator::Not, 'not'), new R\SqliteUnaryLayout(\SqlSemantics\Statement\Expression\SqliteUnaryOperator::Not, 'not')));
         self::assertTrue(SpellingMatch::same(null, null));
     }
 

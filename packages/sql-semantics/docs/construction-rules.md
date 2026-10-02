@@ -134,13 +134,15 @@ rendered-output correspondence remain incomplete.
 **Status:** Partly implemented; complete lexical/output correspondence pending.
 
 - Purpose: preserve expression-derived output names without turning an arbitrary
-  name string into expression SQL. Explicit grouping and binary operator spelling
+  name string into expression SQL. Explicit grouping, unary and binary operator spelling,
   and CASE delimiters have bounded concrete values. No value contains an operand's SQL fragment.
 - Preconditions: a binary spelling encodes its actual operator, and its outer gaps
   contain only validated, complete trivia. Grouping contains a real semantic child.
 - Composition: the renderer adds parentheses required by the child's binding
   power and the parent's associativity. Adjacent minus signs cannot accidentally
-  open a comment; adjacent word characters require separation.
+  open a comment; adjacent word characters require separation. Unary NOT keeps its
+  lower binding power, while sign and bitwise operators require grouping around
+  weaker operands even when compact spelling was requested.
 - Alias uses retain the actual name and field identity. They are not rendered by
   substituting, duplicating, or reordering the target expression.
 - Observation: a direct column label follows the declared column name, including
