@@ -404,6 +404,30 @@ final class MethodInvocationTest extends TestCase
         self::assertNull($invocation->receiver(Term::constant('Box'), new State(), 'Box', true));
     }
 
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerIdentities')]
+    public function testIdentityKeepsOnlyStableReceiverSpellings(Term $receiver, ?string $expected): void
+    {
+        $state = new State();
+        $invocation = new MethodInvocation(new Machine(SolverFixture::context()));
+        $first = $invocation->identity($receiver, $state);
+        $second = $invocation->identity($receiver, $state);
+        self::assertSame($expected ?? 'parameter-object:0', $first);
+        self::assertSame($expected ?? 'parameter-object:1', $second);
+    }
+
+    /**
+     * @return iterable<string, array{Term, string|null}>
+     */
+    public static function providerIdentities(): iterable
+    {
+        yield 'parameter' => [Term::parameter('repo', 'Repo'), 'repo'];
+        yield 'external input' => [new Term('external', 'object:this:Ctl::repo', attributes:['type' => 'Repo']), 'object:this:Ctl::repo'];
+        yield 'stable property read' => [new Term('opaque', 'object:this:Ctl::repo', attributes:['type' => 'Repo', 'stability' => 'state']), 'object:this:Ctl::repo'];
+        yield 'object' => [new Term('object', 'object:1', attributes:['class' => 'Repo']), 'object:1'];
+        yield 'residual reason' => [Term::opaque('OPEN_DISPATCH', 'Repo'), null];
+        yield 'unnamed expression' => [new Term('binary', null, attributes:['type' => 'Repo']), null];
+    }
+
     /**
      * @param Term $receiver Spelled target
      * @param bool $static Invocation syntax

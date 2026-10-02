@@ -91,7 +91,7 @@ final class MethodInvocation
             if (!(new Constraints($context))->assume($path, new Term('binary', '!==', [$receiver, Term::constant(null)], ['type' => 'bool']), true)) {
                 continue;
             }
-            $object = new Term('object', is_string($receiver->literal) ? $receiver->literal : $path->memory->fresh('parameter-object'), attributes: ['class' => $candidate]);
+            $object = new Term('object', $this->identity($receiver, $path), attributes: ['class' => $candidate]);
             array_push($result, ...(new Invocation($this->machine))->call($caller, $instruction, $path, $arguments, $object, $candidate, $name, $dispatch->method($candidate, $name)));
         }
         $bound = implode('|', array_diff(explode('|', $class), ['null']));
@@ -106,6 +106,18 @@ final class MethodInvocation
             array_push($result, ...(new UnknownCall($context))->apply($state->fork(), $instruction, $arguments, $receiver, 'OPEN_DISPATCH'));
         }
         return $result;
+    }
+
+    /**
+     * Keeps a symbolic receiver's identity only when its spelling denotes one object along the path.
+     * @param Term $receiver Runtime receiver bound
+     * @param State $path Dispatched path
+     * @return string Stable input identity, or a fresh one for residuals that may denote distinct objects
+     */
+    public function identity(Term $receiver, State $path): string
+    {
+        $stable = in_array($receiver->kind, ['parameter', 'external', 'object'], true) || $receiver->kind === 'opaque' && isset($receiver->attributes['stability']);
+        return $stable && is_string($receiver->literal) ? $receiver->literal : $path->memory->fresh('parameter-object');
     }
 
     /**
