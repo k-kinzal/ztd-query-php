@@ -20,6 +20,8 @@ use SqlSemantics\Statement\Relation\TableReference;
  */
 final class RenameColumn implements Operation
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * The original column reference, resolved against the unchanged declaration.
      */
@@ -30,7 +32,7 @@ final class RenameColumn implements Operation
      */
     public function __construct(public readonly TableReference $table, Name $name, public readonly Name $newName, public readonly bool $explicitColumn = true)
     {
-        assert($table->alias === null, 'A schema operation target cannot have a query alias.');
+        \SqlSemantics\Statement\Validation\Check::input($table->alias === null, 'A schema operation target cannot have a query alias.');
         $this->column = new ColumnReference(new Scope($table->catalog, $table), $name);
     }
 

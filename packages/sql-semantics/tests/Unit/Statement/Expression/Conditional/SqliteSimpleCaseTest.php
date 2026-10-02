@@ -64,30 +64,6 @@ final class SqliteSimpleCaseTest extends TestCase
         self::assertSame([$column], $case->references());
     }
 
-    public function testWithBasePreservesTheOriginalAndSharedBranches(): void
-    {
-        $null = new NullConstant();
-        $one = new SqliteInteger(new UnsignedInteger('1'));
-        $branches = new SqliteCaseBranches(null, new SqliteCaseArm($null, $null));
-        $original = new SqliteSimpleCase($null, $branches);
-        $updated = $original->withBase($one);
-        self::assertSame($null, $original->base);
-        self::assertSame($one, $updated->base);
-        self::assertSame($branches, $updated->branches);
-    }
-
-    public function testWithBranchesPreservesSingleBaseIdentity(): void
-    {
-        $null = new NullConstant();
-        $branches = new SqliteCaseBranches(null, new SqliteCaseArm($null, $null));
-        $original = new SqliteSimpleCase($null, $branches);
-        $replacement = $branches->withOtherwise($null);
-        $updated = $original->withBranches($replacement);
-        self::assertSame($null, $updated->base);
-        self::assertSame($branches, $original->branches);
-        self::assertSame($replacement, $updated->branches);
-    }
-
     public function testToStringRetainsEqualityChoiceRatherThanTruthTests(): void
     {
         $text = new SqliteText(new StringLiteral('word'));

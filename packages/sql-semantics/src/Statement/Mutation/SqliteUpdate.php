@@ -21,6 +21,8 @@ use SqlSemantics\Statement\SemanticGraph;
  */
 final class SqliteUpdate implements Operation
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * @var non-empty-list<ColumnAssignment>
      */
@@ -31,34 +33,18 @@ final class SqliteUpdate implements Operation
      */
     public function __construct(public readonly TableReference $target, public readonly Scope $scope, public readonly ?ScalarExpression $where = null, public readonly ConflictAction $conflict = ConflictAction::Implicit, ColumnAssignment ...$assignments)
     {
-        assert(($scope->tables[0] ?? null) === $target, 'The update input begins with its actual target occurrence.');
-        assert($assignments !== [], 'An update contains at least one assignment.');
+        \SqlSemantics\Statement\Validation\Check::input(($scope->tables[0] ?? null) === $target, 'The update input begins with its actual target occurrence.');
+        \SqlSemantics\Statement\Validation\Check::input($assignments !== [], 'An update contains at least one assignment.');
         $this->assignments = array_values($assignments);
         $expressions = $where === null ? [] : [$where];
         foreach ($assignments as $assignment) {
-            assert($assignment->column->scope->tables === [$target], 'Every destination refers to the updated table occurrence.');
+            \SqlSemantics\Statement\Validation\Check::input($assignment->column->scope->tables === [$target], 'Every destination refers to the updated table occurrence.');
             $expressions[] = $assignment->expression;
         }
         foreach ($expressions as $expression) {
-            assert((new Ownership())->accepts($expression, $scope), 'Assignment inputs and predicates use the update input scope.');
+            \SqlSemantics\Statement\Validation\Check::input((new Ownership())->accepts($expression, $scope), 'Assignment inputs and predicates use the update input scope.');
         }
-        assert((new SemanticGraph())->containsOnlyValues($this), 'An update retains only immutable semantic values.');
-    }
-
-    /**
-     * Replaces assignments while retaining target, input relations, predicate, and conflict handling.
-     */
-    public function withAssignments(ColumnAssignment $first, ColumnAssignment ...$rest): self
-    {
-        return new self($this->target, $this->scope, $this->where, $this->conflict, $first, ...$rest);
-    }
-
-    /**
-     * Changes the row predicate without rebinding the destinations or assignment inputs.
-     */
-    public function withWhere(?ScalarExpression $where): self
-    {
-        return new self($this->target, $this->scope, $where, $this->conflict, ...$this->assignments);
+        \SqlSemantics\Statement\Validation\Check::input((new SemanticGraph())->containsOnlyValues($this), 'An update retains only immutable semantic values.');
     }
 
     /**

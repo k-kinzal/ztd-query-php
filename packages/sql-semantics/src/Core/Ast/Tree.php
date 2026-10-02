@@ -6,7 +6,7 @@ namespace SqlSemantics\Core\Ast;
 
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
-use SqlSemantics\Core\SemanticException;
+use SqlSemantics\Statement\Validation\Failure\ImplementationGap;
 
 /**
  * Navigates grammar boundaries without flattening nested query or expression scopes.
@@ -81,10 +81,10 @@ final class Tree
     }
 
     /**
-     * @throws SemanticException
+     * @throws ImplementationGap
      */
     public static function unsupported(Node|Token $node, string $context): never
     {
-        throw new SemanticException('unsupported-syntax', 'Unsupported ' . $context . ': ' . self::text($node), $node);
+        throw new ImplementationGap('Missing semantic rule for ' . $context . ': ' . self::text($node));
     }
 }

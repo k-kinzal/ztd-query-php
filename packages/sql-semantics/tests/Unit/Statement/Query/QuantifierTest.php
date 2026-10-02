@@ -10,19 +10,20 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Statement\Construction\Expression\ColumnUse;
+use SqlSemantics\Statement\Construction\Query\FieldDefinition;
+use SqlSemantics\Statement\Construction\Query\Inputs;
+use SqlSemantics\Statement\Construction\Query\NamedInput;
+use SqlSemantics\Statement\Construction\Query\ProjectionDefinition;
+use SqlSemantics\Statement\Construction\Query\SelectDefinition;
 use SqlSemantics\Statement\Declaration\Builtin;
 use SqlSemantics\Statement\Declaration\Nullability;
 use SqlSemantics\Statement\Declaration\TypeDescriptor;
-use SqlSemantics\Statement\Expression\ColumnReference;
 use SqlSemantics\Statement\Identifier\Comparison;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Projection\Field;
-use SqlSemantics\Statement\Projection\Fields;
 use SqlSemantics\Statement\Query\Quantifier;
 use SqlSemantics\Statement\Query\Select;
-use SqlSemantics\Statement\Relation\Scope;
-use SqlSemantics\Statement\Relation\TableReference;
 use SqlSemantics\Statement\Schema\Catalog;
 use SqlSemantics\Statement\Schema\Column;
 use SqlSemantics\Statement\Schema\SearchPath;
@@ -41,17 +42,12 @@ final class QuantifierTest extends TestCase
     public function testDuplicatePolicyMatchesDatabaseResults(Quantifier $quantifier, array $expected): void
     {
         $column = new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer), Nullability::NotNull);
-        $table = new Table(new QualifiedName(new Name('bar')), $column);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $table);
-        $relation = new TableReference($catalog, $table->name);
-        $scope = new Scope($catalog, $relation);
-        $field = new Field(new ColumnReference($scope, new Name('foo')));
-        $fields = new Fields($scope, $field);
-        $query = new Select($fields);
+        $table = new Table(new QualifiedName(new Name('bar')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $column);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $table);
         $db = new PDO('sqlite::memory:');
         $db->exec('CREATE TABLE bar(foo INTEGER NOT NULL)');
         $db->exec('INSERT INTO bar VALUES (1), (1)');
-        $result = $db->query((new Select($fields, quantifier: $quantifier))->toString());
+        $result = $db->query((new Select($catalog, new SelectDefinition(new ProjectionDefinition(new FieldDefinition(new ColumnUse(new Name('foo')))), new Inputs(new NamedInput($table->name)), quantifier: $quantifier)))->toString());
         self::assertInstanceOf(PDOStatement::class, $result);
         self::assertSame($expected, $result->fetchAll(PDO::FETCH_COLUMN));
     }

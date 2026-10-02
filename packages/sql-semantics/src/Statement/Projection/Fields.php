@@ -4,41 +4,39 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Statement\Projection;
 
+use ArrayIterator;
+use Countable;
+use IteratorAggregate;
 use OutOfBoundsException;
 use SqlSemantics\Statement\Expression\Reference\Ownership;
 use SqlSemantics\Statement\Relation\Scope;
 
 /**
- * Ordered result fields whose persistent updates preserve column ownership.
+ * Ordered read-only result fields with scope ownership and explicit lookup outcomes.
+ * @implements IteratorAggregate<int, Field>
  * @visibility public
  * @example Constructing an empty projection for a language that permits it
  *     $catalog = new \SqlSemantics\Statement\Schema\Catalog(new \SqlSemantics\Statement\Schema\SearchPath(new \SqlSemantics\Statement\Identifier\Name('public')), complete: false);
  *     (new \SqlSemantics\Statement\Projection\Fields(new \SqlSemantics\Statement\Relation\Scope($catalog)))->items // => []
  */
-final class Fields
+final class Fields implements Countable, IteratorAggregate
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * @var list<Field>
      */
     public readonly array $items;
 
     /**
-     * Asserts scope identity for every nested column expression.
+     * Checks scope identity for every nested column expression.
      */
     public function __construct(public readonly Scope $scope, Field ...$fields)
     {
         $this->items = array_values($fields);
         foreach ($fields as $field) {
-            assert((new Ownership())->accepts($field->expression, $scope), 'Every projected column must belong to this scope.');
+            \SqlSemantics\Statement\Validation\Check::input((new Ownership())->accepts($field->expression, $scope), 'Every projected column must belong to this scope.');
         }
-    }
-
-    /**
-     * Adds an owned field without modifying the original projection or declaration.
-     */
-    public function addField(Field $field): self
-    {
-        return new self($this->scope, ...[...$this->items, $field]);
     }
 
     /**
@@ -47,11 +45,50 @@ final class Fields
      */
     public function field(string $name): Field
     {
-        $matches = array_values(array_filter($this->items, fn (Field $field): bool => $this->scope->catalog->columnNames->equal($name, $field->name->value)));
-        if (count($matches) !== 1) {
-            throw new OutOfBoundsException($matches === [] ? 'No result field named ' . $name : 'Ambiguous result field: ' . $name);
+        $lookup = $this->lookupField($name);
+        if (!$lookup instanceof UniqueField) {
+            throw new OutOfBoundsException($lookup instanceof AbsentField ? 'No result field named ' . $name : 'Ambiguous result field: ' . $name);
         }
-        return $matches[0];
+        return $lookup->field;
+    }
+
+    /**
+     * Distinguishes a unique position, absence, and all competing output positions.
+     */
+    public function lookupField(string $name): UniqueField|AbsentField|AmbiguousFields
+    {
+        $matches = array_filter($this->items, fn (Field $field): bool => $this->scope->catalog->columnNames->equal($name, $field->name->value));
+        $position = array_key_first($matches);
+        if ($position === null) {
+            return AbsentField::Value;
+        }
+        return count($matches) === 1 ? new UniqueField($position, $matches[$position]) : new AmbiguousFields($matches);
+    }
+
+    /**
+     * Returns an exact zero-based output position, retaining duplicates.
+     * @throws OutOfBoundsException
+     */
+    public function at(int $position): Field
+    {
+        return $this->items[$position] ?? throw new OutOfBoundsException('No output position ' . $position);
+    }
+
+    /**
+     * Counts output positions, including duplicate labels and expressions.
+     */
+    public function count(): int
+    {
+        return count($this->items);
+    }
+
+    /**
+     * Iterates over a copy of the container; every element remains immutable.
+     * @return ArrayIterator<int, Field>
+     */
+    public function getIterator(): ArrayIterator
+    {
+        return new ArrayIterator($this->items);
     }
 
     /**

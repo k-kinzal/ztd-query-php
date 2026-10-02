@@ -16,6 +16,8 @@ use SqlSemantics\Statement\Operation;
  */
 final class Savepoint implements Operation
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Identifies the savepoint being declared.
      */

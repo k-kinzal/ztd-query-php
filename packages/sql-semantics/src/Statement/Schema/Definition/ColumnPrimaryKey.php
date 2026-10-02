@@ -14,6 +14,8 @@ use SqlSemantics\Statement\Identifier\Name;
  */
 final class ColumnPrimaryKey implements ColumnConstraint
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Describes the constraint without evaluating it against stored rows.
      */

@@ -26,17 +26,19 @@ use SqlSemantics\Statement\Type\Unresolved;
  */
 final class AliasReference implements ScalarExpression
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * The target must be an actual field of this projection and carry the referenced alias.
      */
     public function __construct(public readonly Fields $projection, public readonly Field $field, public readonly Name $name)
     {
-        assert(in_array($field, $projection->items, true), 'An alias must reference a field of its actual projection.');
-        assert($field->alias !== null && $projection->scope->catalog->columnNames->equal($field->alias->value, $name->value), 'An alias lookup must name the referenced field.');
+        \SqlSemantics\Statement\Validation\Check::input(($projection->matchingAliases($name->value)[0] ?? null) === $field, 'An alias must reference a field of its actual projection.');
+        \SqlSemantics\Statement\Validation\Check::input($field->alias !== null && $projection->scope->catalog->columnNames->equal($field->alias->value, $name->value), 'An alias lookup must name the referenced field.');
     }
 
     /**
-     * Alias substitution preserves the target expression's result domain.
+     * An alias use has its target expression's result domain.
      */
     public function type(): TypeDescriptor|NullDomain|Unresolved|Invalid|SqliteNumericDomain|SqliteChoiceDomain
     {
@@ -61,10 +63,10 @@ final class AliasReference implements ScalarExpression
     }
 
     /**
-     * Writes SQLite's substituted expression so generated output labels cannot capture the alias.
+     * Writes the actual alias use; its target remains an identity in the semantic model.
      */
     public function toString(): string
     {
-        return '(' . $this->field->expression->toString() . ')';
+        return $this->name->toString();
     }
 }

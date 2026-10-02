@@ -19,7 +19,7 @@ final class CreateTableReader
     /**
      * Conditional creation always describes its own declaration, regardless of other context entries.
      */
-    public function read(Node $source): SqliteCreateTable
+    public function read(Node $source, \SqlSemantics\Statement\Contract\LanguageProfile $profile = new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472)): SqliteCreateTable
     {
         Tree::assertChildren($source, ['create_table', 'create_table_args'], []);
         $header = Tree::child($source, ['create_table']);
@@ -35,7 +35,7 @@ final class CreateTableReader
             }
             $strict = true;
         }
-        return new SqliteCreateTable((new IdentifierReader())->qualified($header), Tree::child($header, ['temp']) !== null, Tree::child($header, ['ifnotexists']) !== null, $strict, ...$this->columns($columns, $strict));
+        return new SqliteCreateTable((new IdentifierReader())->qualified($header), Tree::child($header, ['temp']) !== null, Tree::child($header, ['ifnotexists']) !== null, $strict, $profile, ...$this->columns($columns, $strict));
     }
 
     /**

@@ -23,6 +23,8 @@ use SqlSemantics\Statement\Type\SqliteChoiceDomain;
  */
 final class SqliteCaseBranches
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * @var non-empty-list<SqliteCaseArm>
      */
@@ -33,9 +35,9 @@ final class SqliteCaseBranches
      */
     public function __construct(public readonly ?ScalarExpression $otherwise, SqliteCaseArm ...$arms)
     {
-        assert($arms !== [], 'A CASE expression needs at least one branch.');
+        \SqlSemantics\Statement\Validation\Check::input($arms !== [], 'A CASE expression needs at least one branch.');
         $this->arms = array_values($arms);
-        assert((new SemanticGraph())->containsOnlyValues($this), 'CASE alternatives retain only immutable semantic operands.');
+        \SqlSemantics\Statement\Validation\Check::input((new SemanticGraph())->containsOnlyValues($this), 'CASE alternatives retain only immutable semantic operands.');
     }
 
     /**
@@ -64,7 +66,7 @@ final class SqliteCaseBranches
         $types = [];
         foreach ($this->results() as $result) {
             $type = $result->type();
-            assert(!$type instanceof Invalid, 'Invalid operands have already been diagnosed.');
+            \SqlSemantics\Statement\Validation\Check::input(!$type instanceof Invalid, 'Invalid operands have already been diagnosed.');
             $types[] = $type;
         }
         $domain = new SqliteChoiceDomain(...$types);
@@ -124,14 +126,6 @@ final class SqliteCaseBranches
             array_push($references, ...$operand->references());
         }
         return $references;
-    }
-
-    /**
-     * Replaces the fallback without modifying existing tests or results.
-     */
-    public function withOtherwise(?ScalarExpression $otherwise): self
-    {
-        return new self($otherwise, ...$this->arms);
     }
 
     /**

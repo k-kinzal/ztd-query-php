@@ -16,6 +16,8 @@ use SqlSemantics\Statement\Operation;
  */
 final class DropTrigger implements Operation
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Describes the requested operation without applying it to the declaration context.
      */

@@ -14,19 +14,13 @@ use SqlSemantics\Statement\Operation;
  */
 final class Begin implements Operation
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Omitted characteristics depend on the connection; analysis does not execute preceding SET requests.
      */
     public function __construct(public readonly ?Isolation $isolation = null, public readonly ?bool $readOnly = null, public readonly ?bool $deferrable = null)
     {
-    }
-
-    /**
-     * Replaces an isolation request without changing access or deferrability.
-     */
-    public function withIsolation(?Isolation $isolation): self
-    {
-        return new self($isolation, $this->readOnly, $this->deferrable);
     }
 
     /**

@@ -23,6 +23,13 @@ use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 #[Medium]
 final class LanguageTest extends TestCase
 {
+    public function testProfileIsTheFixedParserIndependentValueForThisLanguage(): void
+    {
+        $language = new Language(SqliteDialect::Sqlite);
+        self::assertSame(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472, $language->profile()->grammar);
+        self::assertSame($language->profile(), $language->profile());
+    }
+
     public function testParserIsResolvedForTheDefaultReleaseOfADialect(): void
     {
         $language = new Language(SqliteDialect::Sqlite);

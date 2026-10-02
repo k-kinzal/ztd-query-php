@@ -36,37 +36,7 @@ final class SemanticGraph
      */
     public function containsOnlyValues(object $root): bool
     {
-        $pending = [$root];
-        $seen = [];
-        while ($pending !== []) {
-            $value = array_pop($pending);
-            $id = spl_object_id($value);
-            if ($value instanceof Element || !str_starts_with($value::class, 'SqlSemantics\\Statement\\')) {
-                return false;
-            }
-            if ($value instanceof UnitEnum || isset($seen[$id])) {
-                continue;
-            }
-            $seen[$id] = true;
-            $reflection = new ReflectionObject($value);
-            if (!$reflection->isFinal()) {
-                return false;
-            }
-            foreach ($reflection->getProperties() as $property) {
-                if (!$property->isReadOnly() || !$property->isInitialized($value)) {
-                    return false;
-                }
-                $field = $property->getValue($value);
-                foreach (is_array($field) ? $field : [$field] as $member) {
-                    if (is_object($member)) {
-                        $pending[] = $member;
-                    } elseif ($member !== null && !is_scalar($member)) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return true;
+        return (new Validation\ValueGraph())->accepts($root);
     }
 
     /**
@@ -74,7 +44,7 @@ final class SemanticGraph
      */
     public function fingerprint(Operation $operation): string
     {
-        assert($this->isSemanticOperation($operation), 'An operation must retain only immutable semantic values.');
+        Validation\Check::invariant($this->isSemanticOperation($operation), 'An operation must retain only immutable semantic values.');
         $entities = [];
         return $this->describe($operation, $entities);
     }
@@ -85,6 +55,9 @@ final class SemanticGraph
      */
     public function describe(object $value, array &$entities): string
     {
+        if ($value instanceof Expression\Rendering\GroupedExpression) {
+            return $this->describe($value->operand, $entities);
+        }
         if ($value instanceof SqliteAliasScope) {
             return $this->describe($value->scope, $entities);
         }
@@ -108,6 +81,9 @@ final class SemanticGraph
         }
         $properties = [];
         foreach ((new ReflectionObject($value))->getProperties() as $property) {
+            if ($value instanceof Expression\SqliteBinary && $property->getName() === 'layout') {
+                continue;
+            }
             $field = $property->getValue($value);
             $members = [];
             foreach (is_array($field) ? $field : [$field] as $key => $member) {

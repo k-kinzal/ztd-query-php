@@ -17,6 +17,8 @@ use SqlSemantics\Statement\SemanticGraph;
  */
 final class Sequence implements Operation
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * @var list<Operation>
      */
@@ -28,8 +30,8 @@ final class Sequence implements Operation
     public function __construct(Operation ...$operations)
     {
         foreach ($operations as $operation) {
-            assert(!$operation instanceof self, 'A script contains operations, not nested scripts.');
-            assert((new SemanticGraph())->isSemanticOperation($operation), 'Every request must be an immutable semantic operation.');
+            \SqlSemantics\Statement\Validation\Check::input(!$operation instanceof self, 'A script contains operations, not nested scripts.');
+            \SqlSemantics\Statement\Validation\Check::input((new SemanticGraph())->isSemanticOperation($operation), 'Every request must be an immutable semantic operation.');
         }
         $this->operations = array_values($operations);
     }

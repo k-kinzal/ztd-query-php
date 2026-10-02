@@ -16,6 +16,8 @@ use SqlSemantics\Statement\Operation;
  */
 final class ReleaseSavepoint implements Operation
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Keeps the target name and optional explicit SAVEPOINT keyword.
      */

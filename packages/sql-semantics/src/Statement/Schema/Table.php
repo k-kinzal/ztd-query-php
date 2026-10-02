@@ -16,6 +16,8 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
  */
 final class Table
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * @var list<Column>
      */
@@ -29,13 +31,13 @@ final class Table
     /**
      * Preserves the supplied column objects and their declaration order.
      */
-    public function __construct(public readonly QualifiedName $name, Column|SqliteRowIdentifier ...$columns)
+    public function __construct(public readonly QualifiedName $name, public readonly \SqlSemantics\Statement\Contract\LanguageProfile $profile = new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), Column|SqliteRowIdentifier ...$columns)
     {
         $explicit = [];
         $rowIdentifier = null;
         foreach ($columns as $column) {
             if ($column instanceof SqliteRowIdentifier) {
-                assert($rowIdentifier === null, 'A table has at most one row identifier.');
+                \SqlSemantics\Statement\Validation\Check::input($rowIdentifier === null, 'A table has at most one row identifier.');
                 $rowIdentifier = $column;
             } else {
                 $explicit[] = $column;
@@ -43,7 +45,7 @@ final class Table
         }
         $this->columns = $explicit;
         $this->rowIdentifier = $rowIdentifier;
-        assert($rowIdentifier === null || ($rowIdentifier->alias === null
+        \SqlSemantics\Statement\Validation\Check::input($rowIdentifier === null || ($rowIdentifier->alias === null
             ? !in_array($rowIdentifier->column, $explicit, true)
             : in_array($rowIdentifier->alias, $explicit, true)), 'A rowid alias must be an explicit column of this same declaration; an implicit rowid stays outside that list.');
     }
@@ -66,11 +68,4 @@ final class Table
         return in_array($column, $this->columns, true) || $this->rowIdentifier?->column === $column;
     }
 
-    /**
-     * Adds a declaration persistently, retaining every existing column identity.
-     */
-    public function withColumn(Column $column): self
-    {
-        return new self($this->name, ...[...$this->columns, $column, ...($this->rowIdentifier === null ? [] : [$this->rowIdentifier])]);
-    }
 }

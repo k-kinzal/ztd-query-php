@@ -49,7 +49,7 @@ final class TableReferenceTest extends TestCase
     public function testMatchesUsesTheResolvedNamespaceRatherThanTheFirstSearchSchema(): void
     {
         $table = new Table(new QualifiedName(new Name('users'), new Name('public')));
-        $catalog = new Catalog(new SearchPath(new Name('app'), new Name('public')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $table);
+        $catalog = new Catalog(new SearchPath(new Name('app'), new Name('public')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $table);
         $relation = new TableReference($catalog, new QualifiedName(new Name('users')));
         self::assertSame([$table], $relation->declarations);
         self::assertTrue($relation->matches($table->name));

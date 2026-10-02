@@ -14,7 +14,7 @@ use SqlSemantics\Statement\Declaration\TypeDescriptor;
  * @example Keeping clock evaluation in the database
  *     \SqlSemantics\Statement\Expression\SqliteCurrentTime::Timestamp->toString() // => 'CURRENT_TIMESTAMP'
  */
-enum SqliteCurrentTime: string implements ScalarExpression
+enum SqliteCurrentTime: string implements ScalarExpression, \SqlSemantics\Statement\Construction\ScalarInput
 {
     case Date = 'CURRENT_DATE';
     case Time = 'CURRENT_TIME';

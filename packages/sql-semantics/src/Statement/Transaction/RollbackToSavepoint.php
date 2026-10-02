@@ -16,6 +16,8 @@ use SqlSemantics\Statement\Operation;
  */
 final class RollbackToSavepoint implements Operation
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Describes the savepoint target without evaluating transaction history.
      */

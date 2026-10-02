@@ -21,22 +21,16 @@ use SqlSemantics\Statement\SemanticGraph;
  */
 final class VacuumInto implements Operation
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Destination expressions do not acquire table visibility from schema declarations.
      */
     public function __construct(public readonly Scope $scope, public readonly ScalarExpression $destination, public readonly Name $schema = new Name('main'))
     {
-        assert($scope->tables === [], 'A vacuum destination has no relation inputs.');
-        assert((new SemanticGraph())->containsOnlyValues($destination), 'The destination contains only semantic values.');
-        assert((new Ownership())->accepts($destination, $scope), 'Destination references belong to the vacuum expression scope.');
-    }
-
-    /**
-     * Changes the destination persistently and rechecks its scope.
-     */
-    public function withDestination(ScalarExpression $destination): self
-    {
-        return new self($this->scope, $destination, $this->schema);
+        \SqlSemantics\Statement\Validation\Check::input($scope->tables === [], 'A vacuum destination has no relation inputs.');
+        \SqlSemantics\Statement\Validation\Check::input((new SemanticGraph())->containsOnlyValues($destination), 'The destination contains only semantic values.');
+        \SqlSemantics\Statement\Validation\Check::input((new Ownership())->accepts($destination, $scope), 'Destination references belong to the vacuum expression scope.');
     }
 
     /**

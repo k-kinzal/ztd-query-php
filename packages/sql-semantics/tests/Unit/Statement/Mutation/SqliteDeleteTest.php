@@ -31,18 +31,4 @@ final class SqliteDeleteTest extends TestCase
         self::assertSame('DELETE FROM bar WHERE foo', $delete->toString());
     }
 
-    public function testWithWherePreservesTheOriginalTargetAndDoesNotMutateTheOperation(): void
-    {
-        $catalog = new Catalog(new SearchPath(new Name('main')), complete: false);
-        $target = new TableReference($catalog, new QualifiedName(new Name('bar')));
-        $scope = new Scope($catalog, $target);
-        $column = new ColumnReference($scope, new Name('foo'));
-        $delete = new SqliteDelete($scope);
-        $changed = $delete->withWhere($column);
-        self::assertNull($delete->where);
-        self::assertSame($column, $changed->where);
-        self::assertSame($target, $changed->target);
-        self::assertSame($scope, $changed->scope);
-    }
-
 }

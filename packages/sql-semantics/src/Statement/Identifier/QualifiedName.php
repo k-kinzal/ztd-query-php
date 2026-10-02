@@ -13,12 +13,14 @@ namespace SqlSemantics\Statement\Identifier;
  */
 final class QualifiedName
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * A catalog qualifier requires a schema qualifier to keep positions unambiguous.
      */
     public function __construct(public readonly Name $name, public readonly ?Name $schema = null, public readonly ?Name $catalog = null)
     {
-        assert($catalog === null || $schema !== null, 'A catalog qualifier requires a schema qualifier.');
+        \SqlSemantics\Statement\Validation\Check::input($catalog === null || $schema !== null, 'A catalog qualifier requires a schema qualifier.');
     }
 
     /**

@@ -16,12 +16,14 @@ use SqlSemantics\Statement\Projection\Fields;
  */
 final class NamedAlias
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Keeps the exact output field and the namespace in which its alias is declared.
      */
     public function __construct(public readonly Fields $projection, public readonly Field $field, public readonly Name $name)
     {
-        assert(in_array($field, $projection->items, true), 'A projection reference must retain its actual field.');
-        assert($field->alias !== null && $projection->scope->catalog->columnNames->equal($field->alias->value, $name->value), 'The referenced field must declare the requested alias.');
+        \SqlSemantics\Statement\Validation\Check::input(in_array($field, $projection->items, true), 'A projection reference must retain its actual field.');
+        \SqlSemantics\Statement\Validation\Check::input($field->alias !== null && $projection->scope->catalog->columnNames->equal($field->alias->value, $name->value), 'The referenced field must declare the requested alias.');
     }
 }

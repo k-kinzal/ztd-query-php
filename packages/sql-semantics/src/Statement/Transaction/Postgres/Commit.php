@@ -14,6 +14,8 @@ use SqlSemantics\Statement\Operation;
  */
 final class Commit implements Operation
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * PostgreSQL treats omission and AND NO CHAIN identically.
      */

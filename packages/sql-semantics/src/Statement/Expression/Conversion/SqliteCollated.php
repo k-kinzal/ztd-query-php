@@ -25,12 +25,14 @@ use SqlSemantics\Statement\Type\Unresolved;
  */
 final class SqliteCollated implements ScalarExpression
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * The name requests a collation from the database; analysis does not execute its comparison function.
      */
     public function __construct(public readonly ScalarExpression $operand, public readonly Name $collation)
     {
-        assert((new SemanticGraph())->containsOnlyValues($operand), 'A collated operand contains only semantic values.');
+        \SqlSemantics\Statement\Validation\Check::input((new SemanticGraph())->containsOnlyValues($operand), 'A collated operand contains only semantic values.');
     }
 
     /**

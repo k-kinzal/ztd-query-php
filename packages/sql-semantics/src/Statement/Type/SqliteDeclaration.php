@@ -20,6 +20,8 @@ use SqlSemantics\Statement\Identifier\Name;
  */
 final class SqliteDeclaration
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     private const NAMES = [
         'INT' => Builtin::Integer,
         'INTEGER' => Builtin::Integer,
@@ -72,7 +74,7 @@ final class SqliteDeclaration
      */
     public function __construct(?string $name = null, public readonly bool $strict = false, bool $custom = false)
     {
-        assert($name === null || !str_contains($name, "\0"), 'A declared type name cannot contain NUL.');
+        \SqlSemantics\Statement\Validation\Check::input($name === null || !str_contains($name, "\0"), 'A declared type name cannot contain NUL.');
         $spelling = strtoupper($name ?? '');
         $this->native = !$custom && in_array($spelling, ['ANY', 'BLOB', 'INT', 'INTEGER', 'REAL', 'TEXT'], true);
         $this->name = $this->native ? $spelling : $name;

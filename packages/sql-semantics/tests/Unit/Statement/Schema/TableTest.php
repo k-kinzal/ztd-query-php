@@ -24,28 +24,17 @@ final class TableTest extends TestCase
     {
         $first = new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer));
         $second = new Column(new Name('FOO'), new TypeDescriptor(Builtin::Text));
-        $table = new Table(new QualifiedName(new Name('bar')), $first, $second);
+        $table = new Table(new QualifiedName(new Name('bar')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $first, $second);
         self::assertSame([$first, $second], $table->matchingColumns('foo', Comparison::AsciiInsensitive));
         self::assertSame([$first], $table->matchingColumns('foo', Comparison::Sensitive));
         self::assertSame([], $table->matchingColumns('missing', Comparison::Sensitive));
     }
 
-    public function testWithColumnRetainsOriginalDeclarationIdentities(): void
-    {
-        $original = new Column(new Name('id'), new TypeDescriptor(Builtin::Integer));
-        $added = new Column(new Name('name'), new TypeDescriptor(Builtin::Text));
-        $table = new Table(new QualifiedName(new Name('users')), $original);
-        $changed = $table->withColumn($added);
-        self::assertNotSame($table, $changed);
-        self::assertSame([$original], $table->columns);
-        self::assertSame([$original, $added], $changed->columns);
-        self::assertSame($table->name, $changed->name);
-    }
     public function testMatchingColumnsLetsExplicitDeclarationsShadowOnlyTheirOwnRowidSpelling(): void
     {
         $rowid = new SqliteRowIdentifier();
         $declared = new Column(new Name('rowid'), new TypeDescriptor(Builtin::Text));
-        $table = new Table(new QualifiedName(new Name('bar')), $declared, $rowid);
+        $table = new Table(new QualifiedName(new Name('bar')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $declared, $rowid);
         self::assertSame([$declared], $table->columns);
         self::assertSame([$declared], $table->matchingColumns('ROWID', Comparison::AsciiInsensitive));
         self::assertSame([$rowid->column], $table->matchingColumns('_rowid_', Comparison::AsciiInsensitive));
@@ -56,21 +45,10 @@ final class TableTest extends TestCase
     {
         $rowid = new SqliteRowIdentifier();
         $declared = new Column(new Name('foo'), new TypeDescriptor(Builtin::Text));
-        $table = new Table(new QualifiedName(new Name('bar')), $declared, $rowid);
+        $table = new Table(new QualifiedName(new Name('bar')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $declared, $rowid);
         self::assertTrue($table->ownsColumn($declared));
         self::assertTrue($table->ownsColumn($rowid->column));
-        self::assertFalse($table->ownsColumn(clone $rowid->column));
-    }
-
-    public function testWithColumnPreservesRowIdentityWhenAddingAShadowingDeclaration(): void
-    {
-        $rowid = new SqliteRowIdentifier();
-        $table = new Table(new QualifiedName(new Name('bar')), $rowid);
-        $declared = new Column(new Name('rowid'), new TypeDescriptor(Builtin::Text));
-        $changed = $table->withColumn($declared);
-        self::assertSame($rowid, $changed->rowIdentifier);
-        self::assertSame([$rowid->column], $table->matchingColumns('rowid', Comparison::AsciiInsensitive));
-        self::assertSame([$declared], $changed->matchingColumns('rowid', Comparison::AsciiInsensitive));
+        self::assertFalse($table->ownsColumn(new Column($rowid->column->name, $rowid->column->type, $rowid->column->nullability)));
     }
 
 }

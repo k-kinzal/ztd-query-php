@@ -14,6 +14,8 @@ use SqlSemantics\Statement\Operation;
  */
 final class CommitPrepared implements Operation
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * The request owns an immutable global identifier, not a reference to simulated transaction history.
      */

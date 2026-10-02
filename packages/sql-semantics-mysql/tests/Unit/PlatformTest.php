@@ -223,7 +223,7 @@ final class PlatformTest extends TestCase
     {
         $language = new Language(Dialect::MySql);
         $platform = new \SqlSemantics\Platform\MySql\Platform();
-        $catalog = $platform->catalog($platform->searchPath(), false);
+        $catalog = $platform->catalog(new Language(Dialect::MySql), $platform->searchPath(), false);
         $operation = $platform->operations($language)->read($language->parser()->parse('BEGIN'), $catalog);
         self::assertInstanceOf(\SqlSemantics\Statement\Transaction\Begin::class, $operation);
         self::assertTrue((new \SqlSemantics\Statement\SemanticGraph())->isSemanticOperation($operation));
@@ -232,8 +232,8 @@ final class PlatformTest extends TestCase
     public function testCatalogRetainsExactDeclarationIdentity(): void
     {
         $platform = new \SqlSemantics\Platform\MySql\Platform();
-        $table = new \SqlSemantics\Statement\Schema\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('bar')));
-        $catalog = $platform->catalog($platform->searchPath(), true, $table);
+        $table = new \SqlSemantics\Statement\Schema\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('bar')), (new Language(Dialect::MySql))->profile());
+        $catalog = $platform->catalog(new Language(Dialect::MySql), $platform->searchPath(), true, $table);
         self::assertSame([$table], $catalog->tables);
         self::assertSame([$table], $catalog->matchingTables($table->name));
         self::assertTrue($catalog->complete);

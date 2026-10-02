@@ -12,14 +12,16 @@ namespace SqlSemantics\Statement\Identifier;
  */
 final class Name
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Keeps the name itself, never a parser token or a fragment of SQL.
      */
     public function __construct(public readonly string $value, public readonly Quote $quote = Quote::None)
     {
-        assert(!str_contains($value, "\0"), 'An identifier cannot contain NUL.');
-        assert($quote !== Quote::None || ($value !== '' && preg_match('/^(?![0-9]+$)[A-Za-z0-9_$\x80-\xff]+$/D', $value) === 1), 'A bare identifier must have an identifier spelling.');
-        assert($quote !== Quote::Bracket || !str_contains($value, ']'), 'Bracket quoting cannot escape a closing bracket.');
+        \SqlSemantics\Statement\Validation\Check::input(!str_contains($value, "\0"), 'An identifier cannot contain NUL.');
+        \SqlSemantics\Statement\Validation\Check::input($quote !== Quote::None || ($value !== '' && preg_match('/^(?![0-9]+$)[A-Za-z0-9_$\x80-\xff]+$/D', $value) === 1), 'A bare identifier must have an identifier spelling.');
+        \SqlSemantics\Statement\Validation\Check::input($quote !== Quote::Bracket || !str_contains($value, ']'), 'Bracket quoting cannot escape a closing bracket.');
     }
 
     /**

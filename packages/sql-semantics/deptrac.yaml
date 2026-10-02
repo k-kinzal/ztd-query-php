@@ -18,7 +18,7 @@ deptrac:
     - name: ParserCore
       collectors:
         - type: classLike
-          value: '^SqlParser\\(Parser|Lexer)\\.*'
+          value: '^SqlParser\\(Parser|Lexer|Resource)\\.*'
   ruleset:
     Statements: []
     Core: [ParserCore, Statements]

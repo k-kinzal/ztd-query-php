@@ -8,7 +8,6 @@ use SqlParser\Lexer\Token;
 use SqlSemantics\Core\Ast\Tree;
 use SqlSemantics\Platform\Sqlite\LiteralDecoder;
 use SqlSemantics\Statement\Expression\NullConstant;
-use SqlSemantics\Statement\Expression\ScalarExpression;
 use SqlSemantics\Statement\Expression\SqliteBlob;
 use SqlSemantics\Statement\Expression\SqliteCurrentTime;
 use SqlSemantics\Statement\Expression\SqliteInteger;
@@ -28,7 +27,7 @@ final class LiteralExpressionReader
     /**
      * The parser's terminal kind selects a concrete literal interpretation.
      */
-    public function read(Token $token): ScalarExpression
+    public function read(Token $token): NullConstant|SqliteBlob|SqliteCurrentTime|SqliteInteger|SqliteReal|SqliteText
     {
         if ($token->name === 'NULL') {
             return new NullConstant($token->text);

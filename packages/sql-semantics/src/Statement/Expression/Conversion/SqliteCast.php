@@ -25,12 +25,14 @@ use SqlSemantics\Statement\Type\SqliteNumericDomain;
  */
 final class SqliteCast implements ScalarExpression
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Keeps the operand and conversion target as immutable semantic values.
      */
     public function __construct(public readonly ScalarExpression $operand, public readonly SqliteCastTarget $target)
     {
-        assert((new SemanticGraph())->containsOnlyValues($operand), 'A cast operand contains only semantic values.');
+        \SqlSemantics\Statement\Validation\Check::input((new SemanticGraph())->containsOnlyValues($operand), 'A cast operand contains only semantic values.');
     }
 
     /**

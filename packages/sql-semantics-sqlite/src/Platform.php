@@ -55,10 +55,10 @@ final class Platform implements Contract
      * Keeps the exact declaration objects and the database's namespace policies.
      * @param non-empty-list<string> $path
      */
-    public function catalog(array $path, bool $complete, Table ...$tables): Catalog
+    public function catalog(Language $language, array $path, bool $complete, Table ...$tables): Catalog
     {
         $schemas = array_map(static fn (string $schema): Name => new Name($schema, Quote::Double), $path);
-        return new Catalog(new SearchPath(...$schemas), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, $complete, null, new Name('main'), ...$tables);
+        return new Catalog(new SearchPath(...$schemas), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, $complete, null, new Name('main'), $language->profile(), ...$tables);
     }
 
     /**

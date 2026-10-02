@@ -12,6 +12,8 @@ namespace SqlSemantics\Statement\Reference;
  */
 final class AmbiguousColumn
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * @var non-empty-list<ResolvedColumn>
      */

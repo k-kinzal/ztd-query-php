@@ -20,6 +20,8 @@ use SqlSemantics\Statement\Schema\Column;
  */
 final class Target
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * The target scope is distinct from the scope that produces input rows.
      */
@@ -57,7 +59,7 @@ final class Target
     {
         $widths = [$first, ...array_values($rest)];
         foreach ($widths as $width) {
-            assert($width >= 0, 'An input row cannot have a negative width.');
+            \SqlSemantics\Statement\Validation\Check::input($width >= 0, 'An input row cannot have a negative width.');
         }
         if (count(array_unique($widths)) !== 1) {
             return Arity::Mismatch;

@@ -15,6 +15,8 @@ use SqlSemantics\Statement\Operation;
  */
 final class Begin implements Operation
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Describes the request without creating a transaction or simulated state.
      */

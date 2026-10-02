@@ -33,8 +33,8 @@ final class BooleanReferenceTest extends TestCase
     public function testTypeAndNullabilityUseTheColumnBeforeTheLiteralAlternative(): void
     {
         $column = new Column(new Name('true'), new TypeDescriptor(Builtin::Text), Nullability::MaybeNull);
-        $table = new Table(new QualifiedName(new Name('users')), $column);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, null, $table);
+        $table = new Table(new QualifiedName(new Name('users')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $column);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, null, new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $table);
         $scope = new Scope($catalog, new TableReference($catalog, $table->name));
         $expression = new BooleanReference(new ColumnReference($scope, new Name('TRUE')));
         self::assertSame($column->type, $expression->type());

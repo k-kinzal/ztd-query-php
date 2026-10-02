@@ -47,8 +47,8 @@ final class LimitReaderTest extends TestCase
 
     public function testReadDoesNotMakeTheQueriesInputColumnsVisibleToTheLimit(): void
     {
-        $table = new Table(new QualifiedName(new Name('bar')), new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer)));
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, null, $table);
+        $table = new Table(new QualifiedName(new Name('bar')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer)));
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, null, new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $table);
         $source = (new SqliteParser())->parse('SELECT foo FROM bar LIMIT foo')->find('limit_opt')[0];
         $limit = (new LimitReader())->read($source, $catalog);
         self::assertInstanceOf(ColumnReference::class, $limit->count);

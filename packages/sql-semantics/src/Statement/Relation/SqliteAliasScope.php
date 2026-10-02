@@ -25,6 +25,8 @@ use SqlSemantics\Statement\Schema\Catalog;
  */
 final class SqliteAliasScope
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * @var list<Field>
      */
@@ -47,7 +49,7 @@ final class SqliteAliasScope
         $this->catalog = $this->scope->catalog;
         $this->aliases = array_values($aliases);
         foreach ($aliases as $alias) {
-            assert($alias->alias !== null && in_array($alias, $projection->items, true), 'A visible alias must belong to this projection.');
+            \SqlSemantics\Statement\Validation\Check::input($alias->alias !== null && in_array($alias, $projection->items, true), 'A visible alias must belong to this projection.');
         }
     }
 
@@ -59,10 +61,18 @@ final class SqliteAliasScope
         $local = $this->scope->local($name, $qualifier);
         if ($qualifier === null && ($local instanceof MissingColumn || $local instanceof CandidateColumn)) {
             foreach ($this->aliases as $alias) {
-                assert($alias->alias !== null, 'A visible alias has a declared name.');
+                \SqlSemantics\Statement\Validation\Check::input($alias->alias !== null, 'A visible alias has a declared name.');
                 if ($this->catalog->columnNames->equal($alias->alias->value, $name->value)) {
                     $reference = new NamedAlias($this->projection, $alias, $name);
-                    return $local instanceof CandidateColumn ? $local->withFallback($reference) : $reference;
+                    if ($local instanceof CandidateColumn) {
+                        foreach ($local->possibilities as $possibility) {
+                            if ($possibility instanceof ResolvedColumn) {
+                                return $local;
+                            }
+                        }
+                        return new CandidateColumn($local->first, ...[...array_slice($local->possibilities, 1), $reference]);
+                    }
+                    return $reference;
                 }
             }
         }

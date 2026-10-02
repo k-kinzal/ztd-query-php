@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Core\SemanticException;
+use SqlSemantics\Statement\Validation\Failure\ImplementationGap;
 
 #[CoversClass(\SqlSemantics\Core\Ast\Tree::class)]
 #[UsesClass(\SqlSemantics\Core\Ast\DialectParser::class)]
@@ -21,7 +21,7 @@ use SqlSemantics\Core\SemanticException;
 #[UsesClass(\SqlSemantics\Statement\Declaration\ColumnDefinition::class)]
 #[UsesClass(\SqlSemantics\Statement\Declaration\TableConstraint::class)]
 #[UsesClass(\SqlSemantics\Statement\Declaration\TableDefinition::class)]
-#[UsesClass(SemanticException::class)]
+#[UsesClass(ImplementationGap::class)]
 #[UsesClass(\SqlSemantics\Statement\Declaration\TypeDescriptor::class)]
 #[UsesClass(\SqlSemantics\Core\Policy\SyntaxRules::class)]
 #[UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
@@ -76,18 +76,18 @@ final class TreeTest extends TestCase
         self::assertSame("'a b'", \SqlSemantics\Core\Ast\Tree::text($token));
     }
 
-    public function testUnsupportedCarriesOriginalSyntax(): void
+    public function testUnsupportedReportsAnImplementationGap(): void
     {
         $node = new \SqlParser\Parser\Node('expr', 0, []);
-        $this->expectException(SemanticException::class);
-        $this->expectExceptionMessage('Unsupported custom operation');
+        $this->expectException(ImplementationGap::class);
+        $this->expectExceptionMessage('Missing semantic rule for custom operation');
         \SqlSemantics\Core\Ast\Tree::unsupported($node, 'custom operation');
     }
 
     public function testAssertChildrenRejectsUnknownClauses(): void
     {
         $tree = (new \SqlParser\PostgreSql\PostgreSqlParser())->parse('SELECT id FROM users');
-        $this->expectException(SemanticException::class);
+        $this->expectException(ImplementationGap::class);
         \SqlSemantics\Core\Ast\Tree::assertChildren($tree->find('simple_select')[0], [], ['SELECT']);
     }
 }

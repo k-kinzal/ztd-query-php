@@ -20,6 +20,8 @@ use SqlSemantics\Statement\Identifier\Name;
  */
 final class SqliteRowIdentifier
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * The actual column identity shared by every unshadowed rowid spelling.
      */
@@ -30,7 +32,7 @@ final class SqliteRowIdentifier
      */
     public function __construct(public readonly ?Column $alias = null)
     {
-        assert($alias === null || ($alias->type->name === Builtin::Integer && $alias->nullability === Nullability::NotNull), 'A rowid alias has a non-NULL integer declaration.');
+        \SqlSemantics\Statement\Validation\Check::input($alias === null || ($alias->type->name === Builtin::Integer && $alias->nullability === Nullability::NotNull), 'A rowid alias has a non-NULL integer declaration.');
         $this->column = $alias ?? new Column(new Name('rowid'), new TypeDescriptor(Builtin::Integer, affinity: Affinity::Integer), Nullability::NotNull);
     }
 

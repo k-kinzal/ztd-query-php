@@ -54,14 +54,23 @@ final class AliasReferenceTest extends TestCase
         self::assertSame([$column], (new AliasReference(new Fields($scope, $field), $field, new Name('answer')))->references());
     }
 
-    public function testToStringSubstitutesTheChosenTargetDespiteAnAliasCollision(): void
+    public function testToStringRetainsTheAliasUseWithoutSubstitutingItsExpression(): void
+    {
+        $scope = new Scope(new Catalog(new SearchPath(new Name('main'))));
+        $field = new Field(new SqliteInteger(new UnsignedInteger('1')), new Name('answer'));
+        $reference = new AliasReference(new Fields($scope, $field), $field, new Name('answer'));
+        self::assertSame('answer', $reference->toString());
+        $result = (new PDO('sqlite::memory:'))->query('SELECT ' . $field->toString() . ' WHERE ' . $reference->toString() . ' = 1');
+        self::assertInstanceOf(PDOStatement::class, $result);
+        self::assertSame(1, $result->fetchColumn());
+    }
+
+    public function testRejectsAnAliasTargetThatLookupWouldNotChoose(): void
     {
         $scope = new Scope(new Catalog(new SearchPath(new Name('main'))));
         $first = new Field(new SqliteInteger(new UnsignedInteger('1')), new Name('answer'));
-        $chosen = new Field(new SqliteInteger(new UnsignedInteger('2')), new Name('answer'));
-        $reference = new AliasReference(new Fields($scope, $first, $chosen), $chosen, new Name('answer'));
-        $result = (new PDO('sqlite::memory:'))->query('SELECT ' . $reference->toString());
-        self::assertInstanceOf(PDOStatement::class, $result);
-        self::assertSame(2, $result->fetchColumn());
+        $other = new Field(new SqliteInteger(new UnsignedInteger('2')), new Name('answer'));
+        $this->expectException(\SqlSemantics\Statement\Validation\Failure\InvalidConstruction::class);
+        new AliasReference(new Fields($scope, $first, $other), $other, new Name('answer'));
     }
 }

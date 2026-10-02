@@ -25,6 +25,8 @@ use SqlSemantics\Statement\Literal\StringLiteral;
  */
 final class TypeDescriptor
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * @param Builtin|TypeName $name Type identity
      * @param int|null $length Declared length, or display width, in the unit of the type

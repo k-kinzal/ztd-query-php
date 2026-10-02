@@ -42,6 +42,7 @@ final class InsertionReader
             return new InsertDefaults($target, $conflict, $replace);
         }
         $input = (new QueryReader())->read($query, $catalog);
+        \SqlSemantics\Statement\Validation\Check::invariant(!$input instanceof \SqlSemantics\Statement\Query\ScopedSelect, 'An insertion source is an independent query root.');
         return $input instanceof Rows ? new InsertRows($target, $input, $conflict, $replace) : new InsertSelect($target, $input, $conflict, $replace);
     }
 

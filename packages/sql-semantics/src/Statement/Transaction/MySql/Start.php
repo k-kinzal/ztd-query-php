@@ -14,19 +14,13 @@ use SqlSemantics\Statement\Operation;
  */
 final class Start implements Operation
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * An omitted access mode depends on the connection; no session state is simulated.
      */
     public function __construct(public readonly bool $consistentSnapshot = false, public readonly Access $access = Access::SessionDefault)
     {
-    }
-
-    /**
-     * Replaces the access request persistently without losing the snapshot request.
-     */
-    public function withAccess(Access $access): self
-    {
-        return new self($this->consistentSnapshot, $access);
     }
 
     /**

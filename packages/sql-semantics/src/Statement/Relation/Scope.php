@@ -24,6 +24,8 @@ use SqlSemantics\Statement\Schema\Catalog;
  */
 final class Scope
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * @var list<TableReference>
      */
@@ -49,8 +51,8 @@ final class Scope
         $this->tables = array_values($tables);
         $occurrences = [];
         foreach ($tables as $table) {
-            assert($table->catalog === $this->catalog, 'Every relation must use the scope declaration context.');
-            assert(!isset($occurrences[spl_object_id($table)]), 'Each relation use must have its own occurrence identity.');
+            \SqlSemantics\Statement\Validation\Check::input($table->catalog === $this->catalog, 'Every relation must use the scope declaration context.');
+            \SqlSemantics\Statement\Validation\Check::input(!isset($occurrences[spl_object_id($table)]), 'Each relation use must have its own occurrence identity.');
             $occurrences[spl_object_id($table)] = true;
         }
     }
@@ -62,7 +64,12 @@ final class Scope
     {
         $local = $this->local($name, $qualifier);
         if ($local instanceof CandidateColumn && $this->parent !== null) {
-            return $local->withFallback(new OuterLookup($this->parent, $name, $qualifier));
+            foreach ($local->possibilities as $possibility) {
+                if ($possibility instanceof ResolvedColumn) {
+                    return $local;
+                }
+            }
+            return new CandidateColumn($local->first, ...[...array_slice($local->possibilities, 1), new OuterLookup($this->parent, $name, $qualifier)]);
         }
         return $local instanceof MissingColumn ? ($this->parent?->resolve($name, $qualifier) ?? $local) : $local;
     }

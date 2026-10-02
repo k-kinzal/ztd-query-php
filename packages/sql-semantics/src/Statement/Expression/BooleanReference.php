@@ -28,6 +28,8 @@ use SqlSemantics\Statement\Type\Unresolved;
  */
 final class BooleanReference implements ScalarExpression
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * @var 0|1
      */
@@ -38,9 +40,9 @@ final class BooleanReference implements ScalarExpression
      */
     public function __construct(public readonly ColumnReference $column)
     {
-        assert($column->qualifier === null && $column->name->quote === Quote::None, 'A truth identifier must be bare and unqualified.');
+        \SqlSemantics\Statement\Validation\Check::input($column->qualifier === null && $column->name->quote === Quote::None, 'A truth identifier must be bare and unqualified.');
         $name = strtoupper($column->name->value);
-        assert(in_array($name, ['TRUE', 'FALSE'], true), 'Only TRUE and FALSE have a truth literal alternative.');
+        \SqlSemantics\Statement\Validation\Check::input(in_array($name, ['TRUE', 'FALSE'], true), 'Only TRUE and FALSE have a truth literal alternative.');
         $this->fallback = $name === 'TRUE' ? 1 : 0;
     }
 

@@ -17,6 +17,8 @@ use SqlSemantics\Statement\Identifier\Name;
  */
 final class Column
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Keeps declaration facts independently of query-local NULL extension.
      */

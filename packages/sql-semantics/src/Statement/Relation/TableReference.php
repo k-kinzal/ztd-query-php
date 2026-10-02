@@ -19,6 +19,8 @@ use SqlSemantics\Statement\Schema\Table;
  */
 final class TableReference
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * @var list<Table>
      */

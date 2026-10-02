@@ -29,9 +29,9 @@ final class AmbiguousTableTest extends TestCase
     public function testConflictingDeclarationsCannotBeResolvedByChoosingOneColumn(): void
     {
         $column = new Column(new Name('id'), new TypeDescriptor(Builtin::Integer));
-        $first = new Table(new QualifiedName(new Name('users')), $column);
+        $first = new Table(new QualifiedName(new Name('users')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $column);
         $second = new Table($first->name);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $first, $second);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $first, $second);
         $relation = new TableReference($catalog, $first->name);
         $expression = new ColumnReference(new Scope($catalog, $relation), new Name('id'));
         self::assertInstanceOf(AmbiguousTable::class, $expression->resolution);

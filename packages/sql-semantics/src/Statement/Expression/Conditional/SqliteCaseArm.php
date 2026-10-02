@@ -16,12 +16,14 @@ use SqlSemantics\Statement\SemanticGraph;
  */
 final class SqliteCaseArm
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * The enclosing CASE determines whether the test is a truth test or a comparison value.
      */
     public function __construct(public readonly ScalarExpression $test, public readonly ScalarExpression $result)
     {
-        assert((new SemanticGraph())->containsOnlyValues($this), 'A CASE branch retains only semantic operands.');
+        \SqlSemantics\Statement\Validation\Check::input((new SemanticGraph())->containsOnlyValues($this), 'A CASE branch retains only semantic operands.');
     }
 
     /**

@@ -27,8 +27,8 @@ final class AmbiguousColumnTest extends TestCase
     public function testAmbiguityKeepsSelfJoinOccurrencesSeparate(): void
     {
         $column = new Column(new Name('id'), new TypeDescriptor(Builtin::Integer));
-        $table = new Table(new QualifiedName(new Name('users')), $column);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $table);
+        $table = new Table(new QualifiedName(new Name('users')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $column);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $table);
         $scope = new Scope($catalog, new TableReference($catalog, $table->name, new Name('a')), new TableReference($catalog, $table->name, new Name('b')));
         $reference = $scope->resolve(new Name('id'));
         self::assertInstanceOf(AmbiguousColumn::class, $reference);

@@ -7,6 +7,10 @@ namespace Tests\Unit\Statement\Reference;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Statement\Construction\Expression\ColumnUse;
+use SqlSemantics\Statement\Construction\Query\FieldDefinition;
+use SqlSemantics\Statement\Construction\Query\ProjectionDefinition;
+use SqlSemantics\Statement\Construction\Query\SelectDefinition;
 use SqlSemantics\Statement\Expression\ColumnReference;
 use SqlSemantics\Statement\Expression\NullConstant;
 use SqlSemantics\Statement\Expression\Subquery\SqliteExists;
@@ -14,7 +18,7 @@ use SqlSemantics\Statement\Expression\Subquery\SqliteSubquery;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Projection\Field;
 use SqlSemantics\Statement\Projection\Fields;
-use SqlSemantics\Statement\Query\Select;
+use SqlSemantics\Statement\Query\ScopedSelect;
 use SqlSemantics\Statement\Reference\AliasDependencies;
 use SqlSemantics\Statement\Reference\NamedAlias;
 use SqlSemantics\Statement\Relation\Scope;
@@ -32,14 +36,15 @@ final class AliasDependenciesTest extends TestCase
         $inner = new Scope($outer);
         $field = new Field(new NullConstant(), new Name('answer'));
         $fields = new Fields($outer, $field);
-        $nested = new Scope(new SqliteAliasScope($fields, $field));
-        $reference = new ColumnReference($nested, new Name('answer'));
+        $body = new ScopedSelect(new SqliteAliasScope($fields, $field), new SelectDefinition(new ProjectionDefinition(new FieldDefinition(new ColumnUse(new Name('answer'))))));
+        $reference = $body->fields()->at(0)->expression;
+        self::assertInstanceOf(ColumnReference::class, $reference);
         self::assertInstanceOf(NamedAlias::class, $reference->resolution);
-        $query = new SqliteExists(new SqliteSubquery($outer, new Select(new Fields($nested, new Field($reference)))));
+        $query = new SqliteExists(new SqliteSubquery($outer, $body));
         self::assertSame([$reference->resolution], (new AliasDependencies())->references($query));
     }
 
-    public function testPreservedRejectsRemovalAndShadowingButAllowsAddingUnrelatedFields(): void
+    public function testPreservedRequiresTheActualAliasTargetInTheCurrentProjection(): void
     {
         $outer = new Scope(new Catalog(new SearchPath(new Name('main'))));
         $inner = new Scope($outer);
@@ -48,9 +53,8 @@ final class AliasDependenciesTest extends TestCase
         $reference = new ColumnReference(new Scope(new SqliteAliasScope($fields, $field)), new Name('answer'));
         $dependencies = new AliasDependencies();
         self::assertTrue($dependencies->preserved($reference, $fields));
-        self::assertTrue($dependencies->preserved($reference, $fields->addField(new Field(new NullConstant(), new Name('other')))));
         self::assertFalse($dependencies->preserved($reference, new Fields($outer)));
-        self::assertFalse($dependencies->preserved($reference, new Fields($outer, clone $field, $field)));
+        self::assertFalse($dependencies->preserved($reference, new Fields($outer, new Field(new NullConstant(), new Name('answer')), $field)));
     }
 
 }

@@ -20,24 +20,18 @@ use SqlSemantics\Statement\SemanticGraph;
  */
 final class AttachDatabase implements Operation
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Each operand is independently evaluated; none introduces a table or changes the catalog.
      */
     public function __construct(public readonly Scope $scope, public readonly ScalarExpression $filename, public readonly ScalarExpression $schema, public readonly ?ScalarExpression $key = null)
     {
-        assert($scope->tables === [], 'Attachment expressions have no relation inputs.');
+        \SqlSemantics\Statement\Validation\Check::input($scope->tables === [], 'Attachment expressions have no relation inputs.');
         foreach ([$filename, $schema, ...($key === null ? [] : [$key])] as $expression) {
-            assert((new SemanticGraph())->containsOnlyValues($expression), 'An attachment operand contains only semantic values.');
-            assert((new Ownership())->accepts($expression, $scope), 'Attachment references use the request expression scope.');
+            \SqlSemantics\Statement\Validation\Check::input((new SemanticGraph())->containsOnlyValues($expression), 'An attachment operand contains only semantic values.');
+            \SqlSemantics\Statement\Validation\Check::input((new Ownership())->accepts($expression, $scope), 'Attachment references use the request expression scope.');
         }
-    }
-
-    /**
-     * Replaces the file expression without changing the schema expression or original request.
-     */
-    public function withFilename(ScalarExpression $filename): self
-    {
-        return new self($this->scope, $filename, $this->schema, $this->key);
     }
 
     /**

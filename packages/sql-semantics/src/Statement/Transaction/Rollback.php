@@ -15,6 +15,8 @@ use SqlSemantics\Statement\Operation;
  */
 final class Rollback implements Operation
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Describes the entire transaction as the rollback target.
      */

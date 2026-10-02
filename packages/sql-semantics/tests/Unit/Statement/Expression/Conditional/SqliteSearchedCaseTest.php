@@ -47,17 +47,6 @@ final class SqliteSearchedCaseTest extends TestCase
         self::assertSame([$column, $column], $case->references());
     }
 
-    public function testWithBranchesPreservesTheOriginalChoice(): void
-    {
-        $null = new NullConstant();
-        $branches = new SqliteCaseBranches(null, new SqliteCaseArm($null, $null));
-        $original = new SqliteSearchedCase($branches);
-        $replacement = $branches->withOtherwise($null);
-        $updated = $original->withBranches($replacement);
-        self::assertSame($branches, $original->branches);
-        self::assertSame($replacement, $updated->branches);
-    }
-
     public function testToStringPreservesTruthTests(): void
     {
         $text = new SqliteText(new StringLiteral('1english'));

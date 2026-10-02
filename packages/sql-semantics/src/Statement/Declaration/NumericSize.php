@@ -14,6 +14,8 @@ namespace SqlSemantics\Statement\Declaration;
  */
 final class NumericSize
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Asserts the construction invariants of the semantic value.
      */

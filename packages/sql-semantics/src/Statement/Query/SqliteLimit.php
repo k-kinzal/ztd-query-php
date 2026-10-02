@@ -20,25 +20,19 @@ use SqlSemantics\Statement\SemanticGraph;
  */
 final class SqliteLimit
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Scope and operand relationships are asserted independently of database coercion.
      */
     public function __construct(public readonly Scope $scope, public readonly ScalarExpression $count, public readonly ?ScalarExpression $offset = null, public readonly bool $commaSyntax = false)
     {
-        assert($scope->tables === [], 'LIMIT does not resolve names against SELECT input columns.');
-        assert(!$commaSyntax || $offset !== null, 'The comma form requires both skip and count expressions.');
-        assert((new SemanticGraph())->containsOnlyValues($this), 'Row restrictions retain only immutable semantic values.');
+        \SqlSemantics\Statement\Validation\Check::input($scope->tables === [], 'LIMIT does not resolve names against SELECT input columns.');
+        \SqlSemantics\Statement\Validation\Check::input(!$commaSyntax || $offset !== null, 'The comma form requires both skip and count expressions.');
+        \SqlSemantics\Statement\Validation\Check::input((new SemanticGraph())->containsOnlyValues($this), 'Row restrictions retain only immutable semantic values.');
         foreach ([$count, $offset] as $operand) {
-            assert($operand === null || (new Ownership())->accepts($operand, $scope), 'Every row-restriction lookup must use its independent expression scope.');
+            \SqlSemantics\Statement\Validation\Check::input($operand === null || (new Ownership())->accepts($operand, $scope), 'Every row-restriction lookup must use its independent expression scope.');
         }
-    }
-
-    /**
-     * Changes the upper bound while preserving the offset and its declaration context.
-     */
-    public function withCount(ScalarExpression $count): self
-    {
-        return new self($this->scope, $count, $this->offset, $this->commaSyntax);
     }
 
     /**
@@ -47,7 +41,7 @@ final class SqliteLimit
     public function toString(): string
     {
         if ($this->commaSyntax) {
-            assert($this->offset !== null, 'Comma notation has both operands.');
+            \SqlSemantics\Statement\Validation\Check::input($this->offset !== null, 'Comma notation has both operands.');
             return 'LIMIT ' . $this->offset->toString() . ', ' . $this->count->toString();
         }
         return 'LIMIT ' . $this->count->toString() . ($this->offset === null ? '' : ' OFFSET ' . $this->offset->toString());

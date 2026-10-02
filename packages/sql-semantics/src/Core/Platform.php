@@ -38,7 +38,7 @@ interface Platform
      * Retains supplied declarations with this database's namespace and comparison rules.
      * @param non-empty-list<string> $path
      */
-    public function catalog(array $path, bool $complete, \SqlSemantics\Statement\Schema\Table ...$tables): \SqlSemantics\Statement\Schema\Catalog;
+    public function catalog(Language $language, array $path, bool $complete, \SqlSemantics\Statement\Schema\Table ...$tables): \SqlSemantics\Statement\Schema\Catalog;
 
     /**
      * Supplies statement construction data for the resolved grammar release.

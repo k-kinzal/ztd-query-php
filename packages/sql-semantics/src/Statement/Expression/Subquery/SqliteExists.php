@@ -19,6 +19,8 @@ use SqlSemantics\Statement\Type\Invalid;
  */
 final class SqliteExists implements ScalarExpression
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Retains the query whose row existence is tested.
      */

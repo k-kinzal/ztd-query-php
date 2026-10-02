@@ -11,6 +11,7 @@ use SqlSemantics\Core\Declarations;
 use SqlSemantics\Core\Language;
 use SqlSemantics\Core\Policy\OperationRules;
 use SqlSemantics\Statement\Operation;
+use SqlSemantics\Statement\Schema\Catalog;
 use SqlSemantics\Statement\Schema\Table;
 use SqlSemantics\Statement\SemanticGraph;
 
@@ -34,32 +35,46 @@ final class Analyzer
 
     /**
      * Builds an operation whose references retain supplied declarations without executing them.
-     * @param list<Table|Operation>|null $dependencies Null means declaration metadata is absent
+     * @param list<Table|Operation>|Catalog|null $dependencies Null means declaration metadata is absent
      * @throws AnalysisException When SQL does not match the selected grammar
      */
-    public function analyze(string $sql, ?array $dependencies = null, Declarations $declarations = Declarations::Complete): Operation
+    public function analyze(string $sql, array|Catalog|null $dependencies = null, Declarations $declarations = Declarations::Complete): Operation
     {
         try {
             $tree = $this->parser->parse($sql);
         } catch (SourceException $error) {
             throw new AnalysisException($error->getMessage(), 0, $error);
         }
-        $tables = (new CatalogReader())->tables(...($dependencies ?? []));
-        $catalog = $this->language->dialect->platform()->catalog($this->path, $dependencies !== null && $declarations === Declarations::Complete, ...$tables);
+        $catalog = $this->context($dependencies, $declarations);
         $operation = $this->operations->read($tree, $catalog);
-        assert((new SemanticGraph())->isSemanticOperation($operation), 'Analysis returns immutable semantic values without parser or grammar models.');
+        \SqlSemantics\Statement\Validation\Check::invariant((new SemanticGraph())->isSemanticOperation($operation), 'Analysis returns immutable semantic values without parser or grammar models.');
         return $operation;
     }
 
     /**
      * Each statement sees the same explicit context, irrespective of preceding requests.
-     * @param list<Table|Operation>|null $dependencies
+     * @param list<Table|Operation>|Catalog|null $dependencies
      * @return list<Operation>
      * @throws AnalysisException When SQL does not match the selected grammar
      */
-    public function analyzeAll(string $sql, ?array $dependencies = null, Declarations $declarations = Declarations::Complete): array
+    public function analyzeAll(string $sql, array|Catalog|null $dependencies = null, Declarations $declarations = Declarations::Complete): array
     {
-        return array_map(fn (string $text): Operation => $this->analyze($text, $dependencies, $declarations), $this->split($sql));
+        $context = $this->context($dependencies, $declarations);
+        return array_map(fn (string $text): Operation => $this->analyze($text, $context), $this->split($sql));
+    }
+
+    /**
+     * Constructs a fresh declaration snapshot or validates an explicitly supplied one.
+     * @param list<Table|Operation>|Catalog|null $dependencies
+     */
+    public function context(array|Catalog|null $dependencies = null, Declarations $declarations = Declarations::Complete): Catalog
+    {
+        if ($dependencies instanceof Catalog) {
+            \SqlSemantics\Statement\Validation\Check::input($this->language->profile()->compatibleWith($dependencies->profile), 'The context must match the selected language profile.');
+            return $dependencies;
+        }
+        $tables = (new CatalogReader())->tables(...($dependencies ?? []));
+        return $this->language->dialect->platform()->catalog($this->language, $this->path, $dependencies !== null && $declarations === Declarations::Complete, ...$tables);
     }
 
     /**

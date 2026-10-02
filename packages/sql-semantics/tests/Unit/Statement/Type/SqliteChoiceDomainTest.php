@@ -21,7 +21,8 @@ final class SqliteChoiceDomainTest extends TestCase
     {
         $integer = new TypeDescriptor(Builtin::Integer);
         $text = new TypeDescriptor(Builtin::Text);
-        $domain = new SqliteChoiceDomain($integer, new SqliteChoiceDomain($text, new TypeDescriptor(Builtin::Integer)), NullDomain::Null, Unresolved::MissingDeclaration);
-        self::assertSame([$integer, $text, NullDomain::Null, Unresolved::MissingDeclaration], $domain->alternatives);
+        $otherInteger = new TypeDescriptor(Builtin::Integer);
+        $domain = new SqliteChoiceDomain($integer, new SqliteChoiceDomain($text, $integer, $otherInteger), NullDomain::Null, Unresolved::MissingDeclaration);
+        self::assertSame([$integer, $text, $otherInteger, NullDomain::Null, Unresolved::MissingDeclaration], $domain->alternatives);
     }
 }

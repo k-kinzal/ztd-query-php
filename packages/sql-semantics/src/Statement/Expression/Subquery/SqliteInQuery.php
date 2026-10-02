@@ -19,13 +19,15 @@ use SqlSemantics\Statement\Type\Invalid;
  */
 final class SqliteInQuery implements ScalarExpression
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Keeps the subject, result relation, and negation as separate semantic operands.
      */
     public function __construct(public readonly ScalarExpression $subject, public readonly SqliteSubquery $source, public readonly bool $negated = false)
     {
-        assert((new \SqlSemantics\Statement\SemanticGraph())->containsOnlyValues($subject), 'Membership retains a semantic subject.');
-        assert((new \SqlSemantics\Statement\Expression\Reference\Ownership())->accepts($subject, $source->scope), 'The membership subject and subquery must have the same expression site.');
+        \SqlSemantics\Statement\Validation\Check::input((new \SqlSemantics\Statement\SemanticGraph())->containsOnlyValues($subject), 'Membership retains a semantic subject.');
+        \SqlSemantics\Statement\Validation\Check::input((new \SqlSemantics\Statement\Expression\Reference\Ownership())->accepts($subject, $source->scope), 'The membership subject and subquery must have the same expression site.');
     }
 
     /**

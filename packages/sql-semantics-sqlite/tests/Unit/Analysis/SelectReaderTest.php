@@ -90,8 +90,8 @@ final class SelectReaderTest extends TestCase
     public function testTablesAndColumnResolutionRetainOriginalDeclarationObjects(): void
     {
         $column = new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer), Nullability::NotNull);
-        $table = new Table(new QualifiedName(new Name('bar')), $column);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $table);
+        $table = new Table(new QualifiedName(new Name('bar')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $column);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $table);
         $reader = new SelectReader();
         $parser = new SqliteParser();
         $query = $reader->read($parser->parse('SELECT foo, absent FROM bar')->find('select')[0], $catalog);
@@ -135,8 +135,8 @@ final class SelectReaderTest extends TestCase
     public function testExpressionKeepsBooleanColumnResolutionAheadOfItsLiteralAlternative(): void
     {
         $column = new Column(new Name('true'), new TypeDescriptor(Builtin::Text));
-        $table = new Table(new QualifiedName(new Name('bar')), $column);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, null, $table);
+        $table = new Table(new QualifiedName(new Name('bar')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $column);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, null, new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $table);
         $query = (new SelectReader())->read((new SqliteParser())->parse('SELECT TRUE FROM bar')->find('select')[0], $catalog);
         $expression = $query->field('true')->expression;
         self::assertInstanceOf(BooleanReference::class, $expression);
@@ -181,6 +181,7 @@ final class SelectReaderTest extends TestCase
     {
         return [
             ['SELECT ((TRUE)), (null), ((1))'],
+            ['SELECT ( /*group*/ TRUE ), 1/*left*/+/*right*/2, 1 is /*operator*/ not 2'],
             ['SELECT 1+2*3, (1+2)*3'],
             ['SELECT 2 IS TRUE, 2 IS (+TRUE)'],
             ['SELECT NULL = NULL, NULL IS NULL'],
@@ -215,11 +216,27 @@ final class SelectReaderTest extends TestCase
         }
     }
 
+    public function testReadKeepsAGroupedColumnNameIndependentOfItsTrivia(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
+        $table = $semantics->analyze('CREATE TABLE items (id INTEGER)');
+        $query = $semantics->analyze('SELECT ( /*column*/ id ) FROM items', [$table]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Query\Select::class, $query);
+        self::assertSame('id', $query->field('id')->name->value);
+        self::assertSame('SELECT ( /*column*/ id ) FROM items', $query->toString());
+        $database = new PDO('sqlite::memory:');
+        $database->exec('CREATE TABLE items (id INTEGER)');
+        $database->exec('INSERT INTO items VALUES (7)');
+        $result = $database->query($query->toString());
+        self::assertInstanceOf(PDOStatement::class, $result);
+        self::assertSame(['id' => 7], $result->fetch(PDO::FETCH_ASSOC));
+    }
+
     public function testReadResolvesAWhereAliasToItsActualProjectedField(): void
     {
         $column = new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer), Nullability::NotNull);
-        $table = new Table(new QualifiedName(new Name('bar')), $column);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, null, $table);
+        $table = new Table(new QualifiedName(new Name('bar')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $column);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, null, new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $table);
         $query = (new SelectReader())->read((new SqliteParser())->parse('SELECT foo + 1 AS n FROM bar WHERE N > 2')->find('select')[0], $catalog);
         self::assertInstanceOf(SqliteBinary::class, $query->where);
         self::assertInstanceOf(AliasReference::class, $query->where->left);
@@ -234,8 +251,8 @@ final class SelectReaderTest extends TestCase
     #[TestWith(['SELECT foo AS n, 10 AS n FROM bar WHERE n > 2'])]
     public function testReadPreservesAliasAndInputColumnPriorityOnTheDatabase(string $sql): void
     {
-        $table = new Table(new QualifiedName(new Name('bar')), new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer)));
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, null, $table);
+        $table = new Table(new QualifiedName(new Name('bar')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer)));
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, null, new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $table);
         $reader = new SelectReader();
         $parser = new SqliteParser();
         $query = $reader->read($parser->parse($sql)->find('select')[0], $catalog);
@@ -274,8 +291,8 @@ final class SelectReaderTest extends TestCase
     #[TestWith(["LIMIT '2'"])]
     public function testReadPreservesRowRestrictionExpressionsAndTheirSeparateScope(string $clause): void
     {
-        $table = new Table(new QualifiedName(new Name('bar')), new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer)));
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, null, $table);
+        $table = new Table(new QualifiedName(new Name('bar')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer)));
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, null, new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $table);
         $sql = 'SELECT foo FROM bar ' . $clause;
         $reader = new SelectReader();
         $parser = new SqliteParser();

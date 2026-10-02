@@ -19,6 +19,8 @@ namespace SqlSemantics\Statement\Declaration;
  */
 final class TypeName
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * @param list<string> $parts Qualified name in declaration order, decoded like identifiers; never empty
      */

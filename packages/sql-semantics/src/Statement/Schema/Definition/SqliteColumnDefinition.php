@@ -19,6 +19,8 @@ use SqlSemantics\Statement\Type\SqliteDeclaration;
  */
 final class SqliteColumnDefinition
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * @var list<ColumnConstraint>
      */
@@ -37,7 +39,7 @@ final class SqliteColumnDefinition
         $this->constraints = array_values($constraints);
         $notNull = false;
         foreach ($constraints as $constraint) {
-            assert((new SemanticGraph())->containsOnlyValues($constraint), 'Column rules must be immutable semantic values.');
+            \SqlSemantics\Statement\Validation\Check::input((new SemanticGraph())->containsOnlyValues($constraint), 'Column rules must be immutable semantic values.');
             $notNull = $notNull || ($constraint instanceof ColumnNullability && !$constraint->allowsNull)
                 || ($constraint instanceof ColumnPrimaryKey && ($type->strict || ($type->permitsRowidAlias() && $constraint->direction !== KeyDirection::Descending)));
         }

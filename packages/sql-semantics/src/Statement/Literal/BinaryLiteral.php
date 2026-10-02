@@ -12,6 +12,8 @@ namespace SqlSemantics\Statement\Literal;
  */
 final class BinaryLiteral implements Literal
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Keeps an independent decoded scalar.
      */

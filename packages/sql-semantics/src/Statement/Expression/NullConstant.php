@@ -13,14 +13,16 @@ use SqlSemantics\Statement\Type\NullDomain;
  * @example Reading a known NULL fact
  *     (new \SqlSemantics\Statement\Expression\NullConstant())->nullability() === \SqlSemantics\Statement\Declaration\Nullability::AlwaysNull // => true
  */
-final class NullConstant implements ScalarExpression
+final class NullConstant implements ScalarExpression, \SqlSemantics\Statement\Construction\ScalarInput
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Keyword case can determine the label of an unaliased result column.
      */
     public function __construct(public readonly string $keyword = 'NULL')
     {
-        assert(strtoupper($keyword) === 'NULL', 'A NULL constant can only carry the NULL keyword.');
+        \SqlSemantics\Statement\Validation\Check::input(strtoupper($keyword) === 'NULL', 'A NULL constant can only carry the NULL keyword.');
     }
 
     /**

@@ -31,17 +31,6 @@ final class VacuumIntoTest extends TestCase
         self::assertTrue((new SemanticGraph())->isSemanticOperation($request));
     }
 
-    public function testWithDestinationPreservesTheSourceAndOriginalRequest(): void
-    {
-        $scope = new Scope(new Catalog(new SearchPath(new Name('main'))));
-        $original = new SqliteText(new StringLiteral('first.db'));
-        $request = new VacuumInto($scope, $original);
-        $changed = $request->withDestination(new SqliteText(new StringLiteral('second.db')));
-        self::assertSame($request->schema, $changed->schema);
-        self::assertSame($scope, $changed->scope);
-        self::assertSame($original, $request->destination);
-        self::assertSame("VACUUM main INTO 'second.db'", $changed->toString());
-    }
     public function testIsNoOpIdentifiesTheIgnoredTemporaryDatabase(): void
     {
         $scope = new Scope(new Catalog(new SearchPath(new Name('main'))));

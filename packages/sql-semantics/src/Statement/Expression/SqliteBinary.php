@@ -21,12 +21,15 @@ use SqlSemantics\Statement\Type\SqliteNumericDomain;
  */
 final class SqliteBinary implements ScalarExpression
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Result facts cannot be supplied independently of the operation and its operands.
      */
-    public function __construct(public readonly ScalarExpression $left, public readonly SqliteBinaryOperator $operator, public readonly ScalarExpression $right)
+    public function __construct(public readonly ScalarExpression $left, public readonly SqliteBinaryOperator $operator, public readonly ScalarExpression $right, public readonly ?Rendering\SqliteBinaryLayout $layout = null)
     {
-        assert((new SemanticGraph())->containsOnlyValues($this), 'A computation retains only immutable semantic operands.');
+        \SqlSemantics\Statement\Validation\Check::input($layout === null || $layout->operator === $operator, 'The lexical operator must match the actual binary operation.');
+        \SqlSemantics\Statement\Validation\Check::input((new SemanticGraph())->containsOnlyValues($this), 'A computation retains only immutable semantic operands.');
     }
 
     /**
@@ -98,6 +101,9 @@ final class SqliteBinary implements ScalarExpression
             return false;
         }
         foreach ([$this->left, $this->right] as $operand) {
+            while ($operand instanceof Rendering\GroupedExpression) {
+                $operand = $operand->operand;
+            }
             if ($operand instanceof SqliteInteger && !$operand->negative && !str_contains($operand->integer->digits, '_') && $operand->value->value === '0') {
                 return true;
             }
@@ -116,6 +122,12 @@ final class SqliteBinary implements ScalarExpression
      */
     public function toString(): string
     {
-        return '(' . $this->left->toString() . ') ' . $this->operator->value . ' (' . $this->right->toString() . ')';
+        if ($this->layout !== null && !$this->layout->groupOperands) {
+            $precedence = new Rendering\SqlitePrecedence();
+            $left = $this->left->toString();
+            $right = $this->right->toString();
+            return $this->layout->between($precedence->grouped($this->left, $this->operator, false) ? '(' . $left . ')' : $left, $precedence->grouped($this->right, $this->operator, true) ? '(' . $right . ')' : $right);
+        }
+        return '(' . $this->left->toString() . ')' . ($this->layout?->symbol() ?? ' ' . $this->operator->value . ' ') . '(' . $this->right->toString() . ')';
     }
 }

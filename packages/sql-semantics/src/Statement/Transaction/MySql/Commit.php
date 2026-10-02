@@ -14,6 +14,8 @@ use SqlSemantics\Statement\Operation;
  */
 final class Commit implements Operation
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Null means the connection's completion policy; false is an explicit NO request.
      */

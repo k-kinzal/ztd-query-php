@@ -24,7 +24,7 @@ final class CatalogReader
     {
         $tables = [];
         foreach ($dependencies as $dependency) {
-            assert((new SemanticGraph())->containsOnlyValues($dependency), 'Declaration context contains only immutable semantic values.');
+            \SqlSemantics\Statement\Validation\Check::input((new SemanticGraph())->containsOnlyValues($dependency), 'Declaration context contains only immutable semantic values.');
             $declarations = match (true) {
                 $dependency instanceof Table => [$dependency],
                 $dependency instanceof DeclarationProvider => $dependency->declaredTables(),

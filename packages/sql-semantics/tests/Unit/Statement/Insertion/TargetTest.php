@@ -28,7 +28,7 @@ final class TargetTest extends TestCase
     public function testToStringKeepsExplicitBindingsAndOriginalDeclarations(): void
     {
         $column = new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer));
-        $table = new Table(new QualifiedName(new Name('bar')), $column);
+        $table = new Table(new QualifiedName(new Name('bar')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $column);
         $catalog = new Catalog(new SearchPath(new Name('main')), tables: $table);
         $target = new Target(new TableReference($catalog, $table->name), new Name('foo'));
         self::assertSame('bar (foo)', $target->toString());
@@ -42,7 +42,7 @@ final class TargetTest extends TestCase
     public function testArityResolvesImplicitColumnsWithoutPrintingAColumnList(): void
     {
         $column = new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer));
-        $table = new Table(new QualifiedName(new Name('bar')), $column);
+        $table = new Table(new QualifiedName(new Name('bar')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $column);
         $catalog = new Catalog(new SearchPath(new Name('main')), tables: $table);
         $target = new Target(new TableReference($catalog, $table->name));
         self::assertSame('bar', $target->toString());

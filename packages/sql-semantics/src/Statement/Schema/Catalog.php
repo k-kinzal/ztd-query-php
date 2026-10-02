@@ -17,6 +17,8 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
  */
 final class Catalog
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * @var list<Table>
      */
@@ -37,11 +39,13 @@ final class Catalog
         public readonly bool $complete = true,
         public readonly ?Name $currentCatalog = null,
         ?Name $declarationSchema = null,
+        public readonly \SqlSemantics\Statement\Contract\LanguageProfile $profile = new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472),
         Table ...$tables,
     ) {
         $this->declarationSchema = $declarationSchema ?? $searchPath->schemas[0];
         $unique = [];
         foreach ($tables as $table) {
+            \SqlSemantics\Statement\Validation\Check::input($profile->compatibleWith($table->profile), 'A declaration must belong to the context language profile.');
             $unique[spl_object_id($table)] = $table;
         }
         $this->tables = array_values($unique);

@@ -8,6 +8,7 @@ use SqlSemantics\Statement\Expression\BooleanReference;
 use SqlSemantics\Statement\Expression\ColumnReference;
 use SqlSemantics\Statement\Expression\ScalarExpression;
 use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Identifier\Quote;
 use SqlSemantics\Statement\Reference\ResolvedColumn;
 use SqlSemantics\Statement\SemanticGraph;
 
@@ -21,25 +22,28 @@ use SqlSemantics\Statement\SemanticGraph;
  */
 final class Field
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * The label returned by the database, including a server-derived expression label.
      */
     public readonly Name $name;
 
     /**
-     * An unaliased non-column expression needs its dialect's derived output label.
+     * Derives the output label from the explicit alias, direct column, or rendered expression.
      */
-    public function __construct(public readonly ScalarExpression $expression, public readonly ?Name $alias = null, ?Name $derivedName = null, public readonly bool $explicitAlias = true)
+    public function __construct(public readonly ScalarExpression $expression, public readonly ?Name $alias = null, public readonly bool $explicitAlias = true)
     {
-        assert((new SemanticGraph())->containsOnlyValues($expression), 'An expression must consist of immutable semantic values.');
-        $column = $expression instanceof BooleanReference ? $expression->column : ($expression instanceof ColumnReference ? $expression : null);
+        \SqlSemantics\Statement\Validation\Check::input((new SemanticGraph())->containsOnlyValues($expression), 'An expression must consist of immutable semantic values.');
+        $base = $expression;
+        while ($base instanceof \SqlSemantics\Statement\Expression\Rendering\GroupedExpression) {
+            $base = $base->operand;
+        }
+        $column = $base instanceof BooleanReference && !$base->column->resolution instanceof \SqlSemantics\Statement\Reference\MissingColumn ? $base->column : ($base instanceof ColumnReference ? $base : null);
         $columnName = $column !== null
             ? ($column->resolution instanceof ResolvedColumn ? $column->resolution->column->name : $column->name)
             : null;
-        $name = $alias ?? $columnName ?? $derivedName;
-        assert($name !== null, 'An unaliased expression requires its result column label.');
-        assert($derivedName === null || $derivedName->value === $name->value, 'A derived name cannot contradict the alias or column name.');
-        $this->name = $name;
+        $this->name = $alias ?? $columnName ?? new Name($expression->toString(), Quote::Double);
     }
 
     /**

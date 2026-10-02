@@ -15,6 +15,8 @@ use SqlSemantics\Statement\Declaration\TypeDescriptor;
  */
 final class SqliteChoiceDomain
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * @var non-empty-list<TypeDescriptor|NullDomain|Unresolved|SqliteNumericDomain>
      */
@@ -25,16 +27,15 @@ final class SqliteChoiceDomain
      */
     public function __construct(TypeDescriptor|NullDomain|Unresolved|SqliteNumericDomain|self ...$alternatives)
     {
-        assert($alternatives !== [], 'A value selection has at least one possible result domain.');
+        \SqlSemantics\Statement\Validation\Check::input($alternatives !== [], 'A value selection has at least one possible result domain.');
         $domains = [];
         foreach ($alternatives as $alternative) {
             foreach ($alternative instanceof self ? $alternative->alternatives : [$alternative] as $domain) {
-                if (array_filter($domains, static fn (TypeDescriptor|NullDomain|Unresolved|SqliteNumericDomain $known): bool => serialize($known) === serialize($domain)) === []) {
+                if (!in_array($domain, $domains, true)) {
                     $domains[] = $domain;
                 }
             }
         }
-        assert($domains !== [], 'A choice retains at least one distinct value domain.');
         $this->alternatives = $domains;
     }
 }

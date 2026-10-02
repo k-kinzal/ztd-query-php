@@ -16,6 +16,8 @@ use SqlSemantics\Statement\Relation\TableReference;
  */
 final class CandidateColumn
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * @var non-empty-list<TableReference|ResolvedColumn|OuterLookup|NamedAlias>
      */
@@ -28,19 +30,7 @@ final class CandidateColumn
     {
         $this->possibilities = [$first, ...array_values($rest)];
         foreach ($this->possibilities as $possibility) {
-            assert(!$possibility instanceof TableReference || (!$possibility->catalog->complete && $possibility->declarations === []), 'A candidate owner must lack a declaration in a partial context.');
+            \SqlSemantics\Statement\Validation\Check::input(!$possibility instanceof TableReference || (!$possibility->catalog->complete && $possibility->declarations === []), 'A candidate owner must lack a declaration in a partial context.');
         }
-    }
-    /**
-     * Adds a lower-priority lookup only when no declared local column already matches.
-     */
-    public function withFallback(OuterLookup|NamedAlias $fallback): self
-    {
-        foreach ($this->possibilities as $possibility) {
-            if ($possibility instanceof ResolvedColumn) {
-                return $this;
-            }
-        }
-        return new self($this->first, ...[...array_slice($this->possibilities, 1), $fallback]);
     }
 }

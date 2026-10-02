@@ -21,6 +21,8 @@ use SqlSemantics\Statement\SemanticGraph;
  */
 final class SqliteDelete implements Operation
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * The actual occurrence targeted for removal.
      */
@@ -31,18 +33,10 @@ final class SqliteDelete implements Operation
      */
     public function __construct(public readonly Scope $scope, public readonly ?ScalarExpression $where = null)
     {
-        assert(count($scope->tables) === 1, 'Deletion has one target occurrence.');
+        \SqlSemantics\Statement\Validation\Check::input(count($scope->tables) === 1, 'Deletion has one target occurrence.');
         $this->target = $scope->tables[0];
-        assert((new SemanticGraph())->containsOnlyValues($this), 'Deletion retains only immutable semantic values.');
-        assert($where === null || (new Ownership())->accepts($where, $scope), 'The deletion predicate uses the target scope.');
-    }
-
-    /**
-     * Changes the row selection persistently, preserving the original target and declaration identities.
-     */
-    public function withWhere(?ScalarExpression $where): self
-    {
-        return new self($this->scope, $where);
+        \SqlSemantics\Statement\Validation\Check::input((new SemanticGraph())->containsOnlyValues($this), 'Deletion retains only immutable semantic values.');
+        \SqlSemantics\Statement\Validation\Check::input($where === null || (new Ownership())->accepts($where, $scope), 'The deletion predicate uses the target scope.');
     }
 
     /**

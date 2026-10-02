@@ -39,7 +39,7 @@ final class SqliteCreateTableTest extends TestCase
     public function testToStringDescribesTemporaryConditionalCreationInItsOwnNamespace(): void
     {
         $column = new SqliteColumnDefinition(new Name('foo'), new SqliteDeclaration('ANY', strict: true));
-        $create = new SqliteCreateTable(new QualifiedName(new Name('bar')), true, true, true, $column);
+        $create = new SqliteCreateTable(new QualifiedName(new Name('bar')), true, true, true, new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $column);
         self::assertSame('CREATE TEMP TABLE IF NOT EXISTS bar (foo ANY) STRICT', $create->toString());
         self::assertSame('temp', $create->table->name->schema?->value);
     }

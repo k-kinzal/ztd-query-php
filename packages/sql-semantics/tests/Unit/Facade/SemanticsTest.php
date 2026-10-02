@@ -56,6 +56,67 @@ use Tests\Contract\Resolved;
 #[Medium]
 final class SemanticsTest extends TestCase
 {
+    public function testContextKeepsTheParameterProfileOfAnalyzedDeclarations(): void
+    {
+        $semantics = new Semantics(SqliteDialect::Sqlite, parameters: Parameters::Named);
+        $declaration = $semantics->analyze('CREATE TABLE items (id INTEGER)');
+        self::assertInstanceOf(\SqlSemantics\Statement\Schema\Definition\SqliteCreateTable::class, $declaration);
+        $context = $semantics->context([$declaration]);
+        $query = $semantics->analyze('SELECT id FROM items', $context);
+        self::assertInstanceOf(\SqlSemantics\Statement\Query\Select::class, $query);
+        self::assertSame($semantics->profile(), $declaration->table->profile);
+        self::assertSame($context, $query->context());
+        self::assertSame(\SqlSemantics\Statement\Contract\ParameterStyle::Named, $query->profile()->parameters);
+    }
+
+    public function testContextRetainsItsSnapshotAndOriginalDeclarationsAcrossAnalysis(): void
+    {
+        $semantics = new Semantics(SqliteDialect::Sqlite);
+        $declaration = $semantics->analyze('CREATE TABLE bar(foo INTEGER)');
+        self::assertInstanceOf(\SqlSemantics\Statement\Schema\Definition\SqliteCreateTable::class, $declaration);
+        $context = $semantics->context([$declaration, $declaration]);
+        $query = $semantics->analyze('SELECT foo FROM bar', $context);
+        self::assertInstanceOf(\SqlSemantics\Statement\Query\Select::class, $query);
+        self::assertSame($context, $query->context());
+        self::assertSame($context->profile, $query->profile());
+        self::assertSame([$declaration->table], $context->tables);
+        $column = $query->field('foo')->expression;
+        self::assertInstanceOf(\SqlSemantics\Statement\Expression\ColumnReference::class, $column);
+        self::assertInstanceOf(Reference\ResolvedColumn::class, $column->resolution);
+        self::assertSame($declaration->table->columns[0], $column->resolution->column);
+    }
+
+    public function testContextDistinguishesOmissionFromAnExplicitEmptyDeclarationSet(): void
+    {
+        $semantics = new Semantics(SqliteDialect::Sqlite);
+        self::assertFalse($semantics->context()->complete);
+        self::assertTrue($semantics->context([])->complete);
+    }
+
+    public function testAnalyzeRejectsAContextFromADifferentGrammarProfile(): void
+    {
+        $first = new Semantics(SqliteDialect::Sqlite);
+        $second = new Semantics(PostgreSql::PostgreSql);
+        $this->expectException(\SqlSemantics\Statement\Validation\Failure\InvalidConstruction::class);
+        $first->analyze('SELECT 1', $second->context());
+    }
+
+    public function testAnalyzeAllUsesTheSameSnapshotForEveryScriptStatement(): void
+    {
+        $semantics = new Semantics(SqliteDialect::Sqlite);
+        $statements = $semantics->analyzeAll('SELECT 1; SELECT 2');
+        self::assertInstanceOf(\SqlSemantics\Statement\Query\Select::class, $statements[0]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Query\Select::class, $statements[1]);
+        self::assertSame($statements[0]->context(), $statements[1]->context());
+    }
+
+    public function testProfileRetainsTheSelectedGrammarAndSemanticRevision(): void
+    {
+        $semantics = new Semantics(SqliteDialect::Sqlite);
+        self::assertSame(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472, $semantics->profile()->grammar);
+        self::assertSame($semantics->language()->profile(), $semantics->profile());
+    }
+
     public function testAnalyzeAcceptsTheDialectContract(): void
     {
         $semantics = new Semantics(SqliteDialect::Sqlite);

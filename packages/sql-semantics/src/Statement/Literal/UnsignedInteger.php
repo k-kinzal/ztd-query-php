@@ -12,6 +12,8 @@ namespace SqlSemantics\Statement\Literal;
  */
 final class UnsignedInteger
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Retains digit grouping without allowing signs, exponents, or arbitrary SQL text.
      */
@@ -19,8 +21,8 @@ final class UnsignedInteger
     {
         $alphabet = substr('0123456789abcdef', 0, $radix->value);
         $ungrouped = str_replace('_', '', $digits);
-        assert($digits !== '' && strspn(strtolower($ungrouped), $alphabet) === strlen($ungrouped), 'Integer digits must belong to their numerical base.');
-        assert(!str_starts_with($digits, '_') && !str_ends_with($digits, '_') && !str_contains($digits, '__'), 'Integer separators must occur singly between digits.');
+        \SqlSemantics\Statement\Validation\Check::input($digits !== '' && strspn(strtolower($ungrouped), $alphabet) === strlen($ungrouped), 'Integer digits must belong to their numerical base.');
+        \SqlSemantics\Statement\Validation\Check::input(!str_starts_with($digits, '_') && !str_ends_with($digits, '_') && !str_contains($digits, '__'), 'Integer separators must occur singly between digits.');
     }
 
     /**

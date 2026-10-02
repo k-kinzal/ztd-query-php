@@ -21,6 +21,8 @@ use SqlSemantics\Statement\Type\SqliteChoiceDomain;
  */
 final class SqliteSearchedCase implements ScalarExpression
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Retains the ordered truth tests and their lazy result alternatives.
      */
@@ -51,14 +53,6 @@ final class SqliteSearchedCase implements ScalarExpression
     public function references(): array
     {
         return $this->branches->references();
-    }
-
-    /**
-     * Persistently replaces the choice while keeping the same truth-selection operation.
-     */
-    public function withBranches(SqliteCaseBranches $branches): self
-    {
-        return new self($branches);
     }
 
     /**

@@ -150,7 +150,7 @@ final class PlatformTest extends TestCase
     public function testCatalogKeepsTheDatabaseNamespacePolicies(): void
     {
         $platform = PostgreSqlDialect::PostgreSql->platform();
-        $catalog = $platform->catalog($platform->searchPath(), true);
+        $catalog = $platform->catalog(new \SqlSemantics\Core\Language(PostgreSqlDialect::PostgreSql), $platform->searchPath(), true);
         self::assertSame('public', $catalog->declarationSchema->value);
         self::assertSame(\SqlSemantics\Statement\Identifier\Comparison::Sensitive, $catalog->columnNames);
     }

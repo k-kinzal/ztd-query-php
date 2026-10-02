@@ -18,6 +18,8 @@ use SqlSemantics\Statement\SemanticGraph;
  */
 final class Row
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * @var non-empty-list<ScalarExpression>
      */
@@ -30,8 +32,8 @@ final class Row
     {
         $this->expressions = [$first, ...array_values($rest)];
         foreach ($this->expressions as $expression) {
-            assert((new SemanticGraph())->containsOnlyValues($expression), 'A row retains only semantic expressions.');
-            assert((new Ownership())->accepts($expression, $scope), 'A row expression must retain its input scope.');
+            \SqlSemantics\Statement\Validation\Check::input((new SemanticGraph())->containsOnlyValues($expression), 'A row retains only semantic expressions.');
+            \SqlSemantics\Statement\Validation\Check::input((new Ownership())->accepts($expression, $scope), 'A row expression must retain its input scope.');
         }
     }
 

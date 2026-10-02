@@ -19,6 +19,8 @@ use SqlSemantics\Statement\Type\NullDomain;
  */
 final class SqliteInList implements ScalarExpression
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * @var list<ScalarExpression>
      */
@@ -30,7 +32,7 @@ final class SqliteInList implements ScalarExpression
     public function __construct(public readonly ScalarExpression $subject, public readonly bool $negated = false, ScalarExpression ...$choices)
     {
         $this->choices = array_values($choices);
-        assert((new SemanticGraph())->containsOnlyValues($this), 'Membership retains only immutable semantic operands.');
+        \SqlSemantics\Statement\Validation\Check::input((new SemanticGraph())->containsOnlyValues($this), 'Membership retains only immutable semantic operands.');
     }
 
     /**

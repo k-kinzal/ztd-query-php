@@ -54,7 +54,7 @@ final class SqliteCaseBranchesTest extends TestCase
         $one = new SqliteInteger(new UnsignedInteger('1'));
         $branches = new SqliteCaseBranches($one, new SqliteCaseArm(new NullConstant(), $one));
         self::assertSame(Nullability::NotNull, $branches->nullability());
-        self::assertSame(Nullability::MaybeNull, $branches->withOtherwise(null)->nullability());
+        self::assertSame(Nullability::MaybeNull, (new SqliteCaseBranches(null, new SqliteCaseArm(new NullConstant(), $one)))->nullability());
     }
 
     public function testTypeRecognizesAnEntirelyNullResultDomain(): void
@@ -94,17 +94,6 @@ final class SqliteCaseBranchesTest extends TestCase
         $type = $branches->type();
         self::assertInstanceOf(SqliteChoiceDomain::class, $type);
         self::assertSame([Unresolved::MissingDeclaration], $type->alternatives);
-    }
-
-    public function testWithOtherwisePreservesTheOriginalChoiceAndBranchIdentities(): void
-    {
-        $null = new NullConstant();
-        $arm = new SqliteCaseArm($null, $null);
-        $original = new SqliteCaseBranches(null, $arm);
-        $updated = $original->withOtherwise($null);
-        self::assertNull($original->otherwise);
-        self::assertSame($null, $updated->otherwise);
-        self::assertSame([$arm], $updated->arms);
     }
 
     public function testToStringPreservesOrderedChoicesAndExplicitFallback(): void

@@ -31,8 +31,8 @@ final class RenameTableTest extends TestCase
         $db->exec('CREATE TABLE users(id INTEGER, name TEXT)');
         $db->exec("INSERT INTO users VALUES (1, 'Alice')");
         $column = new Column(new Name('id'), new TypeDescriptor(Builtin::Integer));
-        $table = new Table(new QualifiedName(new Name('users')), $column);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $table);
+        $table = new Table(new QualifiedName(new Name('users')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $column);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $table);
         $relation = new TableReference($catalog, $table->name);
         $operation = new RenameTable($relation, new Name('people'));
         $db->exec($operation->toString());

@@ -16,6 +16,8 @@ use SqlSemantics\Statement\Identifier\Quote;
  */
 final class SqliteCastTarget
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * The conversion policy selected by the target name, independent of column declaration rules.
      */
@@ -26,7 +28,7 @@ final class SqliteCastTarget
      */
     public function __construct(public readonly string $name)
     {
-        assert(!str_contains($name, "\0"), 'A type name cannot contain NUL.');
+        \SqlSemantics\Statement\Validation\Check::input(!str_contains($name, "\0"), 'A type name cannot contain NUL.');
         $upper = strtoupper($name);
         $this->affinity = match (true) {
             str_contains($upper, 'INT') => Affinity::Integer,

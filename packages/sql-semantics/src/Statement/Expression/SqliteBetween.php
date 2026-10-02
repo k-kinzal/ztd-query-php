@@ -20,12 +20,14 @@ use SqlSemantics\Statement\Type\NullDomain;
  */
 final class SqliteBetween implements ScalarExpression
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * The subject is a single operand, not duplicated into independently evaluated comparisons.
      */
     public function __construct(public readonly ScalarExpression $subject, public readonly ScalarExpression $lower, public readonly ScalarExpression $upper, public readonly bool $negated = false)
     {
-        assert((new SemanticGraph())->containsOnlyValues($this), 'A range test retains only immutable semantic operands.');
+        \SqlSemantics\Statement\Validation\Check::input((new SemanticGraph())->containsOnlyValues($this), 'A range test retains only immutable semantic operands.');
     }
 
     /**

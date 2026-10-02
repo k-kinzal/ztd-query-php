@@ -16,13 +16,15 @@ use SqlSemantics\Statement\SemanticGraph;
  */
 final class ColumnAssignment
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * The destination lookup belongs to one table; the enclosing operation controls input scope.
      */
     public function __construct(public readonly ColumnReference $column, public readonly ScalarExpression $expression)
     {
-        assert($column->qualifier === null && count($column->scope->tables) === 1, 'A column assignment has an unqualified destination in one target relation.');
-        assert((new SemanticGraph())->containsOnlyValues($expression), 'An assignment retains a semantic expression.');
+        \SqlSemantics\Statement\Validation\Check::input($column->qualifier === null && count($column->scope->tables) === 1, 'A column assignment has an unqualified destination in one target relation.');
+        \SqlSemantics\Statement\Validation\Check::input((new SemanticGraph())->containsOnlyValues($expression), 'An assignment retains a semantic expression.');
     }
 
     /**

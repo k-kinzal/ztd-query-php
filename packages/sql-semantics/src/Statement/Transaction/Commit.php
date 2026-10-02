@@ -15,6 +15,8 @@ use SqlSemantics\Statement\Operation;
  */
 final class Commit implements Operation
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Keeps the transaction designation and its equivalent keyword spelling.
      */

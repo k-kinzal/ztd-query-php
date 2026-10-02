@@ -18,6 +18,8 @@ use SqlSemantics\Statement\Relation\SqliteAliasScope;
  */
 final class OuterLookup
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * The actual outer resolution, including another incomplete namespace or an ambiguity.
      */

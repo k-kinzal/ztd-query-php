@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Statement\Declaration;
 
+use ReflectionReference;
 use SqlSemantics\Statement\Element;
 use SqlSemantics\Statement\ImmutableGraph;
 
@@ -18,7 +19,7 @@ final class Invariant
      */
     public static function ensure(bool $condition, string $message): void
     {
-        assert($condition, $message);
+        \SqlSemantics\Statement\Validation\Check::input($condition, $message);
     }
 
     /**
@@ -43,6 +44,9 @@ final class Invariant
         foreach ($members as $member) {
             self::ensure($member instanceof $class, 'A schema member has the wrong type.');
         }
+        foreach (array_keys($members) as $key) {
+            self::ensure(ReflectionReference::fromArrayElement($members, $key) === null, 'Schema arrays cannot retain external references.');
+        }
     }
 
     /**
@@ -54,9 +58,12 @@ final class Invariant
      */
     public static function alternatives(array $members, string $first, string $second): void
     {
-        assert(array_is_list($members), 'Members must be an ordered list.');
+        \SqlSemantics\Statement\Validation\Check::input(array_is_list($members), 'Members must be an ordered list.');
         foreach ($members as $member) {
-            assert($member instanceof $first || $member instanceof $second, 'A member has the wrong value variant.');
+            \SqlSemantics\Statement\Validation\Check::input($member instanceof $first || $member instanceof $second, 'A member has the wrong value variant.');
+        }
+        foreach (array_keys($members) as $key) {
+            self::ensure(ReflectionReference::fromArrayElement($members, $key) === null, 'Value arrays cannot retain external references.');
         }
     }
 

@@ -20,7 +20,6 @@ use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Statement\Expression\Subquery\SqliteExists;
 use SqlSemantics\Statement\Expression\Subquery\SqliteScalarSubquery;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Projection\Field;
 use SqlSemantics\Statement\Query\Select;
 use SqlSemantics\Statement\Reference\AliasDependencies;
 use SqlSemantics\Statement\Reference\CandidateColumn;
@@ -127,8 +126,6 @@ final class SubqueryReaderTest extends TestCase
         self::assertInstanceOf(NamedAlias::class, $reference->resolution);
         self::assertSame($query->field('answer'), $reference->resolution->field);
         self::assertSame('answer', $reference->toString());
-        $newFields = $query->fields()->addField(new Field(new \SqlSemantics\Statement\Expression\NullConstant(), new Name('extra')));
-        self::assertSame($query->where, $query->withFields($newFields)->where);
         self::assertFalse((new AliasDependencies())->preserved($query->where, new \SqlSemantics\Statement\Projection\Fields($query->scope)));
     }
 

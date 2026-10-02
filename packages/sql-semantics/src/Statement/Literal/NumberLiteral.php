@@ -17,12 +17,14 @@ use RangeException;
  */
 final class NumberLiteral implements Literal
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Asserts the construction invariants of the semantic value.
      */
     public function __construct(public readonly string $value)
     {
-        assert(preg_match('/\A-?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?\z/D', $value) === 1, 'A decoded number must be exact decimal text.');
+        \SqlSemantics\Statement\Validation\Check::input(preg_match('/\A-?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?\z/D', $value) === 1, 'A decoded number must be exact decimal text.');
     }
 
     /**

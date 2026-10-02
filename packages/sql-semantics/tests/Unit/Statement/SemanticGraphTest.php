@@ -71,12 +71,12 @@ final class SemanticGraphTest extends TestCase
     public function testDescribePreservesDeclarationIdentityAcrossTables(): void
     {
         $column = new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer));
-        $first = new Table(new QualifiedName(new Name('a')), $column);
-        $shared = new Table(new QualifiedName(new Name('b')), $column);
-        $distinct = new Table(new QualifiedName(new Name('b')), new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer)));
+        $first = new Table(new QualifiedName(new Name('a')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $column);
+        $shared = new Table(new QualifiedName(new Name('b')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $column);
+        $distinct = new Table(new QualifiedName(new Name('b')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer)));
         $path = new SearchPath(new Name('main'));
-        $sharedCatalog = new Catalog($path, \SqlSemantics\Statement\Identifier\Comparison::Sensitive, \SqlSemantics\Statement\Identifier\Comparison::Sensitive, true, null, null, $first, $shared);
-        $distinctCatalog = new Catalog($path, \SqlSemantics\Statement\Identifier\Comparison::Sensitive, \SqlSemantics\Statement\Identifier\Comparison::Sensitive, true, null, null, $first, $distinct);
+        $sharedCatalog = new Catalog($path, \SqlSemantics\Statement\Identifier\Comparison::Sensitive, \SqlSemantics\Statement\Identifier\Comparison::Sensitive, true, null, null, new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $first, $shared);
+        $distinctCatalog = new Catalog($path, \SqlSemantics\Statement\Identifier\Comparison::Sensitive, \SqlSemantics\Statement\Identifier\Comparison::Sensitive, true, null, null, new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $first, $distinct);
         $left = [];
         $right = [];
         self::assertNotSame((new SemanticGraph())->describe($sharedCatalog, $left), (new SemanticGraph())->describe($distinctCatalog, $right));

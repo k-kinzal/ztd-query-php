@@ -16,6 +16,8 @@ use SqlSemantics\Statement\Relation\Scope;
  */
 final class Rows implements Operation
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * @var non-empty-list<Row>
      */
@@ -34,7 +36,7 @@ final class Rows implements Operation
         $this->scope = $first->scope;
         $this->rows = [$first, ...array_values($rest)];
         foreach ($this->rows as $row) {
-            assert($row->scope === $this->scope, 'All rows of one VALUES relation use the same expression scope.');
+            \SqlSemantics\Statement\Validation\Check::input($row->scope === $this->scope, 'All rows of one VALUES relation use the same expression scope.');
         }
     }
 

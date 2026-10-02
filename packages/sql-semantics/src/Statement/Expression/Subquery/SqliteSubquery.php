@@ -7,7 +7,7 @@ namespace SqlSemantics\Statement\Expression\Subquery;
 use SqlSemantics\Statement\Expression\ColumnReference;
 use SqlSemantics\Statement\Expression\ScalarExpression;
 use SqlSemantics\Statement\Query\Rows;
-use SqlSemantics\Statement\Query\Select;
+use SqlSemantics\Statement\Query\ScopedSelect;
 use SqlSemantics\Statement\Relation\Scope;
 use SqlSemantics\Statement\Relation\SqliteAliasScope;
 use SqlSemantics\Statement\Type\Invalid;
@@ -20,13 +20,15 @@ use SqlSemantics\Statement\Type\Invalid;
  */
 final class SqliteSubquery
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * The nested query must have been resolved at this exact expression site.
      */
-    public function __construct(public readonly Scope $scope, public readonly Select|Rows $query)
+    public function __construct(public readonly Scope $scope, public readonly ScopedSelect|Rows $query)
     {
         $parent = $query->scope->parent;
-        assert(($parent instanceof SqliteAliasScope ? $parent->scope : $parent) === $scope, 'A subquery must retain its immediate lexical input scope.');
+        \SqlSemantics\Statement\Validation\Check::input(($parent instanceof SqliteAliasScope ? $parent->scope : $parent) === $scope, 'A subquery must retain its immediate lexical input scope.');
     }
 
     /**
@@ -34,7 +36,7 @@ final class SqliteSubquery
      */
     public function width(): int
     {
-        return $this->query instanceof Select ? count($this->query->fields()->items) : count($this->query->rows[0]->expressions);
+        return $this->query instanceof ScopedSelect ? count($this->query->fields()->items) : count($this->query->rows[0]->expressions);
     }
 
     /**
@@ -43,7 +45,7 @@ final class SqliteSubquery
      */
     public function outputs(): array
     {
-        return $this->query instanceof Select
+        return $this->query instanceof ScopedSelect
             ? array_map(static fn (\SqlSemantics\Statement\Projection\Field $field): ScalarExpression => $field->expression, $this->query->fields()->items)
             : $this->query->rows[0]->expressions;
     }

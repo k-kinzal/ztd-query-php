@@ -15,6 +15,8 @@ use SqlSemantics\Statement\Identifier\Name;
  */
 final class SearchPath
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * @var non-empty-list<Name>
      */

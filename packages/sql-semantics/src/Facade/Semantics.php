@@ -14,6 +14,7 @@ use SqlSemantics\Core\Mode;
 use SqlSemantics\Core\Parameters;
 use SqlSemantics\Core\SearchPath;
 use SqlSemantics\Statement\Operation;
+use SqlSemantics\Statement\Schema\Catalog;
 use SqlSemantics\Statement\Schema\Table;
 
 /**
@@ -74,6 +75,26 @@ final class Semantics
     }
 
     /**
+     * Reads the fixed profile used to interpret SQL and declaration contexts.
+     */
+    public function profile(): \SqlSemantics\Statement\Contract\LanguageProfile
+    {
+        return $this->language->profile();
+    }
+
+    /**
+     * Creates an immutable reusable context from explicit declaration inputs.
+     *
+     * Omitting declarations means an open context; an empty array means a complete
+     * empty context. No previously analyzed root is changed or rebound.
+     * @param list<Table|Operation>|null $dependencies
+     */
+    public function context(?array $dependencies = null, Declarations $declarations = Declarations::Complete): Catalog
+    {
+        return $this->analyzer->context($dependencies, $declarations);
+    }
+
+    /**
      * Answers the namespaces searched for an unqualified relation, in precedence order.
      *
      * @return non-empty-list<string>
@@ -91,22 +112,22 @@ final class Semantics
      * outcomes belong to the semantic result. Context operations never execute
      * or transform another declaration.
      *
-     * @param list<Table|Operation>|null $dependencies The explicit declaration context
+     * @param list<Table|Operation>|Catalog|null $dependencies The explicit declaration context
      * @param Declarations $declarations Whether all database declarations were supplied
      * @throws \SqlSemantics\Core\AnalysisException When SQL is outside the selected grammar
      */
-    public function analyze(string $sql, ?array $dependencies = null, Declarations $declarations = Declarations::Complete): Operation
+    public function analyze(string $sql, array|Catalog|null $dependencies = null, Declarations $declarations = Declarations::Complete): Operation
     {
         return $this->analyzer->analyze($sql, $dependencies, $declarations);
     }
 
     /**
      * Structures each script statement against the same explicit declaration context.
-     * @param list<Table|Operation>|null $dependencies
+     * @param list<Table|Operation>|Catalog|null $dependencies
      * @return list<Operation>
      * @throws \SqlSemantics\Core\AnalysisException When SQL is outside the selected grammar
      */
-    public function analyzeAll(string $sql, ?array $dependencies = null, Declarations $declarations = Declarations::Complete): array
+    public function analyzeAll(string $sql, array|Catalog|null $dependencies = null, Declarations $declarations = Declarations::Complete): array
     {
         return $this->analyzer->analyzeAll($sql, $dependencies, $declarations);
     }

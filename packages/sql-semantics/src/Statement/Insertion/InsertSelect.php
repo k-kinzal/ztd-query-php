@@ -17,13 +17,16 @@ use SqlSemantics\Statement\Schema\Definition\ConflictAction;
  */
 final class InsertSelect implements Operation
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Target and source have distinct scopes but share one explicit declaration context.
      */
     public function __construct(public readonly Target $target, public readonly Select $query, public readonly ConflictAction $conflict = ConflictAction::Implicit, public readonly bool $replaceKeyword = false)
     {
-        assert($target->table->catalog === $query->scope->catalog, 'Insertion source and target must share the declaration context.');
-        assert(!$replaceKeyword || $conflict === ConflictAction::Replace, 'REPLACE requests replacement conflict handling.');
+        \SqlSemantics\Statement\Validation\Check::input($target->table->catalog === $query->scope->catalog, 'Insertion source and target must share the declaration context.');
+        \SqlSemantics\Statement\Validation\Check::input($query->scope->parent === null, 'An insertion can borrow only a complete query root, not a correlated query.');
+        \SqlSemantics\Statement\Validation\Check::input(!$replaceKeyword || $conflict === ConflictAction::Replace, 'REPLACE requests replacement conflict handling.');
     }
 
     /**

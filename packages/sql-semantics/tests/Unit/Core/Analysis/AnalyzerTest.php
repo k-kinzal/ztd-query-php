@@ -38,6 +38,14 @@ use Tests\Contract\Resolved;
 #[Medium]
 final class AnalyzerTest extends TestCase
 {
+    public function testContextDoesNotWrapAnExplicitSnapshotInANewIdentity(): void
+    {
+        $analyzer = new Analyzer(new Language(SqliteDialect::Sqlite), ['temp', 'main']);
+        $context = $analyzer->context([]);
+        self::assertSame($context, $analyzer->context($context));
+        self::assertTrue($context->complete);
+    }
+
     public function testAnalyzeDoesNotNeedTableDeclarations(): void
     {
         $analyzer = new Analyzer(new Language(SqliteDialect::Sqlite), ['main']);
@@ -121,7 +129,9 @@ final class AnalyzerTest extends TestCase
         $rendered = array_map(static fn (Statement $statement): string => $statement->toString(), $statements);
         self::assertNotEmpty($rendered);
         self::assertSame($rendered, array_map(static fn (Statement $statement): string => $statement->toString(), $analyzer->analyzeAll(implode(' ', $rendered))));
-        self::assertStringNotContainsString('SqlParser\\', serialize($statements));
+        foreach ($statements as $statement) {
+            self::assertTrue((new \SqlSemantics\Statement\SemanticGraph())->isSemanticOperation($statement));
+        }
     }
 
     /**
@@ -152,7 +162,7 @@ final class AnalyzerTest extends TestCase
     public function testAnalyzeRetainsExactSuppliedDeclarationObjects(): void
     {
         $column = new \SqlSemantics\Statement\Schema\Column(new \SqlSemantics\Statement\Identifier\Name('foo'), new \SqlSemantics\Statement\Declaration\TypeDescriptor(\SqlSemantics\Statement\Declaration\Builtin::Integer));
-        $table = new \SqlSemantics\Statement\Schema\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('bar')), $column);
+        $table = new \SqlSemantics\Statement\Schema\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('bar')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $column);
         $analyzer = new Analyzer(new Language(SqliteDialect::Sqlite), ['temp', 'main']);
         $query = $analyzer->analyze('SELECT foo FROM bar', [$table]);
         self::assertInstanceOf(\SqlSemantics\Statement\Query\Select::class, $query);
@@ -178,26 +188,6 @@ final class AnalyzerTest extends TestCase
         $empty = $analyzer->analyze('SELECT foo FROM bar', []);
         self::assertInstanceOf(\SqlSemantics\Statement\Query\Select::class, $empty);
         self::assertSame(\SqlSemantics\Statement\Type\Invalid::MissingColumn, $empty->field('foo')->expression->type());
-    }
-
-    public function testAnalyzeKeepsSafeProjectionUpdatesPersistent(): void
-    {
-        $analyzer = new Analyzer(new Language(SqliteDialect::Sqlite), ['temp', 'main']);
-        $table = $analyzer->analyze('CREATE TABLE bar (foo INTEGER, baz TEXT)');
-        self::assertInstanceOf(\SqlSemantics\Statement\Schema\Definition\SqliteCreateTable::class, $table);
-        $query = $analyzer->analyze('SELECT foo FROM bar', [$table]);
-        self::assertInstanceOf(\SqlSemantics\Statement\Query\Select::class, $query);
-        $before = serialize($query);
-        $field = new \SqlSemantics\Statement\Projection\Field(new \SqlSemantics\Statement\Expression\ColumnReference($query->fields()->scope, new \SqlSemantics\Statement\Identifier\Name('baz')));
-        $changed = $query->withFields($query->fields()->addField($field));
-        self::assertSame('SELECT foo, baz FROM bar', $changed->toString());
-        self::assertSame($field, $changed->field('baz'));
-        $expression = $field->expression;
-        self::assertInstanceOf(\SqlSemantics\Statement\Expression\ColumnReference::class, $expression);
-        self::assertInstanceOf(\SqlSemantics\Statement\Reference\ResolvedColumn::class, $expression->resolution);
-        self::assertSame($table->table, $expression->resolution->table);
-        self::assertSame($table->table->columns[1], $expression->resolution->column);
-        self::assertSame($before, serialize($query));
     }
 
     #[\PHPUnit\Framework\Attributes\TestWith([false])]

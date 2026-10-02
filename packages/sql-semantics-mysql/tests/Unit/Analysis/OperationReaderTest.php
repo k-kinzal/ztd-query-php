@@ -32,7 +32,7 @@ final class OperationReaderTest extends TestCase
     {
         $language = new Language(Dialect::MySql);
         $platform = $language->dialect->platform();
-        $catalog = $platform->catalog($platform->searchPath(), false);
+        $catalog = $platform->catalog(new Language(Dialect::MySql), $platform->searchPath(), false);
         $reader = new OperationReader();
         $operation = $reader->read($language->parser()->parse($sql), $catalog);
         self::assertSame($expected, $operation->toString());

@@ -21,6 +21,8 @@ use SqlSemantics\Statement\Schema\Table;
  */
 final class SqliteCreateTable implements DeclarationProvider
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * @var non-empty-list<SqliteColumnDefinition>
      */
@@ -34,13 +36,14 @@ final class SqliteCreateTable implements DeclarationProvider
     /**
      * Keeps one declaration identity for the statement and its users.
      */
-    public function __construct(public readonly QualifiedName $name, public readonly bool $temporary = false, public readonly bool $ifNotExists = false, public readonly bool $strict = false, SqliteColumnDefinition ...$columns)
+    public function __construct(public readonly QualifiedName $name, public readonly bool $temporary = false, public readonly bool $ifNotExists = false, public readonly bool $strict = false, public readonly \SqlSemantics\Statement\Contract\LanguageProfile $profile = new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), SqliteColumnDefinition ...$columns)
     {
-        assert($columns !== [], 'A table definition contains at least one column.');
-        assert($name->catalog === null, 'SQLite table creation identifies at most a database and table.');
+        \SqlSemantics\Statement\Validation\Check::input($profile->grammar->database() === 'sqlite', 'A SQLite declaration requires a SQLite profile.');
+        \SqlSemantics\Statement\Validation\Check::input($columns !== [], 'A table definition contains at least one column.');
+        \SqlSemantics\Statement\Validation\Check::input($name->catalog === null, 'SQLite table creation identifies at most a database and table.');
         $alias = null;
         foreach ($columns as $column) {
-            assert($column->type->strict === $strict, 'Column storage behavior must use the table strictness.');
+            \SqlSemantics\Statement\Validation\Check::input($column->type->strict === $strict, 'Column storage behavior must use the table strictness.');
             foreach ($column->constraints as $constraint) {
                 if ($alias === null && $column->type->permitsRowidAlias() && $constraint instanceof ColumnPrimaryKey && $constraint->direction !== KeyDirection::Descending) {
                     $alias = $column->column;
@@ -48,7 +51,7 @@ final class SqliteCreateTable implements DeclarationProvider
             }
         }
         $this->columns = array_values($columns);
-        $this->table = new Table(new QualifiedName($name->name, $name->schema ?? new Name($temporary ? 'temp' : 'main')), ...[...array_map(static fn (SqliteColumnDefinition $column): Column => $column->column, $this->columns), new SqliteRowIdentifier($alias)]);
+        $this->table = new Table(new QualifiedName($name->name, $name->schema ?? new Name($temporary ? 'temp' : 'main')), $profile, ...[...array_map(static fn (SqliteColumnDefinition $column): Column => $column->column, $this->columns), new SqliteRowIdentifier($alias)]);
     }
 
     /**

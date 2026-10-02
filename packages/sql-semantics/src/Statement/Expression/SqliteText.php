@@ -15,15 +15,17 @@ use SqlSemantics\Statement\Literal\StringLiteral;
  * @example Reconstructing a decoded string
  *     (new \SqlSemantics\Statement\Expression\SqliteText(new \SqlSemantics\Statement\Literal\StringLiteral("a'b")))->toString() // => "'a''b'"
  */
-final class SqliteText implements ScalarExpression
+final class SqliteText implements ScalarExpression, \SqlSemantics\Statement\Construction\ScalarInput
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * The literal form has neither a character-set introducer nor an embedded NUL byte.
      */
     public function __construct(public readonly StringLiteral $value)
     {
-        assert($value->characterSet === null, 'This string literal does not have a character-set introducer.');
-        assert(!str_contains($value->value, "\0"), 'A SQL string literal cannot contain a NUL byte.');
+        \SqlSemantics\Statement\Validation\Check::input($value->characterSet === null, 'This string literal does not have a character-set introducer.');
+        \SqlSemantics\Statement\Validation\Check::input(!str_contains($value->value, "\0"), 'A SQL string literal cannot contain a NUL byte.');
     }
 
     /**

@@ -30,6 +30,8 @@ final class Language
 
     private readonly SqlParser $parser;
 
+    private readonly \SqlSemantics\Statement\Contract\LanguageProfile $profile;
+
     private ?ValueReader $values = null;
 
     /**
@@ -48,6 +50,15 @@ final class Language
     ) {
         $this->parser = $dialect->platform()->parser($grammarVersion, $mode, $parameters);
         $this->version = $this->parser->version();
+        $this->profile = (new Analysis\ProfileReader())->read($this->version, $mode?->toString() ?? '', \SqlSemantics\Statement\Contract\ParameterStyle::from($parameters->name));
+    }
+
+    /**
+     * Returns immutable artifact and lexical identity, without exposing the parser.
+     */
+    public function profile(): \SqlSemantics\Statement\Contract\LanguageProfile
+    {
+        return $this->profile;
     }
 
     /**

@@ -68,7 +68,7 @@ final class OperationReaderTest extends TestCase
     public function testStatementsNeverApplyEarlierSchemaOperations(): void
     {
         $column = new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer));
-        $table = new Table(new QualifiedName(new Name('bar')), $column);
+        $table = new Table(new QualifiedName(new Name('bar')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $column);
         $catalog = new Catalog(new SearchPath(new Name('main')), tables: $table);
         $parser = new SqliteParser();
         $operations = (new OperationReader())->statements($parser->parse('ALTER TABLE bar RENAME COLUMN foo TO baz; DROP TABLE bar; SELECT foo FROM bar;'), $catalog);
@@ -89,7 +89,7 @@ final class OperationReaderTest extends TestCase
     public function testCommandRetainsTableAndColumnIdentityInsideInspection(): void
     {
         $column = new Column(new Name('foo'), new TypeDescriptor(Builtin::Integer));
-        $table = new Table(new QualifiedName(new Name('bar')), $column);
+        $table = new Table(new QualifiedName(new Name('bar')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $column);
         $catalog = new Catalog(new SearchPath(new Name('main')), tables: $table);
         $parser = new SqliteParser();
         $query = (new OperationReader())->command($parser->parse('SELECT foo FROM bar')->find('cmd')[0], $catalog);
@@ -130,7 +130,7 @@ final class OperationReaderTest extends TestCase
         $empty = new Catalog(new SearchPath(new Name('main')), complete: false);
         $create = $reader->read($parser->parse($schema), $empty);
         self::assertInstanceOf(SqliteCreateTable::class, $create);
-        $catalog = new Catalog($empty->searchPath, Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, null, $create->table);
+        $catalog = new Catalog($empty->searchPath, Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, true, null, null, new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $create->table);
         $query = $reader->read($parser->parse('SELECT ' . $referenceName . ' FROM bar'), $catalog);
         self::assertInstanceOf(Select::class, $query);
         $field = $query->field($resultName);

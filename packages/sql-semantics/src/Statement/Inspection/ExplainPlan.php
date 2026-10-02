@@ -17,14 +17,16 @@ use SqlSemantics\Statement\SemanticGraph;
  */
 final class ExplainPlan implements Operation
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Retains the actual operation and its declaration references.
      */
     public function __construct(public readonly Operation $operation)
     {
-        assert((new SemanticGraph())->isSemanticOperation($operation), 'Inspection requires a semantic operation.');
-        assert(!$operation instanceof \SqlSemantics\Statement\Script\Sequence, 'Inspection describes one operation, not a script.');
-        assert(!$operation instanceof ExplainPlan && !$operation instanceof ExplainProgram, 'An operation has at most one inspection request.');
+        \SqlSemantics\Statement\Validation\Check::input((new SemanticGraph())->isSemanticOperation($operation), 'Inspection requires a semantic operation.');
+        \SqlSemantics\Statement\Validation\Check::input(!$operation instanceof \SqlSemantics\Statement\Script\Sequence, 'Inspection describes one operation, not a script.');
+        \SqlSemantics\Statement\Validation\Check::input(!$operation instanceof ExplainPlan && !$operation instanceof ExplainProgram, 'An operation has at most one inspection request.');
     }
 
     /**

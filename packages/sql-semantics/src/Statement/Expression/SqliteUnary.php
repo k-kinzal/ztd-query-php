@@ -22,12 +22,14 @@ use SqlSemantics\Statement\Type\Unresolved;
  */
 final class SqliteUnary implements ScalarExpression
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * The operation's facts are derived from its immutable semantic operand.
      */
     public function __construct(public readonly SqliteUnaryOperator $operator, public readonly ScalarExpression $operand)
     {
-        assert((new SemanticGraph())->containsOnlyValues($operand), 'An operand must contain only immutable semantic values.');
+        \SqlSemantics\Statement\Validation\Check::input((new SemanticGraph())->containsOnlyValues($operand), 'An operand must contain only immutable semantic values.');
     }
 
     /**
@@ -42,10 +44,14 @@ final class SqliteUnary implements ScalarExpression
         if ($this->operator !== SqliteUnaryOperator::Negate) {
             return new TypeDescriptor(Builtin::Integer);
         }
-        if ($this->operand instanceof SqliteInteger && !$this->operand->negative) {
-            return (new SqliteInteger($this->operand->integer, true, $this->operand->uppercasePrefix))->type();
+        $operand = $this->operand;
+        while ($operand instanceof Rendering\GroupedExpression) {
+            $operand = $operand->operand;
         }
-        if ($this->operand instanceof SqliteReal) {
+        if ($operand instanceof SqliteInteger && !$operand->negative) {
+            return (new SqliteInteger($operand->integer, true, $operand->uppercasePrefix))->type();
+        }
+        if ($operand instanceof SqliteReal) {
             return $input;
         }
         return SqliteNumericDomain::IntegerOrReal;

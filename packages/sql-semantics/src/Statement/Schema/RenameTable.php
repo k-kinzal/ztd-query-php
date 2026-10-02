@@ -18,12 +18,14 @@ use SqlSemantics\Statement\Relation\TableReference;
  */
 final class RenameTable implements Operation
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Describes the requested operation without applying it to the declaration context.
      */
     public function __construct(public readonly TableReference $table, public readonly Name $newName)
     {
-        assert($table->alias === null, 'A schema operation target cannot have a query alias.');
+        \SqlSemantics\Statement\Validation\Check::input($table->alias === null, 'A schema operation target cannot have a query alias.');
     }
 
     /**

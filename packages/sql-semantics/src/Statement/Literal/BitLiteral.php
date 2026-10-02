@@ -12,12 +12,14 @@ namespace SqlSemantics\Statement\Literal;
  */
 final class BitLiteral implements Literal
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Keeps an independent decoded scalar.
      */
     public function __construct(public readonly string $value)
     {
-        assert(strspn($value, '01') === strlen($value), 'A bit string contains only zero and one.');
+        \SqlSemantics\Statement\Validation\Check::input(strspn($value, '01') === strlen($value), 'A bit string contains only zero and one.');
     }
 
     /**

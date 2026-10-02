@@ -19,6 +19,8 @@ use SqlSemantics\Statement\Type\SqliteChoiceDomain;
  */
 final class SqliteScalarSubquery implements ScalarExpression
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Keeps the query's cardinality rule distinct from EXISTS and membership.
      */

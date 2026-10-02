@@ -19,14 +19,16 @@ use SqlSemantics\Statement\SemanticGraph;
  */
 final class DetachDatabase implements Operation
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * The schema name is an expression in an independent scope.
      */
     public function __construct(public readonly Scope $scope, public readonly ScalarExpression $schema)
     {
-        assert($scope->tables === [], 'A detach target has no relation inputs.');
-        assert((new SemanticGraph())->containsOnlyValues($schema), 'The target contains only semantic values.');
-        assert((new Ownership())->accepts($schema, $scope), 'Detach references use the request expression scope.');
+        \SqlSemantics\Statement\Validation\Check::input($scope->tables === [], 'A detach target has no relation inputs.');
+        \SqlSemantics\Statement\Validation\Check::input((new SemanticGraph())->containsOnlyValues($schema), 'The target contains only semantic values.');
+        \SqlSemantics\Statement\Validation\Check::input((new Ownership())->accepts($schema, $scope), 'Detach references use the request expression scope.');
     }
 
     /**

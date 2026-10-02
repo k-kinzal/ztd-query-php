@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Schema\Table;
 use UnitEnum;
 
 /**
- * Protects named alias targets when an enclosing projection is persistently edited.
+ * Checks named alias targets within their current enclosing projection.
  * @visibility SqlSemantics
  */
 final class AliasDependencies
@@ -58,7 +58,7 @@ final class AliasDependencies
     }
 
     /**
-     * Preserves the first matching alias and its exact field within the edited projection.
+     * Checks the first matching alias and its exact field within the current projection.
      */
     public function preserved(ScalarExpression $expression, Fields $projection): bool
     {

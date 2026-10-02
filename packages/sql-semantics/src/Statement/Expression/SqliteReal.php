@@ -15,8 +15,10 @@ use SqlSemantics\Statement\Literal\NumberLiteral;
  * @example Keeping the exact decimal input
  *     (new \SqlSemantics\Statement\Expression\SqliteReal('1_000.25e-2'))->value->value() // => '1000.25e-2'
  */
-final class SqliteReal implements ScalarExpression
+final class SqliteReal implements ScalarExpression, \SqlSemantics\Statement\Construction\ScalarInput
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Exact decimal input, independent of the host machine's floating-point rounding.
      */
@@ -27,9 +29,9 @@ final class SqliteReal implements ScalarExpression
      */
     public function __construct(public readonly string $numeral)
     {
-        assert(strpbrk($numeral, '.eE') !== false, 'A real numeral contains a decimal point or exponent.');
-        assert(!str_starts_with($numeral, '-'), 'Unary negation is a separate operation.');
-        assert(preg_match('/(?<![0-9])_|_(?![0-9])/', $numeral) === 0, 'Separators must occur singly between decimal digits.');
+        \SqlSemantics\Statement\Validation\Check::input(strpbrk($numeral, '.eE') !== false, 'A real numeral contains a decimal point or exponent.');
+        \SqlSemantics\Statement\Validation\Check::input(!str_starts_with($numeral, '-'), 'Unary negation is a separate operation.');
+        \SqlSemantics\Statement\Validation\Check::input(preg_match('/(?<![0-9])_|_(?![0-9])/', $numeral) === 0, 'Separators must occur singly between decimal digits.');
         $this->value = new NumberLiteral(str_replace('_', '', $numeral));
     }
 

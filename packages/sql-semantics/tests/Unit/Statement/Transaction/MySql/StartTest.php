@@ -15,15 +15,6 @@ use SqlSemantics\Statement\Transaction\MySql\Start;
 #[Small]
 final class StartTest extends TestCase
 {
-    public function testWithAccessKeepsTheOriginalRequestAndItsSnapshotPolicy(): void
-    {
-        $original = new Start(true, Access::ReadOnly);
-        $updated = $original->withAccess(Access::ReadWrite);
-        self::assertSame(Access::ReadOnly, $original->access);
-        self::assertSame(Access::ReadWrite, $updated->access);
-        self::assertTrue($updated->consistentSnapshot);
-    }
-
     #[TestWith([false, Access::SessionDefault, 'START TRANSACTION'])]
     #[TestWith([true, Access::SessionDefault, 'START TRANSACTION WITH CONSISTENT SNAPSHOT'])]
     #[TestWith([false, Access::ReadOnly, 'START TRANSACTION READ ONLY'])]

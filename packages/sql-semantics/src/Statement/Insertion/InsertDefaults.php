@@ -15,12 +15,14 @@ use SqlSemantics\Statement\Schema\Definition\ConflictAction;
  */
 final class InsertDefaults implements Operation
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Defaults are requested from the target; they are not read as another query or value row.
      */
     public function __construct(public readonly Target $target, public readonly ConflictAction $conflict = ConflictAction::Implicit, public readonly bool $replaceKeyword = false)
     {
-        assert(!$replaceKeyword || $conflict === ConflictAction::Replace, 'REPLACE requests replacement conflict handling.');
+        \SqlSemantics\Statement\Validation\Check::input(!$replaceKeyword || $conflict === ConflictAction::Replace, 'REPLACE requests replacement conflict handling.');
     }
 
     /**

@@ -32,8 +32,8 @@ final class ScopeTest extends TestCase
     public function testResolvePreservesOwnershipAndDistinguishesMissingNames(): void
     {
         $column = new Column(new Name('id'), new TypeDescriptor(Builtin::Integer));
-        $table = new Table(new QualifiedName(new Name('users')), $column);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $table);
+        $table = new Table(new QualifiedName(new Name('users')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $column);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $table);
         $scope = new Scope($catalog, new TableReference($catalog, $table->name, new Name('a')), new TableReference($catalog, $table->name, new Name('b')));
         $reference = $scope->resolve(new Name('id'), new QualifiedName(new Name('a')));
         self::assertInstanceOf(ResolvedColumn::class, $reference);
@@ -63,8 +63,8 @@ final class ScopeTest extends TestCase
     public function testResolvePartialContextDoesNotAssumeAKnownMatchIsUnique(): void
     {
         $column = new Column(new Name('id'), new TypeDescriptor(Builtin::Integer));
-        $table = new Table(new QualifiedName(new Name('users')), $column);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, false, null, null, $table);
+        $table = new Table(new QualifiedName(new Name('users')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $column);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, false, null, null, new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $table);
         $known = new TableReference($catalog, $table->name);
         $candidate = new TableReference($catalog, new QualifiedName(new Name('other')));
         $reference = (new Scope($catalog, $known, $candidate))->resolve(new Name('id'));
@@ -77,8 +77,8 @@ final class ScopeTest extends TestCase
     public function testResolveDoesNotHideDuplicateColumnDeclarations(): void
     {
         $column = new Column(new Name('id'), new TypeDescriptor(Builtin::Integer));
-        $table = new Table(new QualifiedName(new Name('users')), $column, clone $column);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $table);
+        $table = new Table(new QualifiedName(new Name('users')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $column, new Column($column->name, $column->type, $column->nullability));
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $table);
         $reference = (new Scope($catalog, new TableReference($catalog, $table->name)))->resolve(new Name('id'));
         self::assertInstanceOf(AmbiguousColumn::class, $reference);
         self::assertCount(2, $reference->matches);
@@ -90,9 +90,9 @@ final class ScopeTest extends TestCase
     {
         $outerColumn = new Column(new Name('id'), new TypeDescriptor(Builtin::Integer));
         $innerColumn = new Column(new Name('local'), new TypeDescriptor(Builtin::Text));
-        $outerTable = new Table(new QualifiedName(new Name('outer_table')), $outerColumn);
-        $innerTable = new Table(new QualifiedName(new Name('inner_table')), $innerColumn);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $outerTable, $innerTable);
+        $outerTable = new Table(new QualifiedName(new Name('outer_table')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $outerColumn);
+        $innerTable = new Table(new QualifiedName(new Name('inner_table')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $innerColumn);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $outerTable, $innerTable);
         $outer = new Scope($catalog, new TableReference($catalog, $outerTable->name));
         $inner = new Scope($outer, new TableReference($catalog, $innerTable->name));
         $reference = $inner->resolve(new Name('id'));
@@ -108,9 +108,9 @@ final class ScopeTest extends TestCase
     {
         $outerColumn = new Column(new Name('id'), new TypeDescriptor(Builtin::Integer));
         $innerColumn = new Column(new Name('id'), new TypeDescriptor(Builtin::Text));
-        $outerTable = new Table(new QualifiedName(new Name('outer_table')), $outerColumn);
-        $innerTable = new Table(new QualifiedName(new Name('inner_table')), $innerColumn);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $outerTable, $innerTable);
+        $outerTable = new Table(new QualifiedName(new Name('outer_table')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $outerColumn);
+        $innerTable = new Table(new QualifiedName(new Name('inner_table')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $innerColumn);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $outerTable, $innerTable);
         $outer = new Scope($catalog, new TableReference($catalog, $outerTable->name));
         $inner = new Scope($outer, new TableReference($catalog, $innerTable->name));
         $reference = $inner->resolve(new Name('id'));
@@ -122,8 +122,8 @@ final class ScopeTest extends TestCase
     public function testResolveIncompleteLocalMetadataKeepsTheOuterFallbackConditional(): void
     {
         $column = new Column(new Name('id'), new TypeDescriptor(Builtin::Integer));
-        $table = new Table(new QualifiedName(new Name('outer_table')), $column);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, false, null, null, $table);
+        $table = new Table(new QualifiedName(new Name('outer_table')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $column);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, false, null, null, new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $table);
         $outer = new Scope($catalog, new TableReference($catalog, $table->name));
         $local = new TableReference($catalog, new QualifiedName(new Name('local_table')));
         $reference = (new Scope($outer, $local))->resolve(new Name('id'));
@@ -139,8 +139,8 @@ final class ScopeTest extends TestCase
     public function testResolveQualifiedOuterNamesCanPassThroughSeveralNestedScopes(): void
     {
         $column = new Column(new Name('id'), new TypeDescriptor(Builtin::Integer));
-        $table = new Table(new QualifiedName(new Name('bar')), $column);
-        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $table);
+        $table = new Table(new QualifiedName(new Name('bar')), new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $column);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, new \SqlSemantics\Statement\Contract\LanguageProfile(\SqlSemantics\Statement\Contract\GrammarRelease::Sqlite3472), $table);
         $outer = new Scope($catalog, new TableReference($catalog, $table->name, new Name('outside')));
         $inner = new Scope(new Scope($outer));
         $reference = $inner->resolve(new Name('id'), new QualifiedName(new Name('outside')));

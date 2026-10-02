@@ -15,12 +15,14 @@ use SqlSemantics\Statement\Identifier\Name;
  */
 final class TransactionName
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * A label requires the explicit TRANSACTION introducer.
      */
     public function __construct(public readonly ?Name $name = null, public readonly bool $explicit = false)
     {
-        assert($name === null || $explicit, 'A transaction label requires TRANSACTION.');
+        \SqlSemantics\Statement\Validation\Check::input($name === null || $explicit, 'A transaction label requires TRANSACTION.');
     }
 
     /**

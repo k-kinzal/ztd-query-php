@@ -62,7 +62,7 @@ final class OperationReader implements \SqlSemantics\Core\Policy\OperationRules
     {
         assert($source->name === 'cmd', 'A command reader receives one complete command.');
         if (Tree::child($source, ['create_table']) !== null) {
-            return (new CreateTableReader())->read($source);
+            return (new CreateTableReader())->read($source, $catalog->profile);
         }
         if (Tree::child($source, ['insert_cmd']) !== null) {
             return (new InsertionReader())->read($source, $catalog);
@@ -70,7 +70,9 @@ final class OperationReader implements \SqlSemantics\Core\Policy\OperationRules
         $query = Tree::child($source, ['select']);
         if ($query !== null) {
             Tree::assertChildren($source, ['select'], []);
-            return (new QueryReader())->read($query, $catalog);
+            $operation = (new QueryReader())->read($query, $catalog);
+            \SqlSemantics\Statement\Validation\Check::invariant(!$operation instanceof \SqlSemantics\Statement\Query\ScopedSelect, 'An independently parsed query is a statement root.');
+            return $operation;
         }
         $tokens = $source->tokens();
         return match (strtoupper($tokens[0]->text)) {

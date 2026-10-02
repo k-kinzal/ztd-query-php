@@ -35,15 +35,4 @@ final class AttachDatabaseTest extends TestCase
         self::assertSame([], $scope->catalog->tables);
     }
 
-    public function testWithFilenameRetainsTheOtherOperandsAndOriginal(): void
-    {
-        $scope = new Scope(new Catalog(new SearchPath(new Name('main'))));
-        $filename = new SqliteText(new StringLiteral('first.db'));
-        $request = new AttachDatabase($scope, $filename, new SqliteText(new StringLiteral('extra')));
-        $changed = $request->withFilename(new SqliteText(new StringLiteral('second.db')));
-        self::assertSame($request->schema, $changed->schema);
-        self::assertSame($scope, $changed->scope);
-        self::assertSame($filename, $request->filename);
-        self::assertSame("ATTACH DATABASE 'second.db' AS 'extra'", $changed->toString());
-    }
 }

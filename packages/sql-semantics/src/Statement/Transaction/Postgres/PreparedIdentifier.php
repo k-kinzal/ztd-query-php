@@ -12,12 +12,14 @@ namespace SqlSemantics\Statement\Transaction\Postgres;
  */
 final class PreparedIdentifier
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Retains decoded text without PostgreSQL identifier folding or truncation.
      */
     public function __construct(public readonly string $value)
     {
-        assert(!str_contains($value, "\0"), 'A PostgreSQL text identifier cannot contain a zero byte.');
+        \SqlSemantics\Statement\Validation\Check::input(!str_contains($value, "\0"), 'A PostgreSQL text identifier cannot contain a zero byte.');
     }
 
     /**

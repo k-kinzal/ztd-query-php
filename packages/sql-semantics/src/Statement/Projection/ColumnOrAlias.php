@@ -18,15 +18,17 @@ use SqlSemantics\Statement\Type\Unresolved;
  */
 final class ColumnOrAlias implements ScalarExpression
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Both alternatives must belong to the same input scope; a known missing column is already decided.
      */
     public function __construct(public readonly ColumnReference $column, public readonly AliasReference $alias)
     {
-        assert($column->resolution instanceof CandidateColumn, 'A conditional alias requires an unavailable column declaration.');
-        assert($column->qualifier === null, 'A qualified lookup cannot name a projection alias.');
-        assert($column->scope === $alias->projection->scope, 'Both lookup alternatives must have the same input scope.');
-        assert($column->scope->catalog->columnNames->equal($column->name->value, $alias->name->value), 'Both alternatives must answer the same name.');
+        \SqlSemantics\Statement\Validation\Check::input($column->resolution instanceof CandidateColumn, 'A conditional alias requires an unavailable column declaration.');
+        \SqlSemantics\Statement\Validation\Check::input($column->qualifier === null, 'A qualified lookup cannot name a projection alias.');
+        \SqlSemantics\Statement\Validation\Check::input($column->scope === $alias->projection->scope, 'Both lookup alternatives must have the same input scope.');
+        \SqlSemantics\Statement\Validation\Check::input($column->scope->catalog->columnNames->equal($column->name->value, $alias->name->value), 'Both alternatives must answer the same name.');
     }
 
     /**

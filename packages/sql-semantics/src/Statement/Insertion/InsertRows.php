@@ -17,13 +17,16 @@ use SqlSemantics\Statement\Schema\Definition\ConflictAction;
  */
 final class InsertRows implements Operation
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Target and source have distinct scopes but share one explicit declaration context.
      */
     public function __construct(public readonly Target $target, public readonly Rows $rows, public readonly ConflictAction $conflict = ConflictAction::Implicit, public readonly bool $replaceKeyword = false)
     {
-        assert($target->table->catalog === $rows->scope->catalog, 'Insertion source and target must share the declaration context.');
-        assert(!$replaceKeyword || $conflict === ConflictAction::Replace, 'REPLACE requests replacement conflict handling.');
+        \SqlSemantics\Statement\Validation\Check::input($target->table->catalog === $rows->scope->catalog, 'Insertion source and target must share the declaration context.');
+        \SqlSemantics\Statement\Validation\Check::input($rows->scope->parent === null && $rows->scope->tables === [], 'Insertion rows have an independent expression scope without target or outer inputs.');
+        \SqlSemantics\Statement\Validation\Check::input(!$replaceKeyword || $conflict === ConflictAction::Replace, 'REPLACE requests replacement conflict handling.');
     }
 
     /**

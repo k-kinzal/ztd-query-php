@@ -22,20 +22,6 @@ use SqlSemantics\Statement\Schema\SearchPath;
 #[Small]
 final class SqliteLimitTest extends TestCase
 {
-    public function testWithCountKeepsTheOriginalLimitAndOffsetUnchanged(): void
-    {
-        $scope = new Scope(new Catalog(new SearchPath(new Name('main'))));
-        $one = new SqliteInteger(new UnsignedInteger('1'));
-        $two = new SqliteInteger(new UnsignedInteger('2'));
-        $original = new SqliteLimit($scope, $one, $two, true);
-        $changed = $original->withCount($two);
-        self::assertSame($one, $original->count);
-        self::assertSame($two, $changed->count);
-        self::assertSame($two, $changed->offset);
-        self::assertSame($scope, $changed->scope);
-        self::assertTrue($changed->commaSyntax);
-    }
-
     #[TestWith([false])]
     #[TestWith([true])]
     public function testToStringKeepsCountAndSkipRolesAcrossBothNotations(bool $comma): void

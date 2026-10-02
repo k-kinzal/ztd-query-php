@@ -19,8 +19,10 @@ use SqlSemantics\Statement\Type\Invalid;
  *     $literal = new \SqlSemantics\Statement\Expression\SqliteInteger(new \SqlSemantics\Statement\Literal\UnsignedInteger('ffffffffffffffff', \SqlSemantics\Statement\Literal\Radix::Hexadecimal));
  *     $literal->value->value() // => '-1'
  */
-final class SqliteInteger implements ScalarExpression
+final class SqliteInteger implements ScalarExpression, \SqlSemantics\Statement\Construction\ScalarInput
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * Exact decimal text before any floating-point conversion by the database.
      */
@@ -36,8 +38,8 @@ final class SqliteInteger implements ScalarExpression
      */
     public function __construct(public readonly UnsignedInteger $integer, public readonly bool $negative = false, public readonly bool $uppercasePrefix = false)
     {
-        assert(in_array($integer->radix, [Radix::Decimal, Radix::Hexadecimal], true), 'This integer literal uses decimal or hexadecimal notation.');
-        assert(!$uppercasePrefix || $integer->radix === Radix::Hexadecimal, 'Only a hexadecimal literal has a radix prefix.');
+        \SqlSemantics\Statement\Validation\Check::input(in_array($integer->radix, [Radix::Decimal, Radix::Hexadecimal], true), 'This integer literal uses decimal or hexadecimal notation.');
+        \SqlSemantics\Statement\Validation\Check::input(!$uppercasePrefix || $integer->radix === Radix::Hexadecimal, 'Only a hexadecimal literal has a radix prefix.');
         $digits = ltrim(strtolower(str_replace('_', '', $integer->digits)), '0');
         $decimal = $integer->decimal();
         if ($integer->radix === Radix::Hexadecimal && strlen($digits) === 16 && hexdec($digits[0]) >= 8) {

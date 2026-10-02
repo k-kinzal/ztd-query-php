@@ -15,16 +15,6 @@ use SqlSemantics\Statement\Transaction\Postgres\Isolation;
 #[Small]
 final class BeginTest extends TestCase
 {
-    public function testWithIsolationKeepsOriginalCharacteristics(): void
-    {
-        $original = new Begin(null, true, false);
-        $updated = $original->withIsolation(Isolation::Serializable);
-        self::assertNull($original->isolation);
-        self::assertSame(Isolation::Serializable, $updated->isolation);
-        self::assertTrue($updated->readOnly);
-        self::assertFalse($updated->deferrable);
-    }
-
     #[TestWith([null, null, null, 'BEGIN'])]
     #[TestWith([Isolation::ReadCommitted, null, null, 'BEGIN ISOLATION LEVEL READ COMMITTED'])]
     #[TestWith([null, false, false, 'BEGIN READ WRITE, NOT DEFERRABLE'])]

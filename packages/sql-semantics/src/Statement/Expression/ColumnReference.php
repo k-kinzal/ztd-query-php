@@ -32,6 +32,8 @@ use SqlSemantics\Statement\Type\Unresolved;
  */
 final class ColumnReference implements ScalarExpression
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * The lookup outcome; callers cannot supply a conflicting declaration or type.
      */

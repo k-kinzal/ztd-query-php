@@ -26,12 +26,14 @@ use SqlSemantics\Statement\Type\Unresolved;
  */
 final class SqliteSimpleCase implements ScalarExpression
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * The base remains one semantic operand rather than being copied into every test.
      */
     public function __construct(public readonly ScalarExpression $base, public readonly SqliteCaseBranches $branches)
     {
-        assert((new SemanticGraph())->containsOnlyValues($this), 'A simple CASE retains only immutable semantic operands.');
+        \SqlSemantics\Statement\Validation\Check::input((new SemanticGraph())->containsOnlyValues($this), 'A simple CASE retains only immutable semantic operands.');
     }
 
     /**
@@ -69,22 +71,6 @@ final class SqliteSimpleCase implements ScalarExpression
     public function references(): array
     {
         return [...$this->base->references(), ...$this->branches->references()];
-    }
-
-    /**
-     * Replaces the base persistently, retaining every branch object.
-     */
-    public function withBase(ScalarExpression $base): self
-    {
-        return new self($base, $this->branches);
-    }
-
-    /**
-     * Replaces the branches without duplicating or reevaluating the base.
-     */
-    public function withBranches(SqliteCaseBranches $branches): self
-    {
-        return new self($this->base, $branches);
     }
 
     /**

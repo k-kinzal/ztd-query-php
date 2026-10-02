@@ -15,6 +15,8 @@ use SqlSemantics\Statement\Operation;
  */
 final class Vacuum implements Operation
 {
+    use \SqlSemantics\Statement\Validation\Snapshot;
+
     /**
      * An omitted schema denotes main; the semantic target is always explicit.
      */

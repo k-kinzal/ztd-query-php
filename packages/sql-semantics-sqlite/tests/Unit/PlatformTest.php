@@ -173,7 +173,7 @@ final class PlatformTest extends TestCase
     {
         $language = new Language(Dialect::Sqlite);
         $platform = new \SqlSemantics\Platform\Sqlite\Platform();
-        $catalog = $platform->catalog($platform->searchPath(), false);
+        $catalog = $platform->catalog(new Language(Dialect::Sqlite), $platform->searchPath(), false);
         $operation = $platform->operations($language)->read($language->parser()->parse('BEGIN'), $catalog);
         self::assertInstanceOf(\SqlSemantics\Statement\Transaction\Begin::class, $operation);
         self::assertTrue((new \SqlSemantics\Statement\SemanticGraph())->isSemanticOperation($operation));
@@ -183,7 +183,7 @@ final class PlatformTest extends TestCase
     {
         $platform = new \SqlSemantics\Platform\Sqlite\Platform();
         $table = new \SqlSemantics\Statement\Schema\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('bar')));
-        $catalog = $platform->catalog($platform->searchPath(), true, $table);
+        $catalog = $platform->catalog(new Language(Dialect::Sqlite), $platform->searchPath(), true, $table);
         self::assertSame([$table], $catalog->tables);
         self::assertSame([$table], $catalog->matchingTables($table->name));
         self::assertTrue($catalog->complete);
