@@ -241,9 +241,7 @@ final class MachineTest extends TestCase
         self::assertNotNull($body);
         $paths = (new Machine($context))->run($body, $state);
         self::assertContains('recursive-specialization', array_column($context->frontiers, 'operation'));
-        foreach ($paths as $path) {
-            self::assertSame('caller', $path->memory->read($caller)->native());
-        }
+        self::assertSame(['caller'], array_values(array_unique(array_map(static fn (State $path): string|int|float|bool|null => $path->memory->read($caller)->literal, $paths))));
         $returned = array_map(static fn (State $path): array => (new \Deriver\Value\StringPrefix())->known($path->completion->value ?? Term::constant(null)), array_values(array_filter($paths, static fn (State $path): bool => $path->completion->kind === 'return')));
         self::assertContains(['', true], $returned);
         self::assertContains(['xx', false], $returned);

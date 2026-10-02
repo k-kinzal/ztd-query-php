@@ -223,12 +223,11 @@ final class StateJoinTest extends TestCase
         $base = new State();
         $base->block = 1;
         $base->memory->write($base->local('sql'), Term::constant(''));
-        $paths = [];
-        foreach (['SELECT a', 'SELECT b', 'SELECT c'] as $sql) {
+        $paths = array_map(static function (string $sql) use ($base): State {
             $path = $base->fork();
             $path->memory->write($path->local('sql'), Term::constant($sql));
-            $paths[] = $path;
-        }
+            return $path;
+        }, ['SELECT a', 'SELECT b', 'SELECT c']);
         $states = (new StateJoin($context))->limit($paths, $body);
         self::assertCount(2, $states);
         self::assertSame($paths[0], $states[0]);
@@ -248,6 +247,34 @@ final class StateJoinTest extends TestCase
         $b->completion = new Completion('throw', new Term('throwable', 'Throwable'));
         self::assertSame([$a, $b], (new StateJoin($context))->limit([$a, $b], $body));
         self::assertSame([], $context->frontiers);
+    }
+
+    public function testSealKeepsTheRootsOfEverySealedPath(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $body = \Tests\Fake\SummaryFixture::body($context);
+        $a = new State();
+        $a->locals['a'] = new Location('a');
+        $a->memory->cells['a'] = Term::constant(1);
+        $b = new State();
+        $b->locals['b'] = new Location('b');
+        $b->memory->cells['b'] = Term::constant(2);
+        $paths = (new StateJoin($context))->seal([$a, $b], $body);
+        self::assertSame(['return', 'throw'], array_map(static fn (State $state): string => $state->completion->kind, $paths));
+        self::assertSame(['a', 'b'], array_keys($paths[0]->locals));
+        self::assertSame(['opaque', 'opaque'], array_column($paths[0]->memory->cells, 'kind'));
+    }
+
+    public function testEncodeSharesTermsAndDistinguishesValues(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $join = new StateJoin($context);
+        $shared = \Tests\Fake\ValueDocument::shared(40, Term::constant(1));
+        self::assertSame($join->encode(new Location('x'), $context->identity), $join->encode(new Location('x'), $context->identity));
+        self::assertNotSame($join->encode(new Location('x'), $context->identity), $join->encode(new Location('y'), $context->identity));
+        $state = new State();
+        $state->registers['r'] = $shared;
+        self::assertSame($join->encode($state, $context->identity), $join->encode($state->fork(), $context->identity));
     }
 
     public function testCandidateKeysSeparateStatesWithDifferentStorage(): void

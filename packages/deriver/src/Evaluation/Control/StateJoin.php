@@ -194,12 +194,12 @@ final class StateJoin
     }
 
     /**
-     * Encodes a value structurally; shared terms and objects are encoded once, so the cost follows the graph rather than its tree expansion.
-     * @param mixed $value Acyclic evaluator value
+     * Encodes an object structurally; shared terms and objects are encoded once, so the cost follows the graph rather than its tree expansion.
+     * @param object $value Acyclic evaluator value
      * @param Identity $identity Structural term keys
      * @return string Typed structural fingerprint
      */
-    public function encode(mixed $value, Identity $identity): string
+    public function encode(object $value, Identity $identity): string
     {
         /** @var WeakMap<object, string> $encoded */
         $encoded = new WeakMap();
@@ -237,7 +237,8 @@ final class StateJoin
                 continue;
             }
             $kept = array_slice($group, 0, $this->context->query->budget()->partitions - 1);
-            $joined = $kind === 'return' ? (new PathJoin($this->context))->join(array_slice($group, $this->context->query->budget()->partitions - 1), true) : null;
+            $excess = array_slice($group, $this->context->query->budget()->partitions - 1);
+            $joined = $kind === 'return' && $excess !== [] ? (new PathJoin($this->context))->join($excess, true) : null;
             if ($joined !== null) {
                 array_push($result, ...$kept, ...[$joined]);
                 $this->context->frontier('BUDGET_EXCEEDED', $callable->source, 'partition-limit');

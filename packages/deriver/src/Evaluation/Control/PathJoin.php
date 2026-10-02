@@ -7,7 +7,6 @@ namespace Deriver\Evaluation\Control;
 use Deriver\Evaluation\Completion;
 use Deriver\Evaluation\Context;
 use Deriver\Evaluation\State;
-use Deriver\Value\Identity;
 use Deriver\Value\Lattice;
 use Deriver\Value\Term;
 use WeakMap;
@@ -42,34 +41,32 @@ final class PathJoin
      */
     public function join(array $states, bool $completed = false): ?State
     {
-        $identity = $this->context->identity;
-        $join = new StateJoin($this->context);
-        $structure = $join->encode($this->structure($states[0], $completed), $identity);
+        $structure = $this->structure($states[0], $completed);
         foreach ($states as $state) {
-            if ($join->encode($this->structure($state, $completed), $identity) !== $structure) {
+            if ($this->structure($state, $completed) !== $structure) {
                 return null;
             }
         }
         $registers = $completed ? [] : $this->values(array_map(static fn (State $state): array => $state->registers, $states), false);
         $cells = $this->values(array_map(static fn (State $state): array => $state->memory->cells, $states), true);
-        $completion = $this->values(array_map(static fn (State $state): array => $state->completion->value === null ? [] : [$state->completion->value], $states), false);
-        if ($registers === null || $cells === null || $completion === null || count($completion) !== ($states[0]->completion->value === null ? 0 : 1)) {
+        $completion = $this->values(array_map(static fn (State $state): array => $state->completion->value === null ? [] : ['value' => $state->completion->value], $states), false);
+        if ($registers === null || $cells === null || $completion === null || isset($completion['value']) !== ($states[0]->completion->value !== null)) {
             return null;
         }
-        $metadata = [];
-        foreach ($completed ? [] : ['addresses', 'offsets', 'callTargets', 'properties'] as $field) {
-            $metadata[$field] = $this->common(array_map(static fn (State $state): array => $state->{$field}, $states));
-            if ($metadata[$field] === null) {
+        $result = $states[0]->fork();
+        if (!$completed) {
+            $addresses = $this->common(array_map(static fn (State $state): array => $state->addresses, $states));
+            $offsets = $this->common(array_map(static fn (State $state): array => $state->offsets, $states));
+            $targets = $this->common(array_map(static fn (State $state): array => $state->callTargets, $states));
+            $properties = $this->common(array_map(static fn (State $state): array => $state->properties, $states));
+            if ($addresses === null || $offsets === null || $targets === null || $properties === null) {
                 return null;
             }
-        }
-        $result = $states[0]->fork();
-        foreach ($metadata as $field => $entries) {
-            $result->{$field} = $entries;
+            [$result->addresses, $result->offsets, $result->callTargets, $result->properties] = [$addresses, $offsets, $targets, $properties];
         }
         $result->registers = $registers;
         $result->memory->cells = $cells;
-        $result->completion = new Completion($result->completion->kind, $completion[0] ?? null, $result->completion->target, $result->completion->depth);
+        $result->completion = new Completion($result->completion->kind, $completion['value'] ?? null, $result->completion->target, $result->completion->depth);
         $result->constraints = [];
         foreach (array_slice($states, 1) as $state) {
             $this->merge($result, $state);
@@ -103,23 +100,32 @@ final class PathJoin
     }
 
     /**
-     * Lists the parts of a path that joined paths must share exactly.
+     * Fingerprints the parts of a path that joined paths must share exactly: control position, aliases, objects, handlers, and cursors.
      * The predecessor selects the operands of the block's value merges, so pending paths must share it.
      * @param State $state Candidate path
-     * @param bool $completed Whether the path has left the callable
-     * @return list<mixed> Control position, aliases, objects, handlers, and cursors
+     * @param bool $completed Whether the path has left the callable, so its position, locals, and handlers no longer matter
+     * @return string Structural fingerprint without values and bookkeeping
      */
-    public function structure(State $state, bool $completed = false): array
+    public function structure(State $state, bool $completed = false): string
     {
-        $memory = $state->memory;
-        $completion = $state->completion;
-        return [$completed ? null : [$state->block, $state->previous], $completion->kind, $completion->target, $completion->depth, $state->locals, $state->handlers, $state->iterators, $state->lateStaticClass, $memory->classes, $memory->propertyTypes, $memory->cloneWrites, array_keys($memory->slotContracts), $memory->liveArrays];
+        $copy = $state->fork();
+        [$copy->registers, $copy->producers, $copy->addresses, $copy->offsets, $copy->callTargets, $copy->properties] = [[], [], [], [], [], []];
+        [$copy->guard, $copy->constraints, $copy->evidence, $copy->controls, $copy->visits] = [[], [], [], [], []];
+        [$copy->loopEntries, $copy->approximations, $copy->loopStructures, $copy->loopGuards, $copy->stableHeader] = [[], [], [], [], null];
+        [$copy->observed, $copy->unknownLocals, $copy->memory->unknownShared] = [false, null, null];
+        [$copy->memory->cells, $copy->memory->versions, $copy->memory->writers, $copy->memory->sequence] = [[], [], [], 0];
+        $copy->completion = new Completion($state->completion->kind, null, $state->completion->target, $state->completion->depth);
+        if ($completed) {
+            [$copy->block, $copy->previous, $copy->locals, $copy->handlers, $copy->iterators] = [0, -1, [], [], []];
+        }
+        return (new StateJoin($this->context))->fingerprint($copy, $this->context->identity);
     }
 
     /**
      * Keeps register metadata defined on every path; registers defined only on some paths are not read after the join.
-     * @param list<array<int|string, mixed>> $maps One register-indexed map per path
-     * @return array<int|string, mixed>|null Shared entries, or null when one register has different metadata
+     * @template T of object
+     * @param non-empty-list<array<string, T>> $maps One register-indexed map per path
+     * @return array<string, T>|null Shared entries, or null when one register has different metadata
      */
     public function common(array $maps): ?array
     {
@@ -138,9 +144,9 @@ final class PathJoin
 
     /**
      * Widens maps of values key by key.
-     * @param list<array<int|string, Term>> $maps One map per path
+     * @param non-empty-list<array<string, Term>> $maps One map per path
      * @param bool $union Whether keys absent from some paths are joined as uninitialized storage
-     * @return array<int|string, Term>|null Joined values, or null when an identity-bearing value differs
+     * @return array<string, Term>|null Joined values, or null when an identity-bearing value differs
      */
     public function values(array $maps, bool $union): ?array
     {
@@ -149,20 +155,18 @@ final class PathJoin
         $keys = $union ? array_keys(array_replace(...$maps)) : array_keys(array_intersect_key(...$maps));
         $result = [];
         foreach ($keys as $key) {
-            $value = null;
-            foreach ($maps as $map) {
+            $value = $maps[0][$key] ?? new Term('uninitialized');
+            foreach (array_slice($maps, 1) as $map) {
                 $next = $map[$key] ?? new Term('uninitialized');
-                if ($value !== null && $identity->key($value) !== $identity->key($next)) {
-                    if (!$this->plain($value) || !$this->plain($next)) {
-                        return null;
-                    }
-                    $next = $lattice->widen($value, $next);
+                if ($identity->key($value) === $identity->key($next)) {
+                    continue;
                 }
-                $value = $next;
+                if (!$this->plain($value) || !$this->plain($next)) {
+                    return null;
+                }
+                $value = $lattice->widen($value, $next);
             }
-            if ($value !== null) {
-                $result[$key] = $value;
-            }
+            $result[$key] = $value;
         }
         return $result;
     }

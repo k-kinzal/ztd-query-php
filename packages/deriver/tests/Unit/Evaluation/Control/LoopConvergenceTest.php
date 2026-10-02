@@ -174,9 +174,6 @@ final class LoopConvergenceTest extends TestCase
         self::assertSame('SELECT * FROM t WHERE 1' . str_repeat(' AND c = ?', 15), $values[15]->native());
         $widened = array_values(array_filter($values, static fn (Term $value): bool => !$value->isConcrete()));
         self::assertNotEmpty($widened);
-        foreach ($widened as $value) {
-            self::assertSame('SELECT * FROM t WHERE 1', $value->operands[0]->native());
-            self::assertSame('WIDENED', $value->operands[1]->literal);
-        }
+        self::assertSame([['SELECT * FROM t WHERE 1', 'WIDENED']], array_values(array_unique(array_map(static fn (Term $value): array => [$value->operands[0]->literal, $value->operands[1]->literal], $widened), SORT_REGULAR)));
     }
 }

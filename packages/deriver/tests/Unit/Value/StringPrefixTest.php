@@ -69,6 +69,16 @@ final class StringPrefixTest extends TestCase
         self::assertSame('SELECT ', $prefix->bound($shorter));
     }
 
+    public function testContainsRequiresTheKnownLeadingBytes(): void
+    {
+        $prefix = new StringPrefix();
+        $open = new Term('concat', operands: [Term::constant('SELECT a'), Term::parameter('x', 'string')], attributes: ['type' => 'string']);
+        self::assertTrue($prefix->contains('SELECT', $open));
+        self::assertTrue($prefix->contains('SELECT a', $open));
+        self::assertFalse($prefix->contains('SELECT ab', $open));
+        self::assertFalse($prefix->contains('S', Term::parameter('x', 'string')));
+    }
+
     public function testWidenRetainsConfidentiality(): void
     {
         $widened = (new StringPrefix())->widen(Term::constant('key:1', true), Term::constant('key:2'));

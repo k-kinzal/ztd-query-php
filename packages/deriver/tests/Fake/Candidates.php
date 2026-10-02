@@ -78,4 +78,39 @@ final class Candidates
         }
         return $prefix;
     }
+
+    /**
+     * Lists the observed values of a sink query.
+     * @param DerivationResult $result Derived result
+     * @return list<Term> Values in outcome order
+     */
+    public static function values(DerivationResult $result): array
+    {
+        return array_map(static fn (\Deriver\Result\Alternative $outcome): Term => $outcome->values['value'], $result->normalOutcomes);
+    }
+
+    /**
+     * Checks that a runtime string is an exact candidate or contained by a widened residual.
+     * @param DerivationResult $result Derived result
+     * @param string $value Runtime value
+     * @return bool Whether some outcome includes the value
+     */
+    public static function contained(DerivationResult $result, string $value): bool
+    {
+        return array_filter(self::values($result), static fn (Term $candidate): bool => (new \Deriver\Value\Lattice())->contains($candidate, Term::constant($value))) !== [];
+    }
+
+    /**
+     * Enumerates the strings PHP builds from independent two-way letter choices.
+     * @param list<string> $letters Lowercase letters, each chosen in lower or upper case
+     * @return list<string> Every combination in branch order
+     */
+    public static function choices(array $letters): array
+    {
+        $result = [''];
+        foreach ($letters as $letter) {
+            $result = array_merge(...array_map(static fn (string $prefix): array => [$prefix . $letter, $prefix . strtoupper($letter)], $result));
+        }
+        return $result;
+    }
 }

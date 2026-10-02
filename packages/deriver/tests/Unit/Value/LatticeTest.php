@@ -285,9 +285,8 @@ final class LatticeTest extends TestCase
         self::assertSame('concat', $widened->kind);
         self::assertSame('SELECT * FROM t WHERE 1', $widened->operands[0]->native());
         self::assertSame('string', $lattice->type($widened));
-        foreach (['SELECT * FROM t WHERE 1', 'SELECT * FROM t WHERE 1 AND c = ? AND c = ?'] as $member) {
-            self::assertTrue($lattice->contains($widened, Term::constant($member)));
-        }
+        self::assertTrue($lattice->contains($widened, Term::constant('SELECT * FROM t WHERE 1')));
+        self::assertTrue($lattice->contains($widened, Term::constant('SELECT * FROM t WHERE 1 AND c = ? AND c = ?')));
         self::assertFalse($lattice->contains($widened, Term::constant('SELECT 1')));
         self::assertFalse($lattice->contains($widened, Term::parameter('x', 'string')));
         $next = new Term('concat', operands: [$widened, Term::constant(' AND d')], attributes: ['type' => 'string']);
