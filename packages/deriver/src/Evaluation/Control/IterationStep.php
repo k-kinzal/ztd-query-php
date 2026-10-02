@@ -6,6 +6,7 @@ namespace Deriver\Evaluation\Control;
 
 use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Context;
+use Deriver\Evaluation\Havoc;
 use Deriver\Evaluation\State;
 use Deriver\Evaluation\Transfer\MemoryStep;
 use Deriver\Memory\LiveArray;
@@ -46,24 +47,67 @@ final class IterationStep
         }
         $cursor = $state->iterators[$id] ?? new IteratorCursor(Term::opaque('UNKNOWN_ITERABLE'));
         $array = $cursor->location === null ? $cursor->array : $state->memory->read($cursor->location);
-        $head = $cursor->location === null ? (new Arrays())->head($array) : null;
+        $head = (new Arrays())->head($array);
         if ($instruction->operation === 'iterate') {
             return $this->advance($id, new IteratorCursor($array, $cursor->location, $cursor->position + 1), $head, $state);
         }
-        $entries = $head ?? $array;
-        $key = isset($state->memory->liveArrays[$id]) ? $state->memory->liveArrays[$id]->current : ($entries->kind === 'array' ? array_keys($entries->operands)[$cursor->position] ?? null : null);
+        $key = $this->key($id, $cursor, $array, $head, $state);
+        if ($instruction->operation === 'iterator-address' && $cursor->location !== null) {
+            $location = $key === null ? $this->unknownElement($state, $cursor->location, $array) : new Location($cursor->location->root, [...$cursor->location->path, $key]);
+            $state->addresses[$instruction->result] = $location;
+            return new Term('location', $location->root);
+        }
         if ($key === null) {
             return Term::opaque('UNKNOWN_ITERABLE');
         }
         if ($instruction->operation === 'iterator-key') {
             return Term::constant($key, $array->secret);
         }
-        if ($instruction->operation === 'iterator-address' && $cursor->location !== null) {
-            $location = new Location($cursor->location->root, [...$cursor->location->path, $key]);
-            $state->addresses[$instruction->result] = $location;
-            return new Term('location', $location->root);
+        return $state->memory->element($head ?? $array, $key, $head !== null && $array->isSecret());
+    }
+
+    /**
+     * Selects the current key only where its position is certain: tracked buckets of a closed live array, or known leading entries of a snapshot.
+     * @param string $id Iterator identity
+     * @param IteratorCursor $cursor Current cursor
+     * @param Term $array Iterated value
+     * @param Term|null $head Known leading entries of a symbolic merge
+     * @param State $state Current path
+     * @return int|string|null Current key, or null when it is unknown
+     */
+    public function key(string $id, IteratorCursor $cursor, Term $array, ?Term $head, State $state): int|string|null
+    {
+        $closed = $array->kind === 'array' && ($array->attributes['open'] ?? false) === false;
+        if ($cursor->location !== null) {
+            return $closed ? $state->memory->liveArrays[$id]->current ?? null : null;
         }
-        return $state->memory->element($entries, $key, $head !== null && $array->isSecret());
+        $entries = $head ?? $array;
+        if ($entries->kind !== 'array' || array_filter($entries->operands, static fn (Term $entry): bool => ($entry->attributes['maybeUninitialized'] ?? false) === true) !== []) {
+            return null;
+        }
+        return array_keys($entries->operands)[$cursor->position] ?? null;
+    }
+
+    /**
+     * Addresses an unknown entry of by-reference iterated storage, so every write through it invalidates that storage.
+     * @param State $state Current path
+     * @param Location $location Pinned iterated variable
+     * @param Term $subject Iterated value
+     * @return Location Unknown element of the array storage, or of the object's property storage
+     */
+    public function unknownElement(State $state, Location $location, Term $subject): Location
+    {
+        $array = new Location($location->root, $location->path, unknown: true);
+        if ((new TypePredicates())->apply('is_array', $subject)->literal === true) {
+            return $array;
+        }
+        $seen = [];
+        (new Havoc())->reachable($state, $subject, 'UNKNOWN_REFERENCE', $seen);
+        if ($subject->kind === 'object' || (new TypePredicates())->apply('is_object', $subject)->literal === true) {
+            return is_string($subject->literal) ? new Location('object:' . $subject->literal, unknown: true) : $array;
+        }
+        $state->memory->write($array, Term::opaque('UNKNOWN_REFERENCE', dependencies: [$subject]));
+        return is_string($subject->literal) && isset($state->memory->cells['object:' . $subject->literal]) ? new Location('object:' . $subject->literal, unknown: true) : $array;
     }
 
     /**
@@ -82,6 +126,9 @@ final class IterationStep
             return Term::constant(true, $array->secret);
         }
         if ($array->kind !== 'array' || ($array->attributes['open'] ?? false) === true) {
+            if (isset($state->memory->liveArrays[$id])) {
+                $state->memory->liveArrays[$id] = new LiveArray($state->memory->liveArrays[$id]->location, []);
+            }
             return new Term('external', $id . ':has-next:' . $cursor->position, attributes: ['type' => 'bool'], secret: $array->secret);
         }
         if (isset($state->memory->liveArrays[$id])) {
@@ -111,7 +158,7 @@ final class IterationStep
         if ($location !== null) {
             $location = new Location($state->memory->reference($location));
             $array = $state->memory->read($location);
-            $state->memory->liveArrays[$id] = new LiveArray($location, array_keys($array->operands));
+            $state->memory->liveArrays[$id] = new LiveArray($location, $array->kind === 'array' ? array_keys($array->operands) : []);
         }
         $state->iterators[$id] = new IteratorCursor($array, $location);
         return new Term('iterator', $id);
