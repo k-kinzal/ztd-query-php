@@ -85,6 +85,24 @@ final class Derivation
     }
 
     /**
+     * Derives a statement whose request is only inspected, such as the operand of EXPLAIN.
+     *
+     * Every part of the statement receives its facts, and its diagnostics are
+     * kept, but the rows it would return and the declarations it would
+     * provide are discarded: inspecting a statement neither executes it nor
+     * declares anything.
+     */
+    public function inspected(Statement $node): void
+    {
+        $output = $this->output;
+        $declarations = $this->declarations;
+        $this->output = null;
+        $node->deriveStatement($this);
+        $this->output = $output;
+        $this->declarations = $declarations;
+    }
+
+    /**
      * Derives and records the facts of a scalar expression at its position.
      */
     public function scalar(Scalar $node, Environment $environment): ScalarFact

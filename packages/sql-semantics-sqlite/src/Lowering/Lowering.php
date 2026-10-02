@@ -11,9 +11,20 @@ use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Lowering\Productions;
 use SqlSemantics\Platform\Sqlite\Lowering\Definition\DefinitionCommands;
 use SqlSemantics\Platform\Sqlite\Lowering\Expression\ExpressionRule;
+use SqlSemantics\Platform\Sqlite\Lowering\Leaf\ConflictRule;
+use SqlSemantics\Platform\Sqlite\Lowering\Leaf\FlagRule;
+use SqlSemantics\Platform\Sqlite\Lowering\Leaf\LiteralRule;
 use SqlSemantics\Platform\Sqlite\Lowering\Leaf\NameRule;
+use SqlSemantics\Platform\Sqlite\Lowering\Leaf\TypeNameRule;
+use SqlSemantics\Platform\Sqlite\Lowering\Expression\WindowRule;
+use SqlSemantics\Platform\Sqlite\Lowering\Mutation\MutationRule;
+use SqlSemantics\Platform\Sqlite\Lowering\Query\FromRule;
 use SqlSemantics\Platform\Sqlite\Lowering\Query\QueryCommands;
+use SqlSemantics\Platform\Sqlite\Lowering\Query\ResultRule;
 use SqlSemantics\Platform\Sqlite\Lowering\Query\SelectRule;
+use SqlSemantics\Platform\Sqlite\Lowering\Query\SortRule;
+use SqlSemantics\Platform\Sqlite\Lowering\Query\WithRule;
+use SqlSemantics\Platform\Sqlite\Lowering\Trigger\TriggerRule;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -29,19 +40,74 @@ use SqlSemantics\Statement\Statement;
 final class Lowering
 {
     /**
-     * @var NameRule The identifier rules
+     * @var NameRule The identifier rules: name(nm), token(Token), scoped(nm, dbnm), qualified(fullname), pair(nm, nm), list(idlist), optionalList(idlist_opt), collation(collate)
      */
     public readonly NameRule $names;
 
     /**
-     * @var ExpressionRule The expression rules
+     * @var FlagRule The yes-or-no keyword groups: temporary(temp), ifNotExists(ifnotexists)
+     */
+    public readonly FlagRule $flags;
+
+    /**
+     * @var LiteralRule The literal rules: term(term), number(Token)
+     */
+    public readonly LiteralRule $literals;
+
+    /**
+     * @var TypeNameRule The type name rules: named(typetoken), signed(signed), plusNumber(plus_num), minusNumber(minus_num)
+     */
+    public readonly TypeNameRule $typeNames;
+
+    /**
+     * @var ConflictRule The conflict resolution rules: resolution(resolvetype), raised(raisetype), onConflict(onconf), orConflict(orconf)
+     */
+    public readonly ConflictRule $conflicts;
+
+    /**
+     * @var ExpressionRule The expression rules: expression(expr), term(term), list(exprlist), items(nexprlist), where(where_opt)
      */
     public readonly ExpressionRule $expressions;
 
     /**
-     * @var SelectRule The query rules
+     * @var SortRule The ordering rules: terms(sortlist), orderBy(orderby_opt), direction(sortorder), nulls(nulls), columns(eidlist), optionalColumns(eidlist_opt)
+     */
+    public readonly SortRule $ordering;
+
+    /**
+     * @var SelectRule The query rules: select(select), body(selectnowith), limit(limit_opt)
      */
     public readonly SelectRule $selects;
+
+    /**
+     * @var ResultRule The result column rules: columns(selcollist), alias(as), quantifier(distinct), values(values|mvalues)
+     */
+    public readonly ResultRule $results;
+
+    /**
+     * @var FromRule The input relation rules: from(from), terms(seltablist), indexed(indexed_by), optionalIndexed(indexed_opt)
+     */
+    public readonly FromRule $inputs;
+
+    /**
+     * @var WithRule The common table rules: optional(with), clause(wqlist, recursive)
+     */
+    public readonly WithRule $commonTables;
+
+    /**
+     * @var WindowRule The window rules: window(window), definitions(window_clause)
+     */
+    public readonly WindowRule $windows;
+
+    /**
+     * @var MutationRule The data change rules: command(cmd), target(xfullname), assignments(setlist), returning(returning)
+     */
+    public readonly MutationRule $mutations;
+
+    /**
+     * @var TriggerRule The trigger rules: create(trigger_decl, trigger_cmd_list)
+     */
+    public readonly TriggerRule $triggers;
 
     /**
      * @var QueryCommands The commands that read or write rows
@@ -60,8 +126,19 @@ final class Lowering
     public function __construct(public readonly Productions $productions, public readonly Leaves $leaves)
     {
         $this->names = new NameRule($this);
+        $this->flags = new FlagRule($this);
+        $this->literals = new LiteralRule($this);
+        $this->typeNames = new TypeNameRule($this);
+        $this->conflicts = new ConflictRule($this);
         $this->expressions = new ExpressionRule($this);
+        $this->ordering = new SortRule($this);
         $this->selects = new SelectRule($this);
+        $this->results = new ResultRule($this);
+        $this->inputs = new FromRule($this);
+        $this->commonTables = new WithRule($this);
+        $this->windows = new WindowRule($this);
+        $this->mutations = new MutationRule($this);
+        $this->triggers = new TriggerRule($this);
         $this->queryCommands = new QueryCommands($this);
         $this->definitionCommands = new DefinitionCommands($this);
     }

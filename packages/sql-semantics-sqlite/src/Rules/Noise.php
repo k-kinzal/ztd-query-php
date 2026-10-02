@@ -20,6 +20,9 @@ final class Noise
      * - `ecmd`: the semicolon only separates commands (https://sqlite.org/lang.html).
      * - `as: AS nm`: the AS keyword before an alias is optional and changes nothing
      *   (https://sqlite.org/syntax/result-column.html).
+     * - `setlist`: the assignment sign after a column or a column list is mandatory
+     *   punctuation; the tokenizer reads `=` and `==` as the same token there and
+     *   neither spelling changes the assignment (https://sqlite.org/lang_update.html).
      *
      * @return array<string, list<int>>
      */
@@ -30,6 +33,23 @@ final class Noise
             'ecmd: cmdx SEMI' => [1],
             'ecmd: explain cmdx SEMI' => [2],
             'as: AS nm' => [0],
+            'setlist: setlist COMMA nm EQ expr' => [3],
+            'setlist: setlist COMMA LP idlist RP EQ expr' => [5],
+            'setlist: nm EQ expr' => [1],
+            'setlist: LP idlist RP EQ expr' => [3],
         ];
+    }
+
+    /**
+     * Answers the terminals whose spellings are one keyword, with the spelling the comparison uses.
+     *
+     * - `TEMP`: TEMP and TEMPORARY are two spellings of the same keyword
+     *   (https://sqlite.org/lang_createtable.html).
+     *
+     * @return array<string, string>
+     */
+    public static function synonyms(): array
+    {
+        return ['TEMP' => 'TEMP'];
     }
 }

@@ -6,29 +6,23 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Relation;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\Sqlite\Rules\Resolution\TableShapes;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\NamedRelation;
-use SqlSemantics\Statement\Reference\Table\ConditionalTable;
-use SqlSemantics\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Statement\Reference\Table\UndeclaredTable;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Shape\RowShape;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\Known;
 
 /**
  * One occurrence of a named table, view or common table as query input.
  *
- * Rule: SQLITE-TABLE-INPUT-001. The name resolves by CORE-TABLE-LOOKUP-001.
- * A declared table contributes one slot per declared column, in order, each
- * referring to the declaration; an undeclared or conditionally resolved name
- * contributes an open shape that names the missing declaration; a missing or
- * conflicting name contributes an empty complete shape and a diagnostic.
- * Source: https://sqlite.org/lang_select.html#the_from_clause. Status: Implemented.
+ * Rule: SQLITE-TABLE-INPUT-001. The shape and the resolution of the name
+ * follow SQLITE-TABLE-SHAPE-001. An index choice restricts how SQLite may
+ * read the table and changes no row.
+ * Source: https://sqlite.org/lang_select.html#the_from_clause,
+ * https://sqlite.org/lang_indexedby.html. Status: Implemented.
  *
  * @visibility public
  * @example Reading a named input
@@ -42,8 +36,9 @@ final class TableInput implements NamedRelation
     /**
      * @param QualifiedName $name The relation name
      * @param Name|null $alias The correlation name
+     * @param IndexChoice|null $index The demanded index
      */
-    public function __construct(public readonly QualifiedName $name, public readonly ?Name $alias = null)
+    public function __construct(public readonly QualifiedName $name, public readonly ?Name $alias = null, public readonly ?IndexChoice $index = null)
     {
     }
 
@@ -68,24 +63,11 @@ final class TableInput implements NamedRelation
      */
     public function deriveRelation(Derivation $derivation, Environment $environment): RelationFact
     {
-        $resolution = $derivation->table($this->name, $environment);
-        if ($resolution instanceof DeclaredTable) {
-            $slots = [];
-            foreach ($resolution->table->columns as $column) {
-                $slots[] = new OutputSlot($column->name, new Known($column->type), $column->nullability, $column);
-            }
-
-            return new RelationFact(new RowShape($slots), $resolution);
-        }
-        if ($resolution instanceof UndeclaredTable || $resolution instanceof ConditionalTable) {
-            return new RelationFact(new RowShape([], [$resolution->missing]), $resolution);
-        }
-
-        return new RelationFact(new RowShape([]), $resolution);
+        return (new TableShapes())->fact($derivation, $this->name, $environment);
     }
 
     /**
-     * Writes the name and the correlation name.
+     * Writes the name, the correlation name and the index choice.
      */
     public function render(Output $out): void
     {
@@ -96,5 +78,6 @@ final class TableInput implements NamedRelation
         if ($this->alias !== null) {
             $out->keyword('AS')->name($this->alias, NameUse::Alias);
         }
+        $out->node($this->index);
     }
 }

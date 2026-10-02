@@ -6,27 +6,46 @@ namespace SqlSemantics\Platform\Sqlite\Lowering\Query;
 
 use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
+use SqlSemantics\Lowering\Form;
+use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\Sqlite\Lowering\Lowering;
-use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
+use SqlSemantics\Platform\Sqlite\Rules\Query\Ordinals;
+use SqlSemantics\Platform\Sqlite\Statement\Query\Compound;
+use SqlSemantics\Platform\Sqlite\Statement\Query\CompoundOperator;
+use SqlSemantics\Platform\Sqlite\Statement\Query\CompoundStep;
+use SqlSemantics\Platform\Sqlite\Statement\Query\Limit;
+use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\OutputOrdinal;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
-use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Statement\Query\Values;
+use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
 use SqlSemantics\Statement\Scalar;
 
 /**
- * Lowers query productions into selections.
+ * Lowers query productions into selections, VALUES clauses, compound queries and queries with common tables.
  *
- * Rule: SQLITE-SELECT-LOWER-001. Scope: select, selectnowith, oneselect,
- * selcollist, sclp, as, from, seltablist, dbnm, where_opt. Result columns keep
- * their written order. Terminates: the result column list is walked along its
- * spine in a loop; every other child is a strict subtree.
+ * Rule: SQLITE-SELECT-LOWER-001. Scope: select, selectnowith,
+ * multiselect_op, oneselect, groupby_opt, having_opt, limit_opt. The arms of
+ * a compound query keep their written order; the ORDER BY and LIMIT written
+ * after its last arm become those of the compound query. In ORDER BY and
+ * GROUP BY an integer constant becomes a result column position
+ * (SQLITE-ORDINAL-001). Terminates: the arm list is flattened iteratively;
+ * every other child is a strict subtree.
  * Source: https://sqlite.org/lang_select.html. Status: Implemented.
  *
  * @visibility SqlSemantics\Platform\Sqlite
  */
 final class SelectRule
 {
+    /**
+     * The signature of a selection without a WINDOW clause.
+     */
+    private const PLAIN = 'oneselect: SELECT distinct selcollist from where_opt groupby_opt having_opt orderby_opt limit_opt';
+
+    /**
+     * The signature of a selection with a WINDOW clause.
+     */
+    private const WINDOWED = 'oneselect: SELECT distinct selcollist from where_opt groupby_opt having_opt window_clause orderby_opt limit_opt';
+
     /**
      * @param Lowering $lowering The lowering this rule belongs to
      */
@@ -39,113 +58,160 @@ final class SelectRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function select(Node $select): Select
+    public function select(Node $select): Select|Values|Compound|WithQuery
     {
         $form = $this->lowering->productions->form($select);
-        if ($form->signature !== 'select: selectnowith') {
-            throw ImplementationGap::production($form);
-        }
-        $body = $this->lowering->productions->form($form->node(0));
-        if ($body->signature !== 'selectnowith: oneselect') {
-            throw ImplementationGap::production($body);
-        }
-        $one = $this->lowering->productions->form($body->node(0));
-        if ($one->signature !== 'oneselect: SELECT distinct selcollist from where_opt groupby_opt having_opt orderby_opt limit_opt') {
-            throw ImplementationGap::production($one);
-        }
-        foreach ([1 => 'distinct:', 5 => 'groupby_opt:', 6 => 'having_opt:', 7 => 'orderby_opt:', 8 => 'limit_opt:'] as $position => $empty) {
-            $clause = $this->lowering->productions->form($one->node($position));
-            if ($clause->signature !== $empty) {
-                throw ImplementationGap::production($clause);
-            }
-        }
-
-        return new Select($this->columns($one->node(2)), $this->from($one->node(3)), $this->where($one->node(4)));
-    }
-
-    /**
-     * Lowers the result columns in written order.
-     *
-     * @return list<ResultColumn>
-     * @throws ImplementationGap When a production has no rule
-     */
-    public function columns(Node $list): array
-    {
-        $nodes = [];
-        for ($node = $list; $node !== null;) {
-            $nodes[] = $node;
-            $prefix = $this->lowering->productions->form($this->lowering->productions->form($node)->node(0));
-            $node = $prefix->signature === 'sclp:' ? null : $prefix->node(0);
-        }
-        $columns = [];
-        foreach (array_reverse($nodes) as $node) {
-            $form = $this->lowering->productions->form($node);
-            if ($form->signature !== 'selcollist: sclp scanpt expr scanpt as') {
-                throw ImplementationGap::production($form);
-            }
-            $columns[] = new ResultColumn($this->lowering->expressions->expression($form->node(2)), $this->alias($form->node(4)));
-        }
-
-        return $columns;
-    }
-
-    /**
-     * Lowers an optional alias.
-     *
-     * @throws ImplementationGap When the production has no rule
-     */
-    public function alias(Node $alias): ?Name
-    {
-        $form = $this->lowering->productions->form($alias);
 
         return match ($form->signature) {
-            'as:' => null,
-            'as: AS nm' => $this->lowering->names->name($form->node(1)),
-            'as: ids' => $this->lowering->names->token($form->token(0)),
+            'select: selectnowith' => $this->body($form->node(0)),
+            'select: WITH wqlist selectnowith' => new WithQuery($this->lowering->commonTables->clause($form->node(1), false), $this->body($form->node(2))),
+            'select: WITH RECURSIVE wqlist selectnowith' => new WithQuery($this->lowering->commonTables->clause($form->node(2), true), $this->body($form->node(3))),
             default => throw ImplementationGap::production($form),
         };
     }
 
     /**
-     * Lowers the optional input relation.
+     * Lowers a `selectnowith`: one arm, or a compound query of its arms in written order.
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function from(Node $from): ?TableInput
+    public function body(Node $body): Select|Values|Compound
     {
-        $form = $this->lowering->productions->form($from);
-        if ($form->signature === 'from:') {
-            return null;
+        $form = $this->lowering->productions->form($body);
+        if ($form->signature === 'selectnowith: oneselect') {
+            return $this->arm($form->node(0), true);
         }
-        $table = $this->lowering->productions->form($form->node(1));
-        if ($table->signature !== 'seltablist: stl_prefix nm dbnm as on_using') {
-            throw ImplementationGap::production($table);
+        if ($form->signature !== 'selectnowith: selectnowith multiselect_op oneselect') {
+            throw ImplementationGap::production($form);
         }
-        foreach ([0 => 'stl_prefix:', 4 => 'on_using:'] as $position => $empty) {
-            $part = $this->lowering->productions->form($table->node($position));
-            if ($part->signature !== $empty) {
-                throw ImplementationGap::production($part);
-            }
+        $items = (new Lists())->items($body);
+        $steps = [];
+        for ($index = 1; $index < count($items); $index += 2) {
+            $steps[] = new CompoundStep($this->operator($items[$index]), $this->arm($items[$index + 1], $index + 2 < count($items)));
         }
-        $first = $this->lowering->names->name($table->node(1));
-        $second = $this->lowering->productions->form($table->node(2));
-        $name = $second->signature === 'dbnm:' ? new QualifiedName($first) : new QualifiedName($this->lowering->names->name($second->node(1)), $first);
+        $first = $this->arm($items[0], true);
+        $last = $this->lowering->productions->form($items[count($items) - 1]);
+        $shift = $last->signature === self::WINDOWED ? 1 : 0;
+        if ($last->signature !== self::PLAIN && $last->signature !== self::WINDOWED) {
+            return new Compound($first, $steps);
+        }
 
-        return new TableInput($name, $this->alias($table->node(3)));
+        return new Compound($first, $steps, $this->lowering->ordering->orderBy($last->node(7 + $shift), true), $this->limit($last->node(8 + $shift)));
     }
 
     /**
-     * Lowers the optional row predicate.
+     * Lowers a `multiselect_op`.
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function where(Node $where): ?Scalar
+    public function operator(Node $operator): CompoundOperator
     {
-        $form = $this->lowering->productions->form($where);
+        $form = $this->lowering->productions->form($operator);
 
         return match ($form->signature) {
-            'where_opt:' => null,
-            'where_opt: WHERE expr' => $this->lowering->expressions->expression($form->node(1)),
+            'multiselect_op: UNION' => CompoundOperator::Union,
+            'multiselect_op: UNION ALL' => CompoundOperator::UnionAll,
+            'multiselect_op: EXCEPT|INTERSECT' => CompoundOperator::from(strtoupper($form->token(0)->text)),
+            default => throw ImplementationGap::production($form),
+        };
+    }
+
+    /**
+     * Lowers a `oneselect`: a selection or a VALUES clause.
+     *
+     * @param bool $ordered Whether the ORDER BY and LIMIT of a selection stay on it; false for the last arm of a compound query
+     * @throws ImplementationGap When the production has no rule
+     */
+    public function arm(Node $arm, bool $ordered): Select|Values
+    {
+        $form = $this->lowering->productions->form($arm);
+
+        return match ($form->signature) {
+            self::PLAIN => $this->selection($form, 0, $ordered),
+            self::WINDOWED => $this->selection($form, 1, $ordered),
+            'oneselect: values', 'oneselect: mvalues' => $this->lowering->results->values($form->node(0)),
+            default => throw ImplementationGap::production($form),
+        };
+    }
+
+    /**
+     * Lowers a selection from its clauses.
+     *
+     * @param int $shift The number of positions the WINDOW clause moves the ORDER BY and LIMIT clauses by
+     */
+    public function selection(Form $form, int $shift, bool $ordered): Select
+    {
+        return new Select(
+            $this->lowering->results->columns($form->node(2)),
+            $this->lowering->inputs->from($form->node(3)),
+            $this->lowering->expressions->where($form->node(4)),
+            $this->groups($form->node(5)),
+            $this->having($form->node(6)),
+            $shift === 1 ? $this->lowering->windows->definitions($form->node(7)) : [],
+            $ordered ? $this->lowering->ordering->orderBy($form->node(7 + $shift), true) : [],
+            $ordered ? $this->limit($form->node(8 + $shift)) : null,
+            $this->lowering->results->quantifier($form->node(1)),
+        );
+    }
+
+    /**
+     * Lowers a `groupby_opt`: the terms, with integer constants as result column positions.
+     *
+     * @return list<Scalar>
+     * @throws ImplementationGap When the production has no rule
+     */
+    public function groups(Node $clause): array
+    {
+        $form = $this->lowering->productions->form($clause);
+        if ($form->signature === 'groupby_opt:') {
+            return [];
+        }
+        if ($form->signature !== 'groupby_opt: GROUP BY nexprlist') {
+            throw ImplementationGap::production($form);
+        }
+        $terms = [];
+        foreach ($this->lowering->expressions->items($form->node(2)) as $term) {
+            $terms[] = (new Ordinals())->value($term) === null ? $term : new OutputOrdinal($term);
+        }
+
+        return $terms;
+    }
+
+    /**
+     * Lowers a `having_opt`: the predicate, or null when the clause is absent.
+     *
+     * @throws ImplementationGap When the production has no rule
+     */
+    public function having(Node $clause): ?Scalar
+    {
+        $form = $this->lowering->productions->form($clause);
+
+        return match ($form->signature) {
+            'having_opt:' => null,
+            'having_opt: HAVING expr' => $this->lowering->expressions->expression($form->node(1)),
+            default => throw ImplementationGap::production($form),
+        };
+    }
+
+    /**
+     * Lowers a `limit_opt`: the limit in the spelling written, or null when the clause is absent.
+     *
+     * @throws ImplementationGap When the production has no rule
+     */
+    public function limit(Node $clause): ?Limit
+    {
+        $form = $this->lowering->productions->form($clause);
+        $expressions = $this->lowering->expressions;
+        if ($form->signature === 'limit_opt: LIMIT expr COMMA expr') {
+            $offset = $expressions->expression($form->node(1));
+
+            return new Limit($expressions->expression($form->node(3)), $offset, true);
+        }
+
+        return match ($form->signature) {
+            'limit_opt:' => null,
+            'limit_opt: LIMIT expr' => new Limit($expressions->expression($form->node(1))),
+            'limit_opt: LIMIT expr OFFSET expr' => new Limit($expressions->expression($form->node(1)), $expressions->expression($form->node(3))),
             default => throw ImplementationGap::production($form),
         };
     }

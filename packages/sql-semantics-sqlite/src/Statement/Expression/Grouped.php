@@ -17,7 +17,8 @@ use SqlSemantics\Statement\Snapshot;
  * The grouping fixes the evaluation structure of its operand and is kept as
  * written; rendering never adds or removes a grouping.
  *
- * Rule: SQLITE-GROUPED-001. The facts are those of the operand.
+ * Rule: SQLITE-GROUPED-001. The facts, including the column a grouped column
+ * use denotes, are those of the operand.
  * Source: https://sqlite.org/lang_expr.html. Status: Implemented.
  *
  * @visibility public
@@ -42,7 +43,7 @@ final class Grouped implements Scalar
     {
         $fact = $derivation->scalar($this->operand, $environment);
 
-        return new ScalarFact($fact->type, $fact->nullability);
+        return new ScalarFact($fact->type, $fact->nullability, $fact->resolution);
     }
 
     /**

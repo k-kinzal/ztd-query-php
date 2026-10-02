@@ -12,7 +12,7 @@ use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * One projected expression of a selection with its optional alias.
+ * One projected expression of a selection or of a RETURNING clause with its optional alias.
  *
  * @visibility public
  * @example Reading a projected expression and its alias
@@ -25,7 +25,7 @@ final class ResultColumn implements Node
 
     /**
      * @param Scalar $expression The projected expression
-     * @param Name|null $alias The output name given with AS
+     * @param Name|null $alias The output name
      */
     public function __construct(public readonly Scalar $expression, public readonly ?Name $alias = null)
     {

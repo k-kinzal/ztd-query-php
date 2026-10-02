@@ -33,7 +33,8 @@ final class QueryCommands
     {
         return match ($form->signature) {
             'cmd: select' => $this->lowering->selects->select($form->node(0)),
-            default => null,
+            'cmd: createkw trigger_decl BEGIN trigger_cmd_list END' => $this->lowering->triggers->create($form->node(1), $form->node(3)),
+            default => $this->lowering->mutations->command($form),
         };
     }
 }
