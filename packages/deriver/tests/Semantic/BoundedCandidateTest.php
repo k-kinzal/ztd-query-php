@@ -11,6 +11,7 @@ use Deriver\Query\ValueQuery;
 use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversNothing;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use Tests\Fake\Analysis;
@@ -119,5 +120,34 @@ final class BoundedCandidateTest extends TestCase
         foreach (range(1, 33) as $id) {
             self::assertTrue(Candidates::contained($result, 'SELECT * FROM t WHERE id = ' . $id), (string) $id);
         }
+    }
+
+    /**
+     * @param string $source Fixture calling sink() once
+     * @param int $partitions Partition budget
+     * @param list<string|int> $runtime Values PHP 8.3 passes to sink() for some inputs
+     * @throws JsonException If captured fixture values cannot be encoded
+     */
+    #[DataProvider('joins')]
+    public function testJoinedPathsKeepEveryRuntimeValue(string $source, int $partitions, array $runtime): void
+    {
+        $session = Analysis::session('<?php function sink($sql){} ' . $source);
+        $result = $session->derive(new ValueQuery($session->callsTo('sink')[0]->argument(0), budget: new Budget(partitions: $partitions)));
+        self::assertSame($runtime, array_values(array_filter($runtime, static fn (string|int $value): bool => Candidates::contained($result, $value))));
+    }
+
+    /**
+     * @return iterable<string, array{string, int, list<string|int>}>
+     */
+    public static function joins(): iterable
+    {
+        $appends = 'function target(bool $a, bool $b, bool $c, bool $d, bool $e, bool $f1, bool $f3) { $v = 0; $arr = []; if ($a) { $arr[] = 0; } if ($b) { $arr[] = 0; } if ($c) { $arr[] = 0; } if ($d) { $arr[] = 0; } if ($e) { $arr[] = 0; } $arr[] = 0; if ($f1) { $v = 9; } else { if ($f3) { $v = 5; } else { $v = 1; } } sink($v); }';
+        $property = 'class C { public int $p; } function target(bool $a, bool $b, bool $k) { $o = new C(); if ($k) { $o->p = 5; } if ($a) { $x = 1; } else { $x = 2; } if ($b) { $y = 1; } else { $y = 2; } try { $r = $o->p; } catch (Error $e) { $r = "err"; } sink($r); }';
+        $loop = 'function target(bool $flag, int $n, array $xs) { $s = "none"; if ($flag) { $mode = 1; } else { $mode = 1; } for ($i = 0; $i < $n; $i++) { if ($xs[$i]) { $t = 1; } else { $t = 2; } if (!$flag && $i > 40) { $s = "X"; } } sink($s); }';
+        yield 'appends to one array before later branches' => [$appends, 32, [1, 5, 9]];
+        yield 'appends with a small budget' => [$appends, 2, [1, 5, 9]];
+        yield 'typed property that may be uninitialized' => [$property, 2, [5, 'err']];
+        yield 'loop guard of one joined path' => [$loop, 16, ['none', 'X']];
+        yield 'loop guard with a small budget' => [$loop, 2, ['none', 'X']];
     }
 }

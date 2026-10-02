@@ -184,9 +184,9 @@ final class StateJoinTest extends TestCase
         self::assertSame([], $context->frontiers);
     }
 
-    public function testLimitKeepsKnownPartitionsAndSealsTheStorageOfPathsThatCannotBeJoined(): void
+    public function testLimitKeepsClustersWithinTheBudgetAndSealsTheStorageOfTheRest(): void
     {
-        $context = \Tests\Fake\SolverFixture::context(budget:new Budget(partitions:2));
+        $context = \Tests\Fake\SolverFixture::context(budget:new Budget(partitions:1));
         $body = \Tests\Fake\SummaryFixture::body($context);
         $a = new State();
         $a->observed = true;
@@ -247,6 +247,18 @@ final class StateJoinTest extends TestCase
         $b->completion = new Completion('throw', new Term('throwable', 'Throwable'));
         self::assertSame([$a, $b], (new StateJoin($context))->limit([$a, $b], $body));
         self::assertSame([], $context->frontiers);
+    }
+
+    public function testClustersJoinCompatiblePathsAndKeepOtherStructures(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        [$a, $b] = \Tests\Fake\JoinPaths::pair(Term::constant('x'), Term::constant('y'));
+        [$c] = \Tests\Fake\JoinPaths::pair(Term::constant('z'), Term::constant('z'));
+        $c->locals['extra'] = new Location('extra');
+        $clusters = (new StateJoin($context))->clusters([$a, $c, $b]);
+        self::assertCount(2, $clusters);
+        self::assertSame('WIDENED', $clusters[0]->memory->read($clusters[0]->locals['sql'])->literal);
+        self::assertSame($c, $clusters[1]);
     }
 
     public function testSealKeepsTheRootsOfEverySealedPath(): void

@@ -92,10 +92,10 @@ final class Candidates
     /**
      * Checks that a runtime string is an exact candidate or contained by a widened residual.
      * @param DerivationResult $result Derived result
-     * @param string $value Runtime value
+     * @param string|int $value Runtime value
      * @return bool Whether some outcome includes the value
      */
-    public static function contained(DerivationResult $result, string $value): bool
+    public static function contained(DerivationResult $result, string|int $value): bool
     {
         return array_filter(self::values($result), static fn (Term $candidate): bool => (new \Deriver\Value\Lattice())->contains($candidate, Term::constant($value))) !== [];
     }

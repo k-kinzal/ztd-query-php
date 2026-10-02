@@ -6,6 +6,7 @@ namespace Tests\Unit\Evaluation\Control;
 
 use Deriver\Evaluation\Completion;
 use Deriver\Evaluation\Control\PathJoin;
+use Deriver\Evaluation\Offset\Address;
 use Deriver\Evaluation\State;
 use Deriver\Memory\Location;
 use Deriver\Value\Lattice;
@@ -18,6 +19,7 @@ use Tests\Fake\JoinPaths;
 use Tests\Fake\SolverFixture;
 
 #[CoversClass(PathJoin::class)]
+#[UsesClass(Address::class)]
 #[UsesClass(Completion::class)]
 #[UsesClass(State::class)]
 #[UsesClass(Location::class)]
@@ -192,6 +194,50 @@ final class PathJoinTest extends TestCase
         self::assertSame(['a'], array_keys($join->values([['a' => Term::constant(1), 'b' => Term::constant(2)], ['a' => Term::constant(1)]], false) ?? []));
         self::assertSame(['a', 'b'], array_keys($join->values([['a' => Term::constant(1), 'b' => Term::constant(2)], ['a' => Term::constant(1)]], true) ?? []));
         self::assertNull($join->values([['a' => new Term('cell', 'cell:1')], ['a' => new Term('cell', 'cell:2')]], false));
+    }
+
+    public function testLocationsGeneralizeDifferingAddressesIntoOneRoot(): void
+    {
+        $join = new PathJoin(SolverFixture::context());
+        $locations = $join->locations([['r1' => new Location('cell:1', [0]), 'r2' => new Location('cell:2')], ['r1' => new Location('cell:1', [1]), 'r2' => new Location('cell:2')]]);
+        self::assertNotNull($locations);
+        self::assertEquals(new Location('cell:1', unknown: true), $locations['r1']);
+        self::assertEquals(new Location('cell:2'), $locations['r2']);
+        self::assertNull($join->locations([['r1' => new Location('cell:1')], ['r1' => new Location('cell:2')]]));
+    }
+
+    public function testOffsetsWidenKeysBelowOneParent(): void
+    {
+        $join = new PathJoin(SolverFixture::context());
+        $offsets = $join->offsets([['r1' => new Address('r0', Term::constant(0))], ['r1' => new Address('r0', Term::constant(1))]]);
+        self::assertNotNull($offsets);
+        self::assertSame('r0', $offsets['r1']->parent);
+        self::assertTrue((new Lattice())->contains($offsets['r1']->key ?? Term::constant(null), Term::constant(1)));
+        self::assertNull($join->offsets([['r1' => new Address('r0', null)], ['r1' => new Address('r0', Term::constant(1))]]));
+        self::assertNull($join->offsets([['r1' => new Address('r0', null)], ['r1' => new Address('r9', null)]]));
+    }
+
+    public function testLoopsKeepOnlyBookkeepingBothPathsShare(): void
+    {
+        $join = new PathJoin(SolverFixture::context());
+        [$a, $b] = JoinPaths::pair(Term::constant(1), Term::constant(2));
+        $a->loopGuards = [5 => ['flag' => true, 'other' => true], 6 => ['x' => true]];
+        $b->loopGuards = [5 => ['flag' => false, 'other' => true]];
+        $a->approximations = [5 => ['cell:1' => Term::constant(1)]];
+        $b->approximations = [5 => ['cell:1' => Term::constant(2)]];
+        $a->stableHeader = 5;
+        $join->loops($a, $b);
+        self::assertSame([5 => ['other' => true]], $a->loopGuards);
+        self::assertSame([], $a->approximations);
+        self::assertNull($a->stableHeader);
+    }
+
+    public function testValuesKeepObjectRecordsExact(): void
+    {
+        $join = new PathJoin(SolverFixture::context());
+        self::assertNull($join->values([['object:1' => Term::array([])], ['object:1' => Term::array(['p' => Term::constant(5)])]], true, true));
+        self::assertNotNull($join->values([['cell:1' => Term::array([])], ['cell:1' => Term::array(['p' => Term::constant(5)])]], true, true));
+        self::assertNotNull($join->values([['object:1' => Term::array([])], ['object:1' => Term::array([])]], true, true));
     }
 
     public function testPlainRejectsNestedIdentities(): void
