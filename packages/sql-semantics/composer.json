@@ -101,9 +101,6 @@
             "Bench\\": "bench/"
         }
     },
-    "bin": [
-        "bin/build-models.php"
-    ],
     "scripts": {
         "autoload:check": "composer dump-autoload --optimize --strict-psr --strict-ambiguous",
         "bench": "phpbench run --report=aggregate",

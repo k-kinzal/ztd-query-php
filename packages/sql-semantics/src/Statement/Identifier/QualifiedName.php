@@ -4,32 +4,31 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Statement\Identifier;
 
+use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Statement\Snapshot;
+
 /**
- * An object's own name and the namespaces qualifying it.
+ * A decoded object name with its optional schema and catalog qualifiers.
+ *
  * @visibility public
- * @example Naming a table in a schema
+ * @example Reading the parts of a qualified name
  *     $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('users'), new \SqlSemantics\Statement\Identifier\Name('app'));
- *     $name->toString() // => 'app.users'
+ *     [$name->schema?->value, $name->name->value] // => ['app', 'users']
  */
 final class QualifiedName
 {
-    use \SqlSemantics\Statement\Validation\Snapshot;
+    use Snapshot;
 
     /**
-     * A catalog qualifier requires a schema qualifier to keep positions unambiguous.
+     * @param Name $name The object name
+     * @param Name|null $schema The schema (MySQL: database) qualifier
+     * @param Name|null $catalog The catalog qualifier, which requires a schema
      */
-    public function __construct(public readonly Name $name, public readonly ?Name $schema = null, public readonly ?Name $catalog = null)
-    {
-        \SqlSemantics\Statement\Validation\Check::input($catalog === null || $schema !== null, 'A catalog qualifier requires a schema qualifier.');
-    }
-
-    /**
-     * Writes qualified identifiers from the outermost namespace to the object.
-     */
-    public function toString(): string
-    {
-        return ($this->catalog === null ? '' : $this->catalog->toString() . '.')
-            . ($this->schema === null ? '' : $this->schema->toString() . '.')
-            . $this->name->toString();
+    public function __construct(
+        public readonly Name $name,
+        public readonly ?Name $schema = null,
+        public readonly ?Name $catalog = null,
+    ) {
+        Check::input($catalog === null || $schema !== null, 'A catalog qualifier requires a schema qualifier.');
     }
 }

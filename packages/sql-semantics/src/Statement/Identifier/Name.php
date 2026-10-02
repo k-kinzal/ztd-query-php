@@ -4,35 +4,27 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Statement\Identifier;
 
+use SqlSemantics\Statement\Snapshot;
+
 /**
- * A decoded identifier; quoting preserves case and separates it from keywords.
+ * A decoded identifier: the name the database compares, not its SQL spelling.
+ *
+ * Quotes and escapes are removed and the case folding of the language profile
+ * is already applied. Encoding a name for a position is the job of the
+ * profile codec, never string concatenation.
+ *
  * @visibility public
- * @example Reconstructing a quoted identifier
- *     (new \SqlSemantics\Statement\Identifier\Name('a"b', \SqlSemantics\Statement\Identifier\Quote::Double))->toString() // => '"a""b"'
+ * @example Holding a decoded name
+ *     (new \SqlSemantics\Statement\Identifier\Name('order items'))->value // => 'order items'
  */
 final class Name
 {
-    use \SqlSemantics\Statement\Validation\Snapshot;
+    use Snapshot;
 
     /**
-     * Keeps the name itself, never a parser token or a fragment of SQL.
+     * @param string $value The decoded identifier
      */
-    public function __construct(public readonly string $value, public readonly Quote $quote = Quote::None)
+    public function __construct(public readonly string $value)
     {
-        \SqlSemantics\Statement\Validation\Check::input(!str_contains($value, "\0"), 'An identifier cannot contain NUL.');
-        \SqlSemantics\Statement\Validation\Check::input($quote !== Quote::None || ($value !== '' && preg_match('/^(?![0-9]+$)[A-Za-z0-9_$\x80-\xff]+$/D', $value) === 1), 'A bare identifier must have an identifier spelling.');
-        \SqlSemantics\Statement\Validation\Check::input($quote !== Quote::Bracket || !str_contains($value, ']'), 'Bracket quoting cannot escape a closing bracket.');
-    }
-
-    /**
-     * Writes the decoded identifier under its quoting convention.
-     */
-    public function toString(): string
-    {
-        if ($this->quote === Quote::None) {
-            return $this->value;
-        }
-        $close = $this->quote === Quote::Bracket ? ']' : $this->quote->value;
-        return $this->quote->value . str_replace($close, $close . $close, $this->value) . $close;
     }
 }

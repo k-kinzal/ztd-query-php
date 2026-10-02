@@ -7,10 +7,11 @@ parameters:
     toolkit:
         visibilityExemptNamespacePrefixes: ['Tests', 'Bench']
         forbiddenTermsByPath:
-            'src/Core/*': [mysql, postgres, pgsql, sqlite, mariadb]
-            'src/Platform/MySql/*': [postgres, pgsql, sqlite]
-            'src/Platform/PostgreSql/*': [mysql, mariadb, sqlite]
-            'src/Platform/Sqlite/*': [mysql, mariadb, postgres, pgsql]
+            'src/Construction/*': [mysql, postgres, pgsql, sqlite, mariadb]
+            'src/Resolution/*': [mysql, postgres, pgsql, sqlite, mariadb]
+            'src/Rendering/*': [mysql, postgres, pgsql, sqlite, mariadb]
+            'src/Lowering/*': [mysql, postgres, pgsql, sqlite, mariadb]
+            'src/Validation/*': [mysql, postgres, pgsql, sqlite, mariadb]
         forbiddenNamespacePrefixes: ['Tests\Fixture', 'Tests\Fixtures']
     phpVersion: 80100
     level: max

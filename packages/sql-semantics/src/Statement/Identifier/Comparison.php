@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Statement\Identifier;
 
 /**
- * The comparison policy of a namespace after identifier decoding and folding.
+ * How two decoded identifiers are compared in one name space of a language profile.
+ *
  * @visibility public
- * @example Comparing names in an ASCII-insensitive namespace
- *     \SqlSemantics\Statement\Identifier\Comparison::AsciiInsensitive->equal('Foo', 'foo') // => true
+ * @example Comparing names without regard to ASCII letter case
+ *     \SqlSemantics\Statement\Identifier\Comparison::AsciiInsensitive->equal('Users', 'USERS') // => true
  */
 enum Comparison
 {
@@ -16,10 +17,21 @@ enum Comparison
     case AsciiInsensitive;
 
     /**
-     * Compares decoded names without changing their original spelling.
+     * Decides whether two decoded identifiers denote the same name.
      */
     public function equal(string $left, string $right): bool
     {
-        return $this === self::Sensitive ? $left === $right : strcasecmp($left, $right) === 0;
+        return match ($this) {
+            self::Sensitive => $left === $right,
+            self::AsciiInsensitive => $this->fold($left) === $this->fold($right),
+        };
+    }
+
+    /**
+     * Folds ASCII letters only; every other byte is kept, independent of the host locale.
+     */
+    public function fold(string $name): string
+    {
+        return strtr($name, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
     }
 }

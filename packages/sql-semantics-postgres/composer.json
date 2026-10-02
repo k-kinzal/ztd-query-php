@@ -83,8 +83,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "SqlSemantics\\Platform\\PostgreSql\\": "src/",
-            "SqlSemantics\\Statement\\Model\\PostgreSql\\": "resources/models/"
+            "SqlSemantics\\Platform\\PostgreSql\\": "src/"
         }
     },
     "autoload-dev": {
@@ -99,8 +98,6 @@
         "bench": "phpbench run --report=aggregate",
         "bench:full": "@bench",
         "bench:quick": "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10",
-        "build:models": "@php -d memory_limit=1G vendor/bin/build-models.php --dialect=postgresql --output=resources",
-        "build:models:check": "@build:models --check",
         "compat": "phpcs",
         "deptrac": "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
         "docgen": "docgen --packages=. --title=k-kinzal/sql-semantics-postgres",
@@ -152,8 +149,6 @@
         "bench": "Run the benchmarks.",
         "bench:full": "Run the benchmarks.",
         "bench:quick": "Run the benchmarks with fewer iterations.",
-        "build:models": "Regenerate the statement models in resources/.",
-        "build:models:check": "Check that the statement models in resources/ are up to date.",
         "compat": "Check compatibility with PHP 8.1 and later with PHP_CodeSniffer.",
         "deptrac": "Check the layer dependencies with Deptrac.",
         "docgen": "Generate the API documentation into build/docs.",
