@@ -33,11 +33,11 @@ final class CaseReader
         $arms = Tree::child($source, ['case_exprlist']);
         assert($arms !== null, 'A CASE expression has at least one WHEN branch.');
         $otherwise = Tree::child($source, ['case_else']);
-        $branches = new SqliteCaseBranches($otherwise === null ? null : $expressions->read(Tree::outer($otherwise, ['expr'])[0], $scope), ...$this->arms($arms, $scope, $expressions));
+        $branches = new SqliteCaseBranches($otherwise === null ? null : $expressions->read(Tree::outer($otherwise, ['expr'])[0], $scope), (new \SqlSemantics\Platform\Sqlite\Analysis\Input\CaseLayoutReader())->otherwise($otherwise), ...$this->arms($arms, $scope, $expressions));
         $base = Tree::child($source, ['case_operand']);
         return $base === null
-            ? new SqliteSearchedCase($branches)
-            : new SqliteSimpleCase($expressions->read(Tree::outer($base, ['expr'])[0], $scope), $branches);
+            ? new SqliteSearchedCase($branches, (new \SqlSemantics\Platform\Sqlite\Analysis\Input\CaseLayoutReader())->operation($source))
+            : new SqliteSimpleCase($expressions->read(Tree::outer($base, ['expr'])[0], $scope), $branches, (new \SqlSemantics\Platform\Sqlite\Analysis\Input\CaseLayoutReader())->operation($source));
     }
 
     /**
@@ -51,7 +51,7 @@ final class CaseReader
         $arms = $prefix === null ? [] : $this->arms($prefix, $scope, $expressions);
         $operands = array_values(array_filter($source->children, static fn (Node|Token $child): bool => $child instanceof Node && $child->name === 'expr'));
         assert(count($operands) === 2, 'Each branch has exactly one test and one result.');
-        $arms[] = new SqliteCaseArm($expressions->read($operands[0], $scope), $expressions->read($operands[1], $scope));
+        $arms[] = new SqliteCaseArm($expressions->read($operands[0], $scope), $expressions->read($operands[1], $scope), (new \SqlSemantics\Platform\Sqlite\Analysis\Input\CaseLayoutReader())->arm($source));
         return $arms;
     }
 }

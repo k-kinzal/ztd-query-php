@@ -28,7 +28,7 @@ final class OperatorMatch
             return [new ScalarPair($input->operand, $actual->operand, $scope)];
         }
         if ($input instanceof C\BinaryInput) {
-            Check::invariant($actual instanceof E\SqliteBinary && $input->operator === $actual->operator && $input->layout === $actual->layout, 'A binary request must retain its operation and constrained output spelling.');
+            Check::invariant($actual instanceof E\SqliteBinary && $input->operator === $actual->operator && SpellingMatch::same($input->layout, $actual->layout), 'A binary request must retain its operation and constrained output spelling.');
             return [new ScalarPair($input->left, $actual->left, $scope), new ScalarPair($input->right, $actual->right, $scope)];
         }
         if ($input instanceof C\GroupedInput) {

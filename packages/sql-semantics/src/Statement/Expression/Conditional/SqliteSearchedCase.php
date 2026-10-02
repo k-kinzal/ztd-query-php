@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Type\SqliteChoiceDomain;
  * @visibility public
  * @example Preserving searched CASE rather than constructing equality comparisons
  *     $null = new \SqlSemantics\Statement\Expression\NullConstant();
- *     $branches = new \SqlSemantics\Statement\Expression\Conditional\SqliteCaseBranches(null, new \SqlSemantics\Statement\Expression\Conditional\SqliteCaseArm($null, $null));
+ *     $branches = new \SqlSemantics\Statement\Expression\Conditional\SqliteCaseBranches(null, new \SqlSemantics\Statement\Expression\Rendering\SqliteElseLayout(), new \SqlSemantics\Statement\Expression\Conditional\SqliteCaseArm($null, $null));
  *     (new \SqlSemantics\Statement\Expression\Conditional\SqliteSearchedCase($branches))->toString() // => 'CASE WHEN NULL THEN NULL END'
  */
 final class SqliteSearchedCase implements ScalarExpression
@@ -26,7 +26,7 @@ final class SqliteSearchedCase implements ScalarExpression
     /**
      * Retains the ordered truth tests and their lazy result alternatives.
      */
-    public function __construct(public readonly SqliteCaseBranches $branches)
+    public function __construct(public readonly SqliteCaseBranches $branches, public readonly \SqlSemantics\Statement\Expression\Rendering\SqliteCaseLayout $layout = new \SqlSemantics\Statement\Expression\Rendering\SqliteCaseLayout())
     {
     }
 
@@ -60,6 +60,6 @@ final class SqliteSearchedCase implements ScalarExpression
      */
     public function toString(): string
     {
-        return 'CASE ' . $this->branches->toString() . ' END';
+        return $this->layout->finish($this->branches->arms[0]->layout->append($this->layout->start(null), $this->branches->toString()));
     }
 }

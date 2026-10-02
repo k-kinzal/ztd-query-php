@@ -31,11 +31,11 @@ final class CaseInputReader
         $arms = Tree::child($source, ['case_exprlist']);
         assert($arms !== null, 'A CASE expression has at least one WHEN branch.');
         $otherwise = Tree::child($source, ['case_else']);
-        $branches = new CaseBranchesInput($otherwise === null ? null : $expressions->read(Tree::outer($otherwise, ['expr'])[0]), ...$this->arms($arms, $expressions));
+        $branches = new CaseBranchesInput($otherwise === null ? null : $expressions->read(Tree::outer($otherwise, ['expr'])[0]), (new CaseLayoutReader())->otherwise($otherwise), ...$this->arms($arms, $expressions));
         $base = Tree::child($source, ['case_operand']);
         return $base === null
-            ? new SearchedCaseInput($branches)
-            : new SimpleCaseInput($expressions->read(Tree::outer($base, ['expr'])[0]), $branches);
+            ? new SearchedCaseInput($branches, (new CaseLayoutReader())->operation($source))
+            : new SimpleCaseInput($expressions->read(Tree::outer($base, ['expr'])[0]), $branches, (new CaseLayoutReader())->operation($source));
     }
 
     /**
@@ -49,7 +49,7 @@ final class CaseInputReader
         $arms = $prefix === null ? [] : $this->arms($prefix, $expressions);
         $operands = array_values(array_filter($source->children, static fn (Node|Token $child): bool => $child instanceof Node && $child->name === 'expr'));
         assert(count($operands) === 2, 'Each branch has exactly one test and one result.');
-        $arms[] = new CaseArmInput($expressions->read($operands[0]), $expressions->read($operands[1]));
+        $arms[] = new CaseArmInput($expressions->read($operands[0]), $expressions->read($operands[1]), (new CaseLayoutReader())->arm($source));
         return $arms;
     }
 }

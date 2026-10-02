@@ -135,9 +135,9 @@ rendered-output correspondence remain incomplete.
 
 - Purpose: preserve expression-derived output names without turning an arbitrary
   name string into expression SQL. Explicit grouping and binary operator spelling
-  have bounded concrete values. No value contains an operand's SQL fragment.
+  and CASE delimiters have bounded concrete values. No value contains an operand's SQL fragment.
 - Preconditions: a binary spelling encodes its actual operator, and its outer gaps
-  contain only validated whitespace. Grouping contains a real semantic child.
+  contain only validated, complete trivia. Grouping contains a real semantic child.
 - Composition: the renderer adds parentheses required by the child's binding
   power and the parent's associativity. Adjacent minus signs cannot accidentally
   open a comment; adjacent word characters require separation.
@@ -147,9 +147,17 @@ rendered-output correspondence remain incomplete.
   through grouping; a computed expression label follows the profile's expression
   naming rule. Parentheses and operator gaps can affect that label even when the
   value is unchanged.
+- CASE composition: each WHEN/THEN pair retains its two actual operands and bounded
+  keyword/trivia values. The optional base is written once; the optional ELSE is
+  written only when present. Adjacent keyword/operand word characters receive a
+  separator. These values never retain a base, predicate, result, or complete SQL
+  expression. Lowercase and comment-bearing CASE output labels therefore do not
+  require a newly introduced alias when their children preserve their labels.
 - Independent evidence: SQLite in-memory comparisons check rows, storage classes,
   and result-column names. These observations find errors in the rule but are not
-  a proof over all compositions.
+  a proof over all compositions. Capture regressions include a computed CASE label
+  matching a later explicit alias: WHERE must still resolve to that later field,
+  and the original and emitted statements must both return the same empty result.
 - Remaining obligations: all other expression forms, comments important to output
   names, conditional output names, complete alias-capture checks, and actual
   emitted-SQL correspondence. Legacy synthetic aliases still require migration;

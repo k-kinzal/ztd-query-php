@@ -18,7 +18,7 @@ final class CaseArmInput
     /**
      * Specifies a new evaluation structure without an existing expression graph.
      */
-    public function __construct(public readonly \SqlSemantics\Statement\Construction\ScalarInput $when, public readonly \SqlSemantics\Statement\Construction\ScalarInput $then)
+    public function __construct(public readonly \SqlSemantics\Statement\Construction\ScalarInput $when, public readonly \SqlSemantics\Statement\Construction\ScalarInput $then, public readonly \SqlSemantics\Statement\Expression\Rendering\SqliteCaseArmLayout $layout = new \SqlSemantics\Statement\Expression\Rendering\SqliteCaseArmLayout())
     {
         \SqlSemantics\Statement\Construction\InputDomain::check($when);
         \SqlSemantics\Statement\Construction\InputDomain::check($then);

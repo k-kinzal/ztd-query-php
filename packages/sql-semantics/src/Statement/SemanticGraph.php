@@ -81,7 +81,7 @@ final class SemanticGraph
         }
         $properties = [];
         foreach ((new ReflectionObject($value))->getProperties() as $property) {
-            if ($value instanceof Expression\SqliteBinary && $property->getName() === 'layout') {
+            if (in_array($value::class, [Expression\SqliteBinary::class, Expression\Conditional\SqliteSimpleCase::class, Expression\Conditional\SqliteSearchedCase::class, Expression\Conditional\SqliteCaseBranches::class, Expression\Conditional\SqliteCaseArm::class], true) && $property->getName() === 'layout') {
                 continue;
             }
             $field = $property->getValue($value);

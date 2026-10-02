@@ -34,8 +34,8 @@ final class ExpressionConstruction
             $input instanceof Expression\InListInput => new E\SqliteInList($this->derive($input->subject, $scope), $input->negated, ...array_map(fn (ScalarInput $choice): ScalarExpression => $this->derive($choice, $scope), $input->choices)),
             $input instanceof Expression\CastInput => new E\Conversion\SqliteCast($this->derive($input->operand, $scope), $input->target),
             $input instanceof Expression\CollationInput => new E\Conversion\SqliteCollated($this->derive($input->operand, $scope), $input->collation),
-            $input instanceof Conditional\SearchedCaseInput => new E\Conditional\SqliteSearchedCase($this->branches($input->branches, $scope)),
-            $input instanceof Conditional\SimpleCaseInput => new E\Conditional\SqliteSimpleCase($this->derive($input->base, $scope), $this->branches($input->branches, $scope)),
+            $input instanceof Conditional\SearchedCaseInput => new E\Conditional\SqliteSearchedCase($this->branches($input->branches, $scope), $input->layout),
+            $input instanceof Conditional\SimpleCaseInput => new E\Conditional\SqliteSimpleCase($this->derive($input->base, $scope), $this->branches($input->branches, $scope), $input->layout),
             $input instanceof Subquery\ScalarQueryInput => new E\Subquery\SqliteScalarSubquery((new SubqueryConstruction())->derive($input->query, $scope)),
             $input instanceof Subquery\ExistsInput => new E\Subquery\SqliteExists((new SubqueryConstruction())->derive($input->query, $scope)),
             $input instanceof Subquery\InQueryInput => new E\Subquery\SqliteInQuery($this->derive($input->subject, $scope), (new SubqueryConstruction())->derive($input->query, $scope), $input->negated),
@@ -50,7 +50,8 @@ final class ExpressionConstruction
     {
         return new E\Conditional\SqliteCaseBranches(
             $input->otherwise === null ? null : $this->derive($input->otherwise, $scope),
-            ...array_map(fn (Conditional\CaseArmInput $arm): E\Conditional\SqliteCaseArm => new E\Conditional\SqliteCaseArm($this->derive($arm->when, $scope), $this->derive($arm->then, $scope)), $input->arms),
+            $input->layout,
+            ...array_map(fn (Conditional\CaseArmInput $arm): E\Conditional\SqliteCaseArm => new E\Conditional\SqliteCaseArm($this->derive($arm->when, $scope), $this->derive($arm->then, $scope), $arm->layout), $input->arms),
         );
     }
 }

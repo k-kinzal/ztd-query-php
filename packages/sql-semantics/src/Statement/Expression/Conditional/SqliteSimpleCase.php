@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Type\Unresolved;
  * @visibility public
  * @example A NULL base selects the fallback even when a WHEN test is also NULL
  *     $null = new \SqlSemantics\Statement\Expression\NullConstant();
- *     $branches = new \SqlSemantics\Statement\Expression\Conditional\SqliteCaseBranches(null, new \SqlSemantics\Statement\Expression\Conditional\SqliteCaseArm($null, $null));
+ *     $branches = new \SqlSemantics\Statement\Expression\Conditional\SqliteCaseBranches(null, new \SqlSemantics\Statement\Expression\Rendering\SqliteElseLayout(), new \SqlSemantics\Statement\Expression\Conditional\SqliteCaseArm($null, $null));
  *     (new \SqlSemantics\Statement\Expression\Conditional\SqliteSimpleCase($null, $branches))->type() // => \SqlSemantics\Statement\Type\NullDomain::Null
  */
 final class SqliteSimpleCase implements ScalarExpression
@@ -31,7 +31,7 @@ final class SqliteSimpleCase implements ScalarExpression
     /**
      * The base remains one semantic operand rather than being copied into every test.
      */
-    public function __construct(public readonly ScalarExpression $base, public readonly SqliteCaseBranches $branches)
+    public function __construct(public readonly ScalarExpression $base, public readonly SqliteCaseBranches $branches, public readonly \SqlSemantics\Statement\Expression\Rendering\SqliteCaseLayout $layout = new \SqlSemantics\Statement\Expression\Rendering\SqliteCaseLayout())
     {
         \SqlSemantics\Statement\Validation\Check::input((new SemanticGraph())->containsOnlyValues($this), 'A simple CASE retains only immutable semantic operands.');
     }
@@ -78,6 +78,6 @@ final class SqliteSimpleCase implements ScalarExpression
      */
     public function toString(): string
     {
-        return 'CASE ' . $this->base->toString() . ' ' . $this->branches->toString() . ' END';
+        return $this->layout->finish($this->branches->arms[0]->layout->append($this->layout->start($this->base->toString()), $this->branches->toString()));
     }
 }

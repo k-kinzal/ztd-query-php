@@ -17,6 +17,9 @@ final class ValueDomain
      * @var list<class-string>
      */
     private const TYPES = [
+        \SqlSemantics\Statement\Expression\Rendering\SqliteCaseLayout::class,
+        \SqlSemantics\Statement\Expression\Rendering\SqliteCaseArmLayout::class,
+        \SqlSemantics\Statement\Expression\Rendering\SqliteElseLayout::class,
         \SqlSemantics\Statement\Contract\GrammarRelease::class,
         \SqlSemantics\Statement\Contract\ParameterStyle::class,
         \SqlSemantics\Statement\Contract\LexicalSettings::class,

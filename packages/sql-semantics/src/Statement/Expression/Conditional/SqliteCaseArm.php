@@ -21,7 +21,7 @@ final class SqliteCaseArm
     /**
      * The enclosing CASE determines whether the test is a truth test or a comparison value.
      */
-    public function __construct(public readonly ScalarExpression $test, public readonly ScalarExpression $result)
+    public function __construct(public readonly ScalarExpression $test, public readonly ScalarExpression $result, public readonly \SqlSemantics\Statement\Expression\Rendering\SqliteCaseArmLayout $layout = new \SqlSemantics\Statement\Expression\Rendering\SqliteCaseArmLayout())
     {
         \SqlSemantics\Statement\Validation\Check::input((new SemanticGraph())->containsOnlyValues($this), 'A CASE branch retains only semantic operands.');
     }
@@ -31,6 +31,6 @@ final class SqliteCaseArm
      */
     public function toString(): string
     {
-        return 'WHEN ' . $this->test->toString() . ' THEN ' . $this->result->toString();
+        return $this->layout->write($this->test->toString(), $this->result->toString());
     }
 }

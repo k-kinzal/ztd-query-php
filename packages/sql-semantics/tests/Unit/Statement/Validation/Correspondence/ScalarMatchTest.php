@@ -45,7 +45,7 @@ final class ScalarMatchTest extends TestCase
             'changed membership choice' => [new C\Expression\InListInput($one, false, $one, $two), new E\SqliteInList($one, false, $two, $two)],
             'changed group operand' => [new C\Expression\GroupedInput($one), new E\Rendering\GroupedExpression($two)],
             'changed collation operand' => [new C\Expression\CollationInput($one, new Name('binary')), new E\Conversion\SqliteCollated($two, new Name('binary'))],
-            'changed case result' => [new C\Conditional\SearchedCaseInput(new C\Conditional\CaseBranchesInput(null, new C\Conditional\CaseArmInput($one, $two))), new E\Conditional\SqliteSearchedCase(new E\Conditional\SqliteCaseBranches(null, new E\Conditional\SqliteCaseArm($one, $one)))],
+            'changed case result' => [new C\Conditional\SearchedCaseInput(new C\Conditional\CaseBranchesInput(null, new E\Rendering\SqliteElseLayout(), new C\Conditional\CaseArmInput($one, $two))), new E\Conditional\SqliteSearchedCase(new E\Conditional\SqliteCaseBranches(null, new E\Rendering\SqliteElseLayout(), new E\Conditional\SqliteCaseArm($one, $one)))],
         ];
     }
 

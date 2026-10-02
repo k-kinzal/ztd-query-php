@@ -32,8 +32,8 @@ final class ExpressionSql
             $input instanceof C\Expression\InListInput => '(' . $this->write($input->subject) . ')' . ($input->negated ? ' NOT' : '') . ' IN (' . implode(', ', array_map($this->write(...), $input->choices)) . ')',
             $input instanceof C\Expression\CastInput => 'CAST(' . $this->write($input->operand) . ' AS ' . $input->target->toString() . ')',
             $input instanceof C\Expression\CollationInput => '(' . $this->write($input->operand) . ') COLLATE ' . $input->collation->toString(),
-            $input instanceof C\Conditional\SearchedCaseInput => 'CASE ' . $this->branches($input->branches) . ' END',
-            $input instanceof C\Conditional\SimpleCaseInput => 'CASE ' . $this->write($input->base) . ' ' . $this->branches($input->branches) . ' END',
+            $input instanceof C\Conditional\SearchedCaseInput => $input->layout->finish($input->branches->arms[0]->layout->append($input->layout->start(null), $this->branches($input->branches))),
+            $input instanceof C\Conditional\SimpleCaseInput => $input->layout->finish($input->branches->arms[0]->layout->append($input->layout->start($this->write($input->base)), $this->branches($input->branches))),
             $input instanceof C\Subquery\ScalarQueryInput => '(' . (new QuerySql())->write($input->query) . ')',
             $input instanceof C\Subquery\ExistsInput => 'EXISTS (' . (new QuerySql())->write($input->query) . ')',
             $input instanceof C\Subquery\InQueryInput => '(' . $this->write($input->subject) . ')' . ($input->negated ? ' NOT' : '') . ' IN (' . (new QuerySql())->write($input->query) . ')',
@@ -60,6 +60,11 @@ final class ExpressionSql
      */
     public function branches(C\Conditional\CaseBranchesInput $input): string
     {
-        return implode(' ', array_map(fn (C\Conditional\CaseArmInput $arm): string => 'WHEN ' . $this->write($arm->when) . ' THEN ' . $this->write($arm->then), $input->arms)) . ($input->otherwise === null ? '' : ' ELSE ' . $this->write($input->otherwise));
+        $first = $input->arms[0];
+        $sql = $first->layout->write($this->write($first->when), $this->write($first->then));
+        foreach (array_slice($input->arms, 1) as $arm) {
+            $sql = $arm->layout->append($sql, $arm->layout->write($this->write($arm->when), $this->write($arm->then)));
+        }
+        return $input->otherwise === null ? $sql : $input->layout->append($sql, $this->write($input->otherwise));
     }
 }

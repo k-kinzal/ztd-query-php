@@ -32,7 +32,7 @@ final class SqliteSimpleCaseTest extends TestCase
     {
         $null = new NullConstant();
         $one = new SqliteInteger(new UnsignedInteger('1'));
-        $case = new SqliteSimpleCase($null, new SqliteCaseBranches($one, new SqliteCaseArm($null, $null)));
+        $case = new SqliteSimpleCase($null, new SqliteCaseBranches($one, new \SqlSemantics\Statement\Expression\Rendering\SqliteElseLayout(), new SqliteCaseArm($null, $null)));
         self::assertEquals($one->type(), $case->type());
         self::assertSame(Nullability::NotNull, $case->nullability());
     }
@@ -42,7 +42,7 @@ final class SqliteSimpleCaseTest extends TestCase
         $scope = new Scope(new Catalog(new SearchPath(new Name('main'))));
         $column = new ColumnReference($scope, new Name('missing'));
         $null = new NullConstant();
-        $case = new SqliteSimpleCase($null, new SqliteCaseBranches($null, new SqliteCaseArm($null, $column)));
+        $case = new SqliteSimpleCase($null, new SqliteCaseBranches($null, new \SqlSemantics\Statement\Expression\Rendering\SqliteElseLayout(), new SqliteCaseArm($null, $column)));
         self::assertSame(Invalid::MissingColumn, $case->type());
         self::assertSame(Nullability::Unknown, $case->nullability());
     }
@@ -50,7 +50,7 @@ final class SqliteSimpleCaseTest extends TestCase
     public function testNullabilityRetainsPossibleBranchNullsForOtherBases(): void
     {
         $one = new SqliteInteger(new UnsignedInteger('1'));
-        $case = new SqliteSimpleCase($one, new SqliteCaseBranches(null, new SqliteCaseArm($one, $one)));
+        $case = new SqliteSimpleCase($one, new SqliteCaseBranches(null, new \SqlSemantics\Statement\Expression\Rendering\SqliteElseLayout(), new SqliteCaseArm($one, $one)));
         self::assertSame(Nullability::MaybeNull, $case->nullability());
         self::assertInstanceOf(SqliteChoiceDomain::class, $case->type());
     }
@@ -60,14 +60,14 @@ final class SqliteSimpleCaseTest extends TestCase
         $scope = new Scope(new Catalog(new SearchPath(new Name('main')), complete: false));
         $column = new ColumnReference($scope, new Name('input'));
         $null = new NullConstant();
-        $case = new SqliteSimpleCase($column, new SqliteCaseBranches(null, new SqliteCaseArm($null, $null), new SqliteCaseArm($null, $null)));
+        $case = new SqliteSimpleCase($column, new SqliteCaseBranches(null, new \SqlSemantics\Statement\Expression\Rendering\SqliteElseLayout(), new SqliteCaseArm($null, $null), new SqliteCaseArm($null, $null)));
         self::assertSame([$column], $case->references());
     }
 
     public function testToStringRetainsEqualityChoiceRatherThanTruthTests(): void
     {
         $text = new SqliteText(new StringLiteral('word'));
-        $case = new SqliteSimpleCase($text, new SqliteCaseBranches(null, new SqliteCaseArm($text, $text)));
+        $case = new SqliteSimpleCase($text, new SqliteCaseBranches(null, new \SqlSemantics\Statement\Expression\Rendering\SqliteElseLayout(), new SqliteCaseArm($text, $text)));
         self::assertSame("CASE 'word' WHEN 'word' THEN 'word' END", $case->toString());
     }
 }

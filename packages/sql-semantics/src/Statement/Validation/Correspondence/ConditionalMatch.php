@@ -40,10 +40,10 @@ final class ConditionalMatch
             return $children;
         }
         if ($input instanceof C\SimpleCaseInput) {
-            Check::invariant($actual instanceof M\SqliteSimpleCase, 'A simple CASE must retain its single base evaluation.');
+            Check::invariant($actual instanceof M\SqliteSimpleCase && SpellingMatch::same($input->layout, $actual->layout), 'A simple CASE must retain its single base evaluation.');
             return [new ScalarPair($input->base, $actual->base, $scope), ...$this->branches($input->branches, $actual->branches, $scope)];
         }
-        Check::invariant($input instanceof C\SearchedCaseInput && $actual instanceof M\SqliteSearchedCase, 'A searched CASE must retain ordered independent truth tests.');
+        Check::invariant($input instanceof C\SearchedCaseInput && $actual instanceof M\SqliteSearchedCase && SpellingMatch::same($input->layout, $actual->layout), 'A searched CASE must retain ordered independent truth tests.');
         return $this->branches($input->branches, $actual->branches, $scope);
     }
 
@@ -53,10 +53,11 @@ final class ConditionalMatch
      */
     public function branches(C\CaseBranchesInput $input, M\SqliteCaseBranches $actual, Scope|SqliteAliasScope $scope): array
     {
-        Check::invariant(count($input->arms) === count($actual->arms), 'Every CASE arm must occupy its requested position.');
+        Check::invariant(SpellingMatch::same($input->layout, $actual->layout) && count($input->arms) === count($actual->arms), 'Every CASE arm must occupy its requested position.');
         Check::invariant(($input->otherwise === null) === ($actual->otherwise === null), 'CASE must retain whether ELSE was supplied.');
         $children = [];
         foreach ($input->arms as $index => $arm) {
+            Check::invariant(SpellingMatch::same($arm->layout, $actual->arms[$index]->layout), 'Each CASE arm must retain its constrained keyword spelling.');
             $children[] = new ScalarPair($arm->when, $actual->arms[$index]->test, $scope);
             $children[] = new ScalarPair($arm->then, $actual->arms[$index]->result, $scope);
         }

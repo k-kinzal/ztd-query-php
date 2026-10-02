@@ -17,13 +17,13 @@ final class ExpressionSqlTest extends TestCase
 {
     public function testWritePreservesSimpleCaseEvaluationStructure(): void
     {
-        $input = new C\Conditional\SimpleCaseInput(new E\SqliteInteger(new UnsignedInteger('2')), new C\Conditional\CaseBranchesInput(new E\NullConstant(), new C\Conditional\CaseArmInput(new E\SqliteInteger(new UnsignedInteger('2')), new E\SqliteInteger(new UnsignedInteger('7')))));
+        $input = new C\Conditional\SimpleCaseInput(new E\SqliteInteger(new UnsignedInteger('2')), new C\Conditional\CaseBranchesInput(new E\NullConstant(), new E\Rendering\SqliteElseLayout(), new C\Conditional\CaseArmInput(new E\SqliteInteger(new UnsignedInteger('2')), new E\SqliteInteger(new UnsignedInteger('7')))));
         self::assertSame('CASE 2 WHEN 2 THEN 7 ELSE NULL END', (new C\Rendering\ExpressionSql())->write($input));
     }
 
     public function testBranchesRetainsMissingElse(): void
     {
-        $input = new C\Conditional\CaseBranchesInput(null, new C\Conditional\CaseArmInput(new E\NullConstant(), new E\SqliteInteger(new UnsignedInteger('7'))));
+        $input = new C\Conditional\CaseBranchesInput(null, new E\Rendering\SqliteElseLayout(), new C\Conditional\CaseArmInput(new E\NullConstant(), new E\SqliteInteger(new UnsignedInteger('7'))));
         self::assertSame('WHEN NULL THEN 7', (new C\Rendering\ExpressionSql())->branches($input));
     }
 

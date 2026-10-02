@@ -23,7 +23,7 @@ final class SimpleCaseInputTest extends TestCase
 {
     public function testNewInputPreservesItsEvaluationWhenComposedIntoAQuery(): void
     {
-        $input = new C\Conditional\SimpleCaseInput(new E\SqliteInteger(new UnsignedInteger('2')), new C\Conditional\CaseBranchesInput(new E\SqliteInteger(new UnsignedInteger('9')), new C\Conditional\CaseArmInput(new E\SqliteInteger(new UnsignedInteger('1')), new E\SqliteInteger(new UnsignedInteger('3'))), new C\Conditional\CaseArmInput(new E\SqliteInteger(new UnsignedInteger('2')), new E\SqliteInteger(new UnsignedInteger('7')))));
+        $input = new C\Conditional\SimpleCaseInput(new E\SqliteInteger(new UnsignedInteger('2')), new C\Conditional\CaseBranchesInput(new E\SqliteInteger(new UnsignedInteger('9')), new E\Rendering\SqliteElseLayout(), new C\Conditional\CaseArmInput(new E\SqliteInteger(new UnsignedInteger('1')), new E\SqliteInteger(new UnsignedInteger('3'))), new C\Conditional\CaseArmInput(new E\SqliteInteger(new UnsignedInteger('2')), new E\SqliteInteger(new UnsignedInteger('7')))));
         $context = new Catalog(new SearchPath(new Name('main')));
         $query = new Select($context, new C\Query\SelectDefinition(new C\Query\ProjectionDefinition(new C\Query\FieldDefinition($input, new Name('result')))));
         $result = (new PDO('sqlite::memory:'))->query($query->toString());

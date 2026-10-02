@@ -24,8 +24,8 @@ final class ConditionalMatchTest extends TestCase
     {
         $scope = new Scope(new Catalog(new SearchPath(new Name('main'))));
         $value = new E\NullConstant();
-        $input = new C\Conditional\SimpleCaseInput($value, new C\Conditional\CaseBranchesInput(null, new C\Conditional\CaseArmInput($value, $value)));
-        $actual = new E\Conditional\SqliteSearchedCase(new E\Conditional\SqliteCaseBranches(null, new E\Conditional\SqliteCaseArm($value, $value)));
+        $input = new C\Conditional\SimpleCaseInput($value, new C\Conditional\CaseBranchesInput(null, new E\Rendering\SqliteElseLayout(), new C\Conditional\CaseArmInput($value, $value)));
+        $actual = new E\Conditional\SqliteSearchedCase(new E\Conditional\SqliteCaseBranches(null, new E\Rendering\SqliteElseLayout(), new E\Conditional\SqliteCaseArm($value, $value)));
         $this->expectException(InvariantViolation::class);
         (new V\ConditionalMatch())->children(new V\ScalarPair($input, $actual, $scope));
     }
@@ -34,8 +34,8 @@ final class ConditionalMatchTest extends TestCase
     {
         $scope = new Scope(new Catalog(new SearchPath(new Name('main'))));
         $value = new E\NullConstant();
-        $input = new C\Conditional\CaseBranchesInput(null, new C\Conditional\CaseArmInput($value, $value));
-        $actual = new E\Conditional\SqliteCaseBranches($value, new E\Conditional\SqliteCaseArm($value, $value));
+        $input = new C\Conditional\CaseBranchesInput(null, new E\Rendering\SqliteElseLayout(), new C\Conditional\CaseArmInput($value, $value));
+        $actual = new E\Conditional\SqliteCaseBranches($value, new E\Rendering\SqliteElseLayout(), new E\Conditional\SqliteCaseArm($value, $value));
         $this->expectException(InvariantViolation::class);
         (new V\ConditionalMatch())->branches($input, $actual, $scope);
     }
@@ -46,8 +46,8 @@ final class ConditionalMatchTest extends TestCase
         $test = new E\SqliteText(new \SqlSemantics\Statement\Literal\StringLiteral('test'));
         $result = new E\SqliteText(new \SqlSemantics\Statement\Literal\StringLiteral('result'));
         $fallback = new E\NullConstant();
-        $input = new C\Conditional\CaseBranchesInput($fallback, new C\Conditional\CaseArmInput($test, $result));
-        $actual = new E\Conditional\SqliteCaseBranches($fallback, new E\Conditional\SqliteCaseArm($test, $result));
+        $input = new C\Conditional\CaseBranchesInput($fallback, new E\Rendering\SqliteElseLayout(), new C\Conditional\CaseArmInput($test, $result));
+        $actual = new E\Conditional\SqliteCaseBranches($fallback, new E\Rendering\SqliteElseLayout(), new E\Conditional\SqliteCaseArm($test, $result));
         $children = (new V\ConditionalMatch())->branches($input, $actual, $scope);
         self::assertSame([$test, $result, $fallback], array_column($children, 'actual'));
     }

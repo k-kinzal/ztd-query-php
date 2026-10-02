@@ -31,7 +31,7 @@ final class ExpressionConstructionTest extends TestCase
     public function testBranchesPreservesOrderedWhenThenAndElseRoles(): void
     {
         $scope = new \SqlSemantics\Statement\Relation\Scope(new Catalog(new SearchPath(new Name('main'))));
-        $input = new C\Conditional\CaseBranchesInput(new E\NullConstant(), new C\Conditional\CaseArmInput(new C\Expression\ColumnUse(new Name('when_value')), new C\Expression\ColumnUse(new Name('then_value'))));
+        $input = new C\Conditional\CaseBranchesInput(new E\NullConstant(), new E\Rendering\SqliteElseLayout(), new C\Conditional\CaseArmInput(new C\Expression\ColumnUse(new Name('when_value')), new C\Expression\ColumnUse(new Name('then_value'))));
         $branches = (new C\ExpressionConstruction())->branches($input, $scope);
         self::assertSame('WHEN when_value THEN then_value ELSE NULL', $branches->toString());
         self::assertSame('when_value', $branches->arms[0]->test->references()[0]->name->value);

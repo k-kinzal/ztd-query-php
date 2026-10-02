@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Type\SqliteChoiceDomain;
  * @visibility public
  * @example An omitted ELSE contributes a NULL result
  *     $null = new \SqlSemantics\Statement\Expression\NullConstant();
- *     $branches = new \SqlSemantics\Statement\Expression\Conditional\SqliteCaseBranches(null, new \SqlSemantics\Statement\Expression\Conditional\SqliteCaseArm($null, $null));
+ *     $branches = new \SqlSemantics\Statement\Expression\Conditional\SqliteCaseBranches(null, new \SqlSemantics\Statement\Expression\Rendering\SqliteElseLayout(), new \SqlSemantics\Statement\Expression\Conditional\SqliteCaseArm($null, $null));
  *     $branches->nullability() // => \SqlSemantics\Statement\Declaration\Nullability::AlwaysNull
  */
 final class SqliteCaseBranches
@@ -33,7 +33,7 @@ final class SqliteCaseBranches
     /**
      * A selection needs at least one test; PHP null means ELSE is omitted.
      */
-    public function __construct(public readonly ?ScalarExpression $otherwise, SqliteCaseArm ...$arms)
+    public function __construct(public readonly ?ScalarExpression $otherwise, public readonly \SqlSemantics\Statement\Expression\Rendering\SqliteElseLayout $layout, SqliteCaseArm ...$arms)
     {
         \SqlSemantics\Statement\Validation\Check::input($arms !== [], 'A CASE expression needs at least one branch.');
         $this->arms = array_values($arms);
@@ -133,6 +133,10 @@ final class SqliteCaseBranches
      */
     public function toString(): string
     {
-        return implode(' ', array_map(static fn (SqliteCaseArm $arm): string => $arm->toString(), $this->arms)) . ($this->otherwise === null ? '' : ' ELSE ' . $this->otherwise->toString());
+        $sql = $this->arms[0]->toString();
+        foreach (array_slice($this->arms, 1) as $arm) {
+            $sql = $arm->layout->append($sql, $arm->toString());
+        }
+        return $this->otherwise === null ? $sql : $this->layout->append($sql, $this->otherwise->toString());
     }
 }
