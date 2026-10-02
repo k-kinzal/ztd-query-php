@@ -52,7 +52,7 @@ final class Declarations implements DeclarationLookup
         foreach ($body->parameters as $parameter) {
             $parameters[] = new Parameter($parameter->name, $parameter->type, $parameter->byReference, $parameter->variadic, self::initializer($parameter->default));
         }
-        return new Signature($parameters, $body->returnType, $body->allowExtraArguments, $body->byReference);
+        return new Signature($parameters, $body->returnType, $body->allowExtraArguments, $body->byReference, $body->docComment);
     }
 
     /**
@@ -68,9 +68,9 @@ final class Declarations implements DeclarationLookup
         }
         $properties = [];
         foreach ($class->properties as $key => $property) {
-            $properties[$key] = new PropertyMetadata($property->name, $property->className, $property->type, $property->visibility, $property->static, $property->readonly, self::initializer($property->default));
+            $properties[$key] = new PropertyMetadata($property->name, $property->className, $property->type, $property->visibility, $property->static, $property->readonly, self::initializer($property->default), $property->docComment);
         }
-        return new ClassMetadata($class->name, $class->parent, $class->interfaces, $class->traits, $class->methods, $properties, $class->constants, $class->final, $class->abstract, $class->interface, $class->enum);
+        return new ClassMetadata($class->name, $class->parent, $class->interfaces, $class->traits, $class->methods, $properties, $class->constants, $class->final, $class->abstract, $class->interface, $class->enum, $class->docComment, array_map(static fn ($constant): string => $constant->docComment, $class->constantDeclarations));
     }
 
     /**

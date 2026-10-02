@@ -55,7 +55,7 @@ final class CallableCompiler
             (new GotoLowering($l))->resolve();
         }
         $return = $node instanceof FunctionLike ? $this->type($node->getReturnType()) : 'mixed';
-        return new CallableGraph($source->symbol, $parameters, $g->finish(), $g->source($node), $return, $node instanceof FunctionLike && $node->returnsByRef(), $source->strict, $source->className, $this->captures($node), $g->regions, visibility: $node instanceof Stmt\ClassMethod ? ($node->isPrivate() ? 'private' : ($node->isProtected() ? 'protected' : 'public')) : 'public', static: $node instanceof Stmt\ClassMethod ? $node->isStatic() : (($node instanceof Expr\Closure || $node instanceof Expr\ArrowFunction) && $node->static), abstract: $node instanceof Stmt\ClassMethod && $node->stmts === null, external: $external);
+        return new CallableGraph($source->symbol, $parameters, $g->finish(), $g->source($node), $return, $node instanceof FunctionLike && $node->returnsByRef(), $source->strict, $source->className, $this->captures($node), $g->regions, visibility: $node instanceof Stmt\ClassMethod ? ($node->isPrivate() ? 'private' : ($node->isProtected() ? 'protected' : 'public')) : 'public', static: $node instanceof Stmt\ClassMethod ? $node->isStatic() : (($node instanceof Expr\Closure || $node instanceof Expr\ArrowFunction) && $node->static), abstract: $node instanceof Stmt\ClassMethod && $node->stmts === null, external: $external, docComment: $node instanceof FunctionLike ? $node->getDocComment()?->getText() ?? '' : '');
     }
 
     /**
