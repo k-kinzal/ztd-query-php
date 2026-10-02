@@ -119,6 +119,17 @@ final class QueryEncodingTest extends TestCase
         self::assertCount(3, $graph->records);
     }
 
+    public function testRecordKeepsReceiverPropertiesByNameInTheSharedGraph(): void
+    {
+        $order = Term::constant('name');
+        $graph = new ValueGraph();
+        $record = (new QueryEncoding())->record(new ReturnQuery('target', QueryScope::fromEntrypoints([new EntryPoint('Box::run', [$order], properties:['order' => $order,'table' => Term::constant('users')]), new EntryPoint('main')])), $graph);
+        $entries = $record['scope']['entries'];
+        self::assertSame([['name' => 'order','value' => $graph->add($order)],['name' => 'table','value' => $graph->add(Term::constant('users'))]], $entries[0]['properties']);
+        self::assertSame($entries[0]['arguments'][0]['value'], $entries[0]['properties'][0]['value']);
+        self::assertSame([], $entries[1]['properties']);
+    }
+
     /**
      * @throws JsonException If query metadata cannot be encoded
      */
@@ -184,6 +195,11 @@ final class QueryEncodingTest extends TestCase
         yield 'receiver' => [new EntryPoint('Box::run', receiver:new Term('object', 'a', attributes:['class' => 'Box'])),new EntryPoint('Box::run')];
         yield 'receiver secrecy' => [new EntryPoint('Box::run', receiver:new Term('object', 'a', attributes:['class' => 'Box'], secret:true)),new EntryPoint('Box::run', receiver:new Term('object', 'a', attributes:['class' => 'Box']))];
         yield 'binary argument name' => [new EntryPoint('a', ["\xff" => Term::constant(1)]),new EntryPoint('a', ["\xfe" => Term::constant(1)])];
+        yield 'property value' => [new EntryPoint('Box::run', properties:['order' => Term::constant('name')]),new EntryPoint('Box::run', properties:['order' => Term::constant('email')])];
+        yield 'property name' => [new EntryPoint('Box::run', properties:['order' => Term::constant('name')]),new EntryPoint('Box::run', properties:['table' => Term::constant('name')])];
+        yield 'property presence' => [new EntryPoint('Box::run', properties:['order' => Term::constant('name')]),new EntryPoint('Box::run')];
+        yield 'property secrecy' => [new EntryPoint('Box::run', properties:['order' => Term::constant('name', true)]),new EntryPoint('Box::run', properties:['order' => Term::constant('name')])];
+        yield 'confidential property values' => [new EntryPoint('Box::run', properties:['order' => Term::constant('one', true)]),new EntryPoint('Box::run', properties:['order' => Term::constant('two', true)])];
     }
 
     public function testRecordRejectsUnknownQueryImplementations(): void
