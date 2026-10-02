@@ -304,4 +304,27 @@ final class ArrayFunctionsTest extends TestCase
         self::assertSame('TypeError', $result->literal);
     }
 
+    public function testBoundaryKeySelectsTheFirstOrLastKeyOfClosedShapes(): void
+    {
+        $functions = new ArrayFunctions();
+        $array = Term::fromNative(['a' => 1, 7 => 2]);
+        self::assertSame('a', $functions->apply('array_key_first', [$array])->native());
+        self::assertSame(7, $functions->apply('array_key_last', [$array])->native());
+        self::assertNull($functions->boundaryKey('array_key_first', Term::array([]))->native());
+        $open = Term::array([Term::constant(1)], true);
+        self::assertSame(['intrinsic', 'int|string|null', [$open]], [$functions->boundaryKey('array_key_last', $open)->kind, $functions->boundaryKey('array_key_last', $open)->attributes['type'], $functions->boundaryKey('array_key_last', $open)->operands]);
+    }
+
+    public function testSliceRenumbersIntegerKeysUnlessPreserved(): void
+    {
+        $functions = new ArrayFunctions();
+        $array = Term::fromNative([5 => 'a', 'k' => 'b', 9 => 'c']);
+        self::assertSame(['k' => 'b', 0 => 'c'], $functions->apply('array_slice', [$array, Term::constant(1), Term::constant(null), Term::constant(false)])->native());
+        self::assertSame([5 => 'a', 'k' => 'b'], $functions->slice([$array, Term::constant(0), Term::constant(2), Term::constant(true)])->native());
+        self::assertSame([2], $functions->slice([Term::fromNative([1, 2, 3]), Term::constant(-2), Term::constant(-1), Term::constant(false)])->native());
+        self::assertTrue($functions->slice([Term::fromNative([1], true), Term::constant(0), Term::constant(null), Term::constant(false)])->isSecret());
+        $unknown = [$array, Term::parameter('offset', 'int'), Term::constant(null), Term::constant(false)];
+        self::assertSame(['intrinsic', 'array', $unknown], [$functions->slice($unknown)->kind, $functions->slice($unknown)->attributes['type'], $functions->slice($unknown)->operands]);
+    }
+
 }
