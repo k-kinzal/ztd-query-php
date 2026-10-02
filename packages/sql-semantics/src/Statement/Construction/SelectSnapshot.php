@@ -59,6 +59,7 @@ final class SelectSnapshot
         $this->quantifier = $input->quantifier;
         $limitScope = new Scope($catalog);
         $this->limit = $input->limit === null ? null : new SqliteLimit($limitScope, $expressions->derive($input->limit->count, $limitScope), $input->limit->offset === null ? null : $expressions->derive($input->limit->offset, $limitScope), $input->limit->commaSyntax);
-        Check::input((new \SqlSemantics\Statement\SemanticGraph())->containsOnlyValues($this), 'A SELECT retains only closed immutable semantic values.');
+        (new \SqlSemantics\Statement\Validation\Correspondence\QueryMatch())->select($context, $input, $this);
+        Check::invariant((new \SqlSemantics\Statement\SemanticGraph())->containsOnlyValues($this), 'A SELECT retains only closed immutable semantic values.');
     }
 }

@@ -23,8 +23,8 @@ revision. The records below currently apply to the SQLite 3.47.2 profile.
 - Derived facts: delegated to each resulting expression's semantic rule. Current
   arithmetic precision and eager fact completion still require further work.
 - Correspondence: every operand slot is supplied explicitly to its concrete
-  expression constructor. Independent source/model and output/model checking is
-  not yet complete; this dispatch alone does not establish correspondence.
+  expression constructor. NEW-QUERY-CORRESPONDENCE-001 checks the actual stored operands independently
+  of this dispatch. Source/model and output/model checking remain incomplete.
 - Termination: each recursive derivation consumes a strict child of the finite
   input DAG. Immutable constructors cannot form input cycles through normal PHP
   construction; reflection-based private-boundary attacks are outside the model.
@@ -60,8 +60,8 @@ revision. The records below currently apply to the SQLite 3.47.2 profile.
   no edit history, graph transplant, incremental invalidation, or rebind pass.
 - Remaining assumptions/obligations: catalog completeness and name policies need
   their full profile-specific rules; all derived facts must be completed eagerly;
-  actual input and rendered-output correspondence must be checked before
-  publication. Those omissions prevent claiming G3, G5, and G6 in full.
+  original-SQL and rendered-output correspondence must be checked before
+  publication. Typed new-input correspondence is checked as recorded below. Those omissions prevent claiming G3, G5, and G6 in full.
 - Implementation: `Construction\SelectSnapshot`, `Query\Select`,
   `Query\ScopedSelect`, `SubqueryConstruction`.
 
@@ -85,6 +85,49 @@ revision. The records below currently apply to the SQLite 3.47.2 profile.
   does not certify complete VALUES support in SQL analysis or G5/G6.
 - Implementation: `Construction\RowsSnapshot`, `RowsConstruction`, `Query\Rows`,
   `Query\ScopedRows`, and SQLite's typed query-input reader.
+
+## NEW-QUERY-CORRESPONDENCE-001
+
+**Status:** Implemented for the current SELECT/VALUES input domain; SQL-source and
+rendered-output correspondence remain incomplete.
+
+- Input: a complete typed new definition, the requested context or lexical parent,
+  and the actual candidate snapshot. The checker also accepts a finished concrete
+  query for independent inspection; it does not create or transform that query.
+- Operation and slot correspondence: query form, quantifier, ordered named inputs,
+  projection positions, aliases, predicate presence and operands, count/offset,
+  tuple positions and widths, and every supported scalar child are checked against
+  the actual stored properties. CASE base/test/result roles are not interchangeable.
+  Empty membership still checks its syntactically requested subject operand.
+- Environments: the exact catalog snapshot, input occurrences, declaration objects,
+  and output fields are compared by identity. A freshly reconstructed alias search
+  environment is admissible only around the same scope, projection, and ordered
+  visible aliases. An unrelated context with equal contents is not interchangeable.
+- Leaf contract: new construction retains each supplied closed immutable literal
+  value itself. Name uses instead create fresh lookup sites and retain the supplied
+  decoded name and quote interpretation. Resolution outcomes, including conflicts
+  and conditional outer searches, are checked without selecting an alternative.
+- Enforcement: `SelectSnapshot` and `RowsSnapshot` invoke the checker after actual
+  properties are derived and before normal constructor return. A mismatch is an
+  `InvariantViolation`, regardless of PHP's assertion configuration. No candidate
+  or callback escapes while construction is incomplete.
+- Trust boundary: the checker shares the fixed name-resolution primitives with
+  construction. It detects misassembly and wrong actual references; it does not
+  independently establish the primitives' agreement with SQLite. Concrete value
+  constructors, field-name derivation, and catalog rules remain trusted rules
+  requiring their own review. The checker never uses a fingerprint or SQL string
+  to stand in for operand or declaration correspondence.
+- Termination: scalar operand traversal uses an explicit work stack. Nested query
+  checks consume strict query-definition children. Conditional resolution checks
+  follow finite alternatives and strictly enclosing scopes. Deep-query construction
+  and resolution still need the broader explicit-stack performance work.
+- Adversarial evidence: tests reject lost predicates and tuples, reordered fields,
+  changed operators and CASE evaluation forms, missing choices, wrong alias slots,
+  self-join occurrence substitutions, unrelated contexts, and foreign lexical
+  parents. These checks run with `zend.assertions=-1` as well as ordinary settings.
+- Remaining obligations: original SQL to typed input and actual emitted SQL to
+  model are separate contracts; this checker alone does not establish either one.
+- Implementation: `Validation\Correspondence` and the two snapshot constructors.
 
 ## SQLITE-EXPRESSION-SPELLING-001
 

@@ -38,6 +38,7 @@ final class RowsSnapshot
         $this->scope = new Scope($context);
         $expressions = new ExpressionConstruction();
         $this->rows = array_map(fn (Query\RowDefinition $row): Row => new Row($this->scope, ...array_map(fn (ScalarInput $item): ScalarExpression => $expressions->derive($item, $this->scope), $row->expressions)), $input->rows);
-        Check::input((new \SqlSemantics\Statement\SemanticGraph())->containsOnlyValues($this), 'VALUES retains only closed immutable semantic values.');
+        (new \SqlSemantics\Statement\Validation\Correspondence\QueryMatch())->rows($context, $input, $this);
+        Check::invariant((new \SqlSemantics\Statement\SemanticGraph())->containsOnlyValues($this), 'VALUES retains only closed immutable semantic values.');
     }
 }
