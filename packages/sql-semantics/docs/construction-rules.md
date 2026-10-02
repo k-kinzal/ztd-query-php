@@ -65,6 +65,27 @@ revision. The records below currently apply to the SQLite 3.47.2 profile.
 - Implementation: `Construction\SelectSnapshot`, `Query\Select`,
   `Query\ScopedSelect`, `SubqueryConstruction`.
 
+## NEW-VALUES-001
+
+**Status:** Implemented; output-contract obligation incomplete.
+
+- Inputs: one catalog snapshot and a nonempty ordered `RowsDefinition`. Each row
+  supplies explicit scalar inputs; bound `Row` objects are not accepted.
+- Environment: a new empty input scope is created once per query. Each row and
+  scalar use is derived separately, including repeated instances of an input
+  definition. Different widths remain represented for SQL diagnostics.
+- Public boundary: `Rows` is an independent operation; `ScopedRows` is a body with
+  an explicit lexical parent and cannot be supplied as an INSERT source root.
+  Scalar-subquery, existence, and membership rules accept the scoped body through
+  `SqliteSubquery`, which checks its immediate lexical parent.
+- Composition and termination: NEW-SCALAR-INPUT-001 applies at every tuple position;
+  the row traversal is finite and nested derivation consumes strict input children.
+- Remaining obligations: independent input and output correspondence, eager facts,
+  complete diagnostic precision, and all query grammar productions. This record
+  does not certify complete VALUES support in SQL analysis or G5/G6.
+- Implementation: `Construction\RowsSnapshot`, `RowsConstruction`, `Query\Rows`,
+  `Query\ScopedRows`, and SQLite's typed query-input reader.
+
 ## SQLITE-EXPRESSION-SPELLING-001
 
 **Status:** Partly implemented; complete lexical/output correspondence pending.

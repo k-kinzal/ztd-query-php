@@ -36,12 +36,10 @@ final class SubqueryReader
             $subject = Tree::child($source, ['expr']);
             assert($subject !== null, 'Query membership has a left operand.');
             $nested = (new QueryReader())->read($query, $context);
-            \SqlSemantics\Statement\Validation\Check::invariant(!$nested instanceof \SqlSemantics\Statement\Query\Select, 'A correlated query is a scoped body.');
             return new SqliteInQuery($expressions->read($subject, $scope), new SqliteSubquery($scope, $nested), str_starts_with(strtoupper(Tree::text($membership)), 'NOT'));
         }
         Tree::assertChildren($source, ['select'], ['(', ')', 'EXISTS']);
         $nested = (new QueryReader())->read($query, $context);
-        \SqlSemantics\Statement\Validation\Check::invariant(!$nested instanceof \SqlSemantics\Statement\Query\Select, 'A correlated query is a scoped body.');
         $body = new SqliteSubquery($scope, $nested);
         return strtoupper($source->tokens()[0]->text) === 'EXISTS' ? new SqliteExists($body) : new SqliteScalarSubquery($body);
     }

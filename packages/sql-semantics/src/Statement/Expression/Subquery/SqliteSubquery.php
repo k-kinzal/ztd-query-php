@@ -6,7 +6,7 @@ namespace SqlSemantics\Statement\Expression\Subquery;
 
 use SqlSemantics\Statement\Expression\ColumnReference;
 use SqlSemantics\Statement\Expression\ScalarExpression;
-use SqlSemantics\Statement\Query\Rows;
+use SqlSemantics\Statement\Query\ScopedRows;
 use SqlSemantics\Statement\Query\ScopedSelect;
 use SqlSemantics\Statement\Relation\Scope;
 use SqlSemantics\Statement\Relation\SqliteAliasScope;
@@ -25,7 +25,7 @@ final class SqliteSubquery
     /**
      * The nested query must have been resolved at this exact expression site.
      */
-    public function __construct(public readonly Scope $scope, public readonly ScopedSelect|Rows $query)
+    public function __construct(public readonly Scope $scope, public readonly ScopedSelect|ScopedRows $query)
     {
         $parent = $query->scope->parent;
         \SqlSemantics\Statement\Validation\Check::input(($parent instanceof SqliteAliasScope ? $parent->scope : $parent) === $scope, 'A subquery must retain its immediate lexical input scope.');
@@ -56,7 +56,7 @@ final class SqliteSubquery
      */
     public function operands(): array
     {
-        if ($this->query instanceof Rows) {
+        if ($this->query instanceof ScopedRows) {
             return array_merge(...array_map(static fn (\SqlSemantics\Statement\Query\Row $row): array => $row->expressions, $this->query->rows));
         }
         $operands = $this->outputs();
@@ -73,7 +73,7 @@ final class SqliteSubquery
      */
     public function invalid(): ?Invalid
     {
-        if ($this->query instanceof Rows && count(array_unique($this->query->widths())) !== 1) {
+        if ($this->query instanceof ScopedRows && count(array_unique($this->query->widths())) !== 1) {
             return Invalid::InconsistentRowWidth;
         }
         foreach ($this->operands() as $operand) {

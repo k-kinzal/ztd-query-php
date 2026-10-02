@@ -10,13 +10,13 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Statement\Construction\Expression\ColumnUse;
 use SqlSemantics\Statement\Construction\Query\FieldDefinition;
 use SqlSemantics\Statement\Construction\Query\ProjectionDefinition;
+use SqlSemantics\Statement\Construction\Query\RowDefinition;
+use SqlSemantics\Statement\Construction\Query\RowsDefinition;
 use SqlSemantics\Statement\Construction\Query\SelectDefinition;
-use SqlSemantics\Statement\Expression\ColumnReference;
 use SqlSemantics\Statement\Expression\NullConstant;
 use SqlSemantics\Statement\Expression\Subquery\SqliteSubquery;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Query\Row;
-use SqlSemantics\Statement\Query\Rows;
+use SqlSemantics\Statement\Query\ScopedRows;
 use SqlSemantics\Statement\Query\ScopedSelect;
 use SqlSemantics\Statement\Relation\Scope;
 use SqlSemantics\Statement\Schema\Catalog;
@@ -32,7 +32,7 @@ final class SqliteSubqueryTest extends TestCase
         $outer = new Scope(new Catalog(new SearchPath(new Name('main'))));
         $inner = new Scope($outer);
         $value = new NullConstant();
-        $source = new SqliteSubquery($outer, new Rows(new Row($inner, $value, $value)));
+        $source = new SqliteSubquery($outer, new ScopedRows($outer, new RowsDefinition(new RowDefinition($value, $value))));
         self::assertSame(2, $source->width());
         self::assertSame([$value, $value], $source->outputs());
     }
@@ -43,7 +43,7 @@ final class SqliteSubqueryTest extends TestCase
         $inner = new Scope($outer);
         $first = new NullConstant();
         $second = new NullConstant();
-        $source = new SqliteSubquery($outer, new Rows(new Row($inner, $first), new Row($inner, $second)));
+        $source = new SqliteSubquery($outer, new ScopedRows($outer, new RowsDefinition(new RowDefinition($first), new RowDefinition($second))));
         self::assertSame([$first], $source->outputs());
     }
 
@@ -63,7 +63,7 @@ final class SqliteSubqueryTest extends TestCase
         $outer = new Scope(new Catalog(new SearchPath(new Name('main'))));
         $inner = new Scope($outer);
         $value = new NullConstant();
-        $rows = new Rows(new Row($inner, $value), new Row($inner, $value, $value));
+        $rows = new ScopedRows($outer, new RowsDefinition(new RowDefinition($value), new RowDefinition($value, $value)));
         $source = new SqliteSubquery($outer, $rows);
         self::assertSame($rows, $source->query);
         self::assertSame(Invalid::InconsistentRowWidth, $source->invalid());
@@ -73,8 +73,9 @@ final class SqliteSubqueryTest extends TestCase
     {
         $outer = new Scope(new Catalog(new SearchPath(new Name('main'))));
         $inner = new Scope($outer);
-        $reference = new ColumnReference($inner, new Name('missing'));
-        $source = new SqliteSubquery($outer, new Rows(new Row($inner, $reference)));
+        $source = new SqliteSubquery($outer, new ScopedRows($outer, new RowsDefinition(new RowDefinition(new ColumnUse(new Name('missing'))))));
+        $reference = $source->references()[0];
+        self::assertSame($source->query->scope, $reference->scope);
         self::assertSame([$reference], $source->references());
         self::assertSame(Invalid::MissingColumn, $source->invalid());
     }

@@ -19,8 +19,9 @@ final class QueryReader
 {
     /**
      * Preserves the query's source form as a concrete semantic type.
+     * @return ($catalog is Catalog ? Select|Rows : \SqlSemantics\Statement\Query\ScopedSelect|\SqlSemantics\Statement\Query\ScopedRows)
      */
-    public function read(Node $source, Catalog|Scope|SqliteAliasScope $catalog): Select|\SqlSemantics\Statement\Query\ScopedSelect|Rows
+    public function read(Node $source, Catalog|Scope|SqliteAliasScope $catalog): Select|\SqlSemantics\Statement\Query\ScopedSelect|Rows|\SqlSemantics\Statement\Query\ScopedRows
     {
         $input = (new Input\QueryInputReader())->read($source);
         if ($input instanceof \SqlSemantics\Statement\Construction\Query\RowsDefinition) {

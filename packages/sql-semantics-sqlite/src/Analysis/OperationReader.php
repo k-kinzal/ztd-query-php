@@ -71,7 +71,6 @@ final class OperationReader implements \SqlSemantics\Core\Policy\OperationRules
         if ($query !== null) {
             Tree::assertChildren($source, ['select'], []);
             $operation = (new QueryReader())->read($query, $catalog);
-            \SqlSemantics\Statement\Validation\Check::invariant(!$operation instanceof \SqlSemantics\Statement\Query\ScopedSelect, 'An independently parsed query is a statement root.');
             return $operation;
         }
         $tokens = $source->tokens();

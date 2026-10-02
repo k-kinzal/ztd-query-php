@@ -7,19 +7,20 @@ namespace Tests\Unit\Statement\Expression\Subquery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Statement\Construction\Expression\ColumnUse;
 use SqlSemantics\Statement\Construction\Query\FieldDefinition;
 use SqlSemantics\Statement\Construction\Query\ProjectionDefinition;
+use SqlSemantics\Statement\Construction\Query\RowDefinition;
+use SqlSemantics\Statement\Construction\Query\RowsDefinition;
 use SqlSemantics\Statement\Construction\Query\SelectDefinition;
 use SqlSemantics\Statement\Declaration\Nullability;
-use SqlSemantics\Statement\Expression\ColumnReference;
 use SqlSemantics\Statement\Expression\NullConstant;
 use SqlSemantics\Statement\Expression\SqliteInteger;
 use SqlSemantics\Statement\Expression\Subquery\SqliteScalarSubquery;
 use SqlSemantics\Statement\Expression\Subquery\SqliteSubquery;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Literal\UnsignedInteger;
-use SqlSemantics\Statement\Query\Row;
-use SqlSemantics\Statement\Query\Rows;
+use SqlSemantics\Statement\Query\ScopedRows;
 use SqlSemantics\Statement\Query\ScopedSelect;
 use SqlSemantics\Statement\Relation\Scope;
 use SqlSemantics\Statement\Schema\Catalog;
@@ -36,8 +37,9 @@ final class SqliteScalarSubqueryTest extends TestCase
     {
         $outer = new Scope(new Catalog(new SearchPath(new Name('main'))));
         $inner = new Scope($outer);
-        $reference = new ColumnReference($inner, new Name('missing'));
-        $source = new SqliteSubquery($outer, new Rows(new Row($inner, $reference)));
+        $source = new SqliteSubquery($outer, new ScopedRows($outer, new RowsDefinition(new RowDefinition(new ColumnUse(new Name('missing'))))));
+        $reference = $source->references()[0];
+        self::assertSame($source->query->scope, $reference->scope);
         $expression = new SqliteScalarSubquery($source);
         self::assertSame([$reference], $expression->references());
         self::assertSame(Invalid::MissingColumn, $expression->type());
@@ -59,7 +61,7 @@ final class SqliteScalarSubqueryTest extends TestCase
         $outer = new Scope(new Catalog(new SearchPath(new Name('main'))));
         $inner = new Scope($outer);
         $value = new NullConstant();
-        $source = new SqliteSubquery($outer, new Rows(new Row($inner, $value, $value)));
+        $source = new SqliteSubquery($outer, new ScopedRows($outer, new RowsDefinition(new RowDefinition($value, $value))));
         self::assertSame(Invalid::ScalarSubqueryWidth, (new SqliteScalarSubquery($source))->type());
     }
 
@@ -67,7 +69,7 @@ final class SqliteScalarSubqueryTest extends TestCase
     {
         $outer = new Scope(new Catalog(new SearchPath(new Name('main'))));
         $inner = new Scope($outer);
-        $source = new SqliteSubquery($outer, new Rows(new Row($inner, new NullConstant())));
+        $source = new SqliteSubquery($outer, new ScopedRows($outer, new RowsDefinition(new RowDefinition(new NullConstant()))));
         self::assertSame(Nullability::AlwaysNull, (new SqliteScalarSubquery($source))->nullability());
     }
 
@@ -75,7 +77,7 @@ final class SqliteScalarSubqueryTest extends TestCase
     {
         $outer = new Scope(new Catalog(new SearchPath(new Name('main'))));
         $inner = new Scope($outer);
-        $source = new SqliteSubquery($outer, new Rows(new Row($inner, new NullConstant())));
+        $source = new SqliteSubquery($outer, new ScopedRows($outer, new RowsDefinition(new RowDefinition(new NullConstant()))));
         self::assertSame('(VALUES (NULL))', (new SqliteScalarSubquery($source))->toString());
     }
 

@@ -50,7 +50,7 @@ final class SqliteInQuery implements ScalarExpression
         if ($this->type() instanceof Invalid) {
             return Nullability::Unknown;
         }
-        $outputs = $this->source->query instanceof \SqlSemantics\Statement\Query\Rows ? $this->source->operands() : $this->source->outputs();
+        $outputs = $this->source->query instanceof \SqlSemantics\Statement\Query\ScopedRows ? $this->source->operands() : $this->source->outputs();
         foreach ([$this->subject, ...$outputs] as $output) {
             if ($output->nullability() !== Nullability::NotNull) {
                 return Nullability::MaybeNull;

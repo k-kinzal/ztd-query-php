@@ -27,6 +27,7 @@ final class SelectReader
 {
     /**
      * Structures the represented clauses; additional query forms require their own lowering.
+     * @return ($catalog is Catalog ? Select : \SqlSemantics\Statement\Query\ScopedSelect)
      */
     public function read(Node $source, Catalog|Scope|SqliteAliasScope $catalog): Select|\SqlSemantics\Statement\Query\ScopedSelect
     {

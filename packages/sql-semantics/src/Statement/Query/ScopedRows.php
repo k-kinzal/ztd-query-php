@@ -4,18 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Statement\Query;
 
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Relation\Scope;
 
 /**
- * A relation constructed from explicit rows, without a table scan or execution simulation.
+ * Correlated VALUES operands at one lexical use site, separate from a statement root.
  * @visibility public
- * @example Constructing one result row from new inputs
- *     $catalog = new \SqlSemantics\Statement\Schema\Catalog(new \SqlSemantics\Statement\Schema\SearchPath(new \SqlSemantics\Statement\Identifier\Name('main')));
- *     $input = new \SqlSemantics\Statement\Construction\Query\RowsDefinition(new \SqlSemantics\Statement\Construction\Query\RowDefinition(new \SqlSemantics\Statement\Expression\NullConstant()));
- *     (new \SqlSemantics\Statement\Query\Rows($catalog, $input))->toString() // => 'VALUES (NULL)'
+ * @example Distinguishing correlated rows from a statement root
+ *     is_a(\SqlSemantics\Statement\Query\ScopedRows::class, \SqlSemantics\Statement\Operation::class, true) // => false
  */
-final class Rows implements Operation
+final class ScopedRows
 {
     use \SqlSemantics\Statement\Validation\Snapshot;
 
@@ -30,9 +27,9 @@ final class Rows implements Operation
     public readonly Scope $scope;
 
     /**
-     * Creates an independent root from explicit new row inputs, never bound row parts.
+     * Creates a new correlated body in its explicit lexical environment, never from bound row parts.
      */
-    public function __construct(\SqlSemantics\Statement\Schema\Catalog $context, \SqlSemantics\Statement\Construction\Query\RowsDefinition $definition)
+    public function __construct(Scope|\SqlSemantics\Statement\Relation\SqliteAliasScope $context, \SqlSemantics\Statement\Construction\Query\RowsDefinition $definition)
     {
         $snapshot = new \SqlSemantics\Statement\Construction\RowsSnapshot($context, $definition);
         $this->scope = $snapshot->scope;

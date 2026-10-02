@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Analysis;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Core\Ast\Tree;
-use SqlSemantics\Statement\Expression\ScalarExpression;
 use SqlSemantics\Statement\Query\Row;
 use SqlSemantics\Statement\Query\Rows;
 use SqlSemantics\Statement\Relation\Scope;
@@ -21,18 +19,11 @@ final class RowsReader
 {
     /**
      * An explicit row has no table scan; its expressions do not resolve against insertion destinations.
+     * @return ($catalog is Catalog ? Rows : \SqlSemantics\Statement\Query\ScopedRows)
      */
-    public function read(Node $source, Catalog|Scope|SqliteAliasScope $catalog): Rows
+    public function read(Node $source, Catalog|Scope|SqliteAliasScope $catalog): Rows|\SqlSemantics\Statement\Query\ScopedRows
     {
-        assert(in_array($source->name, ['values', 'mvalues'], true), 'A row constructor has one or more explicit tuples.');
-        $scope = new Scope($catalog);
-        $rows = [];
-        foreach (Tree::outer($source, ['nexprlist']) as $tuple) {
-            $expressions = array_map(static fn (Node $expression): ScalarExpression => (new ExpressionReader())->read($expression, $scope), Tree::outer($tuple, ['expr']));
-            assert($expressions !== [], 'Each VALUES tuple has at least one expression.');
-            $rows[] = new Row($scope, ...$expressions);
-        }
-        assert($rows !== [], 'A row constructor contains at least one row.');
-        return new Rows(...$rows);
+        $input = (new Input\QueryInputReader())->rows($source);
+        return (new \SqlSemantics\Statement\Construction\RowsConstruction())->derive($input, $catalog);
     }
 }

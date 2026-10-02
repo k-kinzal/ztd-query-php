@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Statement\Construction;
 
-use SqlSemantics\Statement\Expression\ScalarExpression;
 use SqlSemantics\Statement\Query\Row;
 use SqlSemantics\Statement\Query\Rows;
 use SqlSemantics\Statement\Relation\Scope;
@@ -19,12 +18,10 @@ final class RowsConstruction
 {
     /**
      * Unequal row widths are semantic SQL diagnostics, not a construction rejection.
+     * @return ($context is Catalog ? Rows : \SqlSemantics\Statement\Query\ScopedRows)
      */
-    public function derive(Query\RowsDefinition $input, Catalog|Scope|SqliteAliasScope $context): Rows
+    public function derive(Query\RowsDefinition $input, Catalog|Scope|SqliteAliasScope $context): Rows|\SqlSemantics\Statement\Query\ScopedRows
     {
-        $scope = new Scope($context);
-        $expressions = new ExpressionConstruction();
-        $rows = array_map(static fn (Query\RowDefinition $row): Row => new Row($scope, ...array_map(static fn (ScalarInput $item): ScalarExpression => $expressions->derive($item, $scope), $row->expressions)), $input->rows);
-        return new Rows(...$rows);
+        return $context instanceof Catalog ? new Rows($context, $input) : new \SqlSemantics\Statement\Query\ScopedRows($context, $input);
     }
 }

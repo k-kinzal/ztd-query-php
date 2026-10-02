@@ -7,13 +7,14 @@ namespace Tests\Unit\Statement\Insertion;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Statement\Construction\Query\RowDefinition;
+use SqlSemantics\Statement\Construction\Query\RowsDefinition;
 use SqlSemantics\Statement\Expression\NullConstant;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Insertion\Arity;
 use SqlSemantics\Statement\Insertion\InsertRows;
 use SqlSemantics\Statement\Insertion\Target;
-use SqlSemantics\Statement\Query\Row;
 use SqlSemantics\Statement\Query\Rows;
 use SqlSemantics\Statement\Relation\Scope;
 use SqlSemantics\Statement\Relation\TableReference;
@@ -30,7 +31,7 @@ final class InsertRowsTest extends TestCase
         $catalog = new Catalog(new SearchPath(new Name('main')), complete: false);
         $target = new Target(new TableReference($catalog, new QualifiedName(new Name('bar'))), new Name('foo'));
         $scope = new Scope($catalog);
-        $operation = new InsertRows($target, new Rows(new Row($scope, new NullConstant())));
+        $operation = new InsertRows($target, new Rows($catalog, new RowsDefinition(new RowDefinition(new NullConstant()))));
         self::assertSame('INSERT INTO bar (foo) VALUES (NULL)', $operation->toString());
         self::assertSame($target, $operation->target);
         self::assertTrue((new SemanticGraph())->isSemanticOperation($operation));
@@ -42,7 +43,7 @@ final class InsertRowsTest extends TestCase
         $catalog = new Catalog(new SearchPath(new Name('main')), complete: false);
         $target = new Target(new TableReference($catalog, new QualifiedName(new Name('bar'))), new Name('a'), new Name('b'));
         $scope = new Scope($catalog);
-        $operation = new InsertRows($target, new Rows(new Row($scope, new NullConstant())));
+        $operation = new InsertRows($target, new Rows($catalog, new RowsDefinition(new RowDefinition(new NullConstant()))));
         self::assertSame(Arity::Mismatch, $operation->arity());
     }
 }

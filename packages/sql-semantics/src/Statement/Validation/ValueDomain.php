@@ -92,6 +92,8 @@ final class ValueDomain
         \SqlSemantics\Statement\Query\Quantifier::class,
         \SqlSemantics\Statement\Query\Row::class,
         \SqlSemantics\Statement\Query\Rows::class,
+        \SqlSemantics\Statement\Query\ScopedRows::class,
+        \SqlSemantics\Statement\Construction\RowsSnapshot::class,
         \SqlSemantics\Statement\Query\Select::class,
         \SqlSemantics\Statement\Query\ScopedSelect::class,
         \SqlSemantics\Statement\Expression\Rendering\SqliteBinaryLayout::class,
