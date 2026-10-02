@@ -56,9 +56,12 @@ final class ReceiverStateTest extends TestCase
     {
         $parameter = new EntryPoint('viaParameter', [Term::parameter('r', 'Repo')]);
         $bare = 'function bare(){return (new ReflectionClass(Repo::class))->newInstanceWithoutConstructor();}';
+        $order = '$o=bare();$p=new ReflectionProperty(Repo::class,"conn");$p->setValue($o,new Conn);(new ReflectionProperty(Repo::class,"order"))->setValue($o,"email");';
         return [
             'argument created without its constructor' => [$bare . 'function target(){return viaParameter(bare());}', $parameter],
             'receiver created without its constructor' => [$bare . 'function target(){return bare()->run("SELECT 2");}', new EntryPoint('Repo::run', ['sql' => Term::constant('SELECT 2')])],
+            'receiver with supplied state' => [$bare . 'function target(){' . $order . 'return $o->run("SELECT 3");}', new EntryPoint('Repo::run', ['sql' => Term::constant('SELECT 3')], properties: ['conn' => Term::parameter('conn', 'Conn'), 'order' => Term::constant('email')])],
+            'receiver with default state' => ['function target(){return (new Repo(new Conn))->run("SELECT 4");}', new EntryPoint('Repo::run', ['sql' => Term::constant('SELECT 4')], properties: ['conn' => Term::parameter('conn', 'Conn'), 'order' => Term::constant('name')])],
         ];
     }
 }

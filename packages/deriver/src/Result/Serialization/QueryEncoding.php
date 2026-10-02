@@ -16,7 +16,7 @@ use JsonException;
 /**
  * Encodes every semantic query option, including scope and structural budgets.
  * @phpstan-import-type ScalarRecord from ValueGraph
- * @phpstan-type EntryRecord array{symbol: string, arguments: list<array{name: ScalarRecord, value: string}>, receiver: string|null}
+ * @phpstan-type EntryRecord array{symbol: string, arguments: list<array{name: ScalarRecord, value: string}>, receiver: string|null, properties: list<array{name: string, value: string}>}
  * @phpstan-type QueryRecord array{kind: string, symbol?: string, expression?: \Deriver\Reference\ExpressionRef, point?: \Deriver\Reference\PointRef, variable?: string, projection?: \Deriver\Value\Projection, values?: object, scope: array{mode: string, entries: list<EntryRecord>}, budget: \Deriver\Query\Budget}
  * @visibility root
  */
@@ -44,7 +44,11 @@ final class QueryEncoding
             foreach ($entry->arguments as $name => $value) {
                 $arguments[] = ['name' => $graph->scalar($name), 'value' => $graph->add($value)];
             }
-            $entries[] = ['symbol' => $entry->symbol, 'arguments' => $arguments, 'receiver' => $entry->receiver === null ? null : $graph->add($entry->receiver)];
+            $properties = [];
+            foreach ($entry->properties as $name => $value) {
+                $properties[] = ['name' => $name, 'value' => $graph->add($value)];
+            }
+            $entries[] = ['symbol' => $entry->symbol, 'arguments' => $arguments, 'receiver' => $entry->receiver === null ? null : $graph->add($entry->receiver), 'properties' => $properties];
         }
         return [...$record, 'scope' => ['mode' => $query->scope()->mode, 'entries' => $entries], 'budget' => $query->budget()];
     }
@@ -63,8 +67,8 @@ final class QueryEncoding
         $confidential = false;
         foreach ($query->scope()->entries as $entry) {
             $confidential = $confidential || $entry->receiver?->isSecret() === true;
-            foreach ($entry->arguments as $argument) {
-                $confidential = $confidential || $argument->isSecret();
+            foreach ([...array_values($entry->arguments), ...array_values($entry->properties)] as $value) {
+                $confidential = $confidential || $value->isSecret();
             }
         }
         return $confidential ? (new SecretFingerprint())->digest($encoded) : hash('sha256', $encoded);

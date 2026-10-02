@@ -122,4 +122,36 @@ final class EntryPointTest extends TestCase
         self::assertSame([], $result->frontiers);
         self::assertSame([], $result->exceptionalOutcomes);
     }
+
+    public function testKeepsSuppliedInputsAndDefaultsToNoReceiverProperties(): void
+    {
+        $value = \Deriver\Value\Term::constant('name');
+        $entry = new EntryPoint('App\\Repo::find', [$value], properties:['order' => $value, '_x1' => $value, "caf\xc3\xa9" => $value]);
+        self::assertSame(['order' => $value, '_x1' => $value, "caf\xc3\xa9" => $value], $entry->properties);
+        self::assertSame([], (new EntryPoint('App\\run'))->properties);
+    }
+
+    /**
+     * @param array<string, \Deriver\Value\Term> $properties Keys that cannot name a PHP property
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerMalformedNames')]
+    public function testRejectsKeysThatAreNotPropertyNames(array $properties): void
+    {
+        $this->expectException(\Deriver\Exception\InvalidInputException::class);
+        new EntryPoint('App\\Repo::find', properties:$properties);
+    }
+
+    /**
+     * @return iterable<string, array{array<int|string, \Deriver\Value\Term>}>
+     */
+    public static function providerMalformedNames(): iterable
+    {
+        $value = \Deriver\Value\Term::constant('x');
+        yield 'integer' => [[0 => $value]];
+        yield 'empty' => [['' => $value]];
+        yield 'sigil' => [['$order' => $value]];
+        yield 'leading digit' => [['1order' => $value]];
+        yield 'trailing newline' => [["order\n" => $value]];
+        yield 'qualified' => [['Repo::order' => $value]];
+    }
 }

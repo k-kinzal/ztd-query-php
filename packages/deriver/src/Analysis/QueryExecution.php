@@ -7,6 +7,7 @@ namespace Deriver\Analysis;
 use Deriver\ControlFlow\Program;
 use Deriver\Evaluation\Call\ArgumentBinding;
 use Deriver\Evaluation\Call\PassedArgument;
+use Deriver\Evaluation\Call\Preparation\EntryProperties;
 use Deriver\Evaluation\Context;
 use Deriver\Evaluation\Machine;
 use Deriver\Evaluation\ObservationCollector;
@@ -77,6 +78,7 @@ final class QueryExecution
      * @param Context $context Query context
      * @param EntryPoint $entry Entry contract
      * @param bool $symbolic Whether parameters represent all valid inputs
+     * @throws InvalidInputException If supplied receiver properties cannot describe the entry object
      */
     public function entry(Context $context, EntryPoint $entry, bool $symbolic): void
     {
@@ -96,7 +98,11 @@ final class QueryExecution
         foreach ($symbolic ? $body->captures : [] as $name => $byReference) {
             $captures[$name] = Term::parameter('capture:' . $name);
         }
-        $states = (new ArgumentBinding($machine))->bind($body, $this->initialState(), $arguments, $receiver, $captures, symbolic: $symbolic);
+        $initial = $this->initialState();
+        if ($entry->properties !== []) {
+            (new EntryProperties($context))->apply($body, $receiver, $entry->properties, $initial);
+        }
+        $states = (new ArgumentBinding($machine))->bind($body, $initial, $arguments, $receiver, $captures, symbolic: $symbolic);
         foreach ($states as $state) {
             if ($state->completion->kind === 'normal') {
                 $machine->run($body, $state);

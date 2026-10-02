@@ -60,6 +60,39 @@ $result = $session->derive($query);
 echo $result->normalOutcomes[0]->values['return']->native(); // user:42
 ```
 
+An object that enters from outside the analysis, such as the receiver of an entry method or an object argument, keeps the declared types of its properties, but their values stay symbolic: Deriver does not guess them from assignments elsewhere. A typed property may also be uninitialized, because PHP can create an object without running its constructor, so reading one keeps a possible `Error` outcome. Supply the receiver's initial property values when you know them, for example from the declared defaults. Each entry is one candidate, and unspecified properties stay symbolic:
+
+```php
+$session = (new Analyzer())->open(new ProjectInput([
+    new SourceFile('app.php', <<<'PHP'
+<?php
+final class UserRepository
+{
+    private string $order = 'name';
+
+    public function __construct(private PDO $pdo) {}
+
+    public function sql(): string
+    {
+        return 'SELECT id FROM users ORDER BY ' . $this->order;
+    }
+}
+PHP),
+]));
+
+$default = $session->declarations()->class('UserRepository')->properties['order']->default;
+$result = $session->derive(new ReturnQuery('UserRepository::sql', QueryScope::fromEntrypoints([
+    new EntryPoint('UserRepository::sql', properties: ['order' => $default]),
+    new EntryPoint('UserRepository::sql', properties: ['order' => Term::constant('email')]),
+])));
+
+foreach ($result->normalOutcomes as $outcome) {
+    echo $outcome->values['return']->native(), "\n"; // ... ORDER BY name, then ... ORDER BY email
+}
+```
+
+Property names are resolved from the entry method's class. A name that is not a declared instance property, a value that violates the declared type, or properties on a static method or function entry throw `InvalidInputException`.
+
 Inspect the result's assessment, unresolved dependencies, and exceptional outcomes before treating a normal value as exhaustive. A symbolic value can be complete even when its input is unknown.
 
 A closed assessment does not mean the result is a single fixed value. Reading an undefined variable is closed and concrete, yet it carries a `PHP_WARNING` frontier, because an error handler can turn the warning into an exception. When you need one value PHP always produces, use `definite()`. It returns the only normal outcome when every value is concrete and the result has no frontiers, exceptional outcomes or project diagnostics, and `null` otherwise:

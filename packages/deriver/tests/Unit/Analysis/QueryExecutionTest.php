@@ -140,6 +140,17 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Value\Operations::class)]
 #[UsesClass(Projection::class)]
 #[UsesClass(Term::class)]
+#[UsesClass(\Deriver\Evaluation\Call\SymbolicEnums::class)]
+#[UsesClass(\Deriver\Evaluation\Call\Preparation\EntryProperties::class)]
+#[UsesClass(\Deriver\ControlFlow\PropertyDeclaration::class)]
+#[UsesClass(\Deriver\Evaluation\Call\Creation\Builtins::class)]
+#[UsesClass(\Deriver\Evaluation\Control\ExceptionMatch::class)]
+#[UsesClass(\Deriver\Evaluation\Transfer\ObjectAccess::class)]
+#[UsesClass(\Deriver\Evaluation\Transfer\PropertyAccessCheck::class)]
+#[UsesClass(\Deriver\Evaluation\Transfer\PropertyLookup::class)]
+#[UsesClass(\Deriver\Evaluation\Transfer\PropertySlot::class)]
+#[UsesClass(\Deriver\Evaluation\Transfer\PropertyTransfer::class)]
+#[UsesClass(\Deriver\Source\Compilation\EffectInspection::class)]
 #[Small]
 final class QueryExecutionTest extends TestCase
 {
@@ -269,6 +280,20 @@ final class QueryExecutionTest extends TestCase
         self::assertSame([], $static->frontiers);
         self::assertFalse($static->normalOutcomes[0]->values['return']->native());
     }
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testEntryInstallsSuppliedReceiverPropertiesOnlyForInstanceEntries(): void
+    {
+        $session = \Tests\Fake\Analysis::session('<?php final class B{private string $order="name";function sql(){return "ORDER BY ".$this->order;}static function make(){return 1;}}');
+        $scope = QueryScope::fromEntrypoints([new EntryPoint('B::sql', properties:['order' => Term::constant('email')]), new EntryPoint('B::sql')]);
+        $result = $session->derive(new ReturnQuery('B::sql', $scope));
+        self::assertSame('ORDER BY email', $result->normalOutcomes[0]->values['return']->native());
+        self::assertFalse($result->normalOutcomes[1]->values['return']->isConcrete());
+        $this->expectException(InvalidInputException::class);
+        $session->derive(new ReturnQuery('B::make', QueryScope::fromEntrypoints([new EntryPoint('B::make', properties:['order' => Term::constant('email')])])));
+    }
+
     #[\PHPUnit\Framework\Attributes\DataProvider('providerUnregisteredSlotQuery')]
     public function testOwnerRejectsUnregisteredStateSlotsBeforeReferenceLookup(Query $query): void
     {
