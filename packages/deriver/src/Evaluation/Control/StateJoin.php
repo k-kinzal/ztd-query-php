@@ -53,24 +53,39 @@ final class StateJoin
             $this->context->frontier('BUDGET_EXCEEDED', $callable->source, 'partition-limit');
             $this->context->frontier('CORRELATION_RELAXED', $callable->source, 'partition-limit');
             array_push($result, ...array_slice($group, 0, $keep));
-            $predecessors = [];
-            foreach (array_slice($group, $keep) as $state) {
-                $predecessors[$state->previous][] = $state;
-            }
-            $sealed = [];
-            foreach ($predecessors as $paths) {
-                $joined = (new PathJoin($this->context))->join($paths);
-                if ($joined === null) {
-                    array_push($sealed, ...$paths);
-                } else {
-                    $result[] = $joined;
-                }
-            }
+            $clusters = $this->clusters(array_slice($group, $keep));
+            array_push($result, ...array_slice($clusters, 0, $this->context->query->budget()->partitions));
+            $sealed = array_slice($clusters, $this->context->query->budget()->partitions);
             if ($sealed !== []) {
                 array_push($result, ...$this->seal($sealed, $callable));
             }
         }
         return $result;
+    }
+
+    /**
+     * Joins each path into the first compatible cluster; paths with another structure keep executing as their own cluster.
+     * @param list<State> $states Excess paths waiting at one block
+     * @return list<State> Joined clusters in discovery order
+     */
+    public function clusters(array $states): array
+    {
+        $join = new PathJoin($this->context);
+        $clusters = [];
+        $structures = [];
+        foreach ($states as $state) {
+            $structure = $join->structure($state);
+            foreach (array_keys($structures, $structure, true) as $index) {
+                $joined = $join->join([$clusters[$index], $state], shared: true);
+                if ($joined !== null) {
+                    $clusters[$index] = $joined;
+                    continue 2;
+                }
+            }
+            $clusters[] = $state;
+            $structures[] = $structure;
+        }
+        return $clusters;
     }
 
     /**

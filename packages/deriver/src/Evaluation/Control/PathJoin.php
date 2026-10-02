@@ -6,7 +6,9 @@ namespace Deriver\Evaluation\Control;
 
 use Deriver\Evaluation\Completion;
 use Deriver\Evaluation\Context;
+use Deriver\Evaluation\Offset\Address;
 use Deriver\Evaluation\State;
+use Deriver\Memory\Location;
 use Deriver\Value\Lattice;
 use Deriver\Value\Term;
 use WeakMap;
@@ -37,26 +39,27 @@ final class PathJoin
      * Widens paths that wait at one program point, entered from one predecessor, or that complete with one kind.
      * @param non-empty-list<State> $states Paths to join
      * @param bool $completed Whether the paths have left the callable, so their position and registers no longer matter
+     * @param bool $shared Whether the caller already established that the paths share one structure
      * @return State|null Joined path, or null when the paths differ in more than plain values
      */
-    public function join(array $states, bool $completed = false): ?State
+    public function join(array $states, bool $completed = false, bool $shared = false): ?State
     {
-        $structure = $this->structure($states[0], $completed);
-        foreach ($states as $state) {
+        $structure = $shared ? '' : $this->structure($states[0], $completed);
+        foreach ($shared ? [] : $states as $state) {
             if ($this->structure($state, $completed) !== $structure) {
                 return null;
             }
         }
         $registers = $completed ? [] : $this->values(array_map(static fn (State $state): array => $state->registers, $states), false);
-        $cells = $this->values(array_map(static fn (State $state): array => $state->memory->cells, $states), true);
+        $cells = $this->values(array_map(static fn (State $state): array => $state->memory->cells, $states), true, true);
         $completion = $this->values(array_map(static fn (State $state): array => $state->completion->value === null ? [] : ['value' => $state->completion->value], $states), false);
         if ($registers === null || $cells === null || $completion === null || isset($completion['value']) !== ($states[0]->completion->value !== null)) {
             return null;
         }
         $result = $states[0]->fork();
         if (!$completed) {
-            $addresses = $this->common(array_map(static fn (State $state): array => $state->addresses, $states));
-            $offsets = $this->common(array_map(static fn (State $state): array => $state->offsets, $states));
+            $addresses = $this->locations(array_map(static fn (State $state): array => $state->addresses, $states));
+            $offsets = $this->offsets(array_map(static fn (State $state): array => $state->offsets, $states));
             $targets = $this->common(array_map(static fn (State $state): array => $state->callTargets, $states));
             $properties = $this->common(array_map(static fn (State $state): array => $state->properties, $states));
             if ($addresses === null || $offsets === null || $targets === null || $properties === null) {
@@ -97,6 +100,34 @@ final class PathJoin
         $result->memory->sequence = max($result->memory->sequence, $state->memory->sequence);
         $result->unknownLocals ??= $state->unknownLocals;
         $result->memory->unknownShared ??= $state->memory->unknownShared;
+        $this->loops($result, $state);
+    }
+
+    /**
+     * Keeps loop bookkeeping only where both paths agree, so widening restores no path-specific guard and no loop is
+     * considered stable on behalf of a path that has not converged.
+     * @param State $result Joined path
+     * @param State $state Another joined path
+     */
+    public function loops(State $result, State $state): void
+    {
+        foreach ($result->loopGuards as $header => $guard) {
+            if (isset($state->loopGuards[$header])) {
+                $result->loopGuards[$header] = array_intersect_assoc($guard, $state->loopGuards[$header]);
+            } else {
+                unset($result->loopGuards[$header]);
+            }
+        }
+        $identity = $this->context->identity;
+        $keys = static fn (array $cells): array => array_map(static fn (Term $value): string => $identity->key($value), $cells);
+        foreach ($result->approximations as $header => $cells) {
+            if (!isset($state->approximations[$header]) || $keys($cells) !== $keys($state->approximations[$header]) || ($result->loopStructures[$header] ?? null) !== ($state->loopStructures[$header] ?? null)) {
+                unset($result->approximations[$header], $result->loopStructures[$header]);
+            }
+        }
+        if ($result->stableHeader !== $state->stableHeader) {
+            $result->stableHeader = null;
+        }
     }
 
     /**
@@ -143,12 +174,64 @@ final class PathJoin
     }
 
     /**
+     * Keeps addresses defined on every path; differing addresses into one storage root become an unknown location in it.
+     * A write through the unknown location invalidates the whole root, so every path's write is included.
+     * @param non-empty-list<array<string, Location>> $maps One register-indexed address map per path
+     * @return array<string, Location>|null Joined addresses, or null when one register addresses different roots
+     */
+    public function locations(array $maps): ?array
+    {
+        $result = array_intersect_key(...$maps);
+        foreach ($result as $key => $location) {
+            foreach ($maps as $map) {
+                $other = $map[$key];
+                if ($other == $location) {
+                    continue;
+                }
+                if ($other->root !== $location->root) {
+                    return null;
+                }
+                $location = new Location($location->root, local: $location->local === $other->local ? $location->local : '', unknown: true);
+            }
+            $result[$key] = $location;
+        }
+        return $result;
+    }
+
+    /**
+     * Keeps offsets defined on every path; differing keys below one parent are widened like other plain values.
+     * @param non-empty-list<array<string, Address>> $maps One register-indexed offset map per path
+     * @return array<string, Address>|null Joined offsets, or null when one register has another parent or syntax
+     */
+    public function offsets(array $maps): ?array
+    {
+        $result = array_intersect_key(...$maps);
+        foreach ($result as $register => $address) {
+            $keys = [];
+            foreach ($maps as $index => $map) {
+                if ($map[$register]->parent !== $address->parent || ($map[$register]->key === null) !== ($address->key === null)) {
+                    return null;
+                }
+                $keys[$index] = $map[$register]->key === null ? [] : ['key' => $map[$register]->key];
+            }
+            $key = $this->values(array_values($keys), false);
+            if ($key === null) {
+                return null;
+            }
+            $result[$register] = new Address($address->parent, $key['key'] ?? null);
+        }
+        return $result;
+    }
+
+    /**
      * Widens maps of values key by key.
      * @param non-empty-list<array<string, Term>> $maps One map per path
      * @param bool $union Whether keys absent from some paths are joined as uninitialized storage
+     * @param bool $storage Whether keys are storage roots; only variable roots are widened, while object, model, static,
+     *     and constant storage must be identical, because widening their records would lose uninitialized slots
      * @return array<string, Term>|null Joined values, or null when an identity-bearing value differs
      */
-    public function values(array $maps, bool $union): ?array
+    public function values(array $maps, bool $union, bool $storage = false): ?array
     {
         $identity = $this->context->identity;
         $lattice = new Lattice($this->context->models->extensions->domains);
@@ -161,7 +244,7 @@ final class PathJoin
                 if ($identity->key($value) === $identity->key($next)) {
                     continue;
                 }
-                if (!$this->plain($value) || !$this->plain($next)) {
+                if (!$this->plain($value) || !$this->plain($next) || $storage && !str_starts_with($key, 'cell:') && !str_starts_with($key, 'global:')) {
                     return null;
                 }
                 $value = $lattice->widen($value, $next);
