@@ -34,7 +34,7 @@ final class ScalarFunctions
             return (new Replacement())->apply($values);
         }
         if ($name === 'sprintf' || $name === 'vsprintf') {
-            return (new Formatting($this->floatPrecision))->apply($values);
+            return (new Formatting($this->floatPrecision))->apply($values, $name === 'vsprintf');
         }
         if (in_array($name, ['array_fill', 'str_repeat', 'intval'], true)) {
             return (new ConstructionFunctions())->apply($name, $values);

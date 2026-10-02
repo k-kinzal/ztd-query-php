@@ -189,6 +189,43 @@ final class ArraysTest extends TestCase
         self::assertSame('array-merge', $arrays->merge(Term::parameter('a', 'array'), $closed)->kind);
     }
 
+    public function testHeadKeepsOnlyClosedIntegerKeyedDestinationsOfMerges(): void
+    {
+        $arrays = new Arrays();
+        $head = Term::fromNative(['id', 'name']);
+        $unknown = Term::parameter('x', 'array');
+        $merge = $arrays->merge($head, $unknown);
+        self::assertSame($head, $arrays->head($merge));
+        self::assertSame($head, $arrays->head($arrays->merge($merge, Term::parameter('y', 'array'))));
+        self::assertNull($arrays->head($head));
+        self::assertNull($arrays->head($arrays->merge(Term::fromNative(['k' => 'id']), $unknown)));
+        self::assertNull($arrays->head($arrays->merge(Term::array([]), $unknown)));
+        self::assertNull($arrays->head($arrays->merge(Term::array([Term::constant('id')], true), $unknown)));
+    }
+
+    public function testSplitSeparatesOnlyASingleMergeLevel(): void
+    {
+        $arrays = new Arrays();
+        $head = Term::fromNative(['id']);
+        $unknown = Term::parameter('x', 'array');
+        $merge = $arrays->merge($head, $unknown);
+        self::assertSame([$head, $unknown], $arrays->split($merge));
+        self::assertNull($arrays->split($arrays->merge($merge, Term::parameter('y', 'array'))));
+    }
+
+    public function testAppendableRequiresRoomForEveryMergedSource(): void
+    {
+        $arrays = new Arrays();
+        $unknown = Term::parameter('x', 'array');
+        self::assertTrue($arrays->appendable(Term::fromNative(['k' => 1, 5 => 2])));
+        self::assertTrue($arrays->appendable($arrays->merge(Term::fromNative([1]), $unknown)));
+        self::assertTrue($arrays->appendable(Term::array([PHP_INT_MAX - 4294967297 => Term::constant(1)])));
+        self::assertFalse($arrays->appendable(Term::array([PHP_INT_MAX - 4294967296 => Term::constant(1)])));
+        self::assertFalse($arrays->appendable($arrays->merge(Term::array([PHP_INT_MAX - 4294967297 => Term::constant(1)]), $unknown)));
+        self::assertFalse($arrays->appendable(Term::array([], true)));
+        self::assertFalse($arrays->appendable($unknown));
+    }
+
     public function testSetRetainsExplicitKeysAfterAnUnknownMerge(): void
     {
         $array = Term::parameter('a', 'array');

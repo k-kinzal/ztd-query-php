@@ -11,10 +11,11 @@ use Deriver\Evaluation\Transfer\MemoryStep;
 use Deriver\Memory\LiveArray;
 use Deriver\Memory\Location;
 use Deriver\Model\Builtin\TypePredicates;
+use Deriver\Value\Arrays;
 use Deriver\Value\Term;
 
 /**
- * Evaluates finite foreach cursors and preserves referenced element addresses.
+ * Evaluates finite foreach cursors, known heads of symbolic merges, and referenced element addresses.
  * @visibility root
  */
 final class IterationStep
@@ -45,19 +46,12 @@ final class IterationStep
         }
         $cursor = $state->iterators[$id] ?? new IteratorCursor(Term::opaque('UNKNOWN_ITERABLE'));
         $array = $cursor->location === null ? $cursor->array : $state->memory->read($cursor->location);
+        $head = $cursor->location === null ? (new Arrays())->head($array) : null;
         if ($instruction->operation === 'iterate') {
-            $cursor = new IteratorCursor($array, $cursor->location, $cursor->position + 1);
-            $state->iterators[$id] = $cursor;
-            if ($array->kind !== 'array' || ($array->attributes['open'] ?? false) === true) {
-                return new Term('external', $id . ':has-next:' . $cursor->position, attributes: ['type' => 'bool'], secret: $array->secret);
-            }
-            if (isset($state->memory->liveArrays[$id])) {
-                $state->memory->liveArrays[$id] = $state->memory->liveArrays[$id]->advance();
-                return Term::constant($state->memory->liveArrays[$id]->current !== null, $array->secret);
-            }
-            return Term::constant($cursor->position < count($array->operands), $array->secret);
+            return $this->advance($id, new IteratorCursor($array, $cursor->location, $cursor->position + 1), $head, $state);
         }
-        $key = isset($state->memory->liveArrays[$id]) ? $state->memory->liveArrays[$id]->current : (array_keys($array->operands)[$cursor->position] ?? null);
+        $entries = $head ?? $array;
+        $key = isset($state->memory->liveArrays[$id]) ? $state->memory->liveArrays[$id]->current : ($entries->kind === 'array' ? array_keys($entries->operands)[$cursor->position] ?? null : null);
         if ($key === null) {
             return Term::opaque('UNKNOWN_ITERABLE');
         }
@@ -69,7 +63,32 @@ final class IterationStep
             $state->addresses[$instruction->result] = $location;
             return new Term('location', $location->root);
         }
-        return $state->memory->element($array, $key);
+        return $state->memory->element($entries, $key, $head !== null && $array->isSecret());
+    }
+
+    /**
+     * Moves a cursor by one entry and reports whether that entry exists.
+     * @param string $id Iterator identity
+     * @param IteratorCursor $cursor Cursor at its new position
+     * @param Term|null $head Known leading entries of a symbolic merge
+     * @param State $state Current path
+     * @return Term Entry availability
+     */
+    public function advance(string $id, IteratorCursor $cursor, ?Term $head, State $state): Term
+    {
+        $state->iterators[$id] = $cursor;
+        $array = $cursor->array;
+        if ($head !== null && $cursor->position < count($head->operands)) {
+            return Term::constant(true, $array->secret);
+        }
+        if ($array->kind !== 'array' || ($array->attributes['open'] ?? false) === true) {
+            return new Term('external', $id . ':has-next:' . $cursor->position, attributes: ['type' => 'bool'], secret: $array->secret);
+        }
+        if (isset($state->memory->liveArrays[$id])) {
+            $state->memory->liveArrays[$id] = $state->memory->liveArrays[$id]->advance();
+            return Term::constant($state->memory->liveArrays[$id]->current !== null, $array->secret);
+        }
+        return Term::constant($cursor->position < count($array->operands), $array->secret);
     }
 
     /**

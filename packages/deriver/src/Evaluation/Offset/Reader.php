@@ -9,6 +9,7 @@ use Deriver\Evaluation\Call\Creation\Builtins;
 use Deriver\Evaluation\Call\Dispatch;
 use Deriver\Evaluation\Context;
 use Deriver\Evaluation\State;
+use Deriver\Value\Arrays;
 use Deriver\Value\IntegerConversion;
 use Deriver\Value\Operations;
 use Deriver\Value\Term;
@@ -79,6 +80,10 @@ final class Reader
         if ($normalized->kind !== 'constant' || !is_int($normalized->literal) && !is_string($normalized->literal)) {
             $types = explode('|', (string) ($key->attributes['type'] ?? 'mixed'));
             return new Term('array-read', operands: [$container, $normalized], attributes: ['silent' => $silent, 'mayRejectKey' => array_diff($types, ['int', 'string', 'float', 'bool', 'null', 'true', 'false']) !== []]);
+        }
+        $head = (new Arrays())->head($container);
+        if ($head !== null && is_int($normalized->literal) && array_key_exists($normalized->literal, $head->operands)) {
+            return $state->memory->element($head, $normalized->literal, $key->isSecret() || $container->isSecret());
         }
         if ($container->kind !== 'array') {
             return new Term('array-read', operands: [$container, $normalized], attributes: ['silent' => $silent]);
