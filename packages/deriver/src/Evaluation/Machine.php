@@ -43,8 +43,9 @@ final class Machine
         $key = (new CallableIdentity())->key($callable->symbol);
         $this->context->active[$key] = ($this->context->active[$key] ?? 0) + 1;
         $available = $this->context->available($callable->source, call: true);
-        if (!$available || $this->context->active[$key] > $this->context->query->budget()->recursion) {
-            $completed = (new ResidualPaths($this->context))->seal($initial, $callable->source, $available ? 'recursive-specialization' : 'runtime-resources', $available ? null : $this->context->stopReason ?? 'STACK_LIMIT');
+        if (!$available || $this->recursive($key, $initial)) {
+            $residual = new ResidualPaths($this->context);
+            $completed = $available || $this->context->stopReason === null ? $residual->invocation($initial, $callable->source, $available ? 'recursive-specialization' : 'runtime-resources', $available ? null : 'STACK_LIMIT') : $residual->seal($initial, $callable->source, 'runtime-resources');
         } else {
             $this->context->graphs[$key] = true;
             $this->context->demands[$callable] ??= (new Discovery($this->context))->instructions($callable);
@@ -58,6 +59,31 @@ final class Machine
         }
         $this->context->active[$key]--;
         return $completed;
+    }
+
+    /**
+     * Checks the recursion budgets; recursion over symbolic inputs forks at every level, so it is bounded more tightly.
+     * @param string $key Callable identity
+     * @param State $initial Bound entry state
+     * @return bool Whether this activation exceeds a recursion budget
+     */
+    public function recursive(string $key, State $initial): bool
+    {
+        $active = $this->context->active[$key];
+        $budget = $this->context->query->budget();
+        if ($active > $budget->recursion) {
+            return true;
+        }
+        if ($active <= $budget->symbolicRecursion) {
+            return false;
+        }
+        foreach ($initial->locals as $name => $location) {
+            $value = $initial->memory->materialize($initial->memory->read($location));
+            if ($name !== 'this' && !$value->isConcrete()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

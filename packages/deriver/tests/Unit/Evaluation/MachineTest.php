@@ -128,6 +128,7 @@ use Tests\Fake\SummaryFixture;
 #[UsesClass(\Deriver\Value\Identity::class)]
 #[UsesClass(\Deriver\Value\NumericString::class)]
 #[UsesClass(\Deriver\Value\Operations::class)]
+#[UsesClass(\Deriver\Value\StringPrefix::class)]
 #[UsesClass(Term::class)]
 #[Small]
 final class MachineTest extends TestCase
@@ -212,6 +213,42 @@ final class MachineTest extends TestCase
         self::assertSame(1, $paths[0]->completion->value?->literal);
         self::assertSame([], $context->normal);
     }
+    public function testRecursiveBoundsSymbolicActivationsBeforeConcreteOnes(): void
+    {
+        $context = SolverFixture::context(budget: new Budget(recursion: 3, symbolicRecursion: 1));
+        $machine = new Machine($context);
+        $symbolic = new State();
+        $symbolic->memory->write($symbolic->local('n'), Term::parameter('n', 'int'));
+        $concrete = new State();
+        $concrete->memory->write($concrete->local('n'), Term::constant(1));
+        $concrete->memory->write($concrete->local('this'), new Term('object', 'object:1', attributes: ['class' => 'A']));
+        $context->active['f'] = 1;
+        self::assertFalse($machine->recursive('f', $symbolic));
+        $context->active['f'] = 2;
+        self::assertTrue($machine->recursive('f', $symbolic));
+        self::assertFalse($machine->recursive('f', $concrete));
+        $context->active['f'] = 4;
+        self::assertTrue($machine->recursive('f', $concrete));
+    }
+
+    public function testRunSealsSymbolicRecursionWithoutHavockingTheCaller(): void
+    {
+        $context = SolverFixture::context('<?php function target(array $c){return f($c);} function f(array $c){return $c ? "x" . f($c) : "";}', budget: new Budget(symbolicRecursion: 2));
+        $state = new State();
+        $caller = $state->memory->allocate(Term::constant('caller'));
+        $state->memory->write($state->local('c'), Term::parameter('c', 'array'));
+        $body = $context->program->callable('f');
+        self::assertNotNull($body);
+        $paths = (new Machine($context))->run($body, $state);
+        self::assertContains('recursive-specialization', array_column($context->frontiers, 'operation'));
+        foreach ($paths as $path) {
+            self::assertSame('caller', $path->memory->read($caller)->native());
+        }
+        $returned = array_map(static fn (State $path): array => (new \Deriver\Value\StringPrefix())->known($path->completion->value ?? Term::constant(null)), array_values(array_filter($paths, static fn (State $path): bool => $path->completion->kind === 'return')));
+        self::assertContains(['', true], $returned);
+        self::assertContains(['xx', false], $returned);
+    }
+
     public function testRunSealsOnlyTheCallThatExceedsTheHostStack(): void
     {
         $source = '<?php function target(){return [f0(),g()];}function g(){return 2;}function f20(){return 1;}' . implode('', array_map(static fn (int $i): string => 'function f' . $i . '(){return f' . ($i + 1) . '();}', range(0, 19)));
