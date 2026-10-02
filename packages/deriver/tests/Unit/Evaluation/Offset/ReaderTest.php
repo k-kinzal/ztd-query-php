@@ -67,6 +67,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Source\Validation\AssignmentPatterns::class)]
 #[UsesClass(\Deriver\Source\Validation\ClassScope::class)]
 #[UsesClass(\Deriver\Source\Validation\TargetSyntax::class)]
+#[UsesClass(\Deriver\Value\Arrays::class)]
 #[UsesClass(\Deriver\Value\IntegerConversion::class)]
 #[UsesClass(\Deriver\Value\Operations::class)]
 #[UsesClass(Term::class)]
@@ -92,6 +93,20 @@ final class ReaderTest extends TestCase
         $reader = new Reader($context);
         self::assertSame('TypeError', $reader->array(Term::array([]), Term::array([]), $instruction, new State(), true)->literal);
         self::assertSame('uninitialized', $reader->array(Term::array([]), Term::constant('absent'), $instruction, new State(), true)->kind);
+        self::assertSame([], $context->frontiers);
+    }
+    public function testArrayReadsOnlyIntegerHeadKeysOfAnUnknownMergeExactly(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $body = $context->program->callable('target');
+        self::assertNotNull($body);
+        $instruction = new Instruction('offset', 'read', $body->source, 'result', ['slot']);
+        $reader = new Reader($context);
+        $merge = (new \Deriver\Value\Arrays())->merge(Term::fromNative(['id', 'name']), Term::parameter('x', 'array'));
+        self::assertSame('name', $reader->array($merge, Term::constant('1'), $instruction, new State(), false)->native());
+        self::assertSame('array-read', $reader->array($merge, Term::constant(2), $instruction, new State(), false)->kind);
+        $named = (new \Deriver\Value\Arrays())->merge(Term::fromNative(['k' => 'id', 0 => 'name']), Term::parameter('x', 'array'));
+        self::assertSame('array-read', $reader->array($named, Term::constant(0), $instruction, new State(), false)->kind);
         self::assertSame([], $context->frontiers);
     }
     public function testKeyTruncatesFloatKeysAndRecordsLossOfPrecision(): void

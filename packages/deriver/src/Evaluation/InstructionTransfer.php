@@ -118,7 +118,7 @@ final class InstructionTransfer
         $item = $state->value($instruction->operands[2]);
         if ((new TypePredicates())->apply('is_array', $item)->literal === true) {
             $state->registers[$instruction->result] = (new Arrays())->merge($array, $item);
-            if ($state->registers[$instruction->result]->kind === 'array-merge') {
+            if ($state->registers[$instruction->result]->kind === 'array-merge' && !(new Arrays())->appendable($array)) {
                 $this->machine->context->frontier('WIDENED', $instruction->source, 'symbolic-unpack-append', [$array, $item]);
                 $exception = $state->fork();
                 $exception->completion = new Completion('throw', new Term('throwable', 'Error'));

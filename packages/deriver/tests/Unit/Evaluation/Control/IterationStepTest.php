@@ -209,6 +209,49 @@ final class IterationStepTest extends TestCase
         yield 'open' => [Term::array([], true)];
         yield 'secret open' => [new Term('array', attributes:['open' => true], secret:true)];
     }
+    public function testEvaluateNeverReadsOperandsOfSymbolicIterablesAsEntries(): void
+    {
+        $state = new State();
+        $state->registers['it'] = new Term('iterator', 'cursor');
+        $state->iterators['cursor'] = new IteratorCursor(new Term('intrinsic', 'explode', [Term::constant(','), Term::parameter('s', 'string')], ['type' => 'array']), position:0);
+        $step = new IterationStep(\Tests\Fake\SolverFixture::context());
+        $source = new SourceRef('test', 'a.php', 0, 1);
+        self::assertSame('UNKNOWN_ITERABLE', $step->evaluate(new Instruction('i', 'iterator-value', $source, 'value', ['it']), $state)->literal);
+        self::assertSame('UNKNOWN_ITERABLE', $step->evaluate(new Instruction('i', 'iterator-key', $source, 'key', ['it']), $state)->literal);
+    }
+    public function testAdvanceStoresTheCursorAndReportsKnownHeadEntries(): void
+    {
+        $state = new State();
+        $merge = new Term('array-merge', operands:[Term::fromNative(['id']), Term::parameter('x', 'array')], attributes:['type' => 'array']);
+        $cursor = new IteratorCursor($merge, position:0);
+        $step = new IterationStep(\Tests\Fake\SolverFixture::context());
+        self::assertTrue($step->advance('cursor', $cursor, Term::fromNative(['id']), $state)->native());
+        self::assertSame($cursor, $state->iterators['cursor']);
+        self::assertSame('external', $step->advance('cursor', new IteratorCursor($merge, position:1), Term::fromNative(['id']), $state)->kind);
+    }
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerMergeHeads')]
+    public function testEvaluateVisitsTheKnownHeadOfAMergeBeforeItsUnknownSource(int $position, string $operation, string $kind, mixed $expected): void
+    {
+        $state = new State();
+        $state->registers['it'] = new Term('iterator', 'cursor');
+        $merge = new Term('array-merge', operands:[Term::fromNative(['id', 'name']), Term::parameter('x', 'array')], attributes:['type' => 'array']);
+        $state->iterators['cursor'] = new IteratorCursor($merge, position:$position);
+        $result = (new IterationStep(\Tests\Fake\SolverFixture::context()))->evaluate(new Instruction('i', $operation, new SourceRef('test', 'a.php', 0, 1), 'result', ['it']), $state);
+        self::assertSame($kind, $result->kind);
+        self::assertSame($expected, $result->isConcrete() ? $result->native() : $result->literal);
+    }
+    /**
+     * @return iterable<string,array{int,string,string,mixed}>
+     */
+    public static function providerMergeHeads(): iterable
+    {
+        yield 'first entry exists' => [-1,'iterate','constant',true];
+        yield 'last head entry exists' => [0,'iterate','constant',true];
+        yield 'source entries are unknown' => [1,'iterate','external','cursor:has-next:2'];
+        yield 'head key' => [1,'iterator-key','constant',1];
+        yield 'head value' => [1,'iterator-value','constant','name'];
+        yield 'source value' => [2,'iterator-value','opaque','UNKNOWN_ITERABLE'];
+    }
     public function testEvaluateReleasesOnlyTheSelectedIterator(): void
     {
         $state = new State();

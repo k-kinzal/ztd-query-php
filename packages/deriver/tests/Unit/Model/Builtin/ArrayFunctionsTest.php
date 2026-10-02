@@ -167,6 +167,19 @@ final class ArrayFunctionsTest extends TestCase
         self::assertSame(true, $functions->membership('in_array', $values)->native());
         self::assertSame(false, $functions->membership('in_array', [...$values, Term::constant(true)])->native());
     }
+    public function testMembershipFindsKnownHeadEntriesOfAnUnknownMerge(): void
+    {
+        $merge = (new \Deriver\Value\Arrays())->merge(Term::fromNative(['id', 'name']), Term::parameter('x', 'array'));
+        $functions = new ArrayFunctions();
+        self::assertSame(true, $functions->membership('in_array', [Term::constant('name'), $merge, Term::constant(true)])->native());
+        self::assertSame(true, $functions->membership('array_key_exists', [Term::constant(1), $merge])->native());
+        $arguments = [Term::constant('other'), $merge, Term::constant(true)];
+        $absent = $functions->membership('in_array', $arguments);
+        self::assertSame('intrinsic', $absent->kind);
+        self::assertSame($arguments, $absent->operands);
+        $key = Term::constant(2);
+        self::assertSame([$key, $merge], $functions->membership('array_key_exists', [$key, $merge])->operands);
+    }
     public function testKeysFiltersWithoutRenumberingSourceKeys(): void
     {
         $array = Term::fromNative(['first' => 2, 7 => '2', 'last' => 3]);

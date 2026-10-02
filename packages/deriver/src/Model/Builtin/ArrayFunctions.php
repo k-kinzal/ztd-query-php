@@ -106,7 +106,7 @@ final class ArrayFunctions
     }
 
     /**
-     * Evaluates membership while retaining uncertainty about unknown array parts.
+     * Evaluates membership while retaining uncertainty about unknown array parts, including sources merged after a known head.
      * @param string $name Membership function
      * @param list<Term> $values Bound arguments
      * @return Term Boolean predicate
@@ -115,6 +115,11 @@ final class ArrayFunctions
     {
         $needle = $values[0] ?? Term::constant(null);
         $array = $values[1] ?? Term::constant(null);
+        $head = (new Arrays())->head($array);
+        if ($head !== null) {
+            $found = $this->membership($name, [$needle, new Term('array', operands: $head->operands, attributes: ['open' => true], secret: $array->isSecret()), ...array_slice($values, 2)]);
+            return $found->kind === 'constant' && $found->literal === true ? $found : new Term('intrinsic', $name, $values, ['type' => 'bool']);
+        }
         if ($array->kind !== 'array') {
             return new Term('intrinsic', $name, $values, ['type' => 'bool']);
         }
