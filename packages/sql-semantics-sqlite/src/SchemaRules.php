@@ -89,7 +89,7 @@ final class SchemaRules implements Contract
         }
         Tree::assertChildren($arguments, ['columnlist', 'conslist_opt', 'table_option_set'], ['(', ')']);
         foreach (Tree::outer($source, ['tcons']) as $constraint) {
-            if (!in_array(strtoupper($constraint->tokens()[0]->text ?? ''), ['PRIMARY', 'UNIQUE'], true)) {
+            if (!in_array(\SqlSemantics\Statement\Identifier\Ascii::upper($constraint->tokens()[0]->text ?? ''), ['PRIMARY', 'UNIQUE'], true)) {
                 continue;
             }
             foreach (Tree::outer($constraint, ['expr']) as $expression) {
@@ -134,7 +134,7 @@ final class SchemaRules implements Contract
     public function primaryOptionsNotNull(Node $source): bool
     {
         foreach ($this->options($source) as $option) {
-            if (in_array(strtoupper(Tree::text($option)), ['STRICT', 'WITHOUT ROWID'], true)) {
+            if (in_array(\SqlSemantics\Statement\Identifier\Ascii::upper(Tree::text($option)), ['STRICT', 'WITHOUT ROWID'], true)) {
                 return true;
             }
         }
@@ -189,7 +189,7 @@ final class SchemaRules implements Contract
      */
     public function tableKey(TableDefinition $table): string
     {
-        return strtolower($table->schema . "\x00" . $table->name);
+        return \SqlSemantics\Statement\Identifier\Ascii::lower($table->schema . "\x00" . $table->name);
     }
 
     /**

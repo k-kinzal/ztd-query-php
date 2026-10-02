@@ -22,7 +22,7 @@ final class MaintenanceReader
     {
         $tokens = $command->tokens();
         $target = Tree::child($command, ['nm']) === null ? null : (new IdentifierReader())->qualified($command);
-        return match (strtoupper($tokens[0]->text)) {
+        return match (\SqlSemantics\Statement\Identifier\Ascii::upper($tokens[0]->text)) {
             'ANALYZE' => new Analyze($target),
             'REINDEX' => new Reindex($target),
             default => Tree::unsupported($command, 'maintenance operation'),

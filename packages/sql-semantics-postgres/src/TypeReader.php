@@ -76,7 +76,7 @@ final class TypeReader
      */
     public function read(Node $node): TypeDeclaration
     {
-        if (strtoupper($node->tokens()[0]->text ?? '') === 'SETOF') {
+        if (\SqlSemantics\Statement\Identifier\Ascii::upper($node->tokens()[0]->text ?? '') === 'SETOF') {
             throw new SemanticException('invalid-column-type', 'A column cannot be declared SETOF: ' . Tree::text($node), $node);
         }
         $simple = Tree::outer($node, ['SimpleTypename'])[0] ?? null;
@@ -110,7 +110,7 @@ final class TypeReader
         foreach ($node->children as $child) {
             $brackets += $child instanceof Node && $child->name === 'opt_array_bounds' ? count(array_filter($child->tokens(), static fn (Token $token): bool => $token->text === '[')) : 0;
             $brackets += $child instanceof Token && $child->text === '[' ? 1 : 0;
-            $word = $word || ($child instanceof Token && strtoupper($child->text) === 'ARRAY');
+            $word = $word || ($child instanceof Token && \SqlSemantics\Statement\Identifier\Ascii::upper($child->text) === 'ARRAY');
         }
 
         return $brackets > 0 ? $brackets : ($word ? 1 : 0);
@@ -172,7 +172,7 @@ final class TypeReader
         $facts['precision'] = $this->iconst($node);
         $timestamp = $node->tokens()[0]->name === 'TIMESTAMP';
         $zone = Tree::child($node, ['opt_timezone']);
-        $withZone = $zone !== null && strtoupper($zone->tokens()[0]->text) === 'WITH';
+        $withZone = $zone !== null && \SqlSemantics\Statement\Identifier\Ascii::upper($zone->tokens()[0]->text) === 'WITH';
 
         return match (true) {
             $timestamp && $withZone => Builtin::TimestampTz,
@@ -190,8 +190,8 @@ final class TypeReader
         $facts['precision'] = $this->iconst($simple);
         $words = [];
         foreach ((Tree::child($simple, ['opt_interval'])?->tokens()) ?? [] as $token) {
-            if (ctype_alpha($token->text) && strtoupper($token->text) !== 'TO') {
-                $words[] = strtolower($token->text);
+            if (preg_match('/\A[A-Za-z]+\z/D', $token->text) === 1 && \SqlSemantics\Statement\Identifier\Ascii::upper($token->text) !== 'TO') {
+                $words[] = \SqlSemantics\Statement\Identifier\Ascii::lower($token->text);
             }
         }
         $facts['fields'] = $words === [] ? null : IntervalFields::from(implode(' to ', $words));

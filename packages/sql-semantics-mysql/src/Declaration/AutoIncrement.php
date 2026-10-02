@@ -27,7 +27,7 @@ final class AutoIncrement
         $indexed = [];
         foreach (Tree::outer($table, ['table_constraint_def', 'key_def']) as $constraint) {
             [, $tokens] = TokenGroups::constraintHeader($constraint->tokens(), $identifiers);
-            if (in_array(strtoupper($tokens[0]->text ?? ''), ['PRIMARY', 'UNIQUE', 'KEY', 'INDEX'], true)) {
+            if (in_array(\SqlSemantics\Statement\Identifier\Ascii::upper($tokens[0]->text ?? ''), ['PRIMARY', 'UNIQUE', 'KEY', 'INDEX'], true)) {
                 array_push($indexed, ...TokenGroups::keyNames(TokenGroups::parentheses($tokens)[0] ?? [], $identifiers));
             }
         }
@@ -39,13 +39,13 @@ final class AutoIncrement
             $auto = $serial;
             $key = $serial;
             foreach ($attributes as $attribute) {
-                $words = array_map(static fn ($token): string => strtoupper($token->text), $attribute->tokens());
+                $words = array_map(static fn ($token): string => \SqlSemantics\Statement\Identifier\Ascii::upper($token->text), $attribute->tokens());
                 $auto = $auto || in_array($words[0] ?? '', ['AUTO_INCREMENT', 'SERIAL'], true);
                 $key = $key || in_array($words[0] ?? '', ['PRIMARY', 'KEY', 'UNIQUE', 'SERIAL'], true);
             }
             if ($auto) {
                 $automatic[] = $name;
-                if (!$key && !in_array(strtolower($name), array_map(strtolower(...), $indexed), true)) {
+                if (!$key && !in_array(\SqlSemantics\Statement\Identifier\Ascii::lower($name), array_map(\SqlSemantics\Statement\Identifier\Ascii::lower(...), $indexed), true)) {
                     throw new SemanticException('unindexed-auto-increment', 'An AUTO_INCREMENT column must be indexed.', $column);
                 }
             }

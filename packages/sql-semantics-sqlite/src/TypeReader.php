@@ -74,7 +74,7 @@ final class TypeReader
         if ($names === []) {
             return new TypeDeclaration(new TypeDescriptor(Builtin::Dynamic, affinity: Affinity::Blob));
         }
-        $spelling = strtoupper(implode(' ', $names));
+        $spelling = \SqlSemantics\Statement\Identifier\Ascii::upper(implode(' ', $names));
         $name = self::NAMES[$spelling] ?? new TypeName($names);
         $affinity = $this->affinity($spelling);
         if ($name === Builtin::Any && $table !== null && $this->strict($table)) {
@@ -146,7 +146,7 @@ final class TypeReader
     public function strict(Node $table): bool
     {
         foreach (Tree::outer($table, ['table_option']) as $option) {
-            if (strtoupper(Tree::text($option)) === 'STRICT') {
+            if (\SqlSemantics\Statement\Identifier\Ascii::upper(Tree::text($option)) === 'STRICT') {
                 return true;
             }
         }

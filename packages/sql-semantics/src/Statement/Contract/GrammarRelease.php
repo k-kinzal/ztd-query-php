@@ -34,18 +34,18 @@ enum GrammarRelease: string
     public function grammarDigest(): string
     {
         return match ($this) {
-            self::MySql5651 => '5c74252eb4f0712d4c3079a717fe1ea58daad61caf1f91e0fcc68be9c8b0484c',
-            self::MySql5744 => '565722d68e0953fd067ad68385b8094faa891e38c0788aba26c8eb9a1225b373',
-            self::MySql8044 => '1c0d1ba764dc0bcf28195cec376ba1000bc3a478848015552c365004e41b3181',
-            self::MySql810 => 'ee3222ae0d4591c5e76f36ee225607beef642a5a69c553a2a9a7f606af30d375',
-            self::MySql820 => 'cea373d3ea7f71946ed794ec940cae0f03c29429579677643b993cafc44f22c2',
-            self::MySql830 => '6abe806767da9c0cf6d01a2e7fb88e9a021eceb50dfacdfe928b4f75b2014f64',
-            self::MySql847 => '3fd0c8ebfaff4a9d0d050dd8abdad4c4a58bf48c05102a0daa7f573c46d3d620',
-            self::MySql901 => '9edc0152dad50a2f62f35146285616c0378b3ddf15518319ed8bbc817d74c3f5',
-            self::MySql910 => '196b535f4cba376925d6bc2e4fd9a7d0fee4d727ee6ae11e06bc027453b9803c',
-            self::PostgreSql166 => '134b036758547d76af2c2e4c0173b81e3186ffb4a01c04345734d412975f12cb',
-            self::PostgreSql172 => '29ca6b943c312b5ee95006b6ea908eb8b2df1cc9c45907a525c4f6b1493371e9',
-            self::Sqlite3472 => '6f00dd6a70fc24f51e9d6f33a8f9ec10319e15a95623dbcf601c504789b06d6c',
+            self::MySql5651 => 'e937f61b8bda85c3c0e22dda4e455e8b0b629b8aef8b37cdcae578dffaff7dae',
+            self::MySql5744 => '5c1beff7665a36ef5858f5421d6cbd913b009b38e96c95da4b27c4fd520843ec',
+            self::MySql8044 => '13855b513f1122b1f55f384f2fc8107dfc8f564b49a7ad06f4a4d357181a40fe',
+            self::MySql810 => '71d71cda6854859ef02131c4bcf33e568d0206f73e335fe255905efbc3e10711',
+            self::MySql820 => '8ccf447c83426627cb36bf14d4252c93b08610fe50abd3dbb97e20571f5031ac',
+            self::MySql830 => 'c24e3c5317630235a2adb3991b33c45c67279d52a716036fae3b24ac6baf3d8f',
+            self::MySql847 => '713d6e606abb1d93606a8b7017e3202a11d42df19afdc06a2ef2479dc6febe52',
+            self::MySql901 => '3aa21c6df4d47e32869a8cce85c1cf6487762020548097460b23f08ac8fb09c0',
+            self::MySql910 => '1515f11725e7da94fca69f4a9d1088c2e50a705a1efecef8d671d0da451301db',
+            self::PostgreSql166 => '7d55fbcd39febf445fd8d8a4a7884486f1a30d6e62ab1a10bea346ae27c8af90',
+            self::PostgreSql172 => '82294937323322564a269aa095eaced2a64b5f2b9bf547d32b273bef6eec15b6',
+            self::Sqlite3472 => '579e2b88d7ca99a261b9faeae3401a2344850b91ad3c276b72ab51e608633884',
         };
     }
 

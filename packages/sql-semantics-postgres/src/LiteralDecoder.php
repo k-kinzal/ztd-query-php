@@ -69,10 +69,10 @@ final class LiteralDecoder implements LiteralRules
             }
             return $body;
         }
-        if (strtoupper(substr($text, 0, 2)) === 'U&') {
+        if (\SqlSemantics\Statement\Identifier\Ascii::upper(substr($text, 0, 2)) === 'U&') {
             return $this->unicode($text);
         }
-        $escaped = strtoupper($text[0]) === 'E';
+        $escaped = \SqlSemantics\Statement\Identifier\Ascii::upper($text[0]) === 'E';
         $body = Quoted::body($escaped ? substr($text, 1) : $text, $escaped);
         $decoded = $escaped ? (new Escapes())->cStyle($body) : $body;
         if (str_contains($decoded, "\0")) {

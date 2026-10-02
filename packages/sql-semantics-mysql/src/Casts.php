@@ -45,7 +45,7 @@ trait Casts
             $name === Builtin::Time => ['TIME' . $this->modifiers($type->precision), ['precision']],
             $name === Builtin::DateTime => ['DATETIME' . $this->modifiers($type->precision), ['precision']],
             $name === Builtin::Json => ['JSON', []],
-            $name instanceof Builtin && in_array($name, [Builtin::Point, Builtin::LineString, Builtin::Polygon, Builtin::MultiPoint, Builtin::MultiLineString, Builtin::MultiPolygon, Builtin::GeometryCollection], true) => [strtoupper($name->value), []],
+            $name instanceof Builtin && in_array($name, [Builtin::Point, Builtin::LineString, Builtin::Polygon, Builtin::MultiPoint, Builtin::MultiLineString, Builtin::MultiPolygon, Builtin::GeometryCollection], true) => [\SqlSemantics\Statement\Identifier\Ascii::upper($name->value), []],
             default => throw new CompositionException('MySQL\'s CAST has no target of type ' . $type->label() . '.'),
         };
         $this->statesOnly($type, $facts);

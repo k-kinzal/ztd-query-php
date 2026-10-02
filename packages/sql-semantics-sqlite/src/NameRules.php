@@ -57,6 +57,6 @@ final class NameRules implements Contract
      */
     public function key(string $name): string
     {
-        return strtolower($name);
+        return \SqlSemantics\Statement\Identifier\Ascii::lower($name);
     }
 }

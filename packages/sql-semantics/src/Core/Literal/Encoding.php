@@ -66,14 +66,14 @@ final class Encoding
     public static function number(string $text): string
     {
         $text = str_replace('_', '', $text);
-        $base = match (strtolower(substr($text, 0, 2))) {
+        $base = match (\SqlSemantics\Statement\Identifier\Ascii::lower(substr($text, 0, 2))) {
             '0x' => 16, '0o' => 8, '0b' => 2, default => 10
         };
         if ($base === 10) {
             return $text;
         }
         $allowed = substr('0123456789abcdef', 0, $base);
-        $digits = strtolower(substr($text, 2));
+        $digits = \SqlSemantics\Statement\Identifier\Ascii::lower(substr($text, 2));
         if ($digits === '' || strspn($digits, $allowed) !== strlen($digits)) {
             throw new DecodingException('Invalid radix literal.');
         }

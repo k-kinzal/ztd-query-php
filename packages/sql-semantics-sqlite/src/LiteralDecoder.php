@@ -32,14 +32,14 @@ final class LiteralDecoder implements LiteralRules
             throw new DecodingException('The value is not a literal.');
         }
         $token = $tokens[0];
-        if ($token->name === 'ID' && in_array(strtoupper($token->text), ['TRUE', 'FALSE'], true)) {
-            return new BooleanLiteral(strtoupper($token->text) === 'TRUE');
+        if ($token->name === 'ID' && in_array(\SqlSemantics\Statement\Identifier\Ascii::upper($token->text), ['TRUE', 'FALSE'], true)) {
+            return new BooleanLiteral(\SqlSemantics\Statement\Identifier\Ascii::upper($token->text) === 'TRUE');
         }
         return match ($token->name) {
             'STRING' => new StringLiteral(Quoted::body($token->text)),
             'BLOB' => new BinaryLiteral(Encoding::hex(substr($token->text, 2, -1))),
             'NULL' => NullLiteral::Null,
-            'TRUEFALSE' => new BooleanLiteral(strtoupper($token->text) === 'TRUE'),
+            'TRUEFALSE' => new BooleanLiteral(\SqlSemantics\Statement\Identifier\Ascii::upper($token->text) === 'TRUE'),
             'INTEGER', 'FLOAT', 'QNUMBER' => new NumberLiteral($this->number($token->text)),
             default => throw new DecodingException('The value is not a literal.'),
         };
@@ -52,7 +52,7 @@ final class LiteralDecoder implements LiteralRules
     public function number(string $text): string
     {
         $text = str_replace('_', '', $text);
-        if (strtolower(substr($text, 0, 2)) !== '0x') {
+        if (\SqlSemantics\Statement\Identifier\Ascii::lower(substr($text, 0, 2)) !== '0x') {
             return $text;
         }
         $hex = ltrim(substr($text, 2), '0');

@@ -29,11 +29,11 @@ final class TransactionReader
     public function read(Node $command): Begin|Commit|Rollback|Savepoint|ReleaseSavepoint|RollbackToSavepoint
     {
         $tokens = $command->tokens();
-        $keyword = strtoupper($tokens[0]->text ?? '');
+        $keyword = \SqlSemantics\Statement\Identifier\Ascii::upper($tokens[0]->text ?? '');
         $transaction = Tree::child($command, ['trans_opt']);
         $target = Tree::child($command, ['nm']);
         $mode = Tree::child($command, ['transtype']);
-        $locks = $mode === null ? LockAcquisition::Default : LockAcquisition::from(strtoupper(Tree::text($mode)));
+        $locks = $mode === null ? LockAcquisition::Default : LockAcquisition::from(\SqlSemantics\Statement\Identifier\Ascii::upper(Tree::text($mode)));
         $name = $transaction === null ? new TransactionName() : new TransactionName($this->optionalName($transaction), true);
         return match ($keyword) {
             'BEGIN' => new Begin($locks, $name),

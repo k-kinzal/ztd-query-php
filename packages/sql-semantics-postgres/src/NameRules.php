@@ -33,7 +33,7 @@ final class NameRules implements Contract
             $close = $quote === '[' ? ']' : $quote;
             return str_replace($close . $close, $close, substr($text, 1, -1));
         }
-        return strtolower($text);
+        return \SqlSemantics\Statement\Identifier\Ascii::lower($text);
     }
 
     /**

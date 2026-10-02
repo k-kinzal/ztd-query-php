@@ -34,8 +34,8 @@ trait Casts
         if (in_array($name, [Builtin::Dynamic, Builtin::Unknown], true)) {
             throw new CompositionException('SQLite\'s CAST needs a type name, ' . $type->label() . ' given.');
         }
-        $words = $name instanceof TypeName ? implode(' ', array_map(fn (string $part): string => Writer::render($this->identifier($part)), $name->parts)) : strtoupper($name->value);
-        $affinity = (new TypeReader())->affinity(strtoupper($name instanceof TypeName ? implode(' ', $name->parts) : $name->value));
+        $words = $name instanceof TypeName ? implode(' ', array_map(fn (string $part): string => Writer::render($this->identifier($part)), $name->parts)) : \SqlSemantics\Statement\Identifier\Ascii::upper($name->value);
+        $affinity = (new TypeReader())->affinity(\SqlSemantics\Statement\Identifier\Ascii::upper($name instanceof TypeName ? implode(' ', $name->parts) : $name->value));
         if ($type->affinity !== null && $type->affinity !== $affinity) {
             throw new CompositionException('SQLite reads ' . $words . ' with ' . $affinity->name . ' affinity, not ' . $type->affinity->name . '.');
         }

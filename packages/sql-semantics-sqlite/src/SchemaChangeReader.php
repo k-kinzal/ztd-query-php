@@ -33,7 +33,7 @@ final class SchemaChangeReader
         $reader = new IdentifierReader();
         $name = $reader->qualified($source);
         $tokens = array_values(array_filter($command->children, static fn (Node|Token $child): bool => $child instanceof Token));
-        $keywords = array_map(static fn (Token $token): string => strtoupper($token->text), $tokens);
+        $keywords = array_map(static fn (Token $token): string => \SqlSemantics\Statement\Identifier\Ascii::upper($token->text), $tokens);
         $conditional = Tree::child($command, ['ifexists']) !== null;
         $table = new TableReference($catalog, $name);
         if ($keywords[0] === 'DROP') {

@@ -28,6 +28,32 @@ complete profile interpretation remains under review.
 - Implementation: `Statement\Identifier\Ascii`, `SqlParser\Lexer\Ascii` and
   their fixed interpretation call sites.
 
+## PROFILE-TABLE-STORAGE-001
+
+**Status:** Implemented; this establishes artifact identity and runtime independence
+from zlib/ctype, not SQL semantic completeness.
+
+- Artifact storage: shipped parser tables now contain their complete `SQLPTBL1`
+  codec payload directly. The twelve new artifacts are byte-for-byte the decoded
+  payloads of the previous compressed files. Grammar productions and parser actions
+  are unchanged; the profile's exact file digests are deliberately updated.
+- Evidence and size: the [storage migration record](../../sql-parser/docs/table-storage.md)
+  links old-container and new-payload digests and records the installed-size tradeoff.
+  Loading a changed file uses its actual content hash, so an old table cached under
+  the same path cannot be returned as the newly selected grammar.
+- Pure PHP boundary: loading and saving shipped tables does not require zlib.
+  Legacy custom compressed caches have an optional compatibility reader. Lexer
+  single-byte classification uses explicit ASCII predicates instead of ctype.
+- Runtime tests: each shipped release is parsed in a child process with compression
+  and ctype functions disabled, using only the parser's own autoloader. A separate
+  semantic test checks analyze, declaration identity, new VALUES construction, and
+  SQL reconstruction with those native functions disabled. Parser and semantic
+  coverage/composition obligations remain separate from this execution condition.
+- Trust assumptions: PHP file/hash/byte operations and the reviewed table codec;
+  neither a table digest nor a successful parser test certifies semantic rules.
+- Implementation: `SqlParser\Table\TableFile`, `SqlParser\Lexer\Ascii`,
+  `Contract\GrammarRelease`, and `Core\Analysis\ProfileReader`.
+
 ## NEW-SCALAR-INPUT-001
 
 **Status:** Implemented; contract review incomplete.

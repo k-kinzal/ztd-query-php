@@ -170,7 +170,7 @@ final class TypeReader
     {
         $leading = array_slice($tokens, 0, 1);
         foreach (array_slice($tokens, 1) as $index => $token) {
-            $next = strtoupper($tokens[$index + 2]->text ?? '');
+            $next = \SqlSemantics\Statement\Identifier\Ascii::upper($tokens[$index + 2]->text ?? '');
             if (!in_array($token->name, self::NAME_TOKENS, true) || ($token->name === 'CHAR_SYM' && $next === 'SET')) {
                 break;
             }
@@ -196,10 +196,10 @@ final class TypeReader
             if ($depth > 0 || in_array($token->text, ['(', ')'], true)) {
                 continue;
             }
-            $word = strtoupper($token->text);
-            if ($word === 'CHARSET' || (in_array($word, ['CHARACTER', 'CHAR'], true) && strtoupper($tokens[$index + 1]->text ?? '') === 'SET')) {
+            $word = \SqlSemantics\Statement\Identifier\Ascii::upper($token->text);
+            if ($word === 'CHARSET' || (in_array($word, ['CHARACTER', 'CHAR'], true) && \SqlSemantics\Statement\Identifier\Ascii::upper($tokens[$index + 1]->text ?? '') === 'SET')) {
                 $index += $word === 'CHARSET' ? 1 : 2;
-                $facts['characterSet'] = strtolower((new NameRules())->name($tokens[$index]));
+                $facts['characterSet'] = \SqlSemantics\Statement\Identifier\Ascii::lower((new NameRules())->name($tokens[$index]));
                 $facts['octets'] = $facts['characterSet'] === 'binary';
                 continue;
             }
