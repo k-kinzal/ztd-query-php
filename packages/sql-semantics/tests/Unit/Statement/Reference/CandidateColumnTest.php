@@ -25,4 +25,14 @@ final class CandidateColumnTest extends TestCase
         self::assertSame([$relation], (new CandidateColumn($relation))->possibilities);
     }
 
+    public function testWithFallbackKeepsTheOriginalCandidateImmutable(): void
+    {
+        $catalog = new Catalog(new SearchPath(new Name('main')), complete: false);
+        $table = new TableReference($catalog, new QualifiedName(new Name('missing')));
+        $candidate = new CandidateColumn($table);
+        $fallback = new \SqlSemantics\Statement\Reference\OuterLookup(new \SqlSemantics\Statement\Relation\Scope($catalog), new Name('id'));
+        self::assertSame([$table, $fallback], $candidate->withFallback($fallback)->possibilities);
+        self::assertSame([$table], $candidate->possibilities);
+    }
+
 }

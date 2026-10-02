@@ -10,6 +10,9 @@ use SqlSemantics\Statement\Declaration\TypeDescriptor;
 use SqlSemantics\Statement\Identifier\Quote;
 use SqlSemantics\Statement\Reference\MissingColumn;
 use SqlSemantics\Statement\Type\Invalid;
+use SqlSemantics\Statement\Type\NullDomain;
+use SqlSemantics\Statement\Type\SqliteChoiceDomain;
+use SqlSemantics\Statement\Type\SqliteNumericDomain;
 use SqlSemantics\Statement\Type\Unresolved;
 
 /**
@@ -44,7 +47,7 @@ final class BooleanReference implements ScalarExpression
     /**
      * Uses the integer truth type only after ruling out a column with that name.
      */
-    public function type(): TypeDescriptor|Unresolved|Invalid
+    public function type(): TypeDescriptor|Unresolved|Invalid|NullDomain|SqliteNumericDomain|SqliteChoiceDomain
     {
         return $this->column->resolution instanceof MissingColumn ? new TypeDescriptor(Builtin::Integer) : $this->column->type();
     }

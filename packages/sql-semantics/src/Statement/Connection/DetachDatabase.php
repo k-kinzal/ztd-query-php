@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Statement\Connection;
 
+use SqlSemantics\Statement\Expression\Reference\Ownership;
 use SqlSemantics\Statement\Expression\ScalarExpression;
 use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Relation\Scope;
@@ -25,9 +26,7 @@ final class DetachDatabase implements Operation
     {
         assert($scope->tables === [], 'A detach target has no relation inputs.');
         assert((new SemanticGraph())->containsOnlyValues($schema), 'The target contains only semantic values.');
-        foreach ($schema->references() as $reference) {
-            assert($reference->scope === $scope, 'Detach references use the request expression scope.');
-        }
+        assert((new Ownership())->accepts($schema, $scope), 'Detach references use the request expression scope.');
     }
 
     /**

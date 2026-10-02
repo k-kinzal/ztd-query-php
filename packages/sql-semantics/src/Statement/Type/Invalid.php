@@ -16,4 +16,6 @@ enum Invalid
     case AmbiguousColumn;
     case AmbiguousTable;
     case IntegerLiteralOverflow;
+    case ScalarSubqueryWidth;
+    case InconsistentRowWidth;
 }

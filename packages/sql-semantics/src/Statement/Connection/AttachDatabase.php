@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Statement\Connection;
 
+use SqlSemantics\Statement\Expression\Reference\Ownership;
 use SqlSemantics\Statement\Expression\ScalarExpression;
 use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Relation\Scope;
@@ -27,9 +28,7 @@ final class AttachDatabase implements Operation
         assert($scope->tables === [], 'Attachment expressions have no relation inputs.');
         foreach ([$filename, $schema, ...($key === null ? [] : [$key])] as $expression) {
             assert((new SemanticGraph())->containsOnlyValues($expression), 'An attachment operand contains only semantic values.');
-            foreach ($expression->references() as $reference) {
-                assert($reference->scope === $scope, 'Attachment references use the request expression scope.');
-            }
+            assert((new Ownership())->accepts($expression, $scope), 'Attachment references use the request expression scope.');
         }
     }
 

@@ -12,9 +12,14 @@ use SqlSemantics\Statement\Reference\AmbiguousColumn;
 use SqlSemantics\Statement\Reference\AmbiguousTable;
 use SqlSemantics\Statement\Reference\CandidateColumn;
 use SqlSemantics\Statement\Reference\MissingColumn;
+use SqlSemantics\Statement\Reference\NamedAlias;
 use SqlSemantics\Statement\Reference\ResolvedColumn;
 use SqlSemantics\Statement\Relation\Scope;
+use SqlSemantics\Statement\Relation\SqliteAliasScope;
 use SqlSemantics\Statement\Type\Invalid;
+use SqlSemantics\Statement\Type\NullDomain;
+use SqlSemantics\Statement\Type\SqliteChoiceDomain;
+use SqlSemantics\Statement\Type\SqliteNumericDomain;
 use SqlSemantics\Statement\Type\Unresolved;
 
 /**
@@ -30,22 +35,29 @@ final class ColumnReference implements ScalarExpression
     /**
      * The lookup outcome; callers cannot supply a conflicting declaration or type.
      */
-    public readonly ResolvedColumn|CandidateColumn|MissingColumn|AmbiguousColumn|AmbiguousTable $resolution;
+    public readonly ResolvedColumn|CandidateColumn|MissingColumn|AmbiguousColumn|AmbiguousTable|NamedAlias $resolution;
+
+    /**
+     * The query containing this lookup site.
+     */
+    public readonly Scope $scope;
 
     /**
      * Resolves against the exact supplied scope without modifying its declarations.
      */
-    public function __construct(public readonly Scope $scope, public readonly Name $name, public readonly ?QualifiedName $qualifier = null)
+    public function __construct(Scope|SqliteAliasScope $scope, public readonly Name $name, public readonly ?QualifiedName $qualifier = null)
     {
+        $this->scope = $scope instanceof SqliteAliasScope ? $scope->scope : $scope;
         $this->resolution = $scope->resolve($name, $qualifier);
     }
 
     /**
      * Reads declared type identity or the concrete reason lookup could not establish it.
      */
-    public function type(): TypeDescriptor|Unresolved|Invalid
+    public function type(): TypeDescriptor|Unresolved|Invalid|NullDomain|SqliteNumericDomain|SqliteChoiceDomain
     {
         return match (true) {
+            $this->resolution instanceof NamedAlias => $this->resolution->field->expression->type(),
             $this->resolution instanceof ResolvedColumn => $this->resolution->column->type,
             $this->resolution instanceof CandidateColumn => Unresolved::MissingDeclaration,
             $this->resolution instanceof AmbiguousColumn => Invalid::AmbiguousColumn,
@@ -59,7 +71,11 @@ final class ColumnReference implements ScalarExpression
      */
     public function nullability(): Nullability
     {
-        return $this->resolution instanceof ResolvedColumn ? $this->resolution->column->nullability : Nullability::Unknown;
+        return match (true) {
+            $this->resolution instanceof NamedAlias => $this->resolution->field->expression->nullability(),
+            $this->resolution instanceof ResolvedColumn => $this->resolution->column->nullability,
+            default => Nullability::Unknown,
+        };
     }
 
     /**

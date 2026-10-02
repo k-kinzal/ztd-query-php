@@ -85,4 +85,80 @@ final class ScopeTest extends TestCase
         self::assertNotSame($reference->matches[0]->column, $reference->matches[1]->column);
     }
 
+
+    public function testResolveUsesTheNearestDeclaringScopeAndRetainsExactObjects(): void
+    {
+        $outerColumn = new Column(new Name('id'), new TypeDescriptor(Builtin::Integer));
+        $innerColumn = new Column(new Name('local'), new TypeDescriptor(Builtin::Text));
+        $outerTable = new Table(new QualifiedName(new Name('outer_table')), $outerColumn);
+        $innerTable = new Table(new QualifiedName(new Name('inner_table')), $innerColumn);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $outerTable, $innerTable);
+        $outer = new Scope($catalog, new TableReference($catalog, $outerTable->name));
+        $inner = new Scope($outer, new TableReference($catalog, $innerTable->name));
+        $reference = $inner->resolve(new Name('id'));
+        self::assertSame($outer, $inner->parent);
+        self::assertSame($catalog, $inner->catalog);
+        self::assertInstanceOf(ResolvedColumn::class, $reference);
+        self::assertSame($outerColumn, $reference->column);
+        self::assertSame($outerTable, $reference->table);
+        self::assertSame($outer->tables[0], $reference->relation);
+    }
+
+    public function testResolveLocalMatchesHideOuterColumnsWithoutBecomingAmbiguous(): void
+    {
+        $outerColumn = new Column(new Name('id'), new TypeDescriptor(Builtin::Integer));
+        $innerColumn = new Column(new Name('id'), new TypeDescriptor(Builtin::Text));
+        $outerTable = new Table(new QualifiedName(new Name('outer_table')), $outerColumn);
+        $innerTable = new Table(new QualifiedName(new Name('inner_table')), $innerColumn);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $outerTable, $innerTable);
+        $outer = new Scope($catalog, new TableReference($catalog, $outerTable->name));
+        $inner = new Scope($outer, new TableReference($catalog, $innerTable->name));
+        $reference = $inner->resolve(new Name('id'));
+        self::assertInstanceOf(ResolvedColumn::class, $reference);
+        self::assertSame($innerColumn, $reference->column);
+        self::assertSame($inner->tables[0], $reference->relation);
+    }
+
+    public function testResolveIncompleteLocalMetadataKeepsTheOuterFallbackConditional(): void
+    {
+        $column = new Column(new Name('id'), new TypeDescriptor(Builtin::Integer));
+        $table = new Table(new QualifiedName(new Name('outer_table')), $column);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, false, null, null, $table);
+        $outer = new Scope($catalog, new TableReference($catalog, $table->name));
+        $local = new TableReference($catalog, new QualifiedName(new Name('local_table')));
+        $reference = (new Scope($outer, $local))->resolve(new Name('id'));
+        self::assertInstanceOf(CandidateColumn::class, $reference);
+        self::assertSame($local, $reference->possibilities[0]);
+        $fallback = $reference->possibilities[1];
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\OuterLookup::class, $fallback);
+        self::assertSame($outer, $fallback->scope);
+        self::assertInstanceOf(ResolvedColumn::class, $fallback->resolution);
+        self::assertSame($column, $fallback->resolution->column);
+    }
+
+    public function testResolveQualifiedOuterNamesCanPassThroughSeveralNestedScopes(): void
+    {
+        $column = new Column(new Name('id'), new TypeDescriptor(Builtin::Integer));
+        $table = new Table(new QualifiedName(new Name('bar')), $column);
+        $catalog = new Catalog(new SearchPath(new Name('main')), Comparison::Sensitive, Comparison::Sensitive, true, null, null, $table);
+        $outer = new Scope($catalog, new TableReference($catalog, $table->name, new Name('outside')));
+        $inner = new Scope(new Scope($outer));
+        $reference = $inner->resolve(new Name('id'), new QualifiedName(new Name('outside')));
+        self::assertInstanceOf(ResolvedColumn::class, $reference);
+        self::assertSame($column, $reference->column);
+        self::assertSame($outer->tables[0], $reference->relation);
+        self::assertTrue((new SemanticGraph())->containsOnlyValues($inner));
+    }
+
+    public function testLocalDoesNotSearchTheEnclosingNamespace(): void
+    {
+        $outer = new Scope(new Catalog(new SearchPath(new Name('main'))));
+        $inner = new Scope($outer);
+        $field = new \SqlSemantics\Statement\Projection\Field(new \SqlSemantics\Statement\Expression\NullConstant(), new Name('answer'));
+        $namespace = new \SqlSemantics\Statement\Relation\SqliteAliasScope(new \SqlSemantics\Statement\Projection\Fields($outer, $field), $field);
+        $nested = new Scope($namespace);
+        self::assertSame(MissingColumn::Value, $nested->local(new Name('answer')));
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\NamedAlias::class, $nested->resolve(new Name('answer')));
+    }
+
 }

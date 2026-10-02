@@ -8,6 +8,8 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Core\Ast\Tree;
 use SqlSemantics\Statement\Query\Rows;
 use SqlSemantics\Statement\Query\Select;
+use SqlSemantics\Statement\Relation\Scope;
+use SqlSemantics\Statement\Relation\SqliteAliasScope;
 use SqlSemantics\Statement\Schema\Catalog;
 
 /**
@@ -19,7 +21,7 @@ final class QueryReader
     /**
      * Preserves the query's source form as a concrete semantic type.
      */
-    public function read(Node $source, Catalog $catalog): Select|Rows
+    public function read(Node $source, Catalog|Scope|SqliteAliasScope $catalog): Select|Rows
     {
         Tree::assertChildren($source, ['selectnowith'], []);
         $body = Tree::child($source, ['selectnowith']);

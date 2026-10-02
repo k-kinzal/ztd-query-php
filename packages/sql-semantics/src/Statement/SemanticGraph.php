@@ -10,6 +10,7 @@ use SqlSemantics\Statement\Projection\AliasReference;
 use SqlSemantics\Statement\Projection\ColumnOrAlias;
 use SqlSemantics\Statement\Projection\Field;
 use SqlSemantics\Statement\Relation\Scope;
+use SqlSemantics\Statement\Relation\SqliteAliasScope;
 use SqlSemantics\Statement\Relation\TableReference;
 use SqlSemantics\Statement\Schema\Catalog;
 use SqlSemantics\Statement\Schema\Column;
@@ -84,6 +85,9 @@ final class SemanticGraph
      */
     public function describe(object $value, array &$entities): string
     {
+        if ($value instanceof SqliteAliasScope) {
+            return $this->describe($value->scope, $entities);
+        }
         if ($value instanceof AliasReference) {
             return $this->describe($value->field->expression, $entities);
         }
@@ -126,7 +130,7 @@ final class SemanticGraph
         while ($pending !== []) {
             $value = array_pop($pending);
             $id = spl_object_id($value);
-            if (isset($seen[$id]) || $value instanceof UnitEnum || $value instanceof Scope || $value instanceof Catalog || $value instanceof TableReference || $value instanceof Table || $value instanceof Column) {
+            if (isset($seen[$id]) || $value instanceof UnitEnum || $value instanceof Scope || $value instanceof SqliteAliasScope || $value instanceof Catalog || $value instanceof TableReference || $value instanceof Table || $value instanceof Column) {
                 continue;
             }
             $seen[$id] = true;

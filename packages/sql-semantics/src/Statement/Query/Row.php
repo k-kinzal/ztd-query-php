@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Statement\Query;
 
+use SqlSemantics\Statement\Expression\Reference\Ownership;
 use SqlSemantics\Statement\Expression\ScalarExpression;
 use SqlSemantics\Statement\Relation\Scope;
 use SqlSemantics\Statement\SemanticGraph;
@@ -30,9 +31,7 @@ final class Row
         $this->expressions = [$first, ...array_values($rest)];
         foreach ($this->expressions as $expression) {
             assert((new SemanticGraph())->containsOnlyValues($expression), 'A row retains only semantic expressions.');
-            foreach ($expression->references() as $reference) {
-                assert($reference->scope === $scope, 'A row expression must retain its input scope.');
-            }
+            assert((new Ownership())->accepts($expression, $scope), 'A row expression must retain its input scope.');
         }
     }
 

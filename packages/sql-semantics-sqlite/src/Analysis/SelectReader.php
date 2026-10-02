@@ -17,6 +17,7 @@ use SqlSemantics\Statement\Projection\Fields;
 use SqlSemantics\Statement\Query\Quantifier;
 use SqlSemantics\Statement\Query\Select;
 use SqlSemantics\Statement\Relation\Scope;
+use SqlSemantics\Statement\Relation\SqliteAliasScope;
 use SqlSemantics\Statement\Relation\TableReference;
 use SqlSemantics\Statement\Schema\Catalog;
 use SqlSemantics\Statement\SemanticGraph;
@@ -30,7 +31,7 @@ final class SelectReader
     /**
      * Structures the represented clauses; additional query forms require their own lowering.
      */
-    public function read(Node $source, Catalog $catalog): Select
+    public function read(Node $source, Catalog|Scope|SqliteAliasScope $catalog): Select
     {
         Tree::assertChildren($source, ['selectnowith'], []);
         $body = Tree::child($source, ['selectnowith']);
@@ -39,8 +40,9 @@ final class SelectReader
         $select = Tree::child($body, ['oneselect']);
         assert($select !== null, 'A simple query has a SELECT body.');
         Tree::assertChildren($select, ['distinct', 'selcollist', 'from', 'where_opt', 'limit_opt'], ['SELECT']);
+        $declarations = $catalog instanceof Catalog ? $catalog : $catalog->catalog;
         $from = Tree::child($select, ['from']);
-        $tables = $from === null ? [] : $this->tables(Tree::outer($from, ['seltablist'])[0], $catalog);
+        $tables = $from === null ? [] : $this->tables(Tree::outer($from, ['seltablist'])[0], $declarations);
         $scope = new Scope($catalog, ...$tables);
         $projection = Tree::child($select, ['selcollist']);
         assert($projection !== null, 'This query grammar requires a projection.');
@@ -56,13 +58,16 @@ final class SelectReader
         $predicate = Tree::child($select, ['where_opt']);
         $where = $predicate === null ? null : (new ExpressionReader($fields, ...$aliases))->read(Tree::outer($predicate, ['expr'])[0], $scope);
         foreach ($where === null ? [] : (new SemanticGraph())->conditionalAliases($where) as $reference) {
-            if (($fields->matchingAliases($reference->alias->name->value)[0] ?? null) !== $reference->alias->field) {
+            if ($reference->alias->projection->scope === $scope && ($fields->matchingAliases($reference->alias->name->value)[0] ?? null) !== $reference->alias->field) {
                 Tree::unsupported($select, 'conditional alias affected by computed output naming');
             }
         }
+        if ($where !== null && !(new \SqlSemantics\Statement\Reference\AliasDependencies())->preserved($where, $fields)) {
+            Tree::unsupported($select, 'correlated alias affected by computed output naming');
+        }
         $quantifier = Tree::child($select, ['distinct']);
         $limit = Tree::child($select, ['limit_opt']);
-        return new Select($fields, $where, $quantifier === null ? Quantifier::Default : Quantifier::from(strtoupper(Tree::text($quantifier))), $limit === null ? null : (new LimitReader())->read($limit, $catalog));
+        return new Select($fields, $where, $quantifier === null ? Quantifier::Default : Quantifier::from(strtoupper(Tree::text($quantifier))), $limit === null ? null : (new LimitReader())->read($limit, $declarations));
     }
 
     /**

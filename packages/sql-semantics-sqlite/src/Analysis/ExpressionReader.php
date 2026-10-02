@@ -8,6 +8,7 @@ use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
 use SqlSemantics\Core\Ast\Tree;
 use SqlSemantics\Platform\Sqlite\Analysis\Expression\CaseReader;
+use SqlSemantics\Platform\Sqlite\Analysis\Expression\SubqueryReader;
 use SqlSemantics\Platform\Sqlite\IdentifierReader;
 use SqlSemantics\Statement\Expression\BooleanReference;
 use SqlSemantics\Statement\Expression\ColumnReference;
@@ -27,8 +28,10 @@ use SqlSemantics\Statement\Projection\Field;
 use SqlSemantics\Statement\Projection\Fields;
 use SqlSemantics\Statement\Reference\CandidateColumn;
 use SqlSemantics\Statement\Reference\MissingColumn;
+use SqlSemantics\Statement\Reference\NamedAlias;
 use SqlSemantics\Statement\Reference\ResolvedColumn;
 use SqlSemantics\Statement\Relation\Scope;
+use SqlSemantics\Statement\Relation\SqliteAliasScope;
 
 /**
  * Resolves scalar operations and their column references in one semantic scope.
@@ -59,7 +62,7 @@ final class ExpressionReader
     public function read(Node $source, Scope $scope): ScalarExpression
     {
         assert($this->projection === null || $this->projection->scope === $scope, 'Alias and input lookup must share a scope.');
-        $conversion = (new ConversionReader())->read($source, $scope, $this) ?? (new CaseReader())->read($source, $scope, $this);
+        $conversion = (new SubqueryReader())->read($source, $scope, $this, $this->projection === null ? $scope : new SqliteAliasScope($this->projection, ...$this->aliases)) ?? (new ConversionReader())->read($source, $scope, $this) ?? (new CaseReader())->read($source, $scope, $this);
         if ($conversion !== null) {
             return $conversion;
         }
@@ -95,7 +98,7 @@ final class ExpressionReader
         if ($alias !== null) {
             return $alias;
         }
-        if ($column->qualifier === null && !$column->resolution instanceof ResolvedColumn && $column->name->quote === Quote::Double) {
+        if ($column->qualifier === null && !$column->resolution instanceof ResolvedColumn && !$column->resolution instanceof NamedAlias && $column->name->quote === Quote::Double) {
             Tree::unsupported($source, 'identifier with a literal alternative');
         }
         return $column->qualifier === null && $column->name->quote === Quote::None && in_array(strtoupper($column->name->value), ['TRUE', 'FALSE'], true)
@@ -152,7 +155,14 @@ final class ExpressionReader
      */
     public function alias(ColumnReference $column): AliasReference|ColumnOrAlias|null
     {
-        if ($this->projection === null || $column->qualifier !== null || (!$column->resolution instanceof MissingColumn && !$column->resolution instanceof CandidateColumn)) {
+        if ($this->projection === null || $column->qualifier !== null || (!$column->resolution instanceof MissingColumn && !$column->resolution instanceof CandidateColumn && !$column->resolution instanceof NamedAlias)) {
+            return null;
+        }
+        $local = $column->scope->local($column->name);
+        if (!$local instanceof MissingColumn && !$local instanceof CandidateColumn) {
+            return null;
+        }
+        if ($column->resolution instanceof CandidateColumn && array_filter($column->resolution->possibilities, fn ($possibility): bool => $possibility instanceof NamedAlias && $possibility->projection === $this->projection) === []) {
             return null;
         }
         foreach ($this->aliases as $field) {
@@ -181,7 +191,7 @@ final class ExpressionReader
         $names = array_map((new IdentifierReader())->name(...), $parts);
         $name = $names[count($names) - 1];
         $qualifier = count($names) === 1 ? null : new QualifiedName($names[count($names) - 2], count($names) === 3 ? $names[0] : null);
-        return new ColumnReference($scope, $name, $qualifier);
+        return new ColumnReference($this->projection === null ? $scope : new SqliteAliasScope($this->projection, ...$this->aliases), $name, $qualifier);
     }
 
 }

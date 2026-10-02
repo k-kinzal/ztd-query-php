@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Statement\Mutation;
 
+use SqlSemantics\Statement\Expression\Reference\Ownership;
 use SqlSemantics\Statement\Expression\ScalarExpression;
 use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Relation\Scope;
@@ -33,9 +34,7 @@ final class SqliteDelete implements Operation
         assert(count($scope->tables) === 1, 'Deletion has one target occurrence.');
         $this->target = $scope->tables[0];
         assert((new SemanticGraph())->containsOnlyValues($this), 'Deletion retains only immutable semantic values.');
-        foreach ($where?->references() ?? [] as $reference) {
-            assert($reference->scope === $scope, 'The deletion predicate uses the target scope.');
-        }
+        assert($where === null || (new Ownership())->accepts($where, $scope), 'The deletion predicate uses the target scope.');
     }
 
     /**

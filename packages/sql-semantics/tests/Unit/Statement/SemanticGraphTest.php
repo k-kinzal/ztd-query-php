@@ -95,4 +95,15 @@ final class SemanticGraphTest extends TestCase
         self::assertSame([$conditional], (new SemanticGraph())->conditionalAliases($active));
         self::assertSame([], (new SemanticGraph())->conditionalAliases($eliminated));
     }
+    public function testFingerprintKeepsCorrelatedTargetsWhenReconstructionIntroducesAnUnusedAlias(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $query = $semantics->analyze('SELECT 1+2, 7 AS answer WHERE EXISTS (SELECT answer)', []);
+        $rebuilt = $semantics->analyze($query->toString(), []);
+        $graph = new SemanticGraph();
+        self::assertSame($graph->fingerprint($query), $graph->fingerprint($rebuilt));
+        $different = $semantics->analyze('SELECT 1+2, 8 AS answer WHERE EXISTS (SELECT answer)', []);
+        self::assertNotSame($graph->fingerprint($query), $graph->fingerprint($different));
+    }
+
 }

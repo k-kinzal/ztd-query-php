@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Statement\Projection;
 
 use OutOfBoundsException;
+use SqlSemantics\Statement\Expression\Reference\Ownership;
 use SqlSemantics\Statement\Relation\Scope;
 
 /**
@@ -28,9 +29,7 @@ final class Fields
     {
         $this->items = array_values($fields);
         foreach ($fields as $field) {
-            foreach ($field->expression->references() as $reference) {
-                assert($reference->scope === $scope, 'Every projected column must belong to this scope.');
-            }
+            assert((new Ownership())->accepts($field->expression, $scope), 'Every projected column must belong to this scope.');
         }
     }
 

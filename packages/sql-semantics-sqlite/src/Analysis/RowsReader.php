@@ -10,6 +10,7 @@ use SqlSemantics\Statement\Expression\ScalarExpression;
 use SqlSemantics\Statement\Query\Row;
 use SqlSemantics\Statement\Query\Rows;
 use SqlSemantics\Statement\Relation\Scope;
+use SqlSemantics\Statement\Relation\SqliteAliasScope;
 use SqlSemantics\Statement\Schema\Catalog;
 
 /**
@@ -21,7 +22,7 @@ final class RowsReader
     /**
      * An explicit row has no table scan; its expressions do not resolve against insertion destinations.
      */
-    public function read(Node $source, Catalog $catalog): Rows
+    public function read(Node $source, Catalog|Scope|SqliteAliasScope $catalog): Rows
     {
         assert(in_array($source->name, ['values', 'mvalues'], true), 'A row constructor has one or more explicit tuples.');
         $scope = new Scope($catalog);

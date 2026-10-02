@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Statement\Mutation;
 
+use SqlSemantics\Statement\Expression\Reference\Ownership;
 use SqlSemantics\Statement\Expression\ScalarExpression;
 use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Relation\Scope;
@@ -39,9 +40,7 @@ final class SqliteUpdate implements Operation
             $expressions[] = $assignment->expression;
         }
         foreach ($expressions as $expression) {
-            foreach ($expression->references() as $reference) {
-                assert($reference->scope === $scope, 'Assignment inputs and predicates use the update input scope.');
-            }
+            assert((new Ownership())->accepts($expression, $scope), 'Assignment inputs and predicates use the update input scope.');
         }
         assert((new SemanticGraph())->containsOnlyValues($this), 'An update retains only immutable semantic values.');
     }

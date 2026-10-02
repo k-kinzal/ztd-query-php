@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Statement\Maintenance;
 
+use SqlSemantics\Statement\Expression\Reference\Ownership;
 use SqlSemantics\Statement\Expression\ScalarExpression;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Operation;
@@ -27,9 +28,7 @@ final class VacuumInto implements Operation
     {
         assert($scope->tables === [], 'A vacuum destination has no relation inputs.');
         assert((new SemanticGraph())->containsOnlyValues($destination), 'The destination contains only semantic values.');
-        foreach ($destination->references() as $reference) {
-            assert($reference->scope === $scope, 'Destination references belong to the vacuum expression scope.');
-        }
+        assert((new Ownership())->accepts($destination, $scope), 'Destination references belong to the vacuum expression scope.');
     }
 
     /**

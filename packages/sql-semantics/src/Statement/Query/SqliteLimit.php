@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Statement\Query;
 
+use SqlSemantics\Statement\Expression\Reference\Ownership;
 use SqlSemantics\Statement\Expression\ScalarExpression;
 use SqlSemantics\Statement\Relation\Scope;
 use SqlSemantics\Statement\SemanticGraph;
@@ -28,9 +29,7 @@ final class SqliteLimit
         assert(!$commaSyntax || $offset !== null, 'The comma form requires both skip and count expressions.');
         assert((new SemanticGraph())->containsOnlyValues($this), 'Row restrictions retain only immutable semantic values.');
         foreach ([$count, $offset] as $operand) {
-            foreach ($operand?->references() ?? [] as $reference) {
-                assert($reference->scope === $scope, 'Every row-restriction lookup must use its independent expression scope.');
-            }
+            assert($operand === null || (new Ownership())->accepts($operand, $scope), 'Every row-restriction lookup must use its independent expression scope.');
         }
     }
 

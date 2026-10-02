@@ -111,6 +111,42 @@ base selects the ELSE domain after all operands have been checked. These are
 conservative facts about a request, not execution of its conditions. See SQLite's
 [CASE expression rules](https://sqlite.org/lang_expr.html#the_case_expression).
 
+## Query expressions and lexical scope
+
+SQLite scalar subqueries, EXISTS, and query membership have separate operation
+classes: `SqliteScalarSubquery`, `SqliteExists`, and `SqliteInQuery`. Their
+`SqliteSubquery` source retains the nested `Select` or `Rows` operation and its
+immediate expression scope. A scalar subquery selects the first result row and
+can return NULL when no row exists. EXISTS has an integer truth result and permits
+multiple projected columns. Scalar membership requires one output column and
+keeps the empty-result case distinct from a NULL result. These rules follow the
+[SQLite subquery documentation](https://sqlite.org/lang_expr.html#subquery_expressions).
+
+Name lookup starts with the inner inputs and searches enclosing query namespaces
+only when no local match is found. A resolved reference retains the exact outer
+table occurrence, declaration, and column; its lookup site remains the inner
+scope. Missing local declarations keep the outer lookup as a conditional
+alternative instead of assuming that an outer match wins.
+
+SQLite projection aliases visible in a WHERE expression remain visible to its
+nested queries. `NamedAlias` identifies their exact projected fields. A nested
+query writes the alias name, preserving its original binding without moving the
+aliased expression into a different namespace. Local input columns have priority
+over aliases, and a nearer query's alias has priority over a more distant column.
+Aliases are not visible to sibling SELECT expressions. LIMIT expressions use an
+independent namespace and cannot capture outer SELECT columns.
+
+Ownership assertions check actual query boundaries. A reference owned by an inner
+query cannot be transplanted into an outer expression merely because its scope
+has an outer parent. Persistent projection edits must preserve every referenced
+outer alias target. Adding an unrelated field preserves those dependencies;
+removing or shadowing the target violates the assertion contract.
+
+Output-label reconstruction still has a migration gap when a generated label
+would capture a correlated alias. Such inputs fail explicitly rather than
+reconstructing a query with a changed binding. Compound queries, CTEs, derived
+inputs, and the other unimplemented query forms also remain required work.
+
 ## Declarations and insertion sources
 
 A table creation owns its declaration objects. Supplying that operation as context

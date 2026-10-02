@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Statement\Query;
 
+use SqlSemantics\Statement\Expression\Reference\Ownership;
 use SqlSemantics\Statement\Expression\ScalarExpression;
 use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Projection\Field;
@@ -38,11 +39,12 @@ final class Select implements Operation
         $this->scope = $projection->scope;
         assert($limit === null || $limit->scope->catalog === $this->scope->catalog, 'The row restriction must use this query declaration context.');
         assert((new SemanticGraph())->containsOnlyValues($this), 'A SELECT retains only immutable semantic values.');
-        foreach ($where?->references() ?? [] as $reference) {
-            assert($reference->scope === $this->scope, 'Every predicate column must belong to this SELECT scope.');
+        assert($where === null || (new Ownership())->accepts($where, $this->scope), 'Every predicate column must belong to this SELECT scope.');
+        foreach ([...array_map(static fn (Field $field): ScalarExpression => $field->expression, $projection->items), ...($where === null ? [] : [$where])] as $expression) {
+            assert((new \SqlSemantics\Statement\Reference\AliasDependencies())->preserved($expression, $projection), 'A named alias dependency must preserve its actual projection target.');
         }
         foreach ($where === null ? [] : (new SemanticGraph())->conditionalAliases($where) as $reference) {
-            assert(($projection->matchingAliases($reference->alias->name->value)[0] ?? null) === $reference->alias->field, 'A conditional alias must keep its original fallback field until the input declaration is known.');
+            assert($reference->alias->projection->scope !== $this->scope || ($projection->matchingAliases($reference->alias->name->value)[0] ?? null) === $reference->alias->field, 'A conditional alias must keep its original fallback field until the input declaration is known.');
         }
     }
 

@@ -257,7 +257,11 @@ final class SelectReaderTest extends TestCase
         self::assertSame(Unresolved::MissingDeclaration, $query->where->type());
         self::assertSame($query->field('n'), $query->where->alias->field);
         self::assertInstanceOf(CandidateColumn::class, $query->where->column->resolution);
-        self::assertSame([$query->scope->tables[0]], $query->where->column->resolution->possibilities);
+        self::assertCount(2, $query->where->column->resolution->possibilities);
+        self::assertSame($query->scope->tables[0], $query->where->column->resolution->first);
+        $fallback = $query->where->column->resolution->possibilities[1];
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\NamedAlias::class, $fallback);
+        self::assertSame($query->field('n'), $fallback->field);
     }
 
     #[TestWith(['LIMIT 2'])]
