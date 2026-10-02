@@ -91,6 +91,10 @@ final class Library
             'array_filter' => [new Parameter('array', 'array'), new Parameter('callback', 'callable|null', default: $null), new Parameter('mode', 'int', default: Term::constant(0))],
             'array_reduce' => [new Parameter('array', 'array'), new Parameter('callback', 'callable'), new Parameter('initial', default: $null)],
             'sort' => [new Parameter('array', 'array', byReference: true), new Parameter('flags', 'int', default: Term::constant(0))],
+            'array_shift', 'array_pop' => [new Parameter('array', 'array', byReference: true)],
+            'array_push', 'array_unshift' => [new Parameter('array', 'array', byReference: true), new Parameter('values', 'mixed', variadic: true)],
+            'array_key_first', 'array_key_last' => [new Parameter('array', 'array')],
+            'array_slice' => [new Parameter('array', 'array'), new Parameter('offset', 'int'), new Parameter('length', 'int|null', default: $null), new Parameter('preserve_keys', 'bool', default: Term::constant(false))],
             default => null,
         };
     }

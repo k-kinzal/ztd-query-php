@@ -262,6 +262,18 @@ final class LibraryTest extends TestCase
             'array_reduce:initial' => ['array_reduce', 2, 3, 'initial', ['mixed'], false, false, 'constant', null],
             'sort:array' => ['sort', 0, 2, 'array', ['array'], true, false, 'required', null],
             'sort:flags' => ['sort', 1, 2, 'flags', ['int'], false, false, 'constant', 0],
+            'array_shift:array' => ['array_shift', 0, 1, 'array', ['array'], true, false, 'required', null],
+            'array_pop:array' => ['array_pop', 0, 1, 'array', ['array'], true, false, 'required', null],
+            'array_push:array' => ['array_push', 0, 2, 'array', ['array'], true, false, 'required', null],
+            'array_push:values' => ['array_push', 1, 2, 'values', ['mixed'], false, true, 'required', null],
+            'array_unshift:array' => ['array_unshift', 0, 2, 'array', ['array'], true, false, 'required', null],
+            'array_unshift:values' => ['array_unshift', 1, 2, 'values', ['mixed'], false, true, 'required', null],
+            'array_key_first:array' => ['array_key_first', 0, 1, 'array', ['array'], false, false, 'required', null],
+            'array_key_last:array' => ['array_key_last', 0, 1, 'array', ['array'], false, false, 'required', null],
+            'array_slice:array' => ['array_slice', 0, 4, 'array', ['array'], false, false, 'required', null],
+            'array_slice:offset' => ['array_slice', 1, 4, 'offset', ['int'], false, false, 'required', null],
+            'array_slice:length' => ['array_slice', 2, 4, 'length', ['int', 'null'], false, false, 'constant', null],
+            'array_slice:preserve_keys' => ['array_slice', 3, 4, 'preserve_keys', ['bool'], false, false, 'constant', false],
         ];
     }
 

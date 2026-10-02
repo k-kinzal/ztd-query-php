@@ -37,6 +37,12 @@ final class ArrayFunctions
         if ($name === 'count') {
             return $this->countArguments($values);
         }
+        if ($name === 'array_key_first' || $name === 'array_key_last') {
+            return $this->boundaryKey($name, $array);
+        }
+        if ($name === 'array_slice') {
+            return $this->slice($values);
+        }
         if ($array->kind !== 'array') {
             return new Term('intrinsic', $name, $values, ['type' => 'array']);
         }
@@ -54,6 +60,34 @@ final class ArrayFunctions
             return $this->keys($array, $values);
         }
         return Term::array(array_values($array->operands));
+    }
+
+    /**
+     * Selects the first or last key of a closed shape; an open shape keeps the call symbolic.
+     * @param string $name array_key_first or array_key_last
+     * @param Term $array Bound array
+     * @return Term Key, null for an empty array, or a symbolic key
+     */
+    public function boundaryKey(string $name, Term $array): Term
+    {
+        if ($array->kind !== 'array' || ($array->attributes['open'] ?? false) === true) {
+            return new Term('intrinsic', $name, [$array], ['type' => 'int|string|null']);
+        }
+        return Term::constant($name === 'array_key_first' ? array_key_first($array->operands) : array_key_last($array->operands));
+    }
+
+    /**
+     * Slices a closed shape with constant bounds, renumbering integer keys unless they are preserved.
+     * @param list<Term> $values Bound array, offset, length, and preserve_keys
+     * @return Term Selected entries or a symbolic slice
+     */
+    public function slice(array $values): Term
+    {
+        [$array, $offset, $length, $preserve] = $values + [Term::array([]), Term::constant(0), Term::constant(null), Term::constant(false)];
+        if ($array->kind !== 'array' || ($array->attributes['open'] ?? false) === true || $offset->kind !== 'constant' || !is_int($offset->literal) || $length->kind !== 'constant' || (!is_int($length->literal) && $length->literal !== null) || $preserve->kind !== 'constant' || !is_bool($preserve->literal)) {
+            return new Term('intrinsic', 'array_slice', $values, ['type' => 'array']);
+        }
+        return new Term('array', operands: array_slice($array->operands, $offset->literal, $length->literal, $preserve->literal), attributes: ['open' => false], secret: $array->secret);
     }
 
     /**
