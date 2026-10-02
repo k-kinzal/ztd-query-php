@@ -105,21 +105,52 @@ and `bar` is its candidate owner. With a complete context, an absent column or a
 ambiguous reference has a distinct diagnosis. Pass `Declarations::Partial` when
 the supplied context intentionally omits some database declarations.
 
-Changes create new values and assert their scope relationships:
+Operations and field collections have no editing methods. To request another query,
+explicitly analyze new SQL against the declarations it needs:
 
 ```php
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Projection\Field;
-
-$label = new Field(new ColumnReference($query->scope, new Name('label')));
-$changed = $query->withFields($query->fields()->addField($label));
-$changed->toString(); // SELECT foo, label FROM bar
-$query->toString();   // SELECT foo FROM bar
+$other = $semantics->analyze('SELECT foo, label FROM bar', [$declaration]);
 ```
 
-An insertion from explicit rows, one from SELECT, and one from defaults are
-`InsertRows`, `InsertSelect`, and `InsertDefaults`. Changing the source form
-constructs the corresponding operation, retaining the original target object.
+The same immutable declaration snapshot can also be reused explicitly:
+
+```php
+$context = $query->context();
+$other = new Select(
+    $context,
+    new \SqlSemantics\Statement\Construction\Query\SelectDefinition(
+        new \SqlSemantics\Statement\Construction\Query\ProjectionDefinition(
+            new \SqlSemantics\Statement\Construction\Query\FieldDefinition(
+                new \SqlSemantics\Statement\Construction\Expression\ColumnUse(
+                    new \SqlSemantics\Statement\Identifier\Name('label'),
+                ),
+            ),
+        ),
+        new \SqlSemantics\Statement\Construction\Query\Inputs(
+            new \SqlSemantics\Statement\Construction\Query\NamedInput(
+                $query->singleNamedInput()->name,
+            ),
+        ),
+    ),
+);
+```
+
+`Select` accepts new inputs, not an existing `Fields`, `Scope`, or bound expression.
+Every construction creates fresh relation occurrences and resolves its column uses
+against the supplied context. Immutable literals and declaration objects can be
+shared. `ScopedSelect` is a correlated query body and does not implement the
+statement-root `Operation` contract. The current constructor implements the
+SQLite profile; it does not claim the remaining dialects are implemented.
+
+`Semantics::context()` creates an open declaration snapshot; `context([])` creates
+an explicitly empty complete snapshot. Passing a snapshot to `analyze()` keeps
+its identity. Profiles fix grammar and keyword artifact digests, rule revision,
+lexical modes, and parameter syntax; incompatible declarations or contexts are
+rejected rather than silently adapted.
+
+The new request does not inherit predicates, ordering, aliases, or other clauses
+from an earlier query. Its correctness is assessed independently. INSERT rows,
+SELECT, and defaults retain their distinct concrete operation types.
 
 See the [semantic model contract](docs/semantic-model.md) for uncertainty,
 invariants, reconstruction, verification, and the complete-language requirement.
