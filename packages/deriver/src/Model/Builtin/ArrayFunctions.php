@@ -208,7 +208,7 @@ final class ArrayFunctions
     }
 
     /**
-     * Checks key presence without treating an open remainder as absent.
+     * Checks key presence without treating an open remainder as absent or an entry that unknown code may have removed as present.
      * @param Term $needle Key value
      * @param Term $array Known array shape
      * @return Term Presence predicate
@@ -220,7 +220,7 @@ final class ArrayFunctions
             return $key;
         }
         if ($key->kind === 'constant' && (is_int($key->literal) || is_string($key->literal))) {
-            if (array_key_exists($key->literal, $array->operands)) {
+            if (array_key_exists($key->literal, $array->operands) && ($array->operands[$key->literal]->attributes['maybeUninitialized'] ?? false) !== true) {
                 return Term::constant(true);
             }
             if (($array->attributes['open'] ?? false) === false) {
