@@ -44,7 +44,7 @@ final class ColumnDefinitionReader
         $name = null;
         foreach (Tree::outer($source, ['ccons']) as $constraint) {
             $tokens = $constraint->tokens();
-            if (strtoupper($tokens[0]->text) === 'CONSTRAINT') {
+            if (\SqlSemantics\Statement\Identifier\Ascii::upper($tokens[0]->text) === 'CONSTRAINT') {
                 $name = (new IdentifierReader())->name(Tree::outer($constraint, ['nm'])[0]);
                 continue;
             }
@@ -61,11 +61,11 @@ final class ColumnDefinitionReader
     {
         $tokens = $source->tokens();
         $direction = Tree::child($source, ['sortorder']);
-        $kind = strtoupper($tokens[0]->text);
-        $kind .= $kind === 'NOT' ? ' ' . strtoupper($tokens[1]->text) : '';
+        $kind = \SqlSemantics\Statement\Identifier\Ascii::upper($tokens[0]->text);
+        $kind .= $kind === 'NOT' ? ' ' . \SqlSemantics\Statement\Identifier\Ascii::upper($tokens[1]->text) : '';
         return match ($kind) {
             'NULL', 'NOT NULL' => new ColumnNullability($kind === 'NULL', $this->conflict($source), $name),
-            'PRIMARY' => new ColumnPrimaryKey($direction === null ? KeyDirection::Implicit : KeyDirection::from(strtoupper(Tree::text($direction))), $this->conflict($source), Tree::child($source, ['autoinc']) !== null, $name),
+            'PRIMARY' => new ColumnPrimaryKey($direction === null ? KeyDirection::Implicit : KeyDirection::from(\SqlSemantics\Statement\Identifier\Ascii::upper(Tree::text($direction))), $this->conflict($source), Tree::child($source, ['autoinc']) !== null, $name),
             'UNIQUE' => new ColumnUnique($this->conflict($source), $name),
             default => Tree::unsupported($source, 'column constraint'),
         };
@@ -77,6 +77,6 @@ final class ColumnDefinitionReader
     public function conflict(Node $source): ConflictAction
     {
         $policy = Tree::child($source, ['onconf']);
-        return $policy === null ? ConflictAction::Implicit : ConflictAction::from(strtoupper(Tree::text(Tree::outer($policy, ['resolvetype'])[0])));
+        return $policy === null ? ConflictAction::Implicit : ConflictAction::from(\SqlSemantics\Statement\Identifier\Ascii::upper(Tree::text(Tree::outer($policy, ['resolvetype'])[0])));
     }
 }

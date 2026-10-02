@@ -22,7 +22,7 @@ final class NullConstant implements ScalarExpression, \SqlSemantics\Statement\Co
      */
     public function __construct(public readonly string $keyword = 'NULL')
     {
-        \SqlSemantics\Statement\Validation\Check::input(strtoupper($keyword) === 'NULL', 'A NULL constant can only carry the NULL keyword.');
+        \SqlSemantics\Statement\Validation\Check::input(\SqlSemantics\Statement\Identifier\Ascii::upper($keyword) === 'NULL', 'A NULL constant can only carry the NULL keyword.');
     }
 
     /**

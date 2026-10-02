@@ -21,7 +21,7 @@ final class SqliteElseLayout
      */
     public function __construct(public readonly string $keyword = 'ELSE', public readonly string $before = ' ', public readonly string $after = ' ')
     {
-        Check::input(strtoupper($keyword) === 'ELSE', 'An ELSE spelling contains only its actual keyword.');
+        Check::input(\SqlSemantics\Statement\Identifier\Ascii::upper($keyword) === 'ELSE', 'An ELSE spelling contains only its actual keyword.');
         Check::input((new SqliteTrivia())->accepts($before) && (new SqliteTrivia())->accepts($after), 'ELSE gaps contain only complete trivia.');
     }
 

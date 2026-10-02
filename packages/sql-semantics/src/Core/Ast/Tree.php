@@ -25,7 +25,7 @@ final class Tree
             if ($child instanceof Node && !in_array($child->name, $nodes, true)) {
                 Tree::unsupported($child, 'clause');
             }
-            if ($child instanceof Token && !in_array(strtoupper($child->text), $tokens, true)) {
+            if ($child instanceof Token && !in_array(\SqlSemantics\Statement\Identifier\Ascii::upper($child->text), $tokens, true)) {
                 Tree::unsupported($child, 'clause terminal');
             }
         }

@@ -76,7 +76,7 @@ final class ExpressionReader
             return $this->read($children[1], $scope);
         }
         if (count($children) === 2 && $children[0] instanceof Token && $children[1] instanceof Node && $children[1]->name === 'expr') {
-            $operator = SqliteUnaryOperator::tryFrom(strtoupper($children[0]->text));
+            $operator = SqliteUnaryOperator::tryFrom(\SqlSemantics\Statement\Identifier\Ascii::upper($children[0]->text));
             if ($operator !== null) {
                 return new SqliteUnary($operator, $this->read($children[1], $scope), new \SqlSemantics\Statement\Expression\Rendering\SqliteUnaryLayout($operator, $children[0]->text, $children[1]->tokens()[0]->leading, false));
             }
@@ -101,7 +101,7 @@ final class ExpressionReader
         if ($column->qualifier === null && !$column->resolution instanceof ResolvedColumn && !$column->resolution instanceof NamedAlias && $column->name->quote === Quote::Double) {
             Tree::unsupported($source, 'identifier with a literal alternative');
         }
-        return $column->qualifier === null && $column->name->quote === Quote::None && in_array(strtoupper($column->name->value), ['TRUE', 'FALSE'], true)
+        return $column->qualifier === null && $column->name->quote === Quote::None && in_array(\SqlSemantics\Statement\Identifier\Ascii::upper($column->name->value), ['TRUE', 'FALSE'], true)
             ? new BooleanReference($column)
             : $column;
     }
@@ -115,7 +115,7 @@ final class ExpressionReader
         $first = $children[0] ?? null;
         $last = $children[count($children) - 1] ?? null;
         if ($first instanceof Node && $first->name === 'expr' && $last instanceof Node && $last->name === 'expr' && count($children) >= 3) {
-            $operator = SqliteBinaryOperator::tryFrom(strtoupper(implode(' ', array_map(Tree::text(...), array_slice($children, 1, -1)))));
+            $operator = SqliteBinaryOperator::tryFrom(\SqlSemantics\Statement\Identifier\Ascii::upper(implode(' ', array_map(Tree::text(...), array_slice($children, 1, -1)))));
             if ($operator !== null) {
                 return new SqliteBinary($this->read($first, $scope), $operator, $this->read($last, $scope));
             }
@@ -132,7 +132,7 @@ final class ExpressionReader
         $between = Tree::child($source, ['between_op']);
         if ($between !== null) {
             assert(count($operands) === 3, 'A range has a subject and two bounds.');
-            return new SqliteBetween($this->read($operands[0], $scope), $this->read($operands[1], $scope), $this->read($operands[2], $scope), str_starts_with(strtoupper(Tree::text($between)), 'NOT '));
+            return new SqliteBetween($this->read($operands[0], $scope), $this->read($operands[1], $scope), $this->read($operands[2], $scope), str_starts_with(\SqlSemantics\Statement\Identifier\Ascii::upper(Tree::text($between)), 'NOT '));
         }
         $membership = Tree::child($source, ['in_op']);
         if ($membership !== null && Tree::child($source, ['select', 'nm']) === null) {
@@ -140,10 +140,10 @@ final class ExpressionReader
             assert(count($operands) === 1, 'A scalar list membership has one subject.');
             $list = Tree::child($source, ['exprlist']);
             $choices = $list === null ? [] : array_map(fn (Node $node): ScalarExpression => $this->read($node, $scope), Tree::outer($list, ['expr']));
-            return new SqliteInList($this->read($operands[0], $scope), str_starts_with(strtoupper(Tree::text($membership)), 'NOT '), ...$choices);
+            return new SqliteInList($this->read($operands[0], $scope), str_starts_with(\SqlSemantics\Statement\Identifier\Ascii::upper(Tree::text($membership)), 'NOT '), ...$choices);
         }
         $children = Tree::significant($source);
-        $suffix = strtoupper(implode(' ', array_map(Tree::text(...), array_slice($children, 1))));
+        $suffix = \SqlSemantics\Statement\Identifier\Ascii::upper(implode(' ', array_map(Tree::text(...), array_slice($children, 1))));
         if (count($operands) === 1 && in_array($suffix, ['ISNULL', 'NOTNULL', 'NOT NULL'], true)) {
             return new SqliteBinary($this->read($operands[0], $scope), $suffix === 'ISNULL' ? SqliteBinaryOperator::Is : SqliteBinaryOperator::IsNot, new NullConstant());
         }

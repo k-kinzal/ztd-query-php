@@ -22,7 +22,7 @@ final class SqliteCaseArmLayout
      */
     public function __construct(public readonly string $whenKeyword = 'WHEN', public readonly string $thenKeyword = 'THEN', public readonly string $before = ' ', public readonly string $afterWhen = ' ', public readonly string $beforeThen = ' ', public readonly string $afterThen = ' ')
     {
-        Check::input(strtoupper($whenKeyword) === 'WHEN' && strtoupper($thenKeyword) === 'THEN', 'A CASE arm spelling contains only WHEN and THEN.');
+        Check::input(\SqlSemantics\Statement\Identifier\Ascii::upper($whenKeyword) === 'WHEN' && \SqlSemantics\Statement\Identifier\Ascii::upper($thenKeyword) === 'THEN', 'A CASE arm spelling contains only WHEN and THEN.');
         foreach ([$before, $afterWhen, $beforeThen, $afterThen] as $gap) {
             Check::input((new SqliteTrivia())->accepts($gap), 'CASE arm gaps contain only complete trivia.');
         }

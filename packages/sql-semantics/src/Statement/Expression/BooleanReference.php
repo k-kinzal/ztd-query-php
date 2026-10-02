@@ -41,7 +41,7 @@ final class BooleanReference implements ScalarExpression
     public function __construct(public readonly ColumnReference $column)
     {
         \SqlSemantics\Statement\Validation\Check::input($column->qualifier === null && $column->name->quote === Quote::None, 'A truth identifier must be bare and unqualified.');
-        $name = strtoupper($column->name->value);
+        $name = \SqlSemantics\Statement\Identifier\Ascii::upper($column->name->value);
         \SqlSemantics\Statement\Validation\Check::input(in_array($name, ['TRUE', 'FALSE'], true), 'Only TRUE and FALSE have a truth literal alternative.');
         $this->fallback = $name === 'TRUE' ? 1 : 0;
     }

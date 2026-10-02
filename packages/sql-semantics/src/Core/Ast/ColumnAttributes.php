@@ -22,10 +22,10 @@ final class ColumnAttributes
         $facts = [];
         foreach ($attributes as $attribute) {
             $tokens = $attribute->tokens();
-            if (strtoupper($tokens[0]->text ?? '') === 'CONSTRAINT') {
+            if (\SqlSemantics\Statement\Identifier\Ascii::upper($tokens[0]->text ?? '') === 'CONSTRAINT') {
                 $tokens = array_slice($tokens, 2);
             }
-            $words = array_map(static fn ($token): string => strtoupper($token->text), $tokens);
+            $words = array_map(static fn ($token): string => \SqlSemantics\Statement\Identifier\Ascii::upper($token->text), $tokens);
             if (array_slice($words, 0, 2) === ['NOT', 'NULL']) {
                 $facts[] = Nullability::NotNull;
             } elseif (($words[0] ?? '') === 'NULL') {

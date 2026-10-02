@@ -30,7 +30,7 @@ final class SqliteBlob implements ScalarExpression, \SqlSemantics\Statement\Cons
     public function __construct(public readonly BinaryLiteral $value, public readonly bool $lowercasePrefix = false, ?string $digits = null)
     {
         $hex = bin2hex($value->value);
-        \SqlSemantics\Statement\Validation\Check::input($digits === null || strtolower($digits) === $hex, 'Hexadecimal digits must encode exactly the supplied bytes.');
+        \SqlSemantics\Statement\Validation\Check::input($digits === null || \SqlSemantics\Statement\Identifier\Ascii::lower($digits) === $hex, 'Hexadecimal digits must encode exactly the supplied bytes.');
         $this->digits = $digits ?? $hex;
     }
 

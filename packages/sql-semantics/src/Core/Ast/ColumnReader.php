@@ -59,10 +59,10 @@ final class ColumnReader
                 continue;
             }
             $tokens = $attribute->tokens();
-            if (strtoupper($tokens[0]->text ?? '') === 'CONSTRAINT') {
+            if (\SqlSemantics\Statement\Identifier\Ascii::upper($tokens[0]->text ?? '') === 'CONSTRAINT') {
                 $tokens = array_slice($tokens, 2);
             }
-            $text = strtoupper(implode(' ', array_map(static fn ($token): string => $token->text, $tokens)));
+            $text = \SqlSemantics\Statement\Identifier\Ascii::upper(implode(' ', array_map(static fn ($token): string => $token->text, $tokens)));
             if (str_starts_with($text, 'DEFAULT ')) {
                 $default = $this->values->read($attribute);
                 $defaultValue = $rules->defaultValue($attribute, $this->values);

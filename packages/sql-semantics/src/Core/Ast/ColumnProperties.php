@@ -32,11 +32,11 @@ final class ColumnProperties
     {
         $candidates = [...$attributes, ...Tree::outer($column, $this->identifiers->dialect->platform()->syntax()->nodes('generationClause'))];
         foreach ($candidates as $attribute) {
-            $tokens = array_map(static fn ($token): string => strtoupper($token->text), $attribute->tokens());
+            $tokens = array_map(static fn ($token): string => \SqlSemantics\Statement\Identifier\Ascii::upper($token->text), $attribute->tokens());
             if (($tokens[0] ?? '') === 'CONSTRAINT') {
                 $tokens = array_slice($tokens, 2);
             }
-            $direct = array_filter($attribute->children, static fn ($child): bool => $child instanceof Token && strtoupper($child->text) === 'AS');
+            $direct = array_filter($attribute->children, static fn ($child): bool => $child instanceof Token && \SqlSemantics\Statement\Identifier\Ascii::upper($child->text) === 'AS');
             if ($direct === [] && !in_array($tokens[0] ?? '', ['GENERATED', 'AS'], true)) {
                 continue;
             }
@@ -48,7 +48,7 @@ final class ColumnProperties
             $stored = false;
             foreach ($storageNodes as $storage) {
                 foreach ($storage->children as $child) {
-                    $stored = $stored || ($child instanceof Token && strtoupper($child->text) === 'STORED');
+                    $stored = $stored || ($child instanceof Token && \SqlSemantics\Statement\Identifier\Ascii::upper($child->text) === 'STORED');
                 }
             }
             $kind = $expression === null ? GenerationKind::Identity : ($stored ? GenerationKind::Stored : GenerationKind::Virtual);
@@ -65,7 +65,7 @@ final class ColumnProperties
     {
         foreach ($attributes as $attribute) {
             [, $tokens] = TokenGroups::constraintHeader($attribute->tokens(), $this->identifiers);
-            if (strtoupper($tokens[0]->text ?? '') === 'COLLATE') {
+            if (\SqlSemantics\Statement\Identifier\Ascii::upper($tokens[0]->text ?? '') === 'COLLATE') {
                 return $this->values->read($attribute);
             }
         }
@@ -82,7 +82,7 @@ final class ColumnProperties
             $clauses = [$attribute, ...Tree::outer($attribute, $this->identifiers->dialect->platform()->syntax()->nodes('autoIncrement'))];
             foreach ($clauses as $clause) {
                 foreach ($clause->children as $token) {
-                    if ($token instanceof Token && (in_array(strtoupper($token->text), ['AUTO_INCREMENT', 'AUTOINCREMENT'], true) || $token->name === 'SERIAL_SYM')) {
+                    if ($token instanceof Token && (in_array(\SqlSemantics\Statement\Identifier\Ascii::upper($token->text), ['AUTO_INCREMENT', 'AUTOINCREMENT'], true) || $token->name === 'SERIAL_SYM')) {
                         return true;
                     }
                 }

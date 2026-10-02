@@ -35,7 +35,7 @@ final class ConstraintReader
     public function read(Node $node, ?string $column = null): ?TableConstraint
     {
         [$name, $tokens] = TokenGroups::constraintHeader($node->tokens(), $this->identifiers);
-        $kind = match (strtoupper($tokens[0]->text ?? '')) {
+        $kind = match (\SqlSemantics\Statement\Identifier\Ascii::upper($tokens[0]->text ?? '')) {
             'PRIMARY' => ConstraintKind::PrimaryKey,
             'KEY' => $column === null ? null : ConstraintKind::PrimaryKey,
             'UNIQUE' => ConstraintKind::Unique,
@@ -54,7 +54,7 @@ final class ConstraintReader
         }
         $expression = $kind === ConstraintKind::Check ? (Tree::outer($node, $this->identifiers->dialect->platform()->syntax()->nodes('expression'))[0] ?? null) : null;
 
-        return new TableConstraint($kind, $kind === ConstraintKind::Check ? [] : $columns, $this->values->read($node), $name, $table, $references, $expression === null ? null : $this->values->read($expression), $column !== null, $column !== null && in_array('DESC', array_map(static fn ($token): string => strtoupper($token->text), $tokens), true));
+        return new TableConstraint($kind, $kind === ConstraintKind::Check ? [] : $columns, $this->values->read($node), $name, $table, $references, $expression === null ? null : $this->values->read($expression), $column !== null, $column !== null && in_array('DESC', array_map(static fn ($token): string => \SqlSemantics\Statement\Identifier\Ascii::upper($token->text), $tokens), true));
     }
 
     /**
@@ -65,7 +65,7 @@ final class ConstraintReader
         $remaining = [];
         $started = false;
         foreach ($node->tokens() as $token) {
-            if (strtoupper($token->text) === 'REFERENCES') {
+            if (\SqlSemantics\Statement\Identifier\Ascii::upper($token->text) === 'REFERENCES') {
                 $started = true;
             } elseif ($started) {
                 $remaining[] = $token;
@@ -73,7 +73,7 @@ final class ConstraintReader
         }
         $name = [];
         foreach ($remaining as $token) {
-            if (in_array(strtoupper($token->text), ['(', 'MATCH', 'ON', 'DEFERRABLE', 'NOT', 'INITIALLY'], true)) {
+            if (in_array(\SqlSemantics\Statement\Identifier\Ascii::upper($token->text), ['(', 'MATCH', 'ON', 'DEFERRABLE', 'NOT', 'INITIALLY'], true)) {
                 break;
             }
             if ($token->text !== '.') {

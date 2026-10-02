@@ -67,11 +67,11 @@ final class LexHeader
         $entries = [];
         preg_match_all('/\{\s*(SYM(?:_FN|_HK|_H)?)\s*\(\s*"([^"]+)"\s*,\s*([A-Za-z0-9_]+)\s*\)\s*\}/', $source, $modern, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
         foreach ($modern as $match) {
-            $entries[] = [$match[1][0], strtoupper($match[2][0]), $match[3][0], $match[0][1]];
+            $entries[] = [$match[1][0], \SqlParser\Lexer\Ascii::upper($match[2][0]), $match[3][0], $match[0][1]];
         }
         preg_match_all('/\{\s*"([^"]+)"\s*,\s*SYM\s*\(\s*([A-Za-z0-9_]+)\s*\)\s*\}/', $source, $legacy, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
         foreach ($legacy as $match) {
-            $entries[] = ['SYM', strtoupper($match[1][0]), $match[2][0], $match[0][1]];
+            $entries[] = ['SYM', \SqlParser\Lexer\Ascii::upper($match[1][0]), $match[2][0], $match[0][1]];
         }
 
         return $entries;

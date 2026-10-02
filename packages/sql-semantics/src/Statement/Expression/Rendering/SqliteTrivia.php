@@ -64,7 +64,7 @@ final class SqliteTrivia
             if ($position > 0 && $next === $offset) {
                 return false;
             }
-            if (strtoupper(substr($spelling, $next, strlen($word))) !== $word) {
+            if (\SqlSemantics\Statement\Identifier\Ascii::upper(substr($spelling, $next, strlen($word))) !== $word) {
                 return false;
             }
             $offset = $next + strlen($word);

@@ -46,7 +46,7 @@ final class OperationReader implements \SqlSemantics\Core\Policy\OperationRules
             assert(count($commands) === 1, 'A statement boundary owns exactly one command.');
             $operation = $this->command($commands[0], $catalog);
             $explain = Tree::child($boundary, ['explain']);
-            $operations[] = $explain === null ? $operation : match (strtoupper(Tree::text($explain))) {
+            $operations[] = $explain === null ? $operation : match (\SqlSemantics\Statement\Identifier\Ascii::upper(Tree::text($explain))) {
                 'EXPLAIN' => new ExplainProgram($operation),
                 'EXPLAIN QUERY PLAN' => new ExplainPlan($operation),
                 default => Tree::unsupported($explain, 'inspection request'),
@@ -74,7 +74,7 @@ final class OperationReader implements \SqlSemantics\Core\Policy\OperationRules
             return $operation;
         }
         $tokens = $source->tokens();
-        return match (strtoupper($tokens[0]->text)) {
+        return match (\SqlSemantics\Statement\Identifier\Ascii::upper($tokens[0]->text)) {
             'BEGIN', 'COMMIT', 'END', 'ROLLBACK', 'SAVEPOINT', 'RELEASE' => (new TransactionReader())->read($source),
             'VACUUM' => (new DatabaseReader())->vacuum($source, $catalog),
             'ATTACH', 'DETACH' => (new DatabaseReader())->attachment($source, $catalog),

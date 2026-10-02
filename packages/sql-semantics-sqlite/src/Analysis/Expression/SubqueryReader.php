@@ -36,11 +36,11 @@ final class SubqueryReader
             $subject = Tree::child($source, ['expr']);
             assert($subject !== null, 'Query membership has a left operand.');
             $nested = (new QueryReader())->read($query, $context);
-            return new SqliteInQuery($expressions->read($subject, $scope), new SqliteSubquery($scope, $nested), str_starts_with(strtoupper(Tree::text($membership)), 'NOT'));
+            return new SqliteInQuery($expressions->read($subject, $scope), new SqliteSubquery($scope, $nested), str_starts_with(\SqlSemantics\Statement\Identifier\Ascii::upper(Tree::text($membership)), 'NOT'));
         }
         Tree::assertChildren($source, ['select'], ['(', ')', 'EXISTS']);
         $nested = (new QueryReader())->read($query, $context);
         $body = new SqliteSubquery($scope, $nested);
-        return strtoupper($source->tokens()[0]->text) === 'EXISTS' ? new SqliteExists($body) : new SqliteScalarSubquery($body);
+        return \SqlSemantics\Statement\Identifier\Ascii::upper($source->tokens()[0]->text) === 'EXISTS' ? new SqliteExists($body) : new SqliteScalarSubquery($body);
     }
 }

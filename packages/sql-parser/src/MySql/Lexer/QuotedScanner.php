@@ -42,7 +42,7 @@ final class QuotedScanner
         if ($cursor->peek(1) !== "'") {
             return null;
         }
-        $prefix = strtoupper($character);
+        $prefix = \SqlParser\Lexer\Ascii::upper($character);
         if ($prefix === 'N') {
             $cursor->take(1);
 

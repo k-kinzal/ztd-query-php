@@ -77,7 +77,7 @@ final class SqlMode
             self::$combinations = $combinations;
         }
         $flags = [];
-        foreach (explode(',', strtoupper($modes)) as $name) {
+        foreach (explode(',', \SqlParser\Lexer\Ascii::upper($modes)) as $name) {
             $name = trim($name);
             foreach ($combinations[$name] ?? [$name] as $flag) {
                 $flags[$flag] = true;

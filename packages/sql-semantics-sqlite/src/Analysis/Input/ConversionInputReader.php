@@ -25,11 +25,11 @@ final class ConversionInputReader
     public function read(Node $source, ExpressionInputReader $expressions): CastInput|CollationInput|null
     {
         $head = $source->children[0] ?? null;
-        if ($head instanceof Token && strtoupper($head->text) === 'CAST') {
+        if ($head instanceof Token && \SqlSemantics\Statement\Identifier\Ascii::upper($head->text) === 'CAST') {
             return $this->cast($source, $expressions);
         }
         $operator = $source->children[1] ?? null;
-        return $operator instanceof Token && strtoupper($operator->text) === 'COLLATE'
+        return $operator instanceof Token && \SqlSemantics\Statement\Identifier\Ascii::upper($operator->text) === 'COLLATE'
             ? $this->collated($source, $expressions)
             : null;
     }
@@ -51,7 +51,7 @@ final class ConversionInputReader
     public function collated(Node $source, ExpressionInputReader $expressions): CollationInput
     {
         $children = Tree::significant($source);
-        assert(count($children) === 3 && $children[0] instanceof Node && $children[0]->name === 'expr' && $children[1] instanceof Token && strtoupper($children[1]->text) === 'COLLATE' && $children[2] instanceof Token, 'COLLATE owns an operand and one collation name.');
+        assert(count($children) === 3 && $children[0] instanceof Node && $children[0]->name === 'expr' && $children[1] instanceof Token && \SqlSemantics\Statement\Identifier\Ascii::upper($children[1]->text) === 'COLLATE' && $children[2] instanceof Token, 'COLLATE owns an operand and one collation name.');
         return new CollationInput($expressions->read($children[0]), (new IdentifierReader())->name($children[2]));
     }
 

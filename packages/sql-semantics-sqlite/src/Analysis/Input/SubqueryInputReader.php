@@ -30,10 +30,10 @@ final class SubqueryInputReader
             Tree::assertChildren($source, ['expr', 'in_op', 'select'], ['(', ')']);
             $subject = Tree::child($source, ['expr']);
             assert($subject !== null, 'Query membership has a left operand.');
-            return new InQueryInput($expressions->read($subject), (new QueryInputReader())->read($query), str_starts_with(strtoupper(Tree::text($membership)), 'NOT'));
+            return new InQueryInput($expressions->read($subject), (new QueryInputReader())->read($query), str_starts_with(\SqlSemantics\Statement\Identifier\Ascii::upper(Tree::text($membership)), 'NOT'));
         }
         Tree::assertChildren($source, ['select'], ['(', ')', 'EXISTS']);
         $body = (new QueryInputReader())->read($query);
-        return strtoupper($source->tokens()[0]->text) === 'EXISTS' ? new ExistsInput($body) : new ScalarQueryInput($body);
+        return \SqlSemantics\Statement\Identifier\Ascii::upper($source->tokens()[0]->text) === 'EXISTS' ? new ExistsInput($body) : new ScalarQueryInput($body);
     }
 }

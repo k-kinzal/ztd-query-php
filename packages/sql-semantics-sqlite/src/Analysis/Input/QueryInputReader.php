@@ -51,7 +51,7 @@ final class QueryInputReader
             new Q\ProjectionDefinition(...$this->projection($projection)),
             new Q\Inputs(...($from === null ? [] : $this->tables(Tree::outer($from, ['seltablist'])[0]))),
             $where === null ? null : (new ExpressionInputReader())->read(Tree::outer($where, ['expr'])[0]),
-            $quantifier === null ? Quantifier::Default : Quantifier::from(strtoupper(Tree::text($quantifier))),
+            $quantifier === null ? Quantifier::Default : Quantifier::from(\SqlSemantics\Statement\Identifier\Ascii::upper(Tree::text($quantifier))),
             $limit === null ? null : $this->limit($limit),
         );
     }

@@ -85,7 +85,7 @@ final class OperationReader implements OperationRules
         $readOnly = false;
         $readWrite = false;
         foreach (Tree::outer($source, ['start_transaction_option']) as $option) {
-            $spelling = strtoupper(Tree::text($option));
+            $spelling = \SqlSemantics\Statement\Identifier\Ascii::upper(Tree::text($option));
             assert(in_array($spelling, ['WITH CONSISTENT SNAPSHOT', 'READ ONLY', 'READ WRITE'], true), 'Each characteristic selects one defined transaction requirement.');
             $snapshot = $snapshot || $spelling === 'WITH CONSISTENT SNAPSHOT';
             $readOnly = $readOnly || $spelling === 'READ ONLY';
@@ -108,7 +108,7 @@ final class OperationReader implements OperationRules
         if ($source === null) {
             return null;
         }
-        $request = strtoupper(Tree::text($source));
+        $request = \SqlSemantics\Statement\Identifier\Ascii::upper(Tree::text($source));
         assert(in_array($request, ['AND CHAIN', 'AND NO CHAIN', 'RELEASE', 'NO RELEASE'], true), 'A completion clause is a positive or negative choice.');
         return !in_array($request, ['AND NO CHAIN', 'NO RELEASE'], true);
     }

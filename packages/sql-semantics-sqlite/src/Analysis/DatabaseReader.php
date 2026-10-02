@@ -51,7 +51,7 @@ final class DatabaseReader
         Tree::assertChildren($source, ['database_kw_opt', 'expr', 'key_opt'], ['ATTACH', 'DETACH', 'AS']);
         $operands = array_values(array_filter($source->children, static fn (Node|Token $child): bool => $child instanceof Node && $child->name === 'expr'));
         $scope = new Scope($catalog);
-        if (strtoupper($source->tokens()[0]->text) === 'DETACH') {
+        if (\SqlSemantics\Statement\Identifier\Ascii::upper($source->tokens()[0]->text) === 'DETACH') {
             assert(count($operands) === 1, 'DETACH owns one target expression.');
             return new DetachDatabase($scope, $this->attachmentExpression($operands[0], $scope));
         }

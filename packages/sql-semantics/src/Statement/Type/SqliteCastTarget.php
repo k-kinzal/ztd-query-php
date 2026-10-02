@@ -29,7 +29,7 @@ final class SqliteCastTarget
     public function __construct(public readonly string $name)
     {
         \SqlSemantics\Statement\Validation\Check::input(!str_contains($name, "\0"), 'A type name cannot contain NUL.');
-        $upper = strtoupper($name);
+        $upper = \SqlSemantics\Statement\Identifier\Ascii::upper($name);
         $this->affinity = match (true) {
             str_contains($upper, 'INT') => Affinity::Integer,
             str_contains($upper, 'CHAR'), str_contains($upper, 'CLOB'), str_contains($upper, 'TEXT') => Affinity::Text,

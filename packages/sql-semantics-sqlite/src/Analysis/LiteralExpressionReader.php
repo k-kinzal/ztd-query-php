@@ -33,11 +33,11 @@ final class LiteralExpressionReader
             return new NullConstant($token->text);
         }
         if ($token->name === 'CTIME_KW') {
-            return SqliteCurrentTime::from(strtoupper($token->text));
+            return SqliteCurrentTime::from(\SqlSemantics\Statement\Identifier\Ascii::upper($token->text));
         }
         if (in_array($token->name, ['INTEGER', 'FLOAT', 'QNUMBER'], true)) {
             $text = $token->text;
-            $hexadecimal = str_starts_with(strtolower($text), '0x');
+            $hexadecimal = str_starts_with(\SqlSemantics\Statement\Identifier\Ascii::lower($text), '0x');
             if ($hexadecimal || ctype_digit(str_replace('_', '', $text))) {
                 return new SqliteInteger(new UnsignedInteger($hexadecimal ? substr($text, 2) : $text, $hexadecimal ? Radix::Hexadecimal : Radix::Decimal), uppercasePrefix: str_starts_with($text, '0X'));
             }

@@ -35,13 +35,13 @@ final class MutationReader
         $tables = $from === null ? [] : (new SelectReader())->tables(Tree::outer($from, ['seltablist'])[0], $catalog);
         $scope = new Scope($catalog, $target, ...$tables);
         $where = $this->predicate(Tree::child($source, ['where_opt_ret']), $scope);
-        if (strtoupper($source->tokens()[0]->text) === 'DELETE') {
+        if (\SqlSemantics\Statement\Identifier\Ascii::upper($source->tokens()[0]->text) === 'DELETE') {
             return new SqliteDelete($scope, $where);
         }
         $set = Tree::child($source, ['setlist']);
         assert($set !== null, 'An update contains destination assignments.');
         $policy = Tree::child($source, ['orconf']);
-        $conflict = $policy === null ? ConflictAction::Implicit : ConflictAction::from(strtoupper(Tree::text(Tree::outer($policy, ['resolvetype'])[0])));
+        $conflict = $policy === null ? ConflictAction::Implicit : ConflictAction::from(\SqlSemantics\Statement\Identifier\Ascii::upper(Tree::text(Tree::outer($policy, ['resolvetype'])[0])));
         return new SqliteUpdate($target, $scope, $where, $conflict, ...$this->assignments($set, new Scope($catalog, $target), $scope));
     }
 

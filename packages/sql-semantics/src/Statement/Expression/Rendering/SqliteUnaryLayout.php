@@ -23,7 +23,7 @@ final class SqliteUnaryLayout
      */
     public function __construct(public readonly SqliteUnaryOperator $operator, public readonly string $lexeme, public readonly string $after = ' ', public readonly bool $groupOperand = true)
     {
-        Check::input(strtoupper($lexeme) === $operator->value, 'A prefix spelling must encode its actual unary operator.');
+        Check::input(\SqlSemantics\Statement\Identifier\Ascii::upper($lexeme) === $operator->value, 'A prefix spelling must encode its actual unary operator.');
         Check::input((new SqliteTrivia())->accepts($after), 'A prefix gap contains only complete trivia.');
     }
 

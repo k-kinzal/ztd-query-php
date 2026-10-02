@@ -5,6 +5,29 @@ complete SQL coverage or all of G1–G7. Status names are independent of test re
 The language profile pins the grammar artifacts and `SQLSEM-DESIGN-001/1.0` rule
 revision. The records below currently apply to the SQLite 3.47.2 profile.
 
+## PROFILE-ASCII-001
+
+**Status:** Implemented for keyword/type recognition and ASCII normalization;
+complete profile interpretation remains under review.
+
+- Primitive: an explicit byte translation changes only ASCII A–Z or a–z. Other
+  bytes, including non-ASCII identifier bytes, remain unchanged. No process locale,
+  Unicode extension, or database connection supplies a result.
+- Scope: semantic keyword/type readers, truth-name classification, bounded keyword
+  spellings, numeric digit normalization, and the parser's keyword/mode scanners.
+  This primitive is not a universal identifier-folding or collation algorithm.
+- Compatibility: PHP's native `strtolower`/`strtoupper` became locale-independent
+  in PHP 8.2; the library also targets PHP 8.1. Both the parser and semantics need
+  an explicit primitive, since fixing only the semantic reader leaves token
+  recognition dependent on its host environment.
+- Evidence: byte-preservation and keyword cases, parser lexer tests across all
+  three dialect families, and the SQLite semantic analysis suite. These tests do
+  not establish every language profile setting or database collation rule.
+- Sources: [PHP lowercase conversion](https://www.php.net/manual/en/function.strtolower.php),
+  [PHP uppercase conversion](https://www.php.net/manual/en/function.strtoupper.php).
+- Implementation: `Statement\Identifier\Ascii`, `SqlParser\Lexer\Ascii` and
+  their fixed interpretation call sites.
+
 ## NEW-SCALAR-INPUT-001
 
 **Status:** Implemented; contract review incomplete.

@@ -37,7 +37,7 @@ final class DeclaredTypeReader
         if ($optimized) {
             $span = substr($span, 1, -1);
         }
-        $native = in_array(strtoupper($span), ['ANY', 'BLOB', 'INT', 'INTEGER', 'REAL', 'TEXT'], true);
+        $native = in_array(\SqlSemantics\Statement\Identifier\Ascii::upper($span), ['ANY', 'BLOB', 'INT', 'INTEGER', 'REAL', 'TEXT'], true);
         $first = (new IdentifierReader())->name($tokens[0]);
         $name = !$optimized && $first->quote !== Quote::None ? $first->value : $span;
         return new SqliteDeclaration($name, $strict, !$native);

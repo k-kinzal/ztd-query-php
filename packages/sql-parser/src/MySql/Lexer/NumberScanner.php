@@ -37,7 +37,7 @@ final class NumberScanner
         }
         $prefixed = $cursor->match('0[xX][0-9A-Fa-f]+') ?? $cursor->match('0[bB][01]+');
         if ($prefixed !== null && !Scan::isIdentifierByte($cursor->peek())) {
-            return $scan->lexeme(strtolower($prefixed[1]) === 'x' ? 'HEX_NUM' : 'BIN_NUM', $start);
+            return $scan->lexeme(\SqlParser\Lexer\Ascii::lower($prefixed[1]) === 'x' ? 'HEX_NUM' : 'BIN_NUM', $start);
         }
         $cursor->seek($start);
         $digits = $cursor->match('[0-9]+') ?? '';

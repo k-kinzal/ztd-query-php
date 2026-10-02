@@ -82,8 +82,8 @@ final class TokenGroups
     public static function constraintHeader(array $tokens, Identifiers $identifiers): array
     {
         $name = null;
-        if (strtoupper($tokens[0]->text ?? '') === 'CONSTRAINT') {
-            $unnamed = in_array(strtoupper($tokens[1]->text ?? ''), ['PRIMARY', 'UNIQUE', 'FOREIGN', 'CHECK'], true);
+        if (\SqlSemantics\Statement\Identifier\Ascii::upper($tokens[0]->text ?? '') === 'CONSTRAINT') {
+            $unnamed = in_array(\SqlSemantics\Statement\Identifier\Ascii::upper($tokens[1]->text ?? ''), ['PRIMARY', 'UNIQUE', 'FOREIGN', 'CHECK'], true);
             $name = !$unnamed && isset($tokens[1]) ? $identifiers->name($tokens[1]) : null;
             $tokens = array_slice($tokens, $unnamed ? 1 : 2);
         }

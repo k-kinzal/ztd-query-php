@@ -42,7 +42,7 @@ final class ColumnConstruction
         if ($column->qualifier === null && !$column->resolution instanceof ResolvedColumn && !$column->resolution instanceof NamedAlias && $column->name->quote === Quote::Double) {
             throw new ImplementationGap('The selected profile requires the unresolved double-quoted identifier/string rule.');
         }
-        return $column->qualifier === null && $column->name->quote === Quote::None && in_array(strtoupper($column->name->value), ['TRUE', 'FALSE'], true)
+        return $column->qualifier === null && $column->name->quote === Quote::None && in_array(\SqlSemantics\Statement\Identifier\Ascii::upper($column->name->value), ['TRUE', 'FALSE'], true)
             ? new BooleanReference($column)
             : $column;
     }

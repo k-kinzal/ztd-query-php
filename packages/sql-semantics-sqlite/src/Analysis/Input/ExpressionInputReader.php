@@ -46,7 +46,7 @@ final class ExpressionInputReader
             return new \SqlSemantics\Statement\Construction\Expression\GroupedInput($this->read($children[1]), $children[1]->tokens()[0]->leading, $children[2]->leading);
         }
         if (count($children) === 2 && $children[0] instanceof Token && $children[1] instanceof Node && $children[1]->name === 'expr') {
-            $operator = SqliteUnaryOperator::tryFrom(strtoupper($children[0]->text));
+            $operator = SqliteUnaryOperator::tryFrom(\SqlSemantics\Statement\Identifier\Ascii::upper($children[0]->text));
             if ($operator !== null) {
                 return new UnaryInput($operator, $this->read($children[1]), new \SqlSemantics\Statement\Expression\Rendering\SqliteUnaryLayout($operator, $children[0]->text, $children[1]->tokens()[0]->leading, false));
             }
@@ -75,7 +75,7 @@ final class ExpressionInputReader
         $first = $children[0] ?? null;
         $last = $children[count($children) - 1] ?? null;
         if ($first instanceof Node && $first->name === 'expr' && $last instanceof Node && $last->name === 'expr' && count($children) >= 3) {
-            $operator = SqliteBinaryOperator::tryFrom(strtoupper(implode(' ', array_map(Tree::text(...), array_slice($children, 1, -1)))));
+            $operator = SqliteBinaryOperator::tryFrom(\SqlSemantics\Statement\Identifier\Ascii::upper(implode(' ', array_map(Tree::text(...), array_slice($children, 1, -1)))));
             if ($operator !== null) {
                 $operatorTokens = array_merge(...array_map(static fn (Node|Token $node): array => $node instanceof Node ? $node->tokens() : [$node], array_slice($children, 1, -1)));
                 $firstToken = $operatorTokens[0];
@@ -96,7 +96,7 @@ final class ExpressionInputReader
         $between = Tree::child($source, ['between_op']);
         if ($between !== null) {
             assert(count($operands) === 3, 'A range has a subject and two bounds.');
-            return new BetweenInput($this->read($operands[0]), $this->read($operands[1]), $this->read($operands[2]), str_starts_with(strtoupper(Tree::text($between)), 'NOT '));
+            return new BetweenInput($this->read($operands[0]), $this->read($operands[1]), $this->read($operands[2]), str_starts_with(\SqlSemantics\Statement\Identifier\Ascii::upper(Tree::text($between)), 'NOT '));
         }
         $membership = Tree::child($source, ['in_op']);
         if ($membership !== null && Tree::child($source, ['select', 'nm']) === null) {
@@ -104,10 +104,10 @@ final class ExpressionInputReader
             assert(count($operands) === 1, 'A scalar list membership has one subject.');
             $list = Tree::child($source, ['exprlist']);
             $choices = $list === null ? [] : array_map(fn (Node $node): ScalarInput => $this->read($node), Tree::outer($list, ['expr']));
-            return new InListInput($this->read($operands[0]), str_starts_with(strtoupper(Tree::text($membership)), 'NOT '), ...$choices);
+            return new InListInput($this->read($operands[0]), str_starts_with(\SqlSemantics\Statement\Identifier\Ascii::upper(Tree::text($membership)), 'NOT '), ...$choices);
         }
         $children = Tree::significant($source);
-        $suffix = strtoupper(implode(' ', array_map(Tree::text(...), array_slice($children, 1))));
+        $suffix = \SqlSemantics\Statement\Identifier\Ascii::upper(implode(' ', array_map(Tree::text(...), array_slice($children, 1))));
         if (count($operands) === 1 && in_array($suffix, ['ISNULL', 'NOTNULL', 'NOT NULL'], true)) {
             return new BinaryInput($this->read($operands[0]), $suffix === 'ISNULL' ? SqliteBinaryOperator::Is : SqliteBinaryOperator::IsNot, new NullConstant());
         }

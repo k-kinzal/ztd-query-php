@@ -23,7 +23,7 @@ final class SqliteCaseLayout
      */
     public function __construct(public readonly string $caseKeyword = 'CASE', public readonly string $endKeyword = 'END', public readonly string $baseGap = ' ', public readonly string $endGap = ' ')
     {
-        Check::input(strtoupper($caseKeyword) === 'CASE' && strtoupper($endKeyword) === 'END', 'A CASE spelling contains only its actual delimiters.');
+        Check::input(\SqlSemantics\Statement\Identifier\Ascii::upper($caseKeyword) === 'CASE' && \SqlSemantics\Statement\Identifier\Ascii::upper($endKeyword) === 'END', 'A CASE spelling contains only its actual delimiters.');
         Check::input((new SqliteTrivia())->accepts($baseGap) && (new SqliteTrivia())->accepts($endGap), 'CASE gaps contain only complete trivia.');
     }
 

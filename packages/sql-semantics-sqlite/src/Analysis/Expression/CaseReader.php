@@ -26,7 +26,7 @@ final class CaseReader
     public function read(Node $source, Scope $scope, ExpressionReader $expressions): SqliteSearchedCase|SqliteSimpleCase|null
     {
         $head = $source->children[0] ?? null;
-        if (!$head instanceof Token || strtoupper($head->text) !== 'CASE') {
+        if (!$head instanceof Token || \SqlSemantics\Statement\Identifier\Ascii::upper($head->text) !== 'CASE') {
             return null;
         }
         Tree::assertChildren($source, ['case_operand', 'case_exprlist', 'case_else'], ['CASE', 'END']);

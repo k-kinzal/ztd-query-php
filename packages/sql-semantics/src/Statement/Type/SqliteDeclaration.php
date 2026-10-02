@@ -75,7 +75,7 @@ final class SqliteDeclaration
     public function __construct(?string $name = null, public readonly bool $strict = false, bool $custom = false)
     {
         \SqlSemantics\Statement\Validation\Check::input($name === null || !str_contains($name, "\0"), 'A declared type name cannot contain NUL.');
-        $spelling = strtoupper($name ?? '');
+        $spelling = \SqlSemantics\Statement\Identifier\Ascii::upper($name ?? '');
         $this->native = !$custom && in_array($spelling, ['ANY', 'BLOB', 'INT', 'INTEGER', 'REAL', 'TEXT'], true);
         $this->name = $this->native ? $spelling : $name;
         $identity = $name === null ? Builtin::Dynamic : (self::NAMES[$spelling] ?? new TypeName([$name]));
@@ -87,7 +87,7 @@ final class SqliteDeclaration
      */
     public function affinity(string $spelling): Affinity
     {
-        $spelling = strtoupper($spelling);
+        $spelling = \SqlSemantics\Statement\Identifier\Ascii::upper($spelling);
         return match (true) {
             str_contains($spelling, 'INT') => Affinity::Integer,
             str_contains($spelling, 'CHAR'), str_contains($spelling, 'CLOB'), str_contains($spelling, 'TEXT') => Affinity::Text,
@@ -117,6 +117,6 @@ final class SqliteDeclaration
             return $this->name;
         }
         $name = (new Name($this->name, \SqlSemantics\Statement\Identifier\Quote::Double))->toString();
-        return $name . (in_array(strtoupper($this->name), ['ANY', 'BLOB', 'INT', 'INTEGER', 'REAL', 'TEXT'], true) ? '(0)' : '');
+        return $name . (in_array(\SqlSemantics\Statement\Identifier\Ascii::upper($this->name), ['ANY', 'BLOB', 'INT', 'INTEGER', 'REAL', 'TEXT'], true) ? '(0)' : '');
     }
 }

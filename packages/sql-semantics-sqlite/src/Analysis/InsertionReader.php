@@ -34,9 +34,9 @@ final class InsertionReader
         $columns = Tree::child($source, ['idlist_opt']);
         $names = array_map(static fn (Node $name): Name => (new IdentifierReader())->name($name), $columns === null ? [] : Tree::outer($columns, ['nm']));
         $target = new Target((new QualifiedTableReader())->read($relation, $catalog), ...$names);
-        $replace = strtoupper($command->tokens()[0]->text) === 'REPLACE';
+        $replace = \SqlSemantics\Statement\Identifier\Ascii::upper($command->tokens()[0]->text) === 'REPLACE';
         $policy = Tree::child($command, ['orconf']);
-        $conflict = $replace ? ConflictAction::Replace : ($policy === null ? ConflictAction::Implicit : ConflictAction::from(strtoupper(Tree::text(Tree::outer($policy, ['resolvetype'])[0]))));
+        $conflict = $replace ? ConflictAction::Replace : ($policy === null ? ConflictAction::Implicit : ConflictAction::from(\SqlSemantics\Statement\Identifier\Ascii::upper(Tree::text(Tree::outer($policy, ['resolvetype'])[0]))));
         $query = Tree::child($source, ['select']);
         if ($query === null) {
             return new InsertDefaults($target, $conflict, $replace);

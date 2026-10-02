@@ -40,7 +40,7 @@ final class SqliteInteger implements ScalarExpression, \SqlSemantics\Statement\C
     {
         \SqlSemantics\Statement\Validation\Check::input(in_array($integer->radix, [Radix::Decimal, Radix::Hexadecimal], true), 'This integer literal uses decimal or hexadecimal notation.');
         \SqlSemantics\Statement\Validation\Check::input(!$uppercasePrefix || $integer->radix === Radix::Hexadecimal, 'Only a hexadecimal literal has a radix prefix.');
-        $digits = ltrim(strtolower(str_replace('_', '', $integer->digits)), '0');
+        $digits = ltrim(\SqlSemantics\Statement\Identifier\Ascii::lower(str_replace('_', '', $integer->digits)), '0');
         $decimal = $integer->decimal();
         if ($integer->radix === Radix::Hexadecimal && strlen($digits) === 16 && hexdec($digits[0]) >= 8) {
             $complement = strtr($digits, '0123456789abcdef', 'fedcba9876543210');

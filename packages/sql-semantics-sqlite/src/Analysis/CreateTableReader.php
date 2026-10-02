@@ -30,7 +30,7 @@ final class CreateTableReader
         assert($columns !== null, 'An explicit table definition has columns.');
         $strict = false;
         foreach (Tree::outer($body, ['table_option']) as $option) {
-            if (strtoupper(Tree::text($option)) !== 'STRICT') {
+            if (\SqlSemantics\Statement\Identifier\Ascii::upper(Tree::text($option)) !== 'STRICT') {
                 Tree::unsupported($option, 'table storage option');
             }
             $strict = true;
