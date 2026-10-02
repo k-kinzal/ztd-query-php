@@ -11,6 +11,7 @@ use Deriver\Evaluation\Call\TypeBinding;
 use Deriver\Evaluation\Context;
 use Deriver\Evaluation\State;
 use Deriver\Memory\Location;
+use Deriver\Model\Builtin\TypePredicates;
 use Deriver\Value\Term;
 
 /**
@@ -101,7 +102,8 @@ final class ObjectAccess
             return false;
         }
         return match ($receiver->kind) {
-            'parameter', 'external' => true,
+            'parameter' => true,
+            'external' => (new TypePredicates())->bound('is_object', $receiver) !== false,
             'opaque' => isset($receiver->attributes['stability']),
             'object' => !isset($state->memory->classes[$receiver->literal]) && ($receiver->attributes['uncertain'] ?? false) !== true,
             default => false,

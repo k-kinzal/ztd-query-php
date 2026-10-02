@@ -57,7 +57,12 @@ interface AnalysisSession
 
     /**
      * Finds source call observations without running the application.
-     * @param string $symbol Function or method name
+     * A function name selects function calls, and a method name selects method and static calls of that name on any receiver.
+     * `Class::__construct` selects `new Class(...)` sites, reported with the `new` operation and the created class as the target;
+     * `self` and `parent` resolve to their lexical class, and late-bound `new static` keeps `static` as its target.
+     * `*` selects every call and creation whose name is written in the source; calls through dynamic names such as `$f()`
+     * or `new $class`, and anonymous classes, are not reported.
+     * @param string $symbol Function or method name, `Class::__construct`, or `*`
      * @return list<Observation> Source-ordered call observations
      */
     public function callsTo(string $symbol): array;

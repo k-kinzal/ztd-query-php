@@ -7,7 +7,7 @@ namespace Deriver\Reference;
 use Deriver\Exception\InvalidInputException;
 
 /**
- * A source call site with references to its once-evaluated argument values.
+ * A source call or object creation site with references to its once-evaluated argument values.
  *
  * @visibility public
  * @example Constructing an invocation point
@@ -21,11 +21,11 @@ final class Observation
      * @param SourceRef $source Call expression range
      * @param string $callable Owning callable
      * @param string $instruction Call instruction identity
-     * @param string $target Statically known target name
+     * @param string $target Statically known function or method name, or the created class for `new`
      * @param array<int|string, ExpressionRef> $arguments Original argument expression references
-     * @param ExpressionRef|null $returned Return expression reference
-     * @param ExpressionRef|null $receiver Evaluated object or class operand for a method call
-     * @param string $operation Invocation kind: invoke, invoke-method, or invoke-static
+     * @param ExpressionRef|null $returned Return expression reference; the created object for `new`
+     * @param ExpressionRef|null $receiver Evaluated object or class operand for a method call; null for functions and `new`
+     * @param string $operation Invocation kind: invoke, invoke-method, invoke-static, or new
      */
     public function __construct(public readonly SourceRef $source, public readonly string $callable, public readonly string $instruction, public readonly string $target, public readonly array $arguments, public readonly ?ExpressionRef $returned = null, public readonly ?ExpressionRef $receiver = null, public readonly string $operation = 'invoke')
     {

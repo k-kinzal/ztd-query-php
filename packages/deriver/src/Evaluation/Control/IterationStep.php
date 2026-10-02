@@ -7,8 +7,10 @@ namespace Deriver\Evaluation\Control;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Context;
 use Deriver\Evaluation\State;
+use Deriver\Evaluation\Transfer\MemoryStep;
 use Deriver\Memory\LiveArray;
 use Deriver\Memory\Location;
+use Deriver\Model\Builtin\TypePredicates;
 use Deriver\Value\Term;
 
 /**
@@ -81,14 +83,57 @@ final class IterationStep
         $id = $state->memory->fresh('iterator');
         $register = $instruction->operands[0] ?? '';
         $location = ($instruction->attributes['byReference'] ?? false) === true ? ($state->addresses[$register] ?? null) : null;
+        $array = $location === null ? $state->value($register) : $this->referenced($instruction, $state, $location);
+        if ($this->iterable($array) === false) {
+            $this->context->frontier('PHP_WARNING', $instruction->source, 'foreach-non-iterable');
+            $state->iterators[$id] = new IteratorCursor(new Term('array', attributes: ['open' => false], secret: $array->isSecret()));
+            return new Term('iterator', $id);
+        }
         if ($location !== null) {
             $location = new Location($state->memory->reference($location));
-        }
-        $array = $location === null ? $state->value($register) : $state->memory->read($location);
-        if ($location !== null) {
+            $array = $state->memory->read($location);
             $state->memory->liveArrays[$id] = new LiveArray($location, array_keys($array->operands));
         }
         $state->iterators[$id] = new IteratorCursor($array, $location);
         return new Term('iterator', $id);
+    }
+
+    /**
+     * Reads a by-reference subject as PHP's write fetch does, without defining an undefined plain variable.
+     * @param Instruction $instruction Foreach entry
+     * @param State $state Current path
+     * @param Location $location Iterated storage
+     * @return Term Current subject value
+     */
+    public function referenced(Instruction $instruction, State $state, Location $location): Term
+    {
+        $value = $state->memory->read($location);
+        if ($value->kind !== 'uninitialized') {
+            return $value;
+        }
+        if ($location->path === [] && !$location->unknown) {
+            return (new MemoryStep($this->context))->uninitialized($instruction, $location, $state);
+        }
+        $state->memory->reference($location);
+        return $state->memory->read($location);
+    }
+
+    /**
+     * Decides whether foreach accepts the subject; PHP warns and skips the body for scalars and null.
+     * @param Term $subject Iterated value
+     * @return bool|null Whether the subject is an array or object, or null when its type is not determined
+     */
+    public function iterable(Term $subject): ?bool
+    {
+        if ($subject->kind === 'constant') {
+            return false;
+        }
+        $predicates = new TypePredicates();
+        $array = $predicates->apply('is_array', $subject)->literal;
+        $object = $predicates->apply('is_object', $subject)->literal;
+        if ($array === true || $object === true) {
+            return true;
+        }
+        return $array === false && $object === false ? false : null;
     }
 }

@@ -49,11 +49,7 @@ final class MemoryStep
             $this->context->frontier('DYNAMIC_VARIABLE_WRITE', $instruction->source, $op);
         }
         if ($op === 'read' || $op === 'read-silent') {
-            $value = $state->memory->read($address);
-            if ($value->kind === 'uninitialized' && $op === 'read') {
-                return $this->uninitialized($instruction, $address, $state);
-            }
-            return $value;
+            return $this->read($instruction, $address, $state);
         }
         if ($op === 'write') {
             $value = $state->value($instruction->operands[1] ?? '');
@@ -78,6 +74,25 @@ final class MemoryStep
             return ($instruction->attributes['post'] ?? false) === true ? $before : $after;
         }
         return $this->binding($callable, $instruction, $state, $address);
+    }
+
+    /**
+     * Reads storage, reporting undefined variables and globals that the configuration does not supply.
+     * @param Instruction $instruction Read, or a silent read for isset-like operations
+     * @param Location $address Read storage
+     * @param State $state Current path
+     * @return Term Stored value, PHP's undefined-read result, or a throwable
+     */
+    public function read(Instruction $instruction, Location $address, State $state): Term
+    {
+        $value = $state->memory->read($address);
+        if ($value->kind === 'uninitialized' && $instruction->operation === 'read') {
+            return $this->uninitialized($instruction, $address, $state);
+        }
+        if ($value->kind === 'external' && $value->literal === $address->root && $address->path === [] && str_starts_with($address->root, 'global:')) {
+            $this->context->frontier('EXTERNAL_INPUT', $instruction->source, 'global-read', knownDependencies: [$address->root]);
+        }
+        return $value;
     }
 
     /**
@@ -188,8 +203,24 @@ final class MemoryStep
         if ($address->local === 'this' || ($state->memory->read($address)->attributes['type'] ?? 'mixed') !== 'mixed') {
             return new Term('throwable', 'Error');
         }
-        $this->context->frontier('PHP_WARNING', $instruction->source, 'uninitialized-read');
+        $this->context->frontier('PHP_WARNING', $instruction->source, 'uninitialized-read', knownDependencies: $this->variable($address));
         return Term::constant(null);
+    }
+
+    /**
+     * Names a variable as the environment key that supplies it, or as a function-local variable.
+     * @param Location $address Read variable storage
+     * @return list<string> `global:name` for global storage, `variable:name` for a local, or nothing for other storage
+     */
+    public function variable(Location $address): array
+    {
+        if ($address->path !== [] || $address->unknown) {
+            return [];
+        }
+        if (str_starts_with($address->root, 'global:')) {
+            return [$address->root];
+        }
+        return $address->local === '' ? [] : ['variable:' . $address->local];
     }
 
     /**
@@ -214,11 +245,7 @@ final class MemoryStep
             return Term::constant($present);
         }
         if ($instruction->operation === 'unset') {
-            if ($address->local !== '' && $address->path === []) {
-                unset($state->locals[$address->local]);
-            } else {
-                $state->memory->remove($address);
-            }
+            $this->unset($callable, $state, $address);
         } elseif ($instruction->operation === 'global') {
             $root = 'global:' . $address->local;
             $state->memory->cells[$root] ??= $this->context->configuration->environment[$root] ?? new Term('external', $root, attributes: ['type' => 'mixed']);
@@ -230,6 +257,27 @@ final class MemoryStep
         }
         return Term::constant(null);
     }
+    /**
+     * Removes a variable binding or an element; an unset variable stays undefined until the next symbol-table boundary.
+     * @param CallableGraph $callable Current scope
+     * @param State $state Current path
+     * @param Location $address Unset variable or element
+     */
+    public function unset(CallableGraph $callable, State $state, Location $address): void
+    {
+        if ($address->local === '' || $address->path !== []) {
+            $state->memory->remove($address);
+            return;
+        }
+        unset($state->locals[$address->local]);
+        if (str_starts_with($callable->symbol, 'script:')) {
+            $state->memory->cells['global:' . $address->local] = new Term('uninitialized');
+        }
+        if ($state->unknownLocals !== null) {
+            $state->locals[$address->local] = $state->memory->allocate(new Term('uninitialized'));
+        }
+    }
+
     /**
      * Resolves a returned reference or allocates permitted temporary iteration storage.
      * @param Instruction $instruction Returned-address operation and diagnostic policy
