@@ -47,7 +47,7 @@ final class FormattingTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string, array<int|string, string>, bool, string}>
+     * @return iterable<string, array{string, array<int|string, string>, bool, string}> PHP 8.3 results
      */
     public static function providerArgumentRules(): iterable
     {
@@ -61,6 +61,15 @@ final class FormattingTest extends TestCase
         yield 'numbered percent' => ['%1$%', ['x'], false, '%'];
         yield 'later invalid number wins over missing argument' => ['%s %0$s', [], false, 'ValueError'];
         yield 'positional does not advance sequence' => ['%1$s %s', ['x'], false, 'x x'];
+        yield 'variadic named argument' => ['%s', ['x' => 'v'], false, 'ArgumentCountError'];
+        yield 'missing percent argument rereads its percent' => ['%2$%', ['x'], false, 'ValueError'];
+        yield 'present second percent argument' => ['%2$%', ['x', 'y'], false, '%'];
+        yield 'empty argument number' => ['%$s', ['x'], false, 'ValueError'];
+        yield 'argument number at the end' => ['%1$', ['x'], false, 'ValueError'];
+        yield 'missing argument number at the end' => ['%1$', [], false, 'ArgumentCountError'];
+        yield 'percent at the end' => ['a%', ['x'], false, 'ValueError'];
+        yield 'missing percent at the end' => ['a%', [], false, 'ArgumentCountError'];
+        yield 'percent conversion before text' => ['%1$%%s', ['x'], false, '%x'];
     }
 
     public function testRenderDefersMissingArgumentsAndStopsAtPartialBoundaries(): void
@@ -70,7 +79,9 @@ final class FormattingTest extends TestCase
         self::assertSame('ValueError', $formatting->render('%s %s', false, [Term::constant('a')], false, true)?->literal);
         self::assertNull($formatting->render('%s %s', false, [Term::constant('a')], true, false));
         self::assertSame('a %', $formatting->render('%s %%%', false, [Term::constant('a')], true, false)?->native());
-        self::assertNull($formatting->render('%s %', false, [Term::constant('a')], false, false));
+        self::assertSame('ArgumentCountError', $formatting->render('%s %', false, [Term::constant('a')], false, false)?->literal);
+        self::assertSame('ValueError', $formatting->render('%s %', false, [Term::constant('a'), Term::constant('b')], false, false)?->literal);
+        self::assertNull($formatting->render('%5s', false, [Term::constant('a')], false, false));
         self::assertTrue($formatting->render('%s', true, [Term::constant('a')], false, false)?->isSecret());
     }
 
@@ -106,6 +117,23 @@ final class FormattingTest extends TestCase
         yield 'missing argument' => ['%s', [], null];
         yield 'invalid argument number' => ['%0$s', ['x'], null];
         yield 'no known text' => ['', ['x'], null];
+    }
+
+    public function testPrefixRejectsNamedArgumentsOnlyForVariadicFormatting(): void
+    {
+        $format = new Term('concat', operands: [Term::constant('%s '), new Term('cast', 'string', [Term::parameter('f')], ['type' => 'string'])], attributes: ['type' => 'string']);
+        self::assertNull((new Formatting())->prefix([$format, Term::fromNative(['x' => 'v'])]));
+        self::assertSame('v ', (new Formatting())->prefix([$format, Term::fromNative(['x' => 'v'])], true)?->native());
+    }
+
+    public function testSpecifierParsesOnlyArgumentNumbersAndSupportedConversions(): void
+    {
+        $formatting = new Formatting();
+        self::assertSame(['argument' => 1, 'invalid' => false, 'end' => 3, 'conversion' => '%'], $formatting->specifier('%2$%', 1));
+        self::assertSame(['argument' => null, 'invalid' => true, 'end' => 2, 'conversion' => 's'], $formatting->specifier('%$s', 1));
+        self::assertSame(['argument' => null, 'invalid' => false, 'end' => 1, 'conversion' => ''], $formatting->specifier('%', 1));
+        self::assertNull($formatting->specifier('%-5s', 1));
+        self::assertNull($formatting->specifier('%x', 1));
     }
 
     public function testPrefixRequiresAConcatenatedFormatAndKnownArguments(): void
