@@ -525,4 +525,19 @@ final class MemoryStepTest extends TestCase
         yield 'function after boundary' => ['target', 'INCLUDE_SEMANTICS_UNSUPPORTED', 'uninitialized'];
         yield 'script' => ['script:fixture.php', null, null];
     }
+
+    public function testUnknownSharedMakesALazilyCreatedGlobalUnknown(): void
+    {
+        $context = SolverFixture::context();
+        $state = new State();
+        $step = new MemoryStep($context);
+        self::assertNull($step->unknownShared(new State()));
+        $state->memory->unknownShared = 'MISSING_CALL_MODEL';
+        $value = $step->unknownShared($state);
+        self::assertNotNull($value);
+        self::assertSame(['opaque', 'MISSING_CALL_MODEL', true], [$value->kind, $value->literal, $value->attributes['maybeUninitialized'] ?? null]);
+        $state->addresses['g'] = new Location('global:g', local: 'g');
+        $step->binding(new CallableGraph('target', [], [], new SourceRef('test', 'fixture.php', 0, 1)), new Instruction('g', 'global', new SourceRef('test', 'fixture.php', 0, 1), 'result', ['g']), $state, $state->addresses['g']);
+        self::assertSame('opaque', $state->memory->cells['global:g']->kind);
+    }
 }

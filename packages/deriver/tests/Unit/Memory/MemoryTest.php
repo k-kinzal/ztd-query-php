@@ -524,4 +524,16 @@ final class MemoryTest extends TestCase
         self::assertSame('outer', $value->operands[0]->operands[1]->literal);
         self::assertSame($input, $value->operands[0]->operands[0]);
     }
+
+    public function testReferenceMovesAGlobalValueIntoASharedCellBehindTheSlot(): void
+    {
+        $memory = new Memory();
+        $memory->cells['global:x'] = Term::constant(1);
+        $shared = $memory->reference(new Location('global:x'));
+        self::assertNotSame('global:x', $shared);
+        self::assertSame(['cell', $shared], [$memory->cells['global:x']->kind, $memory->cells['global:x']->literal]);
+        self::assertSame($shared, $memory->reference(new Location('global:x')));
+        $memory->cells['global:x'] = new Term('uninitialized');
+        self::assertSame(1, $memory->read(new Location($shared))->native());
+    }
 }

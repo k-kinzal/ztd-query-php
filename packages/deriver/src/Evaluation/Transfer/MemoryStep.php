@@ -96,6 +96,17 @@ final class MemoryStep
     }
 
     /**
+     * Gives a global first touched after an unexplored write to shared storage an unknown, possibly undefined value.
+     * @param State $state Current path
+     * @return Term|null Residual of the unexplored write, or null when shared storage is fully known
+     */
+    public function unknownShared(State $state): ?Term
+    {
+        $reason = $state->memory->unknownShared;
+        return $reason === null ? null : new Term('opaque', $reason, attributes: ['type' => 'mixed', 'dependencyCoverage' => 'partial', 'maybeUninitialized' => true]);
+    }
+
+    /**
      * Resolves local and dynamic names before ordinary storage operations.
      * @param CallableGraph $callable Current scope
      * @param Instruction $instruction Address instruction
@@ -115,7 +126,7 @@ final class MemoryStep
         }
         if ($op === 'local' && (str_starts_with($callable->symbol, 'script:') || in_array($instruction->name, ['_GET', '_POST', '_COOKIE', '_SERVER', '_ENV', '_REQUEST', '_FILES', '_SESSION'], true))) {
             $root = 'global:' . $instruction->name;
-            $state->memory->cells[$root] ??= $this->context->configuration->environment[$root] ?? $state->memory->read($state->local($instruction->name));
+            $state->memory->cells[$root] ??= $this->context->configuration->environment[$root] ?? $this->unknownShared($state) ?? $state->memory->read($state->local($instruction->name));
             $state->locals[$instruction->name] = new Location($root);
         }
         if (in_array($op, ['local', 'element-address', 'field-address', 'static-address', 'unsupported-address', 'returned-address'], true)) {
@@ -248,7 +259,7 @@ final class MemoryStep
             $this->unset($callable, $state, $address);
         } elseif ($instruction->operation === 'global') {
             $root = 'global:' . $address->local;
-            $state->memory->cells[$root] ??= $this->context->configuration->environment[$root] ?? new Term('external', $root, attributes: ['type' => 'mixed']);
+            $state->memory->cells[$root] ??= $this->context->configuration->environment[$root] ?? $this->unknownShared($state) ?? new Term('external', $root, attributes: ['type' => 'mixed']);
             $state->locals[$address->local] = new Location($root);
         } elseif ($instruction->operation === 'static-local') {
             $root = 'static:' . $callable->symbol . ':' . $address->local;
@@ -259,6 +270,7 @@ final class MemoryStep
     }
     /**
      * Removes a variable binding or an element; an unset variable stays undefined until the next symbol-table boundary.
+     * At script scope the global slot is cleared; values shared by reference live in a separate cell, so other names keep them.
      * @param CallableGraph $callable Current scope
      * @param State $state Current path
      * @param Location $address Unset variable or element
