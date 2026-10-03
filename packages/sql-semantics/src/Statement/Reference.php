@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Statement;
 
-use InvalidArgumentException;
 use SqlSemantics\Statement\Declaration\TableDefinition;
 
 /**
@@ -23,9 +22,6 @@ use SqlSemantics\Statement\Declaration\TableDefinition;
  *     $users = $semantics->analyze('CREATE TABLE users (id INTEGER)', []);
  *     $reference = $semantics->analyze('SELECT id FROM users', [$users])->resolution?->references[0];
  *     [$reference?->name, $reference?->kind?->name, $reference?->declaration === $users] // => [['users'], 'Dependency', true]
- * @example An unresolved reference cannot claim to be a conditional declaration
- *     $value = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->builder()->column('t');
- *     new \SqlSemantics\Statement\Reference($value, ['t'], \SqlSemantics\Statement\ReferenceKind::Undeclared, conditional: true) // throws \InvalidArgumentException
  */
 final class Reference
 {
@@ -45,7 +41,6 @@ final class Reference
      * @param bool $conditional Whether the statement only declares or drops the table if that is possible
      * @param list<Element> $values Every value that writes the name, in writing order, the value first; empty when the value alone writes it
      *
-     * @throws InvalidArgumentException When the values are not a list of values starting with the value, or an undeclared table or a common table expression has a declaration
      */
     public function __construct(
         public readonly Element $value,

@@ -133,14 +133,77 @@ final class SemanticsTest extends TestCase
         $semantics->analyze('SELECT name FROM users', []);
     }
 
-    public function testAnalyzeAllResolvesEachStatementAgainstTheOnesBeforeIt(): void
+    public function testAnalyzeAllUsesTheSameExplicitContextForEveryStatement(): void
     {
         $semantics = new Semantics(SqliteDialect::Sqlite);
-        $statements = $semantics->analyzeAll('CREATE TABLE t (a INTEGER); INSERT INTO t VALUES (1); DROP TABLE t', []);
+        $table = $semantics->analyze('CREATE TABLE t (original INTEGER)', []);
+        $statements = $semantics->analyzeAll('CREATE TABLE t (a INTEGER); INSERT INTO t VALUES (1); DROP TABLE t', [$table]);
         self::assertCount(3, $statements);
-        self::assertSame($statements[0], $statements[1]->resolution?->references[0]->declaration);
+        self::assertSame($table, $statements[1]->resolution?->references[0]->declaration);
         self::assertSame(ReferenceKind::Drop, $statements[2]->resolution?->references[0]->kind);
         self::assertNull($semantics->analyzeAll('SELECT 1; SELECT 2')[1]->resolution);
+    }
+
+    #[TestWith([MySql::MySql, 0])]
+    #[TestWith([MySql::MySql, 1])]
+    #[TestWith([MySql::MySql, 2])]
+    #[TestWith([MySql::MySql, 3])]
+    #[TestWith([PostgreSql::PostgreSql, 0])]
+    #[TestWith([PostgreSql::PostgreSql, 1])]
+    #[TestWith([PostgreSql::PostgreSql, 2])]
+    #[TestWith([PostgreSql::PostgreSql, 3])]
+    #[TestWith([Sqlite::Sqlite, 0])]
+    #[TestWith([Sqlite::Sqlite, 1])]
+    #[TestWith([Sqlite::Sqlite, 2])]
+    #[TestWith([Sqlite::Sqlite, 3])]
+    public function testContextOrderAndNonDeclarationsCannotChangeTheReferencedDefinition(Dialect $dialect, int $order): void
+    {
+        $semantics = new Semantics($dialect);
+        $bar = $semantics->analyze('CREATE TABLE bar (foo INTEGER)', []);
+        $other = $semantics->analyze('CREATE TABLE other (value TEXT)', []);
+        $definition = Resolved::of($bar)->declarations[0];
+        $operations = [
+            $semantics->analyze('ALTER TABLE bar ADD COLUMN extra INTEGER'),
+            $semantics->analyze('DROP TABLE bar'),
+            $semantics->analyze('INSERT INTO bar VALUES (1)'),
+            $semantics->analyze('ALTER TABLE absent ADD COLUMN ignored INTEGER'),
+        ];
+        $contexts = [
+            [$bar, $other, ...$operations],
+            [...$operations, $other, $bar],
+            [$bar, $other, ...array_reverse($operations)],
+            [...array_reverse($operations), $other, $bar],
+        ];
+        $before = serialize($bar);
+        $reference = Resolved::of($semantics->analyze('SELECT foo FROM bar', $contexts[$order]))->tables()[0];
+        self::assertSame($bar, $reference->declaration);
+        self::assertSame($definition, $reference->table);
+        self::assertSame(['foo'], array_column($reference->table->columns, 'name'));
+        self::assertSame($before, serialize($bar));
+    }
+
+    #[TestWith([MySql::MySql, 0])]
+    #[TestWith([MySql::MySql, 1])]
+    #[TestWith([PostgreSql::PostgreSql, 0])]
+    #[TestWith([PostgreSql::PostgreSql, 1])]
+    #[TestWith([Sqlite::Sqlite, 0])]
+    #[TestWith([Sqlite::Sqlite, 1])]
+    public function testConflictingDefinitionsNeverChooseAWinnerFromContextOrder(Dialect $dialect, int $order): void
+    {
+        $semantics = new Semantics($dialect);
+        $first = $semantics->analyze('CREATE TABLE bar (foo INTEGER)', []);
+        $second = $semantics->analyze('CREATE TABLE IF NOT EXISTS bar (foo TEXT)', []);
+        $contexts = [[$first, $second], [$second, $first]];
+        $this->expectException(\SqlSemantics\Core\SemanticException::class);
+        $this->expectExceptionMessage('Conflicting context declarations');
+        $semantics->analyze('SELECT foo FROM bar', $contexts[$order]);
+    }
+
+    public function testRepeatingTheSameDeclarationObjectIsHarmless(): void
+    {
+        $semantics = new Semantics(Sqlite::Sqlite);
+        $table = $semantics->analyze('CREATE TABLE bar (foo INTEGER)', []);
+        self::assertSame($table, Resolved::of($semantics->analyze('SELECT foo FROM bar', [$table, $table]))->tables()[0]->declaration);
     }
 
     public function testBuilderComposesValuesOfTheLanguage(): void
@@ -194,7 +257,7 @@ final class SemanticsTest extends TestCase
     {
         $semantics = new Semantics(PostgreSql::PostgreSql);
         $statements = $semantics->analyzeAll('CREATE TABLE child(id INT REFERENCES parent(id)); SELECT * FROM child; SELECT * FROM absent', dependencies: [], declarations: Declarations::Partial);
-        self::assertSame(ReferenceKind::Dependency, $statements[1]->resolution?->references[0]->kind);
+        self::assertSame(ReferenceKind::Undeclared, $statements[1]->resolution?->references[0]->kind);
         self::assertSame(ReferenceKind::Undeclared, $statements[2]->resolution?->references[0]->kind);
         self::assertSame([], $statements[2]->resolution->declarations);
         $this->expectException(\SqlSemantics\Core\SemanticException::class);
@@ -225,17 +288,17 @@ final class SemanticsTest extends TestCase
         self::assertSame('b', $semantics->analyze('SELECT * FROM t', [$main, $temp])->resolution?->references[0]->table?->columns[0]->name);
         self::assertSame('a', $semantics->analyze('SELECT * FROM main.t', [$main, $temp])->resolution?->references[0]->table?->columns[0]->name);
         $drop = $semantics->analyze('DROP TABLE t', [$main, $temp]);
-        self::assertSame('a', $semantics->analyze('SELECT * FROM t', [$main, $temp, $drop])->resolution?->references[0]->table?->columns[0]->name);
+        self::assertSame('b', $semantics->analyze('SELECT * FROM t', [$main, $temp, $drop])->resolution?->references[0]->table?->columns[0]->name);
     }
 
-    public function testAnalyzeKeepsTemporaryTablesAheadOfAttachedDatabasesInPartialDeclarations(): void
+    public function testPartialScriptsDoNotApplyTheirOwnDeclarationsOrDrops(): void
     {
         $semantics = new Semantics(Sqlite::Sqlite, searchPath: new SearchPath('main', 'attached'));
         $statements = $semantics->analyzeAll('CREATE TABLE attached.t(a INT); CREATE TEMP TABLE t(b TEXT REFERENCES absent(id)); SELECT * FROM t; DROP TABLE t; SELECT * FROM t', [], Declarations::Partial);
         self::assertSame('temp', $statements[1]->resolution?->declarations[0]->schema);
         self::assertSame(ReferenceKind::Undeclared, $statements[1]->resolution->references[1]->kind);
-        self::assertSame($statements[1], $statements[2]->resolution?->references[0]->declaration);
-        self::assertSame($statements[0], $statements[4]->resolution?->references[0]->declaration);
+        self::assertSame(ReferenceKind::Undeclared, $statements[2]->resolution?->references[0]->kind);
+        self::assertSame(ReferenceKind::Undeclared, $statements[4]->resolution?->references[0]->kind);
         self::assertSame(['main', 'attached'], $semantics->searchPath());
     }
 

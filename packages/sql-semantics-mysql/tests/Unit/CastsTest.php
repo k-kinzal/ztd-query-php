@@ -67,7 +67,7 @@ final class CastsTest extends TestCase
         yield 'binary' => [new TypeDescriptor(Builtin::Binary, length: 4), 'no target of type binary', null];
         yield 'varbinary of a length' => [new TypeDescriptor(Builtin::VarBinary, length: 4), 'no target of type varbinary', null];
         yield 'text' => [new TypeDescriptor(Builtin::Text), 'no target of type text', null];
-        yield 'enum' => [new TypeDescriptor(Builtin::Enum, members: [(new Semantics(Dialect::MySql))->builder()->string('a')]), 'no target of type enum', null];
+        yield 'enum' => [new TypeDescriptor(Builtin::Enum, members: [new \SqlSemantics\Statement\Literal\StringLiteral('a')]), 'no target of type enum', null];
         yield 'display width' => [new TypeDescriptor(Builtin::BigInt, length: 20), 'cannot state its length', null];
         yield 'zero fill' => [new TypeDescriptor(Builtin::BigInt, unsigned: true, zerofill: true), 'cannot state its zerofill', null];
         yield 'float before 8.0.17' => [new TypeDescriptor(Builtin::Real), 'No form for SELECT CAST(slot0 AS FLOAT)', 'mysql-5.7.44'];

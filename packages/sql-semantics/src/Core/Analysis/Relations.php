@@ -5,18 +5,18 @@ declare(strict_types=1);
 namespace SqlSemantics\Core\Analysis;
 
 use SqlSemantics\Core\Policy\NameRules;
+use SqlSemantics\Core\SemanticException;
 use SqlSemantics\Statement\Declaration\TableDefinition;
 use SqlSemantics\Statement\Reference;
 use SqlSemantics\Statement\ReferenceKind;
 use SqlSemantics\Statement\Statement;
 
 /**
- * The tables in force while a statement is resolved.
+ * The declarations visible while a statement is resolved.
  *
- * Tables are compared under the dialect's relation name policy. A name
- * without a schema refers to the table of the first schema of the search
- * path that has one, and is declared in the first schema of the path. A
- * table that was dropped is remembered as gone until it is declared again.
+ * Context declarations do not depend on input order. Statements describing
+ * writes, ALTER, or DROP never change them. The search path determines
+ * which schema an unqualified relation name denotes.
  *
  * @visibility SqlSemantics
  */
@@ -28,12 +28,7 @@ final class Relations
     private array $tables = [];
 
     /**
-     * @var list<array{string, string}>
-     */
-    private array $dropped = [];
-
-    /**
-     * Starts with no table in force.
+     * Starts with no declarations.
      *
      * @param non-empty-list<string> $path The schemas an unqualified name is read in, in order
      * @param list<string> $implicitSchemas Implicit namespaces searched before the session path for declared tables
@@ -43,57 +38,37 @@ final class Relations
     }
 
     /**
-     * Applies a reference of a dependency: a declaration puts its table in force, a drop takes it out, and any other reference changes nothing.
+     * Imports declarations from a dependency without applying its operations.
+     *
+     * @throws SemanticException When distinct dependencies declare the same qualified table
      */
     public function apply(Reference $reference, Statement $dependency): void
     {
-        if ($reference->kind === ReferenceKind::Declaration) {
-            [$schema, $name] = ($reference->table === null || $reference->table->schema === '') ? $this->qualified($reference->name) : [$reference->table->schema, $reference->table->name];
-            $this->declare($schema, $name, $reference->table, $dependency);
-        } elseif ($reference->kind === ReferenceKind::Drop) {
-            $found = $this->find($reference->name) ?? $this->qualified($reference->name);
-            $this->drop($found[0], $found[1]);
+        if ($reference->kind !== ReferenceKind::Declaration) {
+            return;
         }
+        [$schema, $name] = ($reference->table === null || $reference->table->schema === '') ? $this->qualified($reference->name) : [$reference->table->schema, $reference->table->name];
+        $known = $this->lookup($schema, $name);
+        if ($known !== null) {
+            if ($known[1] !== $dependency) {
+                throw new SemanticException('duplicate-table', 'Conflicting context declarations: ' . $name, $reference->value);
+            }
+
+            return;
+        }
+        $this->declare($schema, $name, $reference->table, $dependency);
     }
 
     /**
-     * Puts a table in force, with its readable definition and the statement that declares it, when there are any.
+     * Adds a declaration to the innermost scope, retaining its exact definition and owner.
      */
     public function declare(string $schema, string $name, ?TableDefinition $table, ?Statement $owner): void
     {
-        $this->tables[] = [$schema, $name, $table, $owner];
-        $this->dropped = array_values(array_filter($this->dropped, fn (array $gone): bool => !$this->same($gone[0], $gone[1], $schema, $name)));
+        array_unshift($this->tables, [$schema, $name, $table, $owner]);
     }
 
     /**
-     * Takes a table out of force.
-     */
-    public function drop(string $schema, string $name): void
-    {
-        $this->tables = array_values(array_filter($this->tables, fn (array $known): bool => !$this->same($known[0], $known[1], $schema, $name)));
-        $this->dropped[] = [$schema, $name];
-    }
-
-    /**
-     * Reports whether a name refers to no table because the tables it could refer to were dropped: in its schema, or in every schema of the search path.
-     *
-     * @param non-empty-list<string> $name
-     */
-    public function gone(array $name): bool
-    {
-        $parts = array_slice($name, -2);
-        $table = $parts[count($parts) - 1];
-        foreach (count($parts) === 2 ? [$parts[0]] : $this->path as $schema) {
-            if (array_filter($this->dropped, fn (array $gone): bool => $this->same($gone[0], $gone[1], $schema, $table)) === []) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Finds a table in force: its readable definition and the statement that declares it, or null when it is not in force.
+     * Finds a declared table and its owner, or null when the context does not declare it.
      *
      * @return array{TableDefinition|null, Statement|null}|null
      */
@@ -109,10 +84,10 @@ final class Relations
     }
 
     /**
-     * Finds the table in force a name refers to: a qualified name in its schema, an unqualified one in the first schema of the search path that has it.
+     * Finds the declaration a name refers to: a qualified name in its schema, an unqualified one in the first schema of the search path that has it.
      *
      * @param non-empty-list<string> $name
-     * @return array{string, string, TableDefinition|null, Statement|null}|null The schema and name the table is in force under, its definition and its owner
+     * @return array{string, string, TableDefinition|null, Statement|null}|null The qualified name, definition and owner
      */
     public function find(array $name): ?array
     {

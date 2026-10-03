@@ -66,7 +66,7 @@ use Tests\Contract\Resolved;
 #[Medium]
 final class RelationsTest extends TestCase
 {
-    public function testApplyPutsDeclarationsInForceAndTakesDropsOut(): void
+    public function testApplyKeepsDeclarationsIndependentOfOtherOperations(): void
     {
         $relations = new Relations(MySqlDialect::MySql->platform()->names(), ['app']);
         $users = (new Semantics(MySqlDialect::MySql))->analyze('CREATE TABLE users (id INT)', []);
@@ -76,7 +76,7 @@ final class RelationsTest extends TestCase
         $relations->apply(new Reference(new Name('users'), ['users'], ReferenceKind::Dependency, $users, $table), $users);
         self::assertSame([$table, $users], $relations->lookup('app', 'users'));
         $relations->apply(new Reference(new Name('users'), ['app', 'users'], ReferenceKind::Drop, $users, $table), $users);
-        self::assertNull($relations->lookup('app', 'users'));
+        self::assertSame([$table, $users], $relations->lookup('app', 'users'));
     }
 
     public function testDeclareAndLookupKeepTheTableAndItsOwner(): void
@@ -85,16 +85,6 @@ final class RelationsTest extends TestCase
         $relations->declare('app', 'users', null, null);
         self::assertSame([null, null], $relations->lookup('app', 'users'));
         self::assertNull($relations->lookup('other', 'users'));
-    }
-
-    public function testDropRemovesOnlyTheNamedTable(): void
-    {
-        $relations = new Relations(MySqlDialect::MySql->platform()->names(), ['']);
-        $relations->declare('app', 'users', null, null);
-        $relations->declare('app', 'orders', null, null);
-        $relations->drop('app', 'users');
-        self::assertNull($relations->lookup('app', 'users'));
-        self::assertNotNull($relations->lookup('app', 'orders'));
     }
 
     public function testLookupAnswersNothingWhenNoTableIsInForce(): void
@@ -115,15 +105,15 @@ final class RelationsTest extends TestCase
         self::assertNull($relations->find(['audit']));
     }
 
-    public function testApplyDropsTheTableAnUnqualifiedDropFindsInThePath(): void
+    public function testAnUnqualifiedDropDoesNotRemoveAContextDeclaration(): void
     {
         $relations = new Relations(PostgreSqlDialect::PostgreSql->platform()->names(), ['app', 'public']);
         $relations->declare('public', 'users', null, null);
         $users = (new Semantics(PostgreSqlDialect::PostgreSql))->analyze('DROP TABLE users');
         $relations->apply(new Reference(new Name('users'), ['users'], ReferenceKind::Drop), $users);
-        self::assertNull($relations->find(['users']));
+        self::assertSame(['public', 'users', null, null], $relations->find(['users']));
         $relations->apply(new Reference(new Name('users'), ['users'], ReferenceKind::Drop), $users);
-        self::assertNull($relations->find(['users']));
+        self::assertSame(['public', 'users', null, null], $relations->find(['users']));
     }
 
     public function testFindPrefersImplicitNamespacesWithoutChangingTheCreationNamespace(): void
@@ -134,21 +124,6 @@ final class RelationsTest extends TestCase
         self::assertSame(['temp', 'users', null, null], $relations->find(['users']));
         self::assertSame(['main', 'users'], $relations->qualified(['users']));
         self::assertNull($relations->find(['main', 'users']));
-        $relations->drop('temp', 'users');
-        self::assertSame(['attached', 'users', null, null], $relations->find(['users']));
-    }
-
-    public function testGoneTellsATableTheDropsTookOutUntilItIsDeclaredAgain(): void
-    {
-        $relations = new Relations(PostgreSqlDialect::PostgreSql->platform()->names(), ['app', 'public']);
-        $relations->drop('app', 'users');
-        self::assertTrue($relations->gone(['app', 'users']));
-        self::assertFalse($relations->gone(['users']));
-        $relations->drop('public', 'users');
-        self::assertTrue($relations->gone(['users']));
-        $relations->declare('public', 'users', null, null);
-        self::assertFalse($relations->gone(['users']));
-        self::assertFalse($relations->gone(['orders']));
     }
 
     public function testQualifiedUsesTheFirstSchemaOfThePathAndKeepsTheLastTwoParts(): void

@@ -6,15 +6,17 @@ namespace SqlSemantics\Platform\MySql;
 
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
-use SqlSemantics\Core\Analysis\ValueReader;
 use SqlSemantics\Core\Ast\Numbers;
 use SqlSemantics\Core\Ast\TokenGroups;
 use SqlSemantics\Core\Ast\Tree;
+use SqlSemantics\Core\Language;
 use SqlSemantics\Core\SemanticException;
 use SqlSemantics\Statement\Declaration\Builtin;
 use SqlSemantics\Statement\Declaration\NumericSize;
 use SqlSemantics\Statement\Declaration\TypeDeclaration;
 use SqlSemantics\Statement\Declaration\TypeDescriptor;
+use SqlSemantics\Statement\Literal\BinaryLiteral;
+use SqlSemantics\Statement\Literal\StringLiteral;
 
 /**
  * Reads a type declaration by the lexer's type keyword tokens, so every synonym the lexer knows is covered.
@@ -90,7 +92,7 @@ final class TypeReader
      *
      * @throws SemanticException When the declaration is outside the lexer's type vocabulary or its arguments are invalid
      */
-    public function read(Node $node, ValueReader $values): TypeDeclaration
+    public function read(Node $node, Language $language): TypeDeclaration
     {
         $tokens = $node->tokens();
         if ($tokens === []) {
@@ -108,7 +110,7 @@ final class TypeReader
         $group = TokenGroups::parentheses($tokens)[0] ?? [];
         $members = [];
         if (in_array($kind, [Builtin::Enum, Builtin::Set], true)) {
-            $members = array_map($values->read(...), Tree::outer($node, ['text_string']));
+            $members = array_map(fn (Node $member): StringLiteral|BinaryLiteral => $this->member($member, $language), Tree::outer($node, ['text_string']));
             $group = [];
         }
         [$kind, $length, $precision, $scale] = $this->arguments($kind, array_map(fn (array $argument): int => $this->integer($argument, $node), Numbers::arguments($group)));
@@ -121,6 +123,18 @@ final class TypeReader
         $character = $kind->isCharacter();
 
         return new TypeDeclaration(new TypeDescriptor($kind, $length, $precision, $scale, $kind->isNumeric() && $facts['unsigned'], $kind->isNumeric() && $facts['zerofill'], $character && $facts['binary'], $character ? $facts['characterSet'] : null, $members, effectiveNumericSize: $this->numericSize($kind, $precision, $scale, $node)));
+    }
+
+    /**
+     * Decodes an enumeration member into its value under the selected lexical settings.
+     */
+    public function member(Node $node, Language $language): StringLiteral|BinaryLiteral
+    {
+        $tokens = $node->tokens();
+        assert($tokens !== [], 'An enumeration member contains a literal.');
+        $literal = (new LiteralDecoder($language))->decode($tokens);
+        assert($literal instanceof StringLiteral || $literal instanceof BinaryLiteral, 'An enumeration member is a character or binary string.');
+        return $literal;
     }
 
     /**

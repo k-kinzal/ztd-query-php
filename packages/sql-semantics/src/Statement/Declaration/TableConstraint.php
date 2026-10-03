@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Statement\Declaration;
 
-use InvalidArgumentException;
 use SqlSemantics\Statement\Element;
 
 /**
@@ -26,7 +25,6 @@ final class TableConstraint
      * @param list<string> $referencedTable Qualified foreign table name
      * @param list<string> $referencedColumns Referenced key columns; empty means the primary key
      * @param Element|null $expression Typed CHECK expression
-     * @throws InvalidArgumentException When supplied state violates its invariants
      */
     public function __construct(
         public readonly ConstraintKind $kind,

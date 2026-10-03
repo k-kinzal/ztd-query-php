@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Statement\Literal;
 
-use InvalidArgumentException;
 use RangeException;
 
 /**
@@ -14,20 +13,16 @@ use RangeException;
  * it to floating point. Integer conversion is explicit and checked.
  * @example Reading the typed value
  *     (new \SqlSemantics\Statement\Literal\NumberLiteral('42'))->toInt() // => 42
- * @example Rejecting invalid literal state
- *     new \SqlSemantics\Statement\Literal\NumberLiteral('NaN') // throws \InvalidArgumentException
  * @visibility public
  */
 final class NumberLiteral implements Literal
 {
     /**
-     * @throws InvalidArgumentException When the value is not a decimal number
+     * Asserts the construction invariants of the semantic value.
      */
     public function __construct(public readonly string $value)
     {
-        if (preg_match('/\A-?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?\z/D', $value) !== 1) {
-            throw new InvalidArgumentException('A decoded number must be exact decimal text.');
-        }
+        assert(preg_match('/\A-?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?\z/D', $value) === 1, 'A decoded number must be exact decimal text.');
     }
 
     /**

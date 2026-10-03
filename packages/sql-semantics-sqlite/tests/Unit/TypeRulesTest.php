@@ -63,8 +63,8 @@ final class TypeRulesTest extends TestCase
     public function testReadPreservesAnyValuesInStrictTables(string $declaredType): void
     {
         $table = (new \SqlParser\Sqlite\SqliteParser())->parse('CREATE TABLE t (value ' . $declaredType . ') STRICT');
-        $values = Dialect::Sqlite->platform()->values(Dialect::Sqlite->platform()->parser()->version());
-        $type = (new \SqlSemantics\Platform\Sqlite\TypeRules())->read($table->find('typetoken')[0], $values, $table)->type;
+        $language = new \SqlSemantics\Core\Language(Dialect::Sqlite);
+        $type = (new \SqlSemantics\Platform\Sqlite\TypeRules())->read($table->find('typetoken')[0], $language, $table)->type;
         self::assertSame(\SqlSemantics\Statement\Declaration\Builtin::Any, $type->name);
         self::assertSame(\SqlSemantics\Statement\Declaration\Affinity::Blob, $type->affinity);
     }

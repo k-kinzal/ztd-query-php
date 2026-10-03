@@ -30,6 +30,17 @@ interface Platform
     public function parser(?string $version = null, ?Mode $mode = null, Parameters $parameters = Parameters::Native): SqlParser;
 
     /**
+     * Supplies semantic lowering for the resolved language.
+     */
+    public function operations(Language $language): Policy\OperationRules;
+
+    /**
+     * Retains supplied declarations with this database's namespace and comparison rules.
+     * @param non-empty-list<string> $path
+     */
+    public function catalog(array $path, bool $complete, \SqlSemantics\Statement\Schema\Table ...$tables): \SqlSemantics\Statement\Schema\Catalog;
+
+    /**
      * Supplies statement construction data for the resolved grammar release.
      */
     public function values(string $version): Analysis\ValueReader;

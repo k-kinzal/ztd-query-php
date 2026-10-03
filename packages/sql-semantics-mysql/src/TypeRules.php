@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Core\Analysis\ValueReader;
+use SqlSemantics\Core\Language;
 use SqlSemantics\Core\Policy\TypeRules as Contract;
 use SqlSemantics\Statement\Declaration\Builtin;
 use SqlSemantics\Statement\Declaration\TypeDeclaration;
@@ -65,9 +65,9 @@ final class TypeRules implements Contract
     /**
      * Reads a declared type by its keyword tokens, arguments and attributes.
      */
-    public function read(Node $node, ValueReader $values, ?Node $table = null): TypeDeclaration
+    public function read(Node $node, Language $language, ?Node $table = null): TypeDeclaration
     {
-        return (new TypeReader())->read($node, $values);
+        return (new TypeReader())->read($node, $language);
     }
 
     /**

@@ -20,7 +20,7 @@ $reference->name;                             // ['parent']
 $reference->table;                            // null
 ```
 
-Complete declarations remain the default when dependencies are supplied. Pass the parent declaration and analyze the SQL again to resolve the reference; the previous statement stays unchanged. `analyzeAll()` accepts the same declaration policy and applies preceding statements in order. Partial declarations also records absent table references in queries. Drops keep their `Drop` kind and can have no known table. Nothing unresolved is inserted into the known schema as a fabricated table.
+Complete declarations remain the default when dependencies are supplied. Pass the parent declaration and analyze the SQL again to resolve the reference; the previous statement stays unchanged. `analyzeAll()` accepts the same declaration policy and reads every statement against the same explicit context. Partial declarations also records absent table references in queries. Drops keep their `Drop` kind and can have no known table. Nothing unresolved is inserted into the known schema as a fabricated table.
 
 SQLite temporary tables have schema `temp`. Unqualified references search declared tables in `temp` before the configured session path (`main` and any attached databases); explicitly qualified names retain their namespace. All three dialects record foreign table names, including unresolved ones.
 
@@ -77,7 +77,7 @@ $table = $semantics->analyze(
 )->resolution->declarations[0];
 
 $column = $table->columns[0];
-$semantics->decodeLiteral($column->type->members[0])->value(); // "a'b"
+$column->type->members[0]->value(); // "a'b"
 $semantics->decodeLiteral($column->defaultValue)->value();     // 'second'
 ```
 

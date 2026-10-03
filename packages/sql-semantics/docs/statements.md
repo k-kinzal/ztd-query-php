@@ -72,7 +72,7 @@ $reference = $query->resolution->tables()[0];
 $shadowed = Traversal::rewrite($query->command, static fn (Element $value): Element => $value === $reference->value ? $builder->table('shadow_users') : $value);
 ```
 
-A replacement must be a value the position accepts: `map()` checks it against the role of the position and throws `InvalidArgumentException` otherwise. Lexical fields such as a name or a literal spelling, and comments, are not child values; the typed `with*()` methods change them.
+A replacement must be a value the position accepts: `map()` asserts that it has the role of the position. Lexical fields such as a name or a literal spelling, and comments, are not child values; the typed `with*()` methods change them.
 
 ## Reconstructing SQL
 

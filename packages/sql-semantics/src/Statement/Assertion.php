@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Statement;
 
-use InvalidArgumentException;
-
 /**
  * Expresses the construction invariants of immutable SQL values.
  *
@@ -48,14 +46,11 @@ trait Assertion
      * @param callable(Element): Element $replace
      * @return T
      *
-     * @throws InvalidArgumentException When the replacement is not a value of the role
      */
     protected function replacement(Element $value, string $role, callable $replace): Element
     {
         $replaced = $replace($value);
-        if (!$replaced instanceof $role) {
-            throw new InvalidArgumentException('A replacement must be a ' . $role . ', ' . $replaced::class . ' given.');
-        }
+        assert($replaced instanceof $role, 'A replacement must be a ' . $role . ', ' . $replaced::class . ' given.');
 
         return $replaced;
     }

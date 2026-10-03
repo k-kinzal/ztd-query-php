@@ -22,12 +22,14 @@ use SqlSemantics\Statement\Declaration\TableDefinition;
 final class SchemaReader
 {
     private readonly ValueReader $values;
+    private readonly Language $language;
     /**
      * Binds the dependencies used for semantic binding.
      */
-    public function __construct(public readonly Identifiers $identifiers, public readonly string $defaultSchema, ?ValueReader $values = null)
+    public function __construct(public readonly Identifiers $identifiers, public readonly string $defaultSchema, ?ValueReader $values = null, ?Language $language = null)
     {
-        $this->values = $values ?? $identifiers->dialect->platform()->values((new Language($identifiers->dialect))->version);
+        $this->language = $language ?? new Language($identifiers->dialect);
+        $this->values = $values ?? $this->language->values();
     }
 
     /**
@@ -52,7 +54,7 @@ final class SchemaReader
         $declarations = [];
         $constraints = [];
         foreach ($this->columnNodes($create) as [$column, $attributes]) {
-            [$definition, $localConstraints] = (new ColumnReader($this->identifiers, $this->values))->read($column, $attributes, $create);
+            [$definition, $localConstraints] = (new ColumnReader($this->identifiers, $this->values, $this->language))->read($column, $attributes, $create);
             $columns[] = $definition;
             $declarations[] = $column;
             array_push($constraints, ...$localConstraints);

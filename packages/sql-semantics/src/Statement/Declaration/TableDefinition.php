@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Statement\Declaration;
 
-use InvalidArgumentException;
 use SqlSemantics\Statement\Element;
 
 /**
@@ -25,7 +24,6 @@ final class TableDefinition
      * @param list<TableConstraint> $constraints Declared integrity conditions
      * @param Element $source Typed CREATE TABLE declaration
      * @param list<Element> $options Typed table options
-     * @throws InvalidArgumentException When supplied state violates its invariants
      */
     public function __construct(
         public readonly string $schema,

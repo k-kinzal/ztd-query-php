@@ -13,18 +13,16 @@ use SqlSemantics\Core\Language;
 use SqlSemantics\Core\Mode;
 use SqlSemantics\Core\Parameters;
 use SqlSemantics\Core\SearchPath;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Statement\Operation;
+use SqlSemantics\Statement\Schema\Table;
 
 /**
- * Structures every statement of a selected SQL language into independent values.
+ * Analyzes SQL into immutable operations with scoped expressions and declaration references.
  *
- * This entry point needs no database connection. Statements are read as the
- * server reads them: with the grammar of one release, under the session
- * settings given as the mode, and with the selected parameter markers. A
- * statement analyzed with its dependencies, the declarations that came
- * before it, also resolves every table name it writes, reading a name
- * without a schema in the schemas of the session's search path; a name no
- * dependency declares is an error unless the declarations are partial.
+ * Missing declaration metadata remains an explicit unresolved fact. Supplied
+ * declarations keep their object identity; ALTER, DROP, and writes are requests,
+ * never a history to simulate. The selected grammar and session settings define
+ * how input is read.
  *
  * @visibility public
  * @example Reconstructing SQL with the SQLite database package
@@ -34,7 +32,7 @@ use SqlSemantics\Statement\Statement;
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
  *     $users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
  *     $query = $semantics->analyze('SELECT name FROM users WHERE id = 1', [$users]);
- *     $query->resolution?->tables()[0]->table?->name // => 'users'
+ *     $query->field('name')->expression->resolution->table === $users->table // => true
  * @example Finding the statements of a script
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
  *     $semantics->split("SELECT 1; SELECT ';'") // => ['SELECT 1;', " SELECT ';'"]
@@ -76,7 +74,7 @@ final class Semantics
     }
 
     /**
-     * Answers the schemas an unqualified table name is read in, in order; an unqualified declaration creates its table in the first.
+     * Answers the namespaces searched for an unqualified relation, in precedence order.
      *
      * @return non-empty-list<string>
      */
@@ -86,34 +84,27 @@ final class Semantics
     }
 
     /**
-     * Builds an immutable statement from the SQL of one statement, resolved against its dependencies when they are given.
+     * Structures SQL and resolves its references against the supplied declaration objects.
      *
-     * Without dependencies the statement is structured only. With them, even
-     * none, the statement is also resolved: the tables it declares are read,
-     * and every table name it writes must be a common table expression it
-     * defines, a table a dependency declares, or a table it declares or
-     * drops itself. Dependencies are applied in order, so a later DROP TABLE
-     * removes an earlier declaration. With partial declarations, a name no
-     * dependency declares is an undeclared table instead of an error.
+     * Without a context, missing declaration metadata remains unresolved. An
+     * explicit complete context can establish missing or ambiguous names. These
+     * outcomes belong to the semantic result. Context operations never execute
+     * or transform another declaration.
      *
-     * @param list<Statement>|null $dependencies The declarations the statement is read against, in order
-     * @param Declarations $declarations Whether the dependencies declare every table of the database, or only some
-     *
-     * @throws \SqlSemantics\Core\AnalysisException When SQL is not one statement of the selected language
-     * @throws \SqlSemantics\Core\SemanticException When a table name resolves to nothing under complete declarations or a declaration conflicts with a dependency
+     * @param list<Table|Operation>|null $dependencies The explicit declaration context
+     * @param Declarations $declarations Whether all database declarations were supplied
+     * @throws \SqlSemantics\Core\AnalysisException When SQL is outside the selected grammar
      */
-    public function analyze(string $sql, ?array $dependencies = null, Declarations $declarations = Declarations::Complete): Statement
+    public function analyze(string $sql, ?array $dependencies = null, Declarations $declarations = Declarations::Complete): Operation
     {
         return $this->analyzer->analyze($sql, $dependencies, $declarations);
     }
 
     /**
-     * Builds one immutable statement for each statement of a script, in order, each resolved against the dependencies and the statements before it when dependencies are given.
-     *
-     * @param list<Statement>|null $dependencies
-     * @return list<Statement>
-     * @throws \SqlSemantics\Core\AnalysisException When a statement is not in the selected language
-     * @throws \SqlSemantics\Core\SemanticException When a table name resolves to nothing under complete declarations or a declaration conflicts
+     * Structures each script statement against the same explicit declaration context.
+     * @param list<Table|Operation>|null $dependencies
+     * @return list<Operation>
+     * @throws \SqlSemantics\Core\AnalysisException When SQL is outside the selected grammar
      */
     public function analyzeAll(string $sql, ?array $dependencies = null, Declarations $declarations = Declarations::Complete): array
     {

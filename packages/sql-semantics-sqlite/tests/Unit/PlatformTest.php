@@ -168,4 +168,24 @@ final class PlatformTest extends TestCase
         self::assertSame('x', $language->dialect->platform()->literals($language)->decode($tokens)->value());
     }
 
+
+    public function testOperationsReturnsImmutableMeaning(): void
+    {
+        $language = new Language(Dialect::Sqlite);
+        $platform = new \SqlSemantics\Platform\Sqlite\Platform();
+        $catalog = $platform->catalog($platform->searchPath(), false);
+        $operation = $platform->operations($language)->read($language->parser()->parse('BEGIN'), $catalog);
+        self::assertInstanceOf(\SqlSemantics\Statement\Transaction\Begin::class, $operation);
+        self::assertTrue((new \SqlSemantics\Statement\SemanticGraph())->isSemanticOperation($operation));
+    }
+
+    public function testCatalogRetainsExactDeclarationIdentity(): void
+    {
+        $platform = new \SqlSemantics\Platform\Sqlite\Platform();
+        $table = new \SqlSemantics\Statement\Schema\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('bar')));
+        $catalog = $platform->catalog($platform->searchPath(), true, $table);
+        self::assertSame([$table], $catalog->tables);
+        self::assertSame([$table], $catalog->matchingTables($table->name));
+        self::assertTrue($catalog->complete);
+    }
 }

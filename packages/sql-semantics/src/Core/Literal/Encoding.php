@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Core\Literal;
 
+use SqlSemantics\Statement\Literal\Radix;
+use SqlSemantics\Statement\Literal\UnsignedInteger;
+
 /**
  * Exact conversions of literal digits, without machine-number rounding.
  * @visibility SqlSemantics
@@ -74,19 +77,7 @@ final class Encoding
         if ($digits === '' || strspn($digits, $allowed) !== strlen($digits)) {
             throw new DecodingException('Invalid radix literal.');
         }
-        $decimal = '0';
-        foreach (str_split(substr($text, 2)) as $digit) {
-            $carry = (int) hexdec($digit);
-            $next = '';
-            for ($i = strlen($decimal) - 1; $i >= 0; --$i) {
-                $part = (int) $decimal[$i] * $base + $carry;
-                $next = (string) ($part % 10) . $next;
-                $carry = intdiv($part, 10);
-            }
-            $decimal = ($carry === 0 ? '' : (string) $carry) . $next;
-        }
-        $trimmed = ltrim($decimal, '0');
-        return $trimmed === '' ? '0' : $trimmed;
+        return (new UnsignedInteger($digits, Radix::from($base)))->decimal();
     }
 
     /**
@@ -98,13 +89,7 @@ final class Encoding
         if ($digits === '' || !ctype_digit($digits)) {
             throw new DecodingException('Expected nonnegative decimal digits.');
         }
-        for ($i = strlen($digits) - 1; $i >= 0; --$i) {
-            if ($digits[$i] !== '9') {
-                $digits[$i] = (string) ((int) $digits[$i] + 1);
-                return $digits;
-            }
-            $digits[$i] = '0';
-        }
-        return '1' . $digits;
+        $next = (new UnsignedInteger($digits))->successor()->decimal();
+        return str_pad($next, strlen($digits), '0', STR_PAD_LEFT);
     }
 }

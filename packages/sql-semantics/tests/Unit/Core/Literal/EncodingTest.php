@@ -51,6 +51,7 @@ final class EncodingTest extends TestCase
     {
         self::assertSame('100000000000000000000', Encoding::successor('99999999999999999999'));
         self::assertSame('42', Encoding::successor('41'));
+        self::assertSame('010', Encoding::successor('009'));
         $this->expectException(DecodingException::class);
         Encoding::successor('1.2');
     }

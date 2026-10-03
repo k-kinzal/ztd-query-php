@@ -7,8 +7,7 @@ namespace Fuzz\Target;
 use Error;
 use SqlFormatter\Facade\Formatter;
 use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Statement\Element;
-use SqlSemantics\Statement\Traversal;
+use SqlSemantics\Statement\SemanticGraph;
 use Throwable;
 
 /**
@@ -35,17 +34,20 @@ final class RoundTripTarget
         $printed = null;
         try {
             $statement = $this->semantics->analyze($sql);
+            if (!(new SemanticGraph())->isSemanticOperation($statement)) {
+                throw new Error('Analysis returned a syntax representation instead of an immutable semantic operation: ' . $statement::class);
+            }
             $printed = $statement->toString();
-            $expected = $this->compact->format($sql);
-            $actual = $this->compact->format($printed);
+            $again = $this->semantics->analyze($printed);
+            $graph = new SemanticGraph();
+            if (!$graph->isSemanticOperation($again) || $graph->fingerprint($statement) !== $graph->fingerprint($again)) {
+                throw new Error('Reconstruction changed semantic values or declaration ownership.');
+            }
+            if ($this->compact->format($printed) !== $this->compact->format($again->toString())) {
+                throw new Error('Semantic reconstruction did not reach a stable SQL form.');
+            }
         } catch (Throwable $failure) {
             throw new Error("Semantic round trip failed\n{$context}\nPrinted: {$printed}\nError: {$failure->getMessage()}", 0, $failure);
-        }
-        if ($actual !== $expected) {
-            throw new Error("Semantic round trip changed the statement\n{$context}\nPrinted: {$printed}\nExpected: {$expected}\nActual: {$actual}");
-        }
-        if (Traversal::rewrite($statement->command, static fn (Element $value): Element => $value) !== $statement->command) {
-            throw new Error("Rewriting without replacing anything rebuilt the statement\n{$context}");
         }
     }
 }

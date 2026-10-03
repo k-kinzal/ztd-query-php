@@ -214,36 +214,35 @@ final class ResolverTest extends TestCase
     #[TestWith([MySqlDialect::MySql])]
     #[TestWith([PostgreSqlDialect::PostgreSql])]
     #[TestWith([SqliteDialect::Sqlite])]
-    public function testResolveAppliesDropsAndConditionalDeclarationsInOrder(Dialect $dialect): void
+    public function testResolveDescribesConditionalDeclarationsAndDropsWithoutApplyingThem(Dialect $dialect): void
     {
         $semantics = new Semantics($dialect);
         $users = $semantics->analyze('CREATE TABLE users (id INTEGER)', []);
         $again = $semantics->analyze('CREATE TABLE IF NOT EXISTS users (other INTEGER)', [$users]);
-        self::assertSame(ReferenceKind::Dependency, Resolved::of($again)->references[0]->kind);
+        self::assertSame(ReferenceKind::Declaration, Resolved::of($again)->references[0]->kind);
         self::assertTrue(Resolved::of($again)->references[0]->conditional);
-        self::assertSame([], Resolved::of($again)->declarations);
+        self::assertSame('other', Resolved::of($again)->declarations[0]->columns[0]->name);
         $drop = $semantics->analyze('DROP TABLE IF EXISTS users', [$users]);
         self::assertSame(ReferenceKind::Drop, Resolved::of($drop)->references[0]->kind);
         self::assertSame($users, Resolved::of($drop)->references[0]->declaration);
         $missing = $semantics->analyze('DROP TABLE IF EXISTS users', [$users, $drop]);
-        self::assertNull(Resolved::of($missing)->references[0]->declaration);
+        self::assertSame($users, Resolved::of($missing)->references[0]->declaration);
         $fresh = $semantics->analyze('CREATE TABLE users (renewed INTEGER)', [$users, $drop]);
         self::assertSame(ReferenceKind::Declaration, Resolved::of($fresh)->references[0]->kind);
         self::assertSame('renewed', Resolved::of($fresh)->declarations[0]->columns[0]->name);
-        $this->expectException(SemanticException::class);
-        $this->expectExceptionMessage('No dependency declares the table users');
-        $semantics->analyze('SELECT id FROM users', [$users, $drop]);
+        self::assertSame($users, Resolved::of($semantics->analyze('SELECT id FROM users', [$users, $drop]))->tables()[0]->declaration);
     }
 
     #[TestWith([MySqlDialect::MySql])]
     #[TestWith([PostgreSqlDialect::PostgreSql])]
     #[TestWith([SqliteDialect::Sqlite])]
-    public function testResolveRejectsADuplicateDeclarationAndAnUnconditionalDropOfAnUnknownTable(Dialect $dialect): void
+    public function testResolveRejectsConflictingContextDeclarationsAndAnUnconditionalDropOfAnUnknownTable(Dialect $dialect): void
     {
         $semantics = new Semantics($dialect);
         $users = $semantics->analyze('CREATE TABLE users (id INTEGER)');
         try {
-            $semantics->analyze('CREATE TABLE users (id INTEGER)', [$users]);
+            $other = $semantics->analyze('CREATE TABLE users (different INTEGER)');
+            $semantics->analyze('SELECT * FROM users', [$users, $other]);
             self::fail('A duplicate declaration must be rejected.');
         } catch (SemanticException $error) {
             self::assertSame('duplicate-table', $error->reason);
@@ -361,11 +360,10 @@ final class ResolverTest extends TestCase
         self::assertNull(Resolved::of($query)->references[2]->table);
         $drop = $semantics->analyze('DROP TABLE audit_log', [$users], Declarations::Partial);
         self::assertSame(ReferenceKind::Drop, Resolved::of($drop)->references[0]->kind);
-        $this->expectException(SemanticException::class);
-        $semantics->analyze('SELECT * FROM audit_log', [$users, $drop], Declarations::Partial);
+        self::assertSame(ReferenceKind::Undeclared, Resolved::of($semantics->analyze('SELECT * FROM audit_log', [$users, $drop], Declarations::Partial))->references[0]->kind);
     }
 
-    public function testDeclarePutsANewTableInForceAndRefersToAConditionalDuplicate(): void
+    public function testDeclareKeepsTheDefinitionOfAConditionalDeclaration(): void
     {
         [$resolver, $tree, $command, $relations] = Resolving::of(MySqlDialect::MySql, 'CREATE TABLE users (id INT)');
         $declarations = $resolver->declarations($tree);
@@ -374,7 +372,7 @@ final class ResolverTest extends TestCase
         self::assertSame($declarations[0], $reference->table);
         self::assertSame([$declarations[0], null], $relations->lookup('', 'users'));
         $again = $resolver->declare(new NameSite($command, ['users'], ReferenceKind::Declaration, true), $relations, $declarations, $tree);
-        self::assertSame(ReferenceKind::Dependency, $again->kind);
+        self::assertSame(ReferenceKind::Declaration, $again->kind);
         self::assertTrue($again->conditional);
     }
 

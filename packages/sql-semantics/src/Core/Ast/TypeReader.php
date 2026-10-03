@@ -6,8 +6,7 @@ namespace SqlSemantics\Core\Ast;
 
 use LogicException;
 use SqlParser\Parser\Node;
-use SqlSemantics\Core\Analysis\ValueReader;
-use SqlSemantics\Core\Dialect;
+use SqlSemantics\Core\Language;
 use SqlSemantics\Statement\Declaration\Builtin;
 use SqlSemantics\Statement\Declaration\TypeDeclaration;
 
@@ -21,7 +20,7 @@ final class TypeReader
     /**
      * Binds the dependencies used for semantic binding.
      */
-    public function __construct(public readonly Dialect $dialect)
+    public function __construct(public readonly Language $language)
     {
     }
 
@@ -31,10 +30,10 @@ final class TypeReader
      * @throws LogicException When the dialect policy produces a built-in type it does not support
      * @throws \SqlSemantics\Core\SemanticException When the declared type is invalid
      */
-    public function read(Node $node, ValueReader $values, ?Node $table = null): TypeDeclaration
+    public function read(Node $node, ?Node $table = null): TypeDeclaration
     {
-        $types = $this->dialect->platform()->types();
-        $declaration = $types->read($node, $values, $table);
+        $types = $this->language->dialect->platform()->types();
+        $declaration = $types->read($node, $this->language, $table);
         $name = $declaration->type->name;
         if ($name instanceof Builtin && !$types->supports($name)) {
             throw new LogicException('The type policy produced an unsupported built-in type: ' . $name->value);

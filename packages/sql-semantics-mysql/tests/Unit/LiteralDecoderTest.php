@@ -54,8 +54,8 @@ final class LiteralDecoderTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql, mode: \SqlSemantics\Platform\MySql\Mode::fromString('NO_BACKSLASH_ESCAPES'));
         $column = $semantics->analyze("CREATE TABLE t(a ENUM('a\\nb', X'41'))", [])->resolution?->declarations[0]->columns[0] ?? self::fail('Missing column');
-        self::assertSame('a\\nb', $semantics->decodeLiteral($column->type->members[0])->value());
-        self::assertSame('A', $semantics->decodeLiteral($column->type->members[1])->value());
+        self::assertSame('a\\nb', $column->type->members[0]->value());
+        self::assertSame('A', $column->type->members[1]->value());
         $tokens = array_values(array_filter($semantics->language()->parser()->tokenize("_utf8mb4 X'41'"), static fn ($token): bool => $token->text !== ''));
         self::assertNotEmpty($tokens);
         $literal = $semantics->language()->dialect->platform()->literals($semantics->language())->decode($tokens);
