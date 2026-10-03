@@ -925,16 +925,16 @@
         },
         {
             "name": "friendsofphp/php-cs-fixer",
-            "version": "v3.95.25",
+            "version": "v3.95.27",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer.git",
-                "reference": "2cdfc1f3daf173d83a1ebb6177949b58c95de6ff"
+                "reference": "1d0c68ee5f37446d8ad5970b82384cd1bb0a3317"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHP-CS-Fixer/PHP-CS-Fixer/zipball/2cdfc1f3daf173d83a1ebb6177949b58c95de6ff",
-                "reference": "2cdfc1f3daf173d83a1ebb6177949b58c95de6ff",
+                "url": "https://api.github.com/repos/PHP-CS-Fixer/PHP-CS-Fixer/zipball/1d0c68ee5f37446d8ad5970b82384cd1bb0a3317",
+                "reference": "1d0c68ee5f37446d8ad5970b82384cd1bb0a3317",
                 "shasum": ""
             },
             "require": {
@@ -968,15 +968,15 @@
             "require-dev": {
                 "facile-it/paraunit": "^1.3.1 || ^2.11.0",
                 "infection/infection": "^0.32.7",
-                "justinrainbow/json-schema": "^6.10.0",
+                "justinrainbow/json-schema": "^6.12.0",
                 "keradus/cli-executor": "^2.3",
                 "php-coveralls/php-coveralls": "^2.9.1",
                 "php-cs-fixer/phpunit-constraint-isidenticalstring": "^1.8",
                 "php-cs-fixer/phpunit-constraint-xmlmatchesxsd": "^1.8",
-                "phpunit/phpunit": "^9.6.35 || ^10.5.64 || ^11.5.56 || ^12.5.31 || ^13.0.6",
-                "symfony/polyfill-php85": "^1.38",
-                "symfony/var-dumper": "^5.4.48 || ^6.4.36 || ^7.4.8 || ^8.1.1",
-                "symfony/yaml": "^5.4.53 || ^6.4.41 || ^7.4.13 || ^8.1.1"
+                "phpunit/phpunit": "^9.6.36 || ^10.5.64 || ^11.5.56 || ^12.5.35 || ^13.3.3",
+                "symfony/polyfill-php85": "^1.41",
+                "symfony/var-dumper": "^5.4.48 || ^6.4.45 || ^7.4.18 || ^8.1.7",
+                "symfony/yaml": "^5.4.53 || ^6.4.45 || ^7.4.18 || ^8.1.6"
             },
             "suggest": {
                 "ext-dom": "For handling output formats in XML",
@@ -1017,7 +1017,7 @@
             ],
             "support": {
                 "issues": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/issues",
-                "source": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/tree/v3.95.25"
+                "source": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/tree/v3.95.27"
             },
             "funding": [
                 {
@@ -1025,7 +1025,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-09-08T11:11:37+00:00"
+            "time": "2026-09-22T09:54:55+00:00"
         },
         {
             "name": "jean85/pretty-package-versions",
@@ -1093,17 +1093,17 @@
             "dist": {
                 "type": "path",
                 "url": "../bison-parser",
-                "reference": "7f8c7d60d8cfcab3e36d9069ad25a067a695213c"
+                "reference": "48a88d5601053e591cf9c648a1780b2c779166e8"
             },
             "require": {
                 "php": "^8.1"
             },
             "require-dev": {
+                "behat/behat": "^3.14",
                 "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
                 "k-kinzal/php-ai-toolkit": "dev-main",
-                "nikic/php-fuzzer": "^0.0.11",
                 "phpbench/phpbench": "^1.4",
                 "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
                 "phpstan/phpstan": "^2.1",
@@ -1111,9 +1111,6 @@
                 "phpunit/phpunit": "^10.5",
                 "squizlabs/php_codesniffer": "^4.0.4"
             },
-            "bin": [
-                "bin/bison-parser"
-            ],
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -1123,8 +1120,8 @@
             "autoload-dev": {
                 "psr-4": {
                     "Tests\\": "tests/",
-                    "Fuzz\\": "fuzz/",
-                    "Bench\\": "bench/"
+                    "Bench\\": "bench/",
+                    "Spec\\": "spec/"
                 }
             },
             "scripts": {
@@ -1169,24 +1166,6 @@
                 "format:check": [
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
                 ],
-                "fuzz": [
-                    "@fuzz:smoke"
-                ],
-                "fuzz:parse": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/parse') || mkdir('fuzz/corpus/parse', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_parse.php fuzz/corpus/parse/"
-                ],
-                "fuzz:roundtrip": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/roundtrip') || mkdir('fuzz/corpus/roundtrip', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_roundtrip.php fuzz/corpus/roundtrip/"
-                ],
-                "fuzz:smoke": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@fuzz:parse --max-runs=100",
-                    "@fuzz:roundtrip --max-runs=100"
-                ],
                 "lint": [
                     "@autoload:check",
                     "@format:check",
@@ -1201,6 +1180,9 @@
                 ],
                 "phpstan": [
                     "phpstan analyse --memory-limit=1G"
+                ],
+                "spec": [
+                    "behat --strict"
                 ],
                 "test": [
                     "paratest --processes=auto"
@@ -1233,17 +1215,17 @@
             "dist": {
                 "type": "path",
                 "url": "../lemon-parser",
-                "reference": "b3552490fed0f08e2e74c35192154ef7819bef73"
+                "reference": "c4033330a580f2fadd3cf09cfaccaed6d986c513"
             },
             "require": {
                 "php": "^8.1"
             },
             "require-dev": {
+                "behat/behat": "^3.14",
                 "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
                 "k-kinzal/php-ai-toolkit": "dev-main",
-                "nikic/php-fuzzer": "^0.0.11",
                 "phpbench/phpbench": "^1.4",
                 "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
                 "phpstan/phpstan": "^2.1",
@@ -1251,9 +1233,6 @@
                 "phpunit/phpunit": "^10.5",
                 "squizlabs/php_codesniffer": "^4.0.4"
             },
-            "bin": [
-                "bin/lemon-parser"
-            ],
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -1263,8 +1242,8 @@
             "autoload-dev": {
                 "psr-4": {
                     "Tests\\": "tests/",
-                    "Fuzz\\": "fuzz/",
-                    "Bench\\": "bench/"
+                    "Bench\\": "bench/",
+                    "Spec\\": "spec/"
                 }
             },
             "scripts": {
@@ -1309,24 +1288,6 @@
                 "format:check": [
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
                 ],
-                "fuzz": [
-                    "@fuzz:smoke"
-                ],
-                "fuzz:parse": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/parse') || mkdir('fuzz/corpus/parse', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_parse.php fuzz/corpus/parse/"
-                ],
-                "fuzz:roundtrip": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/roundtrip') || mkdir('fuzz/corpus/roundtrip', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_roundtrip.php fuzz/corpus/roundtrip/"
-                ],
-                "fuzz:smoke": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@fuzz:parse --max-runs=100",
-                    "@fuzz:roundtrip --max-runs=100"
-                ],
                 "lint": [
                     "@autoload:check",
                     "@format:check",
@@ -1341,6 +1302,9 @@
                 ],
                 "phpstan": [
                     "phpstan analyse --memory-limit=1G"
+                ],
+                "spec": [
+                    "behat --strict --no-interaction --no-snippets"
                 ],
                 "test": [
                     "paratest --processes=auto"
@@ -1524,7 +1488,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-faker",
-                "reference": "3abb12ca287d64843fff42dbb2a31c1e4483be77"
+                "reference": "d074fd59cb7e49dacd352d2c6fc56f6ccca84121"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -1670,7 +1634,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "Faker Provider for generating syntactically valid SQL statements",
+            "description": "Grammar-based SQL generator for MySQL, PostgreSQL, and SQLite, with a FakerPHP provider",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-faker",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-faker/"
