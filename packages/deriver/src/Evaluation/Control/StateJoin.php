@@ -51,7 +51,7 @@ final class StateJoin
             }
             $this->context->frontier('BUDGET_EXCEEDED', $callable->source, 'partition-limit');
             $this->context->frontier('CORRELATION_RELAXED', $callable->source, 'partition-limit');
-            $keep = $callable->blocks[$group[0]->block]->loopHeader ? 0 : max(0, $this->context->query->budget()->partitions - 1);
+            $keep = ($callable->blocks[$group[0]->block]->loopHeader ?? false) ? 0 : max(0, $this->context->query->budget()->partitions - 1);
             array_push($result, ...array_slice($group, 0, $keep));
             $clusters = $this->clusters(array_slice($group, $keep));
             array_push($result, ...array_slice($clusters, 0, $this->context->query->budget()->partitions));
